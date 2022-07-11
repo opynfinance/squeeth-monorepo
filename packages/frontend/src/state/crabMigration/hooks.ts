@@ -36,7 +36,7 @@ export const useQueueMigrate = () => {
   const address = useAtomValue(addressAtom)
   const crabMigrationContract = useAtomValue(crabMigrationContractAtom)
   const handleTransaction = useHandleTransaction()
-  const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
+  // const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
   const setUserMigratedShares = useSetAtom(userMigratedSharesAtom)
 
   const queueMigrate = useAppCallback(
@@ -47,15 +47,15 @@ export const useQueueMigrate = () => {
         }),
       )
 
-      const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
+      // const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
       const p2 = crabMigrationContract?.methods.sharesDeposited(address).call()
-      const [_totalShare, _userShare] = await Promise.all([p1, p2])
-      setTotalMigratedShares(toTokenAmount(_totalShare, 18))
+      const [_userShare] = await Promise.all([p2])
+      // setTotalMigratedShares(toTokenAmount(_totalShare, 18))
       setUserMigratedShares(toTokenAmount(_userShare, 18))
 
       return res
     },
-    [address, crabMigrationContract?.methods, handleTransaction, setTotalMigratedShares, setUserMigratedShares],
+    [address, crabMigrationContract?.methods, handleTransaction, setUserMigratedShares],
   )
 
   return queueMigrate
