@@ -678,31 +678,6 @@ describe("Crab V2 integration test: ERC20 deposit and withdrawals", function () 
   
     })
 
-    it("Should check if nonce invalid for replayed order", async () => {
-      await wSqueeth.connect(depositor2).approve(crabHelper.address, ethers.utils.parseUnits("10"))
-      const managerBuyPrice = await getOSQTHPrice()
-      const toSell = ethers.utils.parseUnits("10")
-      const orderHash = {
-        bidId: 0,
-        trader: depositor2.address,
-        quantity: toSell,
-        price: managerBuyPrice,
-        isBuying: false,
-        expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
-        nonce: 9
-      };
-      const { typeData, domainData } = getTypeAndDomainData();
-      // Do the trade
-      const signedOrder = await signTypedData(depositor2, domainData, typeData, orderHash);
-      // manager cant siphon off money to market makers
-      await crabStrategy.connect(owner).hedgeOTC(toSell, managerBuyPrice, true, [signedOrder])
-
-      // Check replay order
-      const orderCheck = await crabHelper.verifyOrder(signedOrder)
-      expect(orderCheck.isValidNonce).to.be.false
-
-    })
-  
   
     it("Should verify valid buy order", async () => {
       await weth.connect(depositor2).deposit({ value: ethers.utils.parseUnits("1") });
