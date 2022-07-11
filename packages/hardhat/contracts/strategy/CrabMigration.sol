@@ -19,18 +19,17 @@ import {StrategyMath} from "./base/StrategyMath.sol";
 
 /**
  * Migration Error Codes:
- * M1: Crab V2 Address already set
- * M2: Migration already happened
- * M3: Migration has not yet happened
- * M4: msg.sender is not Euler Mainnet Contract
- * M5: msg. sender cannot send ETH
- * M6: Can't withdraw more than you own
- * M7: Not enough ETH to repay the loan
- * M8: _ethToBorrow or _withdrawMaxEthToPay can't be 0
- * M9: Invalid crabV2 address
- * M10: crabV2 address not yet set
- * M11: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
- * M12: Wrong migration function, use flashMigrateFromV1toV2
+ * M1: Migration already happened
+ * M2: Migration has not yet happened
+ * M3: msg.sender is not Euler Mainnet Contract
+ * M4: msg.sender cannot send ETH
+ * M5: Can't withdraw more than you own
+ * M6: Not enough ETH to repay the loan
+ * M7: _ethToBorrow or _withdrawMaxEthToPay can't be 0
+ * M8: Invalid crabV2 address
+ * M9: Wrong migration function, use flashMigrateAndWithdrawFromV1toV2
+ * M10: Wrong migration function, use flashMigrateFromV1toV2
+ * M11: crabV2 address not yet set
  */
 
 /**
