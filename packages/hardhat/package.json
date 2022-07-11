@@ -52,6 +52,7 @@
   },
   "scripts": {
     "chain": "hardhat node --network hardhat --no-deploy",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 npx hardhat test --network hardhat",
     "test:unit": "TS_NODE_TRANSPILE_ONLY=1 npx hardhat test --network hardhat test/unit-tests/**.ts test/unit-tests/*/**.ts",
     "test:crab-unit": "TS_NODE_TRANSPILE_ONLY=1 npx hardhat test --network hardhat test/unit-tests/strategy/**.ts",
     "test:crab-integration": "TS_NODE_TRANSPILE_ONLY=1 npx hardhat test --network hardhat test/integration-tests/crabv2/*.ts",
