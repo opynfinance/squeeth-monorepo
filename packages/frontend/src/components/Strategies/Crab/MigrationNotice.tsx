@@ -1,13 +1,13 @@
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import clsx from 'clsx'
 import React from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       padding: theme.spacing(2),
-      background: 'rgba(238, 94, 63, 0.1);',
-      border: '1px solid #ee5e3f',
+      border: '1px solid rgba(19, 131, 17)',
       borderRadius: theme.spacing(2),
       display: 'flex',
     },
@@ -18,7 +18,7 @@ const MigrationNotice: React.FC = () => {
   const classes = useStyles()
 
   return (
-    <div className={classes.container}>
+    <div className={clsx(classes.container, 'crab-notice')}>
       <div>
         <Typography variant="h6">🦀</Typography>
       </div>
