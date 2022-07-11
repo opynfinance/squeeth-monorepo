@@ -51,7 +51,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         bytes32 r;
         bytes32 s;
     }
-        
+
     struct OrderCheck {
         bool isValidNonce;
         bool isValidSignature;
@@ -164,7 +164,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     /**
      * @notice view function to verify an order
      * @param _order crab otc hedge order
-     * @return OrderCheck 
+     * @return OrderCheck
      */
     function verifyOrder(Order memory _order) external view returns (OrderCheck memory) {
         bool isSufficientBalance;
@@ -222,7 +222,13 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     function getHedgeSize() external view returns (uint256, bool) {
         // Get state and calculate hedge
         (, , uint256 ethDelta, uint256 strategyDebt) = ICrabStrategyV2(crab).getVaultDetails();
-        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, ICrabStrategyV2(crab).hedgingTwapPeriod(), true);
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            ICrabStrategyV2(crab).hedgingTwapPeriod(),
+            true
+        );
         uint256 wSqueethDelta = strategyDebt.wmul(2e18).wmul(wSqueethEthPrice);
 
         return
