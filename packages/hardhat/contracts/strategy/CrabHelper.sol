@@ -32,7 +32,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     address public immutable wPowerPerp;
     address public immutable ethWSqueethPool;
     address public immutable oracle;
-    uint32 public immutable hedgingTwapPeriod;
 
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_ORDER_TYPEHASH =
@@ -51,6 +50,14 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         uint8 v;
         bytes32 r;
         bytes32 s;
+    }
+        
+    struct OrderCheck {
+        bool isValidNonce;
+        bool isValidSignature;
+        bool isNotExpired;
+        bool isSufficientBalance;
+        bool isSufficientAllowance;
     }
 
     event FlashDepositERC20(
@@ -78,7 +85,6 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         wPowerPerp = ICrabStrategyV2(_crab).wPowerPerp();
         ethWSqueethPool = ICrabStrategyV2(_crab).ethWSqueethPool();
         oracle = ICrabStrategyV2(_crab).oracle();
-        hedgingTwapPeriod = ICrabStrategyV2(_crab).hedgingTwapPeriod();
     }
 
     function flashDepositERC20(
@@ -135,11 +141,14 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     /**
      * @notice view function to verify an order
      * @param _order crab otc hedge order
-     * @return isValid true if order is good
+     * @return OrderCheck 
      */
-    function verifyOrder(Order memory _order) external view returns (bool) {
+    function verifyOrder(Order memory _order) external view returns (OrderCheck memory) {
+        bool isSufficientBalance;
+        bool isSufficientAllowance;
+
         // check that nonce has not been used
-        require(ICrabStrategyV2(crab).nonces(_order.trader, _order.nonce) == false);
+        bool isValidNonce = ICrabStrategyV2(crab).nonces(_order.trader, _order.nonce) == false;
 
         // extract signer
         bytes32 structHash = keccak256(
@@ -158,31 +167,29 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
 
         // check signer and expiry
-        require(offerSigner == _order.trader, "Invalid offer signature");
-        require(_order.expiry >= block.timestamp, "Order has expired");
+        bool isValidSignature = offerSigner == _order.trader;
+        bool isNotExpired = _order.expiry >= block.timestamp;
 
         // weth price for the order
         uint256 wethAmount = _order.quantity.mul(_order.price).div(1e18);
 
         if (_order.isBuying) {
             // check weth balance and allowance
-            require(IWETH9(weth).balanceOf(_order.trader) >= wethAmount, "Not enough weth balance for trade");
-            require(
-                IWETH9(weth).allowance(_order.trader, address(this)) >= wethAmount,
-                "Not enough weth allowance for trade"
-            );
+            isSufficientBalance = IWETH9(weth).balanceOf(_order.trader) >= wethAmount;
+            isSufficientAllowance = IWETH9(weth).allowance(_order.trader, address(this)) >= wethAmount;
         } else {
             // check wPowerPerp balance and allowance
-            require(
-                IWETH9(wPowerPerp).balanceOf(_order.trader) >= _order.quantity,
-                "Not enough wPowerPerp balance for trade"
-            );
-            require(
-                IWETH9(wPowerPerp).allowance(_order.trader, address(this)) >= _order.quantity,
-                "Not enough wPowerPerp allowance for trade"
-            );
+            isSufficientBalance = IWETH9(wPowerPerp).balanceOf(_order.trader) >= _order.quantity;
+            isSufficientAllowance = IWETH9(wPowerPerp).allowance(_order.trader, address(this)) >= _order.quantity;
         }
-        return true;
+        // pack order checks
+        OrderCheck memory orderCheck;
+        orderCheck.isValidNonce = isValidNonce;
+        orderCheck.isValidSignature = isValidSignature;
+        orderCheck.isNotExpired = isNotExpired;
+        orderCheck.isSufficientBalance = isSufficientBalance;
+        orderCheck.isSufficientAllowance = isSufficientAllowance;
+        return orderCheck;
     }
 
     /**
@@ -192,7 +199,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
     function getHedgeSize() external view returns (uint256, bool) {
         // Get state and calculate hedge
         (, , uint256 ethDelta, uint256 strategyDebt) = ICrabStrategyV2(crab).getVaultDetails();
-        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, hedgingTwapPeriod, true);
+        uint256 wSqueethEthPrice = IOracle(oracle).getTwap(ethWSqueethPool, wPowerPerp, weth, ICrabStrategyV2(crab).hedgingTwapPeriod(), true);
         uint256 wSqueethDelta = strategyDebt.wmul(2e18).wmul(wSqueethEthPrice);
 
         return
