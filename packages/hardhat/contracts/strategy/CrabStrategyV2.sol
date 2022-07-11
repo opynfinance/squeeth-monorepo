@@ -88,7 +88,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
     bool public isInitialized;
 
     /// @dev typehash for signed orders
-    bytes32 private constant _CRAB_BALANCE_TYPEHASH =
+    bytes32 private constant _CRAB_ORDER_TYPEHASH =
         keccak256(
             "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
         );
@@ -642,7 +642,7 @@ contract CrabStrategyV2 is StrategyBase, StrategyFlashSwap, ReentrancyGuard, Own
         _useNonce(_order.trader, _order.nonce);
         bytes32 structHash = keccak256(
             abi.encode(
-                _CRAB_BALANCE_TYPEHASH,
+                _CRAB_ORDER_TYPEHASH,
                 _order.bidId,
                 _order.trader,
                 _order.quantity,
