@@ -22,7 +22,7 @@ import {StrategyMath} from "./base/StrategyMath.sol";
  * M1: Migration already happened
  * M2: Migration has not yet happened
  * M3: msg.sender is not Euler Mainnet Contract
- * M4: msg.sender cannot send ETH
+ * M4: Can only receive ETH from weth, crabv1, or crabv2 contract
  * M5: Can't withdraw more than you own
  * M6: Not enough ETH to repay the loan
  * M7: Invalid crabV2 address
