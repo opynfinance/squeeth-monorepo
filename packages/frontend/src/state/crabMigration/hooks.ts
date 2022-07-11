@@ -36,16 +36,26 @@ export const useQueueMigrate = () => {
   const address = useAtomValue(addressAtom)
   const crabMigrationContract = useAtomValue(crabMigrationContractAtom)
   const handleTransaction = useHandleTransaction()
+  const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
+  const setUserMigratedShares = useSetAtom(userMigratedSharesAtom)
 
   const queueMigrate = useAppCallback(
     async (amount: BigNumber | string) => {
-      return await handleTransaction(
+      const res = await handleTransaction(
         crabMigrationContract?.methods.depositV1Shares(fromTokenAmount(amount, 18).toFixed(0)).send({
           from: address,
         }),
       )
+
+      const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
+      const p2 = crabMigrationContract?.methods.sharesDeposited(address).call()
+      const [_totalShare, _userShare] = await Promise.all([p1, p2])
+      setTotalMigratedShares(toTokenAmount(_totalShare, 18))
+      setUserMigratedShares(toTokenAmount(_userShare, 18))
+
+      return res
     },
-    [address, crabMigrationContract?.methods, handleTransaction],
+    [address, crabMigrationContract?.methods, handleTransaction, setTotalMigratedShares, setUserMigratedShares],
   )
 
   return queueMigrate

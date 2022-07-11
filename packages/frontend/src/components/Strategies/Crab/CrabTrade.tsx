@@ -6,7 +6,7 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
 import RestrictionInfo from '@components/RestrictionInfo'
-import { CircularProgress } from '@material-ui/core'
+import { CircularProgress, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -226,7 +226,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
           <Confirmed
             confirmationMessage={
               depositOption === 0
-                ? `Woohoo! You're gauranteed a spot in crab v2 `
+                ? `Woohoo! You're guaranteed a spot in crab v2 `
                 : `Withdrawn ${withdrawAmount.toFixed(4)} ETH`
             }
             txnHash={transactionData?.hash ?? ''}
@@ -247,17 +247,19 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
         </div>
       ) : (
         <>
-          <SecondaryTabs
-            value={depositOption}
-            onChange={(evt, val) => setDepositOption(val)}
-            aria-label="simple tabs example"
-            centered
-            variant="fullWidth"
-            className={classes.tabBackGround}
-          >
-            <SecondaryTab id="crab-deposit-tab" label="V2 Early access" />
-            <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
-          </SecondaryTabs>
+          {!isQueued ? (
+            <SecondaryTabs
+              value={depositOption}
+              onChange={(evt, val) => setDepositOption(val)}
+              aria-label="simple tabs example"
+              centered
+              variant="fullWidth"
+              className={classes.tabBackGround}
+            >
+              <SecondaryTab id="crab-deposit-tab" label="V2 Early access" />
+              <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
+            </SecondaryTabs>
+          ) : null}
           {depositOption === 0 ? null : (
             <div className={classes.settingsButton}>
               <TradeSettings
@@ -269,7 +271,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
           )}
           <div className={classes.tradeContainer}>
             {depositOption === 0 ? (
-              <CrabMigration />
+              !isQueued ? <CrabMigration /> : <><Typography variant="body2" color="textSecondary" style={{ marginTop: '8px' }}>Your position will be included in crab V2 when it is released</Typography></>
             ) : (
               <>
                 {depositOption === 0 ? (
