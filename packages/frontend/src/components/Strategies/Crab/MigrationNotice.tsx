@@ -23,9 +23,9 @@ const MigrationNotice: React.FC = () => {
         <Typography variant="h6">🦀</Typography>
       </div>
       <div style={{ marginLeft: '8px' }}>
-        <Typography variant="body1">Crab V2 Early Access: Gaurantee your spot </Typography>
+        <Typography variant="body1">Crab V2 Early Access: guarantee your spot </Typography>
         <Typography component="p" variant="caption" style={{ marginTop: '4px', lineHeight: 1.5 }} color="textSecondary">
-          As OG Day 1 crabbers, you get to commit to v2 before anyone else. Gaurantee your spot in crab v2 right when it
+          As OG crabbers, you get to commit to v2 before anyone else. guarantee your spot in crab v2 right when it
           drops!
         </Typography>
       </div>
