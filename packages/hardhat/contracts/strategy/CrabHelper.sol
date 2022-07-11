@@ -82,7 +82,7 @@ contract CrabHelper is StrategySwap, ReentrancyGuard, EIP712 {
      * @param _crab address of crabV2 contract
      * @param _swapRouter address of Uniswap swap router
      */
-    constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) {
+    constructor(address _crab, address _swapRouter) StrategySwap(_swapRouter) EIP712("CrabOTC", "2") {
         require(_crab != address(0), "Invalid crab address");
 
         crab = _crab;
