@@ -2,7 +2,8 @@ import useAppMemo from '@hooks/useAppMemo'
 import { getBreakEvenForLongSqueeth, toTokenAmount } from '@utils/calculations'
 import { useAtomValue } from 'jotai'
 import React from 'react'
-import { currentImpliedFundingAtom, indexAtom, markAtom, normFactorAtom } from 'src/state/controller/atoms'
+import { indexAtom, markAtom, normFactorAtom } from 'src/state/controller/atoms'
+import { useCurrentImpliedFunding } from 'src/state/controller/hooks'
 import TradeInfoItem from '../TradeInfoItem'
 
 const BreakEven: React.FC = () => {
@@ -10,7 +11,7 @@ const BreakEven: React.FC = () => {
   const index = useAtomValue(indexAtom)
   const days = 1
   const normFactor = useAtomValue(normFactorAtom)
-  const currentFunding = useAtomValue(currentImpliedFundingAtom)
+  const { currentImpliedFunding: currentFunding } = useCurrentImpliedFunding()
 
   const breakEven = useAppMemo(() => {
     const breakEvenValue = getBreakEvenForLongSqueeth(mark, index, normFactor, days)

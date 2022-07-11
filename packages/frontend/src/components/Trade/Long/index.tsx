@@ -14,7 +14,6 @@ import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import React, { useState } from 'react'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
 import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
 import {
@@ -49,6 +48,7 @@ import Confirmed, { ConfirmType } from '../Confirmed'
 import TradeInfoItem from '../TradeInfoItem'
 import UniswapData from '../UniswapData'
 import BreakEven from './BreakEven'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -282,8 +282,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
   const { squeethAmount } = useComputeSwaps()
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { dailyHistoricalFunding } = useDailyHistoricalFunding()
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
 
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
@@ -309,6 +309,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       setInputQuoteLoading(true)
 
       getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
+        console.log({ val })
         if (val) {
           setSqthTradeAmount(val.amountOut.toString())
           setConfirmedAmount(val.amountOut.toFixed(6).toString())
@@ -548,7 +549,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     priceImpact={quote.priceImpact}
                     minReceived={quote.minimumAmountOut.toFixed(6)}
                     minReceivedUnit="oSQTH"
-                    pools = {quote.pools}
+                    pools={quote.pools}
                   />
                 </div>
               </div>
@@ -598,7 +599,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 <Typography variant="caption" className={classes.caption} component="div">
                   <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                     {' '}
-                    Trades on Uniswap 
+                    Trades on Uniswap
                   </a>
 
                   <a href={Links.AutoRouter} target="_blank" rel="noreferrer">
@@ -914,8 +915,8 @@ const CloseLong: React.FC<BuyProps> = () => {
               slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
               priceImpact={quote.priceImpact}
               minReceived={quote.minimumAmountOut.toFixed(4)}
-              minReceivedUnit="ETH" 
-              pools={quote.pools}            
+              minReceivedUnit="ETH"
+              pools={quote.pools}
             />
           </div>
           <div className={classes.buttonDiv}>
@@ -969,7 +970,7 @@ const CloseLong: React.FC<BuyProps> = () => {
             <Typography variant="caption" className={classes.caption} component="div">
               <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                 {' '}
-                Trades on Uniswap 
+                Trades on Uniswap
               </a>
 
               <a href={Links.AutoRouter} target="_blank" rel="noreferrer">

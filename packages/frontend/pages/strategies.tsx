@@ -24,8 +24,9 @@ import {
   maxCapAtom,
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
+import { useCurrentImpliedFunding, useDailyHistoricalFunding } from 'src/state/controller/hooks'
 import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import { indexAtom } from 'src/state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -112,8 +113,8 @@ const Strategies: React.FC = () => {
   useCurrentCrabPositionValue()
 
   const index = useAtomValue(indexAtom)
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const { dailyHistoricalFunding } = useDailyHistoricalFunding()
+  const { currentImpliedFunding } = useCurrentImpliedFunding()
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)

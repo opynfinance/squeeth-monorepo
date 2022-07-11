@@ -4,9 +4,11 @@ import { useQuery, useQueryClient } from 'react-query'
 import { toTokenAmount } from '@utils/calculations'
 import { indexAtom } from 'src/state/controller/atoms'
 import { useAtomValue } from 'jotai'
+import { networkIdAtom } from 'src/state/wallet/atoms'
+import { Networks } from '../types/index'
 
 const ethPriceQueryKeys = {
-  currentEthPrice: () => ['currentEthPrice'],
+  currentEthPrice: (networkId: Networks) => ['currentEthPrice', networkId],
 }
 
 /**
@@ -18,10 +20,11 @@ const ethPriceQueryKeys = {
 export const useETHPrice = (refetchIntervalSec = 30) => {
   const queryClient = useQueryClient()
   const index = useAtomValue(indexAtom)
+  const networkId = useAtomValue(networkIdAtom)
 
-  const ethPrice = useQuery(ethPriceQueryKeys.currentEthPrice(), () => getETHPriceCoingecko(), {
+  const ethPrice = useQuery(ethPriceQueryKeys.currentEthPrice(networkId), () => getETHPriceCoingecko(), {
     onError() {
-      queryClient.setQueryData(ethPriceQueryKeys.currentEthPrice(), toTokenAmount(index, 18).sqrt())
+      queryClient.setQueryData(ethPriceQueryKeys.currentEthPrice(networkId), toTokenAmount(index, 18).sqrt())
     },
     refetchInterval: refetchIntervalSec * 1000,
     refetchOnWindowFocus: true,
