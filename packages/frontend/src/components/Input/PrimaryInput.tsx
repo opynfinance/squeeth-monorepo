@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'space-between',
     },
     rightContainer: {
-      width: '50%',
+      width: '60%',
     },
     unitsContainer: {},
     label: {

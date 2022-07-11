@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, Tooltip, Snackbar, Collapse, styled } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip, Collapse } from '@material-ui/core'
 import { yellow } from '@material-ui/core/colors'
 import Alert from '@material-ui/lab/Alert'
 import React from 'react'
@@ -29,6 +29,8 @@ type CollatRangeType = {
   collatValue: number
   onCollatValueChange: (val: number) => void
   className?: string
+  existingCollatPercent?: number
+  maxAllowedValue?: number
 }
 
 const marks = [
@@ -46,7 +48,14 @@ const marks = [
   },
 ]
 
-const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
+const CollatRange: React.FC<CollatRangeType> = ({
+  id,
+  collatValue,
+  onCollatValueChange,
+  className,
+  existingCollatPercent = 0,
+  maxAllowedValue,
+}) => {
   const classes = useStyles()
 
   const minCollatRatio = 150
@@ -82,7 +91,17 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
       <Slider
         value={[minCollatRatio, collatValue]}
         ThumbComponent={ThumbComponent}
-        onChange={(_, val) => changeSlider(val as number[])}
+        onChange={(_, val) => {
+          if (!Array.isArray(val)) {
+            return
+          }
+
+          if (maxAllowedValue && val[1] > maxAllowedValue) {
+            changeSlider([val[0], maxAllowedValue])
+          } else {
+            changeSlider(val)
+          }
+        }}
         step={0.1}
         style={{ width: '100%' }}
         classes={{
