@@ -75,8 +75,8 @@ type CrabTradeType = {
   depositedAmount: BigNumber
 }
 
+
 const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
-  useInitCrabMigration()
   const classes = useStyles()
   const [ethAmount, setEthAmount] = useState(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
@@ -218,6 +218,10 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
   const isApprovalCall = useMemo(() => {
     return transactionData?.contractCall?.methodName === 'approve'
   }, [transactionData])
+
+  if (currentEthValue.isZero()) {
+    return null
+  }
 
   return (
     <>

@@ -21,12 +21,16 @@ import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyVaultAtom,
+  currentCrabPositionValueInETHAtom,
   maxCapAtom,
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
+import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
+import { isQueuedAtom } from 'src/state/crabMigration/atom'
+import { makeItCrabRain } from '@components/Strategies/Crab/util'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -114,10 +118,13 @@ const Strategies: React.FC = () => {
   const profitableMovePercent = useSetProfitableMovePercent()
   const setStrategyData = useSetStrategyData()
   useCurrentCrabPositionValue()
+  useInitCrabMigration()
 
   const index = useAtomValue(indexAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
+  const isQueued = useAtomValue(isQueuedAtom)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -134,8 +141,16 @@ const Strategies: React.FC = () => {
     else return Vaults.Custom
   }, [selectedIdx])
 
+  useEffect(() => {
+    if (isQueued) {
+      makeItCrabRain()
+    }
+  }, [isQueued])
+
   return (
     <div>
+      <div id="rain-front"></div>
+      <div id="rain-back"></div>
       <Nav />
       <div className={classes.container}>
         <Tabs
@@ -243,7 +258,7 @@ const Strategies: React.FC = () => {
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
-                  <MigrationNotice />
+                  {!currentEthValue.isZero() ? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />

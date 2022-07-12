@@ -1,3 +1,4 @@
+import { makeItCrabRain } from '@components/Strategies/Crab/util'
 import useAppCallback from '@hooks/useAppCallback'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -52,6 +53,7 @@ export const useQueueMigrate = () => {
       const [_userShare] = await Promise.all([p2])
       // setTotalMigratedShares(toTokenAmount(_totalShare, 18))
       setUserMigratedShares(toTokenAmount(_userShare, 18))
+      makeItCrabRain()
 
       return res
     },
