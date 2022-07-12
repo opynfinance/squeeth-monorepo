@@ -15,15 +15,13 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
-import { useClosePosition, useOpenPositionDeposit, useRebalanceVault, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
+import { useClosePosition, useOpenPositionDeposit, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
 import { useCollectFees } from 'src/state/lp/hooks'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
 import { useFirstValidVault } from 'src/state/positions/hooks'
 import { useGetTwapSqueethPrice, useUpdateOperator } from 'src/state/controller/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
-import useAppEffect from '@hooks/useAppEffect'
-import { CONTROLLER_HELPER } from '@constants/address'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -94,6 +92,7 @@ const useStyles = makeStyles((theme) =>
 
 export function LPCalculator() {
   const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const { controllerHelper } = useAtomValue(addressesAtom)
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
@@ -103,17 +102,25 @@ export function LPCalculator() {
   const openLPPosition = useOpenPositionDeposit()
   const closeLPPosition = useClosePosition()
   const collectFees = useCollectFees()
-  const rebalanceVault = useRebalanceVault()
   const rebalanceSwap = useRebalanceGeneralSwap()
+  const updateOperator = useUpdateOperator()
   const { vaultId, validVault: vault } = useFirstValidVault()
 
   const openPos = useAppCallback(async () => {
     try {
-      await openLPPosition(new BigNumber(50), -887220, 887220, 0, () => {})
+      await openLPPosition(new BigNumber(200), -887220, 887220, 0, () => {})
     } catch (e) {
       console.log(e)
     }
   }, [vaultId, squeethPrice])
+
+  const updateOp = useAppCallback(async () => {
+    try {
+      await updateOperator(Number(682), controllerHelper)
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId])
 
   const collFees = useAppCallback(async () => {
     try {
@@ -131,17 +138,9 @@ export function LPCalculator() {
     }
   }, [vaultId])
 
-  const rebalVault = useAppCallback(async () => {
-    try {
-      await rebalanceVault(Number(682), -887220, 887220, () => {})
-    } catch (e) {
-      console.log(e)
-    }
-}, [vaultId])
-
   const rebalSwap = useAppCallback(async () => {
     try {
-      await rebalanceSwap(Number(682), 0, 80000, () => {})
+      await rebalanceSwap(Number(682), -20, 500, () => {})
     } catch (e) {
       console.log(e)
     }
@@ -235,6 +234,17 @@ export function LPCalculator() {
                 </Button>
 
                 <Button
+                  onClick={updateOp}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Update Operator'}
+                </Button>
+
+                <Button
                   onClick={collFees}
                   style={{
                     width: '300px',
@@ -254,17 +264,6 @@ export function LPCalculator() {
                   }}
                 >
                   {'Close LP Position'}
-                </Button>
-
-                <Button
-                  onClick={rebalVault}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
-                  {'Rebalance Vault Position'}
                 </Button>
 
                 <Button
