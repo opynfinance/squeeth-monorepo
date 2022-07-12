@@ -1,4 +1,5 @@
 import { Contract } from "ethers"
+import fs from 'fs'
 
 export const networkNameToUniRouter = (name: string) => {
   switch (name) {
@@ -194,4 +195,14 @@ export const getUniswapDeployments = async (ethers: any, deployer: string, netwo
   }
 
   return { positionManager, swapRouter, uniswapFactory }
+}
+
+export const createArgumentFile = (contract: string, network: string, args: Array<any>) => {
+  const path = `./arguments/${contract}-${network}.js`
+  const content = `module.exports = [${args.map(a => `"${a}"`).join(',')}]`
+
+  console.log(path, content);
+
+
+  fs.writeFileSync(path, content);
 }

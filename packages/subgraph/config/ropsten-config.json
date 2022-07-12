@@ -32,10 +32,10 @@
   "ControllerHelper-start-block": 12347841,
   "ControllerHelperUtil": "0x7a29594866CF3383555b8e051C80142e86d1058C",
   "ControllerHelperUtil-start-block": 12344832,
-  "CrabMigration": "0x1d1e0838d97996eD3f46b24f52533E3d09F02BcB",
-  "CrabMigration-start-block": 12482254,
+  "CrabMigration": "0x380B43a55d672951b8aa193780134af03EBeF39E",
+  "CrabMigration-start-block": 12574262,
   "Timelock": "0xF15964458bcA1941dE53fBc004BA7842f4783EC6",
   "Timelock-start-block": 12482222,
-  "CrabStrategyV2": "0x909563E976ec6EfD2FbDC14A69A84372D80C3183",
-  "CrabStrategyV2-start-block": 12492234
+  "CrabStrategyV2": "0x978f5d87ADA3F7937642c4f79fFDf055bfa928FC",
+  "CrabStrategyV2-start-block": 12574631
 }
