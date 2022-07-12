@@ -20,4 +20,8 @@ contract MockEulerDToken {
     function repay(uint256, uint256 amount) external {
         weth.transferFrom(msg.sender, address(this), amount);
     }
+
+    function underlyingAsset() external view returns (address) {
+        return address(weth);
+    }
 }
