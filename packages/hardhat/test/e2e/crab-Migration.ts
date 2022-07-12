@@ -972,20 +972,6 @@ describe("Crab Migration", function () {
                 expect(crabV2SharesBalanceAfter).to.be.equal(ethers.utils.parseEther('10'))
             })
 
-            it("d1 claims shares", async () => {
-                const d1SharesBefore = await crabStrategyV2.balanceOf(d1.address);
-
-                await crabMigration.connect(d1).claimV2Shares();
-
-                // 1. check that shares sent from migration contract equals shares received by user
-                const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
-                const d1SharesAfter = await crabStrategyV2.balanceOf(d1.address);
-
-                expect(d1SharesBefore).to.be.equal('0');
-                expect(d1SharesAfter).to.be.equal(ethers.utils.parseEther('10'));
-                expect(constractSharesAfter).to.be.equal('0')
-            })
-
             it("Partial migrate d2 with CR1 > CR2", async () => {
                 let gasPaid = BigNumber.from(0)
                 await initialize(d2.address)
@@ -1023,8 +1009,22 @@ describe("Crab Migration", function () {
                 expect(crabV2SharesBefore).to.be.equal('0')
                 expect(crabV2SharesAfter).to.be.equal(expectedV2Shares)
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
-                expect(crabV2SharesInMigration).to.be.equal('0')
+                expect(crabV2SharesInMigration).to.not.be.equal('0')
                 expect(squeethBalance).to.be.equal('0')
+            })
+
+            it("d1 claims shares", async () => {
+                const d1SharesBefore = await crabStrategyV2.balanceOf(d1.address);
+
+                await crabMigration.connect(d1).claimV2Shares();
+
+                // 1. check that shares sent from migration contract equals shares received by user
+                const constractSharesAfter = await crabStrategyV2.balanceOf(crabMigration.address);
+                const d1SharesAfter = await crabStrategyV2.balanceOf(d1.address);
+
+                expect(d1SharesBefore).to.be.equal('0');
+                expect(d1SharesAfter).to.be.equal(ethers.utils.parseEther('10'));
+                expect(constractSharesAfter).to.be.equal('0')
             })
 
             it("Partial migrate d2 with CR1 < CR2", async () => {

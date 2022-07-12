@@ -254,6 +254,7 @@ contract CrabMigration is Ownable {
             IERC20(wPowerPerp).approve(crabV1, type(uint256).max);
             CrabStrategy(crabV1).withdraw(crabV1Balance);
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_V1_TO_V2) {
+            uint256 initialCrabAmount = CrabStrategyV2(crabV2).balanceOf(address(this));
             FlashMigrateV1toV2 memory data = abi.decode(_calldata, (FlashMigrateV1toV2));
 
             CrabStrategyV2(crabV2).deposit{value: _amount}();
@@ -274,7 +275,7 @@ contract CrabMigration is Ownable {
 
             uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
             // send back V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount);
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount.sub(initialCrabAmount));
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             uint256 excessEth = address(this).balance;
@@ -286,6 +287,7 @@ contract CrabMigration is Ownable {
                 payable(_initiator).sendValue(excessEth.sub(_amount));
             }
         } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_MIGRATE_WITHDRAW_V1_TO_V2) {
+            uint256 initialCrabAmount = CrabStrategyV2(crabV2).balanceOf(address(this));
             FlashMigrateAndBuyV1toV2 memory data = abi.decode(_calldata, (FlashMigrateAndBuyV1toV2));
             (, , , uint256 v1Short) = CrabStrategy(crabV1).getVaultDetails();
 
@@ -315,7 +317,7 @@ contract CrabMigration is Ownable {
             uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
 
             // send V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount);
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount.sub(initialCrabAmount));
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             uint256 excessEth = address(this).balance;
