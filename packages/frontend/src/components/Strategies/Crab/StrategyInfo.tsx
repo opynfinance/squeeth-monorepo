@@ -105,10 +105,10 @@ export const StrategyInfo: React.FC = () => {
         approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each day. Crab aims to be
         profitable in USD terms.
       </Typography>
-      <Typography variant="h5" color="primary" className={classes.title}>
+      {/* <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
       </Typography>
-      <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} />
+      <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} /> */}
       <Typography variant="h5" color="primary" className={classes.title}>
         Steps
       </Typography>
