@@ -4,7 +4,8 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Fira Sans,
     Droid Sans, Helvetica Neue, sans-serif;
 
-  background: #181b1c; /* fallback for old browsers */
+  background: #181b1c;
+  /* fallback for old browsers */
   /* background: -webkit-linear-gradient(to bottom, #3296fa11, #181B1C); 
     background: linear-gradient(to bottom, #3296fa11, #181B1C);  */
   height: 100vh;
@@ -24,6 +25,7 @@ input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type='number'] {
   -moz-appearance: textfield;
 }
@@ -39,4 +41,55 @@ a {
 
 .bn-onboard-custom.bn-onboard-modal {
   z-index: 99;
+}
+
+.crab-notice {
+  background: linear-gradient(270deg, rgba(32, 202, 26, 0.1), rgba(19, 131, 17, 0.4));
+  background-size: 200% 200%;
+
+  -webkit-animation: AnimationName 8s ease infinite;
+  -moz-animation: AnimationName 8s ease infinite;
+  animation: AnimationName 8s ease infinite;
+}
+
+@-webkit-keyframes AnimationName {
+  0% {
+    background-position: 0% 46%
+  }
+
+  50% {
+    background-position: 100% 55%
+  }
+
+  100% {
+    background-position: 0% 46%
+  }
+}
+
+@-moz-keyframes AnimationName {
+  0% {
+    background-position: 0% 46%
+  }
+
+  50% {
+    background-position: 100% 55%
+  }
+
+  100% {
+    background-position: 0% 46%
+  }
+}
+
+@keyframes AnimationName {
+  0% {
+    background-position: 0% 46%
+  }
+
+  50% {
+    background-position: 100% 55%
+  }
+
+  100% {
+    background-position: 0% 46%
+  }
 }
