@@ -95,7 +95,7 @@ const TradeInfoItem: React.FC<tradeType> = ({ value, unit, id, frontUnit, label,
         <Typography
           component="span"
           style={{ marginLeft: '8px', fontSize: '.9rem', color: colorCode }}
-          className={'trade-info-item-value'}
+          className="trade-info-item-value"
         >
           {value}
         </Typography>

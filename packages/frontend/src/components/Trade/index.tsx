@@ -40,7 +40,7 @@ const Trade: React.FC = () => {
           onChange={(evt, val) => {
             setOpenPosition(val)
 
-            if (!transactionInProgress || !isTxFirstStep) {
+            if ((!transactionInProgress || !isTxFirstStep) && val !== openPosition) {
               resetEthTradeAmount()
               resetSqthTradeAmount()
               resetTransactionData()

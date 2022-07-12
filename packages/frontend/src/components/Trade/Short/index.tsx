@@ -57,6 +57,7 @@ import { TradeType } from '../../../types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
 import { OpenShortPosition } from './OpenShort'
+import { CloseShort as Close } from './CloseShort'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
@@ -729,7 +730,7 @@ type SellType = {
 }
 
 const Short: React.FC<SellType> = ({ open }) => {
-  return open ? <OpenShortPosition /> : <CloseShort open={open} />
+  return open ? <OpenShortPosition /> : <Close />
 }
 
 export default memo(Short)
