@@ -135,6 +135,9 @@ export const useOpenPositionDeposit = () => {
   return openPositionDeposit
 }
 
+/*** CONSTANTS ***/
+const TICK_SPACE = 60
+
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
