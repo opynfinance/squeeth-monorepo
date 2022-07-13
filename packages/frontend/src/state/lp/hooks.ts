@@ -215,6 +215,10 @@ export const useRebalanceGeneralSwap = () => {
       // Calculate prices from ticks
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
+      console.log(sqrtUpperPrice.toString())
+      const lowerPrice =  sqrtLowerPrice.pow(2)
+      const upperPrice = sqrtUpperPrice.pow(2)
+      console.log("upperPrice", upperPrice.toString())
       const { sqrtPriceX96 } = await getPoolState(squeethPoolContract)
       const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
       const squeethPrice = await getTwapSqueethPrice()
@@ -223,15 +227,22 @@ export const useRebalanceGeneralSwap = () => {
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         console.log("case 1")
         // All weth position
+        // newLiquidity = positionEthValue/(upperPrice/sqrt(upperPrice) - upperPrice/sqrt(upperPrice) + sqrt(upperPrice)-sqrt(lowerPrice))
+        const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
+        const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))
         wPowerPerpAmountInLPAfter = 0
-        const ethAmountOut = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
-        wethAmountInLPAfter = new BigNumber(ethAmountOut).plus(wethAmountInLPBefore)
+        const liquidity = positionEthValue.div((upperPrice.div(sqrtUpperPrice))
+                                                          .minus(upperPrice.div(sqrtUpperPrice))
+                                                          .plus(sqrtUpperPrice)
+                                                          .minus(sqrtLowerPrice))
+        wethAmountInLPAfter = liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
         amountIn = wPowerPerpAmountInLPBefore
         tokenIn = oSqueeth
         tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
         console.log("case 2")
         // All squeeth position
+        console.log("beep")
         wethAmountInLPAfter = 0
         const squeethAmountOut = await getQuote(new BigNumber(wethAmountInLPBefore), false)
         wPowerPerpAmountInLPAfter = new BigNumber(squeethAmountOut).plus(wPowerPerpAmountInLPBefore)
