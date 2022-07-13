@@ -84,6 +84,7 @@ export const crabMigrationContractAtom = atom<Contract | null>((get) => {
   if (!web3) return null
   return getContract(web3, crabMigration, crabMigrationAbi)
 })
+
 export const controllerHelperHelperContractAtom = atom<Contract | null>((get) => {
   const web3 = get(web3Atom)
   const { controllerHelper } = get(addressesAtom)
