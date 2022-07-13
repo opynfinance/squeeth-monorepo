@@ -19,6 +19,7 @@ import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
 import { indexAtom, normFactorAtom } from '../controller/atoms'
+import { getPoolState } from '../squeethPool/hooks'
 
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
@@ -326,24 +327,28 @@ export const useGetExactOut = () => {
   return getExactOut
 }
 
-async function getPoolState(poolContract: Contract) {
-  const [slot, liquidity, tickSpacing] = await Promise.all([
-    poolContract?.methods.slot0().call(),
-    poolContract?.methods.liquidity().call(),
-    poolContract.methods.tickSpacing().call(),
-  ])
 
-  const PoolState = {
-    liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
-    observationIndex: slot[2],
-    observationCardinality: slot[3],
-    observationCardinalityNext: slot[4],
-    feeProtocol: slot[5],
-    unlocked: slot[6],
-    tickSpacing,
-  }
+export const useGetQuote = () => {
+  const contract = useAtomValue(quoterContractAtom)
+  const {weth, oSqueeth} = useAtomValue(addressesAtom)
 
-  return PoolState
+  const getQuote = useCallback(
+    async (amount: BigNumber, squeethIn: boolean) => {
+      if (!contract) return null
+
+      const QuoteExactInputSingleParams = {
+        tokenIn: squeethIn ? oSqueeth : weth,
+        tokenOut: squeethIn ? weth : oSqueeth,
+        amountIn: amount.toFixed(0),
+        fee: 3000,
+        sqrtPriceLimitX96: 0
+      }
+
+      const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
+      return quote.amountOut
+    },
+    [contract, weth, oSqueeth],
+  )
+
+  return getQuote
 }
