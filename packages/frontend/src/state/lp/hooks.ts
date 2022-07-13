@@ -13,6 +13,9 @@ import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
 
+/*** CONSTANTS ***/
+const TICK_SPACE = 60
+
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
