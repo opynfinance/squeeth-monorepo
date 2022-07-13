@@ -41,6 +41,7 @@ import {
   BIGINT_ONE,
   BIGINT_ZERO,
   SHORT_HELPER_ADDR,
+  CONTROLLER_HELPER_ADDR,
   EMPTY_ADDR,
 } from "./constants";
 
@@ -233,6 +234,8 @@ export function handleMintShort(event: MintShort): void {
   let actionType: string;
   if (event.params.sender == SHORT_HELPER_ADDR) {
     actionType = "OPEN_SHORT";
+  } else if (event.params.sender == CONTROLLER_HELPER_ADDR) {
+    actionType = "FLASH_SWAP_W_MINT";
   } else {
     actionType = "MINT";
   }

@@ -78,7 +78,7 @@ const useStyles = makeStyles((theme) =>
 
 type PrimaryInputType = {
   value: number | string
-  onChange: (value: string) => void
+  onChange: (value: string, name?: string) => void
   label: string
   unit: string
   tooltip?: string
@@ -90,6 +90,7 @@ type PrimaryInputType = {
   error?: boolean
   isLoading?: boolean
   isFullClose?: boolean
+  name?: string
   loadingMessage?: string
 }
 
@@ -110,6 +111,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
   isLoading = false,
   isFullClose = false,
   loadingMessage = 'Fetching best price',
+  name,
 }) => {
   const classes = useStyles()
 
@@ -133,6 +135,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
           <div className={classes.inputContainer}>
             <Tooltip title={isFullClose ? Tooltips.FullcloseInput : ''} className={classes.fullCloseInfo}>
               <input
+                name={name}
                 id={id}
                 className={clsx(classes.input, isFullClose && classes.notAllowedCursor)}
                 // className={classes.input}
@@ -155,7 +158,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
                     }
                   }
 
-                  return onChange(v)
+                  return onChange(v, e.target.name)
                 }}
                 onWheel={(e) => (e.target as any).blur()}
                 placeholder="0"
@@ -186,7 +189,7 @@ export const PrimaryInput: React.FC<PrimaryInputType> = ({
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="caption" color={error ? 'error' : 'textSecondary'}>
+          <Typography variant="caption" color={error ? 'error' : 'textSecondary'} id="open-long-eth-input-hint">
             {hint || ''}
           </Typography>
           {actionTxt && onActionClicked ? (

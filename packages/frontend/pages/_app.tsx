@@ -20,6 +20,7 @@ import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/sque
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
+import { VaultManagerProvider } from '@hooks/contracts/useVaultManager'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -109,7 +110,9 @@ const TradeApp = ({ Component, pageProps }: any) => {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <ComputeSwapsProvider>
-          <Component {...pageProps} />
+          <VaultManagerProvider>
+            <Component {...pageProps} />
+          </VaultManagerProvider>
         </ComputeSwapsProvider>
       </ThemeProvider>
     </React.Fragment>

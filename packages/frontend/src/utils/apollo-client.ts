@@ -69,14 +69,15 @@ const splitLink = (wsLink: any, httpLink: any) => {
   )
 }
 
+const uniswapCache = new InMemoryCache()
 const mainnet = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkMN, httpLinkMN) : undefined,
-  cache: new InMemoryCache(),
+  cache: uniswapCache,
 })
 
 const ropsten = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkRP, httpLinkRP) : undefined,
-  cache: new InMemoryCache(),
+  cache: uniswapCache,
 })
 
 export const uniswapClient = {
@@ -86,14 +87,16 @@ export const uniswapClient = {
   421611: mainnet, // Should be replaced with arbitrum subgraph
 }
 
+const squeethCache = new InMemoryCache()
+
 const squeethMainnet = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth) : undefined,
-  cache: new InMemoryCache(),
+  cache: squeethCache,
 })
 
 const squeethRopsten = new ApolloClient({
   link: typeof window !== 'undefined' ? splitLink(wsLinkRPSqueeth, httpLinkRPSqueeth) : undefined,
-  cache: new InMemoryCache(),
+  cache: squeethCache,
 })
 
 export const squeethClient = {

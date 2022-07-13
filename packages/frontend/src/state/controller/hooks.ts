@@ -27,6 +27,8 @@ import {
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
 import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import useAppCallback from '@hooks/useAppCallback'
+import useEthUsdcPrice from '@hooks/useEthUsdcPrice'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -182,19 +184,17 @@ export const useGetVault = () => {
 
 export const useGetDebtAmount = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
-  const contract = useAtomValue(controllerContractAtom)
   const normFactor = useAtomValue(normFactorAtom)
   const { getTwapSafe } = useOracle()
+  const ethUsdcPrice = useEthUsdcPrice()
+
   const getDebtAmount = useCallback(
     async (shortAmount: BigNumber) => {
-      if (!contract) return new BigNumber(0)
-
-      const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
       const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
       const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethUsdcPrice)
       return toTokenAmount(ethDebt, 18)
     },
-    [contract, ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
+    [ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
   )
   return getDebtAmount
 }
@@ -231,13 +231,16 @@ export const useGetUniNFTCollatDetail = () => {
   const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getTwapEthPrice = useGetTwapEthPrice()
 
-  const getUniNFTCollatDetail = async (uniId: number) => {
-    const ethPrice = await getTwapEthPrice()
-    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
-    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+  const getUniNFTCollatDetail = useAppCallback(
+    async (uniId: number) => {
+      const ethPrice = await getTwapEthPrice()
+      const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+      const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
 
-    return { collateral: sqthValueInEth.plus(wethAmount), position }
-  }
+      return { collateral: sqthValueInEth.plus(wethAmount), position }
+    },
+    [normFactor, getETHandOSQTHAmount, getTwapEthPrice],
+  )
 
   return getUniNFTCollatDetail
 }
@@ -247,9 +250,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const normFactor = useAtomValue(normFactorAtom)
   const contract = useAtomValue(controllerContractAtom)
-  const getTwapEthPrice = useGetTwapEthPrice()
   const getDebtAmount = useGetDebtAmount()
-  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
   const getCollatRatioAndLiqPrice = useCallback(
     async (collateralAmount: BigNumber, shortAmount: BigNumber, uniId?: number) => {
@@ -289,7 +290,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
 
       return emptyState
     },
-    [contract, getDebtAmount, getETHandOSQTHAmount, getTwapEthPrice, impliedVol, isWethToken0, normFactor.toString()],
+    [contract, getDebtAmount, impliedVol, isWethToken0, normFactor],
   )
 
   return getCollatRatioAndLiqPrice

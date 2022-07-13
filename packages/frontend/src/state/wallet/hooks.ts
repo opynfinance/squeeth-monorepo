@@ -103,6 +103,7 @@ export const useTransactionStatus = () => {
 
   const confirmed = transactionData?.status === 'confirmed' && !txCancelled
   const cancelled = transactionData?.status === 'confirmed' && txCancelled
+  const failed = transactionData?.status === 'failed'
 
   useEffect(() => {
     if (transactionData?.status === 'cancel') {
@@ -115,11 +116,12 @@ export const useTransactionStatus = () => {
       transactionData,
       confirmed,
       cancelled,
+      failed,
       loading: transactionLoading,
       resetTxCancelled: () => setTxCancelled(false),
       resetTransactionData,
     }),
-    [cancelled, confirmed, resetTransactionData, transactionData, transactionLoading],
+    [cancelled, confirmed, resetTransactionData, transactionData, transactionLoading, failed],
   )
 }
 

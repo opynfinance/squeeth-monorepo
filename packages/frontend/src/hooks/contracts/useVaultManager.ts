@@ -1,4 +1,3 @@
-import { useCallback, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
@@ -11,7 +10,8 @@ import { squeethClient } from '../../utils/apollo-client'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
-import { usePrevious } from 'react-use'
+import { useCallback, useState } from 'react'
+import constate from 'constate'
 
 /**
  * get user vaults.
@@ -19,12 +19,12 @@ import { usePrevious } from 'react-use'
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {Vault[]}
  */
-export const useVaultManager = () => {
+export const [VaultManagerProvider, useVaultManager] = constate(() => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
-  const [isPolling, setIsPolling] = useState(false)
+  const [waitingForUpdate, setWaitingForUpdate] = useState(false)
 
-  const { data, loading, subscribeToMore, startPolling, stopPolling } = useQuery<Vaults>(VAULTS_QUERY, {
+  const { data, loading, subscribeToMore } = useQuery<Vaults>(VAULTS_QUERY, {
     client: squeethClient[networkId],
     fetchPolicy: 'cache-and-network',
     variables: {
@@ -32,35 +32,9 @@ export const useVaultManager = () => {
     },
   })
 
-  const currentVault = data?.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
-  const prevVault = usePrevious(currentVault)
-
   const updateVault = useCallback(() => {
-    setIsPolling(true)
+    setWaitingForUpdate(true)
   }, [])
-
-  useAppEffect(() => {
-    if (isPolling && !prevVault && !currentVault) {
-      startPolling(500)
-    } else if (
-      isPolling &&
-      (new BigNumber(prevVault?.shortAmount).isEqualTo(new BigNumber(currentVault?.shortAmount)) ||
-        new BigNumber(prevVault?.collateralAmount).isEqualTo(new BigNumber(currentVault?.collateralAmount)))
-    ) {
-      startPolling(500)
-    } else {
-      stopPolling()
-      setIsPolling(false)
-    }
-  }, [
-    currentVault?.shortAmount.toString(),
-    currentVault?.collateralAmount.toString(),
-    isPolling,
-    prevVault?.shortAmount.toString(),
-    prevVault?.collateralAmount.toString(),
-    startPolling,
-    stopPolling,
-  ])
 
   useAppEffect(() => {
     subscribeToMore({
@@ -69,12 +43,27 @@ export const useVaultManager = () => {
         ownerId: address ?? '',
       },
       updateQuery(prev, { subscriptionData }) {
-        if (!subscriptionData.data || subscriptionData.data.vaults.length === data?.vaults.length) return prev
+        if (!subscriptionData.data) return prev
         const newVaults = subscriptionData.data.vaults
+
+        const prevVault = prev.vaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
+        const newVault = newVaults.find((vault) => new BigNumber(vault.collateralAmount).isGreaterThan(0))
+
+        if (
+          prevVault &&
+          newVault &&
+          new BigNumber(prevVault.shortAmount).isEqualTo(newVault.shortAmount) &&
+          new BigNumber(prevVault.collateralAmount).isEqualTo(newVault.collateralAmount)
+        ) {
+          return prev
+        }
+
+        setWaitingForUpdate(false)
+
         return { vaults: newVaults }
       },
     })
-  }, [address, subscribeToMore, data?.vaults.length])
+  }, [address, subscribeToMore])
 
   const vaultsData = data?.vaults
     .filter((v) => {
@@ -89,7 +78,7 @@ export const useVaultManager = () => {
     }))
 
   return useAppMemo(
-    () => ({ vaults: vaultsData, loading: loading || isPolling, updateVault }),
-    [vaultsData, loading, isPolling, updateVault],
+    () => ({ vaults: vaultsData, updateVault, loading: loading || waitingForUpdate }),
+    [vaultsData, loading, waitingForUpdate, updateVault],
   )
-}
+})

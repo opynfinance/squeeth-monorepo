@@ -1,5 +1,5 @@
 import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
-import { getShortHelperAddr } from "./util";
+import { getShortHelperAddr, getControllerHelperAddr } from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
 export const BIGINT_ZERO = BigInt.fromI32(0);
@@ -18,3 +18,14 @@ export const RA_SHORT_HELPER_ADDR = Address.fromString(
 );
 
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
+
+// export const MAINNET_CONTROLLER_HELPER_ADDR = Address.fromString("");
+export const ROPSTEN_CONTROLLER_HELPER_ADDR = Address.fromString(
+  "0x1561AD75Fc7382C33819e63A4787b6F362D8152f"
+);
+// export const LOCALHOST_CONTROLLER_HELPER_ADDR = Address.fromString("");
+// export const RA_CONTROLLER_HELPER_ADDR = Address.fromString("");
+
+export const CONTROLLER_HELPER_ADDR = getControllerHelperAddr(
+  dataSource.network()
+);

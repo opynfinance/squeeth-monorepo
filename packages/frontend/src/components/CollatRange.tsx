@@ -1,5 +1,6 @@
-import { createStyles, makeStyles, Tooltip, Snackbar, Collapse, styled } from '@material-ui/core'
+import { createStyles, makeStyles, Tooltip, Collapse } from '@material-ui/core'
 import { yellow } from '@material-ui/core/colors'
+import Circle from '@material-ui/icons/FiberManualRecord'
 import Alert from '@material-ui/lab/Alert'
 import React from 'react'
 
@@ -21,6 +22,20 @@ const useStyles = makeStyles((theme) =>
     safe: {
       backgroundColor: theme.palette.success.main,
     },
+    legendsContainer: {
+      display: 'flex',
+      fontSize: '0.75rem',
+      marginBottom: '.5em',
+    },
+    legend: {
+      display: 'flex',
+      alignItems: 'center',
+      marginRight: '1em',
+    },
+    legendIcon: {
+      fontSize: '0.75rem',
+      marginRight: '5px',
+    },
   }),
 )
 
@@ -30,21 +45,6 @@ type CollatRangeType = {
   onCollatValueChange: (val: number) => void
   className?: string
 }
-
-const marks = [
-  {
-    value: 150,
-    label: 'DANGER',
-  },
-  {
-    value: 200,
-    label: 'RISKY',
-  },
-  {
-    value: 225,
-    label: 'SAFE',
-  },
-]
 
 const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValueChange, className }) => {
   const classes = useStyles()
@@ -90,11 +90,24 @@ const CollatRange: React.FC<CollatRangeType> = ({ id, collatValue, onCollatValue
           track: sliderClass,
         }}
         className={className}
-        marks={marks}
         min={150}
-        max={300}
+        max={600}
         id={id + '-slider'}
       />
+      <div className={classes.legendsContainer}>
+        <span className={classes.legend}>
+          <Circle className={classes.legendIcon} style={{ color: '#f5475c' }} />
+          <span>DANGER</span>
+        </span>
+        <span className={classes.legend}>
+          <Circle className={classes.legendIcon} style={{ color: '#fbc02d' }} />
+          <span>RISKY</span>
+        </span>
+        <span className={classes.legend}>
+          <Circle className={classes.legendIcon} style={{ color: '#49D273' }} />
+          <span>SAFE</span>
+        </span>
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         <Collapse in={collatValue === 150}>
           <Alert severity="error" id={id + '-alert-text'}>

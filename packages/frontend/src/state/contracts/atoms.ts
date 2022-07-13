@@ -8,6 +8,7 @@ import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
 import shortAbi from '../../abis/shortHelper.json'
+import controllerHelperAbi from '../../abis/controllerHelper.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -58,4 +59,11 @@ export const shortHelperContractAtom = atom<Contract | null>((get) => {
   const { shortHelper } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, shortHelper, shortAbi)
+})
+
+export const controllerHelperContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { controllerHelper } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, controllerHelper, controllerHelperAbi)
 })

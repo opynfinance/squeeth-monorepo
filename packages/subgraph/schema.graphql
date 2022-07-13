@@ -50,6 +50,7 @@ enum Action {
   MINT
   BURN
   LIQUIDATE
+  FLASH_SWAP_W_MINT
 }
 
 type VaultHistory @entity {
