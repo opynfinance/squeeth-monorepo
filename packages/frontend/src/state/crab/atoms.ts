@@ -19,6 +19,7 @@ export const crabStrategySlippageAtom = atom(0.5)
 export const isTimeHedgeAvailableAtom = atom(false)
 export const isPriceHedgeAvailableAtom = atom(false)
 export const crabPositionValueLoadingAtom = atom(true)
+export const userCrabShares = atom(BIG_ZERO)
 
 export const crabLoadingAtom = atom((get) => {
   const loading = get(loadingAtom)
