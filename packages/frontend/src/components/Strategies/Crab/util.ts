@@ -14,6 +14,9 @@ export const makeItCrabRain = function () {
     const randoFiver = Math.floor(Math.random() * (5 - 2 + 1) + 2)
     //increment
     increment += randoFiver
+
+    const emojis = ['🐱', '🦀']
+    const randEmoji = emojis[Math.floor(Math.random() * emojis.length)]
     //add in a new raindrop with various randomizations to certain CSS properties
     drops +=
       '<div class="drop" style="left: ' +
@@ -22,13 +25,15 @@ export const makeItCrabRain = function () {
       (randoFiver + randoFiver - 1 + 100) +
       '%; animation-delay: 0.' +
       randoHundo +
-      's; animation-duration: 1.' +
+      's; animation-duration: 2.' +
       randoHundo +
       's;"><div class="stem" style="animation-delay: 0.' +
       randoHundo +
       's; animation-duration: 0.5' +
       randoHundo +
-      's;"></div>🦀<div class="splat" style="animation-delay: 0.' +
+      's;"></div>' +
+      randEmoji +
+      '<div class="splat" style="animation-delay: 0.' +
       randoHundo +
       's; animation-duration: 0.5' +
       randoHundo +
@@ -40,13 +45,15 @@ export const makeItCrabRain = function () {
       (randoFiver + randoFiver - 1 + 100) +
       '%; animation-delay: 0.' +
       randoHundo +
-      's; animation-duration: 1.' +
+      's; animation-duration: 2.' +
       randoHundo +
       's;"><div class="stem" style="animation-delay: 0.' +
       randoHundo +
       's; animation-duration: 0.5' +
       randoHundo +
-      's;"></div>🦀<div class="splat" style="animation-delay: 0.' +
+      's;"></div>' +
+      randEmoji +
+      '<div class="splat" style="animation-delay: 0.' +
       randoHundo +
       's; animation-duration: 0.5' +
       randoHundo +
