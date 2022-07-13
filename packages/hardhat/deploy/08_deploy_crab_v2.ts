@@ -23,9 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(controller.address)
 
-  if (network.name === "mainnet") {
-    return
-  }
+
 
 
   const exec = await getExec(deployer, network.name)
@@ -39,6 +37,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     dWethToken,
     euler,
   ]
+
   // Deploy CrabMigration contract
   await deploy("CrabMigration", {
     from: deployer,
@@ -49,22 +48,32 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`Successfully deploy CrabMigration`)
 
+
+  const timelockArgs = [
+    '0x609FFF64429e2A275a879e5C50e415cec842c629', // deployer,
+    432000,
+  ]
+
+
   // Deploy Timelock contract
   await deploy("Timelock", {
     from: deployer,
     log: true,
-    args: [
-      deployer,
-      172800,
-    ],
-    // skipIfAlreadyDeployed: false
+    args: timelockArgs,
+    skipIfAlreadyDeployed: true
   });
+
+
 
   console.log(`Successfully deploy Timelock`)
   createArgumentFile('CrabMigration', network.name, migrationArgs)
+  createArgumentFile('Timelock', network.name, timelockArgs)
+
+
 
   const timelock = await ethers.getContract("Timelock", deployer);
   const migration = await ethers.getContract("CrabMigration", deployer);
+
 
   const v2args = [
     controller.address,
@@ -78,16 +87,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     '200000000000000000'
   ]
 
-  console.log('squeeth pool', squeethPoolAddr)
 
-  console.log(crabV1, controller.address, oracle.address, weth.address, uniswapFactory.address, squeethPoolAddr, timelock.address, migration.address, 1, one.toString())
 
   // Deploy Crabv2 contract
   await deploy("CrabStrategyV2", {
     from: deployer,
     log: true,
     args: v2args,
-    skipIfAlreadyDeployed: false
+    skipIfAlreadyDeployed: true
   });
 
   createArgumentFile('CrabStrategyV2', network.name, v2args)

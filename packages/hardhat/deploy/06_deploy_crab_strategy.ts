@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  if (network.name === "ropsten") {
+  if (network.name === "ropsten" || network.name === "mainnet") {
     return
   }
 

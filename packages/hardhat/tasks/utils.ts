@@ -201,8 +201,5 @@ export const createArgumentFile = (contract: string, network: string, args: Arra
   const path = `./arguments/${contract}-${network}.js`
   const content = `module.exports = [${args.map(a => `"${a}"`).join(',')}]`
 
-  console.log(path, content);
-
-
   fs.writeFileSync(path, content);
 }

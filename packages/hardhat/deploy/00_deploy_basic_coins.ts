@@ -9,7 +9,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
   console.log(`Start deploying with ${deployer}`)
-  return
 
   const { deploy } = deployments;
   // Deploy WETH9 and UniswapV3Factory for SwapRouter.
@@ -27,7 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Deploy USD
   const usdcAddress = networkNameToUSDC(network.name as string)
   if (usdcAddress === undefined) {
-    await deploy("MockErc20", { from: deployer, args: ["USDC", "USDC", 6], skipIfAlreadyDeployed: false });
+    await deploy("MockErc20", { from: deployer, args: ["USDC", "USDC", 6], skipIfAlreadyDeployed: true });
     const usdc = await ethers.getContract("MockErc20", deployer);
     console.log(`USDC Deployed at ${usdc.address} 🍇`)
   } else {

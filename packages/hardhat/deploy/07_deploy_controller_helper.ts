@@ -12,7 +12,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(network.name)
   if (network.name === 'localhost') return;
-  if (network.name === "ropsten") {
+  if (network.name === "ropsten" || network.name === "mainnet") {
     return
   }
 
