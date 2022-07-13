@@ -68,3 +68,28 @@ export const useGetPosition = () => {
   
     return getDecreaseLiquiduity
   }
+
+  export const useGetQuote = () => {
+    const contract = useAtomValue(quoterContractAtom)
+    const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  
+    const getQuote = useCallback(
+      async (amount: BigNumber, squeethIn: boolean) => {
+        if (!contract) return null
+  
+        const QuoteExactInputSingleParams = {
+          tokenIn: squeethIn ? oSqueeth : weth,
+          tokenOut: squeethIn ? weth : oSqueeth,
+          amountIn: amount.toFixed(0),
+          fee: 3000,
+          sqrtPriceLimitX96: 0
+        }
+  
+        const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
+        return quote.amountOut
+      },
+      [contract, weth, oSqueeth],
+    )
+  
+    return getQuote
+  }
