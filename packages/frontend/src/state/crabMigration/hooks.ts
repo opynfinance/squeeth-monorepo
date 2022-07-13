@@ -46,6 +46,7 @@ export const useQueueMigrate = () => {
         crabMigrationContract?.methods.depositV1Shares(fromTokenAmount(amount, 18).toFixed(0)).send({
           from: address,
         }),
+        () => makeItCrabRain(),
       )
 
       // const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
