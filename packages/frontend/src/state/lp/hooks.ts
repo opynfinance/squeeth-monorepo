@@ -17,6 +17,7 @@ import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../contro
 const TICK_SPACE = 60
 const COLLAT_RATIO = 1.5
 const POOL_FEE = 3000
+const MAX_INT = new BigNumber(2).pow(128).minus(1).toFixed(0)
 
 /*** ACTIONS ***/
 
@@ -122,6 +123,58 @@ export const useClosePosition = () => {
     )
   }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
   return closePosition
+}
+
+// Collect fees
+export const useCollectFees = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const getDebtAmount = useGetDebtAmount()
+  const getVault = useGetVault()
+  const collectFees = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+    const vaultBefore = await getVault(vaultId)
+    const uniTokenId = vaultBefore?.NFTCollateralId    
+    
+    if (
+      !controllerContract ||
+      !controllerHelperContract ||
+      !address ||
+      !vaultBefore ||
+      !vaultBefore.shortAmount
+    )
+      return
+
+    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+    const debtInEth = await getDebtAmount(shortAmount)
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+    const amount0Max = MAX_INT
+    const amount1Max = MAX_INT
+    const abiCoder = new ethers.utils.AbiCoder()
+    const rebalanceLpInVaultParams = [
+      {
+        rebalanceLpInVaultType: new BigNumber(6).toFixed(0),
+        // CollectFees
+        data: abiCoder.encode(['uint256', 'uint128', 'uint128'], [uniTokenId, amount0Max, amount1Max]),
+      },
+      {
+        rebalanceLpInVaultType: new BigNumber(7).toFixed(0),
+        // DepositExistingNftParams
+        data: abiCoder.encode(["uint256"], [uniTokenId])
+      }
+    ]
+
+    return handleTransaction(
+      await controllerHelperContract.methods
+        .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
+        .send({
+          from: address,
+        }),
+      onTxConfirmed,
+    )
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault])
+  return collectFees
 }
 
 /*** GETTERS ***/
