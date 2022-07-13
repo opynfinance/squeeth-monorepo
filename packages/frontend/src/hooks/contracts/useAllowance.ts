@@ -30,9 +30,9 @@ export function useUserAllowance(token: string, spenderAddess: string) {
 
       await handleTransaction(erc.methods.approve(spenderAddess, approveAmount).send({ from: address }), async () => {
         onTxConfirmed()
-        const newAllowance = await erc.methods.allowance(address, spenderAddess).call()
-        setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
       })
+      const newAllowance = await erc.methods.allowance(address, spenderAddess).call()
+      setAllowance(toTokenAmount(new BigNumber(newAllowance.toString()), 18))
     },
     [web3, token, address, spenderAddess, handleTransaction],
   )

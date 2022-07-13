@@ -9,6 +9,7 @@ import { addressAtom } from 'src/state/wallet/atoms'
 import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
 import { pnlInPerct } from 'src/lib/pnl'
 import useAppMemo from '@hooks/useAppMemo'
+import { userMigratedSharesAtom } from 'src/state/crabMigration/atom'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -35,6 +36,7 @@ const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
   const { loading: isCrabPositonLoading, depositedUsd } = useCrabPosition(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValue()
+  const userMigratedShares = useAtomValue(userMigratedSharesAtom)
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
@@ -45,6 +47,10 @@ const CrabPosition: React.FC = () => {
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
+  const isMigrated = useAppMemo(() => {
+    return userMigratedShares.gt(0)
+  }, [userMigratedShares])
+
   if (loading) {
     return (
       <Box mt={2}>
@@ -53,14 +59,14 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (currentCrabPositionValue.isZero() || depositedUsd.isZero()) {
+  if ((currentCrabPositionValue.isZero() || depositedUsd.isZero()) && !isMigrated) {
     return null
   }
 
   return (
     <div className={classes.container}>
       <Typography color="primary" variant="subtitle1">
-        Position
+        {isMigrated ? 'Position committed to Crab V2' : 'Position'}
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" id="crab-pos-bal">

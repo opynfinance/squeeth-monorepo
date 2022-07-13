@@ -21,11 +21,16 @@ import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyVaultAtom,
+  currentCrabPositionValueInETHAtom,
   maxCapAtom,
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
+import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
+import { isQueuedAtom } from 'src/state/crabMigration/atom'
+import { makeItCrabRain } from '@components/Strategies/Crab/util'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -44,16 +49,19 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       marginTop: theme.spacing(3),
     },
-    tradeForm: {
-      background: theme.palette.background.stone,
-      borderRadius: theme.spacing(2),
-      margin: theme.spacing(0, 'auto'),
+    tradeCard: {
       width: '350px',
-      position: 'sticky',
       maxHeight: '440px',
       minHeight: '350px',
       height: 'fit-content',
-      top: '100px',
+      position: 'sticky',
+      top: '75px',
+      margin: theme.spacing('-120px', '50px'),
+    },
+    tradeForm: {
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(2),
+      marginTop: theme.spacing(4),
     },
     overview: {
       display: 'flex',
@@ -110,10 +118,13 @@ const Strategies: React.FC = () => {
   const profitableMovePercent = useSetProfitableMovePercent()
   const setStrategyData = useSetStrategyData()
   useCurrentCrabPositionValue()
+  useInitCrabMigration()
 
   const index = useAtomValue(indexAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
+  const isQueued = useAtomValue(isQueuedAtom)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -130,8 +141,15 @@ const Strategies: React.FC = () => {
     else return Vaults.Custom
   }, [selectedIdx])
 
+  useEffect(() => {
+    if (isQueued) {
+      makeItCrabRain()
+    }
+  }, [isQueued])
+
   return (
     <div>
+      <div id="rain"></div>
       <Nav />
       <div className={classes.container}>
         <Tabs
@@ -198,9 +216,8 @@ const Strategies: React.FC = () => {
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${
-                      Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    tooltip={`${Tooltips.StrategyEarnFunding
+                      }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>
@@ -239,14 +256,17 @@ const Strategies: React.FC = () => {
                 <CrabStrategyHistory />
               </div>
               {supportedNetwork && (
-                <div className={classes.tradeForm}>
-                  {!!address ? (
-                    <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                  ) : (
-                    <div className={classes.connectWalletDiv}>
-                      <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
-                    </div>
-                  )}
+                <div className={classes.tradeCard}>
+                  {!currentEthValue.isZero() ? <MigrationNotice /> : null}
+                  <div className={classes.tradeForm}>
+                    {!!address ? (
+                      <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                    ) : (
+                      <div className={classes.connectWalletDiv}>
+                        <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>

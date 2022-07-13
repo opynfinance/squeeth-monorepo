@@ -45,6 +45,8 @@ import { BIG_ZERO } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
 import floatifyBigNums from '@utils/floatifyBigNums'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { userMigratedSharesAtom } from '../crabMigration/atom'
+import useAppMemo from '@hooks/useAppMemo'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -125,6 +127,7 @@ export const useCurrentCrabPositionValue = () => {
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtom)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtom)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 15, 18)
+  const userMigratedShares = useAtomValue(userMigratedSharesAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
@@ -136,12 +139,16 @@ export const useCurrentCrabPositionValue = () => {
     setStrategyData()
   }, [])
 
+  const userShares = useAppMemo(() => {
+    return userMigratedShares.gt(0) ? userMigratedShares : userCrabBalance;
+  }, [userMigratedShares, userCrabBalance])
+
   useAppEffect(() => {
     ;(async () => {
       setIsCrabPositionValueLoading(true)
       const [collateral, squeethDebt] = await Promise.all([
-        getCollateralFromCrabAmount(userCrabBalance, contract, vault),
-        getWsqueethFromCrabAmount(userCrabBalance, contract),
+        getCollateralFromCrabAmount(userShares, contract, vault),
+        getWsqueethFromCrabAmount(userShares, contract),
       ])
 
       if (!squeethDebt || !collateral) {
@@ -162,7 +169,7 @@ export const useCurrentCrabPositionValue = () => {
       setCurrentEthLoading(false)
     })()
   }, [
-    userCrabBalance,
+    userShares,
     contract,
     setCurrentEthLoading,
     setIsCrabPositionValueLoading,
