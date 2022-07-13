@@ -20,7 +20,6 @@ import {
   CRAB_MIGRATION,
   CRAB_STRATEGY2,
   CONTROLLER_HELPER,
-  QUOTER_CH,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -50,7 +49,6 @@ export const addressesAtom = atom((get) => {
     swapRouter2: SWAP_ROUTER_02[networkId].toLowerCase(),
     squeethPool: SQUEETH_UNI_POOL[networkId].toLowerCase(),
     quoter: QUOTER[networkId].toLowerCase(),
-    quoterCH: QUOTER_CH[networkId].toLowerCase(),
     shortHelper: SHORT_HELPER[networkId].toLowerCase(),
     oracle: ORACLE[networkId].toLowerCase(),
     ethUsdcPool: ETH_USDC_POOL[networkId].toLowerCase(),
