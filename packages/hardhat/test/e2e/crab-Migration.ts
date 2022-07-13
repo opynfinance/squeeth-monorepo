@@ -1103,7 +1103,7 @@ describe("Crab Migration", function () {
             const d2Amt = ethers.utils.parseEther('10');
             const d3Amt = ethers.utils.parseEther('8');
             const d4Amt = ethers.utils.parseEther('10');
-            const d5Amt = ethers.utils.parseEther('17');
+            const d5Amt = ethers.utils.parseEther('27');
 
 
             await crabStrategyV1.connect(d1).deposit({ value: d1Amt })
@@ -1111,6 +1111,7 @@ describe("Crab Migration", function () {
             await crabStrategyV1.connect(d3).deposit({ value: d3Amt })
             await crabStrategyV1.connect(d4).deposit({ value: d4Amt })
             await crabStrategyV1.connect(d5).deposit({ value: d5Amt })
+            await crabStrategyV1.connect(random).deposit({ value: d1Amt })
 
             const p1 = oSqth.connect(d1).transfer(random.address, await oSqth.balanceOf(d1.address))
             const p2 = oSqth.connect(d2).transfer(random.address, await oSqth.balanceOf(d2.address))
@@ -1257,6 +1258,7 @@ describe("Crab Migration", function () {
                 expect(crabV2SharesInMigrationBefore).to.be.equal('0') // All the shares are migrated
                 expect(crabV2SharesInMigration).to.be.equal('0')
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
         })
@@ -1318,6 +1320,7 @@ describe("Crab Migration", function () {
                 expect(crabV2SharesInMigrationBefore).to.be.equal('0') // All the shares are migrated
                 expect(crabV2SharesInMigration).to.be.equal('0')
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -1426,7 +1429,7 @@ describe("Crab Migration", function () {
 
                 expect(crabV1SharesAfter).to.be.equal('0')
                 expect(crabV1SharesInMigration).to.be.equal('0')
-                expect(crabV2SharesInMigration).to.be.equal(crabV2inMigrationBefore) // D2 shares should not be given away to Joe Squlark 
+                expect(crabV2SharesInMigration).to.be.equal(crabV2inMigrationBefore) // V2 shares should not be given away to Joe Squlark 
                 expect(crabV2SharesAfter).to.be.equal(expectedV2Shares)
                 expect(squeethBalance).to.be.equal('0')
                 expect(userEthBalanceAfter.gte(userEthBalance.add(expectedEth).sub(gasPaid))).to.be.true
@@ -1472,6 +1475,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
         })
 
@@ -1529,6 +1533,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -1701,6 +1706,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
         })
 
@@ -1780,6 +1786,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -1940,6 +1947,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
         })
 
@@ -2003,6 +2011,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -2152,6 +2161,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
         })
 
@@ -2202,6 +2212,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -2302,6 +2313,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {
@@ -2433,6 +2445,7 @@ describe("Crab Migration", function () {
                 expect(userEthBalanceAfter).to.be.equal(userEthBalance.add(excessEth).sub(gasPaid))
                 expect(crabV2SharesInMigration).to.be.equal(crabV2SharesInMigrationBefore) // D2 shares should not be given away to Joe Squlark 
                 expect(squeethBalance).to.be.equal('0')
+                await decreaseCR1(ethers.utils.parseEther('10'))
             })
 
             it("Should flashMigrateAndWithdraw", async () => {

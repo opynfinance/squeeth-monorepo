@@ -273,14 +273,14 @@ contract CrabMigration is Ownable {
                 );
             }
 
-            uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
+            uint256 crabV2ToTransfer = CrabStrategyV2(crabV2).balanceOf(address(this)).sub(initialCrabAmount);
             // send back V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount.sub(initialCrabAmount));
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2ToTransfer);
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             uint256 excessEth = address(this).balance;
 
-            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2Amount, excessEth.sub(_amount));
+            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2ToTransfer, excessEth.sub(_amount));
 
             // send back excess ETH
             if (excessEth > _amount) {
@@ -314,15 +314,15 @@ contract CrabMigration is Ownable {
                 );
             }
 
-            uint256 crabV2Amount = CrabStrategyV2(crabV2).balanceOf(address(this));
+            uint256 crabV2ToTransfer = CrabStrategyV2(crabV2).balanceOf(address(this)).sub(initialCrabAmount);
 
             // send V2 tokens to the user
-            CrabStrategyV2(crabV2).transfer(_initiator, crabV2Amount.sub(initialCrabAmount));
+            CrabStrategyV2(crabV2).transfer(_initiator, crabV2ToTransfer);
             IERC20(wPowerPerp).transfer(_initiator, IERC20(wPowerPerp).balanceOf(address(this)));
 
             uint256 excessEth = address(this).balance;
 
-            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2Amount, excessEth.sub(_amount));
+            emit FlashMigrate(_initiator, data.crabV1ToWithdraw, crabV2ToTransfer, excessEth.sub(_amount));
 
             // send back the excess ETH
             if (excessEth > _amount) {
