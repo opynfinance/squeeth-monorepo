@@ -19,6 +19,9 @@ const POOL_FEE = 3000
 const MAX_INT_128 = new BigNumber(2).pow(128).minus(1).toFixed(0)
 const x96 = new BigNumber(2).pow(96)
 
+/*** CONSTANTS ***/
+const TICK_SPACE = 60
+
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
