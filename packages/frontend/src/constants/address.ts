@@ -55,7 +55,7 @@ export const SWAP_ROUTER: Address = {
 
 export const SWAP_ROUTER_02: Address = {
   1: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
-  3: '0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45',
+  3: '',
   421611: '',
   31337: '',
 }
@@ -110,3 +110,10 @@ export const CRAB_STRATEGY: Address = {
 }
 
 export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
+
+export const CONTROLLER_HELPER: Address = {
+  1: '0xfa86d43b41Fa7a759c606130cc81970A955ff816',
+  3: '0x7e9C5490e91F93529c6480B46a59D738F6bcEa43',
+  421611: '',
+  31337: '',
+}
