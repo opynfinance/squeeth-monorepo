@@ -51,9 +51,9 @@ enum MIGRATION_STEP {
 }
 
 const getAction = (action: MIGRATION_STEP) => {
-  if (action === MIGRATION_STEP.APPROVE) return 'Approve crab to transfer funds upon v2 launch'
+  if (action === MIGRATION_STEP.APPROVE) return 'Approve crab to transfer funds to v2 at launch'
 
-  return 'Confirm crab v2 commitment'
+  return 'Secure spot in Crab v2'
 }
 
 const CrabMigration: React.FC = () => {
@@ -68,7 +68,7 @@ const CrabMigration: React.FC = () => {
   const [action, setAction] = useState(MIGRATION_STEP.APPROVE)
   const [loadingTx, setLoadingTx] = useState(false)
 
-  const steps = ['Approve Crab Contract', 'Confirm Crab V2 Commitment']
+  const steps = ['Approve Crab Contract', 'Secure spot in Crab v2']
 
   useAppEffect(() => {
     if (allowance.gte(userCrabBalance)) {
@@ -107,7 +107,7 @@ const CrabMigration: React.FC = () => {
     <div className={classes.container}>
       <Stepper
         className={classes.stepper}
-        activeStep={getAction(action) === 'Confirm crab v2 commitment' ? 1 : 0}
+        activeStep={getAction(action) === 'Secure spot in Crab v2' ? 1 : 0}
         alternativeLabel
       >
         {steps.map((label) => (
@@ -129,7 +129,7 @@ const CrabMigration: React.FC = () => {
       </div> */}
       <div className={classes.position}>
         <TradeInfoItem
-          label="Crab Position"
+          label="Crab v1 Position"
           value={`${positionInEth.toFixed(4)} ETH`}
           unit={`$${positionInUsd.toFixed(1)}`}
           tooltip={

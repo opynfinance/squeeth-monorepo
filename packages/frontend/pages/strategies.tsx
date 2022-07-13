@@ -121,10 +121,10 @@ const Strategies: React.FC = () => {
   useInitCrabMigration()
 
   const index = useAtomValue(indexAtom)
+  const isQueued = useAtomValue(isQueuedAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
-  const isQueued = useAtomValue(isQueuedAtom)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -257,7 +257,7 @@ const Strategies: React.FC = () => {
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
-                  {!currentEthValue.isZero() ? <MigrationNotice /> : null}
+                  {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
