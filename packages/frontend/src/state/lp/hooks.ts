@@ -1,5 +1,4 @@
 import { nearestUsableTick, TickMath } from '@uniswap/v3-sdk'
-
 import { fromTokenAmount } from '@utils/calculations'
 import { useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
@@ -14,7 +13,63 @@ import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
 
+/*** CONSTANTS ***/
+const TICK_SPACE = 60
+const COLLAT_RATIO = 1.5
+const POOL_FEE = 3000
+const MAX_INT = new BigNumber(2).pow(128).minus(1).toFixed(0)
+const x96 = new BigNumber(2).pow(96)
+
 /*** ACTIONS ***/
+
+// Opening a mint and LP position and depositing
+export const useOpenPositionDeposit = () => {
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerHelperHelperContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const getTwapSqueethPrice = useGetTwapSqueethPrice()
+  const getDebtAmount = useGetDebtAmount()
+  const openPositionDeposit = useAppCallback(
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+      if (!contract || !address) return null
+      
+      const squeethPrice = await getTwapSqueethPrice()
+      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
+      const ethDebt = await getDebtAmount(mintWSqueethAmount)
+
+      const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
+      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
+
+      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
+      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
+
+      const flashloanWMintDepositNftParams = {
+        wPowerPerpPool: squeethPool,
+        vaultId: 0,
+        wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
+        collateralToDeposit: collateralToMint.toFixed(0),
+        collateralToFlashloan: collateralToMint.toFixed(0),
+        collateralToLp: collateralToLp.toFixed(0),
+        collateralToWithdraw: 0,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: lowerTick,
+        upperTick: upperTick,
+      }
+
+      return handleTransaction(
+        contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
+          from: address,
+          value: collateralToLp.toFixed(0),
+        }),
+        onTxConfirmed,
+      )
+    },
+    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
+  )
+  return openPositionDeposit
+}
 
 // Close position with flashloan
 export const useClosePosition = () => {
@@ -43,7 +98,7 @@ export const useClosePosition = () => {
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
     const limitEth = await getQuote(shortAmount, true)
 
     const flashloanCloseVaultLpNftParam = {
@@ -57,11 +112,9 @@ export const useClosePosition = () => {
       limitPriceEthPerPowerPerp: limitEth,
       amount0Min: 0,
       amount1Min: 0,
-      poolFee: 3000,
+      poolFee: POOL_FEE,
       burnExactRemoved: true,
     }
-
-    console.log("flashloanCloseVaultLpNftParam", flashloanCloseVaultLpNftParam)
 
     return handleTransaction(
       await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
@@ -71,56 +124,6 @@ export const useClosePosition = () => {
     )
   }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
   return closePosition
-}
-
-// Opening a mint and LP position and depositing
-export const useOpenPositionDeposit = () => {
-  const { squeethPool } = useAtomValue(addressesAtom)
-  const address = useAtomValue(addressAtom)
-  const contract = useAtomValue(controllerHelperHelperContractAtom)
-  const handleTransaction = useHandleTransaction()
-  const getTwapSqueethPrice = useGetTwapSqueethPrice()
-  const getDebtAmount = useGetDebtAmount()
-  const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultID: number, onTxConfirmed?: () => void) => {
-      const squeethPrice = await getTwapSqueethPrice()
-      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const ethDebt = await getDebtAmount(mintWSqueethAmount)
-
-      const collateralToMint = ethDebt.multipliedBy(3).div(2)
-      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
-
-      const lowerTick = nearestUsableTick(lowerTickInput, 60)
-      const upperTick = nearestUsableTick(upperTickInput, 60)
-
-      const flashloanWMintDepositNftParams = {
-        wPowerPerpPool: squeethPool,
-        vaultId: vaultID,
-        wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
-        collateralToDeposit: collateralToMint.toFixed(0),
-        collateralToFlashloan: collateralToMint.toFixed(0),
-        collateralToLp: collateralToLp.toFixed(0),
-        collateralToWithdraw: 0,
-        amount0Min: 0,
-        amount1Min: 0,
-        lowerTick: lowerTick,
-        upperTick: upperTick,
-      }
-
-      console.log('flashloanWMintDepositNftParams from hooks', flashloanWMintDepositNftParams)
-      if (!contract || !address) return null
-
-      return handleTransaction(
-        contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
-          from: address,
-          value: collateralToLp.toFixed(0),
-        }),
-        onTxConfirmed,
-      )
-    },
-    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
-  )
-  return openPositionDeposit
 }
 
 // Collect fees
@@ -146,9 +149,9 @@ export const useCollectFees = () => {
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(1.5)
-    const amount0Max = new BigNumber(2).pow(128).minus(1).toFixed(0)
-    const amount1Max = new BigNumber(2).pow(128).minus(1).toFixed(0)
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+    const amount0Max = MAX_INT
+    const amount1Max = MAX_INT
     const abiCoder = new ethers.utils.AbiCoder()
     const rebalanceLpInVaultParams = [
       {
@@ -198,19 +201,18 @@ export const useRebalanceGeneralSwap = () => {
       if (!controllerContract || !controllerHelperContract || !address || !position || !vaultBefore || !squeethPoolContract) return
       const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
       const debtInEth = await getDebtAmount(shortAmount)
-      const collateralToFlashloan = debtInEth.multipliedBy(1.5)
+      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
 
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)
 
-      const lowerTick = nearestUsableTick(lowerTickInput, 60)
-      const upperTick = nearestUsableTick(upperTickInput, 60)
+      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
+      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
 
       // Get current LP positions
       const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
-      const x96 = new BigNumber(2).pow(96)
 
       // Calculate prices from ticks
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
@@ -221,7 +223,6 @@ export const useRebalanceGeneralSwap = () => {
 
       let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
-        console.log("case 1")
         // All weth position
         wPowerPerpAmountInLPAfter = 0
         const ethAmountOut = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
@@ -230,7 +231,6 @@ export const useRebalanceGeneralSwap = () => {
         tokenIn = oSqueeth
         tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
-        console.log("case 2")
         // All squeeth position
         wethAmountInLPAfter = 0
         const squeethAmountOut = await getQuote(new BigNumber(wethAmountInLPBefore), false)
@@ -239,7 +239,6 @@ export const useRebalanceGeneralSwap = () => {
         tokenIn = weth
         tokenOut = oSqueeth
       } else {
-        console.log("case 3")
         // Get previous liquidity ammount in ETH
         const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
         const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))
@@ -286,7 +285,7 @@ export const useRebalanceGeneralSwap = () => {
         // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
         data: abiCoder.encode(
           ['address', 'address', 'uint256', 'uint256', 'uint24'],
-          [tokenIn, tokenOut, amountIn, 0, 3000],
+          [tokenIn, tokenOut, amountIn, 0, POOL_FEE],
         ),
       }
       const mintNewLP = {
@@ -329,101 +328,100 @@ export const useRebalanceGeneralSwap = () => {
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
-  const contract = useAtomValue(nftManagerContractAtom)
-
-  const getPosition = useCallback(
-    async (uniTokenId: number) => {
-      if (!contract) return null
-      const position = await contract.methods.positions(uniTokenId).call()
-      const { nonce, operator, token0, token1, fee, tickLower, tickUpper, liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1 } = position
-      return {
-        nonce,
-        operator,
-        token0,
-        token1,
-        fee,
-        tickLower,
-        tickUpper,
-        liquidity,
-        feeGrowthInside0LastX128,
-        feeGrowthInside1LastX128,
-        tokensOwed0,
-        tokensOwed1
-      }
-    },
-    [contract],
-  )
-
-  return getPosition
-}
-
-export const useGetDecreaseLiquidity = () => {
-  const contract = useAtomValue(nftManagerContractAtom)
-
-  const getDecreaseLiquiduity = useCallback(
-    async (tokenId: number, liquidity: number, amount0Min: number, amount1Min: number, deadline: number) => {
-      if (!contract) return null
-      const DecreaseLiquidityParams = {
-        tokenId,
-        liquidity,
-        amount0Min,
-        amount1Min,
-        deadline,
-      }
-      console.log("DecreaseLiquidityParams", DecreaseLiquidityParams)
-
-      const decreaseLiquidity = await contract.methods.decreaseLiquidity(DecreaseLiquidityParams).call()
-
-      return decreaseLiquidity
-    },
-    [contract],
-  )
-
-  return getDecreaseLiquiduity
-}
-
-
-export const useGetQuote = () => {
-  const contract = useAtomValue(quoterContractAtom)
-  const {weth, oSqueeth} = useAtomValue(addressesAtom)
-
-  const getQuote = useCallback(
-    async (amount: BigNumber, squeethIn: boolean) => {
-      if (!contract) return null
-
-      const QuoteExactInputSingleParams = {
-        tokenIn: squeethIn ? oSqueeth : weth,
-        tokenOut: squeethIn ? weth : oSqueeth,
-        amountIn: amount.toFixed(0),
-        fee: 3000,
-        sqrtPriceLimitX96: 0
-      }
-
-      const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
-      return quote.amountOut
-    },
-    [contract, weth, oSqueeth],
-  )
-
-  return getQuote
-}
-
-async function getPoolState(squeethContract: Contract) {
-  const [slot, liquidity] = await Promise.all([
-    squeethContract?.methods.slot0().call(),
-    squeethContract?.methods.liquidity().call(),
-  ])
-
-  const PoolState = {
-    liquidity,
-    sqrtPriceX96: slot[0],
-    tick: slot[1],
-    observationIndex: slot[2],
-    observationCardinality: slot[3],
-    observationCardinalityNext: slot[4],
-    feeProtocol: slot[5],
-    unlocked: slot[6],
+    const contract = useAtomValue(nftManagerContractAtom)
+  
+    const getPosition = useCallback(
+      async (uniTokenId: number) => {
+        if (!contract) return null
+        const position = await contract.methods.positions(uniTokenId).call()
+        const { nonce, operator, token0, token1, fee, tickLower, tickUpper, liquidity, feeGrowthInside0LastX128, feeGrowthInside1LastX128, tokensOwed0, tokensOwed1 } = position
+        return {
+          nonce,
+          operator,
+          token0,
+          token1,
+          fee,
+          tickLower,
+          tickUpper,
+          liquidity,
+          feeGrowthInside0LastX128,
+          feeGrowthInside1LastX128,
+          tokensOwed0,
+          tokensOwed1
+        }
+      },
+      [contract],
+    )
+  
+    return getPosition
   }
 
-  return PoolState
-}
+  export const useGetDecreaseLiquidity = () => {
+    const contract = useAtomValue(nftManagerContractAtom)
+  
+    const getDecreaseLiquiduity = useCallback(
+      async (tokenId: number, liquidity: number, amount0Min: number, amount1Min: number, deadline: number) => {
+        if (!contract) return null
+        const DecreaseLiquidityParams = {
+          tokenId,
+          liquidity,
+          amount0Min,
+          amount1Min,
+          deadline,
+        }
+        console.log("DecreaseLiquidityParams", DecreaseLiquidityParams)
+  
+        const decreaseLiquidity = await contract.methods.decreaseLiquidity(DecreaseLiquidityParams).call()
+  
+        return decreaseLiquidity
+      },
+      [contract],
+    )
+  
+    return getDecreaseLiquiduity
+  }
+
+  export const useGetQuote = () => {
+    const contract = useAtomValue(quoterContractAtom)
+    const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  
+    const getQuote = useCallback(
+      async (amount: BigNumber, squeethIn: boolean) => {
+        if (!contract) return null
+  
+        const QuoteExactInputSingleParams = {
+          tokenIn: squeethIn ? oSqueeth : weth,
+          tokenOut: squeethIn ? weth : oSqueeth,
+          amountIn: amount.toFixed(0),
+          fee: POOL_FEE,
+          sqrtPriceLimitX96: 0
+        }
+  
+        const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
+        return quote.amountOut
+      },
+      [contract, weth, oSqueeth],
+    )
+  
+    return getQuote
+  }
+
+  async function getPoolState(squeethContract: Contract) {
+    const [slot, liquidity] = await Promise.all([
+      squeethContract?.methods.slot0().call(),
+      squeethContract?.methods.liquidity().call(),
+    ])
+  
+    const PoolState = {
+      liquidity,
+      sqrtPriceX96: slot[0],
+      tick: slot[1],
+      observationIndex: slot[2],
+      observationCardinality: slot[3],
+      observationCardinalityNext: slot[4],
+      feeProtocol: slot[5],
+      unlocked: slot[6],
+    }
+  
+    return PoolState
+  } 
