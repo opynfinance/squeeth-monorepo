@@ -215,34 +215,23 @@ export const useRebalanceGeneralSwap = () => {
       // Calculate prices from ticks
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
-      console.log(sqrtUpperPrice.toString())
-      const lowerPrice =  sqrtLowerPrice.pow(2)
-      const upperPrice = sqrtUpperPrice.pow(2)
-      console.log("upperPrice", upperPrice.toString())
       const { sqrtPriceX96 } = await getPoolState(squeethPoolContract)
       const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
       const squeethPrice = await getTwapSqueethPrice()
 
-      let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, needMoreWeth, tokenIn, tokenOut
+      let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         console.log("case 1")
         // All weth position
-        // newLiquidity = positionEthValue/(upperPrice/sqrt(upperPrice) - upperPrice/sqrt(upperPrice) + sqrt(upperPrice)-sqrt(lowerPrice))
-        const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
-        const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))
         wPowerPerpAmountInLPAfter = 0
-        const liquidity = positionEthValue.div((upperPrice.div(sqrtUpperPrice))
-                                                          .minus(upperPrice.div(sqrtUpperPrice))
-                                                          .plus(sqrtUpperPrice)
-                                                          .minus(sqrtLowerPrice))
-        wethAmountInLPAfter = liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
+        const ethAmountOut = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
+        wethAmountInLPAfter = new BigNumber(ethAmountOut).plus(wethAmountInLPBefore)
         amountIn = wPowerPerpAmountInLPBefore
         tokenIn = oSqueeth
         tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
         console.log("case 2")
         // All squeeth position
-        console.log("beep")
         wethAmountInLPAfter = 0
         const squeethAmountOut = await getQuote(new BigNumber(wethAmountInLPBefore), false)
         wPowerPerpAmountInLPAfter = new BigNumber(squeethAmountOut).plus(wPowerPerpAmountInLPBefore)
@@ -266,60 +255,63 @@ export const useRebalanceGeneralSwap = () => {
         newAmount1 = liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
         wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
         wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
-        needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
+        const needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
+        const needMoreSqueeth = new BigNumber(wPowerPerpAmountInLPBefore).lt(new BigNumber(wPowerPerpAmountInLPAfter))
         tokenIn = needMoreWeth ? oSqueeth : weth
         tokenOut = needMoreWeth ? weth : oSqueeth
-        amountIn = needMoreWeth ? new BigNumber(wPowerPerpAmountInLPAfter).minus(new BigNumber(wPowerPerpAmountInLPBefore)).toFixed(0)
-        : new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).toFixed(0)
+        amountIn = needMoreWeth && !needMoreSqueeth ? new BigNumber(wPowerPerpAmountInLPBefore).minus(new BigNumber(wPowerPerpAmountInLPAfter)).toFixed(0) :
+                   needMoreSqueeth && !needMoreWeth ? new BigNumber(wethAmountInLPBefore).minus(new BigNumber(wethAmountInLPAfter)).toFixed(0)
+                  : 0
       }
 
       const abiCoder = new ethers.utils.AbiCoder()
-      const rebalanceLpInVaultParams = [
-        {
-          // Liquidate LP
-          rebalanceLpInVaultType: new BigNumber(1).toFixed(0), // DecreaseLpLiquidity:
-          // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
-          data: abiCoder.encode(
-            ['uint256', 'uint256', 'uint256', 'uint128', 'uint128'],
-            [
-              uniTokenId,
-              position.liquidity,
-              fromTokenAmount(1, 18).toFixed(0),
-              0,
-              0,
-            ],
-          ),
-        },
-        {
-          // Exchange necessary amount of oSQTH and ETH
-          rebalanceLpInVaultType: new BigNumber(5).toFixed(0), // GeneralSwap:
-          // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
-          data: abiCoder.encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint24'],
-            [tokenIn, tokenOut, amountIn, 0, 3000],
-          ),
-        },
-        {
-          // Mint new LP
-          rebalanceLpInVaultType: new BigNumber(4).toFixed(0), // MintNewLP
-          // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
-          data: abiCoder.encode(
-            ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
-            [
-              controllerHelper,
-              squeethPool,
-              vaultId,
-              wPowerPerpAmountInLPAfter.toFixed(0),
-              0,
-              wethAmountInLPAfter.toFixed(0),
-              amount0Min.toFixed(0),
-              amount1Min.toFixed(0),
-              lowerTick,
-              upperTick,
-            ],
-          ),
-        },
-      ]
+      const liquidatePreviousLP = {
+        // Liquidate LP
+        rebalanceLpInVaultType: new BigNumber(1).toFixed(0), // DecreaseLpLiquidity:
+        // DecreaseLpLiquidityParams: [tokenId, liquidity, liquidityPercentage, amount0Min, amount1Min]
+        data: abiCoder.encode(
+          ['uint256', 'uint256', 'uint256', 'uint128', 'uint128'],
+          [
+            uniTokenId,
+            position.liquidity,
+            fromTokenAmount(1, 18).toFixed(0),
+            0,
+            0,
+          ],
+        ),
+      }
+      const generalSwap = {
+        // Exchange necessary amount of oSQTH and ETH
+        rebalanceLpInVaultType: new BigNumber(5).toFixed(0), // GeneralSwap:
+        // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
+        data: abiCoder.encode(
+          ['address', 'address', 'uint256', 'uint256', 'uint24'],
+          [tokenIn, tokenOut, amountIn, 0, 3000],
+        ),
+      }
+      const mintNewLP = {
+        // Mint new LP
+        rebalanceLpInVaultType: new BigNumber(4).toFixed(0), // MintNewLP
+        // lpWPowerPerpPool: [recipient, wPowerPerpPool, vaultId, wPowerPerpAmount, collateralToDeposit, collateralToLP, amount0Min, amount1Min, lowerTick, upperTick ]
+        data: abiCoder.encode(
+          ['address', 'address', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'uint256', 'int24', 'int24'],
+          [
+            controllerHelper,
+            squeethPool,
+            vaultId,
+            wPowerPerpAmountInLPAfter.toFixed(0),
+            0,
+            wethAmountInLPAfter.toFixed(0),
+            amount0Min.toFixed(0),
+            amount1Min.toFixed(0),
+            lowerTick,
+            upperTick,
+          ],
+        ),
+      }
+
+      const rebalanceLpInVaultParams = amountIn > 0 ? [liquidatePreviousLP, generalSwap, mintNewLP] : [liquidatePreviousLP, mintNewLP]
+
       return handleTransaction(
         await controllerHelperContract.methods
           .rebalanceLpInVault(vaultId, collateralToFlashloan.toFixed(0), rebalanceLpInVaultParams)
