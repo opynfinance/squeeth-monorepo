@@ -1,6 +1,13 @@
 export const makeItCrabRain = function () {
   //clear out everything
-  document.getElementById('rain-front')
+  const rainRoot = document.getElementById('rain')
+  const rainFront = document.createElement('div')
+  rainFront.id = 'rain-front'
+  const rainBack = document.createElement('div')
+  rainBack.id = 'rain-back'
+
+  rainRoot?.appendChild(rainFront)
+  rainRoot?.appendChild(rainBack)
 
   let increment = 0
   let drops = ''
@@ -71,6 +78,5 @@ export const makeItCrabRain = function () {
 }
 
 export const stopRain = () => {
-  document.getElementById('rain-front')!.innerHTML = ''
-  document.getElementById('rain-back')!.innerHTML = ''
+  document.getElementById('rain')!.innerHTML = ''
 }

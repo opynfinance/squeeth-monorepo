@@ -149,8 +149,7 @@ const Strategies: React.FC = () => {
 
   return (
     <div>
-      <div id="rain-front"></div>
-      <div id="rain-back"></div>
+      <div id="rain"></div>
       <Nav />
       <div className={classes.container}>
         <Tabs
