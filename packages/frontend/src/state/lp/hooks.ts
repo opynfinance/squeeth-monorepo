@@ -21,6 +21,7 @@ const x96 = new BigNumber(2).pow(96)
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
+const COLLAT_RATIO = 1.5
 
 /*** ACTIONS ***/
 
@@ -40,7 +41,7 @@ export const useOpenPositionDeposit = () => {
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
       const ethDebt = await getDebtAmount(mintWSqueethAmount)
 
-      const collateralToMint = ethDebt.multipliedBy(1.5)
+      const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
       const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
