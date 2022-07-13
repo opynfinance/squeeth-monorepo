@@ -357,38 +357,6 @@ export const useGetPosition = () => {
   return getPosition
 }
 
-export const useGetTotalSupply = () => {
-  const contract = useAtomValue(nftManagerContractAtom)
-
-  const getTotalSupply = useCallback(
-    async () => {
-      if (!contract) return null
-      const totalSupply = await contract.methods.totalSupply().call()
-
-      return totalSupply
-    },
-    [contract],
-  )
-
-  return getTotalSupply
-}
-
-export const useGetTokenByIndex = () => {
-  const contract = useAtomValue(nftManagerContractAtom)
-
-  const getTokenByIndex = useCallback(
-    async (index: BigNumber) => {
-      if (!contract) return null
-      const tokenByIndex = await contract.methods.tokenByIndex(index.toFixed(0)).call()
-
-      return tokenByIndex
-    },
-    [contract],
-  )
-
-  return getTokenByIndex
-}
-
 export const useGetDecreaseLiquidity = () => {
   const contract = useAtomValue(nftManagerContractAtom)
 

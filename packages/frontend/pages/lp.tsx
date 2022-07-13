@@ -112,7 +112,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, squeethPrice])
+  }, [vaultId, squeethPrice, openLPPosition])
 
   const updateOp = useAppCallback(async () => {
     try {
@@ -120,7 +120,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId])
+  }, [vaultId, updateOperator])
 
   const collFees = useAppCallback(async () => {
     try {
@@ -128,7 +128,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId])
+  }, [vaultId, collectFees])
 
   const closePos = useAppCallback(async () => {
     try {
@@ -136,7 +136,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId])
+  }, [vaultId, closeLPPosition])
 
   const rebalSwap = useAppCallback(async () => {
     try {
@@ -144,7 +144,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId])
+  }, [vaultId, rebalanceSwap])
 
 
   return (
