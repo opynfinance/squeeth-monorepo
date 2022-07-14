@@ -391,7 +391,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       console.log(e)
       setBuyLoading(false)
     }
-  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess, slippageAmount])
+  }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
   return (
     <div id="open-long-card">
