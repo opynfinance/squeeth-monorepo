@@ -5,7 +5,6 @@ import {
   SHORT_HELPER_ADDR,
   SWAPROUTER2_ADDR,
   SWAPROUTER_ADDR,
-  CRAB_STRATEGY_ADDR,
 } from "./addresses";
 import { TOKEN_DECIMALS_18 } from "./constants";
 import { buyOrSellSQTH, createTransactionHistory } from "./util";
@@ -14,11 +13,8 @@ import { convertTokenToDecimal } from "./utils";
 export function handleTransfer(event: Transfer): void {
   if (
     event.params.to == SHORT_HELPER_ADDR ||
-    event.params.to == CONTROLLER_ADDR ||
     event.params.to == SWAPROUTER_ADDR ||
-    event.params.to == SWAPROUTER2_ADDR ||
-    event.params.to == NFT_MANAGER_ADDR ||
-    event.params.to == CRAB_STRATEGY_ADDR
+    event.params.to == SWAPROUTER2_ADDR
   ) {
     return;
   }

@@ -10,17 +10,11 @@ import {
   createTransactionHistory,
   buyOrSellLPSQTH,
   buyOrSellLPETH,
-  buyOrSellETH,
-  buyOrSellSQTH,
 } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 import { OSQTH_TOKEN_ADDR, WETH_TOKEN_ADDR } from "../addresses";
-import {
-  loadOrCreateAccount,
-  loadOrCreateLPPosition,
-  loadOrCreatePosition,
-} from "../utils/loadInit";
+import { loadOrCreateLPPosition } from "../utils/loadInit";
 
 function updateLPposition(
   userAddr: string,
@@ -70,14 +64,6 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
 
   const userAddr = event.transaction.from.toHex();
   updateLPposition(userAddr, event.params.amount0, event.params.amount1);
-
-  const position = loadOrCreatePosition(userAddr);
-  const account = loadOrCreateAccount(userAddr);
-  // // if long & lp, selling osqth and eth for lp
-  if (position.currentOSQTHAmount.gt(account.accShortAmount.toBigDecimal())) {
-    buyOrSellSQTH(userAddr, amount0.neg());
-    buyOrSellETH(userAddr, amount1.neg());
-  }
 }
 
 // buying to remove lp
@@ -108,14 +94,6 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
     event.params.amount0.neg(),
     event.params.amount1.neg()
   );
-
-  const position = loadOrCreatePosition(userAddr);
-  const account = loadOrCreateAccount(userAddr);
-  // if long & lp, buying back osqth and eth for removing lp token
-  if (position.currentOSQTHAmount.gt(account.accShortAmount.toBigDecimal())) {
-    buyOrSellSQTH(userAddr, amount0);
-    buyOrSellETH(userAddr, amount1);
-  }
 }
 
 export function handleCollect(event: Collect): void {

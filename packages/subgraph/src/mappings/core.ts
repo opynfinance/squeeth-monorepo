@@ -7,7 +7,7 @@ import {
 import { Swap as OSQTHSwapEvent } from "../../generated/OSQTHPool/Pool";
 import { sqrtPriceX96ToTokenPrices } from "../utils/pricing";
 import { TOKEN_DECIMALS_18, TOKEN_DECIMALS_USDC, ZERO_BD } from "../constants";
-import { createTransactionHistory, buyOrSellSQTH } from "../util";
+import { createTransactionHistory } from "../util";
 import { convertTokenToDecimal } from "../utils";
 import { USDC_WETH_POOL } from "../addresses";
 import { loadOrCreateAccount } from "../utils/loadInit";
@@ -63,10 +63,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     event.params.amount0,
     TOKEN_DECIMALS_18
   );
-
-  // event.params.amount0 > 0, selling
-  // event.params.amount0 < 0, buying
-  // buyOrSellSQTH(event.transaction.from.toHex(), amount0.neg());
 
   let transactionType = "";
   if (amount0.lt(ZERO_BD)) {
