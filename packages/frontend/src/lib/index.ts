@@ -2,6 +2,7 @@ import BigNumber from 'bignumber.js'
 import { accounts_accounts_lppositions, accounts_accounts_positions } from '@queries/squeeth/__generated__/accounts'
 import { BIG_ZERO, OSQUEETH_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 export function pnl(currentValue: BigNumber, cost: BigNumber): BigNumber {
   return currentValue.minus(cost)
@@ -33,6 +34,8 @@ export function calculatePnL(
   const currentOSQTHAmount = new BigNumber(positions?.currentOSQTHAmount).abs()
 
   const currentPositionValue = oSqthPrice.times(currentOSQTHAmount).plus(currentETHAmount.times(ethPrice))
+
+  console.log(floatifyBigNums({ currentOSQTHAmount, currentETHAmount, accShortAmount }))
 
   const unrealizedCost = unrealizedOSQTHUnitCost
     .times(currentOSQTHAmount)

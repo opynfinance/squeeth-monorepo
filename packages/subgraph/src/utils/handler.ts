@@ -20,12 +20,14 @@ export function handleOSQTHChange(
 
   // When position type chages, reset PnLs and calculate with remaining amount
   let newAmount = position.currentOSQTHAmount.plus(amount);
-  let positionBalanceBeforeTrade = position.currentOSQTHAmount.minus(
-    BigDecimal.fromString(account.accShortAmount.toString())
-  );
-  let positionBalanceAfterTrade = newAmount.minus(
-    BigDecimal.fromString(account.accShortAmount.toString())
-  );
+  // let positionBalanceBeforeTrade = position.currentOSQTHAmount.minus(
+  //   BigDecimal.fromString(account.accShortAmount.toString())
+  // );
+  // let positionBalanceAfterTrade = newAmount.minus(
+  //   BigDecimal.fromString(account.accShortAmount.toString())
+  // );
+  let positionBalanceBeforeTrade = position.currentOSQTHAmount;
+  let positionBalanceAfterTrade = newAmount;
 
   if (newAmount.times(positionBalanceAfterTrade).lt(ZERO_BD)) {
     position = initPosition(userAddr, position);
