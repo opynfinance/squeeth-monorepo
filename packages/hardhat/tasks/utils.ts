@@ -83,6 +83,15 @@ export const networkNameToDweth = (name: string) => {
   }
 }
 
+export const networkNameToControllerHelper = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0xfa86d43b41Fa7a759c606130cc81970A955ff816'
+    case 'ropsten': return '0x7e9C5490e91F93529c6480B46a59D738F6bcEa43'
+    default: return undefined
+  }
+}
+
+
 export const getWETH = async (ethers: any, deployer: string, networkName: string)=> {
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
@@ -150,6 +159,16 @@ export const hasUniswapDeployments = (networkName: string) => {
   return false
 }
 
+export const getControllerHelper = async(ethers: any, deployer: string, networkName: string) => {
+  const controllerHelperAddr = networkNameToControllerHelper(networkName)
+  if (controllerHelperAddr === undefined) {
+    // get from deployed network
+    return ethers.getContract("ControllerHelper", deployer);
+  } 
+  // get contract instance at address
+  return ethers.getContractAt('ControllerHelper', controllerHelperAddr)
+}
+
 export const getUniswapDeployments = async(ethers: any, deployer: string, networkName: string) => {
   // Get Uniswap Factory
   let uniswapFactory: Contract
@@ -177,3 +196,4 @@ export const getUniswapDeployments = async(ethers: any, deployer: string, networ
 
   return { positionManager, swapRouter, uniswapFactory }
 }
+
