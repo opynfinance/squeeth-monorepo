@@ -16,6 +16,7 @@ import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../contro
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
 const COLLAT_RATIO = 1.5
+const POOL_FEE = 3000
 
 /*** ACTIONS ***/
 
@@ -67,6 +68,62 @@ export const useOpenPositionDeposit = () => {
     [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
   )
   return openPositionDeposit
+}
+
+// Close position with flashloan
+export const useClosePosition = () => {
+  const address = useAtomValue(addressAtom)
+  const controllerHelperContract = useAtomValue(controllerHelperHelperContractAtom)
+  const controllerContract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const getDebtAmount = useGetDebtAmount()
+  const getVault = useGetVault()
+  const getPosition = useGetPosition()
+  const getQuote = useGetQuote()
+  const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+    const vaultBefore = await getVault(vaultId)
+    const uniTokenId = vaultBefore?.NFTCollateralId 
+    const position = await getPosition(uniTokenId)
+
+    if (
+      !controllerContract ||
+      !controllerHelperContract ||
+      !address ||
+      !position ||
+      !vaultBefore ||
+      !vaultBefore.shortAmount
+    )
+      return
+
+      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const debtInEthPromise = getDebtAmount(shortAmount)
+      const limitEthPromise = getQuote(shortAmount, true)
+      const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
+      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+
+    const flashloanCloseVaultLpNftParam = {
+      vaultId: vaultId,
+      tokenId: uniTokenId,
+      liquidity: position.liquidity,
+      liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
+      wPowerPerpAmountToBurn: shortAmount.toFixed(0),
+      collateralToFlashloan: collateralToFlashloan.toFixed(0),
+      collateralToWithdraw: 0,
+      limitPriceEthPerPowerPerp: limitEth,
+      amount0Min: 0,
+      amount1Min: 0,
+      poolFee: POOL_FEE,
+      burnExactRemoved: true,
+    }
+
+    return handleTransaction(
+      await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
+        from: address,
+      }),
+      onTxConfirmed,
+    )
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
+  return closePosition
 }
 
 /*** GETTERS ***/
