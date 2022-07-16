@@ -118,10 +118,11 @@ export const useClosePosition = () => {
     )
       return
 
-    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-    const debtInEth = await getDebtAmount(shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
-    const limitEth = await getQuote(shortAmount, true)
+      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const debtInEthPromise = getDebtAmount(shortAmount)
+      const limitEthPromise = getQuote(shortAmount, true)
+      const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
+      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
 
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
