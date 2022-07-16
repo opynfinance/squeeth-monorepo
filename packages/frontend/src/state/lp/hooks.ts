@@ -154,9 +154,10 @@ export const useOpenPositionDeposit = () => {
     async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
       if (!contract || !address) return null
       
-      const squeethPrice = await getTwapSqueethPrice()
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const ethDebt = await getDebtAmount(mintWSqueethAmount)
+      const squeethPricePromise = getTwapSqueethPrice()
+      const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
+      const [squeethPrice, ethDebt] = await Promise.all([squeethPricePromise, ethDebtPromise])
 
       const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
