@@ -236,7 +236,7 @@ export const useRebalanceGeneralSwap = () => {
     async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
       const uniTokenId = vaultBefore?.NFTCollateralId 
-      const position = await getPosition(uniTokenId)
+      const position = uniTokenId ? await getPosition(uniTokenId) : null
       if (!controllerContract || !controllerHelperContract || !address || !position || !vaultBefore || !squeethPoolContract) return
       const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
       const debtInEth = await getDebtAmount(shortAmount)
