@@ -181,7 +181,8 @@ export const useCollectFees = () => {
       !controllerHelperContract ||
       !address ||
       !vaultBefore ||
-      !vaultBefore.shortAmount
+      !vaultBefore.shortAmount ||
+      !uniTokenId
     )
       return
 
