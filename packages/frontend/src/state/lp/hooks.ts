@@ -258,29 +258,35 @@ export const useRebalanceGeneralSwap = () => {
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
       const { sqrtPriceX96 } = await getPoolState(squeethPoolContract)
       const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
-      const squeethPrice = await getTwapSqueethPrice()
+      const squeethPrice = sqrtSqueethPrice.pow(2)
+
+      // Get previous liquidity amount in ETH
+      const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
+      const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))       
+      console.log("positionEthValue", positionEthValue.toString())
 
       let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         // All weth position
+        // newLiquidity = positionEthValue/(sqrt(upperPrice) - sqrt(lowerPrice))
+        const liquidity = positionEthValue.div(sqrtUpperPrice.minus(sqrtLowerPrice))
+        // wethAmount = L(sqrt(upperPrice) - sqrt(lowerPrice))
+        wethAmountInLPAfter = liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
         wPowerPerpAmountInLPAfter = 0
-        const ethAmountOut = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
-        wethAmountInLPAfter = new BigNumber(ethAmountOut).plus(wethAmountInLPBefore)
         amountIn = wPowerPerpAmountInLPBefore
         tokenIn = oSqueeth
         tokenOut = weth
       } else if (sqrtSqueethPrice.lt(sqrtLowerPrice)) {
         // All squeeth position
+        // newLiquidity = positionEthValue/(squeethPrice/sqrt(lowerPrice) - squeethPrice/sqrt(upperPrice))
+        const liquidity = positionEthValue.div((squeethPrice.div(sqrtLowerPrice)).minus((squeethPrice.div(sqrtUpperPrice))))
         wethAmountInLPAfter = 0
-        const squeethAmountOut = await getQuote(new BigNumber(wethAmountInLPBefore), false)
-        wPowerPerpAmountInLPAfter = new BigNumber(squeethAmountOut).plus(wPowerPerpAmountInLPBefore)
+        // wPowerPerpAmount = L/sqrt(lowerPrice) - L/sqrt(upperPrice)
+        wPowerPerpAmountInLPAfter = (liquidity.div(sqrtLowerPrice).minus(liquidity.div(sqrtUpperPrice)))
         amountIn = wethAmountInLPBefore
         tokenIn = weth
         tokenOut = oSqueeth
       } else {
-        // Get previous liquidity ammount in ETH
-        const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
-        const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))
         // newLiquidity = positionEthValue/(squeethPrice/sqrt(squeethPrice) - squeethPrice/sqrt(upperPrice) + sqrt(squeethPrice) - sqrt(lowerPrice))
         const liquidity = positionEthValue.div((new BigNumber(squeethPrice).div(sqrtSqueethPrice))
                                                                           .minus((new BigNumber(squeethPrice).div(sqrtUpperPrice)))
