@@ -150,7 +150,7 @@ export const useOpenPositionDeposit = () => {
   const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
       if (!contract || !address) return null
       
       const squeethPrice = await getTwapSqueethPrice()
@@ -165,7 +165,7 @@ export const useOpenPositionDeposit = () => {
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
-        vaultId: 0,
+        vaultId: vaultId,
         wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
         collateralToDeposit: collateralToMint.toFixed(0),
         collateralToFlashloan: collateralToMint.toFixed(0),
