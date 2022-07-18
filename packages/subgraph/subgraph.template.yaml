@@ -127,3 +127,71 @@ dataSources:
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
+  - kind: ethereum/contract
+    name: WPowerPerp
+    network: {{network}}
+    source:
+      address: "{{WPowerPerp}}"
+      abi: WPowerPerp
+      startBlock: {{WPowerPerp-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/wPowerPerp.ts
+      entities:
+        - Position
+        - TransactionHistory
+      abis:
+        - name: WPowerPerp
+          file: ./abis/WPowerPerp.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+  - kind: ethereum/contract
+    name: OSQTHPool
+    network: {{network}}
+    source:
+      address: "{{OSQTHPool}}"
+      abi: Pool
+      startBlock: {{OSQTHPool-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/mappings/core.ts
+      entities:
+        - Pool
+        - Position
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleOSQTHSwap
+  - kind: ethereum/contract
+    name: USDCPool
+    network: {{network}}
+    source:
+      address: "{{USDCPool}}"
+      abi: Pool
+      startBlock: {{USDCPool-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/core.ts
+      entities:
+        - Pool
+        - TransactionHistory
+      abis:
+        - name: Pool
+          file: ./abis/pool.json
+      eventHandlers:
+        - event: Initialize(uint160,int24)
+          handler: handleInitialize
+        - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
+          handler: handleUSDCSwap

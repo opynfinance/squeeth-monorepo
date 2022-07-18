@@ -37,12 +37,8 @@ import {
 } from "../generated/schema";
 import { loadOrCreateAccount } from "./util";
 
-import {
-  BIGINT_ONE,
-  BIGINT_ZERO,
-  SHORT_HELPER_ADDR,
-  EMPTY_ADDR,
-} from "./constants";
+import { BIGINT_ONE, BIGINT_ZERO } from "./constants";
+import { EMPTY_ADDR, SHORT_HELPER_ADDR } from "./addresses";
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with

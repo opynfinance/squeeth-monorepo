@@ -19,5 +19,11 @@
   "TickMathExternal": "0x4d9d7F7aE80d51628Aa56eF37720718C99E6FDfC",
   "TickMathExternal-start-block": 13982535,
   "CrabStrategyDeployment": "0xf205ad80bb86ac92247638914265887a8baa437d",
-  "CrabStrategyDeployment-start-block": 11808056
+  "CrabStrategyDeployment-start-block": 11808056,
+  "NonfungiblePositionManagerDeployment": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
+  "NonfungiblePositionManagerDeployment-start-block": 11808056,
+  "OSQTHPool": "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C",
+  "OSQTHPool-start-block": 11808056,
+  "USDCPool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
+  "USDCPool-start-block": 11808056
 }

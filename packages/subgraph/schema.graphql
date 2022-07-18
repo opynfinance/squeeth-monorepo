@@ -11,6 +11,16 @@ type Account @entity {
   id: ID!
   vaults: [Vault!]! @derivedFrom(field: "owner")
   vaultCount: BigInt!
+
+  sqthOpenAmount: BigDecimal!
+  sqthOpenUnitPrice: BigDecimal!
+  sqthCloseAmount: BigDecimal!
+  sqthCloseUnitPrice: BigDecimal!
+
+  ethDepositAmount: BigDecimal!
+  ethDepositUnitPrice: BigDecimal!
+  ethWithdrawAmount: BigDecimal!
+  ethWitdhrawUnitPrice: BigDecimal!
 }
 
 type Liquidation @entity {
@@ -88,4 +98,17 @@ type CrabAuction @entity {
   isHedgingOnUniswap: Boolean!
   owner: Bytes!
   timestamp: BigInt!
+}
+
+type Pool @entity {
+  # pool address
+  id: ID!
+  # creation
+  createdAtTimestamp: BigInt!
+  # current price tracker
+  sqrtPrice: BigInt!
+  # token0 per token1
+  token0Price: BigDecimal
+  # token1 per token0
+  token1Price: BigDecimal
 }
