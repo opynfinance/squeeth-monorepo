@@ -14,7 +14,8 @@ import { Links, Vaults } from '@constants/enums'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
-import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+// import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
@@ -260,7 +261,7 @@ const Strategies: React.FC = () => {
                   {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
-                      <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                      <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                     ) : (
                       <div className={classes.connectWalletDiv}>
                         <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
