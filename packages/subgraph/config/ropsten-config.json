@@ -23,9 +23,13 @@
   "WPowerPerp": "0xa4222f78d23593e82Aa74742d25D06720DCa4ab7",
   "WPowerPerp-start-block": 11808030,
   "CrabStrategyDeployment": "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf",
-  "CrabStrategyDeployment-start-block": 11808056,
+  "CrabStrategyDeployment-start-block": 11851694,
   "SqrtPriceMathPartial": "0x786a197a14C5dBD1B10acb3a997F6d0E81b447ea",
   "SqrtPriceMathPartial-start-block": 11808047,
   "TickMathExternal": "0xAca2c805A88f80D7857773E4b80dE580Dc7ef4Ea",
-  "TickMathExternal-start-block": 11808046
+  "TickMathExternal-start-block": 11808046,
+  "CrabV2": "0xdd1e9c25115e0d6e531d9f9e6ab7dbbed15158ce",
+  "CrabV2-start-block": 12581446,
+  "Timelock": "0xf15964458bca1941de53fbc004ba7842f4783ec6",
+  "Timelock-start-block": 12482222
 }
