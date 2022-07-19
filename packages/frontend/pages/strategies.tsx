@@ -1,6 +1,6 @@
 import { LinkButton } from '@components/Button'
 import Nav from '@components/Nav'
-import CapDetails from '@components/Strategies/Crab/CapDetails'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
@@ -23,7 +23,7 @@ import {
   crabStrategyCollatRatioAtom,
   crabStrategyVaultAtom,
   currentCrabPositionValueInETHAtom,
-  maxCapAtom,
+  maxCapAtomV2,
   timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
@@ -112,7 +112,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   const classes = useStyles()
-  const maxCap = useAtomValue(maxCapAtom)
+  const maxCap = useAtomValue(maxCapAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtom)
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
   const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtom)
@@ -201,7 +201,7 @@ const Strategies: React.FC = () => {
             </Typography>
             <div className={classes.body}>
               <div className={classes.details}>
-                <CapDetails maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                <CapDetailsV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 <div className={classes.overview}>
                   <StrategyInfoItem
                     value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
