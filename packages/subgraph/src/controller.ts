@@ -35,9 +35,9 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import { loadOrCreateAccount } from "./util";
+import { convertTokenToDecimal, ethChange, loadOrCreateAccount } from "./util";
 
-import { BIGINT_ONE, BIGINT_ZERO } from "./constants";
+import { BIGINT_ONE, BIGINT_ZERO, TOKEN_DECIMALS_18 } from "./constants";
 import { EMPTY_ADDR, SHORT_HELPER_ADDR } from "./addresses";
 
 // Note: If a handler doesn't require existing field values, it is faster
@@ -151,6 +151,9 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
+
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  ethChange(vault.owner, amount);
 }
 
 export function handleDepositUniPositionToken(
@@ -329,6 +332,9 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
+
+  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  ethChange(vault.owner, amount.neg());
 }
 
 export function handleWithdrawUniPositionToken(

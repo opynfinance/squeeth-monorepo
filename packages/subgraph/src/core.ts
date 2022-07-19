@@ -2,6 +2,8 @@ import { Pool } from "../generated/schema";
 import { USDC_WETH_POOL } from "./addresses";
 import { TOKEN_DECIMALS_18, TOKEN_DECIMALS_USDC } from "./constants";
 import { loadOrCreateAccount, sqrtPriceX96ToTokenPrices } from "./util";
+import { Swap as USDCSwapEvent, Initialize } from "../generated/USDCPool/Pool";
+import { Swap as OSQTHSwapEvent } from "../generated/OSQTHPool/Pool";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price

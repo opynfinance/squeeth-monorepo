@@ -14,10 +14,10 @@
   "ShortPowerPerp-start-block": 13982499,
   "WPowerPerp": "0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B",
   "WPowerPerp-start-block": 13982500,
-  "SqrtPriceMathPartial": "0x9cf8dcbCf115B06d8f577E73Cb9EdFdb27828460",
-  "SqrtPriceMathPartial-start-block": 13982540,
-  "TickMathExternal": "0x4d9d7F7aE80d51628Aa56eF37720718C99E6FDfC",
-  "TickMathExternal-start-block": 13982535,
+  "SqrtPriceMathPartial": "0xb9127F2e97F6816DCd7b85d8617B7AcFe5E15419",
+  "SqrtPriceMathPartial-start-block": 14922911,
+  "TickMathExternal": "0x8f92cfB1BF6eD1ce79F2E8Eb0DC96e0F3b61276D",
+  "TickMathExternal-start-block": 14922910,
   "CrabStrategyDeployment": "0xf205ad80bb86ac92247638914265887a8baa437d",
   "CrabStrategyDeployment-start-block": 11808056,
   "NonfungiblePositionManagerDeployment": "0xC36442b4a4522E871399CD717aBDD847Ab11FE88",
@@ -25,5 +25,9 @@
   "OSQTHPool": "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C",
   "OSQTHPool-start-block": 11808056,
   "USDCPool": "0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8",
-  "USDCPool-start-block": 11808056
+  "USDCPool-start-block": 11808056,
+  "ControllerHelper": "0xfa86d43b41Fa7a759c606130cc81970A955ff816",
+  "ControllerHelper-start-block": 14925294,
+  "ControllerHelperUtil": "0xB53c2eE92A24B08521912e1687Bc8142a7E6a9EE",
+  "ControllerHelperUtil-start-block": 14922913
 }

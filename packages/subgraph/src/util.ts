@@ -1,6 +1,13 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { Account } from "../generated/schema";
-import { BIGINT_ZERO, BIGINT_ONE, BIGDECIMAL_ZERO } from "./constants";
+import { Account, Pool } from "../generated/schema";
+import { OSQTH_WETH_POOL, USDC_WETH_POOL } from "./addresses";
+import {
+  BIGINT_ZERO,
+  BIGINT_ONE,
+  BIGDECIMAL_ZERO,
+  TOKEN_DECIMALS_USDC,
+  TOKEN_DECIMALS_18,
+} from "./constants";
 
 export function loadOrCreateAccount(accountId: string): Account {
   let account = Account.load(accountId);
@@ -66,7 +73,43 @@ export function sqrtPriceX96ToTokenPrices(
   return [price0, price1];
 }
 
-export function resetPrices(userAddr: string) {
+export function getEthUsdcPrices(): BigDecimal[] {
+  let usdcPool = Pool.load(USDC_WETH_POOL);
+  if (usdcPool == null) {
+    return [BIGDECIMAL_ZERO, BIGDECIMAL_ZERO, BIGDECIMAL_ZERO];
+  }
+  let usdcPrices = sqrtPriceX96ToTokenPrices(
+    usdcPool.sqrtPrice,
+    TOKEN_DECIMALS_USDC,
+    TOKEN_DECIMALS_18
+  );
+
+  return [usdcPool.sqrtPrice.toBigDecimal(), usdcPrices[0], usdcPrices[1]];
+}
+
+export function getSqthEthPrices(): BigDecimal[] {
+  let osqthPool = Pool.load(OSQTH_WETH_POOL);
+  let usdcPrices = getEthUsdcPrices();
+
+  if (osqthPool == null) {
+    return [BIGDECIMAL_ZERO, BIGDECIMAL_ZERO, BIGDECIMAL_ZERO, BIGDECIMAL_ZERO];
+  }
+
+  let sqthPrices = sqrtPriceX96ToTokenPrices(
+    osqthPool.sqrtPrice,
+    TOKEN_DECIMALS_18,
+    TOKEN_DECIMALS_18
+  );
+
+  return [
+    osqthPool.sqrtPrice.toBigDecimal(),
+    sqthPrices[0],
+    sqthPrices[1],
+    sqthPrices[1].times(usdcPrices[1]),
+  ];
+}
+
+export function resetPrices(userAddr: string): void {
   let account = loadOrCreateAccount(userAddr);
 
   account.sqthOpenAmount = BIGDECIMAL_ZERO;
@@ -76,12 +119,12 @@ export function resetPrices(userAddr: string) {
   account.ethDepositAmount = BIGDECIMAL_ZERO;
   account.ethDepositUnitPrice = BIGDECIMAL_ZERO;
   account.ethWithdrawAmount = BIGDECIMAL_ZERO;
-  account.ethWitdhrawUnitPrice = BIGDECIMAL_ZERO;
+  account.ethWithdrawUnitPrice = BIGDECIMAL_ZERO;
 
   account.save();
 }
 
-export function sqthChange(userAddr: string, amount: BigDecimal) {
+export function sqthChange(userAddr: string, amount: BigDecimal): void {
   let account = loadOrCreateAccount(userAddr);
 
   let sqthAmount = account.sqthOpenAmount.plus(account.sqthCloseAmount);
@@ -98,14 +141,62 @@ export function sqthChange(userAddr: string, amount: BigDecimal) {
     return;
   }
 
+  let sqthPrices = getSqthEthPrices();
+
   // Open
-  if (sqthAmount.times(amount).gt(BIGDECIMAL_ZERO)) {
+  if (sqthAmount.times(amount).ge(BIGDECIMAL_ZERO)) {
     let oldSqthOpenAmount = account.sqthOpenAmount;
     let oldSqthOpenUnitPrice = account.sqthOpenUnitPrice;
 
-    // account.sqthOpenAmount = oldSqthOpenAmount.plus(amount);
-    // account.sqthOpenUnitPrice = oldSqthOpenUnitPrice
-    //   .times(oldSqthOpenAmount)
-    //   .plus();
+    account.sqthOpenAmount = oldSqthOpenAmount.plus(amount);
+    account.sqthOpenUnitPrice = oldSqthOpenUnitPrice
+      .times(oldSqthOpenAmount)
+      .plus(amount.times(sqthPrices[3]))
+      .div(oldSqthOpenAmount.plus(amount));
   }
+
+  // Close
+  if (sqthAmount.times(amount).lt(BIGDECIMAL_ZERO)) {
+    let oldSqthCloseAmount = account.sqthCloseAmount;
+    let oldSqthCloseUnitPrice = account.sqthCloseUnitPrice;
+
+    account.sqthCloseAmount = oldSqthCloseAmount.plus(amount);
+    account.sqthCloseUnitPrice = oldSqthCloseUnitPrice
+      .times(oldSqthCloseAmount)
+      .plus(amount.times(sqthPrices[3]))
+      .div(oldSqthCloseAmount.plus(amount));
+  }
+
+  account.save();
+}
+
+export function ethChange(userAddr: string, amount: BigDecimal): void {
+  let account = loadOrCreateAccount(userAddr);
+  let usdcPrices = getEthUsdcPrices();
+
+  // Deposit
+  if (amount.gt(BIGDECIMAL_ZERO)) {
+    let oldEthDepositAmount = account.ethDepositAmount;
+    let oldEthDepositUnitPrice = account.ethDepositUnitPrice;
+
+    account.ethDepositAmount = oldEthDepositAmount.plus(amount);
+    account.ethDepositUnitPrice = oldEthDepositUnitPrice
+      .times(oldEthDepositAmount)
+      .plus(amount.times(usdcPrices[0]))
+      .div(oldEthDepositAmount.plus(amount));
+  }
+
+  // Withdraw
+  if (amount.lt(BIGDECIMAL_ZERO)) {
+    let oldEthWithdrawAmount = account.ethWithdrawAmount;
+    let oldEthWithdrawUnitPrice = account.ethWithdrawUnitPrice;
+
+    account.ethWithdrawAmount = oldEthWithdrawAmount.plus(amount);
+    account.ethWithdrawUnitPrice = oldEthWithdrawUnitPrice
+      .times(oldEthWithdrawAmount)
+      .plus(amount.times(usdcPrices[0]))
+      .div(oldEthWithdrawAmount.plus(amount));
+  }
+
+  account.save();
 }

@@ -20,7 +20,7 @@ type Account @entity {
   ethDepositAmount: BigDecimal!
   ethDepositUnitPrice: BigDecimal!
   ethWithdrawAmount: BigDecimal!
-  ethWitdhrawUnitPrice: BigDecimal!
+  ethWithdrawUnitPrice: BigDecimal!
 }
 
 type Liquidation @entity {

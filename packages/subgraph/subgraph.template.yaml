@@ -140,8 +140,7 @@ dataSources:
       language: wasm/assemblyscript
       file: ./src/wPowerPerp.ts
       entities:
-        - Position
-        - TransactionHistory
+        - Account
       abis:
         - name: WPowerPerp
           file: ./abis/WPowerPerp.json
@@ -159,11 +158,10 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
-      file: ./src/mappings/core.ts
+      file: ./src/core.ts
       entities:
         - Pool
         - Position
-        - TransactionHistory
       abis:
         - name: Pool
           file: ./abis/pool.json
@@ -172,6 +170,36 @@ dataSources:
           handler: handleInitialize
         - event: Swap(indexed address,indexed address,int256,int256,uint160,uint128,int24)
           handler: handleOSQTHSwap
+  - kind: ethereum/contract
+    name: NonfungiblePositionManager
+    network: {{network}}
+    source:
+      address: "{{NonfungiblePositionManagerDeployment}}"
+      abi: NonfungiblePositionManager
+      startBlock: {{NonfungiblePositionManagerDeployment-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      file: ./src/positionManager.ts
+      entities:
+        - Account
+      abis:
+        - name: NonfungiblePositionManager
+          file: ./abis/NonfungiblePositionManager.json
+        - name: Pool
+          file: ./abis/pool.json
+        - name: Factory
+          file: ./abis/factory.json
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: IncreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleIncreaseLiquidity
+        - event: DecreaseLiquidity(indexed uint256,uint128,uint256,uint256)
+          handler: handleDecreaseLiquidity
+        - event: Collect(indexed uint256,address,uint256,uint256)
+          handler: handleCollect
   - kind: ethereum/contract
     name: USDCPool
     network: {{network}}
@@ -186,7 +214,6 @@ dataSources:
       file: ./src/core.ts
       entities:
         - Pool
-        - TransactionHistory
       abis:
         - name: Pool
           file: ./abis/pool.json
