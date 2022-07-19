@@ -19,7 +19,6 @@ import './tasks/addWethLiquidity'
 import './tasks/buySqueeth'
 import './tasks/buyWeth'
 import './tasks/increaseSlot'
-import './tasks/hedgeCrabV2'
 
 // Load env variables
 dotenv.config()
