@@ -1,5 +1,6 @@
 import {
     SetHedgePriceThreshold,
+    SetHedgeTimeThreshold,
     HedgeOTC,
     HedgeOTCSingle,
     SetStrategyCap,
@@ -23,7 +24,7 @@ import {
     VaultTransferred as VaultTransferredSchema
 } from "../generated/schema"
 
-export function handleSetHedgeTimeThreshold(event: SetHedgePriceThreshold): void {
+export function handleSetHedgeTimeThreshold(event: SetHedgeTimeThreshold): void {
   const timeThreshold = new CrabHedgeTimeThreshold(event.transaction.hash.toHex())
   timeThreshold.threshold = event.params.newHedgePriceThreshold;
   timeThreshold.timestamp = event.block.timestamp;
