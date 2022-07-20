@@ -380,7 +380,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     setBuyLoading(true)
     try {
       await buyAndRefund(new BigNumber(ethTradeAmount), () => {
-        
         setTradeSuccess(true)
         setTradeCompleted(true)
 
@@ -548,7 +547,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     priceImpact={quote.priceImpact}
                     minReceived={quote.minimumAmountOut.toFixed(6)}
                     minReceivedUnit="oSQTH"
-                    pools = {quote.pools}
+                    pools={quote.pools}
                   />
                 </div>
               </div>
@@ -598,7 +597,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 <Typography variant="caption" className={classes.caption} component="div">
                   <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                     {' '}
-                    Trades on Uniswap 
+                    Trades on Uniswap
                   </a>
 
                   <a href={Links.AutoRouter} target="_blank" rel="noreferrer">
@@ -914,8 +913,8 @@ const CloseLong: React.FC<BuyProps> = () => {
               slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
               priceImpact={quote.priceImpact}
               minReceived={quote.minimumAmountOut.toFixed(4)}
-              minReceivedUnit="ETH" 
-              pools={quote.pools}            
+              minReceivedUnit="ETH"
+              pools={quote.pools}
             />
           </div>
           <div className={classes.buttonDiv}>
@@ -969,7 +968,7 @@ const CloseLong: React.FC<BuyProps> = () => {
             <Typography variant="caption" className={classes.caption} component="div">
               <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
                 {' '}
-                Trades on Uniswap 
+                Trades on Uniswap
               </a>
 
               <a href={Links.AutoRouter} target="_blank" rel="noreferrer">

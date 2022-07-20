@@ -153,10 +153,7 @@ export function sqthChange(userAddr: string, amount: BigDecimal): void {
       .times(oldSqthOpenAmount)
       .plus(amount.times(sqthPrices[3]))
       .div(oldSqthOpenAmount.plus(amount));
-  }
-
-  // Close
-  if (sqthAmount.times(amount).lt(BIGDECIMAL_ZERO)) {
+  } else {
     let oldSqthCloseAmount = account.sqthCloseAmount;
     let oldSqthCloseUnitPrice = account.sqthCloseUnitPrice;
 
@@ -182,7 +179,7 @@ export function ethChange(userAddr: string, amount: BigDecimal): void {
     account.ethDepositAmount = oldEthDepositAmount.plus(amount);
     account.ethDepositUnitPrice = oldEthDepositUnitPrice
       .times(oldEthDepositAmount)
-      .plus(amount.times(usdcPrices[0]))
+      .plus(amount.times(usdcPrices[1]))
       .div(oldEthDepositAmount.plus(amount));
   }
 
@@ -194,7 +191,7 @@ export function ethChange(userAddr: string, amount: BigDecimal): void {
     account.ethWithdrawAmount = oldEthWithdrawAmount.plus(amount);
     account.ethWithdrawUnitPrice = oldEthWithdrawUnitPrice
       .times(oldEthWithdrawAmount)
-      .plus(amount.times(usdcPrices[0]))
+      .plus(amount.times(usdcPrices[1]))
       .div(oldEthWithdrawAmount.plus(amount));
   }
 
