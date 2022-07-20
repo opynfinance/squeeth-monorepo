@@ -164,3 +164,13 @@ type VaultTransferred @entity {
   strategy: Bytes!
   timestamp: BigInt!
 }
+
+type CrabUserTx @entity {
+  id: ID!
+  owner: Bytes!
+  user: Bytes!
+  lpAmount: BigInt
+  ethAmount: BigInt!
+  wSqueethAmount: BigInt
+  timestamp: BigInt!
+}

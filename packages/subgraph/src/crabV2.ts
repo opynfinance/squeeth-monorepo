@@ -6,8 +6,16 @@ import {
     SetStrategyCap,
     SetHedgingTwapPeriod,
     SetOTCPriceTolerance,
-    VaultTransferred
+    VaultTransferred,
+    Deposit,
+    Withdraw,
+    WithdrawShutdown,
+    FlashDeposit,
+    FlashWithdraw,
+    FlashDepositCallback,
+    FlashWithdrawCallback,
   } from "../generated/CrabStrategyV2/CrabStrategyV2"
+  import { BigInt } from "@graphprotocol/graph-ts"
 
 import { QueueTransaction } from "../generated/Timelock/Timelock";
 
@@ -21,12 +29,85 @@ import {
     SetHedgePriceThreshold as SetHedgePriceThresholdSchema,
     TimeLockTx,
     SetOTCPriceTolerance as SetOTCPriceToleranceSchema,
-    VaultTransferred as VaultTransferredSchema
+    VaultTransferred as VaultTransferredSchema,
+    CrabUserTx as CrabUserTxSchema,
+    CrabUserTx,
 } from "../generated/schema"
+
+function loadOrCreateTx(id: string): CrabUserTxSchema {
+  const strategy = CrabUserTx.load(id)
+  if (strategy) return strategy
+
+  return new CrabUserTx(id)
+}
+
+export function handleDeposit(event: Deposit): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.wSqueethAmount
+  userTx.lpAmount = event.params.lpAmount
+  userTx.ethAmount = event.transaction.value
+  userTx.user = event.params.depositor
+  userTx.owner = event.transaction.from
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleWithdraw(event: Withdraw): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.wSqueethAmount
+  userTx.lpAmount = event.params.crabAmount
+  userTx.ethAmount = event.params.ethWithdrawn
+  userTx.user = event.params.withdrawer
+  userTx.owner = event.transaction.from
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleWithdrawShutdown(event: WithdrawShutdown): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.lpAmount = event.params.crabAmount
+  userTx.ethAmount = event.params.ethWithdrawn
+  userTx.user = event.params.withdrawer
+  userTx.owner = event.transaction.from
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleFlashDeposit(event: FlashDeposit): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.tradedAmountOut
+  userTx.ethAmount = (userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')).plus(event.transaction.value)
+  userTx.user = event.params.depositor
+  userTx.owner = event.transaction.from
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleFlashWithdraw(event: FlashWithdraw): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.wSqueethAmount
+  userTx.lpAmount = event.params.crabAmount
+  userTx.user = event.params.withdrawer
+  userTx.owner = event.transaction.from
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleFlashDepositCallback(event: FlashDepositCallback): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.ethAmount = ((userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')) as BigInt).minus(event.params.excess)
+  userTx.save()
+}
+
+export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.ethAmount = event.params.excess
+  userTx.save()
+}
 
 export function handleSetHedgeTimeThreshold(event: SetHedgeTimeThreshold): void {
   const timeThreshold = new CrabHedgeTimeThreshold(event.transaction.hash.toHex())
-  timeThreshold.threshold = event.params.newHedgePriceThreshold;
+  timeThreshold.threshold = event.params.newHedgeTimeThreshold;
   timeThreshold.timestamp = event.block.timestamp;
   timeThreshold.save()
 }
