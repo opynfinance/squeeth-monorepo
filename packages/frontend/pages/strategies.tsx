@@ -20,13 +20,13 @@ import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
-  crabStrategyCollatRatioAtom,
-  crabStrategyVaultAtom,
+  crabStrategyCollatRatioAtomV2,
+  crabStrategyVaultAtomV2,
   currentCrabPositionValueInETHAtom,
   maxCapAtomV2,
-  timeAtLastHedgeAtom,
+  timeAtLastHedgeAtomV2,
 } from 'src/state/crab/atoms'
-import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyDataV2 } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
@@ -113,11 +113,11 @@ const Strategies: React.FC = () => {
 
   const classes = useStyles()
   const maxCap = useAtomValue(maxCapAtomV2)
-  const vault = useAtomValue(crabStrategyVaultAtom)
-  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtom)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
+  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
-  const setStrategyData = useSetStrategyData()
+  const setStrategyData = useSetStrategyDataV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
 

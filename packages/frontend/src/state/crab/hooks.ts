@@ -114,6 +114,7 @@ export const useSetStrategyDataV2 = () => {
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
 
+
   const setStrategyData = useCallback(async () => {
     if (!contract) return
 
@@ -123,6 +124,7 @@ export const useSetStrategyDataV2 = () => {
       .then((v) => {
         setVault(v)
         if (v) {
+          console.log(v, "here");
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount)
             .then((cl) => {
               setCollatRatio(cl.collateralPercent)
