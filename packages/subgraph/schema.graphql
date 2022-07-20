@@ -172,5 +172,6 @@ type CrabUserTx @entity {
   lpAmount: BigInt
   ethAmount: BigInt!
   wSqueethAmount: BigInt
+  type: String!
   timestamp: BigInt!
 }

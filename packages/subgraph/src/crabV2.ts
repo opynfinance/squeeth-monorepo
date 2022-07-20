@@ -48,6 +48,7 @@ export function handleDeposit(event: Deposit): void {
   userTx.ethAmount = event.transaction.value
   userTx.user = event.params.depositor
   userTx.owner = event.transaction.from
+  userTx.type = 'DEPOSIT'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -59,6 +60,7 @@ export function handleWithdraw(event: Withdraw): void {
   userTx.ethAmount = event.params.ethWithdrawn
   userTx.user = event.params.withdrawer
   userTx.owner = event.transaction.from
+  userTx.type = 'WITHDRAW'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -69,6 +71,7 @@ export function handleWithdrawShutdown(event: WithdrawShutdown): void {
   userTx.ethAmount = event.params.ethWithdrawn
   userTx.user = event.params.withdrawer
   userTx.owner = event.transaction.from
+  userTx.type = 'WITHDRAW_SHUTDOWN'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -79,6 +82,7 @@ export function handleFlashDeposit(event: FlashDeposit): void {
   userTx.ethAmount = (userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')).plus(event.transaction.value)
   userTx.user = event.params.depositor
   userTx.owner = event.transaction.from
+  userTx.type = 'FLASH_DEPOSIT'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -89,6 +93,7 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.lpAmount = event.params.crabAmount
   userTx.user = event.params.withdrawer
   userTx.owner = event.transaction.from
+  userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -96,12 +101,14 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
 export function handleFlashDepositCallback(event: FlashDepositCallback): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = ((userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')) as BigInt).minus(event.params.excess)
+  userTx.type = 'FLASH_DEPOSIT_CALLBACK'
   userTx.save()
 }
 
 export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.params.excess
+  userTx.type = 'FLASH_WITHDRAW_CALLBACK'
   userTx.save()
 }
 
