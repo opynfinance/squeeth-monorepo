@@ -458,6 +458,8 @@ export const useAutoRoutedBuyAndRefund = () => {
             value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
             from: address,
             gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
+          maxPriorityFeePerGas: null,
+          maxFeePerGas: null,
         }),
         onTxConfirmed,
       )
@@ -680,7 +682,9 @@ export const useAutoRoutedSell = () => {
       const encodedUnwrapCall = swapIface.encodeFunctionData('unwrapWETH9(uint256,address)', [fromTokenAmount(minimumAmountOut, 18).toString(), address])
       const result = await handleTransaction(
         swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata, encodedUnwrapCall]).send({
-            from: address,
+          from: address,
+          maxPriorityFeePerGas: null,
+          maxFeePerGas: null,
         }),
         onTxConfirmed,
       )
