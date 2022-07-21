@@ -118,7 +118,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
    // which crab strategy to display. V1 or V2. 
-   const displayCrabV1 = true; 
+   const displayCrabV1 = false; 
 
   const classes = useStyles()
   const maxCap = displayCrabV1? useAtomValue(maxCapAtom) : useAtomValue(maxCapAtomV2)
