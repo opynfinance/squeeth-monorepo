@@ -127,3 +127,73 @@ dataSources:
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
+  - kind: ethereum/contract
+    name: CrabStrategyV2
+    network: {{network}}
+    source:
+      address: "{{CrabStrategyV2}}"
+      abi: CrabStrategyV2
+      startBlock: {{CrabStrategyV2-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SetHedgeTimeThreshold
+      abis:
+        - name: CrabStrategyV2
+          file: ./abis/CrabStrategyV2.json
+      eventHandlers:
+        - event: SetHedgeTimeThreshold(uint256)
+          handler: handleSetHedgeTimeThreshold
+        - event: HedgeOTC(uint256,uint256,bool,uint256)
+          handler: handleHedgeOTC
+        - event: HedgeOTCSingle(address,uint256,uint256,uint256,bool,uint256)
+          handler: handleHedgeOTCSingle
+        - event: SetStrategyCap(uint256)
+          handler: handleSetStrategyCap
+        - event: SetHedgingTwapPeriod(uint32)
+          handler: handleSetHedgingTwapPeriod
+        - event: SetHedgePriceThreshold(uint256)
+          handler: handleSetHedgePriceThreshold
+        - event: SetOTCPriceTolerance(uint256)
+          handler: handleSetOTCPriceTolerance
+        - event: VaultTransferred(indexed address,uint256)
+          handler: handleVaultTransferred
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdrawShutdown
+        - event: FlashDeposit(indexed address,uint256,uint256)
+          handler: handleFlashDeposit
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: FlashDepositCallback(indexed address,uint256,uint256)
+          handler: handleFlashDepositCallback
+        - event: FlashWithdrawCallback(indexed address,uint256,uint256)
+          handler: handleFlashWithdrawCallback 
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: Timelock
+    network: {{network}}
+    source:
+      address: "{{Timelock}}"
+      abi: Timelock
+      startBlock: {{Timelock-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TimeLockTx
+      abis:
+        - name: Timelock
+          file: ./abis/Timelock.json
+      eventHandlers:
+        - event: QueueTransaction(indexed bytes32,indexed address,uint256,string,bytes,uint256)
+          handler: handleQueueTransaction
+        - event: ExecuteTransaction(indexed bytes32,indexed address,uint256,string,bytes,uint256)
+          handler: handleExecuteTransaction
+      file: ./src/crabV2.ts

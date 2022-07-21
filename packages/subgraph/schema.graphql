@@ -89,3 +89,89 @@ type CrabAuction @entity {
   owner: Bytes!
   timestamp: BigInt!
 }
+
+type CrabHedgeTimeThreshold @entity {
+  id: ID!
+  threshold: BigInt!
+  timestamp: BigInt!
+}
+
+type TimeLockTx @entity {
+  id: ID!
+  target: Bytes!
+  value: BigInt!
+  signature: String!
+  data: Bytes
+  eta: BigInt!
+  queued: Boolean
+  timestamp: BigInt!
+}
+
+type ExecuteTimeLockTx @entity {
+  id: ID!
+  timelocktx: TimeLockTx!
+  timestamp: BigInt!
+}
+
+type HedgeOTC @entity {
+  id: ID!
+  bidID: BigInt!
+  quantity: BigInt!
+  isBuying: Boolean!
+  clearingPrice: BigInt!
+  timestamp: BigInt!
+}
+
+type HedgeOTCSingle @entity {
+  id: ID!
+  trader: Bytes!
+  bidID: BigInt!
+  quantity: BigInt!
+  price: BigInt!
+  isBuying: Boolean!
+  clearingPrice: BigInt!
+  hedgeOTC: HedgeOTC!
+  timestamp: BigInt!
+}
+
+type SetStrategyCap @entity {
+  id: ID!
+  cap: BigInt!
+  timestamp: BigInt!
+}
+
+type SetHedgingTwapPeriod @entity {
+  id: ID!
+  hedging: BigInt!
+  timestamp: BigInt!
+}
+
+type SetHedgePriceThreshold @entity {
+  id: ID!
+  threshold: BigInt!
+  timestamp: BigInt!
+}
+
+type SetOTCPriceTolerance @entity {
+  id: ID!
+  tolerance: BigInt!
+  timestamp: BigInt!
+}
+
+type VaultTransferred @entity {
+  id: ID!
+  vaultID: BigInt!
+  strategy: Bytes!
+  timestamp: BigInt!
+}
+
+type CrabUserTx @entity {
+  id: ID!
+  owner: Bytes!
+  user: Bytes!
+  lpAmount: BigInt
+  ethAmount: BigInt!
+  wSqueethAmount: BigInt
+  type: String!
+  timestamp: BigInt!
+}
