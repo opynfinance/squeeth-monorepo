@@ -40,6 +40,7 @@ import {
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import CrabPositionV2 from './CrabPositionV2'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -361,7 +362,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="1.5rem" />}
               </PrimaryButton>
             )}
-            <CrabPosition />
+            <CrabPositionV2 />
           </div>
         </>
       )}
