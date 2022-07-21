@@ -142,7 +142,7 @@ dataSources:
         - SetHedgeTimeThreshold
       abis:
         - name: CrabStrategyV2
-          file: ./abis/CrabV2.json
+          file: ./abis/CrabStrategyV2.json
       eventHandlers:
         - event: SetHedgeTimeThreshold(uint256)
           handler: handleSetHedgeTimeThreshold
