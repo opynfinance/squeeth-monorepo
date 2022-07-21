@@ -11,7 +11,7 @@ import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useSwaps } from 'src/state/positions/hooks'
-import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
+import { isLPAtom, swapsAtom } from 'src/state/positions/atoms'
 import {
   actualTradeTypeAtom,
   isOpenPositionAtom,
@@ -172,14 +172,10 @@ const pnlClass = (pnl: BigNumber, classes: any) => {
 }
 
 const PositionCard: React.FC = () => {
-  const loading = useAtomValue(loadingAtom)
-  const isToHidePnL = useAtomValue(isToHidePnLAtom)
-
-  const positionType = useAtomValue(positionTypeAtom)
+  const isToHidePnL = false
   const { startPolling, stopPolling } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
-  const { squeethAmount } = useComputeSwaps()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
@@ -197,8 +193,13 @@ const PositionCard: React.FC = () => {
   const [fetchingNew, setFetchingNew] = useState(false)
   const [postTradeAmt, setPostTradeAmt] = useState(new BigNumber(0))
   const [postPosition, setPostPosition] = useState(PositionType.NONE)
-  const classes = useStyles({ positionType, postPosition, isToHidePnL })
   const { realizedPnL, unrealizedPnL, sqthAmount, sqthAmountInUSD, loading: pnlLoading } = usePnL()
+  const positionType = sqthAmount.gt(new BigNumber(0))
+    ? PositionType.LONG
+    : sqthAmount.lt(new BigNumber(0))
+    ? PositionType.SHORT
+    : PositionType.NONE
+  const classes = useStyles({ positionType, postPosition, isToHidePnL })
 
   useAppEffect(() => {
     if (tradeSuccess && prevSwapsData?.length === swaps?.length) {
@@ -217,14 +218,6 @@ const PositionCard: React.FC = () => {
     return Boolean(vault && vault.shortAmount.isZero() && liquidations.length > 0)
   }, [vault, liquidations])
 
-  const isDollarValueLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {
-      return loading
-    } else {
-      return null
-    }
-  }, [positionType, loading])
-
   useAppEffect(() => {
     if (isPositionLoading) return
 
@@ -232,16 +225,16 @@ const PositionCard: React.FC = () => {
     let _postPosition = PositionType.NONE
     if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.plus(tradeAmount)
+        _postTradeAmt = sqthAmount.plus(tradeAmount)
       } else {
-        _postTradeAmt = squeethAmount.minus(tradeAmount)
+        _postTradeAmt = sqthAmount.minus(tradeAmount)
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.plus(tradeAmount) : tradeAmount
       } else {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
+        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.minus(tradeAmount) : new BigNumber(0)
       }
       if (_postTradeAmt.gt(0)) {
         _postPosition = PositionType.SHORT
@@ -250,7 +243,7 @@ const PositionCard: React.FC = () => {
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
-  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
+  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, sqthAmount, tradeAmount])
 
   const renderPnL = (pnl: BigNumber) => (isToHidePnL ? '--' : pnlLoading ? 'Loading' : `$${pnl.toFixed(2)}`)
 

@@ -5,6 +5,7 @@ import {
   IncreaseLiquidity,
   NonfungiblePositionManager,
 } from "../generated/NonfungiblePositionManager/NonfungiblePositionManager";
+import { Swap } from "../generated/NonfungiblePositionManager/Pool";
 import { OSQTH_TOKEN_ADDR, WETH_TOKEN_ADDR } from "./addresses";
 import { TOKEN_DECIMALS_18 } from "./constants";
 import { convertTokenToDecimal, ethChange } from "./util";
@@ -46,6 +47,16 @@ export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
 }
 
 export function handleCollect(event: Collect): void {
+  let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
+  if (!isOSQTHNETHPool) return;
+
+  ethChange(
+    event.transaction.from.toHex(),
+    convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
+  );
+}
+
+export function handleSwap(event: Swap): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
