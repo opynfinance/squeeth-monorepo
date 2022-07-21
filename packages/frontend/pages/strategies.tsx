@@ -5,7 +5,7 @@ import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { Typography, Tab, Tabs, Box } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -38,6 +38,7 @@ import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { isQueuedAtom } from 'src/state/crabMigration/atom'
 import { makeItCrabRain } from '@components/Strategies/Crab/util'
+import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -111,6 +112,10 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'right',
       alignSelf: 'center',
     },
+    toggle: {
+      justifyContent: 'right',
+      marginLeft: theme.spacing(2)
+    },
   }),
 )
 
@@ -118,7 +123,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
    // which crab strategy to display. V1 or V2. 
-   const displayCrabV1 = true; 
+  const [displayCrabV1, setDisplayCrabV1] = useState(false)
 
   const classes = useStyles()
   const maxCap = displayCrabV1? useAtomValue(maxCapAtom) : useAtomValue(maxCapAtomV2)
@@ -161,6 +166,10 @@ const Strategies: React.FC = () => {
     }
   }, [isQueued])
 
+  const handleVersionToggle = () => {
+    setDisplayCrabV1(!displayCrabV1)
+  }
+
   return (
     <div>
       <div id="rain"></div>
@@ -196,12 +205,24 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
-            <div className={classes.header}>
-              <Typography variant="h6">🦀</Typography>
-              <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-                Crab Strategy
-              </Typography>
-            </div>
+              <div className={classes.header}>
+                <Typography variant="h6">🦀</Typography>
+                <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
+                  Crab Strategy
+                </Typography>
+                <div className={classes.toggle}>
+                  <ToggleButtonGroup
+                    size="small"
+                    color="primary"
+                    value={displayCrabV1}
+                    exclusive
+                    onChange={handleVersionToggle}
+                  >
+                    <ToggleButton value={true}>V1</ToggleButton>
+                    <ToggleButton value={false}>V2</ToggleButton>
+                  </ToggleButtonGroup>
+                </div>
+              </div>
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
