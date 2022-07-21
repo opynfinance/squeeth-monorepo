@@ -118,7 +118,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
    // which crab strategy to display. V1 or V2. 
-   const displayCrabV1 = false; 
+   const displayCrabV1 = true; 
 
   const classes = useStyles()
   const maxCap = displayCrabV1? useAtomValue(maxCapAtom) : useAtomValue(maxCapAtomV2)
@@ -271,7 +271,7 @@ const Strategies: React.FC = () => {
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
-                  {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
+                  {displayCrabV1 && !currentEthValue.isZero() && !isQueued? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
