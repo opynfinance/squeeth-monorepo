@@ -155,7 +155,7 @@ export function handleHedgeOTC(event: HedgeOTC): void {
 }
 
 export function handleHedgeOTCSingle(event: HedgeOTCSingle): void {
-  const hedge = new HedgeOTCSingleSchema(event.transaction.hash.toHex() + event.logIndex);
+  const hedge = new HedgeOTCSingleSchema(event.transaction.hash.toHex() + event.logIndex.toHexString());
   hedge.hedgeOTC = event.transaction.hash.toString();
   hedge.trader = event.params.trader;
   hedge.bidID = event.params.bidId;
