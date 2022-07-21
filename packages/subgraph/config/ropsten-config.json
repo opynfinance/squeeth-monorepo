@@ -28,8 +28,6 @@
   "SqrtPriceMathPartial-start-block": 12325018,
   "TickMathExternal": "0x0772382Dd7D99adb5218d31fAdfE1c68c8477335",
   "TickMathExternal-start-block": 12325016,
-  "CrabV2": "0xdD1e9c25115e0d6e531d9F9E6ab7dbbEd15158Ce",
-  "CrabV2-start-block": 12581446,
   "Timelock": "0xF15964458bcA1941dE53fBc004BA7842f4783EC6",
   "Timelock-start-block": 12482222,
   "ControllerHelper": "0x7e9C5490e91F93529c6480B46a59D738F6bcEa43",

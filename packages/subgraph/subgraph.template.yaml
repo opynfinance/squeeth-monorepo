@@ -131,9 +131,9 @@ dataSources:
     name: CrabStrategyV2
     network: {{network}}
     source:
-      address: "{{CrabV2}}"
+      address: "{{CrabStrategyV2}}"
       abi: CrabStrategyV2
-      startBlock: {{CrabV2-start-block}}
+      startBlock: {{CrabStrategyV2-start-block}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
