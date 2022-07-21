@@ -18,6 +18,7 @@ import {
   ZERO_ADDR,
   CRAB_STRATEGY,
   CRAB_MIGRATION,
+  CRAB_STRATEGY2,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -54,6 +55,7 @@ export const addressesAtom = atom((get) => {
     nftManager: NFT_MANAGER[networkId].toLowerCase(),
     crabStrategy: CRAB_STRATEGY[networkId].toLowerCase(),
     crabMigration: CRAB_MIGRATION[networkId].toLowerCase(),
+    crabStrategy2: CRAB_STRATEGY2[networkId].toLowerCase(),
   }
 })
 

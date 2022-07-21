@@ -1,10 +1,11 @@
 import { LinkButton } from '@components/Button'
 import Nav from '@components/Nav'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { Typography, Tab, Tabs, Box } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -15,22 +16,29 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabStrategyCollatRatioAtom,
+  crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
+  crabStrategyVaultAtomV2,
   currentCrabPositionValueInETHAtom,
+  currentCrabPositionValueInETHAtomV2,
   maxCapAtom,
+  maxCapAtomV2,
   timeAtLastHedgeAtom,
+  timeAtLastHedgeAtomV2,
 } from 'src/state/crab/atoms'
-import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyData } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValueV2, useSetProfitableMovePercent, useSetStrategyDataV2, useCurrentCrabPositionValue, useSetStrategyData} from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { isQueuedAtom } from 'src/state/crabMigration/atom'
 import { makeItCrabRain } from '@components/Strategies/Crab/util'
+import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -104,19 +112,27 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'right',
       alignSelf: 'center',
     },
+    toggle: {
+      justifyContent: 'right',
+      marginLeft: theme.spacing(2)
+    },
   }),
 )
 
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
+   // which crab strategy to display. V1 or V2. 
+  const [displayCrabV1, setDisplayCrabV1] = useState(false)
+
   const classes = useStyles()
-  const maxCap = useAtomValue(maxCapAtom)
-  const vault = useAtomValue(crabStrategyVaultAtom)
-  const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtom)
+  const maxCap = displayCrabV1? useAtomValue(maxCapAtom) : useAtomValue(maxCapAtomV2)
+  const vault = displayCrabV1? useAtomValue(crabStrategyVaultAtom) : useAtomValue(crabStrategyVaultAtomV2) 
+  const collatRatio = displayCrabV1? useAtomValue(crabStrategyCollatRatioAtom) : useAtomValue(crabStrategyCollatRatioAtomV2)
+  const timeAtLastHedge = displayCrabV1? useAtomValue(timeAtLastHedgeAtom) : useAtomValue(timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
-  const setStrategyData = useSetStrategyData()
+  const setStrategyData = displayCrabV1? useSetStrategyData() : useSetStrategyDataV2()
+  useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
 
@@ -124,11 +140,14 @@ const Strategies: React.FC = () => {
   const isQueued = useAtomValue(isQueuedAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
+  const currentEthValue = displayCrabV1? useAtomValue(currentCrabPositionValueInETHAtom) : useAtomValue(currentCrabPositionValueInETHAtomV2)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
+
+  const CapDetailsComponent = displayCrabV1? CapDetails : CapDetailsV2
+  const CrabTradeComponent = displayCrabV1? CrabTrade: CrabTradeV2
 
   useEffect(() => {
     setStrategyData()
@@ -146,6 +165,10 @@ const Strategies: React.FC = () => {
       makeItCrabRain()
     }
   }, [isQueued])
+
+  const handleVersionToggle = () => {
+    setDisplayCrabV1(!displayCrabV1)
+  }
 
   return (
     <div>
@@ -182,12 +205,24 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
-            <div className={classes.header}>
-              <Typography variant="h6">🦀</Typography>
-              <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-                Crab Strategy
-              </Typography>
-            </div>
+              <div className={classes.header}>
+                <Typography variant="h6">🦀</Typography>
+                <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
+                  Crab Strategy
+                </Typography>
+                <div className={classes.toggle}>
+                  <ToggleButtonGroup
+                    size="small"
+                    color="primary"
+                    value={displayCrabV1}
+                    exclusive
+                    onChange={handleVersionToggle}
+                  >
+                    <ToggleButton value={false}>V2</ToggleButton>
+                    <ToggleButton value={true}>V1</ToggleButton>
+                  </ToggleButtonGroup>
+                </div>
+              </div>
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
@@ -200,7 +235,7 @@ const Strategies: React.FC = () => {
             </Typography>
             <div className={classes.body}>
               <div className={classes.details}>
-                <CapDetails maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                <CapDetailsComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 <div className={classes.overview}>
                   <StrategyInfoItem
                     value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
@@ -257,10 +292,10 @@ const Strategies: React.FC = () => {
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
-                  {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
+                  {displayCrabV1 && !currentEthValue.isZero() && !isQueued? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
-                      <CrabTrade maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                      <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                     ) : (
                       <div className={classes.connectWalletDiv}>
                         <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>

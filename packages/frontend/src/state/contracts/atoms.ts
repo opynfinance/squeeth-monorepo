@@ -4,6 +4,7 @@ import { Contract } from 'web3-eth-contract'
 import { getContract } from '@utils/getContract'
 import controllerAbi from '../../abis/controller.json'
 import crabStrategyAbi from '../../abis/crabStrategy.json'
+import crabStrategyV2Abi from '../../abis/crabStrategyV2.json'
 import positionManagerAbi from '../../abis/NFTpositionmanager.json'
 import routerABI from '../../abis/swapRouter.json'
 import uniABI from '../../abis/uniswapPool.json'
@@ -24,6 +25,13 @@ export const crabStrategyContractAtom = atom<Contract | null>((get) => {
   const { crabStrategy } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, crabStrategy, crabStrategyAbi)
+})
+
+export const crabStrategyContractAtomV2  = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { crabStrategy2 } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, crabStrategy2, crabStrategyV2Abi)
 })
 
 export const nftManagerContractAtom = atom<Contract | null>((get) => {
