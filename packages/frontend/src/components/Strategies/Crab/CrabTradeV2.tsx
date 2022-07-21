@@ -19,9 +19,13 @@ import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import {
   crabStrategySlippageAtom,
+  crabStrategySlippageAtomV2,
   currentCrabPositionValueInETHAtom,
+  currentCrabPositionValueInETHAtomV2,
   isPriceHedgeAvailableAtom,
+  isPriceHedgeAvailableAtomV2,
   isTimeHedgeAvailableAtom,
+  isTimeHedgeAvailableAtomV2,
 } from 'src/state/crab/atoms'
 import {
   useCalculateETHtoBorrowFromUniswap,
@@ -30,6 +34,8 @@ import {
   useSetStrategyDataV2,
   useFlashDepositV2,
   useCalculateETHtoBorrowFromUniswapV2,
+  useFlashWithdrawEthV2,
+  useCalculateEthWillingToPayV2,
 } from 'src/state/crab/hooks'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
@@ -86,14 +92,14 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
 
   const connected = useAtomValue(connectedWalletAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
-  const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtom)
-  const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtom)
-  const [slippage, setSlippage] = useAtom(crabStrategySlippageAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtomV2)
+  const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtomV2)
+  const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyDataV2()
-  const flashWithdrawEth = useFlashWithdrawEth()
-  const calculateEthWillingToPay = useCalculateEthWillingToPay()
+  const flashWithdrawEth = useFlashWithdrawEthV2()
+  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const index = useAtomValue(indexAtom)
@@ -121,6 +127,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [confirmed, prevCrabTxData?.length, data?.length])
 
   useEffect(() => {
+    console.log(currentEthValue.toString())
     setStrategyData()
   }, [])
 

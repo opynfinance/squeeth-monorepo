@@ -26,6 +26,10 @@ import {
   isPriceHedgeAvailableAtomV2,
   isTimeHedgeAvailableAtomV2,
   timeAtLastHedgeAtomV2,
+  crabPositionValueLoadingAtomV2,
+  currentCrabPositionValueAtomV2,
+  currentCrabPositionValueInETHAtomV2,
+  currentEthLoadingAtomV2,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -124,7 +128,6 @@ export const useSetStrategyDataV2 = () => {
       .then((v) => {
         setVault(v)
         if (v) {
-          console.log(v, "here");
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount)
             .then((cl) => {
               setCollatRatio(cl.collateralPercent)
@@ -175,6 +178,33 @@ export const useCalculateEthWillingToPay = () => {
   return calculateEthWillingToPay
 }
 
+export const useCalculateEthWillingToPayV2 = () => {
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+
+  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const getBuyQuote = useGetBuyQuote()
+  const calculateEthWillingToPay = useCallback(
+    async (amount: BigNumber, slippage: number) => {
+      const emptyState = {
+        amountIn: new BigNumber(0),
+        maximumAmountIn: new BigNumber(0),
+        priceImpact: '0',
+      }
+      if (!vault) return emptyState
+
+      const squeethDebt = await getWsqueethFromCrabAmount(amount, contract)
+      console.log('Debt', squeethDebt?.toString(), amount.toString())
+      if (!squeethDebt) return emptyState
+
+      const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
+      return ethWillingToPayQuote
+    },
+    [contract, getBuyQuote, vault?.id],
+  )
+
+  return calculateEthWillingToPay
+}
+
 export const useCurrentCrabPositionValue = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
 
@@ -186,6 +216,67 @@ export const useCurrentCrabPositionValue = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtom)
   const vault = useAtomValue(crabStrategyVaultAtom)
+  const ethPrice = useETHPrice()
+  const setStrategyData = useSetStrategyData()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+
+  useEffect(() => {
+    setStrategyData()
+  }, [])
+
+  const userShares = useAppMemo(() => {
+    return userMigratedShares.gt(0) ? userMigratedShares : userCrabBalance;
+  }, [userMigratedShares, userCrabBalance])
+
+  useAppEffect(() => {
+    ;(async () => {
+      setIsCrabPositionValueLoading(true)
+      const [collateral, squeethDebt] = await Promise.all([
+        getCollateralFromCrabAmount(userShares, contract, vault),
+        getWsqueethFromCrabAmount(userShares, contract),
+      ])
+
+      if (!squeethDebt || !collateral) {
+        setCurrentCrabPositionValue(BIG_ZERO)
+        setCurrentCrabPositionValueInETH(BIG_ZERO)
+        return
+      }
+
+      const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
+
+      const crabPositionValueInETH = collateral.minus(ethDebt)
+      const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+
+      setCurrentCrabPositionValue(crabPositionValueInUSD)
+      setCurrentCrabPositionValueInETH(crabPositionValueInETH)
+
+      setIsCrabPositionValueLoading(false)
+      setCurrentEthLoading(false)
+    })()
+  }, [
+    userShares,
+    contract,
+    setCurrentEthLoading,
+    setIsCrabPositionValueLoading,
+    getWSqueethPositionValueInETH,
+    ethPrice,
+    vault,
+  ])
+
+  return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
+}
+
+export const useCurrentCrabPositionValueV2 = () => {
+  const { crabStrategy2 } = useAtomValue(addressesAtom)
+
+  const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtomV2)
+  const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtomV2)
+  const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtomV2)
+  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 15, 18)
+  const userMigratedShares = useAtomValue(userMigratedSharesAtom)
+  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtomV2)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
   const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
@@ -428,12 +519,61 @@ export const useFlashWithdraw = () => {
   return flashWithdraw
 }
 
+export const useFlashWithdrawV2 = () => {
+  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
+
+  const flashWithdraw = useCallback(
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
+      console.log(_ethWillingToPay.toString())
+      const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
+      const crabAmount = fromTokenAmount(amount, 18)
+      const poolFeePercent = 3000
+      return await handleTransaction(
+        contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0)).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction, calculateEthWillingToPay],
+  )
+
+  return flashWithdraw
+}
+
 export const useFlashWithdrawEth = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy, 5, 18)
   const contract = useAtomValue(crabStrategyContractAtom)
   const flashWithdraw = useFlashWithdraw()
+
+  const flashWithdrawEth = useCallback(
+    async (ethAmount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
+      console.log(currentEthValue?.toString(), userCrabBalance?.toString(), ethAmount.toString())
+      return await flashWithdraw(equivalentCrab, slippage, onTxConfirmed)
+    },
+    [contract, currentEthValue?.toString(), flashWithdraw, userCrabBalance?.toString()],
+  )
+
+  return flashWithdrawEth
+}
+
+export const useFlashWithdrawEthV2 = () => {
+  const { crabStrategy2 } = useAtomValue(addressesAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
+  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const flashWithdraw = useFlashWithdrawV2()
 
   const flashWithdrawEth = useCallback(
     async (ethAmount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {

@@ -22,11 +22,11 @@ import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtomV2,
-  currentCrabPositionValueInETHAtom,
+  currentCrabPositionValueInETHAtomV2,
   maxCapAtomV2,
   timeAtLastHedgeAtomV2,
 } from 'src/state/crab/atoms'
-import { useCurrentCrabPositionValue, useSetProfitableMovePercent, useSetStrategyDataV2 } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValueV2, useSetProfitableMovePercent, useSetStrategyDataV2 } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
@@ -118,14 +118,14 @@ const Strategies: React.FC = () => {
   const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
   const setStrategyData = useSetStrategyDataV2()
-  useCurrentCrabPositionValue()
+  useCurrentCrabPositionValueV2()
   useInitCrabMigration()
 
   const index = useAtomValue(indexAtom)
   const isQueued = useAtomValue(isQueuedAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
