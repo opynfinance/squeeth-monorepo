@@ -29,6 +29,7 @@ import {
   useFlashWithdrawEth,
   useSetStrategyDataV2,
   useFlashDepositV2,
+  useCalculateETHtoBorrowFromUniswapV2,
 } from 'src/state/crab/hooks'
 import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
@@ -93,8 +94,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const setStrategyData = useSetStrategyDataV2()
   const flashWithdrawEth = useFlashWithdrawEth()
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
-  const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswap()
-  const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
+  const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
+  const flashDeposit = useFlashDepositV2(useCalculateETHtoBorrowFromUniswapV2)
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 

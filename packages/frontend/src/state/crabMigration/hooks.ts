@@ -17,8 +17,10 @@ export const useInitCrabMigration = () => {
 
   const updateMigrationData = useCallback(async () => {
     // const p1 = crabMigrationContract?.methods.totalCrabV1SharesMigrated().call()
-    const p2 = crabMigrationContract?.methods.sharesDeposited(address).call()
+    const p2 = crabMigrationContract?.methods.sharesDeposited('0x4F35571EBe3E8Ea371fB841BE43F6a79aBF60bF3').call()
+    console.log('demola 1:',p2)
     const [_userShare] = await Promise.all([p2])
+    console.log('demola 2:',_userShare)
     //setTotalMigratedShares(toTokenAmount(_totalShare, 18))
     setUserMigratedShares(toTokenAmount(_userShare, 18))
   }, [address, crabMigrationContract?.methods, setUserMigratedShares])
