@@ -95,7 +95,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const flashWithdrawEth = useFlashWithdrawEth()
   const calculateEthWillingToPay = useCalculateEthWillingToPay()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
-  const flashDeposit = useFlashDepositV2(useCalculateETHtoBorrowFromUniswapV2)
+  const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
@@ -184,8 +184,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [ready, withdrawAmount.toString(), slippage])
 
   const deposit = async () => {
+    
     setTxLoading(true)
     try {
+      console.log('demola 1');
       await flashDeposit(ethAmount, slippage, () => {
         setTxLoading(false)
         setStrategyData()

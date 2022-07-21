@@ -258,7 +258,7 @@ const Strategies: React.FC = () => {
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
-                  {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
+                  {/* {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null} */}
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
