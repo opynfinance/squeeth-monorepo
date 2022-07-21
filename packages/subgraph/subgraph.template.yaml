@@ -160,6 +160,20 @@ dataSources:
           handler: handleSetOTCPriceTolerance
         - event: VaultTransferred(indexed address,uint256)
           handler: handleVaultTransferred
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256,uint256)
+          handler: handleWithdrawShutdown
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdraw
+        - event: FlashDeposit(indexed address,uint256,uint256)
+          handler: handleFlashDeposit
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: FlashDepositCallback(indexed address,uint256,uint256)
+          handler: handleFlashDepositCallback
+        - event: FlashWithdrawCallback(indexed address,uint256,uint256)
+          handler: handleFlashWithdrawCallback 
       file: ./src/crabV2.ts
   - kind: ethereum/contract
     name: Timelock
