@@ -45,3 +45,10 @@ export const crabLoadingAtom = atom((get) => {
   const currentEthLoading = get(currentEthLoadingAtom)
   return loading || !ready || currentEthLoading
 })
+
+export const crabLoadingAtomV2 = atom((get) => {
+  const loading = get(loadingAtomV2)
+  const ready = get(readyAtom)
+  const currentEthLoading = get(currentEthLoadingAtomV2)
+  return loading || !ready || currentEthLoading
+})
