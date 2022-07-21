@@ -134,7 +134,7 @@ jobs:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Deploy
-          command: npx hardhat deploy --network hardhat
+          command: npx hardhat deploy --network ropsten
 
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
