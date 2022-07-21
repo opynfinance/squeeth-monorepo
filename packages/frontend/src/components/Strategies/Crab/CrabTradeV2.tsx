@@ -187,7 +187,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     
     setTxLoading(true)
     try {
-      console.log('demola 1');
       await flashDeposit(ethAmount, slippage, () => {
         setTxLoading(false)
         setStrategyData()
