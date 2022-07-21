@@ -1,6 +1,7 @@
 import { LinkButton } from '@components/Button'
 import Nav from '@components/Nav'
 import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
@@ -14,19 +15,24 @@ import { Links, Vaults } from '@constants/enums'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
-// import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
+  crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
+  crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
+  currentCrabPositionValueInETHAtom,
   currentCrabPositionValueInETHAtomV2,
+  maxCapAtom,
   maxCapAtomV2,
+  timeAtLastHedgeAtom,
   timeAtLastHedgeAtomV2,
 } from 'src/state/crab/atoms'
-import { useCurrentCrabPositionValueV2, useSetProfitableMovePercent, useSetStrategyDataV2 } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValueV2, useSetProfitableMovePercent, useSetStrategyDataV2, useCurrentCrabPositionValue, useSetStrategyData} from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import MigrationNotice from '@components/Strategies/Crab/MigrationNotice'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
@@ -111,25 +117,32 @@ const useStyles = makeStyles((theme) =>
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
+   // which crab strategy to display. V1 or V2. 
+   const displayCrabV1 = true; 
+
   const classes = useStyles()
-  const maxCap = useAtomValue(maxCapAtomV2)
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
+  const maxCap = displayCrabV1? useAtomValue(maxCapAtom) : useAtomValue(maxCapAtomV2)
+  const vault = displayCrabV1? useAtomValue(crabStrategyVaultAtom) : useAtomValue(crabStrategyVaultAtomV2) 
+  const collatRatio = displayCrabV1? useAtomValue(crabStrategyCollatRatioAtom) : useAtomValue(crabStrategyCollatRatioAtomV2)
+  const timeAtLastHedge = displayCrabV1? useAtomValue(timeAtLastHedgeAtom) : useAtomValue(timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
-  const setStrategyData = useSetStrategyDataV2()
+  const setStrategyData = displayCrabV1? useSetStrategyData() : useSetStrategyDataV2()
   useCurrentCrabPositionValueV2()
+  useCurrentCrabPositionValue()
   useInitCrabMigration()
 
   const index = useAtomValue(indexAtom)
   const isQueued = useAtomValue(isQueuedAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const currentEthValue = displayCrabV1? useAtomValue(currentCrabPositionValueInETHAtom) : useAtomValue(currentCrabPositionValueInETHAtomV2)
 
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
+
+  const CapDetailsComponent = displayCrabV1? CapDetails : CapDetailsV2
+  const CrabTradeComponent = displayCrabV1? CrabTrade: CrabTradeV2
 
   useEffect(() => {
     setStrategyData()
@@ -201,7 +214,7 @@ const Strategies: React.FC = () => {
             </Typography>
             <div className={classes.body}>
               <div className={classes.details}>
-                <CapDetailsV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                <CapDetailsComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 <div className={classes.overview}>
                   <StrategyInfoItem
                     value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
@@ -261,7 +274,7 @@ const Strategies: React.FC = () => {
                   {!currentEthValue.isZero() && !isQueued ? <MigrationNotice /> : null}
                   <div className={classes.tradeForm}>
                     {!!address ? (
-                      <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                      <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                     ) : (
                       <div className={classes.connectWalletDiv}>
                         <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>

@@ -128,7 +128,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [confirmed, prevCrabTxData?.length, data?.length])
 
   useEffect(() => {
-    console.log(currentEthValue.toString())
     setStrategyData()
   }, [])
 
