@@ -218,8 +218,8 @@ const Strategies: React.FC = () => {
                     exclusive
                     onChange={handleVersionToggle}
                   >
-                    <ToggleButton value={true}>V1</ToggleButton>
                     <ToggleButton value={false}>V2</ToggleButton>
+                    <ToggleButton value={true}>V1</ToggleButton>
                   </ToggleButtonGroup>
                 </div>
               </div>
