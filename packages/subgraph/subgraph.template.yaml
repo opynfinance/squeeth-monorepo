@@ -163,9 +163,9 @@ dataSources:
         - event: Deposit(indexed address,uint256,uint256)
           handler: handleDeposit
         - event: Withdraw(indexed address,uint256,uint256,uint256)
-          handler: handleWithdrawShutdown
-        - event: WithdrawShutdown(indexed address,uint256,uint256)
           handler: handleWithdraw
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdrawShutdown
         - event: FlashDeposit(indexed address,uint256,uint256)
           handler: handleFlashDeposit
         - event: FlashWithdraw(indexed address,uint256,uint256)
