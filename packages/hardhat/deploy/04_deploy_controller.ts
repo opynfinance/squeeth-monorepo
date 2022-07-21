@@ -11,6 +11,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const feeTier = 3000
 
+
+  if (network.name === "ropsten" || network.name === "mainnet") {
+    return
+  }
+
   // Load contracts
   const oracle = await ethers.getContract("Oracle", deployer);
   const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);

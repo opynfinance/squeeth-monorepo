@@ -1,5 +1,5 @@
-import {HardhatRuntimeEnvironment} from 'hardhat/types';
-import {DeployFunction} from 'hardhat-deploy/types';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { DeployFunction } from 'hardhat-deploy/types';
 import { getUniswapDeployments, getWETH } from '../tasks/utils'
 import { getPoolAddress } from '../test/setup';
 
@@ -8,17 +8,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
+  if (network.name === "ropsten" || network.name === "mainnet") {
+    return
+  }
 
   const controller = await ethers.getContract("Controller", deployer);
   const oracle = await ethers.getContract("Oracle", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
   const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
 
-  const {uniswapFactory} = await getUniswapDeployments(ethers, deployer, network.name)
+  const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const squeethPoolAddr = await getPoolAddress(wsqueeth, weth, uniswapFactory)
-  
-  if (network.name === "mainnet") {
+
+  if (network.name === "mainnet" || network.name === "ropsten") {
     return
   }
 
@@ -35,15 +38,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: [
-      controller.address, 
+      controller.address,
       oracle.address,
       weth.address,
       uniswapFactory.address,
       squeethPoolAddr,
-      hedgeTimeThreshold, 
-      hedgePriceThreshold, 
-      auctionTime, 
-      minPriceMultiplier, 
+      hedgeTimeThreshold,
+      hedgePriceThreshold,
+      auctionTime,
+      minPriceMultiplier,
       maxPriceMultiplier
     ]
   });
