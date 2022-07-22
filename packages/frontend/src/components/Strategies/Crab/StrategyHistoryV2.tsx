@@ -8,8 +8,8 @@ import Menu from '@material-ui/core/Menu'
 import MenuItem from '@material-ui/core/MenuItem'
 import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined'
 import { GreyButton } from '@components/Button'
-import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
-import { CrabStrategyTxType, Networks } from '../../../types/index'
+import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
+import { CrabStrategyV2TxType, Networks } from '../../../types/index'
 import clsx from 'clsx'
 import { useAtomValue } from 'jotai'
 import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
@@ -135,7 +135,7 @@ export const CrabStrategyV2History: React.FC = () => {
 
 const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user, networkId }) => {
   const classes = useStyles()
-  const { data } = useUserCrabTxHistory(user, true)
+  const { data } = useUserCrabV2TxHistory(user, true)
 
   return (
     <>
@@ -156,7 +156,7 @@ const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user
             <div className={classes.txSubItem}>
               <Typography
                 variant="subtitle1"
-                className={d.type === CrabStrategyTxType.FLASH_DEPOSIT ? classes.red : classes.green}
+                className={d.type === CrabStrategyV2TxType.FLASH_DEPOSIT ? classes.red : classes.green}
               >
                 <b style={{ fontWeight: 600 }}>{d.ethAmount.toFixed(6)}</b> ETH
               </Typography>

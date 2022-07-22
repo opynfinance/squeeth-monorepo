@@ -3,7 +3,7 @@ import { useAtomValue } from 'jotai'
 
 import { crabV2Auctions } from '../queries/squeeth/__generated__/crabV2Auctions'
 import CRAB_V2_AUCTION_QUERY from '../queries/squeeth/crabV2AuctionQuery'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { networkIdAtom } from 'src/state/wallet/atoms'
