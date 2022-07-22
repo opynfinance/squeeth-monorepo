@@ -128,7 +128,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [confirmed, prevCrabTxData?.length, data?.length])
 
   useEffect(() => {
-    console.log(currentEthValue.toString())
     setStrategyData()
   }, [])
 
@@ -192,7 +191,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [ready, withdrawAmount.toString(), slippage])
 
   const deposit = async () => {
-    
     setTxLoading(true)
     try {
       await flashDeposit(ethAmount, slippage, () => {
