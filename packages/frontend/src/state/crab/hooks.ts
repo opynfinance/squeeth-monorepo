@@ -38,6 +38,7 @@ import {
   getTimeAtLastHedge,
   checkTimeHedge,
   checkPriceHedge,
+  checkPriceHedgeV2,
   getCollateralFromCrabAmount,
   getWsqueethFromCrabAmount,
   getCurrentProfitableMovePercent,

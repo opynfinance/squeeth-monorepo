@@ -17,6 +17,13 @@ export const checkPriceHedge = async (auctionTriggerTime: number, contract: Cont
   return result
 }
 
+export const checkPriceHedgeV2 = async (contract: Contract | null) => {
+  if (!contract) return null
+
+  const result = await contract.methods.checkPriceHedge().call()
+  return result
+}
+
 export const getCollateralFromCrabAmount = async (
   crabAmount: BigNumber,
   contract: Contract | null,
