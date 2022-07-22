@@ -109,12 +109,12 @@ export const StrategyInfo: React.FC = () => {
         Payoff
       </Typography>
       <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} /> */}
-      <Typography variant="h5" color="primary" className={classes.title}>
+      {/* <Typography variant="h5" color="primary" className={classes.title}>
         Steps
       </Typography>
       <div className={classes.stepsImage}>
         <Image src={CrabSteps} alt="Steps" />
-      </div>
+      </div> */}
       <Typography variant="h5" color="primary" className={classes.title}>
         Risk
       </Typography>
