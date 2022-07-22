@@ -16,7 +16,7 @@ const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.FLASH_WITHDRAW) return 'Flash Withdraw'
 }
 
-export const useUserCrabTxHistory = (user: string, isDescending?: boolean) => {
+export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data, loading, startPolling, stopPolling } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
