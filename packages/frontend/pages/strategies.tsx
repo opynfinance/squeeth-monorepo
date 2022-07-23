@@ -166,8 +166,11 @@ const Strategies: React.FC = () => {
     }
   }, [isQueued])
 
-  const handleVersionToggle = () => {
-    setDisplayCrabV1(!displayCrabV1)
+  const switchToV1 = () => {
+    setDisplayCrabV1(true)
+  }
+  const switchToV2 = () => {
+    setDisplayCrabV1(false)
   }
 
   return (
@@ -216,10 +219,9 @@ const Strategies: React.FC = () => {
                     color="primary"
                     value={displayCrabV1}
                     exclusive
-                    onChange={handleVersionToggle}
                   >
-                    <ToggleButton value={false}>V2</ToggleButton>
-                    <ToggleButton value={true}>V1</ToggleButton>
+                    <ToggleButton value={false} onClick={switchToV2}>V2</ToggleButton>
+                    <ToggleButton value={true} onClick={switchToV1}>V1</ToggleButton>
                   </ToggleButtonGroup>
                 </div>
               </div>
