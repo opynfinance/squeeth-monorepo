@@ -16,6 +16,7 @@ type CrabPositionType = {
   pnlWMidPriceInPerct: BigNumber
   currentCrabPositionValue: BigNumber
   currentCrabPositionValueInETH: BigNumber
+  version: String
 }
 
 const CrabPosition: React.FC<CrabPositionType> = ({
@@ -26,6 +27,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
   pnlWMidPriceInUSD,
   currentCrabPositionValue,
   currentCrabPositionValueInETH,
+  version,
 }) => {
   const classes = useStyles()
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
@@ -41,7 +43,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography>🦀</Typography>
-          <Typography style={{ marginLeft: '8px' }}>Crab strategy</Typography>
+          <Typography style={{ marginLeft: '8px' }}>{version}</Typography>
         </div>
       </div>
       <div className={classes.shortPositionData}>

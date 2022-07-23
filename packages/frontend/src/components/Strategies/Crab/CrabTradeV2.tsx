@@ -37,7 +37,7 @@ import {
   useFlashWithdrawEthV2,
   useCalculateEthWillingToPayV2,
 } from 'src/state/crab/hooks'
-import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
+import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
@@ -115,7 +115,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
-  const { data, startPolling, stopPolling } = useUserCrabTxHistory(address ?? '')
+  const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
 
   const prevCrabTxData = usePrevious(data)
 

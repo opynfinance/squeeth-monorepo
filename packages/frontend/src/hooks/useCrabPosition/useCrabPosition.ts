@@ -1,6 +1,7 @@
 import { BIG_ZERO } from '../../constants'
 import { useEffect, useState } from 'react'
 import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
+import { useUserCrabV2TxHistory } from '../useUserCrabV2TxHistory'
 import { CrabStrategyTxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useAtomValue } from 'jotai'
@@ -100,7 +101,7 @@ export const useCrabPositionV2 = (user: string) => {
   const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtomV2)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
 
-  const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabTxHistory(user)
+  const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabV2TxHistory(user)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -154,6 +155,8 @@ export const useCrabPositionV2 = (user: string) => {
     calculateCurrentValue()
   }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
 
+  console.log("crabLoading", crabLoading)
+  console.log('txHistoryLoading', txHistoryLoading)
   return {
     depositedEth,
     depositedUsd,

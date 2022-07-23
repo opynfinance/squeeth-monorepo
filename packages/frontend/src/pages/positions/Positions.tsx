@@ -33,8 +33,9 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2 } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
+import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 
 export default function Positions() {
   const classes = useStyles()
@@ -54,9 +55,17 @@ export default function Positions() {
   const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
     useCurrentCrabPositionValue()
 
+    const { depositedEth: depositedEthV2, depositedUsd: depositedUsdV2, loading: isCrabPositonLoadingV2 } = useCrabPositionV2(address || '')
+  const { currentCrabPositionValue: currentCrabPositionValueV2, currentCrabPositionValueInETH: currentCrabPositionValueInETHV2, isCrabPositionValueLoading: isCrabPositionValueLoadingV2 } =
+    useCurrentCrabPositionValueV2()
+
   const isCrabloading = useAppMemo(() => {
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
+
+  const isCrabV2loading = useAppMemo(() => {
+    return isCrabPositonLoadingV2 || isCrabPositionValueLoadingV2
+  }, [isCrabPositonLoadingV2, isCrabPositionValueLoadingV2])
 
   const pnlWMidPriceInUSD = useAppMemo(() => {
     return pnl(currentCrabPositionValue, depositedUsd)
@@ -64,6 +73,13 @@ export default function Positions() {
   const pnlWMidPriceInPerct = useAppMemo(() => {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
+
+  const pnlWMidPriceInUSDV2 = useAppMemo(() => {
+    return pnl(currentCrabPositionValueV2, depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2])
+  const pnlWMidPriceInPerctV2 = useAppMemo(() => {
+    return pnlInPerct(currentCrabPositionValueV2, depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -126,6 +142,20 @@ export default function Positions() {
             pnlWMidPriceInPerct={pnlWMidPriceInPerct}
             currentCrabPositionValue={currentCrabPositionValue}
             currentCrabPositionValueInETH={currentCrabPositionValueInETH}
+            version="Crab Strategy V1"
+          />
+        )}
+
+        {!!address && depositedEthV2.isGreaterThan(0) && (
+          <CrabPosition
+            depositedEth={depositedEthV2}
+            depositedUsd={depositedUsdV2}
+            loading={isCrabV2loading}
+            pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
+            pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
+            currentCrabPositionValue={currentCrabPositionValueV2}
+            currentCrabPositionValueInETH={currentCrabPositionValueInETHV2}
+            version="Crab Strategy V2"
           />
         )}
 
