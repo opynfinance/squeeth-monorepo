@@ -155,8 +155,6 @@ export const useCrabPositionV2 = (user: string) => {
     calculateCurrentValue()
   }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
 
-  console.log("crabLoading", crabLoading)
-  console.log('txHistoryLoading', txHistoryLoading)
   return {
     depositedEth,
     depositedUsd,

@@ -2,7 +2,7 @@ import { Tooltip, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 import { useEffect } from 'react'
-import { useCurrentCrabPositionValue, useSetStrategyData } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2, useSetStrategyData } from 'src/state/crab/hooks'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
 import useStyles from './useStyles'
@@ -33,6 +33,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
   const setStrategyData = useSetStrategyData()
   useCurrentCrabPositionValue()
+  useCurrentCrabPositionValueV2()
 
   useEffect(() => {
     setStrategyData()

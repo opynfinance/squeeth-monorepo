@@ -33,9 +33,11 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2 } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
+import useAppEffect from '@hooks/useAppEffect'
 
 export default function Positions() {
   const classes = useStyles()
@@ -50,12 +52,18 @@ export default function Positions() {
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
+  const setStrategyData = useSetStrategyDataV2()
+
+  useAppEffect(() => {
+    setStrategyData()
+  }, [])
+
   usePositionsAndFeesComputation()
   const { depositedEth, depositedUsd, loading: isCrabPositonLoading } = useCrabPosition(address || '')
   const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
     useCurrentCrabPositionValue()
 
-    const { depositedEth: depositedEthV2, depositedUsd: depositedUsdV2, loading: isCrabPositonLoadingV2 } = useCrabPositionV2(address || '')
+  const { depositedEth: depositedEthV2, depositedUsd: depositedUsdV2, loading: isCrabPositonLoadingV2 } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue: currentCrabPositionValueV2, currentCrabPositionValueInETH: currentCrabPositionValueInETHV2, isCrabPositionValueLoading: isCrabPositionValueLoadingV2 } =
     useCurrentCrabPositionValueV2()
 
@@ -115,6 +123,7 @@ export default function Positions() {
 
         {shortDebt.isZero() &&
         depositedEth.isZero() &&
+        depositedEthV2.isZero() &&
         squeethAmount.isZero() &&
         mintedDebt.isZero() &&
         lpedSqueeth.isZero() ? (
