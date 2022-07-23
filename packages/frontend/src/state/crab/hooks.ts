@@ -145,7 +145,7 @@ export const useSetStrategyDataV2 = () => {
     if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
       // Check price hedge only if firebase is available
       const doc = await db.doc('squeeth-monitoring/crab').get()
-      checkPriceHedge(doc?.data()?.lastAuctionTrigger || 0, contract).then(setIsPriceHedgeAvailable)
+      checkPriceHedgeV2(contract).then(setIsPriceHedgeAvailable)
     }
   }, [contract, getCollatRatioAndLiqPrice, getVault])
 
