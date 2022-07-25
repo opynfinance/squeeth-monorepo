@@ -93,6 +93,7 @@ async function updateBalance(
     console.log("balance", balance.toString())
     return balance
   } catch (error) {
+    console.log("error", error)
     return new BigNumber(0)
   }
 }
