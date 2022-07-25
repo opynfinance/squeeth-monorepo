@@ -42,7 +42,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
-      refetchInterval: poll ? 500 : refetchIntervalSec * 15000,
+      refetchInterval: poll ? 500 : refetchIntervalSec * 100,
     },
   )
 

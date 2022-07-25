@@ -32,7 +32,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 1, OSQUEETH_DECIMALS)
+  const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const computedSwaps = useAppMemo(
     () =>
