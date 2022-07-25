@@ -7,7 +7,7 @@ import {
 } from "../generated/NonfungiblePositionManager/NonfungiblePositionManager";
 import { OSQTH_TOKEN_ADDR, WETH_TOKEN_ADDR } from "./addresses";
 import { TOKEN_DECIMALS_18 } from "./constants";
-import { convertTokenToDecimal, ethChange } from "./util";
+import { convertTokenToDecimal, createTransactionHistory, ethChange } from "./util";
 
 function isOSQTHETHPool(address: Address, tokenId: BigInt): boolean {
   let contract = NonfungiblePositionManager.bind(address);
@@ -29,28 +29,40 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  ethChange(
-    event.transaction.from.toHex(),
-    convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
-  );
+  let transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event)
+  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
+  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  transactionHistory.save();
+  // ethChange(
+  //   event.transaction.from.toHex(),
+  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  // );
 }
 
 export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  ethChange(
-    event.transaction.from.toHex(),
-    convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
-  );
+  let transactionHistory = createTransactionHistory("REMOVE_LIQUIDITY", event)
+  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
+  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  transactionHistory.save();
+  // ethChange(
+  //   event.transaction.from.toHex(),
+  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
+  // );
 }
 
 export function handleCollect(event: Collect): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  ethChange(
-    event.transaction.from.toHex(),
-    convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
-  );
+  let transactionHistory = createTransactionHistory("COLLECT_FEE", event)
+  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
+  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  transactionHistory.save();
+  // ethChange(
+  //   event.transaction.from.toHex(),
+  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
+  // );
 }

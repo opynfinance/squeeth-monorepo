@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { Account, Pool } from "../generated/schema";
+import { BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { Account, Pool, TransactionHistory } from "../generated/schema";
 import { OSQTH_WETH_POOL, USDC_WETH_POOL } from "./addresses";
 import {
   BIGINT_ZERO,
@@ -196,4 +196,19 @@ export function ethChange(userAddr: string, amount: BigDecimal): void {
   }
 
   account.save();
+}
+
+export function createTransactionHistory(transactionType: string, event: ethereum.Event): TransactionHistory {
+  let transactionHistory = new TransactionHistory(
+    `${event.transaction.hash.toHex()}-${transactionType}`
+  );
+  transactionHistory.owner = event.transaction.from;
+  transactionHistory.timestamp = event.block.timestamp;
+  transactionHistory.transactionType = transactionType;
+  transactionHistory.sqthAmount = BIGDECIMAL_ZERO;
+  transactionHistory.ethAmount = BIGDECIMAL_ZERO;
+  transactionHistory.sqthPrice = getSqthEthPrices()[3]
+  transactionHistory.ethPrice = getEthUsdcPrices()[1]
+
+  return transactionHistory
 }

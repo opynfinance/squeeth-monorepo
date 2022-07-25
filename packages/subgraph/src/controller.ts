@@ -35,7 +35,7 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import { convertTokenToDecimal, ethChange, loadOrCreateAccount } from "./util";
+import { convertTokenToDecimal, createTransactionHistory, ethChange, loadOrCreateAccount } from "./util";
 
 import { BIGINT_ONE, BIGINT_ZERO, TOKEN_DECIMALS_18 } from "./constants";
 import { EMPTY_ADDR, SHORT_HELPER_ADDR } from "./addresses";
@@ -115,6 +115,14 @@ export function handleBurnShort(event: BurnShort): void {
     BIGINT_ZERO
   );
   vaultTransaction.save();
+
+  let transactionHistory = createTransactionHistory("BURN_OSQTH", event)
+  transactionHistory.owner = Address.fromString(vault.owner)
+  transactionHistory.sqthAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
+  transactionHistory.save();
 }
 
 export function handleDepositCollateral(event: DepositCollateral): void {
@@ -152,8 +160,16 @@ export function handleDepositCollateral(event: DepositCollateral): void {
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
 
-  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
-  ethChange(vault.owner, amount);
+  // let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  // ethChange(vault.owner, amount);
+
+  let transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event)
+  transactionHistory.owner = Address.fromString(vault.owner)
+  transactionHistory.ethAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
+  transactionHistory.save();
 }
 
 export function handleDepositUniPositionToken(
@@ -249,6 +265,15 @@ export function handleMintShort(event: MintShort): void {
     BIGINT_ZERO
   );
   vaultTransaction.save();
+
+
+  let transactionHistory = createTransactionHistory("MINT_OSQTH", event)
+  transactionHistory.owner = Address.fromString(vault.owner)
+  transactionHistory.sqthAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
+  transactionHistory.save();
 }
 
 export function handleNormalizationFactorUpdated(
@@ -333,8 +358,16 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
 
-  let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
-  ethChange(vault.owner, amount.neg());
+  // let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  // ethChange(vault.owner, amount.neg());
+
+  let transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event)
+  transactionHistory.owner = Address.fromString(vault.owner)
+  transactionHistory.ethAmount = convertTokenToDecimal(
+    event.params.amount,
+    TOKEN_DECIMALS_18
+  );
+  transactionHistory.save();
 }
 
 export function handleWithdrawUniPositionToken(

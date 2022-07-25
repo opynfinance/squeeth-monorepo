@@ -33,6 +33,7 @@ dataSources:
         - UpdateOperator
         - WithdrawCollateral
         - WithdrawUniPositionToken
+        - TransactionHistory
       abis:
         - name: Controller
           file: ./abis/Controller.json
@@ -141,6 +142,7 @@ dataSources:
       file: ./src/wPowerPerp.ts
       entities:
         - Account
+        - TransactionHistory
       abis:
         - name: WPowerPerp
           file: ./abis/WPowerPerp.json
@@ -184,6 +186,7 @@ dataSources:
       file: ./src/positionManager.ts
       entities:
         - Account
+        - TransactionHistory
       abis:
         - name: NonfungiblePositionManager
           file: ./abis/NonfungiblePositionManager.json

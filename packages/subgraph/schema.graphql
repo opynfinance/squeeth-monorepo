@@ -112,3 +112,27 @@ type Pool @entity {
   # token1 per token0
   token1Price: BigDecimal
 }
+
+enum TransactionType {
+  MINT_OSQTH
+  BURN_OSQTH
+  SEND_OSQTH
+  RECEIVE_OSQTH
+  DEPOSIT_COLLAT
+  WITHDRAW_COLLAT
+  SWAP
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  COLLECT_FEE
+}
+
+type TransactionHistory @entity {
+  id: ID!
+  timestamp: BigInt!
+  transactionType: TransactionType!
+  owner: Bytes!
+  sqthAmount: BigDecimal!
+  ethAmount: BigDecimal!
+  sqthPrice: BigDecimal!
+  ethPrice: BigDecimal!
+}
