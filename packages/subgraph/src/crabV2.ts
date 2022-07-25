@@ -1,44 +1,57 @@
 import {
-    SetHedgePriceThreshold,
-    SetHedgeTimeThreshold,
-    HedgeOTC,
-    HedgeOTCSingle,
-    SetStrategyCap,
-    SetHedgingTwapPeriod,
-    SetOTCPriceTolerance,
-    VaultTransferred,
-    Deposit,
-    Withdraw,
-    WithdrawShutdown,
-    FlashDeposit,
-    FlashWithdraw,
-    FlashDepositCallback,
-    FlashWithdrawCallback,
-  } from "../generated/CrabStrategyV2/CrabStrategyV2"
-  import { BigInt } from "@graphprotocol/graph-ts"
+  SetHedgePriceThreshold,
+  SetHedgeTimeThreshold,
+  HedgeOTC,
+  HedgeOTCSingle,
+  SetStrategyCap,
+  SetHedgingTwapPeriod,
+  SetOTCPriceTolerance,
+  VaultTransferred,
+  Deposit,
+  Withdraw,
+  WithdrawShutdown,
+  FlashDeposit,
+  FlashWithdraw,
+  FlashDepositCallback,
+  FlashWithdrawCallback,
+  Transfer,
+  CrabStrategyV2
+} from "../generated/CrabStrategyV2/CrabStrategyV2"
+import { BigInt, log } from "@graphprotocol/graph-ts"
 
 import { QueueTransaction } from "../generated/Timelock/Timelock";
 
 import {
-    CrabHedgeTimeThreshold,
-    ExecuteTimeLockTx,
-    HedgeOTC as HedgeOTCSchema,
-    HedgeOTCSingle as HedgeOTCSingleSchema,
-    SetHedgingTwapPeriod as SetHedgingTwapPeriodSchema,
-    SetStrategyCap as SetStrategyCapSchema,
-    SetHedgePriceThreshold as SetHedgePriceThresholdSchema,
-    TimeLockTx,
-    SetOTCPriceTolerance as SetOTCPriceToleranceSchema,
-    VaultTransferred as VaultTransferredSchema,
-    CrabUserTx as CrabUserTxSchema,
-    CrabUserTx,
+  CrabHedgeTimeThreshold,
+  ExecuteTimeLockTx,
+  HedgeOTC as HedgeOTCSchema,
+  HedgeOTCSingle as HedgeOTCSingleSchema,
+  SetHedgingTwapPeriod as SetHedgingTwapPeriodSchema,
+  SetStrategyCap as SetStrategyCapSchema,
+  SetHedgePriceThreshold as SetHedgePriceThresholdSchema,
+  TimeLockTx,
+  SetOTCPriceTolerance as SetOTCPriceToleranceSchema,
+  VaultTransferred as VaultTransferredSchema,
+  CrabUserTx as CrabUserTxSchema,
+  CrabUserTx,
+  Strategy,
+  Vault,
 } from "../generated/schema"
+import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
+import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
   const strategy = CrabUserTx.load(id)
   if (strategy) return strategy
 
   return new CrabUserTx(id)
+}
+
+function loadOrCreateStrategy(id: string): Strategy {
+  const strategy = Strategy.load(id)
+  if (strategy) return strategy
+
+  return new Strategy(id)
 }
 
 export function handleDeposit(event: Deposit): void {
@@ -92,6 +105,9 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.wSqueethAmount = event.params.wSqueethAmount
   userTx.lpAmount = event.params.crabAmount
   userTx.user = event.params.withdrawer
+  if (userTx.user.equals(CRAB_MIGRATION_ADDR)) {
+    userTx.user = event.transaction.from
+  }
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
@@ -110,6 +126,45 @@ export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void 
   userTx.ethAmount = event.params.excess
   userTx.type = 'FLASH_WITHDRAW_CALLBACK'
   userTx.save()
+}
+
+export function handleTransfer(event: Transfer): void {
+  const strategy = loadOrCreateStrategy(CRAB_V2_ADDR.toHex())
+
+  let contract = CrabStrategyV2.bind(event.address)
+  const vaultId = contract.vaultId()
+  strategy.vaultId = vaultId
+
+  // Minting token
+  if (event.params.from.toHex().toLowerCase() == '0x0000000000000000000000000000000000000000') {
+    const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+    userTx.lpAmount = event.params.value
+    userTx.save()
+
+    strategy.totalSupply = strategy.totalSupply.plus(event.params.value)
+    strategy.save()
+  }
+  // Burning token
+  if (event.params.to.toHex().toLowerCase() == '0x0000000000000000000000000000000000000000') {
+    strategy.totalSupply = strategy.totalSupply.minus(event.params.value)
+    strategy.save()
+  }
+}
+
+export function handleDepositV1Shares(event: DepositV1Shares): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  const strategy = loadOrCreateStrategy(CRAB_V1_ADDR.toHex())
+  const vault = Vault.load(strategy.vaultId.toString());
+  if (!vault) return
+
+  userTx.lpAmount = event.params.crabV1Amount
+  userTx.ethAmount = event.params.crabV1Amount.times(vault.collateralAmount).div(strategy.totalSupply)
+  userTx.user = event.params.user
+  userTx.owner = event.transaction.from
+  userTx.type = 'DEPOSIT_V1'
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+
 }
 
 export function handleSetHedgeTimeThreshold(event: SetHedgeTimeThreshold): void {
@@ -131,12 +186,12 @@ export function handleQueueTransaction(event: QueueTransaction): void {
   tx.save()
 }
 
-export function handleExecuteTransaction(event : QueueTransaction): void {
+export function handleExecuteTransaction(event: QueueTransaction): void {
   const execTimeLockTx = new ExecuteTimeLockTx(event.params.txHash.toHex());
   execTimeLockTx.timestamp = event.block.timestamp;
   const id = event.params.txHash.toHex();
   const tx = TimeLockTx.load(id);
-  if(tx) {
+  if (tx) {
     tx.queued = false
     tx.save();
     execTimeLockTx.timelocktx = tx.id;

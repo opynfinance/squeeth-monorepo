@@ -259,7 +259,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
               variant="fullWidth"
               className={classes.tabBackGround}
             >
-              <SecondaryTab id="crab-deposit-tab" label="Early Access v2" />
+              <SecondaryTab id="crab-deposit-tab" label="Migrate to v2" />
               <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
             </SecondaryTabs>
           ) : null}
@@ -274,12 +274,14 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
           )}
           <div className={classes.tradeContainer}>
             {depositOption === 0 ? (
-              !isQueued ? (
-                <CrabMigration />
+              !currentEthValue.isZero() ? (
+                <Typography variant="body2" color="textSecondary" style={{ marginTop: '20px' }}>
+                  Migrate to V2 coming soon!
+                </Typography>
               ) : (
                 <>
                   <Typography variant="body2" color="textSecondary" style={{ marginTop: '8px' }}>
-                    You have secured your spot! Your position will be included in Crab v2 at launch 🦀🎉
+                    You don't have any Crab v1 position to migrate
                   </Typography>
                 </>
               )
@@ -298,8 +300,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                       depositError
                         ? depositError
                         : warning
-                        ? warning
-                        : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                          ? warning
+                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                     }
                     convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                     onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}

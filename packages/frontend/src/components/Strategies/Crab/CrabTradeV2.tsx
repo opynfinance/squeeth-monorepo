@@ -6,41 +6,35 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
 import RestrictionInfo from '@components/RestrictionInfo'
-import { CircularProgress } from '@material-ui/core'
+import { CircularProgress, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
-import CrabPosition from './CrabPosition'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import {
-  crabStrategySlippageAtom,
   crabStrategySlippageAtomV2,
-  currentCrabPositionValueInETHAtom,
-  currentCrabPositionValueInETHAtomV2,
-  isPriceHedgeAvailableAtom,
+  currentCrabPositionETHActualAtomV2,
   isPriceHedgeAvailableAtomV2,
-  isTimeHedgeAvailableAtom,
   isTimeHedgeAvailableAtomV2,
 } from 'src/state/crab/atoms'
 import {
-  useCalculateETHtoBorrowFromUniswap,
-  useCalculateEthWillingToPay,
-  useFlashWithdrawEth,
   useSetStrategyDataV2,
   useFlashDepositV2,
   useCalculateETHtoBorrowFromUniswapV2,
   useFlashWithdrawEthV2,
   useCalculateEthWillingToPayV2,
+  useClaimAndWithdrawEthV2,
 } from 'src/state/crab/hooks'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
+import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -86,20 +80,24 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [withdrawAmount, setWithdrawAmount] = useState(new BigNumber(0))
   const [depositOption, setDepositOption] = useState(0)
   const [txLoading, setTxLoading] = useState(false)
-  const [txLoaded, setTxLoaded] = useState(false)
-  const [txHash, setTxHash] = useState('')
   const [depositPriceImpact, setDepositPriceImpact] = useState('0')
   const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
 
   const connected = useAtomValue(connectedWalletAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
+  const userCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
   const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtomV2)
   const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtomV2)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
+
+  const currentEthValue = userCurrentEthValue.gt(0) ? userCurrentEthValue : currentEthActualValue
+  const isClaimAndWithdraw = userCurrentEthValue.gt(0)
+
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyDataV2()
   const flashWithdrawEth = useFlashWithdrawEthV2()
+  const claimAndWithdrawEth = useClaimAndWithdrawEthV2()
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
@@ -206,10 +204,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const withdraw = async () => {
     setTxLoading(true)
     try {
-      await flashWithdrawEth(withdrawAmount, slippage, () => {
-        setTxLoading(false)
-        setStrategyData()
-      })
+      if (isClaimAndWithdraw) {
+        await claimAndWithdrawEth(withdrawAmount, slippage)
+      } else {
+        await flashWithdrawEth(withdrawAmount, slippage)
+      }
+      setTxLoading(false)
+      setStrategyData()
     } catch (e) {
       console.log(e)
       setTxLoading(false)
@@ -267,6 +268,18 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             />
           </div>
           <div className={classes.tradeContainer}>
+            <div style={{ marginBottom: '8px' }}>
+              {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
+                <>
+                  <Typography variant="caption" component="div">
+                    - Withdraw initially transferred crab position
+                  </Typography>
+                  <Typography variant="caption">
+                    - Withdraw crab v2 position
+                  </Typography>
+                </>
+              ) : null}
+            </div>
             {depositOption === 0 ? (
               <PrimaryInput
                 id="crab-deposit-eth-input"
