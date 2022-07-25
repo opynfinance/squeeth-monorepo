@@ -40,8 +40,8 @@ export default function Positions() {
   const classes = useStyles()
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
-  const positionType = useAtomValue(positionTypeAtom)
-  console.log("position type", positionType)
+  const positionTypeValue = useAtomValue(positionTypeAtom)
+  console.log("position type value", positionTypeValue)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -69,6 +69,11 @@ export default function Positions() {
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
   }, [vault])
+
+  const positionType = useAppMemo (() => {
+    console.log("positionType", positionTypeValue)
+    return positionTypeValue
+  }, [positionTypeValue])
 
   const { liquidations } = useVaultLiquidations(Number(vaultId))
 
