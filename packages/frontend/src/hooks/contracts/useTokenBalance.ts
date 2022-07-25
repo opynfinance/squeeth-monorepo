@@ -63,7 +63,6 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   useEffect(() => {
     if (poll && prevBalance !== balanceQuery.data?.toString()) {
       console.log("in the first one")
-      setPoll(false)
     }
     if (poll && prevBalance && balanceQuery.data && prevBalance !== balanceQuery.data?.toString()) {
       console.log("in the new one")
