@@ -55,6 +55,7 @@ export default function Positions() {
     useCurrentCrabPositionValue()
 
   const isCrabloading = useAppMemo(() => {
+    console.log("position null", <LongSqueeth/> === null)
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
