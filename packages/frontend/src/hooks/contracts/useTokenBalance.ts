@@ -37,17 +37,17 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     setContract(new web3.eth.Contract(erc20Abi as any, token))
   }, [web3, token])
 
-  console.log("address", address)
-  console.log("connected", connected)
-  console.log("decimals", decimals)
-  console.log("refetchIntervalSec", refetchIntervalSec)
-  console.log("token", token)
-  console.log("contract", contract)
-  console.log("boolean", Boolean(token) && Boolean(connected) && Boolean(contract))
-  console.log("web3", web3)
-  console.log("poll", poll)
-  console.log("query", tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }))
-  console.log("update", updateBalance(token, connected, contract, address, decimals))
+  // console.log("address", address)
+  // console.log("connected", connected)
+  // console.log("decimals", decimals)
+  // console.log("refetchIntervalSec", refetchIntervalSec)
+  // console.log("token", token)
+  // console.log("contract", contract)
+  // console.log("boolean", Boolean(token) && Boolean(connected) && Boolean(contract))
+  // console.log("web3", web3)
+  // console.log("poll", poll)
+  // console.log("query", tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }))
+  // console.log("update", updateBalance(token, connected, contract, address, decimals))
   
   const balanceQuery = useQuery(
     tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
@@ -88,8 +88,9 @@ async function updateBalance(
     const _bal = await contract.methods.balanceOf(address).call({
       from: address,
     })
+    console.log("made it in")
     const balance = toTokenAmount(new BigNumber(_bal.toString()), decimals)
-
+    console.log("balance", balance.toString())
     return balance
   } catch (error) {
     return new BigNumber(0)
