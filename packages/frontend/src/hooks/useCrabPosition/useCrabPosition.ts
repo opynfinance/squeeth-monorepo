@@ -2,13 +2,20 @@ import { BIG_ZERO } from '../../constants'
 import { useEffect, useState } from 'react'
 import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
 import { useUserCrabV2TxHistory } from '../useUserCrabV2TxHistory'
-import { CrabStrategyTxType } from '../../types'
+import { CrabStrategyTxType, CrabStrategyV2TxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useAtomValue } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
-import { crabLoadingAtom, crabLoadingAtomV2, crabPositionValueLoadingAtom, crabPositionValueLoadingAtomV2, currentCrabPositionValueInETHAtom, currentCrabPositionValueInETHAtomV2 } from 'src/state/crab/atoms'
+import {
+  crabLoadingAtom,
+  crabLoadingAtomV2,
+  crabPositionValueLoadingAtom,
+  crabPositionValueLoadingAtomV2,
+  currentCrabPositionValueInETHAtom,
+  currentCrabPositionValueInETHAtomV2,
+} from 'src/state/crab/atoms'
 
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
@@ -116,11 +123,15 @@ export const useCrabPositionV2 = (user: string) => {
 
     const { depositedEth, usdAmount } = txHistoryData?.reduce(
       (acc, tx) => {
-        if (tx.type === CrabStrategyTxType.FLASH_DEPOSIT) {
+        if (
+          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.DEPOSIT ||
+          CrabStrategyV2TxType.DEPOSIT_V1
+        ) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
-        } else if (tx.type === CrabStrategyTxType.FLASH_WITHDRAW) {
+        } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)

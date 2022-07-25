@@ -5,7 +5,7 @@ export const USER_CRAB_V2_TX_QUERY = gql`
     crabUserTxes(
       orderBy: timestamp
       orderDirection: $orderDirection
-      where: { owner: $ownerId, type_in: ["FLASH_DEPOSIT", "FLASH_WITHDRAW"] }
+      where: { owner: $ownerId, type_in: ["FLASH_DEPOSIT", "FLASH_WITHDRAW", "DEPOSIT", "WITHDRAW", "DEPOSIT_V1"] }
     ) {
       id
       type

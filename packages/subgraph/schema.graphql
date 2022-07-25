@@ -175,3 +175,9 @@ type CrabUserTx @entity {
   type: String!
   timestamp: BigInt!
 }
+
+type Strategy @entity {
+  id: ID!
+  totalSupply: BigInt!
+  vaultId: BigInt!
+}
