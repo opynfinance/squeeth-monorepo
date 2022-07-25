@@ -48,10 +48,6 @@ const CrabPosition: React.FC = () => {
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
-  const isMigrated = useAppMemo(() => {
-    return userMigratedShares.gt(0)
-  }, [userMigratedShares])
-
   if (loading) {
     return (
       <Box mt={2}>
@@ -60,14 +56,14 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if ((currentCrabPositionValue.isZero() || depositedUsd.isZero()) && !isMigrated) {
+  if (currentCrabPositionValue.isZero()) {
     return null
   }
 
   return (
     <div className={classes.container}>
       <Typography color="primary" variant="subtitle1">
-        {isMigrated ? 'Position secured in Crab V2' : 'Position'}
+        Position
       </Typography>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Typography variant="h6" id="crab-pos-bal">
