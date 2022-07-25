@@ -22,6 +22,8 @@ export enum TransactionType {
   REMOVE_LIQUIDITY = 'Removed Liquidity',
   CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
   CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
+  CRAB_V2_FLASH_DEPOSIT = 'Flash deposit in crab V2',
+  CRAB_V2_FLASH_WITHDRAW = 'Flash withdraw in crab V2',
 }
 
 export enum CloseType {

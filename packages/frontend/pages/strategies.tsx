@@ -3,6 +3,7 @@ import Nav from '@components/Nav'
 import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
@@ -290,7 +291,7 @@ const Strategies: React.FC = () => {
                   />
                 </div>
                 <StrategyInfo />
-                <CrabStrategyHistory />
+                { displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History /> }
               </div>
               {supportedNetwork && (
                 <div className={classes.tradeCard}>
