@@ -41,6 +41,7 @@ export default function Positions() {
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
+  console.log("position type", positionType)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -55,7 +56,6 @@ export default function Positions() {
     useCurrentCrabPositionValue()
 
   const isCrabloading = useAppMemo(() => {
-    console.log("position null", <LongSqueeth/> === null)
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
