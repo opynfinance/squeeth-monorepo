@@ -41,7 +41,6 @@ export default function Positions() {
   const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionTypeValue = useAtomValue(positionTypeAtom)
-  console.log("position type value", positionTypeValue)
   const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -71,7 +70,6 @@ export default function Positions() {
   }, [vault])
 
   const positionType = useAppMemo (() => {
-    console.log("positionType", positionTypeValue)
     return positionTypeValue
   }, [positionTypeValue])
 
