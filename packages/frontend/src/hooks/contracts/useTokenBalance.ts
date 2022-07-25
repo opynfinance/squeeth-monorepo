@@ -37,12 +37,18 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
     setContract(new web3.eth.Contract(erc20Abi as any, token))
   }, [web3, token])
 
+  console.log("address", address)
+  console.log("connected", connected)
+  console.log("decimals", decimals)
+  console.log("refetchIntervalSec", refetchIntervalSec)
+  console.log("token", token)
+
   const balanceQuery = useQuery(
     tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
     () => updateBalance(token, connected, contract, address, decimals),
     {
       enabled: Boolean(token) && Boolean(connected) && Boolean(contract),
-      refetchInterval: poll ? 500 : refetchIntervalSec * 100,
+      refetchInterval: poll ? 500 : refetchIntervalSec * 15000,
     },
   )
 
