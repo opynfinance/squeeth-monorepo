@@ -42,6 +42,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   console.log("decimals", decimals)
   console.log("refetchIntervalSec", refetchIntervalSec)
   console.log("token", token)
+  console.log("contract", contract)
 
   const balanceQuery = useQuery(
     tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
