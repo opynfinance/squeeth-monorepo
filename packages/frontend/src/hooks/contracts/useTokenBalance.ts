@@ -62,7 +62,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
 
   useEffect(() => {
     if (poll && prevBalance !== balanceQuery.data?.toString()) {
-      setPoll(false)
+      // setPoll(false)
     }
   }, [balanceQuery.data?.toString(), poll, prevBalance])
 
@@ -85,9 +85,7 @@ async function updateBalance(
 ) {
   try {
     if (!token || !connected || !contract) return
-    const _bal = await contract.methods.balanceOf(address).call({
-      from: address,
-    })
+    const _bal = await contract.methods.balanceOf(address).call()
     console.log("made it in")
     const balance = toTokenAmount(new BigNumber(_bal.toString()), decimals)
     console.log("balance", balance.toString())
