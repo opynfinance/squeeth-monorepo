@@ -43,7 +43,12 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   console.log("refetchIntervalSec", refetchIntervalSec)
   console.log("token", token)
   console.log("contract", contract)
-
+  console.log("boolean", Boolean(token) && Boolean(connected) && Boolean(contract))
+  console.log("web3", web3)
+  console.log("poll", poll)
+  console.log("query", tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }))
+  console.log("update", updateBalance(token, connected, contract, address, decimals))
+  
   const balanceQuery = useQuery(
     tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token }),
     () => updateBalance(token, connected, contract, address, decimals),
