@@ -23,7 +23,4 @@ export function handleTransfer(event: Transfer): void {
   recipientHistory.owner = event.params.to;
   recipientHistory.sqthAmount = amount;
   recipientHistory.save();
-
-  // sqthChange(event.params.to.toHex(), amount);
-  // sqthChange(event.params.from.toHex(), amount.neg());
 }
