@@ -515,7 +515,6 @@ export const useFlashWithdraw = () => {
       if (!contract) return
 
       const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
-      console.log(_ethWillingToPay.toString())
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
       return await handleTransaction(
@@ -570,7 +569,6 @@ export const useClaimWithdrawV2 = () => {
       if (!contract) return
 
       const { maximumAmountIn: _ethWillingToPay } = await calculateEthWillingToPay(amount, slippage)
-      console.log(_ethWillingToPay.toString())
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
@@ -641,7 +639,6 @@ export const useClaimAndWithdrawEthV2 = () => {
       if (!contract) return
 
       const equivalentCrab = ethAmount.div(currentEthValue).times(userCrabBalance)
-      console.log(currentEthValue?.toString(), userCrabBalance?.toString(), ethAmount.toString())
       return await claimAndWithdraw(equivalentCrab, slippage, onTxConfirmed)
     },
     [contract, currentEthValue?.toString(), claimAndWithdraw, userCrabBalance?.toString()],

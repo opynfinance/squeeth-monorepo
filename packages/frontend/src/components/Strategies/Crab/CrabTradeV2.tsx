@@ -86,13 +86,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
-  const userCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
+  const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
   const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtomV2)
   const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtomV2)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
 
-  const currentEthValue = userCurrentEthValue.gt(0) ? userCurrentEthValue : currentEthActualValue
-  const isClaimAndWithdraw = userCurrentEthValue.gt(0)
+  const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
+  const isClaimAndWithdraw = migratedCurrentEthValue.gt(0)
 
   const { data: balance } = useWalletBalance()
   const setStrategyData = useSetStrategyDataV2()
@@ -272,10 +272,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
                 <>
                   <Typography variant="caption" component="div">
-                    - Withdraw initially transferred crab position
+                    - Withdraw migrated crab position: {migratedCurrentEthValue.toFixed(4)} ETH
                   </Typography>
                   <Typography variant="caption">
-                    - Withdraw crab v2 position
+                    - Withdraw crab v2 position: {currentEthActualValue.toFixed(4)} ETH
                   </Typography>
                 </>
               ) : null}

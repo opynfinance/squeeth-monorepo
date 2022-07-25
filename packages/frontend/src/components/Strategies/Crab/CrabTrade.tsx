@@ -276,12 +276,12 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             {depositOption === 0 ? (
               !currentEthValue.isZero() ? (
                 <Typography variant="body2" color="textSecondary" style={{ marginTop: '20px' }}>
-                  Migrate to V2 coming soon!
+                  Didn't migrate from Crab V1 during early access? Migration to V2 coming soon.
                 </Typography>
               ) : (
                 <>
                   <Typography variant="body2" color="textSecondary" style={{ marginTop: '8px' }}>
-                    You don't have any Crab v1 position to migrate
+                    You don't have a Crab v1 position to migrate
                   </Typography>
                 </>
               )
