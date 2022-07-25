@@ -2,7 +2,7 @@ import { Tooltip, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 import { useEffect } from 'react'
-import { useCurrentCrabPositionValue, useSetStrategyData } from 'src/state/crab/hooks'
+import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2, useSetStrategyData } from 'src/state/crab/hooks'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { crabStrategyCollatRatioAtom } from 'src/state/crab/atoms'
 import useStyles from './useStyles'
@@ -16,6 +16,7 @@ type CrabPositionType = {
   pnlWMidPriceInPerct: BigNumber
   currentCrabPositionValue: BigNumber
   currentCrabPositionValueInETH: BigNumber
+  version: String
 }
 
 const CrabPosition: React.FC<CrabPositionType> = ({
@@ -26,11 +27,13 @@ const CrabPosition: React.FC<CrabPositionType> = ({
   pnlWMidPriceInUSD,
   currentCrabPositionValue,
   currentCrabPositionValueInETH,
+  version,
 }) => {
   const classes = useStyles()
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtom)
   const setStrategyData = useSetStrategyData()
   useCurrentCrabPositionValue()
+  useCurrentCrabPositionValueV2()
 
   useEffect(() => {
     setStrategyData()
@@ -41,7 +44,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography>🦀</Typography>
-          <Typography style={{ marginLeft: '8px' }}>Crab strategy</Typography>
+          <Typography style={{ marginLeft: '8px' }}>{version}</Typography>
         </div>
       </div>
       <div className={classes.shortPositionData}>
