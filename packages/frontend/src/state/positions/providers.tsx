@@ -99,8 +99,10 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
 
   useAppEffect(() => {
     console.log("outside if", computedSwaps.squeethAmount.toString())
+    console.log("osqth bal outside", oSqueethBal.toString())
     if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
       console.log("computedSwaps.squeethAmount", computedSwaps.squeethAmount.toString())
+      console.log("osqth bal inside", oSqueethBal.toString())
       setPositionType(PositionType.LONG)
       // check if user osqth wallet balance is equal to the accumulated amount from tx history
       // if it's not the same, it's likely that they do smt on crab acution or otc or lp etc so dont show the pnl for them
