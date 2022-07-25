@@ -44,27 +44,13 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     return;
   }
 
-  if (event.params.recipient.toHex() === "0x76a7ae64725bdab99a51681872c16f0e641301f3") {
-    log.error("Recipient", [event.params.recipient.toHex()])
-  }
-  if (event.params.sender.toHex() === "0x76a7ae64725bdab99a51681872c16f0e641301f3") {
-    log.error("Sender", [event.params.sender.toHex()])
-  }
-
   // const account = loadOrCreateAccount(event.params.recipient.toHex());
   let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
   let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
-  if (amount0.gt(BIGDECIMAL_ZERO)) {
-    let transactionHistory = createTransactionHistory("SELL_OSQTH", event)
-    transactionHistory.sqthAmount = amount0;
-    transactionHistory.ethAmount = amount1;
-    transactionHistory.save();
-  } else {
-    let transactionHistory = createTransactionHistory("BUY_OSQTH", event)
-    transactionHistory.sqthAmount = amount0.neg();
-    transactionHistory.ethAmount = amount1.neg();
-    transactionHistory.save();
-  }
+  let transactionHistory = createTransactionHistory("SWAP", event)
+  transactionHistory.sqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
+  transactionHistory.save();
   // sqthChange(event.params.recipient.toHex(), amount0.neg());
   // account.save();  
 
