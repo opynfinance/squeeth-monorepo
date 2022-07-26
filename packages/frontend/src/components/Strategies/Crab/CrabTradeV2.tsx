@@ -71,7 +71,7 @@ const useStyles = makeStyles((theme) =>
     notice: {
       marginTop: theme.spacing(1.5),
       marginBottom: theme.spacing(2),
-      padding: theme.spacing(2.5),
+      padding: theme.spacing(2),
       border: `1px solid #F3FF6C`,
       borderRadius: theme.spacing(1),
       display: 'flex',
@@ -147,6 +147,16 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   useEffect(() => {
     setStrategyData()
   }, [])
+
+const { priceImpactWarning } = useMemo(() => {
+  let priceImpactWarning: Boolean | false
+  priceImpactWarning = true
+  return { priceImpactWarning }
+  }, [
+      dailyHistoricalFunding.funding,
+      dailyHistoricalFunding.period,
+      impliedVol,
+  ])
 
   const { depositFundingWarning, withdrawFundingWarning } = useMemo(() => {
     let depositFundingWarning: Boolean | false
@@ -381,6 +391,18 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 </div>
                 <Typography variant="caption">
                   It is currently costly to withdraw. Consider withdrawing later.
+                </Typography>
+              </div>
+          ) : null }
+          { priceImpactWarning ? (
+              <div className={classes.notice}>
+                <div className={classes.infoIcon}>
+                  <Tooltip title={"High price impact means that you are losing a significant amount of value due to the size of your trade. Depositing a smaller size can reduce your price impact."}>
+                    <InfoIcon fontSize="medium" />
+                  </Tooltip>
+                </div>
+                <Typography variant="caption">
+                  High price impact. Try a smaller size.
                 </Typography>
               </div>
           ) : null }
