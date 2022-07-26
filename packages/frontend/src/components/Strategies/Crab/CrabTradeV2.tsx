@@ -36,6 +36,7 @@ import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, impliedVolAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
+import { useUpdateSharesData } from 'src/state/crabMigration/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -115,6 +116,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const claimAndWithdrawEth = useClaimAndWithdrawEthV2()
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
+  const updateSharesData = useUpdateSharesData()
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -243,6 +245,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       } else {
         await flashWithdrawEth(withdrawAmount, slippage)
       }
+      updateSharesData()
       setTxLoading(false)
       setStrategyData()
     } catch (e) {
@@ -303,13 +306,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
           </div>
           <div className={classes.tradeContainer}>
             <div style={{ marginBottom: '8px' }}>
-              {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
+              {depositOption !== 0 && isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
                 <>
                   <Typography variant="caption" component="div">
-                    - Withdraw migrated crab position: {migratedCurrentEthValue.toFixed(4)} ETH
+                    Step 1: Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
                   </Typography>
                   <Typography variant="caption">
-                    - Withdraw crab v2 position: {currentEthActualValue.toFixed(4)} ETH
+                    Step 2: Withdraw crab v2 position, {currentEthActualValue.toFixed(4)} ETH
                   </Typography>
                 </>
               ) : null}
