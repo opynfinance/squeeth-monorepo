@@ -6,7 +6,7 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
 import RestrictionInfo from '@components/RestrictionInfo'
-import { CircularProgress, Typography } from '@material-ui/core'
+import { CircularProgress, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -16,6 +16,7 @@ import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
+import InfoIcon from '@material-ui/icons/Info'
 import {
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
@@ -32,7 +33,7 @@ import {
 } from 'src/state/crab/hooks'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, impliedVolAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
 
@@ -66,6 +67,20 @@ const useStyles = makeStyles((theme) =>
       zIndex: 20,
       // background: '#2A2D2E',
     },
+    notice: {
+      marginTop: theme.spacing(1.5),
+      marginBottom: theme.spacing(2),
+      padding: theme.spacing(2.5),
+      border: `1px solid #F3FF6C`,
+      borderRadius: theme.spacing(1),
+      display: 'flex',
+      background: 'rgba(243, 255, 108, 0.1)',
+      alignItems: 'center',
+    },
+    infoIcon: {
+      marginRight: theme.spacing(2),
+      color: "#F3FF6C",
+    }
   }),
 )
 
@@ -117,6 +132,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
 
   const prevCrabTxData = usePrevious(data)
 
+  const impliedVol = useAtomValue(impliedVolAtom)
+
   useEffect(() => {
     if (confirmed && prevCrabTxData?.length === data?.length) {
       startPolling(500)
@@ -128,6 +145,31 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   useEffect(() => {
     setStrategyData()
   }, [])
+
+  const { depositFundingWarning, withdrawFundingWarning } = useMemo(() => {
+    let depositFundingWarning: Boolean | false
+    let withdrawFundingWarning: Boolean | false
+
+    const daysInYear = 365
+    const impliedVolDiff = new BigNumber(depositOption === 0 ? -0.1 : 0.1)
+    const impliedVolDiffLowVol = new BigNumber(depositOption === 0 ? -0.08 : 0.08)
+    console.log("funding", dailyHistoricalFunding.funding.toString())
+    const dailyHistoricalImpliedVol = (new BigNumber(dailyHistoricalFunding.funding).times(daysInYear)).sqrt()
+    console.log("dailyHistoricalImpliedVol", dailyHistoricalImpliedVol.toString())
+    const threshold = BigNumber.max(dailyHistoricalImpliedVol.times(new BigNumber(1).plus(impliedVolDiff)),
+    dailyHistoricalImpliedVol.plus(impliedVolDiffLowVol))
+    console.log("threshhold", threshold.toString())
+    depositFundingWarning = (depositOption === 0 && new BigNumber(impliedVol).lt(threshold)) ? true : false
+    withdrawFundingWarning = (depositOption != 0 && new BigNumber(impliedVol).gt(threshold)) ? true : false
+    console.log("deposit funding warning", depositFundingWarning)
+    console.log("withdraw funding warning", withdrawFundingWarning)
+    return { depositFundingWarning, withdrawFundingWarning }
+    }, [
+        dailyHistoricalFunding.funding,
+        dailyHistoricalFunding.period,
+        depositOption,
+        impliedVol,
+      ])
 
   const { depositError, warning, withdrawError } = useMemo(() => {
     let depositError: string | undefined
@@ -150,9 +192,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
         depositError = 'Deposits and withdraws available after the hedge auction'
         withdrawError = 'Deposits and withdraws available after the hedge auction'
-      }
-      if (currentImpliedFunding <= 0.75 * dailyHistoricalFunding.funding) {
-        warning = `Current implied funding is 75% lower than the last ${dailyHistoricalFunding.period} hours. Consider if you want to deposit now or later`
       }
     }
 
@@ -323,6 +362,20 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 error={!!withdrawError}
               />
             )}
+            { depositFundingWarning || withdrawFundingWarning ? (
+              <div className={classes.notice}>
+                <div className={classes.infoIcon}>
+                  <Tooltip title={depositFundingWarning ? "The strategy sells squeeth to earn yield. Yield is currently lower than usual. You can still deposit, but you may earn less."
+                                                        : "Squeeth is currently more expensive than usual. The strategy buys back squeeth to withdraw. You can still withdraw, but you will pay more."}>
+                    <InfoIcon fontSize="medium" />
+                  </Tooltip>
+                </div>
+                <Typography variant="caption">
+                  {depositFundingWarning ? "Crab yield is currently lower than usual. Consider depositing later."
+                                        : "It is currently costly to withdraw. Consider withdrawing later."}
+                </Typography>
+              </div>
+          ) : null }
             <TradeInfoItem
               label="Slippage"
               value={slippage.toString()}
