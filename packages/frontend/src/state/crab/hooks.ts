@@ -298,19 +298,21 @@ export const useCurrentCrabPositionValueV2 = () => {
 
   useAppEffect(() => {
     ; (async () => {
-      setIsCrabPositionValueLoading(true)
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral) {
+      if (!squeethDebt || !collateral || collateral.isZero() || squeethDebt.isZero()) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         return
       }
 
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
+
+      // Or else vault would have been liquidated
+      if (collateral.lt(ethDebt)) return
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
