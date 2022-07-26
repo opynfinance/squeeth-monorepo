@@ -298,19 +298,21 @@ export const useCurrentCrabPositionValueV2 = () => {
 
   useAppEffect(() => {
     ; (async () => {
-      setIsCrabPositionValueLoading(true)
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral) {
+      if (!squeethDebt || !collateral || collateral.isZero() || squeethDebt.isZero()) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         return
       }
 
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
+
+      // Or else vault would have been liquidated
+      if (collateral.lt(ethDebt)) return
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
@@ -628,10 +630,9 @@ export const useFlashWithdrawEthV2 = () => {
 }
 
 export const useClaimAndWithdrawEthV2 = () => {
-  const { crabStrategy2 } = useAtomValue(addressesAtom)
   const currentEthValue = useAtomValue(userMigratedSharesETHAtom)
-  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
-  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const userCrabBalance = useAtomValue(userMigratedSharesAtom)
+  const contract = useAtomValue(crabMigrationContractAtom)
   const claimAndWithdraw = useClaimWithdrawV2()
 
   const claimAndWithdrawEth = useCallback(

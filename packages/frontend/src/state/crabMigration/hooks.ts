@@ -10,6 +10,14 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { totalMigratedSharesAtom, userMigratedSharesAtom } from './atom'
 
 export const useInitCrabMigration = () => {
+  const updateMigrationData = useUpdateSharesData()
+
+  useEffect(() => {
+    updateMigrationData()
+  }, [updateMigrationData])
+}
+
+export const useUpdateSharesData = () => {
   const address = useAtomValue(addressAtom)
   const crabMigrationContract = useAtomValue(crabMigrationContractAtom)
   //const setTotalMigratedShares = useSetAtom(totalMigratedSharesAtom)
@@ -26,9 +34,7 @@ export const useInitCrabMigration = () => {
     }
   }, [address, crabMigrationContract?.methods, setUserMigratedShares])
 
-  useEffect(() => {
-    updateMigrationData()
-  }, [updateMigrationData])
+  return updateMigrationData
 }
 
 /**
