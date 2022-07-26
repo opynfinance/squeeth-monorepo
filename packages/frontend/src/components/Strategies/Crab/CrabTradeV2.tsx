@@ -6,7 +6,7 @@ import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
 import RestrictionInfo from '@components/RestrictionInfo'
-import { CircularProgress, Typography } from '@material-ui/core'
+import { CircularProgress, responsiveFontSizes, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -16,6 +16,8 @@ import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
+import InfoIcon from '@material-ui/icons/Info'
+
 import {
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
@@ -35,6 +37,7 @@ import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
+import clsx from 'clsx'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -64,7 +67,20 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       top: '0',
       zIndex: 20,
-      // background: '#2A2D2E',
+    },
+    notice: {
+      marginTop: theme.spacing(1.5),
+      marginBottom: theme.spacing(2),
+      padding: theme.spacing(2.5),
+      border: `1px solid ${theme.palette.background.stone}`,
+      borderRadius: theme.spacing(1),
+      display: 'flex',
+      background: theme.palette.background.lightStone,
+      alignItems: 'center',
+    },
+    infoIcon: {
+      marginRight: theme.spacing(2),
+      color: theme.palette.text.hint,
     },
   }),
 )
@@ -323,6 +339,14 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 error={!!withdrawError}
               />
             )}
+            <div className={classes.notice}>
+              <div className={classes.infoIcon}>
+                <InfoIcon fontSize="medium" />
+              </div>
+              <Typography variant="caption" color="textSecondary">
+                Crab aims to earn yield in dollar terms. It does this by stacking ETH when price decreases and selling ETH when price increases.
+              </Typography>
+            </div>
             <TradeInfoItem
               label="Slippage"
               value={slippage.toString()}
