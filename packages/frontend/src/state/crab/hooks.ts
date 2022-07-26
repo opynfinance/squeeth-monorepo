@@ -276,7 +276,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtomV2)
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtomV2)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtomV2)
-  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 15, 18)
+  const { value: userCrabBalance, loading: balLoading } = useTokenBalance(crabStrategy2, 15, 18)
   const userMigratedShares = useAtomValue(userMigratedSharesAtom)
   const setUserMigratedSharesETH = useUpdateAtom(userMigratedSharesETHAtom)
   const setCurrentCrabPositionETHActual = useUpdateAtom(currentCrabPositionETHActualAtomV2)
@@ -298,14 +298,18 @@ export const useCurrentCrabPositionValueV2 = () => {
 
   useAppEffect(() => {
     ; (async () => {
+      if (balLoading) {
+        setIsCrabPositionValueLoading(true)
+      }
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral || collateral.isZero() || squeethDebt.isZero()) {
+      if (!squeethDebt || !collateral || ((collateral.isZero() || squeethDebt.isZero()) && userShares.gt(0))) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
+        setIsCrabPositionValueLoading(true)
         return
       }
 
@@ -336,6 +340,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     setUserMigratedSharesETH,
     ethPrice,
     vault,
+    balLoading,
   ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
