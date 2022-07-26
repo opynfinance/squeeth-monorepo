@@ -628,10 +628,9 @@ export const useFlashWithdrawEthV2 = () => {
 }
 
 export const useClaimAndWithdrawEthV2 = () => {
-  const { crabStrategy2 } = useAtomValue(addressesAtom)
   const currentEthValue = useAtomValue(userMigratedSharesETHAtom)
-  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
-  const contract = useAtomValue(crabStrategyContractAtomV2)
+  const userCrabBalance = useAtomValue(userMigratedSharesAtom)
+  const contract = useAtomValue(crabMigrationContractAtom)
   const claimAndWithdraw = useClaimWithdrawV2()
 
   const claimAndWithdrawEth = useCallback(

@@ -34,7 +34,6 @@ import { useUserCrabTxHistory } from '@hooks/useUserCrabTxHistory'
 import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabMigration from './CrabMigrate'
-import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { isQueuedAtom } from 'src/state/crabMigration/atom'
 
 const useStyles = makeStyles((theme) =>

@@ -33,7 +33,12 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from 'src/state/crab/hooks'
+import {
+  useCurrentCrabPositionValue,
+  useCurrentCrabPositionValueV2,
+  useSetStrategyData,
+  useSetStrategyDataV2,
+} from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
@@ -52,20 +57,29 @@ export default function Positions() {
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
-  const setStrategyData = useSetStrategyDataV2()
+  const setStrategyDataV2 = useSetStrategyDataV2()
+  const setStrategyData = useSetStrategyData()
 
   useAppEffect(() => {
+    setStrategyDataV2()
     setStrategyData()
-  }, [])
+  }, [setStrategyData, setStrategyDataV2])
 
   usePositionsAndFeesComputation()
   const { depositedEth, depositedUsd, loading: isCrabPositonLoading } = useCrabPosition(address || '')
   const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
     useCurrentCrabPositionValue()
 
-  const { depositedEth: depositedEthV2, depositedUsd: depositedUsdV2, loading: isCrabPositonLoadingV2 } = useCrabPositionV2(address || '')
-  const { currentCrabPositionValue: currentCrabPositionValueV2, currentCrabPositionValueInETH: currentCrabPositionValueInETHV2, isCrabPositionValueLoading: isCrabPositionValueLoadingV2 } =
-    useCurrentCrabPositionValueV2()
+  const {
+    depositedEth: depositedEthV2,
+    depositedUsd: depositedUsdV2,
+    loading: isCrabPositonLoadingV2,
+  } = useCrabPositionV2(address || '')
+  const {
+    currentCrabPositionValue: currentCrabPositionValueV2,
+    currentCrabPositionValueInETH: currentCrabPositionValueInETHV2,
+    isCrabPositionValueLoading: isCrabPositionValueLoadingV2,
+  } = useCurrentCrabPositionValueV2()
 
   const isCrabloading = useAppMemo(() => {
     return isCrabPositonLoading || isCrabPositionValueLoading
@@ -122,11 +136,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-        depositedEth.isZero() &&
-        depositedEthV2.isZero() &&
-        squeethAmount.isZero() &&
-        mintedDebt.isZero() &&
-        lpedSqueeth.isZero() ? (
+          depositedEth.isZero() &&
+          depositedEthV2.isZero() &&
+          squeethAmount.isZero() &&
+          mintedDebt.isZero() &&
+          lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -142,7 +156,7 @@ export default function Positions() {
 
         {liquidations.length > 0 && <ShortSqueethLiquidated />}
 
-        {!!address && depositedEth.isGreaterThan(0) && (
+        {!!address && currentCrabPositionValueInETH.isGreaterThan(0) && (
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
@@ -155,7 +169,7 @@ export default function Positions() {
           />
         )}
 
-        {!!address && depositedEthV2.isGreaterThan(0) && (
+        {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
           <CrabPosition
             depositedEth={depositedEthV2}
             depositedUsd={depositedUsdV2}
