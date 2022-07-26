@@ -118,8 +118,6 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  console.log(txHistoryData)
-
   const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
