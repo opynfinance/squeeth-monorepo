@@ -16,6 +16,8 @@ import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
+import InfoIcon from '@material-ui/icons/Info'
+
 import {
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
@@ -65,7 +67,20 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       top: '0',
       zIndex: 20,
-      // background: '#2A2D2E',
+    },
+    notice: {
+      marginTop: theme.spacing(1.5),
+      marginBottom: theme.spacing(2),
+      padding: theme.spacing(2.5),
+      border: `1px solid ${theme.palette.background.stone}`,
+      borderRadius: theme.spacing(1),
+      display: 'flex',
+      background: theme.palette.background.lightStone,
+      alignItems: 'center',
+    },
+    infoIcon: {
+      marginRight: theme.spacing(2),
+      color: theme.palette.text.hint,
     },
   }),
 )
@@ -326,6 +341,14 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 error={!!withdrawError}
               />
             )}
+            <div className={classes.notice}>
+              <div className={classes.infoIcon}>
+                <InfoIcon fontSize="medium" />
+              </div>
+              <Typography variant="caption" color="textSecondary">
+                Crab aims to earn yield in dollar terms. It does this by stacking ETH when price decreases and selling ETH when price increases.
+              </Typography>
+            </div>
             <TradeInfoItem
               label="Slippage"
               value={slippage.toString()}
