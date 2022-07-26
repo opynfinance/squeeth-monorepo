@@ -7,7 +7,13 @@ import {
 } from "../generated/NonfungiblePositionManager/NonfungiblePositionManager";
 import { OSQTH_TOKEN_ADDR, WETH_TOKEN_ADDR } from "./addresses";
 import { TOKEN_DECIMALS_18 } from "./constants";
-import { convertTokenToDecimal, createTransactionHistory, ethChange } from "./util";
+import {
+  convertTokenToDecimal,
+  createTransactionHistory,
+  ethChange,
+  loadOrCreateAccount,
+  sqthChange,
+} from "./util";
 
 function isOSQTHETHPool(address: Address, tokenId: BigInt): boolean {
   let contract = NonfungiblePositionManager.bind(address);
@@ -29,40 +35,48 @@ export function handleIncreaseLiquidity(event: IncreaseLiquidity): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  let transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event)
-  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
-  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
+  let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
+
+  let transactionHistory = createTransactionHistory("ADD_LIQUIDITY", event);
+  transactionHistory.sqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
   transactionHistory.save();
-  // ethChange(
-  //   event.transaction.from.toHex(),
-  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
-  // );
+
+  sqthChange(event.transaction.from.toHex(), amount0);
+  ethChange(event.transaction.from.toHex(), amount1);
 }
 
 export function handleDecreaseLiquidity(event: DecreaseLiquidity): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  let transactionHistory = createTransactionHistory("REMOVE_LIQUIDITY", event)
-  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
-  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
+  let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
+
+  let transactionHistory = createTransactionHistory("REMOVE_LIQUIDITY", event);
+  transactionHistory.sqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
   transactionHistory.save();
-  // ethChange(
-  //   event.transaction.from.toHex(),
-  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
-  // );
+
+  sqthChange(event.transaction.from.toHex(), amount0.neg());
+  ethChange(event.transaction.from.toHex(), amount1.neg());
 }
 
 export function handleCollect(event: Collect): void {
   let isOSQTHNETHPool = isOSQTHETHPool(event.address, event.params.tokenId);
   if (!isOSQTHNETHPool) return;
 
-  let transactionHistory = createTransactionHistory("COLLECT_FEE", event)
-  transactionHistory.sqthAmount = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18)
-  transactionHistory.ethAmount = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18)
+  let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
+  let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
+
+  let transactionHistory = createTransactionHistory("COLLECT_FEE", event);
+  transactionHistory.sqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
   transactionHistory.save();
-  // ethChange(
-  //   event.transaction.from.toHex(),
-  //   convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18).neg()
-  // );
+
+  let account = loadOrCreateAccount(event.transaction.from.toHex());
+  account.sqthCollected = account.sqthCollected.plus(amount0);
+  account.ethCollected = account.ethCollected.plus(amount1);
+  account.save();
 }

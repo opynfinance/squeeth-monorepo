@@ -7,10 +7,14 @@ export const ACCOUNT_QUERY = gql`
       sqthOpenUnitPrice
       sqthCloseAmount
       sqthCloseUnitPrice
+
       ethDepositAmount
       ethDepositUnitPrice
       ethWithdrawAmount
       ethWithdrawUnitPrice
+
+      sqthCollected
+      ethCollected
     }
   }
 `
@@ -22,10 +26,14 @@ export const ACCOUNT_SUBSCRIPTION = gql`
       sqthOpenUnitPrice
       sqthCloseAmount
       sqthCloseUnitPrice
+
       ethDepositAmount
       ethDepositUnitPrice
       ethWithdrawAmount
       ethWithdrawUnitPrice
+
+      sqthCollected
+      ethCollected
     }
   }
 `

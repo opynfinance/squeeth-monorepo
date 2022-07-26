@@ -44,15 +44,16 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     return;
   }
 
-  // const account = loadOrCreateAccount(event.params.recipient.toHex());
   let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
   let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
-  let transactionHistory = createTransactionHistory("SWAP", event)
+  let transactionHistory = createTransactionHistory("SWAP", event);
   transactionHistory.sqthAmount = amount0;
   transactionHistory.ethAmount = amount1;
   transactionHistory.save();
-  // sqthChange(event.params.recipient.toHex(), amount0.neg());
-  // account.save();  
+
+  const account = loadOrCreateAccount(event.transaction.from.toHex());
+  sqthChange(event.transaction.from.toHex(), amount0.neg());
+  account.save();
 
   // token0 osqth
   // token1 weth

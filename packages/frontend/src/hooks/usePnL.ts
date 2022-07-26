@@ -26,9 +26,11 @@ export default function usePnL() {
     const ethDepositUnitPrice = new BigNumber(account.ethDepositUnitPrice)
     const ethWithdrawAmount = new BigNumber(account.ethWithdrawAmount)
     const ethWithdrawUnitPrice = new BigNumber(account.ethWithdrawUnitPrice)
+    const ethCollected = new BigNumber(account.ethCollected)
+    const sqthCollected = new BigNumber(account.sqthCollected)
 
     const unrealizedSqthCost = sqthOpenAmount.times(sqthOpenUnitPrice).plus(sqthCloseAmount.times(sqthCloseUnitPrice))
-    const unrealizedSqthPnL = sqthOpenAmount.plus(sqthCloseAmount).times(sqthPrice).minus(unrealizedSqthCost)
+    const unrealizedSqthPnL = sqthOpenAmount.plus(sqthCloseAmount).times(sqthPrice).plus(unrealizedSqthCost)
     const unrealizedEthCost = ethDepositAmount
       .times(ethDepositUnitPrice)
       .minus(ethWithdrawAmount.times(ethWithdrawUnitPrice))
@@ -37,14 +39,16 @@ export default function usePnL() {
     const realizedSqthPnL = sqthOpenUnitPrice.plus(sqthCloseUnitPrice).times(sqthCloseAmount)
     const realizedEthPnL = ethWithdrawUnitPrice.minus(ethDepositUnitPrice).times(ethWithdrawAmount)
 
+    const collected = ethCollected.times(ethPrice).plus(sqthCollected.times(sqthPrice))
+
     const sqthAmount = sqthOpenAmount.plus(sqthCloseAmount)
     const sqthAmountInUSD = sqthAmount.times(sqthPrice)
 
-    console.log({ account })
+    console.log(floatifyBigNums({ unrealizedSqthPnL, unrealizedEthPnL, realizedSqthPnL, realizedEthPnL }))
 
     return {
-      unrealizedPnL: unrealizedSqthPnL.plus(unrealizedEthPnL),
-      realizedPnL: realizedSqthPnL.plus(realizedEthPnL),
+      unrealizedPnL: unrealizedSqthPnL.plus(unrealizedEthPnL).plus(collected),
+      realizedPnL: realizedSqthPnL.plus(realizedEthPnL).plus(collected),
       sqthAmount,
       sqthAmountInUSD,
     }

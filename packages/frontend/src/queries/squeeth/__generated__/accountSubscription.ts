@@ -17,6 +17,8 @@ export interface accountSubscription_account {
   ethDepositUnitPrice: any;
   ethWithdrawAmount: any;
   ethWithdrawUnitPrice: any;
+  sqthCollected: any;
+  ethCollected: any;
 }
 
 export interface accountSubscription {

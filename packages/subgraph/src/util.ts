@@ -116,10 +116,14 @@ export function resetPrices(userAddr: string): void {
   account.sqthOpenUnitPrice = BIGDECIMAL_ZERO;
   account.sqthCloseAmount = BIGDECIMAL_ZERO;
   account.sqthCloseUnitPrice = BIGDECIMAL_ZERO;
+
   account.ethDepositAmount = BIGDECIMAL_ZERO;
   account.ethDepositUnitPrice = BIGDECIMAL_ZERO;
   account.ethWithdrawAmount = BIGDECIMAL_ZERO;
   account.ethWithdrawUnitPrice = BIGDECIMAL_ZERO;
+
+  account.sqthCollected = BIGDECIMAL_ZERO;
+  account.ethCollected = BIGDECIMAL_ZERO;
 
   account.save();
 }
@@ -198,7 +202,10 @@ export function ethChange(userAddr: string, amount: BigDecimal): void {
   account.save();
 }
 
-export function createTransactionHistory(transactionType: string, event: ethereum.Event): TransactionHistory {
+export function createTransactionHistory(
+  transactionType: string,
+  event: ethereum.Event
+): TransactionHistory {
   let transactionHistory = new TransactionHistory(
     `${event.transaction.hash.toHex()}-${transactionType}`
   );
@@ -207,8 +214,8 @@ export function createTransactionHistory(transactionType: string, event: ethereu
   transactionHistory.transactionType = transactionType;
   transactionHistory.sqthAmount = BIGDECIMAL_ZERO;
   transactionHistory.ethAmount = BIGDECIMAL_ZERO;
-  transactionHistory.sqthPrice = getSqthEthPrices()[3]
-  transactionHistory.ethPrice = getEthUsdcPrices()[1]
+  transactionHistory.sqthPrice = getSqthEthPrices()[3];
+  transactionHistory.ethPrice = getEthUsdcPrices()[1];
 
-  return transactionHistory
+  return transactionHistory;
 }
