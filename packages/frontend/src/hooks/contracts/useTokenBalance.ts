@@ -49,7 +49,7 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   const prevBalance = usePrevious(balanceQuery.data?.toString())
 
   useEffect(() => {
-    if (poll && prevBalance !== balanceQuery.data?.toString()) {
+    if (poll && prevBalance && balanceQuery.data && prevBalance !== balanceQuery.data?.toString()) {
       setPoll(false)
     }
   }, [balanceQuery.data?.toString(), poll, prevBalance])
