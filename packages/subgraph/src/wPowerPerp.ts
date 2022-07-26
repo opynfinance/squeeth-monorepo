@@ -1,4 +1,3 @@
-import { Address } from "@graphprotocol/graph-ts";
 import { Transfer } from "../generated/WPowerPerp/WPowerPerp";
 import { TOKEN_DECIMALS_18 } from "./constants";
 import {
@@ -7,11 +6,6 @@ import {
 } from "./util";
 
 export function handleTransfer(event: Transfer): void {
-  // Ignore mint and burn
-  if (event.params.from === Address.empty() || event.params.to === Address.empty()) {
-    return;
-  }
-
   let amount = convertTokenToDecimal(event.params.value, TOKEN_DECIMALS_18);
 
   let senderHistory = createTransactionHistory("SEND_OSQTH", event);
