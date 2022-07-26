@@ -118,6 +118,8 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
+  console.log(txHistoryData)
+
   const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
 
@@ -126,7 +128,7 @@ export const useCrabPositionV2 = (user: string) => {
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT ||
-          CrabStrategyV2TxType.DEPOSIT_V1
+          tx.type === CrabStrategyV2TxType.DEPOSIT_V1
         ) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
