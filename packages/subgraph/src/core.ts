@@ -1,13 +1,16 @@
 import { Pool } from "../generated/schema";
 import { CRAB_STRATEGY_ADDR, USDC_WETH_POOL } from "./addresses";
 import {
+  BIGDECIMAL_ZERO,
   TOKEN_DECIMALS_18,
   TOKEN_DECIMALS_USDC,
 } from "./constants";
 import {
   convertTokenToDecimal,
   createTransactionHistory,
+  loadOrCreateAccount,
   sqrtPriceX96ToTokenPrices,
+  sqthChange,
 } from "./util";
 import { Swap as USDCSwapEvent, Initialize } from "../generated/USDCPool/Pool";
 import { Swap as OSQTHSwapEvent } from "../generated/OSQTHPool/Pool";
@@ -41,12 +44,15 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     return;
   }
 
+  // const account = loadOrCreateAccount(event.params.recipient.toHex());
   let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
   let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
   let transactionHistory = createTransactionHistory("SWAP", event)
   transactionHistory.sqthAmount = amount0;
   transactionHistory.ethAmount = amount1;
   transactionHistory.save();
+  // sqthChange(event.params.recipient.toHex(), amount0.neg());
+  // account.save();  
 
   // token0 osqth
   // token1 weth

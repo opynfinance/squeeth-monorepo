@@ -2,8 +2,11 @@ import {
   Address,
   BigInt,
   Bytes,
+  log,
+  dataSource,
 } from "@graphprotocol/graph-ts";
 import {
+  Controller,
   BurnShort,
   DepositCollateral,
   DepositUniPositionToken,
@@ -32,7 +35,7 @@ import {
   DayStatSnapshot,
   VaultHistory,
 } from "../generated/schema";
-import { convertTokenToDecimal, createTransactionHistory, loadOrCreateAccount } from "./util";
+import { convertTokenToDecimal, createTransactionHistory, ethChange, loadOrCreateAccount } from "./util";
 
 import { BIGINT_ONE, BIGINT_ZERO, TOKEN_DECIMALS_18 } from "./constants";
 import { EMPTY_ADDR, SHORT_HELPER_ADDR } from "./addresses";
@@ -156,6 +159,9 @@ export function handleDepositCollateral(event: DepositCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.plus(event.params.amount);
   dayStatSnapshot.save();
+
+  // let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  // ethChange(vault.owner, amount);
 
   let transactionHistory = createTransactionHistory("DEPOSIT_COLLAT", event)
   transactionHistory.owner = Address.fromString(vault.owner)
@@ -351,6 +357,9 @@ export function handleWithdrawCollateral(event: WithdrawCollateral): void {
   dayStatSnapshot.totalCollateralAmount =
     dayStatSnapshot.totalCollateralAmount.minus(event.params.amount);
   dayStatSnapshot.save();
+
+  // let amount = convertTokenToDecimal(event.params.amount, TOKEN_DECIMALS_18);
+  // ethChange(vault.owner, amount.neg());
 
   let transactionHistory = createTransactionHistory("WITHDRAW_COLLAT", event)
   transactionHistory.owner = Address.fromString(vault.owner)
