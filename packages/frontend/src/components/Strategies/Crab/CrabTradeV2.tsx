@@ -157,7 +157,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     const threshold = BigNumber.max(dailyHistoricalImpliedVol.times(new BigNumber(1).plus(impliedVolDiff)),
                                     dailyHistoricalImpliedVol.plus(impliedVolDiffLowVol))
     depositFundingWarning = (depositOption === 0 && new BigNumber(impliedVol).lt(threshold)) ? true : false
-    withdrawFundingWarning = true
+    withdrawFundingWarning = (depositOption != 0 && new BigNumber(impliedVol).gt(threshold)) ? true : false
     return { depositFundingWarning, withdrawFundingWarning }
     }, [
         dailyHistoricalFunding.funding,
