@@ -37,7 +37,6 @@ import { usePrevious } from 'react-use'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
-import clsx from 'clsx'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
