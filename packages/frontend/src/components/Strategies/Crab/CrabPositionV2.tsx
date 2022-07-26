@@ -37,7 +37,6 @@ const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
   const { loading: isCrabPositonLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
-  const userMigratedShares = useAtomValue(userMigratedSharesAtom)
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
@@ -45,6 +44,7 @@ const CrabPosition: React.FC = () => {
   }, [currentCrabPositionValue, depositedUsd])
 
   const loading = useAppMemo(() => {
+    console.log('Crab position loading : ', isCrabPositonLoading, isCrabPositionValueLoading)
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
 
