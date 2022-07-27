@@ -10,7 +10,7 @@ import { CircularProgress, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
@@ -38,6 +38,7 @@ import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, impliedVolAtom, 
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
 import { useUpdateSharesData } from 'src/state/crabMigration/hooks'
+import useAppMemo from '@hooks/useAppMemo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -168,7 +169,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     setStrategyData()
   }, [])
 
-const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => {
+const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useAppMemo(() => {
   let depositPriceImpactWarning: Boolean | false
   let withdrawPriceImpactWarning: Boolean | false
 
@@ -192,7 +193,7 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
       depositOption,
   ])
 
-  const { depositFundingWarning, withdrawFundingWarning } = useMemo(() => {
+  const { depositFundingWarning, withdrawFundingWarning } = useAppMemo(() => {
     let depositFundingWarning: Boolean | false
     let withdrawFundingWarning: Boolean | false
 
@@ -211,7 +212,7 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
         impliedVol,
       ])
 
-  const { depositError, warning, withdrawError } = useMemo(() => {
+  const { depositError, warning, withdrawError } = useAppMemo(() => {
     let depositError: string | undefined
     let withdrawError: string | undefined
     let warning: string | undefined
