@@ -189,6 +189,7 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
       squeethAmountInFromDeposit,
       ethAmountInFromWithdraw,
       squeethAmountOutFromWithdraw,
+      depositOption,
   ])
 
   const { depositFundingWarning, withdrawFundingWarning } = useMemo(() => {
