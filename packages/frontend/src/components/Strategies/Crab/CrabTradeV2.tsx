@@ -441,11 +441,22 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
                 </Typography>
               </div>
           ) : null }
-          { (depositPriceImpactWarning && depositOption === 0) 
-          || (withdrawPriceImpactWarning && depositOption !== 0) ? (
+          { (depositPriceImpactWarning && depositOption === 0) ? (
               <div className={classes.notice}>
                 <div className={classes.infoIcon}>
                   <Tooltip title={"High price impact means that you are losing a significant amount of value due to the size of your trade. Depositing a smaller size can reduce your price impact."}>
+                    <InfoIcon fontSize="medium" />
+                  </Tooltip>
+                </div>
+                <Typography variant="caption">
+                  High price impact. Try a smaller size.
+                </Typography>
+              </div>
+          ) : null }
+          { (withdrawPriceImpactWarning && depositOption !== 0) ? (
+              <div className={classes.notice}>
+                <div className={classes.infoIcon}>
+                  <Tooltip title={"High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact."}>
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
