@@ -14,7 +14,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO } from '../../../constants'
+import { BIG_ZERO, FUNDING_PERIOD, INDEX_SCALE, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, YEAR } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import InfoIcon from '@material-ui/icons/Info'
 
@@ -174,10 +174,10 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
 
   const squeethPrice = depositOption === 0 ? ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
                                            : ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
-  const scalingFactor = new BigNumber(10000)
-  const fundingPeriod = new BigNumber(17.5).div(365)  
+  const scalingFactor = new BigNumber(INDEX_SCALE)
+  const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)  
   const executionVol = new BigNumber(Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())).div(fundingPeriod).sqrt()
-  const showPriceImpactWarning = (executionVol.minus(impliedVol)).abs().gt(BigNumber.max(new BigNumber(impliedVol).div(10), 0.08))
+  const showPriceImpactWarning = (executionVol.minus(impliedVol)).abs().gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
   depositPriceImpactWarning = showPriceImpactWarning && depositOption === 0 ? true : false
   withdrawPriceImpactWarning = showPriceImpactWarning && depositOption !== 0 ? true : false
   return { depositPriceImpactWarning, withdrawPriceImpactWarning }
@@ -196,10 +196,9 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
     let depositFundingWarning: Boolean | false
     let withdrawFundingWarning: Boolean | false
 
-    const daysInYear = 365
-    const impliedVolDiff = new BigNumber(depositOption === 0 ? -0.1 : 0.1)
-    const impliedVolDiffLowVol = new BigNumber(depositOption === 0 ? -0.08 : 0.08)
-    const dailyHistoricalImpliedVol = (new BigNumber(dailyHistoricalFunding.funding).times(daysInYear)).sqrt()
+    const impliedVolDiff = new BigNumber(depositOption === 0 ? -VOL_PERCENT_SCALAR : VOL_PERCENT_SCALAR)
+    const impliedVolDiffLowVol = new BigNumber(depositOption === 0 ? -VOL_PERCENT_FIXED : VOL_PERCENT_FIXED)
+    const dailyHistoricalImpliedVol = (new BigNumber(dailyHistoricalFunding.funding).times(YEAR)).sqrt()
     const threshold = BigNumber.max(dailyHistoricalImpliedVol.times(new BigNumber(1).plus(impliedVolDiff)),
                                     dailyHistoricalImpliedVol.plus(impliedVolDiffLowVol))
     depositFundingWarning = (depositOption === 0 && new BigNumber(impliedVol).lt(threshold)) ? true : false
@@ -421,7 +420,7 @@ const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => 
             { depositFundingWarning && depositOption === 0 ? (
               <div className={classes.notice}>
                 <div className={classes.infoIcon}>
-                  <Tooltip title={"The strategy sells squeeth to earn yield. Yield is currently lower than usual. You can still deposit, but you may earn less."}>
+                  <Tooltip title={"The strategy sells squeeth to earn yield. Yield is currently lower than usual. You can still deposit, but you may be more likely to have negative returns."}>
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
