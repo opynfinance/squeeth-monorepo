@@ -33,7 +33,7 @@ import {
 } from 'src/state/crab/hooks'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, impliedVolAtom, indexAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from 'src/state/controller/atoms'
 import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
 import { useUpdateSharesData } from 'src/state/crabMigration/hooks'
@@ -99,6 +99,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [depositPriceImpact, setDepositPriceImpact] = useState('0')
   const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
   const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
+  const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit] = useState(new BigNumber(0))
+  const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit] = useState(new BigNumber(0))
+  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw] = useState(new BigNumber(0))
+  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw] = useState(new BigNumber(0))
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -135,6 +139,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const prevCrabTxData = usePrevious(data)
 
   const impliedVol = useAtomValue(impliedVolAtom)
+  const normFactor = useAtomValue(normFactorAtom)
 
   useEffect(() => {
     if (confirmed && prevCrabTxData?.length === data?.length) {
@@ -148,14 +153,27 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     setStrategyData()
   }, [])
 
-const { priceImpactWarning } = useMemo(() => {
-  let priceImpactWarning: Boolean | false
-  priceImpactWarning = true
-  return { priceImpactWarning }
+const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useMemo(() => {
+  let depositPriceImpactWarning: Boolean | false
+  let withdrawPriceImpactWarning: Boolean | false
+
+  const squeethPrice = depositOption === 0 ? ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
+                                           : ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+  const scalingFactor = new BigNumber(10000)
+  const fundingPeriod = new BigNumber(17.5).div(365)  
+  const executionVol = new BigNumber(Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())).div(fundingPeriod).sqrt()
+  const showPriceImpactWarning = (executionVol.minus(impliedVol)).abs().gt(BigNumber.max(new BigNumber(impliedVol).div(10), 0.08))
+  depositPriceImpactWarning = showPriceImpactWarning && depositOption === 0 ? true : false
+  withdrawPriceImpactWarning = showPriceImpactWarning && depositOption !== 0 ? true : false
+  return { depositPriceImpactWarning, withdrawPriceImpactWarning }
   }, [
       dailyHistoricalFunding.funding,
       dailyHistoricalFunding.period,
       impliedVol,
+      ethAmountOutFromDeposit,
+      squeethAmountInFromDeposit,
+      ethAmountInFromWithdraw,
+      squeethAmountOutFromWithdraw,
   ])
 
   const { depositFundingWarning, withdrawFundingWarning } = useMemo(() => {
@@ -225,13 +243,19 @@ const { priceImpactWarning } = useMemo(() => {
     calculateETHtoBorrowFromUniswap(ethAmount, slippage).then((q) => {
       setDepositPriceImpact(q.priceImpact)
       setBorrowEth(q.ethBorrow)
+      setEthAmountOutFromDeposit(q.amountOut)
+      setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
     })
   }, [ready, ethAmount.toString(), slippage])
 
   useEffect(() => {
     if (!ready || depositOption === 0) return
 
-    calculateEthWillingToPay(withdrawAmount, slippage).then((q) => setWithdrawPriceImpact(q.priceImpact))
+    calculateEthWillingToPay(withdrawAmount, slippage).then((q) => {
+      setWithdrawPriceImpact(q.priceImpact)
+      setEthAmountInFromWithdraw(q.amountIn)
+      setSqueethAmountOutFromWithdraw(q.squeethDebt)
+    })
   }, [ready, withdrawAmount.toString(), slippage])
 
   const deposit = async () => {
@@ -394,7 +418,8 @@ const { priceImpactWarning } = useMemo(() => {
                 </Typography>
               </div>
           ) : null }
-          { priceImpactWarning ? (
+          { (depositPriceImpactWarning && depositOption === 0) 
+          || (withdrawPriceImpactWarning && depositOption !== 0) ? (
               <div className={classes.notice}>
                 <div className={classes.infoIcon}>
                   <Tooltip title={"High price impact means that you are losing a significant amount of value due to the size of your trade. Depositing a smaller size can reduce your price impact."}>
@@ -431,17 +456,17 @@ const { priceImpactWarning } = useMemo(() => {
             {depositOption === 0 ? (
               <PrimaryButton
                 id="crab-deposit-btn"
-                variant={Number(depositPriceImpact) > 3 || !!warning || depositFundingWarning ? 'outlined' : 'contained'}
+                variant={Number(depositPriceImpact) > 3 || !!warning || depositFundingWarning || depositPriceImpactWarning? 'outlined' : 'contained'}
                 onClick={() => deposit()}
                 disabled={txLoading || !!depositError}
                 style={
                   Number(depositPriceImpact) > 3 || !!warning
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : depositFundingWarning ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                    : depositFundingWarning || depositPriceImpactWarning ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
                     : { marginTop: '8px' }
                 }
               >
-                { !txLoading  && depositFundingWarning ? 'Deposit anyway' 
+                { !txLoading  && (depositFundingWarning || depositPriceImpactWarning) ? 'Deposit anyway' 
                   : !txLoading ? 'Deposit' 
                   : <CircularProgress color="primary" size="1.5rem" />
                 }
@@ -449,17 +474,17 @@ const { priceImpactWarning } = useMemo(() => {
             ) : (
               <PrimaryButton
                 id="crab-withdraw-btn"
-                variant={Number(withdrawPriceImpact) > 3 || withdrawFundingWarning ? 'outlined' : 'contained'}
+                variant={Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'}
                 style={
                   Number(withdrawPriceImpact) > 3
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : withdrawFundingWarning ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                    : withdrawFundingWarning || withdrawPriceImpactWarning ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
                     : { marginTop: '8px' }
                 }
                 onClick={() => withdraw()}
                 disabled={txLoading || !!withdrawError}
               >
-                { !txLoading  && withdrawFundingWarning ? 'Withdraw anyway' 
+                { !txLoading  && (withdrawFundingWarning || withdrawPriceImpactWarning) ? 'Withdraw anyway' 
                   : !txLoading ? 'Withdraw' 
                   : <CircularProgress color="primary" size="1.5rem" />
                 }
