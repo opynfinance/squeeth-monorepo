@@ -323,8 +323,8 @@ export const useCurrentCrabPositionValueV2 = () => {
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
-      setUserMigratedSharesETH(crabPositionValueInETH.div(userShares).times(userMigratedShares))
-      setCurrentCrabPositionETHActual(crabPositionValueInETH.div(userShares).times(userCrabBalance))
+      setUserMigratedSharesETH(userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userMigratedShares))
+      setCurrentCrabPositionETHActual(userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userCrabBalance))
 
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
