@@ -203,10 +203,8 @@ export const useCalculateEthWillingToPayV2 = () => {
       if (!squeethDebt) return emptyState
 
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
-      return { 
-        amountIn: ethWillingToPayQuote.amountIn, 
-        maximumAmountIn: ethWillingToPayQuote.amountIn, 
-        priceImpact: ethWillingToPayQuote.priceImpact,
+      return {
+        ...ethWillingToPayQuote,
         squeethDebt
       }
     },
