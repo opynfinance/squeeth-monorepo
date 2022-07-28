@@ -52,7 +52,7 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } fro
 import { fromTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom } from '../controller/atoms'
+import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
 import { crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
@@ -121,7 +121,6 @@ export const useSetStrategyDataV2 = () => {
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const networkId = useAtomValue(networkIdAtom)
-
 
   const setStrategyData = useCallback(async () => {
     if (!contract) return
@@ -205,7 +204,7 @@ export const useCalculateEthWillingToPayV2 = () => {
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
       return {
         ...ethWillingToPayQuote,
-        squeethDebt
+        squeethDebt,
       }
     },
     [contract, getBuyQuote, vault?.id],
@@ -233,11 +232,11 @@ export const useCurrentCrabPositionValue = () => {
   }, [])
 
   const userShares = useAppMemo(() => {
-    return userCrabBalance;
+    return userCrabBalance
   }, [userCrabBalance])
 
   useAppEffect(() => {
-    ; (async () => {
+    ;(async () => {
       setIsCrabPositionValueLoading(true)
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
@@ -296,12 +295,11 @@ export const useCurrentCrabPositionValueV2 = () => {
   }, [])
 
   const userShares = useAppMemo(() => {
-    return userMigratedShares.plus(userCrabBalance);
+    return userMigratedShares.plus(userCrabBalance)
   }, [userMigratedShares, userCrabBalance])
 
-
   useAppEffect(() => {
-    ; (async () => {
+    ;(async () => {
       if (balLoading) {
         setIsCrabPositionValueLoading(true)
       }
@@ -327,8 +325,12 @@ export const useCurrentCrabPositionValueV2 = () => {
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
-      setUserMigratedSharesETH(userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userMigratedShares))
-      setCurrentCrabPositionETHActual(userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userCrabBalance))
+      setUserMigratedSharesETH(
+        userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userMigratedShares),
+      )
+      setCurrentCrabPositionETHActual(
+        userShares.isZero() ? BIG_ZERO : crabPositionValueInETH.div(userShares).times(userCrabBalance),
+      )
 
       setIsCrabPositionValueLoading(false)
       setCurrentEthLoading(false)
@@ -411,7 +413,7 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
         ethBorrow: new BigNumber(0),
-        initialWSqueethDebt: new BigNumber(0)
+        initialWSqueethDebt: new BigNumber(0),
       }
       if (!vault || ethDeposit.eq(0)) return emptyState
 
@@ -501,7 +503,7 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
       // TODO: fix it so it uses v2 ratio, not v1.
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = fromTokenAmount(amount, 18)
-      const poolFeePercent = 3000;
+      const poolFeePercent = 3000
       return await handleTransaction(
         contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0), poolFeePercent).send({
           from: address,
@@ -558,9 +560,11 @@ export const useFlashWithdrawV2 = () => {
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
       return await handleTransaction(
-        contract.methods.flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0)).send({
-          from: address,
-        }),
+        contract.methods
+          .flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
+          .send({
+            from: address,
+          }),
         onTxConfirmed,
       )
     },
@@ -585,9 +589,11 @@ export const useClaimWithdrawV2 = () => {
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
       return await handleTransaction(
-        contract.methods.claimAndWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0)).send({
-          from: address,
-        }),
+        contract.methods
+          .claimAndWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
+          .send({
+            from: address,
+          }),
         onTxConfirmed,
       )
     },
@@ -679,12 +685,13 @@ export const useSetStrategyCap = () => {
 export const useSetProfitableMovePercent = () => {
   const [profitableMovePercent, setProfitableMovePercent] = useAtom(profitableMovePercentAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentImpliedVol = useAtomValue(impliedVolAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
 
   useEffect(() => {
     if (!contract) return
-    setProfitableMovePercent(getCurrentProfitableMovePercent(currentImpliedFunding))
-  }, [contract, currentImpliedFunding])
+    setProfitableMovePercent(getCurrentProfitableMovePercent(currentImpliedVol))
+  }, [contract, currentImpliedVol])
 
   return profitableMovePercent
 }

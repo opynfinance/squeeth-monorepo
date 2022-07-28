@@ -227,8 +227,9 @@ const Strategies: React.FC = () => {
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
-              either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in
-              USD terms, stacking ETH if price drops and selling ETH if price increases.
+              either direction before the next hedge. Crab hedges approximately three times a week (on MWF), reducing
+              risk risk of liquidations. Crab aims to be profitable in USD terms, stacking ETH if price drops and
+              selling ETH price increases.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}
@@ -252,8 +253,9 @@ const Strategies: React.FC = () => {
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding
-                      }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    tooltip={`${
+                      Tooltips.StrategyEarnFunding
+                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>
@@ -274,7 +276,7 @@ const Strategies: React.FC = () => {
                         minute: 'numeric',
                         timeZoneName: 'long',
                       }) +
-                      '. Hedges every 24hrs or every 20% ETH price move'
+                      '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
                     }
                   />
                   <StrategyInfoItem
