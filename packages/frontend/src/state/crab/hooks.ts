@@ -11,6 +11,7 @@ import {
   timeAtLastHedgeAtom,
   loadingAtom,
   profitableMovePercentAtom,
+  profitableMovePercentAtomV2,
   crabStrategySlippageAtom,
   isTimeHedgeAvailableAtom,
   isPriceHedgeAvailableAtom,
@@ -43,6 +44,7 @@ import {
   getCollateralFromCrabAmount,
   getWsqueethFromCrabAmount,
   getCurrentProfitableMovePercent,
+  getCurrentProfitableMovePercentV2,
 } from './utils'
 import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
@@ -685,13 +687,26 @@ export const useSetStrategyCap = () => {
 export const useSetProfitableMovePercent = () => {
   const [profitableMovePercent, setProfitableMovePercent] = useAtom(profitableMovePercentAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const contract = useAtomValue(crabStrategyContractAtom)
+
+  useEffect(() => {
+    if (!contract) return
+    setProfitableMovePercent(getCurrentProfitableMovePercent(currentImpliedFunding))
+  }, [contract, currentImpliedFunding])
+
+  return profitableMovePercent
+}
+
+export const useSetProfitableMovePercentV2 = () => {
+  const [profitableMovePercentV2, setProfitableMovePercentV2] = useAtom(profitableMovePercentAtomV2)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const currentImpliedVol = useAtomValue(impliedVolAtom)
   const contract = useAtomValue(crabStrategyContractAtom)
 
   useEffect(() => {
     if (!contract) return
-    setProfitableMovePercent(getCurrentProfitableMovePercent(currentImpliedVol))
+    setProfitableMovePercentV2(getCurrentProfitableMovePercentV2(currentImpliedVol))
   }, [contract, currentImpliedVol])
 
-  return profitableMovePercent
+  return profitableMovePercentV2
 }

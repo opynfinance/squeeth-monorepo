@@ -36,10 +36,14 @@ export const getCollateralFromCrabAmount = async (
   return vault.collateralAmount.times(crabAmount).div(totalSupply)
 }
 
-export const getCurrentProfitableMovePercent = (currentImpliedVol: number) => {
+export const getCurrentProfitableMovePercentV2 = (currentImpliedVol: number) => {
   // Approximating a hedge every 2 days, take the vol divided by the sqrt of # of periods
   // In this case 365 / 2 = 182.5
   return currentImpliedVol / Math.sqrt(YEAR / 2)
+}
+
+export const getCurrentProfitableMovePercent = (currentImpliedFunding: number) => {
+  return Math.sqrt(currentImpliedFunding)
 }
 
 export const getMaxCap = async (contract: Contract | null) => {
