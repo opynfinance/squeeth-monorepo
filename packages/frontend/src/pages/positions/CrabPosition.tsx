@@ -53,6 +53,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="caption" component="span" color="textSecondary">
               Deposited Amount
             </Typography>
+            <Tooltip title={Tooltips.CrabMigratedDeposit}>
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
             <Typography variant="body1">$ {depositedUsd.toFixed(2)}</Typography>
             <Typography variant="body2" color="textSecondary">
               <span id="pos-page-crab-deposited-amount">{depositedEth.toFixed(6)}</span>
