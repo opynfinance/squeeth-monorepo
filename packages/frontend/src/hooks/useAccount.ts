@@ -36,5 +36,7 @@ export default function useAccount() {
     })
   }, [subscribeToMore, address])
 
+  console.log({ address })
+
   return { account, loading }
 }

@@ -70,7 +70,7 @@ export const RA_USDC_WETH_POOL =
 export const MAINNET_OSQTH_WETH_POOL =
   "0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C".toLowerCase();
 export const ROPSTEN_OSQTH_WETH_POOL =
-  "0x921c384F79de1BAe96d6f33E3E5b8d0B2B34cb68".toLowerCase();
+  "0xf1a8d75237939f46599b3da8d30117c1e0aab126".toLowerCase();
 export const LOCALHOST_OSQTH_WETH_POOL =
   "0x8dF057949E6717B6f28962f30e8415b148241e16".toLowerCase();
 export const RA_OSQTH_WETH_POOL =

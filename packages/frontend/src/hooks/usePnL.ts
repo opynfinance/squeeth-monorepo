@@ -44,7 +44,7 @@ export default function usePnL() {
     const sqthAmount = sqthOpenAmount.plus(sqthCloseAmount)
     const sqthAmountInUSD = sqthAmount.times(sqthPrice)
 
-    console.log(floatifyBigNums({ unrealizedSqthPnL, unrealizedEthPnL, realizedSqthPnL, realizedEthPnL }))
+    console.log(floatifyBigNums({ sqthOpenAmount }))
 
     return {
       unrealizedPnL: unrealizedSqthPnL.plus(unrealizedEthPnL).plus(collected),

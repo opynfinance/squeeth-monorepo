@@ -14,7 +14,6 @@ import {
 } from "./util";
 import { Swap as USDCSwapEvent, Initialize } from "../generated/USDCPool/Pool";
 import { Swap as OSQTHSwapEvent } from "../generated/OSQTHPool/Pool";
-import { Address, log } from "@graphprotocol/graph-ts";
 
 export function handleInitialize(event: Initialize): void {
   // update pool sqrt price
