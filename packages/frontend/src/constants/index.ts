@@ -12,6 +12,12 @@ export const DEFAULT_SLIPPAGE = 0.5
 
 export const MIN_COLLATERAL_AMOUNT = 6.9
 
+export const YEAR = 365
+
+export const VOL_PERCENT_FIXED = 0.08
+
+export const VOL_PERCENT_SCALAR = 0.1
+
 //7min, 420 seconds
 export const TWAP_PERIOD = 420
 

@@ -194,6 +194,7 @@ export const useCalculateEthWillingToPayV2 = () => {
         amountIn: new BigNumber(0),
         maximumAmountIn: new BigNumber(0),
         priceImpact: '0',
+        squeethDebt: new BigNumber(0),
       }
       if (!vault) return emptyState
 
@@ -202,7 +203,12 @@ export const useCalculateEthWillingToPayV2 = () => {
       if (!squeethDebt) return emptyState
 
       const ethWillingToPayQuote = await getBuyQuote(squeethDebt, new BigNumber(slippage))
-      return ethWillingToPayQuote
+      return { 
+        amountIn: ethWillingToPayQuote.amountIn, 
+        maximumAmountIn: ethWillingToPayQuote.amountIn, 
+        priceImpact: ethWillingToPayQuote.priceImpact,
+        squeethDebt
+      }
     },
     [contract, getBuyQuote, vault?.id],
   )
@@ -407,6 +413,7 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
         ethBorrow: new BigNumber(0),
+        initialWSqueethDebt: new BigNumber(0)
       }
       if (!vault || ethDeposit.eq(0)) return emptyState
 
@@ -424,7 +431,7 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
         if (prevState.minimumAmountOut.eq(quote.minimumAmountOut)) {
           break
         }
-        prevState = { ...quote, ethBorrow }
+        prevState = { ...quote, ethBorrow, initialWSqueethDebt }
         if (borrowRatio.gt(0) && borrowRatio.lte(deviation)) {
           break
         } else {
