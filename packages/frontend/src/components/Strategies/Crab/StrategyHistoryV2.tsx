@@ -156,7 +156,11 @@ const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user
             <div className={classes.txSubItem}>
               <Typography
                 variant="subtitle1"
-                className={d.type === CrabStrategyV2TxType.FLASH_DEPOSIT ? classes.red : classes.green}
+                className={
+                  d.type === CrabStrategyV2TxType.FLASH_DEPOSIT || d.type === CrabStrategyV2TxType.DEPOSIT_V1
+                    ? classes.red
+                    : classes.green
+                }
               >
                 <b style={{ fontWeight: 600 }}>{d.ethAmount.toFixed(6)}</b> ETH
               </Typography>
