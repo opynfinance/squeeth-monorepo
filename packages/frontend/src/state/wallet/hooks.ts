@@ -75,11 +75,12 @@ export const useHandleTransaction = () => {
 
           if (transaction.status === 'confirmed') {
             tx.then(() => {
-              setTransactionData(transaction)
               if (onTxConfirmed) {
                 onTxConfirmed()
               }
               refetch()
+            }).finally(() => {
+              setTransactionData(transaction)
             })
           }
 
