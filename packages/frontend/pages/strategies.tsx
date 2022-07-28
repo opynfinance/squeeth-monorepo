@@ -227,9 +227,8 @@ const Strategies: React.FC = () => {
             <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
               Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
               profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
-              either direction before the next hedge. Crab hedges approximately three times a week (on MWF), reducing
-              risk risk of liquidations. Crab aims to be profitable in USD terms, stacking ETH if price drops and
-              selling ETH price increases.
+              either direction between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab aims to
+              be profitable in USD terms, stacking ETH if price drops and selling ETH price increases.
               <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
                 {' '}
                 Learn more.{' '}

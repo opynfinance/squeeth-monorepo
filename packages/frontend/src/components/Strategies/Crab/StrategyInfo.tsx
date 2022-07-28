@@ -102,7 +102,7 @@ export const StrategyInfo: React.FC = () => {
       </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
-        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction before the next hedge. Crab
+        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction between 2 day hedges. Crab
         hedges approximately three times a week (on MWF). Crab aims to be profitable in USD terms.
       </Typography>
       {/* <Typography variant="h5" color="primary" className={classes.title}>

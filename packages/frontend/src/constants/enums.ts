@@ -67,7 +67,7 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
-  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position.',
+  CrabPnL = 'Expected total profit / loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position.',
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
