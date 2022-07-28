@@ -3,14 +3,14 @@ import { Typography, Radio, RadioGroup, FormControl, FormControlLabel, FormLabel
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { Links, Vaults } from '@constants/enums'
-import CrabProfit_Flat from '../../../../public/images/CrabProfit_Flat_v2.svg'
-import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase_v2.svg'
-import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease_v2.svg'
+import CrabProfit_Flat from '../../../../public/images/CrabProfit_Flat.svg'
+import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase.svg'
+import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease.svg'
 import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
 import { MemoizedCrabStrategyChart as CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useSetProfitableMovePercentV2 } from 'src/state/crab/hooks'
+import { useSetProfitableMovePercent } from 'src/state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -53,7 +53,7 @@ const useStyles = makeStyles((theme) =>
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
   const ethPrice = useETHPrice()
-  const profitableMovePercent = useSetProfitableMovePercentV2()
+  const profitableMovePercent = useSetProfitableMovePercent()
 
   const [profitToggle, setProfitToggle] = React.useState('flat')
 
@@ -64,10 +64,10 @@ export const StrategyInfo: React.FC = () => {
       </Typography> */}
       {/* <CrabStrategyChart vault={Vaults.Short} longAmount={0} /> */}
       <Typography variant="h5" color="primary" className={classes.title}>
-        Profitability between hedges
+        1 Day Profitability
       </Typography>
       <FormControl className={classes.radioTitle}>
-        <FormLabel>Before the next hedge, if ETH approximately</FormLabel>
+        <FormLabel>At the end of one day, if ETH approximately</FormLabel>
         <RadioGroup
           row
           name="At the end of one day, if ETH approximately"
@@ -93,28 +93,28 @@ export const StrategyInfo: React.FC = () => {
       </FormControl>
       <div className={classes.profitImage}>
         {profitToggle === 'flat' ? (
-          <Image src={CrabProfit_Flat} alt="Profitability Flat" />
+          <Image src={CrabProfit_Flat} alt="1 Day Profitability Flat" />
         ) : profitToggle === 'increase' ? (
-          <Image src={CrabProfit_Increase} alt="Profitability Increase" />
+          <Image src={CrabProfit_Increase} alt="1 Day Profitability Increase" />
         ) : (
-          <Image src={CrabProfit_Decrease} alt="Profitability Decrease" />
+          <Image src={CrabProfit_Decrease} alt="1 Day Profitability Decrease" />
         )}
       </div>
       <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
         Based on current funding, crab strategy would be unprofitable if ETH moves more than the profit threshold of
-        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction between 2 day hedges. Crab
-        hedges approximately three times a week (on MWF). Crab aims to be profitable in USD terms.
+        approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each day. Crab aims to be
+        profitable in USD terms.
       </Typography>
       {/* <Typography variant="h5" color="primary" className={classes.title}>
         Payoff
       </Typography>
       <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} /> */}
-      {/* <Typography variant="h5" color="primary" className={classes.title}>
+      <Typography variant="h5" color="primary" className={classes.title}>
         Steps
       </Typography>
       <div className={classes.stepsImage}>
         <Image src={CrabSteps} alt="Steps" />
-      </div> */}
+      </div>
       <Typography variant="h5" color="primary" className={classes.title}>
         Risk
       </Typography>
@@ -123,9 +123,8 @@ export const StrategyInfo: React.FC = () => {
         liquidation. Rebalancing based on large ETH price changes helps prevent a liquidation from occurring.
         <br /> <br />
         Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately{' '}
-        {(profitableMovePercent * 100).toFixed(2)}% in either direction before the next hedge. The implied funding rate
-        at which you deposit at impacts your profitability. Depositing at a high funding rate increases likelihood of
-        profitability.
+        {(profitableMovePercent * 100).toFixed(2)}% in either direction each day. The implied funding rate at which you
+        deposit at impacts your profitability. Depositing at a high funding rate increases likelihood of profitability.
         <br /> <br />
         If the Squeeth premium to ETH increases, the strategy will incur a loss because it will be more expensive to
         close the position. Crab aims to be profitable in USD terms.
@@ -134,8 +133,8 @@ export const StrategyInfo: React.FC = () => {
           Learn more.{' '}
         </a>
         <br /> <br />
-        Crab smart contracts have been audited by Sherlock. However, smart contracts are experimental technology and we
-        encourage caution only risking funds you can afford to lose.
+        Crab smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts are
+        experimental technology and we encourage caution only risking funds you can afford to lose.
       </Typography>
     </div>
   )
