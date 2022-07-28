@@ -72,13 +72,16 @@ export const useHandleTransaction = () => {
 
         emitter.on('all', (transaction) => {
           if (networkId === Networks.LOCAL) return
-          setTransactionData(transaction)
 
           if (transaction.status === 'confirmed') {
-            if (onTxConfirmed) {
-              onTxConfirmed()
-            }
-            refetch()
+            tx.then(() => {
+              if (onTxConfirmed) {
+                onTxConfirmed()
+              }
+              refetch()
+            }).finally(() => {
+              setTransactionData(transaction)
+            })
           }
 
           return {
