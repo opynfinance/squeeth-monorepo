@@ -73,7 +73,7 @@ export enum Tooltips {
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
-  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
+  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge.',
   FullcloseInput = 'Select partial close to edit input',
   FundingVol = 'VOL is calculated as "sqrt(Daily Funding * 365)"',
   FundingDaily = 'Daily funding is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
@@ -87,7 +87,7 @@ export enum Links {
   GitBook = 'https://opyn.gitbook.io/squeeth/',
   UniswapSwap = 'https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
   CrabFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-strategies-faq',
-  AutoRouter = 'https://uniswap.org/blog/auto-router'
+  AutoRouter = 'https://uniswap.org/blog/auto-router',
 }
 
 export const UniswapIFrameOpen = {

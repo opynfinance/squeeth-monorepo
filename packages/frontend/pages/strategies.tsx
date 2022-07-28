@@ -5,6 +5,7 @@ import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
 import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
+import StrategyInfoV1 from '@components/Strategies/Crab/StrategyInfoV1'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
@@ -34,6 +35,7 @@ import {
 import {
   useCurrentCrabPositionValueV2,
   useSetProfitableMovePercent,
+  useSetProfitableMovePercentV2,
   useSetStrategyDataV2,
   useCurrentCrabPositionValue,
   useSetStrategyData,
@@ -133,6 +135,7 @@ const Strategies: React.FC = () => {
   const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
   const timeAtLastHedge = useAtomValue(displayCrabV1 ? timeAtLastHedgeAtom : timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
+  const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
 
@@ -224,16 +227,29 @@ const Strategies: React.FC = () => {
                 </ToggleButtonGroup>
               </div>
             </div>
-            <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
-              Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would be
-              profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
-              either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in
-              USD terms, stacking ETH if price drops and selling ETH if price increases.
-              <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
-                {' '}
-                Learn more.{' '}
-              </a>
-            </Typography>
+            {displayCrabV1 ? (
+              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+                Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
+                be profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
+                either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable
+                in USD terms, stacking ETH if price drops and selling ETH if price increases.
+                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
+                  {' '}
+                  Learn more.{' '}
+                </a>
+              </Typography>
+            ) : (
+              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+                Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
+                be profitable if ETH moves less than approximately <b>{(profitableMovePercentV2 * 100).toFixed(2)}%</b>{' '}
+                in either direction between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab
+                aims to be profitable in USD terms, stacking ETH if price drops and selling ETH price increases.
+                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
+                  {' '}
+                  Learn more.{' '}
+                </a>
+              </Typography>
+            )}
             <div className={classes.body}>
               <div className={classes.details}>
                 <CapDetailsComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
@@ -252,8 +268,9 @@ const Strategies: React.FC = () => {
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Funding (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding
-                      }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    tooltip={`${
+                      Tooltips.StrategyEarnFunding
+                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                 </div>
                 <div className={classes.overview}>
@@ -274,21 +291,29 @@ const Strategies: React.FC = () => {
                         minute: 'numeric',
                         timeZoneName: 'long',
                       }) +
-                      '. Hedges every 24hrs or every 20% ETH price move'
+                      '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
                     }
                   />
-                  <StrategyInfoItem
-                    value={(profitableMovePercent * 100).toFixed(2)}
-                    label="Current Profit Threshold (%)"
-                    tooltip={Tooltips.StrategyProfitThreshold}
-                  />
+                  {displayCrabV1 ? (
+                    <StrategyInfoItem
+                      value={(profitableMovePercent * 100).toFixed(2)}
+                      label="Current Profit Threshold (%)"
+                      tooltip={Tooltips.StrategyProfitThreshold}
+                    />
+                  ) : (
+                    <StrategyInfoItem
+                      value={(profitableMovePercentV2 * 100).toFixed(2)}
+                      label="Current Profit Threshold (%)"
+                      tooltip={Tooltips.StrategyProfitThreshold}
+                    />
+                  )}
                   <StrategyInfoItem
                     value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
                     label="Collat Ratio (%)"
                     tooltip={Tooltips.StrategyCollRatio}
                   />
                 </div>
-                <StrategyInfo />
+                {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>
               {supportedNetwork && (
