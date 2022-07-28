@@ -129,27 +129,6 @@ dataSources:
           handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
   - kind: ethereum/contract
-    name: WPowerPerp
-    network: {{network}}
-    source:
-      address: "{{WPowerPerp}}"
-      abi: WPowerPerp
-      startBlock: {{WPowerPerp-start-block}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      file: ./src/wPowerPerp.ts
-      entities:
-        - Account
-        - TransactionHistory
-      abis:
-        - name: WPowerPerp
-          file: ./abis/WPowerPerp.json
-      eventHandlers:
-        - event: Transfer(indexed address,indexed address,uint256)
-          handler: handleTransfer
-  - kind: ethereum/contract
     name: OSQTHPool
     network: {{network}}
     source:
