@@ -8,7 +8,7 @@ export const UNI_POOL_FEES = 3000
 //17.5 days, 420 hours
 export const FUNDING_PERIOD = 17.5
 
-export const DEFAULT_SLIPPAGE = 0.5
+export const DEFAULT_SLIPPAGE = 0.25
 
 export const MIN_COLLATERAL_AMOUNT = 6.9
 
