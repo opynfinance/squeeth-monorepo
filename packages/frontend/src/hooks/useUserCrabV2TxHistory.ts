@@ -17,6 +17,7 @@ import { useUsdAmount } from './useUsdAmount'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import useAppMemo from './useAppMemo'
+import BigNumber from 'bignumber.js'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.DEPOSIT) return 'Deposit'
@@ -48,11 +49,12 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         let ethUsdValue = getUsdAmt(ethAmount, tx.timestamp)
 
         if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
-          const ethValue = toTokenAmount(tx.lpAmount, WETH_DECIMALS).times(V2_MIGRATION_ETH_AMOUNT)
-          const oSqthValue = toTokenAmount(tx.lpAmount, WETH_DECIMALS).times(V2_MIGRATION_OSQTH_AMOUNT)
 
-          ethAmount = ethValue
-            .minus(oSqthValue.times(V2_MIGRATION_OSQTH_PRICE))
+          const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
+          const oSqthMigrated = new BigNumber(V2_MIGRATION_OSQTH_AMOUNT)
+
+          ethAmount = ethMigrated
+            .minus(oSqthMigrated.times(V2_MIGRATION_OSQTH_PRICE))
             .times(toTokenAmount(tx.lpAmount, WETH_DECIMALS))
             .div(V2_MIGRATION_SUPPLY)
 
