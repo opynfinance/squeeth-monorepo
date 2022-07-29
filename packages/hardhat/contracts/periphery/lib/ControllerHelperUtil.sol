@@ -93,6 +93,8 @@ library ControllerHelperUtil {
      * @notice minth amount of wPowerPerp and LP in weth/wPowerPerp pool
      * @param _controller wPowerPerp controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
+     * @param _wPowerPerp wPowerPerp address
+     * @param _weth weth address
      * @param _mintAndLpParams ControllerHelperDataType.MintAndLpParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
      * @return _vaultId and tokenId
@@ -133,6 +135,8 @@ library ControllerHelperUtil {
      * @notice increase liquidityin Uni v3 position
      * @param _controller controller address
      * @param _nonfungiblePositionManager Uni NonFungiblePositionManager address
+     * @param _wPowerPerp wPowerPerp address
+     * @param _wPowerPerpPool wPowerpPerp pool address in Uni v3
      * @param _vaultId vault Id
      * @param _increaseLiquidityParam ControllerHelperDataType.IncreaseLpLiquidityParams struct
      * @param _isWethToken0 bool variable indicate if Weth token is token0 in Uniswap v3 weth/wPowerPerp pool
