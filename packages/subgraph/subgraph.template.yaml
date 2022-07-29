@@ -100,6 +100,7 @@ dataSources:
         - FlashWithdrawCallback
         - ExecuteSellAuction
         - ExecuteBuyAuction
+        - Strategy
       abis:
         - name: CrabStrategy
           file: ./abis/CrabStrategyDeployment.json
@@ -174,6 +175,8 @@ dataSources:
           handler: handleFlashDepositCallback
         - event: FlashWithdrawCallback(indexed address,uint256,uint256)
           handler: handleFlashWithdrawCallback 
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
       file: ./src/crabV2.ts
   - kind: ethereum/contract
     name: Timelock
@@ -196,4 +199,24 @@ dataSources:
           handler: handleQueueTransaction
         - event: ExecuteTransaction(indexed bytes32,indexed address,uint256,string,bytes,uint256)
           handler: handleExecuteTransaction
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabMigration
+    network: {{network}}
+    source:
+      address: "{{CrabMigration}}"
+      abi: CrabMigration
+      startBlock: {{CrabMigration-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabMigration
+          file: ./abis/CrabMigration.json
+      eventHandlers:
+        - event: DepositV1Shares(indexed address,uint256)
+          handler: handleDepositV1Shares
       file: ./src/crabV2.ts

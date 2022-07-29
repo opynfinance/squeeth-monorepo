@@ -22,6 +22,8 @@ export enum TransactionType {
   REMOVE_LIQUIDITY = 'Removed Liquidity',
   CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
   CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
+  CRAB_V2_FLASH_DEPOSIT = 'Flash deposit in crab V2',
+  CRAB_V2_FLASH_WITHDRAW = 'Flash withdraw in crab V2',
 }
 
 export enum CloseType {
@@ -65,12 +67,13 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
-  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position.',
+  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position. Note that if you migrated from v1, your PnL is reset with the migrated amount as your initial crab v2 deposit.',
+  CrabMigratedDeposit = 'Note that if you migrated from v1, your PnL is reset with your initial deposited amount as the amount migrated from v1.',
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn funding by depositing into the strategy',
-  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
+  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge.',
   FullcloseInput = 'Select partial close to edit input',
   FundingVol = 'VOL is calculated as "sqrt(Daily Funding * 365)"',
   FundingDaily = 'Daily funding is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
@@ -84,7 +87,7 @@ export enum Links {
   GitBook = 'https://opyn.gitbook.io/squeeth/',
   UniswapSwap = 'https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
   CrabFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-strategies-faq',
-  AutoRouter = 'https://uniswap.org/blog/auto-router'
+  AutoRouter = 'https://uniswap.org/blog/auto-router',
 }
 
 export const UniswapIFrameOpen = {
