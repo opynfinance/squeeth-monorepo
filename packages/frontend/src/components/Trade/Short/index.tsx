@@ -415,8 +415,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     }
   }
 
-  const shortOpenPriceImpactErrorState =
-    priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError && !existingLongError
+  const shortOpenPriceImpactErrorState = priceImpactWarning && !shortLoading && !(collatPercent < 150) && !openError
+
+  const shortOpenLongOpenErrorState =
+    existingLongError && !shortLoading && !(collatPercent < 150) && !openError && !priceImpactWarning
 
   useAppEffect(() => {
     setCollatRatio(collatPercent / 100)
@@ -633,13 +635,12 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   transactionInProgress ||
                   collatPercent < 150 ||
                   !!openError ||
-                  !!existingLongError ||
                   (vault && vault.shortAmount.isZero()) ||
                   !!vaultIdDontLoadedError
                 }
-                variant={shortOpenPriceImpactErrorState ? 'outlined' : 'contained'}
+                variant={shortOpenPriceImpactErrorState || shortOpenLongOpenErrorState ? 'outlined' : 'contained'}
                 style={
-                  shortOpenPriceImpactErrorState
+                  shortOpenPriceImpactErrorState || shortOpenLongOpenErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
@@ -651,10 +652,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : (
                   <>
-                    {isVaultApproved
-                      ? 'Deposit and sell'
-                      : shortOpenPriceImpactErrorState && isVaultApproved
+                    {(shortOpenPriceImpactErrorState && isVaultApproved) || (existingLongError && isVaultApproved)
                       ? 'Deposit and sell anyway'
+                      : isVaultApproved
+                      ? 'Deposit and sell'
                       : 'Allow wrapper to manage vault (1/2)'}
                     {!isVaultApproved ? (
                       <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
@@ -878,11 +879,14 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   }
 
   const shortClosePriceImpactErrorState =
-    priceImpactWarning &&
+    priceImpactWarning && !buyLoading && !(collatPercent < 150) && !closeError && vault && !vault.shortAmount.isZero()
+
+  const shortCloseLongOpenErrorState =
+    existingLongError &&
     !buyLoading &&
     !(collatPercent < 150) &&
     !closeError &&
-    !existingLongError &&
+    !priceImpactWarning &&
     vault &&
     !vault.shortAmount.isZero()
 
@@ -1143,14 +1147,13 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   transactionInProgress ||
                   collatPercent < 150 ||
                   !!closeError ||
-                  !!existingLongError ||
                   (vault && vault.shortAmount.isZero()) ||
                   !!vaultIdDontLoadedError ||
                   !!insufficientETHBalance
                 }
-                variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                variant={shortClosePriceImpactErrorState || shortCloseLongOpenErrorState ? 'outlined' : 'contained'}
                 style={
-                  shortClosePriceImpactErrorState
+                  shortClosePriceImpactErrorState || shortCloseLongOpenErrorState
                     ? { width: '300px', color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
                     : { width: '300px' }
                 }
@@ -1164,7 +1167,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   <>
                     {isVaultApproved
                       ? 'Buy back and close'
-                      : shortClosePriceImpactErrorState && isVaultApproved
+                      : (shortClosePriceImpactErrorState && isVaultApproved) || (existingLongError && isVaultApproved)
                       ? 'Buy back and close anyway'
                       : 'Allow wrapper to manage vault (1/2)'}
                     {!isVaultApproved ? (
