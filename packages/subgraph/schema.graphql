@@ -138,4 +138,6 @@ type TransactionHistory @entity {
   ethAmount: BigDecimal!
   sqthPrice: BigDecimal!
   ethPrice: BigDecimal!
+  transactionFrom: String!
+  transactionTo: Bytes
 }

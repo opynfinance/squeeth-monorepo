@@ -51,15 +51,13 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   transactionHistory.ethAmount = amount1;
   transactionHistory.save();
 
-  const account = loadOrCreateAccount(event.transaction.from.toHex());
   sqthChange(event.transaction.from.toHex(), amount0.neg());
-  account.save();
 
   // token0 osqth
   // token1 weth
   // token0 per token1
   osqthPool.sqrtPrice = event.params.sqrtPriceX96;
-  const osqthPrices = sqrtPriceX96ToTokenPrices(
+  let osqthPrices = sqrtPriceX96ToTokenPrices(
     osqthPool.sqrtPrice,
     TOKEN_DECIMALS_18,
     TOKEN_DECIMALS_18

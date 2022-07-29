@@ -216,6 +216,8 @@ export function createTransactionHistory(
   transactionHistory.ethAmount = BIGDECIMAL_ZERO;
   transactionHistory.sqthPrice = getSqthEthPrices()[3];
   transactionHistory.ethPrice = getEthUsdcPrices()[1];
+  transactionHistory.transactionFrom = event.transaction.from.toHex();
+  transactionHistory.transactionTo = event.transaction.to;
 
   return transactionHistory;
 }

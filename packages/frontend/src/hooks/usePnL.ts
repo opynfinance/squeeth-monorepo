@@ -30,7 +30,7 @@ export default function usePnL() {
     const sqthCollected = new BigNumber(account.sqthCollected)
 
     const unrealizedSqthCost = sqthOpenAmount.times(sqthOpenUnitPrice).plus(sqthCloseAmount.times(sqthCloseUnitPrice))
-    const unrealizedSqthPnL = sqthOpenAmount.plus(sqthCloseAmount).times(sqthPrice).plus(unrealizedSqthCost)
+    const unrealizedSqthPnL = sqthOpenAmount.plus(sqthCloseAmount).times(sqthPrice).minus(unrealizedSqthCost)
     const unrealizedEthCost = ethDepositAmount
       .times(ethDepositUnitPrice)
       .minus(ethWithdrawAmount.times(ethWithdrawUnitPrice))
@@ -43,8 +43,6 @@ export default function usePnL() {
 
     const sqthAmount = sqthOpenAmount.plus(sqthCloseAmount)
     const sqthAmountInUSD = sqthAmount.times(sqthPrice)
-
-    console.log(floatifyBigNums({ unrealizedSqthPnL, unrealizedEthPnL, realizedSqthPnL, realizedEthPnL }))
 
     return {
       unrealizedPnL: unrealizedSqthPnL.plus(unrealizedEthPnL).plus(collected),
