@@ -1,6 +1,6 @@
 import { atom } from 'jotai'
 
-import { BIG_ZERO } from '@constants/index'
+import { BIG_ZERO, DEFAULT_SLIPPAGE } from '@constants/index'
 import { Vault } from '../../types'
 import { readyAtom } from '../squeethPool/atoms'
 
@@ -23,7 +23,7 @@ export const currentEthLoadingAtom = atom(true)
 export const currentCrabPositionValueAtom = atom(BIG_ZERO)
 export const currentCrabPositionValueInETHAtom = atom(BIG_ZERO)
 export const profitableMovePercentAtom = atom(0)
-export const crabStrategySlippageAtom = atom(0.5)
+export const crabStrategySlippageAtom = atom(DEFAULT_SLIPPAGE)
 export const isTimeHedgeAvailableAtom = atom(false)
 export const isPriceHedgeAvailableAtom = atom(false)
 export const crabPositionValueLoadingAtom = atom(true)
@@ -34,7 +34,7 @@ export const currentCrabPositionValueAtomV2 = atom(BIG_ZERO)
 export const currentCrabPositionValueInETHAtomV2 = atom(BIG_ZERO)
 export const currentCrabPositionETHActualAtomV2 = atom(BIG_ZERO)
 export const profitableMovePercentAtomV2 = atom(0)
-export const crabStrategySlippageAtomV2 = atom(0.5)
+export const crabStrategySlippageAtomV2 = atom(DEFAULT_SLIPPAGE)
 export const isTimeHedgeAvailableAtomV2 = atom(false)
 export const isPriceHedgeAvailableAtomV2 = atom(false)
 export const crabPositionValueLoadingAtomV2 = atom(true)
