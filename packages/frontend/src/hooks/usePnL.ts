@@ -1,12 +1,17 @@
+import { PositionType } from '../types'
 import floatifyBigNums from '@utils/floatifyBigNums'
 import BigNumber from 'bignumber.js'
+import { useUpdateAtom } from 'jotai/utils'
+import { positionTypeAtom } from 'src/state/positions/atoms'
 import useAccount from './useAccount'
+import useAppEffect from './useAppEffect'
 import useAppMemo from './useAppMemo'
 import useCurrentPrices from './useCurrentPrices'
 
 export default function usePnL() {
   const { account, loading: loadingAccount } = useAccount()
   const { ethPrice, sqthPrice, loading: loadingPrices } = useCurrentPrices()
+  const setPositionType = useUpdateAtom(positionTypeAtom)
 
   const { realizedPnL, unrealizedPnL, sqthAmount, sqthAmountInUSD } = useAppMemo(() => {
     if (!account) {
@@ -36,13 +41,15 @@ export default function usePnL() {
       .minus(ethWithdrawAmount.times(ethWithdrawUnitPrice))
     const unrealizedEthPnL = ethDepositAmount.minus(ethWithdrawAmount).times(ethPrice).minus(unrealizedEthCost)
 
-    const realizedSqthPnL = sqthOpenUnitPrice.plus(sqthCloseUnitPrice).times(sqthCloseAmount)
+    const realizedSqthPnL = sqthOpenUnitPrice.minus(sqthCloseUnitPrice).times(sqthCloseAmount)
     const realizedEthPnL = ethWithdrawUnitPrice.minus(ethDepositUnitPrice).times(ethWithdrawAmount)
 
     const collected = ethCollected.times(ethPrice).plus(sqthCollected.times(sqthPrice))
 
     const sqthAmount = sqthOpenAmount.plus(sqthCloseAmount)
     const sqthAmountInUSD = sqthAmount.times(sqthPrice)
+
+    console.log(floatifyBigNums({ sqthAmount, sqthPrice }))
 
     return {
       unrealizedPnL: unrealizedSqthPnL.plus(unrealizedEthPnL).plus(collected),
@@ -51,6 +58,16 @@ export default function usePnL() {
       sqthAmountInUSD,
     }
   }, [account, ethPrice, sqthPrice])
+
+  useAppEffect(() => {
+    if (sqthAmount.gt(new BigNumber(0))) {
+      setPositionType(PositionType.LONG)
+    } else if (sqthAmount.lt(new BigNumber(0))) {
+      setPositionType(PositionType.SHORT)
+    } else {
+      setPositionType(PositionType.NONE)
+    }
+  }, [sqthAmount, setPositionType])
 
   return {
     realizedPnL,

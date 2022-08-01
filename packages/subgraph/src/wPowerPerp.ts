@@ -29,6 +29,10 @@ export function handleTransfer(event: Transfer): void {
   recipientHistory.sqthAmount = amount;
   recipientHistory.save();
 
+  if (event.transaction.to === SHORT_HELPER_ADDR) {
+    return;
+  }
+
   sqthChange(event.params.to.toHex(), amount);
   sqthChange(event.params.from.toHex(), amount.neg());
 }

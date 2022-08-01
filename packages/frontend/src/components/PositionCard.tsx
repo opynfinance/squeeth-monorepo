@@ -10,7 +10,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { PnLType, PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useSwaps } from 'src/state/positions/hooks'
+import { useFirstValidVault, useLPPositionsQuery, useSwaps } from 'src/state/positions/hooks'
 import { isLPAtom, positionTypeAtom, swapsAtom, isToHidePnLAtom } from 'src/state/positions/atoms'
 import {
   actualTradeTypeAtom,
@@ -88,6 +88,7 @@ const useStyles = makeStyles((theme) =>
     },
     posBg: {
       background: (props: any): any => {
+        console.log('position-type-123', props.positionType)
         const positionColor =
           props.positionType === PositionType.LONG
             ? '#375F4290'
@@ -179,7 +180,6 @@ const PositionCard: React.FC = () => {
   const { startPolling, stopPolling } = useSwaps()
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData.swaps
-  const { squeethAmount } = useComputeSwaps()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat } = useVaultData(vault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
@@ -217,14 +217,6 @@ const PositionCard: React.FC = () => {
     return Boolean(vault && vault.shortAmount.isZero() && liquidations.length > 0)
   }, [vault, liquidations])
 
-  const isDollarValueLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG || positionType === PositionType.SHORT) {
-      return loading
-    } else {
-      return null
-    }
-  }, [positionType, loading])
-
   useAppEffect(() => {
     if (isPositionLoading) return
 
@@ -232,16 +224,16 @@ const PositionCard: React.FC = () => {
     let _postPosition = PositionType.NONE
     if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.plus(tradeAmount)
+        _postTradeAmt = sqthAmount.plus(tradeAmount)
       } else {
-        _postTradeAmt = squeethAmount.minus(tradeAmount)
+        _postTradeAmt = sqthAmount.minus(tradeAmount)
       }
       if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
     } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
       if (isOpenPosition) {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.plus(tradeAmount) : tradeAmount
+        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.plus(tradeAmount) : tradeAmount
       } else {
-        _postTradeAmt = squeethAmount.isGreaterThan(0) ? squeethAmount.minus(tradeAmount) : new BigNumber(0)
+        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.minus(tradeAmount) : new BigNumber(0)
       }
       if (_postTradeAmt.gt(0)) {
         _postPosition = PositionType.SHORT
@@ -250,7 +242,7 @@ const PositionCard: React.FC = () => {
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
-  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
+  }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, sqthAmount, tradeAmount])
 
   const renderPnL = (pnl: BigNumber) => (isToHidePnL ? '--' : pnlLoading ? 'Loading' : `$${pnl.toFixed(2)}`)
 
@@ -285,7 +277,7 @@ const PositionCard: React.FC = () => {
             <div>
               <div className={classes.postAmount}>
                 <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
-                  {sqthAmount.isZero() ? '0' : sqthAmount.toFixed(6)}
+                  {sqthAmount.isZero() ? '0' : sqthAmount.absoluteValue().toFixed(6)}
                 </Typography>
 
                 {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
@@ -317,22 +309,10 @@ const PositionCard: React.FC = () => {
                 </Typography>
               ) : (
                 <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                  ≈ $ {sqthAmountInUSD.isZero() ? '0' : sqthAmountInUSD.toFixed(2)}
+                  ≈ $ {sqthAmountInUSD.isZero() ? '0' : sqthAmountInUSD.absoluteValue().toFixed(2)}
                 </Typography>
               )}
             </div>
-
-            {positionType === PositionType.SHORT ? (
-              <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
-                <Link href={`vault/${vaultId}`}>Manage Vault</Link>
-              </Typography>
-            ) : null}
-
-            {isLP ? (
-              <Typography className={classes.link}>
-                <Link href="h1">Manage LP</Link>
-              </Typography>
-            ) : null}
 
             {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
               <HidePnLText />
@@ -390,6 +370,18 @@ const PositionCard: React.FC = () => {
               </div>
             )}
           </div>
+
+          {positionType === PositionType.SHORT ? (
+            <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
+              <Link href={`vault/${vaultId}`}>Manage Vault</Link>
+            </Typography>
+          ) : null}
+
+          {isLP ? (
+            <Typography className={classes.link}>
+              <Link href="h1">Manage LP</Link>
+            </Typography>
+          ) : null}
         </div>
       ) : (
         <div>

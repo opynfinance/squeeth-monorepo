@@ -1,20 +1,19 @@
 import Typography from '@material-ui/core/Typography'
 import { useAtomValue } from 'jotai'
-import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
+import { useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import useStyles from './useStyles'
 import { useLongGain, useCurrentLongPositionValue, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
-import { toTokenAmount } from '@utils/calculations'
-import { indexAtom } from 'src/state/controller/atoms'
 import { isToHidePnLAtom } from 'src/state/positions/atoms'
 import { HidePnLText } from '@components/HidePnLText'
 import { PnLType } from '../../types'
 import { PnLTooltip } from '@components/PnLTooltip'
+import usePnL from '@hooks/usePnL'
 
 export default function LongSqueeth() {
   const classes = useStyles()
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
+  const { sqthAmount, loading: swapsLoading } = usePnL()
   const isPnLLoading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
   const longGain = useLongGain()
@@ -34,10 +33,10 @@ export default function LongSqueeth() {
               oSQTH Amount
             </Typography>
             <Typography variant="body1">
-              {isPositionLoading && squeethAmount.isEqualTo(0) ? (
+              {isPositionLoading && sqthAmount.isEqualTo(0) ? (
                 'Loading'
               ) : (
-                <span id="pos-page-long-osqth-bal">{squeethAmount.toFixed(8)}</span>
+                <span id="pos-page-long-osqth-bal">{sqthAmount.toFixed(8)}</span>
               )}{' '}
               &nbsp; oSQTH
             </Typography>

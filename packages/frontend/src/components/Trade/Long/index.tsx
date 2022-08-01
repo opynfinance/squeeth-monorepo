@@ -7,6 +7,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
 import { useETHPrice } from '@hooks/useETHPrice'
+import usePnL from '@hooks/usePnL'
 import { CircularProgress, createStyles, makeStyles, Typography } from '@material-ui/core'
 import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import { toTokenAmount } from '@utils/calculations'
@@ -16,16 +17,13 @@ import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import React, { useState } from 'react'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from 'src/state/controller/atoms'
 import { addressesAtom, isShortAtom } from 'src/state/positions/atoms'
-import { useComputeSwaps, useShortDebt } from 'src/state/positions/hooks'
+import { useShortDebt } from 'src/state/positions/hooks'
 import {
   useAutoRoutedBuyAndRefund,
   useAutoRoutedSell,
-  useBuyAndRefund,
-  useSell,
   useAutoRoutedGetSellQuote,
   useGetBuyQuote,
   useGetBuyQuoteForETH,
-  useGetSellQuote,
   useGetSellQuoteForETH,
   useGetWSqueethPositionValue,
 } from 'src/state/squeethPool/hooks'
@@ -281,7 +279,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const isShort = useAtomValue(isShortAtom)
   const selectWallet = useSelectWallet()
-  const { squeethAmount } = useComputeSwaps()
+  const { sqthAmount } = usePnL()
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
@@ -507,13 +505,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     <div className={classes.hint}>
                       <span className={classes.hintTextContainer}>
                         <span className={classes.hintTitleText}>Balance </span>
-                        <span id="open-long-osqth-before-trade-balance">{squeethAmount.toFixed(4)}</span>
+                        <span id="open-long-osqth-before-trade-balance">{sqthAmount.toFixed(4)}</span>
                       </span>
                       {quote.amountOut.gt(0) ? (
                         <>
                           <ArrowRightAltIcon className={classes.arrowIcon} />
                           <span id="open-long-osqth-post-trade-balance">
-                            {squeethAmount.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
+                            {sqthAmount.plus(new BigNumber(sqthTradeAmount)).toFixed(6)}
                           </span>{' '}
                         </>
                       ) : null}{' '}
@@ -656,7 +654,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { squeethAmount } = useComputeSwaps()
+  const { sqthAmount } = usePnL()
 
   const shortDebt = useShortDebt()
   const isShort = shortDebt.gt(0)
@@ -666,16 +664,16 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   useAppEffect(() => {
     //if it's insufficient amount them set it to it's maximum
-    if (squeethAmount.lt(amount)) {
-      setSqthTradeAmount(squeethAmount.toString())
-      getSellQuote(squeethAmount).then((val) => {
+    if (sqthAmount.lt(amount)) {
+      setSqthTradeAmount(sqthAmount.toString())
+      getSellQuote(sqthAmount).then((val) => {
         if (val) {
           setEthTradeAmount(val.amountOut.toString())
-          setConfirmedAmount(squeethAmount.toFixed(6))
+          setConfirmedAmount(sqthAmount.toFixed(6))
         }
       })
     }
-  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
+  }, [sqthAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -683,7 +681,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   let priceImpactWarning: string | undefined
 
   if (connected) {
-    if (squeethAmount.lt(amount)) {
+    if (sqthAmount.lt(amount)) {
       closeError = 'Insufficient oSQTH balance'
     }
     // if (amount.gt(balance)) {
@@ -698,7 +696,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   }
 
   const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
+    priceImpactWarning && !closeError && !sellLoading && !sqthAmount.isZero() && !isShort
 
   const sellAndClose = useAppCallback(async () => {
     setSellLoading(true)
@@ -843,7 +841,7 @@ const CloseLong: React.FC<BuyProps> = () => {
             label="Amount"
             tooltip="Amount of oSqueeth you want to close"
             actionTxt="Max"
-            onActionClicked={() => handleSqthChange(squeethAmount.toString())}
+            onActionClicked={() => handleSqthChange(sqthAmount.toString())}
             unit="oSQTH"
             convertedValue={getWSqueethPositionValue(amount).toFixed(2).toLocaleString()}
             error={!!existingShortError || !!priceImpactWarning || !!closeError}
@@ -859,12 +857,12 @@ const CloseLong: React.FC<BuyProps> = () => {
                 <div className={classes.hint}>
                   <span className={classes.hintTextContainer}>
                     <span className={classes.hintTitleText}>Position</span>{' '}
-                    <span id="close-long-osqth-before-trade-balance">{squeethAmount.toFixed(6)}</span>{' '}
+                    <span id="close-long-osqth-before-trade-balance">{sqthAmount.toFixed(6)}</span>{' '}
                   </span>
                   {quote.amountOut.gt(0) ? (
                     <>
                       <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span id="close-long-osqth-post-trade-balance">{squeethAmount.minus(amount).toFixed(6)}</span>
+                      <span id="close-long-osqth-post-trade-balance">{sqthAmount.minus(amount).toFixed(6)}</span>
                     </>
                   ) : null}{' '}
                   <span style={{ marginLeft: '4px' }}>oSQTH</span>
@@ -940,7 +938,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                   transactionInProgress ||
                   !!closeError ||
                   !!existingShortError ||
-                  squeethAmount.isZero() ||
+                  sqthAmount.isZero() ||
                   sqthTradeAmount === '0'
                 }
                 style={

@@ -97,24 +97,24 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
     [isWethToken0, data?.swaps, getUsdAmt],
   )
 
-  useAppEffect(() => {
-    if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
-      setPositionType(PositionType.LONG)
-      // check if user osqth wallet balance is equal to the accumulated amount from tx history
-      // if it's not the same, it's likely that they do smt on crab acution or otc or lp etc so dont show the pnl for them
-      if (!computedSwaps.squeethAmount.isEqualTo(oSqueethBal)) {
-        setIsToHidePnL(true)
-      } else {
-        setIsToHidePnL(false)
-      }
-    } else if (computedSwaps.squeethAmount.isLessThan(0)) {
-      setIsToHidePnL(true)
-      setPositionType(PositionType.SHORT)
-    } else {
-      setIsToHidePnL(false)
-      setPositionType(PositionType.NONE)
-    }
-  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL])
+  // useAppEffect(() => {
+  //   if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
+  //     setPositionType(PositionType.LONG)
+  //     // check if user osqth wallet balance is equal to the accumulated amount from tx history
+  //     // if it's not the same, it's likely that they do smt on crab acution or otc or lp etc so dont show the pnl for them
+  //     if (!computedSwaps.squeethAmount.isEqualTo(oSqueethBal)) {
+  //       setIsToHidePnL(true)
+  //     } else {
+  //       setIsToHidePnL(false)
+  //     }
+  //   } else if (computedSwaps.squeethAmount.isLessThan(0)) {
+  //     setIsToHidePnL(true)
+  //     setPositionType(PositionType.SHORT)
+  //   } else {
+  //     setIsToHidePnL(false)
+  //     setPositionType(PositionType.NONE)
+  //   }
+  // }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL])
 
   useAppEffect(() => {
     refetch()
