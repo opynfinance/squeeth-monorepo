@@ -8,19 +8,18 @@
 // ====================================================
 
 export interface normalizationFactorUpdates_normalizationFactorUpdates {
-  __typename: "NormalizationFactorUpdate";
-  id: string;
-  oldNormFactor: any;
-  newNormFactor: any;
-  lastModificationTimestamp: any;
-  timestamp: any;
+  __typename: 'NormalizationFactorUpdate'
+  id: string
+  oldNormFactor: any
+  newNormFactor: any
+  lastModificationTimestamp: any
+  timestamp: any
 }
 
 export interface normalizationFactorUpdates {
-  normalizationFactorUpdates: normalizationFactorUpdates_normalizationFactorUpdates[];
+  normalizationFactorUpdates: normalizationFactorUpdates_normalizationFactorUpdates[]
 }
 
 export interface normalizationFactorUpdatesVariables {
-  timestamp?: number | null;
-  timestampOnedayAfter?: number | null;
+  skipCount?: number | null
 }

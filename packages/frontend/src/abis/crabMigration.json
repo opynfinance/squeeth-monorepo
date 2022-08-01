@@ -55,6 +55,75 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabAmount",
+        "type": "uint256"
+      }
+    ],
+    "name": "ClaimV2Shares",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabV1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "DepositV1Shares",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabV1Amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabV2Amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "excessEth",
+        "type": "uint256"
+      }
+    ],
+    "name": "FlashMigrate",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "previousOwner",
         "type": "address"
       },
@@ -69,7 +138,32 @@
     "type": "event"
   },
   {
-    "inputs": [],
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabV1Amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawV1Shares",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_strategyCap",
+        "type": "uint256"
+      }
+    ],
     "name": "batchMigrate",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -86,6 +180,11 @@
         "internalType": "uint256",
         "name": "_maxEthToPay",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint24",
+        "name": "_poolFee",
+        "type": "uint24"
       }
     ],
     "name": "claimAndWithdraw",
@@ -105,7 +204,7 @@
     "name": "crabV1",
     "outputs": [
       {
-        "internalType": "contract CrabStrategy",
+        "internalType": "address payable",
         "name": "",
         "type": "address"
       }
@@ -118,7 +217,7 @@
     "name": "crabV2",
     "outputs": [
       {
-        "internalType": "contract CrabStrategyV2",
+        "internalType": "address payable",
         "name": "",
         "type": "address"
       }
@@ -130,7 +229,7 @@
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "amount",
+        "name": "_amount",
         "type": "uint256"
       }
     ],
@@ -144,7 +243,7 @@
     "name": "euler",
     "outputs": [
       {
-        "internalType": "contract IEulerExec",
+        "internalType": "address",
         "name": "",
         "type": "address"
       }
@@ -173,6 +272,11 @@
         "internalType": "uint256",
         "name": "_withdrawMaxEthToPay",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint24",
+        "name": "_poolFee",
+        "type": "uint24"
       }
     ],
     "name": "flashMigrateAndWithdrawFromV1toV2",
@@ -191,6 +295,11 @@
         "internalType": "uint256",
         "name": "_ethToFlashDeposit",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint24",
+        "name": "_poolFee",
+        "type": "uint24"
       }
     ],
     "name": "flashMigrateFromV1toV2",
@@ -311,32 +420,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "totalCrabV1SharesMigrated",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalCrabV2SharesReceived",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "address",
@@ -345,6 +428,32 @@
       }
     ],
     "name": "transferOwnership",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "weth",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "withdrawV1Shares",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

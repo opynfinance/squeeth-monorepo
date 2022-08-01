@@ -48,7 +48,7 @@ export const useSwaps = () => {
   const [networkId] = useAtom(networkIdAtom)
   const [address] = useAtom(addressAtom)
   const setSwaps = useUpdateAtom(swapsAtom)
-  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy } = useAtomValue(addressesAtom)
+  const { squeethPool, oSqueeth, shortHelper, swapRouter, crabStrategy, crabStrategy2 } = useAtomValue(addressesAtom)
   const { subscribeToMore, data, refetch, loading, error, startPolling, stopPolling } = useQuery<
     swaps | swapsRopsten,
     swapsVariables | swapsRopstenVariables
@@ -56,7 +56,7 @@ export const useSwaps = () => {
     variables: {
       origin: address || '',
       orderDirection: 'asc',
-      recipient_not: crabStrategy,
+      recipient_not_in: [crabStrategy, crabStrategy2],
       ...(networkId === Networks.MAINNET
         ? {
             tokenAddress: oSqueeth,
@@ -75,7 +75,7 @@ export const useSwaps = () => {
       variables: {
         origin: address || '',
         orderDirection: 'asc',
-        recipient_not: crabStrategy,
+        recipient_not_in: [crabStrategy, crabStrategy2],
         ...(networkId === Networks.MAINNET
           ? {
               tokenAddress: oSqueeth,

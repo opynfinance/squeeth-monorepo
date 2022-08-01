@@ -9,6 +9,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
 
+  if (network.name === "ropsten" || network.name === "mainnet") {
+    return
+  }
   const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
   // Get Tokens
