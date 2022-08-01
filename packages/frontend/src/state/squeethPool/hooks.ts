@@ -94,17 +94,19 @@ export const useUpdateSqueethPoolData = () => {
         isWethToken0 ? 'oSqueeth' : 'Wrapped Ether',
       )
 
-      const pool = new Pool(
-        TokenA,
-        TokenB,
-        Number(fee),
-        state.sqrtPriceX96.toString(),
-        state.liquidity.toString(),
-        Number(state.tick),
-        ticks || [],
-      )
-
-      setPool(pool)
+      if (ticks?.length) {
+        const pool = new Pool(
+          TokenA,
+          TokenB,
+          Number(fee),
+          state.sqrtPriceX96.toString(),
+          state.liquidity.toString(),
+          Number(state.tick),
+          ticks || [],
+        )
+  
+        setPool(pool)
+      }
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
     })()
