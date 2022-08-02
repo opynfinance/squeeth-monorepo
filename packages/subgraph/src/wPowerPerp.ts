@@ -17,6 +17,13 @@ import {
 } from "./util";
 
 export function handleTransfer(event: Transfer): void {
+  if (
+    event.transaction.to ===
+    Address.fromString("0x59f0c781a6ec387f09c40faa22b7477a2950d209")
+  ) {
+    return;
+  }
+
   let amount = convertTokenToDecimal(event.params.value, TOKEN_DECIMALS_18);
 
   let senderHistory = createTransactionHistory("SEND_OSQTH", event);
@@ -28,10 +35,6 @@ export function handleTransfer(event: Transfer): void {
   recipientHistory.owner = event.params.to;
   recipientHistory.sqthAmount = amount;
   recipientHistory.save();
-
-  if (event.transaction.to === SHORT_HELPER_ADDR) {
-    return;
-  }
 
   sqthChange(event.params.to.toHex(), amount);
   sqthChange(event.params.from.toHex(), amount.neg());
