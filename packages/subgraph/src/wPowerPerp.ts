@@ -17,10 +17,7 @@ import {
 } from "./util";
 
 export function handleTransfer(event: Transfer): void {
-  if (
-    event.transaction.to ===
-    Address.fromString("0x59f0c781a6ec387f09c40faa22b7477a2950d209")
-  ) {
+  if (event.params.to === CONTROLLER_ADDR) {
     return;
   }
 
