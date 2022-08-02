@@ -1,10 +1,5 @@
 import { Tooltip, Typography } from '@material-ui/core'
-import {
-  useComputeSwaps,
-  useFirstValidVault,
-  useLPPositionsQuery,
-  useShortRealizedPnl,
-} from 'src/state/positions/hooks'
+import { useFirstValidVault, useLPPositionsQuery, useShortRealizedPnl } from 'src/state/positions/hooks'
 import useStyles from './useStyles'
 import Link from 'next/link'
 import { useAtomValue } from 'jotai'
@@ -17,13 +12,14 @@ import { HidePnLText } from '@components/HidePnLText'
 import { isToHidePnLAtom } from 'src/state/positions/atoms'
 import { PnLType } from '../../types'
 import { PnLTooltip } from '@components/PnLTooltip'
+import usePnL from '@hooks/usePnL'
 
 export default function ShortSqueeth() {
   const classes = useStyles()
   const { validVault, vaultId, isVaultLoading } = useFirstValidVault()
   const { existingCollat, existingLiqPrice, existingCollatPercent } = useVaultData(validVault)
   const { loading: isPositionLoading } = useLPPositionsQuery()
-  const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
+  const { sqthAmount, loading: swapsLoading } = usePnL()
   const isPnLLoading = useAtomValue(loadingAtom)
   const shortPositionValue = useCurrentShortPositionValue()
   const shortGain = useShortGain()
@@ -49,7 +45,7 @@ export default function ShortSqueeth() {
               <Typography variant="body1">Loading</Typography>
             ) : (
               <Typography variant="body1" id="pos-page-short-osqth-bal">
-                {squeethAmount.toFixed(8) + ' oSQTH'}
+                {sqthAmount.toFixed(8) + ' oSQTH'}
               </Typography>
             )}
           </div>

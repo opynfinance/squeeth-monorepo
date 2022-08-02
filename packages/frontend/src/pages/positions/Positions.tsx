@@ -14,7 +14,6 @@ import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { addressAtom } from 'src/state/wallet/atoms'
 import {
-  useComputeSwaps,
   useFirstValidVault,
   useLpDebt,
   useMintedDebt,
@@ -41,8 +40,8 @@ import {
 } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
+import usePnL from '@hooks/usePnL'
 
 export default function Positions() {
   const classes = useStyles()
@@ -51,7 +50,7 @@ export default function Positions() {
   const positionType = useAtomValue(positionTypeAtom)
   const activePositions = useAtomValue(activePositionsAtom)
 
-  const { squeethAmount } = useComputeSwaps()
+  const { sqthAmount } = usePnL()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
@@ -136,11 +135,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-          depositedEth.isZero() &&
-          depositedEthV2.isZero() &&
-          squeethAmount.isZero() &&
-          mintedDebt.isZero() &&
-          lpedSqueeth.isZero() ? (
+        depositedEth.isZero() &&
+        depositedEthV2.isZero() &&
+        sqthAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>

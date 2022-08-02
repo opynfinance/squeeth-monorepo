@@ -11,6 +11,19 @@ type Account @entity {
   id: ID!
   vaults: [Vault!]! @derivedFrom(field: "owner")
   vaultCount: BigInt!
+
+  sqthOpenAmount: BigDecimal!
+  sqthOpenUnitPrice: BigDecimal!
+  sqthCloseAmount: BigDecimal!
+  sqthCloseUnitPrice: BigDecimal!
+
+  ethDepositAmount: BigDecimal!
+  ethDepositUnitPrice: BigDecimal!
+  ethWithdrawAmount: BigDecimal!
+  ethWithdrawUnitPrice: BigDecimal!
+
+  sqthCollected: BigDecimal!
+  ethCollected: BigDecimal!
 }
 
 type Liquidation @entity {
@@ -90,6 +103,44 @@ type CrabAuction @entity {
   timestamp: BigInt!
 }
 
+type Pool @entity {
+  # pool address
+  id: ID!
+  # creation
+  createdAtTimestamp: BigInt!
+  # current price tracker
+  sqrtPrice: BigInt!
+  # token0 per token1
+  token0Price: BigDecimal
+  # token1 per token0
+  token1Price: BigDecimal
+}
+
+enum TransactionType {
+  MINT_OSQTH
+  BURN_OSQTH
+  SEND_OSQTH
+  RECEIVE_OSQTH
+  DEPOSIT_COLLAT
+  WITHDRAW_COLLAT
+  SWAP
+  ADD_LIQUIDITY
+  REMOVE_LIQUIDITY
+  COLLECT_FEE
+}
+
+type TransactionHistory @entity {
+  id: ID!
+  timestamp: BigInt!
+  transactionType: TransactionType!
+  owner: Bytes!
+  sqthAmount: BigDecimal!
+  ethAmount: BigDecimal!
+  sqthPrice: BigDecimal!
+  ethPrice: BigDecimal!
+  transactionFrom: String!
+  transactionTo: Bytes
+}
 type CrabHedgeTimeThreshold @entity {
   id: ID!
   threshold: BigInt!

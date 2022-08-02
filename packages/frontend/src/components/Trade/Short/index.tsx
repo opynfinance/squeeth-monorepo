@@ -40,7 +40,7 @@ import {
   useGetShortAmountFromDebt,
   useUpdateOperator,
 } from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+import { useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -60,6 +60,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
+import usePnL from '@hooks/usePnL'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -272,7 +273,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const { updateVault, vaults: shortVaults, loading: vaultIDLoading } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
-  const { squeethAmount: shortSqueethAmount } = useComputeSwaps()
+  const { sqthAmount: shortSqueethAmount } = usePnL()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const { existingCollatPercent } = useVaultData(vault)
   const collatPercentAtom = collatPercentFamily(200)
@@ -396,7 +397,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     } else if (vault && vaultId === 0 && vault?.shortAmount.gt(0)) {
       vaultIdDontLoadedError = 'Loading Vault...'
     }
-    console.log(currentImpliedFunding, FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding, Number(amount) > 0)
+    // console.log(currentImpliedFunding, FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding, Number(amount) > 0)
     if (currentImpliedFunding <= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding && Number(amount) > 0) {
       const fundingPercent = (1 - currentImpliedFunding / dailyHistoricalFunding.funding) * 100
       lowVolError = `Funding is ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`
