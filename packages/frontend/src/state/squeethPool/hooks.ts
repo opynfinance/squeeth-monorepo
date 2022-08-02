@@ -104,6 +104,8 @@ export const useUpdateSqueethPoolData = () => {
         ticks || [],
       )
 
+      console.log("Pools is set with tick length", ticks?.length)
+
       setPool(pool)
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
