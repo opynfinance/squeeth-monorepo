@@ -47,7 +47,7 @@ export const useGetPosition = () => {
   export const useGetDecreaseLiquidity = () => {
     const contract = useAtomValue(nftManagerContractAtom)
   
-    const getDecreaseLiquiduity = useCallback(
+    const getDecreaseLiquidity = useCallback(
       async (tokenId: number, liquidity: number, amount0Min: number, amount1Min: number, deadline: number) => {
         if (!contract) return null
         const DecreaseLiquidityParams = {
@@ -66,7 +66,7 @@ export const useGetPosition = () => {
       [contract],
     )
   
-    return getDecreaseLiquiduity
+    return getDecreaseLiquidity
   }
 
   export const useGetQuote = () => {
