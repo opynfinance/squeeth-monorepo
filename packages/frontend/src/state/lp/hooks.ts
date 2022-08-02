@@ -21,7 +21,7 @@ const x96 = new BigNumber(2).pow(96)
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
-const COLLAT_RATIO = 1.5
+const COLLAT_RATIO = 2
 
 /*** ACTIONS ***/
 
