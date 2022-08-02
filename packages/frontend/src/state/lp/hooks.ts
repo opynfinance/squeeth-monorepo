@@ -13,6 +13,62 @@ import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
 
+/*** CONSTANTS ***/
+const TICK_SPACE = 60
+const COLLAT_RATIO = 2
+
+/*** ACTIONS ***/
+
+// Opening a mint and LP position and depositing
+export const useOpenPositionDeposit = () => {
+  const { squeethPool } = useAtomValue(addressesAtom)
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerHelperHelperContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const getTwapSqueethPrice = useGetTwapSqueethPrice()
+  const getDebtAmount = useGetDebtAmount()
+  const openPositionDeposit = useAppCallback(
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
+      if (!contract || !address) return null
+      
+      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
+      const squeethPricePromise = getTwapSqueethPrice()
+      const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
+      const [squeethPrice, ethDebt] = await Promise.all([squeethPricePromise, ethDebtPromise])
+
+      const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
+      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
+
+      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
+      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
+
+      const flashloanWMintDepositNftParams = {
+        wPowerPerpPool: squeethPool,
+        vaultId: vaultId,
+        wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
+        collateralToDeposit: collateralToMint.toFixed(0),
+        collateralToFlashloan: collateralToMint.toFixed(0),
+        collateralToLp: collateralToLp.toFixed(0),
+        collateralToWithdraw: 0,
+        amount0Min: 0,
+        amount1Min: 0,
+        lowerTick: lowerTick,
+        upperTick: upperTick,
+      }
+
+      return handleTransaction(
+        contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
+          from: address,
+          value: collateralToLp.toFixed(0),
+        }),
+        onTxConfirmed,
+      )
+    },
+    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
+  )
+  return openPositionDeposit
+}
+
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
