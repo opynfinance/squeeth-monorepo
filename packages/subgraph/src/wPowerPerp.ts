@@ -29,11 +29,15 @@ export function handleTransfer(event: Transfer): void {
   let senderHistory = createTransactionHistory("SEND_OSQTH", event);
   senderHistory.owner = event.params.from;
   senderHistory.sqthAmount = amount;
+  senderHistory.transactionFrom = event.params.from.toHex();
+  senderHistory.transactionTo = event.params.to;
   senderHistory.save();
 
   let recipientHistory = createTransactionHistory("RECEIVE_OSQTH", event);
   recipientHistory.owner = event.params.to;
   recipientHistory.sqthAmount = amount;
+  senderHistory.transactionFrom = event.params.from.toHex();
+  senderHistory.transactionTo = event.params.to;
   recipientHistory.save();
 
   sqthChange(event.params.to.toHex(), amount);
