@@ -38,14 +38,25 @@ export const useOpenPositionDeposit = () => {
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
       const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
       const poolStatePromise = getPoolState(squeethPoolContract)
-      const [ethDebt, { tick }] = await Promise.all([ethDebtPromise, poolStatePromise])
-      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
-                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
-      const collateralToMint = ethDebt.multipliedBy(collatRatio)
-      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
       const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
       const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
+
+      // Calculate prices from ticks
+      const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
+      const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
+      const [ethDebt, { tick }] = await Promise.all([ethDebtPromise, poolStatePromise])
+      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
+                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
+      const sqrtSqueethPrice = squeethPrice.sqrt()
+      const collateralToMint = ethDebt.multipliedBy(collatRatio)
+
+      // Lx = x * (sqrtSqueethPrice * sqrtUpperPrice) / (sqrtUpperPrice - sqrtSqueethPrice)
+      // y = Lx * (sqrtSqueethPrice - sqrtLowerPrice)
+      const liquidity = mintWSqueethAmount.times(sqrtSqueethPrice.times(sqrtUpperPrice)).div(sqrtUpperPrice.minus(sqrtSqueethPrice))
+      const collateralToLp = sqrtUpperPrice.lt(sqrtSqueethPrice) ? liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
+                            : sqrtSqueethPrice.lt(sqrtLowerPrice) ? 0
+                            : liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
