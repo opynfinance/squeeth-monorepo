@@ -12,6 +12,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
+import { sl } from 'date-fns/locale'
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
@@ -32,7 +33,7 @@ export const useOpenPositionDeposit = () => {
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, onTxConfirmed?: () => void) => {
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !address || !squeethPoolContract) return null
       
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
@@ -55,9 +56,14 @@ export const useOpenPositionDeposit = () => {
       // y = Lx * (sqrtSqueethPrice - sqrtLowerPrice)
       const liquidity = mintWSqueethAmount.times(sqrtSqueethPrice.times(sqrtUpperPrice)).div(sqrtUpperPrice.minus(sqrtSqueethPrice))
       const collateralToLp = sqrtUpperPrice.lt(sqrtSqueethPrice) ? liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
-                            : sqrtSqueethPrice.lt(sqrtLowerPrice) ? 0
+                            : sqrtSqueethPrice.lt(sqrtLowerPrice) ? new BigNumber(0)
                             : liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
-
+      
+      const amount0 = isWethToken0 ? collateralToLp : mintWSqueethAmount
+      const amount1 = isWethToken0 ? mintWSqueethAmount : collateralToLp
+      const amount0Min = amount0.times(new BigNumber(1).minus(slippage)).toFixed(0)
+      const amount1Min = amount1.times(new BigNumber(1).minus(slippage)).toFixed(0)
+      
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
         vaultId: vaultId,
@@ -66,8 +72,8 @@ export const useOpenPositionDeposit = () => {
         collateralToFlashloan: collateralToMint.toFixed(0),
         collateralToLp: collateralToLp.toFixed(0),
         collateralToWithdraw: 0,
-        amount0Min: 0,
-        amount1Min: 0,
+        amount0Min,
+        amount1Min,
         lowerTick: lowerTick,
         upperTick: upperTick,
       }
