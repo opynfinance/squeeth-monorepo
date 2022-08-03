@@ -5,7 +5,7 @@ import Notify from 'bnc-notify'
 import Onboard from 'bnc-onboard'
 import Web3 from 'web3'
 import { ethers } from 'ethers'
-import { useQuery, useQueryClient } from 'react-query'
+import { useMutation, useQuery, useQueryClient } from 'react-query'
 
 import {
   onboardAtom,
@@ -17,6 +17,8 @@ import {
   web3Atom,
   transactionDataAtom,
   transactionLoadingAtom,
+  isRiskAddressAtom,
+  connectFailureVisibleAtom,
 } from './atoms'
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
@@ -24,13 +26,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
+import axios from 'axios'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
+  const isRiskAddress = useAtomValue(isRiskAddressAtom)
+  const setConnectFailureVisible = useUpdateAtom(connectFailureVisibleAtom)
   const onWalletSelect = async () => {
     if (!onboard) return
     onboard.walletSelect().then(async (success) => {
-      if (success) await onboard.walletCheck()
+      if (success) {
+        await onboard.walletCheck()
+        if (isRiskAddress) {
+          setConnectFailureVisible(true)
+        }
+      }
     })
   }
 
@@ -136,6 +146,20 @@ export const useWalletBalance = () => {
   })
 }
 
+export const checkHighRisk = async (address: string) => {
+  try {
+    const { data } = await axios.post(`https://api.chainalysis.com/api/kyt/v1/users/${address}/withdrawaladdresses`, {
+      network: 'Ethereum',
+      asset: 'ETH',
+      address,
+    })
+
+    return data[0].rating === 'highRisk'
+  } catch {
+    return true
+  }
+}
+
 export const useOnboard = () => {
   const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
@@ -147,6 +171,7 @@ export const useOnboard = () => {
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
   const { refetch: refetchWalletBalance } = useWalletBalance()
+  const setIsRiskAddress = useUpdateAtom(isRiskAddressAtom)
 
   const onNetworkChange = useAppCallback(
     (updateNetwork: number) => {
@@ -190,7 +215,15 @@ export const useOnboard = () => {
   useAppEffect(() => {
     const onboard = initOnboard(
       {
-        address: setAddress,
+        address: async (address: string) => {
+          const isHighRisk = true // await checkHighRisk(address)
+          if (isHighRisk) {
+            console.log('-- high risk --', isHighRisk)
+            setIsRiskAddress(isHighRisk)
+          } else {
+            setAddress(address)
+          }
+        },
         network: onNetworkChange,
         wallet: onWalletUpdate,
       },

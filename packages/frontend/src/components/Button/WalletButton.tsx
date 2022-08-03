@@ -2,13 +2,19 @@ import { Hidden, Box, Button, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { useMemo, useState } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
 import Davatar from '@davatar/react'
-import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import {
+  addressAtom,
+  connectedWalletAtom,
+  isRiskAddressAtom,
+  networkIdAtom,
+  supportedNetworkAtom,
+} from 'src/state/wallet/atoms'
 import { useDiscconectWallet, useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../constants'
 
@@ -115,7 +121,7 @@ const WalletButton: React.FC = () => {
   return (
     <div className={classes.walletBox}>
       {!connected ? (
-        <Button variant="contained" color="primary" onClick={selectWallet} id="connect-wallet">
+        <Button variant="contained" onClick={selectWallet} color="primary" id="connect-wallet">
           Connect wallet
         </Button>
       ) : !supportedNetwork ? (
