@@ -19,7 +19,7 @@ import { wethTokenAtom } from '../squeethPool/atoms'
 const TICK_SPACE = 60
 const COLLAT_RATIO_FLASHLOAN = 2
 const POOL_FEE = 3000
-const MAX_INT = new BigNumber(2).pow(128).minus(1).toFixed(0)
+const MAX_INT_128 = new BigNumber(2).pow(128).minus(1).toFixed(0)
 const x96 = new BigNumber(2).pow(96)
 
 /*** ACTIONS ***/
@@ -186,8 +186,8 @@ export const useCollectFees = () => {
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
     const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
-    const amount0Max = MAX_INT
-    const amount1Max = MAX_INT
+    const amount0Max = MAX_INT_128
+    const amount1Max = MAX_INT_128
     const abiCoder = new ethers.utils.AbiCoder()
     const rebalanceLpInVaultParams = [
       {
