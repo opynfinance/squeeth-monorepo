@@ -141,7 +141,7 @@ export const useClosePosition = () => {
       tokenId: uniTokenId,
       liquidity: position.liquidity,
       liquidityPercentage: fromTokenAmount(liquidityPercentage, 18).toFixed(0),
-      wPowerPerpAmountToBurn: shortAmount.times(burnPercentage).toFixed(0),
+      wPowerPerpAmountToBurn: amountToBurn.toFixed(0),
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
       collateralToWithdraw: collateralToWithdraw.toFixed(0),
       limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
