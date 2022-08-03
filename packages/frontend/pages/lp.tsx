@@ -1,4 +1,4 @@
-import { createStyles, makeStyles } from '@material-ui/core'
+import { Button, createStyles, makeStyles } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
 import React, { useState } from 'react'
@@ -15,6 +15,13 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
+import { useClosePosition, useOpenPositionDeposit, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
+import { useCollectFees } from 'src/state/lp/hooks'
+import BigNumber from 'bignumber.js'
+import useAppCallback from '@hooks/useAppCallback'
+import { useFirstValidVault } from 'src/state/positions/hooks'
+import { useGetTwapSqueethPrice, useUpdateOperator } from 'src/state/controller/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -73,15 +80,72 @@ const useStyles = makeStyles((theme) =>
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
     },
+    buttonTest: {
+      marginTop: theme.spacing(1),
+      backgroundColor: theme.palette.success.main,
+      '&:hover': {
+        backgroundColor: theme.palette.success.dark,
+      },
+    },
   }),
 )
 
 export function LPCalculator() {
+  const [isVaultApproved, setIsVaultApproved] = useState(true)
+  const { controllerHelper } = useAtomValue(addressesAtom)
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const squeethPrice = useGetTwapSqueethPrice()
+  const openLPPosition = useOpenPositionDeposit()
+  const closeLPPosition = useClosePosition()
+  const collectFees = useCollectFees()
+  const rebalanceSwap = useRebalanceGeneralSwap()
+  const updateOperator = useUpdateOperator()
+  const { vaultId, validVault: vault } = useFirstValidVault()
+
+  const openPos = useAppCallback(async () => {
+    try {
+      await openLPPosition(new BigNumber(200), -500000, 500000, 0, 1.5, .0025, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId, squeethPrice, openLPPosition])
+
+  const updateOp = useAppCallback(async () => {
+    try {
+      await updateOperator(Number(719), controllerHelper)
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId, updateOperator])
+
+  const collFees = useAppCallback(async () => {
+    try {
+      await collectFees(Number(719), () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId, collectFees])
+
+  const closePos = useAppCallback(async () => {
+    try {
+      await closeLPPosition(Number(719), 1, 1, 0, true, 0.0025, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId, closeLPPosition])
+
+  const rebalSwap = useAppCallback(async () => {
+    try {
+      await rebalanceSwap(Number(719), -30000, 2000, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultId, rebalanceSwap])
+
 
   return (
     <div>
@@ -155,6 +219,64 @@ export function LPCalculator() {
                   contracts are experimental technology and we encourage caution only risking funds you can afford to
                   lose.
                 </Typography>
+                <Typography className={classes.heading} variant="subtitle1" color="primary">
+                  Testing One Click LP Hooks
+                </Typography>
+                <Button
+                  onClick={openPos}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Open Mint and Deposit LP Position'}
+                </Button>
+
+                <Button
+                  onClick={updateOp}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Update Operator'}
+                </Button>
+
+                <Button
+                  onClick={collFees}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Collect Fees'}
+                </Button>
+
+                <Button
+                  onClick={closePos}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Close LP Position'}
+                </Button>
+
+                <Button
+                  onClick={rebalSwap}
+                  style={{
+                    width: '300px',
+                    color: 'gray',
+                    backgroundColor: '#a9fbf6',
+                  }}
+                >
+                  {'Rebalance General Swap'}
+                </Button>
+
               </div>
             ) : (
               <div style={{ marginTop: '16px' }}>
