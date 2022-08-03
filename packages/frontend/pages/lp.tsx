@@ -116,7 +116,7 @@ export function LPCalculator() {
 
   const updateOp = useAppCallback(async () => {
     try {
-      await updateOperator(Number(682), controllerHelper)
+      await updateOperator(Number(719), controllerHelper)
     } catch (e) {
       console.log(e)
     }
@@ -124,7 +124,7 @@ export function LPCalculator() {
 
   const collFees = useAppCallback(async () => {
     try {
-      await collectFees(Number(682), () => {})
+      await collectFees(Number(719), () => {})
     } catch (e) {
       console.log(e)
     }
@@ -132,7 +132,7 @@ export function LPCalculator() {
 
   const closePos = useAppCallback(async () => {
     try {
-      await closeLPPosition(Number(682), () => {})
+      await closeLPPosition(Number(719), () => {})
     } catch (e) {
       console.log(e)
     }
@@ -140,7 +140,7 @@ export function LPCalculator() {
 
   const rebalSwap = useAppCallback(async () => {
     try {
-      await rebalanceSwap(Number(682), -30000, 2000, () => {})
+      await rebalanceSwap(Number(719), -30000, 2000, () => {})
     } catch (e) {
       console.log(e)
     }

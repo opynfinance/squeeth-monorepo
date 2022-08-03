@@ -11,7 +11,7 @@ import { Contract } from 'web3-eth-contract'
 import { useHandleTransaction } from '../wallet/hooks'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
-import { useGetDebtAmount, useGetTwapSqueethPrice, useGetVault } from '../controller/hooks'
+import { useGetDebtAmount, useGetVault } from '../controller/hooks'
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
@@ -28,17 +28,19 @@ export const useOpenPositionDeposit = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerHelperHelperContractAtom)
   const handleTransaction = useHandleTransaction()
-  const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
+  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const openPositionDeposit = useAppCallback(
     async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
-      if (!contract || !address) return null
+      if (!contract || !address || !squeethPoolContract) return null
       
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const squeethPricePromise = getTwapSqueethPrice()
       const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
-      const [squeethPrice, ethDebt] = await Promise.all([squeethPricePromise, ethDebtPromise])
-
+      const poolStatePromise = getPoolState(squeethPoolContract)
+      const [ethDebt, { tick }] = await Promise.all([ethDebtPromise, poolStatePromise])
+      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
+                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
       const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
@@ -67,7 +69,7 @@ export const useOpenPositionDeposit = () => {
         onTxConfirmed,
       )
     },
-    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
+    [address, squeethPool, contract, handleTransaction, getDebtAmount],
   )
   return openPositionDeposit
 }
@@ -193,7 +195,6 @@ export const useRebalanceGeneralSwap = () => {
   const getVault = useGetVault()
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const getPosition = useGetPosition()
-  const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const getQuote = useGetQuote()
   const rebalanceGeneralSwap = useAppCallback(
@@ -220,14 +221,14 @@ export const useRebalanceGeneralSwap = () => {
       // Calculate prices from ticks
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
-      const { sqrtPriceX96 } = await getPoolState(squeethPoolContract)
-      const sqrtSqueethPrice = new BigNumber(sqrtPriceX96.toString()).div(x96)
-      const squeethPrice = sqrtSqueethPrice.pow(2)
+      const { tick } = await getPoolState(squeethPoolContract)
+      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
+                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
+      const sqrtSqueethPrice = squeethPrice.sqrt()
 
       // Get previous liquidity amount in ETH
       const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
       const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))       
-      console.log("positionEthValue", positionEthValue.toString())
 
       let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
@@ -329,7 +330,7 @@ export const useRebalanceGeneralSwap = () => {
         onTxConfirmed,
       )
     },
-    [address, controllerHelperContract, controllerHelper, weth, oSqueeth, squeethPool, controllerContract, handleTransaction, isWethToken0, getDebtAmount, getVault, getDecreaseLiquidity, getPosition, getTwapSqueethPrice, squeethPoolContract],
+    [address, controllerHelperContract, controllerHelper, weth, oSqueeth, squeethPool, controllerContract, handleTransaction, isWethToken0, getDebtAmount, getVault, getDecreaseLiquidity, getPosition, squeethPoolContract],
   )
   return rebalanceGeneralSwap
 }
@@ -378,7 +379,6 @@ export const useGetPosition = () => {
           amount1Min,
           deadline,
         }
-        console.log("DecreaseLiquidityParams", DecreaseLiquidityParams)
   
         const decreaseLiquidity = await contract.methods.decreaseLiquidity(DecreaseLiquidityParams).call()
   
