@@ -15,7 +15,7 @@ import { useGetDebtAmount, useGetVault } from '../controller/hooks'
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
-const COLLAT_RATIO = 1.5
+const COLLAT_RATIO_FLASHLOAN = 2
 const POOL_FEE = 3000
 const MAX_INT = new BigNumber(2).pow(128).minus(1).toFixed(0)
 const x96 = new BigNumber(2).pow(96)
@@ -32,7 +32,7 @@ export const useOpenPositionDeposit = () => {
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, onTxConfirmed?: () => void) => {
       if (!contract || !address || !squeethPoolContract) return null
       
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
@@ -41,7 +41,7 @@ export const useOpenPositionDeposit = () => {
       const [ethDebt, { tick }] = await Promise.all([ethDebtPromise, poolStatePromise])
       const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
                                             : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
-      const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
+      const collateralToMint = ethDebt.multipliedBy(collatRatio)
       const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
 
       const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
@@ -103,7 +103,7 @@ export const useClosePosition = () => {
     const debtInEthPromise = getDebtAmount(shortAmount)
     const limitEthPromise = getQuote(shortAmount, true)
     const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
 
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
@@ -154,7 +154,7 @@ export const useCollectFees = () => {
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
     const amount0Max = MAX_INT
     const amount1Max = MAX_INT
     const abiCoder = new ethers.utils.AbiCoder()
@@ -205,7 +205,7 @@ export const useRebalanceGeneralSwap = () => {
       if (!controllerContract || !controllerHelperContract || !address || !position || !vaultBefore || !squeethPoolContract) return
       const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
       const debtInEth = await getDebtAmount(shortAmount)
-      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
 
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)

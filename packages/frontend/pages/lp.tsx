@@ -108,7 +108,7 @@ export function LPCalculator() {
 
   const openPos = useAppCallback(async () => {
     try {
-      await openLPPosition(new BigNumber(200), -887220, 887220, 0, () => {})
+      await openLPPosition(new BigNumber(200), -887220, 887220, 0, 2, () => {})
     } catch (e) {
       console.log(e)
     }
