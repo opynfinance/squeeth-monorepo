@@ -218,7 +218,6 @@ export const useOnboard = () => {
         address: async (address: string) => {
           const isHighRisk = true // await checkHighRisk(address)
           if (isHighRisk) {
-            console.log('-- high risk --', isHighRisk)
             setIsRiskAddress(isHighRisk)
           } else {
             setAddress(address)
