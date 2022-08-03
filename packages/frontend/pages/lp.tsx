@@ -132,7 +132,7 @@ export function LPCalculator() {
 
   const closePos = useAppCallback(async () => {
     try {
-      await closeLPPosition(Number(719), () => {})
+      await closeLPPosition(Number(719), 1, 1, 0, true, 0.0025, () => {})
     } catch (e) {
       console.log(e)
     }

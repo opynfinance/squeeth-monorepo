@@ -13,6 +13,7 @@ import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
 import { sl } from 'date-fns/locale'
+import { wethTokenAtom } from '../squeethPool/atoms'
 
 /*** CONSTANTS ***/
 const TICK_SPACE = 60
@@ -63,7 +64,7 @@ export const useOpenPositionDeposit = () => {
       const amount1 = isWethToken0 ? mintWSqueethAmount : collateralToLp
       const amount0Min = amount0.times(new BigNumber(1).minus(slippage)).toFixed(0)
       const amount1Min = amount1.times(new BigNumber(1).minus(slippage)).toFixed(0)
-      
+
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
         vaultId: vaultId,
@@ -100,8 +101,11 @@ export const useClosePosition = () => {
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const getPosition = useGetPosition()
-  const getQuote = useGetQuote()
-  const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+  const getExactIn = useGetExactIn()
+  const getExactOut = useGetExactOut()
+  const getDecreaseLiquidity = useGetDecreaseLiquidity()
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const closePosition = useAppCallback(async (vaultId: number, liquidityPercentage: number, burnPercentage: number, collateralToWithdraw: number, burnExactRemoved: boolean, slippage: number, onTxConfirmed?: () => void) => {
     const vaultBefore = await getVault(vaultId)
     const uniTokenId = vaultBefore?.NFTCollateralId 
     const position = await getPosition(uniTokenId)
@@ -118,23 +122,33 @@ export const useClosePosition = () => {
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEthPromise = getDebtAmount(shortAmount)
-    const limitEthPromise = getQuote(shortAmount, true)
-    const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
 
+    // Get current LP positions
+    const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
+    const wPowerPerpAmountInLP = isWethToken0 ? amount1 : amount0
+   
+    const amountToLiquidate = new BigNumber(wPowerPerpAmountInLP).times(liquidityPercentage)
+    const amountToBurn = shortAmount.times(burnPercentage)
+    const limitEthPromise = amountToLiquidate.gt(amountToBurn) ? getExactIn(amountToLiquidate.minus(amountToBurn), true)
+                            : getExactOut(amountToBurn.minus(amountToLiquidate), true)
+    
+    const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
+    const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
+
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
       tokenId: uniTokenId,
       liquidity: position.liquidity,
-      liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
-      wPowerPerpAmountToBurn: shortAmount.toFixed(0),
+      liquidityPercentage: fromTokenAmount(liquidityPercentage, 18).toFixed(0),
+      wPowerPerpAmountToBurn: shortAmount.times(burnPercentage).toFixed(0),
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
-      collateralToWithdraw: 0,
-      limitPriceEthPerPowerPerp: limitEth,
+      collateralToWithdraw: collateralToWithdraw.toFixed(0),
+      limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
       amount0Min: 0,
       amount1Min: 0,
       poolFee: POOL_FEE,
-      burnExactRemoved: true,
+      burnExactRemoved,
     }
 
     return handleTransaction(
@@ -143,7 +157,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getExactIn])
   return closePosition
 }
 
@@ -213,7 +227,7 @@ export const useRebalanceGeneralSwap = () => {
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const getPosition = useGetPosition()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
-  const getQuote = useGetQuote()
+  const getQuote = useGetExactIn()
   const rebalanceGeneralSwap = useAppCallback(
     async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
@@ -407,11 +421,11 @@ export const useGetPosition = () => {
     return getDecreaseLiquiduity
   }
 
-  export const useGetQuote = () => {
+  export const useGetExactIn = () => {
     const contract = useAtomValue(quoterContractAtom)
     const {weth, oSqueeth} = useAtomValue(addressesAtom)
   
-    const getQuote = useCallback(
+    const getExactIn = useCallback(
       async (amount: BigNumber, squeethIn: boolean) => {
         if (!contract) return null
   
@@ -429,7 +443,32 @@ export const useGetPosition = () => {
       [contract, weth, oSqueeth],
     )
   
-    return getQuote
+    return getExactIn
+  }
+
+  export const useGetExactOut = () => {
+    const contract = useAtomValue(quoterContractAtom)
+    const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  
+    const getExactOut = useCallback(
+      async (amount: BigNumber, squeethOut: boolean) => {
+        if (!contract) return null
+  
+        const QuoteExactOutputSingleParams = {
+          tokenIn: squeethOut ? weth : oSqueeth,
+          tokenOut: squeethOut ? oSqueeth : weth,
+          amount: amount.toFixed(0),
+          fee: POOL_FEE,
+          sqrtPriceLimitX96: 0
+        }
+  
+        const quote = await contract.methods.quoteExactOutputSingle(QuoteExactOutputSingleParams).call()
+        return quote.amountIn
+      },
+      [contract, weth, oSqueeth],
+    )
+  
+    return getExactOut
   }
 
   async function getPoolState(squeethContract: Contract) {
