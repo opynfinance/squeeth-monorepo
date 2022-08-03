@@ -138,8 +138,8 @@ type TransactionHistory @entity {
   ethAmount: BigDecimal!
   sqthPrice: BigDecimal!
   ethPrice: BigDecimal!
-  transactionFrom: String!
-  transactionTo: Bytes
+  debug0: Bytes!
+  debug1: Bytes
 }
 type CrabHedgeTimeThreshold @entity {
   id: ID!
