@@ -471,10 +471,10 @@ export const useGetPosition = () => {
     return getExactOut
   }
 
-  async function getPoolState(squeethContract: Contract) {
+  async function getPoolState(poolContract: Contract) {
     const [slot, liquidity] = await Promise.all([
-      squeethContract?.methods.slot0().call(),
-      squeethContract?.methods.liquidity().call(),
+      poolContract?.methods.slot0().call(),
+      poolContract?.methods.liquidity().call(),
     ])
   
     const PoolState = {
