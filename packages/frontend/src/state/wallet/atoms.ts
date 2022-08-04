@@ -51,5 +51,5 @@ export const connectedWalletAtom = atom((get) => {
 
 export const isTransactionFirstStepAtom = atom(false)
 
-export const isRiskAddressAtom = atom(false)
+export const isValidAddressAtom = atom(false)
 export const connectFailureVisibleAtom = atom(false)

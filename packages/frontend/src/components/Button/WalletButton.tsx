@@ -11,7 +11,7 @@ import Davatar from '@davatar/react'
 import {
   addressAtom,
   connectedWalletAtom,
-  isRiskAddressAtom,
+  isValidAddressAtom,
   networkIdAtom,
   supportedNetworkAtom,
 } from 'src/state/wallet/atoms'

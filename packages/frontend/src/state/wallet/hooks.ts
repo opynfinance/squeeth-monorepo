@@ -17,7 +17,7 @@ import {
   web3Atom,
   transactionDataAtom,
   transactionLoadingAtom,
-  isRiskAddressAtom,
+  isValidAddressAtom,
   connectFailureVisibleAtom,
 } from './atoms'
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
@@ -30,14 +30,18 @@ import axios from 'axios'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
-  const isRiskAddress = useAtomValue(isRiskAddressAtom)
+  const isValidAddress = useAtomValue(isValidAddressAtom)
   const setConnectFailureVisible = useUpdateAtom(connectFailureVisibleAtom)
   const onWalletSelect = async () => {
     if (!onboard) return
+
     onboard.walletSelect().then(async (success) => {
       if (success) {
         await onboard.walletCheck()
-        if (isRiskAddress) {
+
+        console.log('useWalletSelect')
+
+        if (!isValidAddress) {
           setConnectFailureVisible(true)
         }
       }
@@ -146,17 +150,13 @@ export const useWalletBalance = () => {
   })
 }
 
-export const checkHighRisk = async (address: string) => {
+export const checkValidAddress = async (address: string) => {
   try {
-    const { data } = await axios.post(`https://api.chainalysis.com/api/kyt/v1/users/${address}/withdrawaladdresses`, {
-      network: 'Ethereum',
-      asset: 'ETH',
-      address,
-    })
+    const { data } = await axios.get(`/api/isValidAddress?address=${address}`)
 
-    return data[0].rating === 'highRisk'
+    return data.valid ?? false
   } catch {
-    return true
+    return false
   }
 }
 
@@ -171,7 +171,7 @@ export const useOnboard = () => {
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
   const { refetch: refetchWalletBalance } = useWalletBalance()
-  const setIsRiskAddress = useUpdateAtom(isRiskAddressAtom)
+  const [isValidAddress, setIsValidAddress] = useAtom(isValidAddressAtom)
 
   const onNetworkChange = useAppCallback(
     (updateNetwork: number) => {
@@ -202,6 +202,9 @@ export const useOnboard = () => {
   const onWalletUpdate = useAppCallback(
     (wallet: any) => {
       if (wallet.provider) {
+        if (!isValidAddress) {
+          return
+        }
         window.localStorage.setItem('selectedWallet', wallet.name)
         const provider = new ethers.providers.Web3Provider(wallet.provider)
         provider.pollingInterval = 30000
@@ -209,18 +212,20 @@ export const useOnboard = () => {
         setSigner(provider.getSigner())
       }
     },
-    [setSigner, setWeb3],
+    [setSigner, setWeb3, isValidAddress],
   )
 
   useAppEffect(() => {
     const onboard = initOnboard(
       {
         address: async (address: string) => {
-          const isHighRisk = true // await checkHighRisk(address)
-          if (isHighRisk) {
-            setIsRiskAddress(isHighRisk)
-          } else {
+          if (!address) {
+            return
+          }
+          const isValid = await checkValidAddress(address)
+          if (isValid) {
             setAddress(address)
+            setIsValidAddress(true)
           }
         },
         network: onNetworkChange,
