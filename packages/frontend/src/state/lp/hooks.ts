@@ -16,7 +16,6 @@ import { sl } from 'date-fns/locale'
 import { wethTokenAtom } from '../squeethPool/atoms'
 
 /*** CONSTANTS ***/
-const TICK_SPACE = 60
 const COLLAT_RATIO_FLASHLOAN = 2
 const POOL_FEE = 3000
 const MAX_INT_128 = new BigNumber(2).pow(128).minus(1).toFixed(0)
@@ -41,13 +40,13 @@ export const useOpenPositionDeposit = () => {
       const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
       const poolStatePromise = getPoolState(squeethPoolContract)
 
-      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
-      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
-
       // Calculate prices from ticks
+      const [ethDebt, { tick, tickSpacing }] = await Promise.all([ethDebtPromise, poolStatePromise])
+      console.log("tickSpacing", Number(tickSpacing))
+      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
+      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
-      const [ethDebt, { tick }] = await Promise.all([ethDebtPromise, poolStatePromise])
       const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
                                             : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
       const sqrtSqueethPrice = squeethPrice.sqrt()
@@ -241,18 +240,17 @@ export const useRebalanceGeneralSwap = () => {
       const amount0Min = new BigNumber(0)
       const amount1Min = new BigNumber(0)
 
-      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
-      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
-
       // Get current LP positions
       const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
 
       // Calculate prices from ticks
+      const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
+      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
+      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
       const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
-      const { tick } = await getPoolState(squeethPoolContract)
       const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
                                             : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
       const sqrtSqueethPrice = squeethPrice.sqrt()
@@ -472,9 +470,10 @@ export const useGetPosition = () => {
   }
 
   async function getPoolState(poolContract: Contract) {
-    const [slot, liquidity] = await Promise.all([
+    const [slot, liquidity, tickSpacing] = await Promise.all([
       poolContract?.methods.slot0().call(),
       poolContract?.methods.liquidity().call(),
+      poolContract.methods.tickSpacing().call()
     ])
   
     const PoolState = {
@@ -486,6 +485,7 @@ export const useGetPosition = () => {
       observationCardinalityNext: slot[4],
       feeProtocol: slot[5],
       unlocked: slot[6],
+      tickSpacing
     }
   
     return PoolState
