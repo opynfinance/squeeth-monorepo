@@ -12,11 +12,13 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
         asset: 'ETH',
         address,
       },
-      { headers: { Token: '42a447a56771499cc025e34114faf46df3b69019dcdf0a43039b677f98be648d' } },
+      { headers: { Token: process.env.NEXT_PUBLIC_CHAINANLYSIS_TOKEN ?? '' } },
     )
 
     res.status(200).json({ valid: (data?.[0]?.rating ?? 'highRisk') !== 'highRisk' })
-  } catch {
+  } catch (e) {
+    console.log('Chain analysis error', e)
+
     res.status(200).json({ valid: false })
   }
 }
