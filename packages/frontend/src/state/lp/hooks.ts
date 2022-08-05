@@ -289,10 +289,8 @@ export const useRebalanceGeneralSwap = () => {
         // Calculate amounts of each asset to LP
         // x = L(sqrt(upperPrice) - sqrt(squeethPrice))) / sqrt(squeethPrice) * sqrt(upperPrice)
         // y = L(sqrt(squeethPrice) - sqrt(lowerPrice))
-        newAmount0 = liquidity.times(sqrtUpperPrice.minus(sqrtSqueethPrice)).div((sqrtSqueethPrice.times(sqrtUpperPrice)))
-        newAmount1 = liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
-        wethAmountInLPAfter = isWethToken0 ? newAmount0 : newAmount1
-        wPowerPerpAmountInLPAfter = isWethToken0 ? newAmount1 : newAmount0
+        wPowerPerpAmountInLPAfter = liquidity.times(sqrtUpperPrice.minus(sqrtSqueethPrice)).div((sqrtSqueethPrice.times(sqrtUpperPrice)))
+        wethAmountInLPAfter = liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
         const needMoreWeth = new BigNumber(wethAmountInLPBefore).lt(new BigNumber(wethAmountInLPAfter))
         const needMoreSqueeth = new BigNumber(wPowerPerpAmountInLPBefore).lt(new BigNumber(wPowerPerpAmountInLPAfter))
         tokenIn = needMoreWeth ? oSqueeth : weth
