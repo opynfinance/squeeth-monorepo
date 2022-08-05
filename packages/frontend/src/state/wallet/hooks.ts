@@ -17,6 +17,8 @@ import {
   web3Atom,
   transactionDataAtom,
   transactionLoadingAtom,
+  onboardAddressAtom,
+  walletFailVisibleAtom,
 } from './atoms'
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
@@ -27,10 +29,21 @@ import useAppEffect from '@hooks/useAppEffect'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
+  const address = useAtomValue(addressAtom)
+  const onboardAddress = useAtomValue(onboardAddressAtom)
+  const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+
   const onWalletSelect = async () => {
     if (!onboard) return
     onboard.walletSelect().then(async (success) => {
-      if (success) await onboard.walletCheck()
+      if (success) {
+        // if onboard address is invalid
+        if (onboardAddress && !address) {
+          setWalletFailVisible(true)
+        }
+
+        await onboard.walletCheck()
+      }
     })
   }
 
@@ -40,6 +53,7 @@ export const useSelectWallet = () => {
 export const useDiscconectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
+  const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
 
@@ -48,6 +62,7 @@ export const useDiscconectWallet = () => {
     onboard.walletReset()
     window.localStorage.setItem('walletAddress', '')
     setAddress(null)
+    setOnboardAddress(null)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
     queryClient.removeQueries()
     apolloClient.clearStore()
@@ -140,7 +155,8 @@ export const useOnboard = () => {
   const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useAtom(onboardAtom)
-  const [address, setAddress] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
+  const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
   const setWeb3 = useUpdateAtom(web3Atom)
   const setSigner = useUpdateAtom(signerAtom)
   const setNotify = useUpdateAtom(notifyAtom)
@@ -190,7 +206,7 @@ export const useOnboard = () => {
   useAppEffect(() => {
     const onboard = initOnboard(
       {
-        address: setAddress,
+        address: setOnboardAddress,
         network: onNetworkChange,
         wallet: onWalletUpdate,
       },

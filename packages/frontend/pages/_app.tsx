@@ -15,11 +15,15 @@ import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { addressAtom, networkIdAtom, onboardAddressAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
+import { useUpdateAtom } from 'jotai/utils'
+import useAppEffect from '@hooks/useAppEffect'
+import axios from 'axios'
+import WalletFailModal from '@components/WalletFailModal'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -75,6 +79,24 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
+  const setAddress = useUpdateAtom(addressAtom)
+  const onboardAddress = useAtomValue(onboardAddressAtom)
+  const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+
+  useAppEffect(() => {
+    if (!onboardAddress) {
+      return
+    }
+
+    axios.get<{ valid: boolean }>(`/api/isValidAddress?address=${onboardAddress}`).then((r) => {
+      if (r.data.valid) {
+        setAddress(onboardAddress)
+      } else {
+        setWalletFailVisible(true)
+      }
+    })
+  }, [onboardAddress, setAddress, setWalletFailVisible])
+
   useOnboard()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
@@ -109,6 +131,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <ComputeSwapsProvider>
+          <WalletFailModal />
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>
