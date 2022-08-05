@@ -256,8 +256,8 @@ export const useRebalanceGeneralSwap = () => {
       const sqrtSqueethPrice = squeethPrice.sqrt()
 
       // Get previous liquidity amount in ETH
-      const wPowerPerpAmountInLPBeforeInEth = await getQuote(new BigNumber(wPowerPerpAmountInLPBefore), true)
-      const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(new BigNumber(wPowerPerpAmountInLPBeforeInEth))       
+      const wPowerPerpAmountInLPBeforeInEth = new BigNumber(wPowerPerpAmountInLPBefore).times(squeethPrice)
+      const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(wPowerPerpAmountInLPBeforeInEth)       
 
       let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
