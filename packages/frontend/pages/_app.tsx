@@ -6,7 +6,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { memo, useEffect, useMemo } from 'react'
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { useAtomValue } from 'jotai'
@@ -82,9 +82,16 @@ const Init = () => {
   const setAddress = useUpdateAtom(addressAtom)
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+  const loadingRef = useRef(true)
 
   useAppEffect(() => {
-    if (!onboardAddress) {
+    setTimeout(() => {
+      loadingRef.current = false
+    }, 2000)
+  }, [])
+
+  useAppEffect(() => {
+    if (loadingRef.current || !onboardAddress) {
       return
     }
 
