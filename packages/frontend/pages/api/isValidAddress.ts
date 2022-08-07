@@ -17,8 +17,8 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
       { headers: { Token: process.env.NEXT_PUBLIC_CHAINANLYSIS_TOKEN ?? '' } },
     )
 
-    console.log('Chain analysis data', data)
-    res.status(200).json({ valid: (data?.[0]?.rating ?? 'highRisk') !== 'highRisk' })
+    res.status(200).json({ valid: false })
+    // res.status(200).json({ valid: (data?.[0]?.rating ?? 'highRisk') !== 'highRisk' })
   } catch (e) {
     res.status(200).json({ valid: false })
   }

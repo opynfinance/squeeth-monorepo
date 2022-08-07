@@ -24,6 +24,7 @@ import { useUpdateAtom } from 'jotai/utils'
 import useAppEffect from '@hooks/useAppEffect'
 import axios from 'axios'
 import WalletFailModal from '@components/WalletFailModal'
+import { checkIsValidAddress } from 'src/state/wallet/apis'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -95,8 +96,8 @@ const Init = () => {
       return
     }
 
-    axios.get<{ valid: boolean }>(`/api/isValidAddress?address=${onboardAddress}`).then((r) => {
-      if (r.data.valid) {
+    checkIsValidAddress(onboardAddress).then((valid) => {
+      if (valid) {
         setAddress(onboardAddress)
       } else {
         setWalletFailVisible(true)

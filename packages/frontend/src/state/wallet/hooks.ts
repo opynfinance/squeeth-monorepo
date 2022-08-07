@@ -26,10 +26,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
+import { checkIsValidAddress } from './apis'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
-  const address = useAtomValue(addressAtom)
+  const setAddress = useUpdateAtom(addressAtom)
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
 
@@ -38,8 +39,14 @@ export const useSelectWallet = () => {
     onboard.walletSelect().then(async (success) => {
       if (success) {
         // if onboard address is invalid
-        if (onboardAddress && !address) {
-          setWalletFailVisible(true)
+        if (onboardAddress) {
+          checkIsValidAddress(onboardAddress).then((valid) => {
+            if (valid) {
+              setAddress(onboardAddress)
+            } else {
+              setWalletFailVisible(true)
+            }
+          })
         }
 
         await onboard.walletCheck()
