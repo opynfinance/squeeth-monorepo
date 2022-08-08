@@ -133,6 +133,9 @@ export const useClosePosition = () => {
 
     const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
 
+    const amount0Min = new BigNumber(amount0).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
+    const amount1Min = new BigNumber(amount1).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
+
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
       tokenId: uniTokenId,
@@ -142,8 +145,8 @@ export const useClosePosition = () => {
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
       collateralToWithdraw: collateralToWithdraw.toFixed(0),
       limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
-      amount0Min: 0,
-      amount1Min: 0,
+      amount0Min,
+      amount1Min,
       poolFee: POOL_FEE,
       burnExactRemoved,
     }
