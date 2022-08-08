@@ -308,11 +308,8 @@ export const useRebalanceGeneralSwap = () => {
       const amount1MinNew = amount1New.times(new BigNumber(1).minus(slippage)).toFixed(0)
 
       // Get limit price
-      const amountToLiquidate = new BigNumber(wPowerPerpAmountInLPAfter)
-      const amountToBurn = shortAmount
-      const limitEth = amountToLiquidate.gt(amountToBurn) ? await getExactIn(amountToLiquidate.minus(amountToBurn), true)
-                              : await getExactOut(amountToBurn.minus(amountToLiquidate), true)
-      const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
+      const amountOut = await getExactIn(new BigNumber(amountIn), tokenIn == oSqueeth)
+      const limitPrice = new BigNumber(amountOut).div(new BigNumber(amountIn)).times(new BigNumber(1).minus(slippage))
 
       const abiCoder = new ethers.utils.AbiCoder()
       const liquidatePreviousLP = {
