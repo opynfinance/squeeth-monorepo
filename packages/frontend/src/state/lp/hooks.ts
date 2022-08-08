@@ -224,6 +224,8 @@ export const useRebalanceGeneralSwap = () => {
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const getPosition = useGetPosition()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+  const getExactIn = useGetExactIn()
+  const getExactOut = useGetExactOut()
   const rebalanceGeneralSwap = useAppCallback(
     async (vaultId: number, lowerTickInput: number, upperTickInput: number, slippage: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
@@ -296,10 +298,18 @@ export const useRebalanceGeneralSwap = () => {
                   : 0
       }
 
+      // Get amount mins
       const amount0New = isWethToken0 ? wethAmountInLPAfter : wPowerPerpAmountInLPAfter
       const amount1New = isWethToken0 ? wPowerPerpAmountInLPAfter : wethAmountInLPAfter
       const amount0MinNew = amount0New.times(new BigNumber(1).minus(slippage)).toFixed(0)
       const amount1MinNew = amount1New.times(new BigNumber(1).minus(slippage)).toFixed(0)
+
+      // Get limit price
+      const amountToLiquidate = new BigNumber(wPowerPerpAmountInLPAfter)
+      const amountToBurn = shortAmount
+      const limitEth = amountToLiquidate.gt(amountToBurn) ? await getExactIn(amountToLiquidate.minus(amountToBurn), true)
+                              : await getExactOut(amountToBurn.minus(amountToLiquidate), true)
+      const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
 
       const abiCoder = new ethers.utils.AbiCoder()
       const liquidatePreviousLP = {
@@ -323,7 +333,7 @@ export const useRebalanceGeneralSwap = () => {
         // GeneralSwap: [tokenIn, tokenOut, amountIn, limitPrice]
         data: abiCoder.encode(
           ['address', 'address', 'uint256', 'uint256', 'uint24'],
-          [tokenIn, tokenOut, amountIn, 0, POOL_FEE],
+          [tokenIn, tokenOut, amountIn, fromTokenAmount(limitPrice, 18).toFixed(0), POOL_FEE],
         ),
       }
       const mintNewLP = {

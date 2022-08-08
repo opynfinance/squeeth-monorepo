@@ -140,7 +140,7 @@ export function LPCalculator() {
 
   const rebalSwap = useAppCallback(async () => {
     try {
-      await rebalanceSwap(Number(719), -30000, 2000, () => {})
+      await rebalanceSwap(Number(719), 0, 40000, .0025, () => {})
     } catch (e) {
       console.log(e)
     }
