@@ -78,13 +78,14 @@ export const useOpenPositionDeposit = () => {
       return handleTransaction(
         contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
           from: address,
-          value: collateralToLp.toFixed(0),
+          value: collateralToLp.plus(collateralToMint).toFixed(0),
         }),
         onTxConfirmed,
       )
     },
     [address, squeethPool, contract, handleTransaction, getDebtAmount],
   )
+
   return openPositionDeposit
 }
 
