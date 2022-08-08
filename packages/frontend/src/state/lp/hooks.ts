@@ -12,8 +12,6 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
-import { sl } from 'date-fns/locale'
-import { wethTokenAtom } from '../squeethPool/atoms'
 
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
@@ -42,7 +40,6 @@ export const useOpenPositionDeposit = () => {
 
       // Calculate prices from ticks
       const [ethDebt, { tick, tickSpacing }] = await Promise.all([ethDebtPromise, poolStatePromise])
-      console.log("tickSpacing", Number(tickSpacing))
       const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
       const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
       const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
@@ -135,6 +132,7 @@ export const useClosePosition = () => {
     const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
 
     const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
+
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
       tokenId: uniTokenId,
@@ -226,9 +224,8 @@ export const useRebalanceGeneralSwap = () => {
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const getPosition = useGetPosition()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
-  const getQuote = useGetExactIn()
   const rebalanceGeneralSwap = useAppCallback(
-    async (vaultId: number, lowerTickInput: number, upperTickInput: number, onTxConfirmed?: () => void) => {
+    async (vaultId: number, lowerTickInput: number, upperTickInput: number, slippage: number, onTxConfirmed?: () => void) => {
       const vaultBefore = await getVault(vaultId)
       const uniTokenId = vaultBefore?.NFTCollateralId 
       const position = uniTokenId ? await getPosition(uniTokenId) : null
@@ -237,11 +234,10 @@ export const useRebalanceGeneralSwap = () => {
       const debtInEth = await getDebtAmount(shortAmount)
       const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
 
-      const amount0Min = new BigNumber(0)
-      const amount1Min = new BigNumber(0)
-
       // Get current LP positions
       const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
+      const amount0MinOld =  new BigNumber(amount0).times(new BigNumber(1).minus(slippage)).toFixed(0)
+      const amount1MinOld = new BigNumber(amount1).times(new BigNumber(1).minus(slippage)).toFixed(0)
       const wPowerPerpAmountInLPBefore = isWethToken0 ? amount1 : amount0
       const wethAmountInLPBefore = isWethToken0 ? amount0 : amount1
 
@@ -259,14 +255,14 @@ export const useRebalanceGeneralSwap = () => {
       const wPowerPerpAmountInLPBeforeInEth = new BigNumber(wPowerPerpAmountInLPBefore).times(squeethPrice)
       const positionEthValue = new BigNumber(wethAmountInLPBefore).plus(wPowerPerpAmountInLPBeforeInEth)       
 
-      let newAmount0, newAmount1, amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
+      let amountIn, wethAmountInLPAfter, wPowerPerpAmountInLPAfter, tokenIn, tokenOut
       if (sqrtUpperPrice.lt(sqrtSqueethPrice)) {
         // All weth position
         // newLiquidity = positionEthValue/(sqrt(upperPrice) - sqrt(lowerPrice))
         const liquidity = positionEthValue.div(sqrtUpperPrice.minus(sqrtLowerPrice))
         // wethAmount = L(sqrt(upperPrice) - sqrt(lowerPrice))
         wethAmountInLPAfter = liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
-        wPowerPerpAmountInLPAfter = 0
+        wPowerPerpAmountInLPAfter = new BigNumber(0)
         amountIn = wPowerPerpAmountInLPBefore
         tokenIn = oSqueeth
         tokenOut = weth
@@ -274,7 +270,7 @@ export const useRebalanceGeneralSwap = () => {
         // All squeeth position
         // newLiquidity = positionEthValue/(squeethPrice/sqrt(lowerPrice) - squeethPrice/sqrt(upperPrice))
         const liquidity = positionEthValue.div((squeethPrice.div(sqrtLowerPrice)).minus((squeethPrice.div(sqrtUpperPrice))))
-        wethAmountInLPAfter = 0
+        wethAmountInLPAfter = new BigNumber(0)
         // wPowerPerpAmount = L/sqrt(lowerPrice) - L/sqrt(upperPrice)
         wPowerPerpAmountInLPAfter = (liquidity.div(sqrtLowerPrice).minus(liquidity.div(sqrtUpperPrice)))
         amountIn = wethAmountInLPBefore
@@ -300,6 +296,11 @@ export const useRebalanceGeneralSwap = () => {
                   : 0
       }
 
+      const amount0New = isWethToken0 ? wethAmountInLPAfter : wPowerPerpAmountInLPAfter
+      const amount1New = isWethToken0 ? wPowerPerpAmountInLPAfter : wethAmountInLPAfter
+      const amount0MinNew = amount0New.times(new BigNumber(1).minus(slippage)).toFixed(0)
+      const amount1MinNew = amount1New.times(new BigNumber(1).minus(slippage)).toFixed(0)
+
       const abiCoder = new ethers.utils.AbiCoder()
       const liquidatePreviousLP = {
         // Liquidate LP
@@ -311,8 +312,8 @@ export const useRebalanceGeneralSwap = () => {
             uniTokenId,
             position.liquidity,
             fromTokenAmount(1, 18).toFixed(0),
-            0,
-            0,
+            amount0MinOld,
+            amount1MinOld,
           ],
         ),
       }
@@ -338,8 +339,8 @@ export const useRebalanceGeneralSwap = () => {
             wPowerPerpAmountInLPAfter.toFixed(0),
             0,
             wethAmountInLPAfter.toFixed(0),
-            amount0Min.toFixed(0),
-            amount1Min.toFixed(0),
+            amount0MinNew,
+            amount1MinNew,
             lowerTick,
             upperTick,
           ],
