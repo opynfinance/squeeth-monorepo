@@ -158,6 +158,7 @@ export const useGetPosition = () => {
         tokensOwed0,
         tokensOwed1,
       } = position
+      
       return {
         nonce,
         operator,
@@ -278,7 +279,11 @@ export const useGetDecreaseLiquidity = () => {
 
 export const useGetExactIn = () => {
   const contract = useAtomValue(quoterContractAtom)
+<<<<<<< HEAD
   const { weth, oSqueeth } = useAtomValue(addressesAtom)
+=======
+  const {weth, oSqueeth} = useAtomValue(addressesAtom)
+>>>>>>> 802cc1a2 (exact in, exact out)
 
   const getExactIn = useCallback(
     async (amount: BigNumber, squeethIn: boolean) => {
