@@ -47,19 +47,39 @@ import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(4, 20),
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      maxWidth: '1500px',
+      [theme.breakpoints.down('md')]: {
+        padding: theme.spacing(5, 5),
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(4, 4),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(2, 2),
+      },
+      margin: '0 auto',
+      maxWidth: '1080px',
     },
     header: {
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'center',
       marginTop: theme.spacing(4),
     },
+    description: {
+      marginTop: theme.spacing(4),
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+      [theme.breakpoints.up('md')]: {
+        margin: '20px auto',
+        width: '70%',
+      },
+    },
     body: {
-      display: 'flex',
       marginTop: theme.spacing(3),
+      width: '100%',
+      margin: '0',
+      padding: '0',
     },
     tradeCard: {
       width: '350px',
@@ -76,14 +96,19 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     overview: {
-      display: 'flex',
+      display: 'grid',
+      [theme.breakpoints.up('md')]: {
+        gridTemplateColumns: '1fr 1fr 1fr',
+      },
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: '1fr 1fr',
+      },
+      [theme.breakpoints.down('xs')]: {
+        gridTemplateColumns: '1fr',
+      },
+      gridGap: theme.spacing(2),
       columnGap: '20px',
       marginTop: theme.spacing(3),
-    },
-    details: {
-      display: 'flex',
-      flexDirection: 'column',
-      paddingRight: theme.spacing(5),
     },
     chartContainer: {
       padding: theme.spacing(0),
@@ -228,7 +253,7 @@ const Strategies: React.FC = () => {
               </div>
             </div>
             {displayCrabV1 ? (
-              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
                 Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
                 either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable
@@ -239,7 +264,7 @@ const Strategies: React.FC = () => {
                 </a>
               </Typography>
             ) : (
-              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
                 Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercentV2 * 100).toFixed(2)}%</b>{' '}
                 in either direction between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab
@@ -272,8 +297,6 @@ const Strategies: React.FC = () => {
                       Tooltips.StrategyEarnFunding
                     }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
-                </div>
-                <div className={classes.overview}>
                   <StrategyInfoItem
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                       day: 'numeric',
