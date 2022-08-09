@@ -160,7 +160,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getExactIn])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getExactIn, getExactOut, getDecreaseLiquidity, isWethToken0])
   return closePosition
 }
 
