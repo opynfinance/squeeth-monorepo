@@ -95,6 +95,7 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(2),
       marginTop: theme.spacing(4),
     },
+    details: {},
     overview: {
       display: 'grid',
       [theme.breakpoints.up('md')]: {
