@@ -1,4 +1,4 @@
-import { Button, createStyles, makeStyles } from '@material-ui/core'
+import { Button, createStyles, makeStyles, TextField } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
 import React, { useState } from 'react'
@@ -81,17 +81,20 @@ const useStyles = makeStyles((theme) =>
       border: `1px solid ${theme.palette.primary.main}30`,
     },
     buttonTest: {
-      marginTop: theme.spacing(1),
-      backgroundColor: theme.palette.success.main,
-      '&:hover': {
-        backgroundColor: theme.palette.success.dark,
-      },
+      width: '300px',
+      color: 'gray',
+      backgroundColor: '#a9fbf6',
+      marginTop: '10px',
+      marginBottom: '10px',
+    },
+    testField: {
+      marginTop: '10px',
+      marginBottom: '10px',
     },
   }),
 )
 
 export function LPCalculator() {
-  const [isVaultApproved, setIsVaultApproved] = useState(true)
   const { controllerHelper } = useAtomValue(addressesAtom)
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
@@ -106,46 +109,74 @@ export function LPCalculator() {
   const updateOperator = useUpdateOperator()
   const { vaultId, validVault: vault } = useFirstValidVault()
 
+  const [vaultID, setVaultID] = useState(0)
+  const [squeethAmount, setSqueethAmount] = useState(0)
+  const [lowerTick, setLowerTick] = useState(-500000)
+  const [upperTick, setUpperTick] = useState(500000)
+  const [slippage, setSlippage] = useState(0.0025)
+  const [collatToWithdraw, setCollatToWithdraw] = useState(0)
+  const [collatRatio, setCollatRatio] = useState(1.5)
+  const [liquidityPercentage, setLiquidityPercentage] = useState(1)
+  const [burnPercentage, setBurnPercentage] = useState(1)
+  const [burnExactRemoved, setBurnExactRemoved] = useState(true)
+
   const openPos = useAppCallback(async () => {
     try {
-      await openLPPosition(new BigNumber(200), -500000, 500000, 0, 1.5, .0025, () => {})
+      await openLPPosition(
+        new BigNumber(squeethAmount),
+        lowerTick,
+        upperTick,
+        vaultID,
+        collatRatio,
+        slippage,
+        collatToWithdraw,
+        () => {},
+      )
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, squeethPrice, openLPPosition])
+  }, [vaultID, squeethPrice, openLPPosition])
 
   const updateOp = useAppCallback(async () => {
     try {
-      await updateOperator(Number(719), controllerHelper)
+      await updateOperator(vaultID, controllerHelper)
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, updateOperator])
+  }, [vaultID, updateOperator])
 
   const collFees = useAppCallback(async () => {
     try {
-      await collectFees(Number(719), () => {})
+      await collectFees(vaultID, () => {})
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, collectFees])
+  }, [vaultID, collectFees])
 
   const closePos = useAppCallback(async () => {
     try {
-      await closeLPPosition(Number(719), 1, 1, 0, true, 0.0025, () => {})
+      console.log("vault id", vaultID)
+      await closeLPPosition(
+        vaultID,
+        liquidityPercentage,
+        burnPercentage,
+        collatToWithdraw,
+        burnExactRemoved,
+        slippage,
+        () => {},
+      )
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, closeLPPosition])
+  }, [vaultID, closeLPPosition])
 
   const rebalSwap = useAppCallback(async () => {
     try {
-      await rebalanceSwap(Number(719), -500000, 40000, .0025, () => {})
+      await rebalanceSwap(vaultID, lowerTick, upperTick, slippage, () => {})
     } catch (e) {
       console.log(e)
     }
-  }, [vaultId, rebalanceSwap])
-
+  }, [vaultID, rebalanceSwap])
 
   return (
     <div>
@@ -222,61 +253,96 @@ export function LPCalculator() {
                 <Typography className={classes.heading} variant="subtitle1" color="primary">
                   Testing One Click LP Hooks
                 </Typography>
-                <Button
-                  onClick={openPos}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
-                  {'Open Mint and Deposit LP Position'}
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Vault ID"
+                  value={vaultID}
+                  onChange={(event) => setVaultID(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Squeeth Amount"
+                  value={squeethAmount}
+                  onChange={(event) => setSqueethAmount(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Lower Tick"
+                  value={lowerTick}
+                  onChange={(event) => setLowerTick(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Upper Tick"
+                  value={upperTick}
+                  onChange={(event) => setUpperTick(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Slippage Tolerance"
+                  value={slippage}
+                  onChange={(event) => setSlippage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Collateral to Withdraw"
+                  value={collatToWithdraw}
+                  onChange={(event) => setCollatToWithdraw(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Collat Ratio"
+                  value={collatRatio}
+                  onChange={(event) => setCollatRatio(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Liquidity Percentage (in decimal)"
+                  value={liquidityPercentage}
+                  onChange={(event) => setLiquidityPercentage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Burn Percentage (in decimal)"
+                  value={burnPercentage}
+                  onChange={(event) => setBurnPercentage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Burn Exact Removed"
+                  value={burnExactRemoved}
+                  onChange={(event) => setBurnExactRemoved(Boolean(event.target.value))}
+                />
+                <br />
+                <Button onClick={openPos} className={classes.buttonTest}>
+                  {'Open Mint and Deposit'}
                 </Button>
-
-                <Button
-                  onClick={updateOp}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
+                <br />
+                <Button onClick={updateOp} className={classes.buttonTest}>
                   {'Update Operator'}
                 </Button>
-
-                <Button
-                  onClick={collFees}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
+                <br />
+                <Button onClick={collFees} className={classes.buttonTest}>
                   {'Collect Fees'}
                 </Button>
-
-                <Button
-                  onClick={closePos}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
-                  {'Close LP Position'}
+                <br />
+                <Button onClick={closePos} className={classes.buttonTest}>
+                  {'Close Position'}
                 </Button>
-
-                <Button
-                  onClick={rebalSwap}
-                  style={{
-                    width: '300px',
-                    color: 'gray',
-                    backgroundColor: '#a9fbf6',
-                  }}
-                >
+                <br />
+                <Button onClick={rebalSwap} className={classes.buttonTest}>
                   {'Rebalance General Swap'}
                 </Button>
-
               </div>
             ) : (
               <div style={{ marginTop: '16px' }}>
