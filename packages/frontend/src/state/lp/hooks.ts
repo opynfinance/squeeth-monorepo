@@ -208,8 +208,6 @@ export const useOpenPositionDeposit = () => {
   return openPositionDeposit
 }
 
-/*** CONSTANTS ***/
-
 // Close position with flashloan
 export const useClosePosition = () => {
   const address = useAtomValue(addressAtom)
@@ -219,8 +217,11 @@ export const useClosePosition = () => {
   const getDebtAmount = useGetDebtAmount()
   const getVault = useGetVault()
   const getPosition = useGetPosition()
-  const getQuote = useGetQuote()
-  const closePosition = useAppCallback(async (vaultId: number, onTxConfirmed?: () => void) => {
+  const getExactIn = useGetExactIn()
+  const getExactOut = useGetExactOut()
+  const getDecreaseLiquidity = useGetDecreaseLiquidity()
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const closePosition = useAppCallback(async (vaultId: number, liquidityPercentage: number, burnPercentage: number, collateralToWithdraw: number, burnExactRemoved: boolean, slippage: number, onTxConfirmed?: () => void) => {
     const vaultBefore = await getVault(vaultId)
     const uniTokenId = vaultBefore?.NFTCollateralId 
     const position = await getPosition(uniTokenId)
@@ -235,25 +236,39 @@ export const useClosePosition = () => {
     )
       return
 
-      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-      const debtInEthPromise = getDebtAmount(shortAmount)
-      const limitEthPromise = getQuote(shortAmount, true)
-      const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
-      const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
+    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+    const debtInEthPromise = getDebtAmount(shortAmount)
+
+    // Get current LP positions
+    const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
+    const wPowerPerpAmountInLP = isWethToken0 ? amount1 : amount0
+   
+    const amountToLiquidate = new BigNumber(wPowerPerpAmountInLP).times(liquidityPercentage)
+    const amountToBurn = shortAmount.times(burnPercentage)
+    const limitEthPromise = amountToLiquidate.gt(amountToBurn) ? getExactIn(amountToLiquidate.minus(amountToBurn), true)
+                            : getExactOut(amountToBurn.minus(amountToLiquidate), true)
+    
+    const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
+    const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
+
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
+
+    const amount0Min = new BigNumber(amount0).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
+    const amount1Min = new BigNumber(amount1).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
 
     const flashloanCloseVaultLpNftParam = {
       vaultId: vaultId,
       tokenId: uniTokenId,
       liquidity: position.liquidity,
-      liquidityPercentage: fromTokenAmount(1, 18).toFixed(0),
-      wPowerPerpAmountToBurn: shortAmount.toFixed(0),
+      liquidityPercentage: fromTokenAmount(liquidityPercentage, 18).toFixed(0),
+      wPowerPerpAmountToBurn: amountToBurn.toFixed(0),
       collateralToFlashloan: collateralToFlashloan.toFixed(0),
-      collateralToWithdraw: 0,
-      limitPriceEthPerPowerPerp: limitEth,
-      amount0Min: 0,
-      amount1Min: 0,
+      collateralToWithdraw: collateralToWithdraw.toFixed(0),
+      limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
+      amount0Min,
+      amount1Min,
       poolFee: POOL_FEE,
-      burnExactRemoved: true,
+      burnExactRemoved,
     }
 
     return handleTransaction(
@@ -262,7 +277,7 @@ export const useClosePosition = () => {
       }),
       onTxConfirmed,
     )
-  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getQuote])
+  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getExactIn, getExactOut, getDecreaseLiquidity, isWethToken0])
   return closePosition
 }
 
