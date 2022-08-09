@@ -188,9 +188,9 @@ export const useCollectFees = () => {
 
     const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
     const debtInEth = await getDebtAmount(shortAmount)
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO)
-    const amount0Max = MAX_INT
-    const amount1Max = MAX_INT
+    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
+    const amount0Max = MAX_INT_128
+    const amount1Max = MAX_INT_128
     const abiCoder = new ethers.utils.AbiCoder()
     const rebalanceLpInVaultParams = [
       {
