@@ -148,7 +148,7 @@ export const useOpenPositionDeposit = () => {
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, slippage: number, onTxConfirmed?: () => void) => {
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, slippage: number, withdrawAmount: number, onTxConfirmed?: () => void) => {
       if (!contract || !address || !squeethPoolContract) return null
       
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
@@ -178,6 +178,8 @@ export const useOpenPositionDeposit = () => {
       const amount0Min = amount0.times(new BigNumber(1).minus(slippage)).toFixed(0)
       const amount1Min = amount1.times(new BigNumber(1).minus(slippage)).toFixed(0)
 
+      const collateralToWithdraw =  new BigNumber(withdrawAmount)
+
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
         vaultId: vaultId,
@@ -185,7 +187,7 @@ export const useOpenPositionDeposit = () => {
         collateralToDeposit: collateralToMint.toFixed(0),
         collateralToFlashloan: collateralToMint.toFixed(0),
         collateralToLp: collateralToLp.toFixed(0),
-        collateralToWithdraw: 0,
+        collateralToWithdraw: collateralToWithdraw.toFixed(0),
         amount0Min,
         amount1Min,
         lowerTick: lowerTick,
@@ -195,12 +197,12 @@ export const useOpenPositionDeposit = () => {
       return handleTransaction(
         contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
           from: address,
-          value: collateralToLp.plus(collateralToMint).toFixed(0),
+          value: collateralToLp.plus(collateralToMint).minus(collateralToWithdraw).toFixed(0),
         }),
         onTxConfirmed,
       )
     },
-    [address, squeethPool, contract, handleTransaction, getDebtAmount],
+    [address, squeethPool, contract, handleTransaction, getDebtAmount, squeethPoolContract, isWethToken0],
   )
 
   return openPositionDeposit
