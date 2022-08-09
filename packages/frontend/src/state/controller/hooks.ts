@@ -210,17 +210,6 @@ export const useGetTwapEthPrice = () => {
   return getTwapEthPrice
 }
 
-export const useGetTwapSqueethPrice = () => {
-  const { squeethPool, oSqueeth, weth } = useAtomValue(addressesAtom)
-  const { getTwapSafe } = useOracle()
-  const getTwapSqueethPrice = useCallback(
-    async () => await getTwapSafe(squeethPool, oSqueeth, weth, TWAP_PERIOD),
-    [oSqueeth, weth, getTwapSafe, squeethPool],
-  )
-
-  return getTwapSqueethPrice
-}
-
 export const useGetShortAmountFromDebt = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const normFactor = useAtomValue(normFactorAtom)
