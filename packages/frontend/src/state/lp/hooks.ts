@@ -136,10 +136,6 @@ export const useOpenPositionDeposit = () => {
   return openPositionDeposit
 }
 
-/*** CONSTANTS ***/
-const TICK_SPACE = 60
-const COLLAT_RATIO = 2
-
 /*** ACTIONS ***/
 
 // Opening a mint and LP position and depositing
@@ -148,22 +144,39 @@ export const useOpenPositionDeposit = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerHelperHelperContractAtom)
   const handleTransaction = useHandleTransaction()
-  const getTwapSqueethPrice = useGetTwapSqueethPrice()
   const getDebtAmount = useGetDebtAmount()
+  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
   const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, onTxConfirmed?: () => void) => {
-      if (!contract || !address) return null
+    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract || !address || !squeethPoolContract) return null
       
       const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const squeethPricePromise = getTwapSqueethPrice()
       const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
-      const [squeethPrice, ethDebt] = await Promise.all([squeethPricePromise, ethDebtPromise])
+      const poolStatePromise = getPoolState(squeethPoolContract)
 
-      const collateralToMint = ethDebt.multipliedBy(COLLAT_RATIO)
-      const collateralToLp = mintWSqueethAmount.multipliedBy(squeethPrice)
+      // Calculate prices from ticks
+      const [ethDebt, { tick, tickSpacing }] = await Promise.all([ethDebtPromise, poolStatePromise])
+      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
+      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
+      const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
+      const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
+      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
+                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
+      const sqrtSqueethPrice = squeethPrice.sqrt()
+      const collateralToMint = ethDebt.multipliedBy(collatRatio)
 
-      const lowerTick = nearestUsableTick(lowerTickInput, TICK_SPACE)
-      const upperTick = nearestUsableTick(upperTickInput, TICK_SPACE)
+      // Lx = x * (sqrtSqueethPrice * sqrtUpperPrice) / (sqrtUpperPrice - sqrtSqueethPrice)
+      // y = Lx * (sqrtSqueethPrice - sqrtLowerPrice)
+      const liquidity = mintWSqueethAmount.times(sqrtSqueethPrice.times(sqrtUpperPrice)).div(sqrtUpperPrice.minus(sqrtSqueethPrice))
+      const collateralToLp = sqrtUpperPrice.lt(sqrtSqueethPrice) ? liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
+                            : sqrtSqueethPrice.lt(sqrtLowerPrice) ? new BigNumber(0)
+                            : liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
+      
+      const amount0 = isWethToken0 ? collateralToLp : mintWSqueethAmount
+      const amount1 = isWethToken0 ? mintWSqueethAmount : collateralToLp
+      const amount0Min = amount0.times(new BigNumber(1).minus(slippage)).toFixed(0)
+      const amount1Min = amount1.times(new BigNumber(1).minus(slippage)).toFixed(0)
 
       const flashloanWMintDepositNftParams = {
         wPowerPerpPool: squeethPool,
@@ -173,8 +186,8 @@ export const useOpenPositionDeposit = () => {
         collateralToFlashloan: collateralToMint.toFixed(0),
         collateralToLp: collateralToLp.toFixed(0),
         collateralToWithdraw: 0,
-        amount0Min: 0,
-        amount1Min: 0,
+        amount0Min,
+        amount1Min,
         lowerTick: lowerTick,
         upperTick: upperTick,
       }
@@ -182,13 +195,14 @@ export const useOpenPositionDeposit = () => {
       return handleTransaction(
         contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
           from: address,
-          value: collateralToLp.toFixed(0),
+          value: collateralToLp.plus(collateralToMint).toFixed(0),
         }),
         onTxConfirmed,
       )
     },
-    [address, squeethPool, contract, handleTransaction, getTwapSqueethPrice, getDebtAmount],
+    [address, squeethPool, contract, handleTransaction, getDebtAmount],
   )
+
   return openPositionDeposit
 }
 
