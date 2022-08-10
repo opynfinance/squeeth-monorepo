@@ -1,4 +1,4 @@
-import { createStyles, makeStyles } from '@material-ui/core'
+import { Button, createStyles, makeStyles, TextField } from '@material-ui/core'
 import Typography from '@material-ui/core/Typography'
 import Image from 'next/image'
 import React, { useState } from 'react'
@@ -15,6 +15,13 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
+import { useClosePosition, useOpenPositionDeposit, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
+import { useCollectFees } from 'src/state/lp/hooks'
+import BigNumber from 'bignumber.js'
+import useAppCallback from '@hooks/useAppCallback'
+import { useFirstValidVault } from 'src/state/positions/hooks'
+import { useGetTwapSqueethPrice, useUpdateOperator } from 'src/state/controller/hooks'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -73,15 +80,102 @@ const useStyles = makeStyles((theme) =>
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
     },
+    buttonTest: {
+      width: '300px',
+      color: 'gray',
+      backgroundColor: '#a9fbf6',
+      marginTop: '10px',
+      marginBottom: '10px',
+    },
+    testField: {
+      marginTop: '10px',
+      marginBottom: '10px',
+    },
   }),
 )
 
 export function LPCalculator() {
+  const { controllerHelper } = useAtomValue(addressesAtom)
   const classes = useStyles()
   const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const squeethPrice = useGetTwapSqueethPrice()
+  const openLPPosition = useOpenPositionDeposit()
+  const closeLPPosition = useClosePosition()
+  const collectFees = useCollectFees()
+  const rebalanceSwap = useRebalanceGeneralSwap()
+  const updateOperator = useUpdateOperator()
+  const { vaultId, validVault: vault } = useFirstValidVault()
+
+  const [vaultID, setVaultID] = useState(0)
+  const [squeethAmount, setSqueethAmount] = useState(0)
+  const [lowerTick, setLowerTick] = useState(-500000)
+  const [upperTick, setUpperTick] = useState(500000)
+  const [slippage, setSlippage] = useState(0.0025)
+  const [collatToWithdraw, setCollatToWithdraw] = useState(0)
+  const [collatRatio, setCollatRatio] = useState(1.5)
+  const [liquidityPercentage, setLiquidityPercentage] = useState(1)
+  const [burnPercentage, setBurnPercentage] = useState(1)
+  const [burnExactRemoved, setBurnExactRemoved] = useState(true)
+
+  const openPos = useAppCallback(async () => {
+    try {
+      await openLPPosition(
+        new BigNumber(squeethAmount),
+        lowerTick,
+        upperTick,
+        vaultID,
+        collatRatio,
+        slippage,
+        collatToWithdraw,
+        () => {},
+      )
+    } catch (e) {
+      console.log(e)
+    }
+  }, [squeethAmount, vaultID, lowerTick, upperTick, collatRatio, slippage, collatToWithdraw, openLPPosition])
+
+  const updateOp = useAppCallback(async () => {
+    try {
+      await updateOperator(vaultID, controllerHelper)
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultID, controllerHelper, updateOperator])
+
+  const collFees = useAppCallback(async () => {
+    try {
+      await collectFees(vaultID, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultID, collectFees])
+
+  const closePos = useAppCallback(async () => {
+    try {
+      await closeLPPosition(
+        vaultID,
+        liquidityPercentage,
+        burnPercentage,
+        collatToWithdraw,
+        burnExactRemoved,
+        slippage,
+        () => {},
+      )
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultID, liquidityPercentage, burnPercentage, collatToWithdraw, burnExactRemoved, slippage, closeLPPosition])
+
+  const rebalSwap = useAppCallback(async () => {
+    try {
+      await rebalanceSwap(vaultID, lowerTick, upperTick, slippage, () => {})
+    } catch (e) {
+      console.log(e)
+    }
+  }, [vaultID, lowerTick, upperTick, slippage, rebalanceSwap])
 
   return (
     <div>
@@ -155,6 +249,99 @@ export function LPCalculator() {
                   contracts are experimental technology and we encourage caution only risking funds you can afford to
                   lose.
                 </Typography>
+                <Typography className={classes.heading} variant="subtitle1" color="primary">
+                  Testing One Click LP Hooks
+                </Typography>
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Vault ID"
+                  value={vaultID}
+                  onChange={(event) => setVaultID(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Squeeth Amount"
+                  value={squeethAmount}
+                  onChange={(event) => setSqueethAmount(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Lower Tick"
+                  value={lowerTick}
+                  onChange={(event) => setLowerTick(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Upper Tick"
+                  value={upperTick}
+                  onChange={(event) => setUpperTick(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Slippage Tolerance"
+                  value={slippage}
+                  onChange={(event) => setSlippage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Collateral to Withdraw"
+                  value={collatToWithdraw}
+                  onChange={(event) => setCollatToWithdraw(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Collat Ratio"
+                  value={collatRatio}
+                  onChange={(event) => setCollatRatio(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Liquidity Percentage (in decimal)"
+                  value={liquidityPercentage}
+                  onChange={(event) => setLiquidityPercentage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Burn Percentage (in decimal)"
+                  value={burnPercentage}
+                  onChange={(event) => setBurnPercentage(Number(event.target.value))}
+                />
+                <TextField
+                  className={classes.testField}
+                  id="outlined-name"
+                  label="Burn Exact Removed"
+                  value={burnExactRemoved}
+                  onChange={(event) => setBurnExactRemoved(Boolean(event.target.value))}
+                />
+                <br />
+                <Button onClick={openPos} className={classes.buttonTest}>
+                  {'Open Mint and Deposit'}
+                </Button>
+                <br />
+                <Button onClick={updateOp} className={classes.buttonTest}>
+                  {'Update Operator'}
+                </Button>
+                <br />
+                <Button onClick={collFees} className={classes.buttonTest}>
+                  {'Collect Fees'}
+                </Button>
+                <br />
+                <Button onClick={closePos} className={classes.buttonTest}>
+                  {'Close Position'}
+                </Button>
+                <br />
+                <Button onClick={rebalSwap} className={classes.buttonTest}>
+                  {'Rebalance General Swap'}
+                </Button>
               </div>
             ) : (
               <div style={{ marginTop: '16px' }}>
