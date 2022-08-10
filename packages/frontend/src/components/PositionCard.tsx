@@ -27,6 +27,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import { HidePnLText } from './HidePnLText'
 import { PnLTooltip } from '@components/PnLTooltip'
 import usePnL from '@hooks/usePnL'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -173,7 +174,6 @@ const pnlClass = (pnl: BigNumber, classes: any) => {
 }
 
 const PositionCard: React.FC = () => {
-  const loading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
   const positionType = useAtomValue(positionTypeAtom)
@@ -222,23 +222,42 @@ const PositionCard: React.FC = () => {
 
     let _postTradeAmt = new BigNumber(0)
     let _postPosition = PositionType.NONE
-    if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
-      if (isOpenPosition) {
-        _postTradeAmt = sqthAmount.plus(tradeAmount)
-      } else {
-        _postTradeAmt = sqthAmount.minus(tradeAmount)
-      }
-      if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
-    } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
-      if (isOpenPosition) {
-        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.plus(tradeAmount) : tradeAmount
-      } else {
-        _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.minus(tradeAmount) : new BigNumber(0)
-      }
-      if (_postTradeAmt.gt(0)) {
-        _postPosition = PositionType.SHORT
-      }
+
+    // if (actualTradeType === TradeType.LONG && positionType !== PositionType.SHORT) {
+    //   if (isOpenPosition) {
+    //     _postTradeAmt = sqthAmount.plus(tradeAmount)
+    //   } else {
+    //     _postTradeAmt = sqthAmount.minus(tradeAmount)
+    //   }
+    //   if (_postTradeAmt.gt(0)) _postPosition = PositionType.LONG
+    // } else if (actualTradeType === TradeType.SHORT && positionType !== PositionType.LONG) {
+    //   if (isOpenPosition) {
+    //     _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.plus(tradeAmount) : tradeAmount
+    //   } else {
+    //     _postTradeAmt = sqthAmount.isGreaterThan(0) ? sqthAmount.minus(tradeAmount) : new BigNumber(0)
+    //   }
+    //   if (_postTradeAmt.gt(0)) {
+    //     _postPosition = PositionType.SHORT
+    //   }
+    // }
+
+    let signedTradeAmount = tradeAmount
+    if (
+      (positionType === PositionType.SHORT && isOpenPosition) ||
+      (positionType === PositionType.LONG && !isOpenPosition)
+    ) {
+      signedTradeAmount = signedTradeAmount.negated()
     }
+
+    _postTradeAmt = sqthAmount.plus(signedTradeAmount)
+    if (_postTradeAmt.gt(new BigNumber(0))) {
+      _postPosition = PositionType.LONG
+    } else if (_postTradeAmt.lt(new BigNumber(0))) {
+      _postPosition = PositionType.SHORT
+    } else {
+      _postPosition = PositionType.NONE
+    }
+    console.log(floatifyBigNums({ sqthAmount, tradeAmount, _postTradeAmt }))
 
     setPostTradeAmt(_postTradeAmt)
     setPostPosition(_postPosition)
@@ -295,7 +314,7 @@ const PositionCard: React.FC = () => {
                       }}
                       id="position-card-post-trade-balance"
                     >
-                      {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
+                      {postTradeAmt.absoluteValue().toFixed(6)}
                     </Typography>
                   </>
                 )}

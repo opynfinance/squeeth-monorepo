@@ -44,15 +44,6 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
     return;
   }
 
-  let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
-  let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
-  let transactionHistory = createTransactionHistory("SWAP", event);
-  transactionHistory.sqthAmount = amount0;
-  transactionHistory.ethAmount = amount1;
-  transactionHistory.save();
-
-  sqthChange(event.transaction.from.toHex(), amount0.neg());
-
   // token0 osqth
   // token1 weth
   // token0 per token1
@@ -66,6 +57,15 @@ export function handleOSQTHSwap(event: OSQTHSwapEvent): void {
   osqthPool.token0Price = osqthPrices[0];
   osqthPool.token1Price = osqthPrices[1];
   osqthPool.save();
+
+  let amount0 = convertTokenToDecimal(event.params.amount0, TOKEN_DECIMALS_18);
+  let amount1 = convertTokenToDecimal(event.params.amount1, TOKEN_DECIMALS_18);
+  let transactionHistory = createTransactionHistory("SWAP", event);
+  transactionHistory.sqthAmount = amount0;
+  transactionHistory.ethAmount = amount1;
+  transactionHistory.save();
+
+  sqthChange(event.transaction.from.toHex(), amount0.neg());
 }
 
 export function handleUSDCSwap(event: USDCSwapEvent): void {
