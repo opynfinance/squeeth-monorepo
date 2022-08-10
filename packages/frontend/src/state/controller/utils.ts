@@ -7,6 +7,7 @@ import { BIG_ZERO, OSQUEETH_DECIMALS } from '../../constants'
 import { toTokenAmount } from '@utils/calculations'
 import { Vault } from '../../types'
 import { FUNDING_PERIOD, INDEX_SCALE } from '../../constants'
+import floatifyBigNums from '@utils/floatifyBigNums'
 
 /**
  * Liquidation price is calculated using this document: https://docs.google.com/document/d/1MzuPADIZqLm3aQu-Ri2Iyk9ZUvDA1D6oOikKwwjSC2M/edit
@@ -125,7 +126,7 @@ export async function getDailyHistoricalFunding(contract: Contract | null) {
     return { period: 0, funding: 0 }
   }
 
-  console.log('period ' + period)
+  console.log('period ' + period, floatifyBigNums({ mark, index }))
 
   const funding = Math.log(mark.dividedBy(index).toNumber()) / FUNDING_PERIOD
 
