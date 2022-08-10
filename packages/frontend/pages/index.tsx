@@ -7,8 +7,9 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import * as Fathom from 'fathom-client'
 
 import squeethTokenSymbol from '../public/images/Squeeth.svg'
 import { PrimaryButton } from '@components/Button'
@@ -412,6 +413,11 @@ const SqueethInfo: React.FC = () => {
 
   const [showAdvanced, setShowAdvanced] = useState(false)
 
+  const toggleAdvanced = useCallback(() => {
+    setShowAdvanced((prevState) => !prevState)
+    Fathom.trackGoal('DRFFVOPH', 0)
+  }, [setShowAdvanced])
+
   return (
     <div className={classes.squeethInfo}>
       <div>
@@ -464,11 +470,10 @@ const SqueethInfo: React.FC = () => {
                 Funding
               </Typography>
               <Tooltip
-                title={`${Tooltips.FundingPayments}. ${
-                  actualTradeType === TradeType.LONG
+                title={`${Tooltips.FundingPayments}. ${actualTradeType === TradeType.LONG
                     ? 'Funding is paid out of your position'
                     : 'Funding is paid continuously to you from oSQTH token holders'
-                }`}
+                  }`}
               >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
@@ -529,7 +534,7 @@ const SqueethInfo: React.FC = () => {
           </div>
         ) : null}
         <div className={classes.squeethInfoSubGroup}>
-          <button className={classes.advancedDetails} onClick={() => setShowAdvanced((prevState) => !prevState)}>
+          <button className={classes.advancedDetails} onClick={toggleAdvanced}>
             <Typography color="textSecondary" variant="body2">
               Advanced details
             </Typography>

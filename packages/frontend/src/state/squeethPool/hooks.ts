@@ -31,6 +31,7 @@ import {
 } from './atoms'
 import { computeRealizedLPFeePercent } from './price'
 import { slippageAmountAtom } from '../trade/atoms'
+import { useState } from 'react'
 // import { BaseProvider } from '@ethersproject/providers'
 // import {BaseProvider} from '@ethers
 
@@ -75,6 +76,8 @@ export const useUpdateSqueethPoolData = () => {
   const contract = useAtomValue(squeethPoolContractAtom)
   const { ticks } = useUniswapTicks()
   useAppEffect(() => {
+    let isMounted = true
+
     ;(async () => {
       const { token0, token1, fee } = await getImmutables(contract!)
 
@@ -104,11 +107,19 @@ export const useUpdateSqueethPoolData = () => {
         ticks || [],
       )
 
-      setPool(pool)
+      console.log("Pools is set with tick length", ticks?.length)
+      if (isMounted) {
+        setPool(pool)
+      }
+      
       setWethToken(isWethToken0 ? TokenA : TokenB)
       setSqueethToken(isWethToken0 ? TokenB : TokenA)
     })()
-  }, [isWethToken0, networkId, ticks?.length, contract])
+
+    return () => {
+      isMounted = false
+    }
+  }, [isWethToken0, networkId, ticks?.length, contract, setPool, setWethToken, setSqueethToken])
 }
 
 export const useSetTokens = () => {

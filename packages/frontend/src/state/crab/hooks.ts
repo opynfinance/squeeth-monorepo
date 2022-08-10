@@ -63,6 +63,7 @@ import floatifyBigNums from '@utils/floatifyBigNums'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
+import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
 
 export const useSetStrategyData = () => {
@@ -238,7 +239,7 @@ export const useCurrentCrabPositionValue = () => {
   }, [userCrabBalance])
 
   useAppEffect(() => {
-    ;(async () => {
+    ; (async () => {
       setIsCrabPositionValueLoading(true)
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
@@ -301,7 +302,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   }, [userMigratedShares, userCrabBalance])
 
   useAppEffect(() => {
-    ;(async () => {
+    ; (async () => {
       if (balLoading) {
         setIsCrabPositionValueLoading(true)
       }
@@ -497,6 +498,12 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
       if (!contract || !vault) return
 
       let { ethBorrow: _ethBorrow } = await calculateETHtoBorrowFromUniswap(amount, slippage)
+      // Just to make sure the issue never happens
+      if (_ethBorrow.isZero()) {
+        Fathom.trackGoal('HOUQK7NR', 0)
+        alert('Some error occurred. Refresh the page!')
+        throw new Error('Some error occurred. Refresh the page!')
+      }
       const _allowedEthToBorrow = maxCap.minus(amount.plus(vault.collateralAmount))
       if (_ethBorrow.gt(_allowedEthToBorrow)) {
         _ethBorrow = _allowedEthToBorrow
