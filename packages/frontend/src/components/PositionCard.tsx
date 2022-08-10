@@ -241,6 +241,8 @@ const PositionCard: React.FC = () => {
     //   }
     // }
 
+    console.log(floatifyBigNums({ tradeAmount }))
+
     let signedTradeAmount = tradeAmount
     if (
       (positionType === PositionType.SHORT && isOpenPosition) ||
@@ -299,11 +301,7 @@ const PositionCard: React.FC = () => {
                   {sqthAmount.isZero() ? '0' : sqthAmount.absoluteValue().toFixed(6)}
                 </Typography>
 
-                {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
-                (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
-                tradeAmount.isLessThanOrEqualTo(0) ||
-                tradeAmount.isNaN() ||
-                tradeCompleted ? null : (
+                {tradeAmount.isLessThanOrEqualTo(0) || tradeAmount.isNaN() || tradeCompleted ? null : (
                   <>
                     <ArrowRightAltIcon className={classes.arrow} />
                     <Typography

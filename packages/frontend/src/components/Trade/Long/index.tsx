@@ -391,6 +391,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
   }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
+  console.log(floatifyBigNums({ sqthTradeAmount, openError }))
+
   return (
     <div id="open-long-card">
       {confirmed ? (
