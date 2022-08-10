@@ -135,7 +135,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultID, squeethPrice, openLPPosition])
+  }, [squeethAmount, vaultID, lowerTick, upperTick, collatRatio, slippage, collatToWithdraw, openLPPosition])
 
   const updateOp = useAppCallback(async () => {
     try {
@@ -143,7 +143,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultID, updateOperator])
+  }, [vaultID, controllerHelper, updateOperator])
 
   const collFees = useAppCallback(async () => {
     try {
@@ -155,7 +155,6 @@ export function LPCalculator() {
 
   const closePos = useAppCallback(async () => {
     try {
-      console.log("vault id", vaultID)
       await closeLPPosition(
         vaultID,
         liquidityPercentage,
@@ -168,7 +167,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultID, closeLPPosition])
+  }, [vaultID, liquidityPercentage, burnPercentage, collatToWithdraw, burnExactRemoved, slippage, closeLPPosition])
 
   const rebalSwap = useAppCallback(async () => {
     try {
@@ -176,7 +175,7 @@ export function LPCalculator() {
     } catch (e) {
       console.log(e)
     }
-  }, [vaultID, rebalanceSwap])
+  }, [vaultID, lowerTick, upperTick, slippage, rebalanceSwap])
 
   return (
     <div>
