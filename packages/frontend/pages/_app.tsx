@@ -22,7 +22,6 @@ import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import useAppEffect from '@hooks/useAppEffect'
-import axios from 'axios'
 import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 
