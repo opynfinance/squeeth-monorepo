@@ -47,10 +47,11 @@ const getImmutables = async (squeethContract: Contract) => {
   return { token0, token1, fee, tickSpacing, maxLiquidityPerTick }
 }
 
-async function getPoolState(squeethContract: Contract) {
-  const [slot, liquidity] = await Promise.all([
-    squeethContract?.methods.slot0().call(),
-    squeethContract?.methods.liquidity().call(),
+export const getPoolState = async (poolContract: Contract) => {
+  const [slot, liquidity, tickSpacing] = await Promise.all([
+    poolContract?.methods.slot0().call(),
+    poolContract?.methods.liquidity().call(),
+    poolContract.methods.tickSpacing().call()
   ])
 
   const PoolState = {
@@ -62,6 +63,7 @@ async function getPoolState(squeethContract: Contract) {
     observationCardinalityNext: slot[4],
     feeProtocol: slot[5],
     unlocked: slot[6],
+    tickSpacing
   }
 
   return PoolState
