@@ -12,6 +12,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
+import { getPoolState } from '../squeethPool/hooks'
 
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
@@ -480,25 +481,3 @@ export const useGetPosition = () => {
   
     return getExactOut
   }
-
-  async function getPoolState(poolContract: Contract) {
-    const [slot, liquidity, tickSpacing] = await Promise.all([
-      poolContract?.methods.slot0().call(),
-      poolContract?.methods.liquidity().call(),
-      poolContract.methods.tickSpacing().call()
-    ])
-  
-    const PoolState = {
-      liquidity,
-      sqrtPriceX96: slot[0],
-      tick: slot[1],
-      observationIndex: slot[2],
-      observationCardinality: slot[3],
-      observationCardinalityNext: slot[4],
-      feeProtocol: slot[5],
-      unlocked: slot[6],
-      tickSpacing
-    }
-  
-    return PoolState
-  } 
