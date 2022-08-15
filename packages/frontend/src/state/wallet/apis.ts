@@ -1,10 +1,12 @@
 import axios from 'axios'
-import * as Fathom from 'fathom-client'
+import * as Sentry from '@sentry/nextjs'
 
-export const checkIsValidAddress = async (adress: string) => {
-  const { data } = await axios.get<{ valid: boolean }>(`/api/isValidAddress?address=${adress}`)
+export const checkIsValidAddress = async (address: string) => {
+  const { data } = await axios.get<{ valid: boolean }>(`/api/isValidAddress?address=${address}`)
 
-  Fathom.trackGoal(process.env.NEXT_PUBLIC_FATHOM_CODE_FOR_AML ?? '', data.valid ? 1 : 0)
+  if (!data.valid) {
+    Sentry.captureMessage(`Risk address ${address} is blocked.`)
+  }
 
   return data.valid
 }

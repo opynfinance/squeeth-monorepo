@@ -65,6 +65,7 @@
     },
     "devDependencies": {
         "@babel/preset-react": "^7.16.7",
+        "@sentry/nextjs": "^7.10.0",
         "@synthetixio/synpress": "^1.1.1",
         "@testing-library/dom": "^8.11.3",
         "@testing-library/jest-dom": "^5.16.2",

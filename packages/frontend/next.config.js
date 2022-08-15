@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { withSentryConfig } = require('@sentry/nextjs')
+
 const securityHeaders = [
   {
     key: 'X-Frame-Options',
@@ -5,7 +8,7 @@ const securityHeaders = [
   },
 ]
 
-module.exports = {
+const moduleExports = {
   reactStrictMode: true,
   images: {
     domains: ['media.giphy.com'],
@@ -23,3 +26,9 @@ module.exports = {
     dirs: ['pages', 'src'],
   },
 }
+
+const sentryWebpackPluginOptions = {
+  silent: true,
+}
+
+module.exports = withSentryConfig(moduleExports, sentryWebpackPluginOptions)

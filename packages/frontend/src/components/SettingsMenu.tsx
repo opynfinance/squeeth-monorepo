@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core'
+import { Button, Link as MatLink } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import MoreHorizIcon from '@material-ui/icons/MoreHorizOutlined'
@@ -172,6 +172,22 @@ const SettingMenu = () => {
           </List>
           <Typography>The app uses the following third-party APIs:</Typography>
           <List>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Chainalysis</ListItemText>
+              </Typography>
+              <ListItemText>
+                The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
+                reasons.{' '}
+                <MatLink
+                  href="https://docs.google.com/document/d/1gKqknY2lzqbAlcePcS00ekBvLkw-VN4hwwfZt77UI_0"
+                  target="_blank"
+                >
+                  Learn More
+                </MatLink>
+              </ListItemText>
+            </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
