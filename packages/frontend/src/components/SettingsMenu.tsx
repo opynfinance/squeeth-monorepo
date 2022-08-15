@@ -180,20 +180,21 @@ const SettingMenu = () => {
               <ListItemText>
                 The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
                 reasons.{' '}
-                <MatLink
-                  href="https://docs.google.com/document/d/1gKqknY2lzqbAlcePcS00ekBvLkw-VN4hwwfZt77UI_0"
-                  target="_blank"
-                >
-                  Learn More
-                </MatLink>
               </ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
-                <ListItemText>Infura</ListItemText>
+                <ListItemText>Sentry</ListItemText>
               </Typography>
-              <ListItemText>This app fetches on-chain data and constructs contract calls with Infura API</ListItemText>
+              <ListItemText>The app logs blocked IP addresses using the Sentry</ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Alchemy</ListItemText>
+              </Typography>
+              <ListItemText>This app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
