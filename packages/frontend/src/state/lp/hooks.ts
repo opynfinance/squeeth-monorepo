@@ -135,78 +135,6 @@ export const useOpenPositionDeposit = () => {
   return openPositionDeposit
 }
 
-/*** ACTIONS ***/
-
-// Opening a mint and LP position and depositing
-export const useOpenPositionDeposit = () => {
-  const { squeethPool } = useAtomValue(addressesAtom)
-  const address = useAtomValue(addressAtom)
-  const contract = useAtomValue(controllerHelperHelperContractAtom)
-  const handleTransaction = useHandleTransaction()
-  const getDebtAmount = useGetDebtAmount()
-  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
-  const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const openPositionDeposit = useAppCallback(
-    async (squeethToMint: BigNumber, lowerTickInput: number, upperTickInput: number, vaultId: number, collatRatio: number, slippage: number, withdrawAmount: number, onTxConfirmed?: () => void) => {
-      if (!contract || !address || !squeethPoolContract) return null
-      
-      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
-      const ethDebtPromise = getDebtAmount(mintWSqueethAmount)
-      const poolStatePromise = getPoolState(squeethPoolContract)
-
-      // Calculate prices from ticks
-      const [ethDebt, { tick, tickSpacing }] = await Promise.all([ethDebtPromise, poolStatePromise])
-      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
-      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
-      const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
-      const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
-      const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
-                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
-      const sqrtSqueethPrice = squeethPrice.sqrt()
-      const collateralToMint = ethDebt.multipliedBy(collatRatio)
-
-      // Lx = x * (sqrtSqueethPrice * sqrtUpperPrice) / (sqrtUpperPrice - sqrtSqueethPrice)
-      // y = Lx * (sqrtSqueethPrice - sqrtLowerPrice)
-      const liquidity = mintWSqueethAmount.times(sqrtSqueethPrice.times(sqrtUpperPrice)).div(sqrtUpperPrice.minus(sqrtSqueethPrice))
-      const collateralToLp = sqrtUpperPrice.lt(sqrtSqueethPrice) ? liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
-                            : sqrtSqueethPrice.lt(sqrtLowerPrice) ? new BigNumber(0)
-                            : liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
-      
-      const amount0 = isWethToken0 ? collateralToLp : mintWSqueethAmount
-      const amount1 = isWethToken0 ? mintWSqueethAmount : collateralToLp
-      const amount0Min = amount0.times(new BigNumber(1).minus(slippage)).toFixed(0)
-      const amount1Min = amount1.times(new BigNumber(1).minus(slippage)).toFixed(0)
-
-      const collateralToWithdraw =  new BigNumber(withdrawAmount)
-
-      const flashloanWMintDepositNftParams = {
-        wPowerPerpPool: squeethPool,
-        vaultId: vaultId,
-        wPowerPerpAmount: mintWSqueethAmount.toFixed(0),
-        collateralToDeposit: collateralToMint.toFixed(0),
-        collateralToFlashloan: collateralToMint.toFixed(0),
-        collateralToLp: collateralToLp.toFixed(0),
-        collateralToWithdraw: collateralToWithdraw.toFixed(0),
-        amount0Min,
-        amount1Min,
-        lowerTick: lowerTick,
-        upperTick: upperTick,
-      }
-
-      return handleTransaction(
-        contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
-          from: address,
-          value: collateralToLp.plus(collateralToMint).minus(collateralToWithdraw).toFixed(0),
-        }),
-        onTxConfirmed,
-      )
-    },
-    [address, squeethPool, contract, handleTransaction, getDebtAmount, squeethPoolContract, isWethToken0],
-  )
-
-  return openPositionDeposit
-}
-
 /*** GETTERS ***/
 
 export const useGetPosition = () => {
@@ -230,7 +158,6 @@ export const useGetPosition = () => {
         tokensOwed0,
         tokensOwed1,
       } = position
-      
       return {
         nonce,
         operator,
@@ -351,11 +278,7 @@ export const useGetDecreaseLiquidity = () => {
 
 export const useGetExactIn = () => {
   const contract = useAtomValue(quoterContractAtom)
-<<<<<<< HEAD
   const { weth, oSqueeth } = useAtomValue(addressesAtom)
-=======
-  const {weth, oSqueeth} = useAtomValue(addressesAtom)
->>>>>>> 802cc1a2 (exact in, exact out)
 
   const getExactIn = useCallback(
     async (amount: BigNumber, squeethIn: boolean) => {
