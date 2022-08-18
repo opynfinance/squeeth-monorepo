@@ -80,20 +80,30 @@ const useStyles = makeStyles((theme) =>
       width: '100%',
       margin: '0',
       padding: '0',
+      display: 'flex',
+      [theme.breakpoints.down('md')]: {
+        flexDirection: 'column-reverse',
+      },
     },
     tradeCard: {
+      // position: 'relative',
+      margin: theme.spacing('0', 'auto', '20px'),
       width: '350px',
-      maxHeight: '440px',
-      minHeight: '350px',
-      height: 'fit-content',
-      position: 'sticky',
-      top: '75px',
-      margin: theme.spacing('-120px', '50px'),
+
+      [theme.breakpoints.up('lg')]: {
+        width: '350px',
+        maxHeight: '440px',
+        minHeight: '350px',
+        height: 'fit-content',
+        position: 'sticky',
+        top: '75px',
+        margin: theme.spacing('0', '50px'),
+      },
     },
     tradeForm: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
-      marginTop: theme.spacing(4),
+      // marginTop: theme.spacing(4),
     },
     details: {},
     overview: {
