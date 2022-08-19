@@ -27,6 +27,8 @@ import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
+import TimeAgo from 'javascript-time-ago'
+import { differenceInMonths } from 'date-fns'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -236,6 +238,8 @@ export const useOnboard = () => {
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
 export function initOnboard(subscriptions: any, networkId: Networks) {
+  const timeAgo = new TimeAgo('en-US')
+
   const network = networkId === 1 ? 'mainnet' : 'ropsten'
   const RPC_URL =
     networkId === Networks.LOCAL
@@ -247,6 +251,15 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       : usePokt === 'true'
       ? `https://eth-${network}.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID}`
       : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+
+  const termsUpdatedDate = new Date('2022-08-18')
+  const termsUpdateNotice =
+    differenceInMonths(new Date(), termsUpdatedDate) < 3
+      ? `<p> <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> is updated ${timeAgo.format(
+          new Date('2022-08-18'),
+        )}. Please check it if you haven't checked it yet. </p>`
+      : ''
+
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
     networkId: networkId,
@@ -255,6 +268,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
     subscriptions: subscriptions,
     walletSelect: {
       description: `<div>
+          ${termsUpdateNotice}
           <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
           </div > `,
 
