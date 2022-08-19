@@ -70,9 +70,7 @@ export const useOpenPositionDeposit = () => {
         // Lx = x * (sqrtSqueethPrice * sqrtUpperPrice) / (sqrtUpperPrice - sqrtSqueethPrice)
         // y = Lx * (sqrtSqueethPrice - sqrtLowerPrice)
         const liquidity = mintWSqueethAmount.times(sqrtSqueethPrice.times(sqrtUpperPrice)).div(sqrtUpperPrice.minus(sqrtSqueethPrice))
-        collateralToLp = sqrtUpperPrice.lt(sqrtSqueethPrice) ? liquidity.times(sqrtUpperPrice.minus(sqrtLowerPrice))
-                              : sqrtSqueethPrice.lt(sqrtLowerPrice) ? new BigNumber(0)
-                              : liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
+        collateralToLp = liquidity.times(sqrtSqueethPrice.minus(sqrtLowerPrice))
       }
       
       const amount0New = isWethToken0 ? collateralToLp : mintWSqueethAmount
@@ -86,9 +84,10 @@ export const useOpenPositionDeposit = () => {
       const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)
       
       // Calculate collateralToMint
+      const oSQTHInETH = mintWSqueethAmount.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
       const collateralToMint = (new BigNumber(collatRatio).times((vaultShortAmt.plus(mintWSqueethAmount)).times(normFactor).times(ethIndexPrice).div(INDEX_SCALE)))
-                              .minus((vaultCollateralAmt.minus(collateralToWithdraw).plus(collateralToLp).plus((mintWSqueethAmount).times(squeethPrice))))
-      const flashLoanAmount = (new BigNumber(collatRatio + FLASHLOAN_BUFFER).times(vaultShortAmt.plus(mintWSqueethAmount)).times(normFactor).times(ethIndexPrice).div(INDEX_SCALE))
+                              .minus((vaultCollateralAmt.minus(collateralToWithdraw).plus(collateralToLp).plus(oSQTHInETH)))
+      const flashLoanAmount = (new BigNumber(COLLAT_RATIO_FLASHLOAN + FLASHLOAN_BUFFER).times(vaultShortAmt.plus(mintWSqueethAmount)).times(normFactor).times(ethIndexPrice).div(INDEX_SCALE))
                               .minus(vaultCollateralAmt.plus(collateralToMint).minus(collateralToWithdraw))
       const collateralToMintPos = BigNumber.max(collateralToMint, 0)
       const flashLoanAmountPos = BigNumber.max(flashLoanAmount, 0)
