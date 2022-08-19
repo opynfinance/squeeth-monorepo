@@ -67,12 +67,12 @@ const useStyles = makeStyles((theme) =>
     },
     description: {
       marginTop: theme.spacing(4),
+      [theme.breakpoints.up('md')]: {
+        margin: '20px 0',
+        width: '640px',
+      },
       [theme.breakpoints.down('md')]: {
         width: '100%',
-      },
-      [theme.breakpoints.up('md')]: {
-        margin: '20px auto',
-        width: '70%',
       },
     },
     body: {
@@ -86,10 +86,8 @@ const useStyles = makeStyles((theme) =>
       },
     },
     tradeCard: {
-      // position: 'relative',
       margin: theme.spacing('0', 'auto', '20px'),
       width: '350px',
-
       [theme.breakpoints.up('lg')]: {
         width: '350px',
         maxHeight: '440px',
@@ -97,13 +95,20 @@ const useStyles = makeStyles((theme) =>
         height: 'fit-content',
         position: 'sticky',
         top: '75px',
-        margin: theme.spacing('0', '50px'),
+        margin: theme.spacing('-160px', '50px'),
       },
     },
     tradeForm: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
       // marginTop: theme.spacing(4),
+    },
+    tradeCardDesktop: {
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+      },
+
+      margin: theme.spacing('-120px', '50px'),
     },
     details: {},
     overview: {
