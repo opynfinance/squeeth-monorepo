@@ -47,10 +47,15 @@ export const useOpenPositionDeposit = () => {
       const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
       const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
       const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
-      const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(lowerTick).toString()).div(x96)
-      const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(upperTick).toString()).div(x96)
+      const lowerPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(lowerTick)).toString()).div(x96).pow(2))
+                                        : new BigNumber(TickMath.getSqrtRatioAtTick(Number(lowerTick)).toString()).div(x96).pow(2)
+      const upperPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(upperTick)).toString()).div(x96).pow(2))
+                                        : new BigNumber(TickMath.getSqrtRatioAtTick(Number(upperTick)).toString()).div(x96).pow(2)
       const squeethPrice = isWethToken0 ? new BigNumber(1).div(new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2))
-                                            : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
+                                        : new BigNumber(TickMath.getSqrtRatioAtTick(Number(tick)).toString()).div(x96).pow(2)
+      
+      const sqrtLowerPrice = lowerPrice.sqrt()
+      const sqrtUpperPrice = upperPrice.sqrt()
       const sqrtSqueethPrice = squeethPrice.sqrt()
 
       let collateralToLp
