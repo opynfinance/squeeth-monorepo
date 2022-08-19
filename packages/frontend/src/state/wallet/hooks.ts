@@ -28,7 +28,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
 import TimeAgo from 'javascript-time-ago'
-import { differenceInMonths } from 'date-fns'
+import { differenceInMonths, format } from 'date-fns'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -253,12 +253,6 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
   const termsUpdatedDate = new Date('2022-08-18')
-  const termsUpdateNotice =
-    differenceInMonths(new Date(), termsUpdatedDate) < 3
-      ? `<p> <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> is updated ${timeAgo.format(
-          new Date('2022-08-18'),
-        )}. Please check it if you haven't checked it yet. </p>`
-      : ''
 
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
@@ -268,8 +262,10 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
     subscriptions: subscriptions,
     walletSelect: {
       description: `<div>
-          ${termsUpdateNotice}
-          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
+          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on ${format(
+            termsUpdatedDate,
+            'PPP',
+          )}.</p>
           </div > `,
 
       wallets: [
