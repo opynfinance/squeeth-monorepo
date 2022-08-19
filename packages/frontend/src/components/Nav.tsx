@@ -121,6 +121,7 @@ const Nav: React.FC = () => {
             {/* <NavLink path="/trade" name="Trade 1" /> */}
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
+            <NavLink path="/lp-earn" name="LP + earn" />
             <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
               <Typography className={classes.navLink} variant="h6">
                 FAQ
