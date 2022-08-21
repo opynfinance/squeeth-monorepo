@@ -61,15 +61,13 @@ const useStyles = makeStyles((theme) =>
     },
     header: {
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
       marginTop: theme.spacing(4),
     },
     description: {
       marginTop: theme.spacing(4),
       [theme.breakpoints.up('md')]: {
         margin: '20px 0',
-        width: '640px',
+        width: '685px',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
@@ -101,7 +99,6 @@ const useStyles = makeStyles((theme) =>
     tradeForm: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
-      // marginTop: theme.spacing(4),
     },
     tradeCardDesktop: {
       [theme.breakpoints.down('md')]: {
@@ -143,7 +140,9 @@ const useStyles = makeStyles((theme) =>
     connectWalletDiv: {
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(5),
+    },
+    strategiesConnectWalletBtn: {
+      padding: theme.spacing(1),
     },
     tabBackGround: {
       position: 'sticky',
@@ -355,8 +354,8 @@ const Strategies: React.FC = () => {
                 {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>
-              {supportedNetwork && (
-                <div className={classes.tradeCard}>
+              <div className={classes.tradeCard}>
+                {supportedNetwork && (
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTradeComponent
@@ -365,12 +364,14 @@ const Strategies: React.FC = () => {
                       />
                     ) : (
                       <div className={classes.connectWalletDiv}>
-                        <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                        <LinkButton className={classes.strategiesConnectWalletBtn} onClick={() => selectWallet()}>
+                          Connect Wallet
+                        </LinkButton>
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}
