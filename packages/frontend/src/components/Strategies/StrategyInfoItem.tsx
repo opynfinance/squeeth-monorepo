@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) =>
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
       padding: theme.spacing(2, 3),
-      width: '200px',
+      width: '100%',
     },
     overviewTitle: {
       fontSize: '14px',
