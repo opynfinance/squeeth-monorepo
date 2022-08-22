@@ -175,15 +175,26 @@ const SettingMenu = () => {
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Alchemy</ListItemText>
+              </Typography>
+              <ListItemText>This app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>Chainalysis</ListItemText>
               </Typography>
               <ListItemText>
                 The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
-                reasons.{' '}
-                <MatLink href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank">
-                  Learn More
-                </MatLink>
+                reasons.
               </ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Fathom</ListItemText>
+              </Typography>
+              <ListItemText>This app logs anonymized usage data to make improvements</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
@@ -195,23 +206,9 @@ const SettingMenu = () => {
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
-                <ListItemText>Alchemy</ListItemText>
-              </Typography>
-              <ListItemText>This app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
-            </ListItem>
-            <ListItem className={classes.thirdPartyItems}>
-              <Typography className={classes.thirdPartyTitle}>
-                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>The Graph</ListItemText>
               </Typography>
               <ListItemText>{`This app fetches blockchain data from the Graph's hosted service`}</ListItemText>
-            </ListItem>
-            <ListItem className={classes.thirdPartyItems}>
-              <Typography className={classes.thirdPartyTitle}>
-                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
-                <ListItemText>Fathom</ListItemText>
-              </Typography>
-              <ListItemText>This app logs anonymized usage data to make improvements</ListItemText>
             </ListItem>
           </List>
         </Box>

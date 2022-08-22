@@ -238,8 +238,6 @@ export const useOnboard = () => {
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
 export function initOnboard(subscriptions: any, networkId: Networks) {
-  const timeAgo = new TimeAgo('en-US')
-
   const network = networkId === 1 ? 'mainnet' : 'ropsten'
   const RPC_URL =
     networkId === Networks.LOCAL
@@ -252,8 +250,6 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       ? `https://eth-${network}.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID}`
       : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
 
-  const termsUpdatedDate = new Date('2022-08-18')
-
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
     networkId: networkId,
@@ -262,10 +258,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
     subscriptions: subscriptions,
     walletSelect: {
       description: `<div>
-          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on ${format(
-            termsUpdatedDate,
-            'PPP',
-          )}.</p>
+          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on August 22, 2022.</p>
           </div > `,
 
       wallets: [

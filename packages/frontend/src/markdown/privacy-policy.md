@@ -1,6 +1,6 @@
 ### Opyn Privacy Policy
 
-### Last Modified: May 25, 2022
+### Last Modified: August 22, 2022
 
 &nbsp;
 &nbsp;
