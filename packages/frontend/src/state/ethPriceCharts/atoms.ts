@@ -13,6 +13,7 @@ import {
   getSqueethPNLCompounding,
   useETHSqueethPNLCompounding,
   getLongChartData,
+  getCrabPnlV2ChartData,
 } from '@utils/pricer'
 import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
@@ -409,3 +410,24 @@ export const useLongChartData = () => {
     },
   )
 }
+
+export const useCrabPnLV2ChartData = () => {
+
+
+  return useQuery(
+    ['pnlChart', ],
+    async () => getCrabPnlV2ChartData(),
+    {
+      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+    },
+  )
+}
+
+export const crabV2DaysAtom = atom(getCrabStartDate())
+
+function getCrabStartDate() {
+  return 30;
+}
+
+

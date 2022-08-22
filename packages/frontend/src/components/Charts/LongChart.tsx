@@ -114,6 +114,7 @@ function LongChart() {
   const [tradeType, setTradeType] = useAtom(chartTradeTypeAtom)
   const query = useLongChartData()
 
+
   const longEthPNL = query.data?.longEthPNL
   const longSeries = query.data?.longSeries
   const positionSizeSeries = query.data?.positionSizeSeries

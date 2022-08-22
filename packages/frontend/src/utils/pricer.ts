@@ -592,3 +592,14 @@ export const getLongChartData = async (days: number, collatRatio: number, volMul
   const data = await response.json()
   return data
 }
+
+export const getCrabPnlV2ChartData = async () => {
+
+  const domain = 'https://mm-bot-nonprod.uc.r.appspot.com'
+  const base_url = `${domain}/metrics/crabv2`
+  const url = `${base_url}`
+
+  const response = await fetch(url)
+  const data = await response.json()
+  return data
+}
