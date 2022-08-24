@@ -314,8 +314,8 @@ const Strategies: React.FC = () => {
                     tooltip={Tooltips.StrategyCollRatio}
                   />
                 </div>
-                {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? null : <StrategyPnLV2 />}
+                {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>
               {supportedNetwork && (

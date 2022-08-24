@@ -7,6 +7,8 @@ const apiKey = process.env.NEXT_PUBLIC_TARDIS_API_KEY as string
 
 const updateDB = process.env.NEXT_PUBLIC_UPDATE_DB === 'true'
 
+const omdbBaseUrl = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
+
 export function getFairSqueethMarkBefore(price: number, timeElapsedInDay: number, vol: number, power = 2) {
   const vDaily = vol / Math.sqrt(365)
   const priceSquare = price ** 2
@@ -595,7 +597,7 @@ export const getLongChartData = async (days: number, collatRatio: number, volMul
 
 export const getCrabPnlV2ChartData = async () => {
 
-  const domain = 'https://mm-bot-nonprod.uc.r.appspot.com'
+  const domain = omdbBaseUrl
   const base_url = `${domain}/metrics/crabv2`
   const url = `${base_url}`
 

@@ -3,18 +3,14 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import useAppMemo from '@hooks/useAppMemo'
-import { crabV2DaysAtom, useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
+
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { graphOptions } from '@constants/diagram'
-import LegendBox from '@components/LegendBox'
 
 
 export type ChartDataInfo = {
     timestamp: number
-    ethUsd: number
-    crabEth: number 
-    crabUsd: number
     crabPnL: number
   }
 
@@ -27,10 +23,10 @@ const chartTradeTypeAtom = atom(0)
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-       
-        padding: theme.spacing(0),
+ 
+      padding: theme.spacing(0),
       marginTop: theme.spacing(4),
-      marginBottom: theme.spacing(5),
+      marginBottom: theme.spacing(1),
       maxWidth: '640px',
     },
     green: {
@@ -52,7 +48,6 @@ const useStyles = makeStyles((theme) =>
         justifyContent: 'center',
       },
       payoffContainer: {
-        
         //  background: theme.palette.background.stone,
          borderRadius: theme.spacing(1),
         padding: theme.spacing(1, 2),
@@ -72,23 +67,18 @@ const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: f
 
 const modeAtom = atom<ChartType>((get) => {
     const tradeType = get(chartTradeTypeAtom)
-  
     if (tradeType === 0) return ChartType.PNL
-  
     return ChartType.PNL
 })
 
 function StrategyPnLV2() {
     
     const classes = useStyles()
-    const [days, setDays] = useAtom(crabV2DaysAtom)
     const mode = useAtomValue(modeAtom)
-    const [tradeType, setTradeType] = useAtom(chartTradeTypeAtom)
     const query = useCrabPnLV2ChartData()
 
  
     const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabPnL*100 })) ;
-  
 
     const chartOptions = useAppMemo(() => {
         return {
@@ -138,7 +128,6 @@ function StrategyPnLV2() {
                     options={chartOptions}
                     lineSeries={lineSeries}
                     autoWidth
-                    // width={1000}
                     height={300}
                     darkTheme
                 />
@@ -147,19 +136,12 @@ function StrategyPnLV2() {
                     <CircularProgress size={40} color="secondary" />
                 </Box>
                 )}
-
-              
            </div> 
-
         </div>  
-        
       
         </div>
     )
 }
-
-
-
 
 const ChartMemoized = memo(StrategyPnLV2)
 
