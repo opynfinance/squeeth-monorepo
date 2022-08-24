@@ -186,7 +186,10 @@ const SettingMenu = () => {
               </Typography>
               <ListItemText>
                 The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
-                reasons.
+                reasons.{' '}
+                <MatLink href="https://squeeth.opyn.co/terms-of-service" target="_blank">
+                  Learn More
+                </MatLink>
               </ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
