@@ -187,14 +187,6 @@ const SettingMenu = () => {
               <ListItemText>
                 The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
                 reasons.{' '}
-                <Link href="/terms-of-service">
-                  <a
-                    target="_blank"
-                    style={{ textDecoration: isOver && currentlyOver === 'tos' ? 'underline' : 'none' }}
-                  >
-                    Squeeth User Terms of Service
-                  </a>
-                </Link>
                 <MatLink href={`${location.host}/terms-of-service`} target="_blank">
                   Learn More
                 </MatLink>
