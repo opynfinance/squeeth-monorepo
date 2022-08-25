@@ -187,7 +187,7 @@ const SettingMenu = () => {
               <ListItemText>
                 The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
                 reasons.{' '}
-                <MatLink href={`${location.origin}/terms-of-service`} target="_blank">
+                <MatLink href={`${location.origin}/terms-of-service-faq`} target="_blank">
                   Learn More
                 </MatLink>
               </ListItemText>
