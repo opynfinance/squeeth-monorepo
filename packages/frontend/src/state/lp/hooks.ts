@@ -95,7 +95,7 @@ export const useOpenPositionDeposit = () => {
         .times(normFactor)
         .times(ethIndexPrice)
         .div(INDEX_SCALE)
-        .minus(vaultCollateralAmt.plus(collateralToMint).minus(collateralToWithdraw))
+        .minus(vaultCollateralAmt)
       const collateralToMintPos = BigNumber.max(collateralToMint, 0)
       const flashLoanAmountPos = BigNumber.max(flashLoanAmount, 0)
 
