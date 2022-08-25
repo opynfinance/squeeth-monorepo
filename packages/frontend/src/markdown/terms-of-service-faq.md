@@ -9,7 +9,7 @@
 &nbsp;
 
 
-#### Q. What are the major changes in the August 22, 2022 Updated Terms of Service?
+#### Q. What are the major changes in the August 25, 2022 Updated Terms of Service?
 
 #### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct  that attempt to interact with [squeeth.opyn.co](https://squeeth.opyn.co/).
 

@@ -1,6 +1,6 @@
 ### Squeeth User Terms of Service
 
-### Last Updated: August 22, 2022
+### Last Updated: August 25, 2022
 
 &nbsp;
 &nbsp;
@@ -9,8 +9,11 @@
 #### 1. Introduction
 
 Welcome to https://squeeth.opyn.co, a website-hosted user interface, and any associated software or services (collectively the "Interface") provided by Opyn, Inc. (“Opyn”, "we", "our", or "us"). The Interface provides access to a decentralized protocol on the blockchain that allows users to transact certain digital assets through power perpetual contracts (the "Protocol"). The Opyn User Terms of Service is an agreement (“Agreement” or “Terms”) between Opyn, the owner and operator of the Interface, and you (“you”, “your” or “user(s)”), a user of the Interface. Where you enter into this Agreement on behalf of a legal entity or organization you represent and warrant that you have the authority to bind such legal entity or organization to this Agreement. 
+
 PLEASE BE AWARE THAT THERE ARE ARBITRATION AND CLASS ACTION PROVISIONS THAT MAY AFFECT YOUR RIGHTS. 
+
 You must read this Agreement carefully. By accessing or using the Interface, you signify that you have read, understand, and agree to be bound by this Agreement in its entirety. If you do not agree to these Terms, you are not authorized to access or use the Interface.
+
 OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN THE UNITED STATES OF AMERICA (COLLECTIVELY, “US PERSONS”). MOREOVER, OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN ANY RESTRICTED TERRITORY, DEFINED BELOW (ANY SUCH PERSON OR ENTITY FROM A RESTRICTED TERRITORY, A “RESTRICTED PERSON”). WE DO NOT MAKE EXCEPTIONS; THEREFORE, IF YOU ARE A US PERSON OR RESTRICTED PERSON DO NOT ATTEMPT TO USE OUR PROTOCOL OR ACCESS OR ATTEMPT TO ACCESS THE INTERFACE. USE OF A VIRTUAL PRIVATE NETWORK (“VPN”) TO CIRCUMVENT THE RESTRICTIONS SET FORTH HEREIN IS PROHIBITED. WE RESERVE THE RIGHT TO RESTRICT ANY USER’S ACCESS TO THE INTERFACE SUBJECT TO ANY RESTRICTIONS WE MAY SET FORTH IN THIS AGREEMENT.
 
 
@@ -40,7 +43,8 @@ You represent and warrant that you are at least the age of majority in your juri
 
 We care about your privacy. Please note that when you use the Interface, you are interacting with Blockchain Technology, which provides transparency into your transactions. Opyn does not control and is not responsible for any information you make public on Blockchain Technology by either using the Interface or accessing the Protocol. 
 
-The only information we collect from you is your blockchain wallet address, completed transaction hashes, and the digital asset names, symbols, or other blockchain identifiers of the digital assets that you use for transactions. We do not collect any personal information from you (e.g., your name or other identifiers that can be linked to you). We do, however, use third-party service providers, like Infura, The Graph, and Fathom Analytics. We do not control how these third parties handle your data and you should review their privacy policies to understand how they collect, use, and share your personal information. For more information, please see our [Privacy Policy](https://squeeth.opyn.co/privacy-policy).
+The only information we collect from you is your blockchain wallet address, completed transaction hashes, and the digital asset names, symbols, or other blockchain identifiers of the digital assets that you use for transactions. We do not collect any personal information from you (e.g., your name or other identifiers that can be linked to you). We do, however, use third-party service providers, like Alchemy and Fathom Analytics. We do not control how these third parties handle your data and you should review their privacy policies to understand how they collect, use, and share your personal information. For more information, please see our [Privacy Policy](https://squeeth.opyn.co/privacy-policy).
+
 We use the Digital wallet address that you use to connect with the Interface to detect, prevent, and mitigate financial crime and other illicit or harmful activities on the Interface. For these purposes, we may share the Digital wallet address we collect with blockchain analytics providers. We share information with these service providers only so that they can help us promote the safety, security, and integrity of the Interface. We do not retain the information we collect any longer than necessary for these purposes.
 
 If you have additional questions regarding our data privacy practices please visit our [Privacy Policy](https://squeeth.opyn.co/privacy-policy). Our Privacy Policy is incorporated by reference into this Agreement.

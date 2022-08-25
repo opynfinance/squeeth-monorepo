@@ -204,7 +204,7 @@ const SettingMenu = () => {
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>Sentry</ListItemText>
               </Typography>
-              <ListItemText>The app logs blocked IP addresses using the Sentry</ListItemText>
+              <ListItemText>The app logs blocked address events using the Sentry</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
