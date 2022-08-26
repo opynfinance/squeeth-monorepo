@@ -121,10 +121,6 @@ export const useCrabPositionV2 = (user: string) => {
   const { depositedEth, usdAmount: depositedUsd, withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO,depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO }
 
-    txHistoryData.forEach( x => console.log('ethUsdValue:',x.ethUsdValue.toString() ))
-
-
-
     const { depositedEth, usdAmount,withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
