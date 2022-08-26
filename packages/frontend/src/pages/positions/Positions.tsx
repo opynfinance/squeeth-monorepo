@@ -8,7 +8,7 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@pages/positions/History'
 import { PositionType } from '../../types'
-import { Tooltips } from '../../constants'
+import { BIG_ZERO, Tooltips } from '../../constants'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
@@ -39,7 +39,7 @@ import {
   useSetStrategyData,
   useSetStrategyDataV2,
 } from 'src/state/crab/hooks'
-import { pnl, pnlInPerct } from 'src/lib/pnl'
+import { pnl, pnlInPerct,pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
@@ -73,6 +73,8 @@ export default function Positions() {
   const {
     depositedEth: depositedEthV2,
     depositedUsd: depositedUsdV2,
+    depositedValueUsd: depositedValueUsdV2,
+    withdrawnUsdAmount: withdrawnUsdAmountV2,
     loading: isCrabPositonLoadingV2,
   } = useCrabPositionV2(address || '')
   const {
@@ -95,13 +97,18 @@ export default function Positions() {
   const pnlWMidPriceInPerct = useAppMemo(() => {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
-
+  // const pnlWMidPriceInUSDV2 = useAppMemo(() => {
+  //   return pnl(currentCrabPositionValueV2, depositedUsdV2)
+  // }, [currentCrabPositionValueV2, depositedUsdV2])
+    // const pnlWMidPriceInPerctV2 = useAppMemo(() => {
+  //   return pnlInPerct(currentCrabPositionValueV2, depositedUsdV2)
+  // }, [currentCrabPositionValueV2, depositedUsdV2])
   const pnlWMidPriceInUSDV2 = useAppMemo(() => {
-    return pnl(currentCrabPositionValueV2, depositedUsdV2)
+    return pnlv2(currentCrabPositionValueV2, withdrawnUsdAmountV2,depositedValueUsdV2)
   }, [currentCrabPositionValueV2, depositedUsdV2])
   const pnlWMidPriceInPerctV2 = useAppMemo(() => {
-    return pnlInPerct(currentCrabPositionValueV2, depositedUsdV2)
-  }, [currentCrabPositionValueV2, depositedUsdV2])
+    return pnlInPerctv2(currentCrabPositionValueV2, depositedUsdV2,depositedValueUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2, depositedValueUsdV2])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
