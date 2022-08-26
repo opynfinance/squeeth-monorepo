@@ -5,6 +5,7 @@ export const networkNameToUniRouter = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xE592427A0AEce92De3Edee1F18E0157C05861564'
     case 'rinkebyArbitrum': return '0xE592427A0AEce92De3Edee1F18E0157C05861564'
+    case 'goerli': return '0xE592427A0AEce92De3Edee1F18E0157C05861564'
     default: return undefined
   }
 }
@@ -13,6 +14,7 @@ export const networkNameToUniFactory = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x1F98431c8aD98523631AE4a59f267346ea31F984'
     case 'rinkebyArbitrum': return '0x1F98431c8aD98523631AE4a59f267346ea31F984'
+    case 'goerli': return '0x1F98431c8aD98523631AE4a59f267346ea31F984'
     default: return undefined
   }
 }
@@ -22,6 +24,7 @@ export const networkNameToUniQuoter = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xC8d3a4e6BB4952E3658CCA5081c358e6935Efa43'
     case 'rinkebyArbitrum': return undefined
+    case 'goerli': return undefined
     default: return undefined
   }
 }
@@ -30,6 +33,7 @@ export const networkNameToPositionManager = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
     case 'rinkebyArbitrum': return '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
+    case 'goerli': return '0xC36442b4a4522E871399CD717aBDD847Ab11FE88'
     default: return undefined
   }
 }
@@ -38,6 +42,7 @@ export const networkNameToUSDC = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
     case 'ropsten': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
+    case 'goerli': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
     default: return undefined
   }
 }
@@ -48,6 +53,7 @@ export const networkNameToWeth = (name: string) => {
     case 'mainnet': return '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
     case 'ropsten': return '0xc778417e063141139fce010982780140aa0cd5ab'
     case 'rinkebyArbitrum': return '0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681'
+    case 'goerli': return '0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6'
     default: return undefined
   }
 }
@@ -64,6 +70,7 @@ export const networkNameToExec = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x59828FdF7ee634AaaD3f58B19fDBa3b03E2D9d80'
     case 'ropsten': return '0xF7B8611008Ed073Ef348FE130671688BBb20409d'
+    case 'goerli': return '0x4b62EB6797526491eEf6eF36D3B9960E5d66C394'
     default: return undefined
   }
 }
@@ -72,6 +79,7 @@ export const networkNameToEuler = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x27182842E098f60e3D576794A5bFFb0777E025d3'
     case 'ropsten': return '0xfC3DD73e918b931be7DEfd0cc616508391bcc001'
+    case 'goerli': return '0x931172BB95549d0f29e10ae2D079ABA3C63318B3'
     default: return undefined
   }
 }
@@ -80,6 +88,7 @@ export const networkNameToDweth = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x62e28f054efc24b26A794F5C1249B6349454352C'
     case 'ropsten': return '0x682b4c36a6D4749Ced8C3abF47AefDFC57A17754'
+    case 'goerli': return '0x3CbBCf7411F5090E7A33A42d4aeC66d108d96430'
     default: return undefined
   }
 }
