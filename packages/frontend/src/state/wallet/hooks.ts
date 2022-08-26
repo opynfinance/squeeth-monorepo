@@ -17,6 +17,8 @@ import {
   web3Atom,
   transactionDataAtom,
   transactionLoadingAtom,
+  onboardAddressAtom,
+  walletFailVisibleAtom,
 } from './atoms'
 import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
 import { Networks } from '../../types'
@@ -24,13 +26,33 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
+import { checkIsValidAddress } from './apis'
+import TimeAgo from 'javascript-time-ago'
+import { differenceInMonths, format } from 'date-fns'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
+  const setAddress = useUpdateAtom(addressAtom)
+  const onboardAddress = useAtomValue(onboardAddressAtom)
+  const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+
   const onWalletSelect = async () => {
     if (!onboard) return
     onboard.walletSelect().then(async (success) => {
-      if (success) await onboard.walletCheck()
+      if (success) {
+        // if onboard address is invalid
+        if (onboardAddress) {
+          checkIsValidAddress(onboardAddress).then((valid) => {
+            if (valid) {
+              setAddress(onboardAddress)
+            } else {
+              setWalletFailVisible(true)
+            }
+          })
+        }
+
+        await onboard.walletCheck()
+      }
     })
   }
 
@@ -40,6 +62,7 @@ export const useSelectWallet = () => {
 export const useDiscconectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
+  const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
 
@@ -48,6 +71,7 @@ export const useDiscconectWallet = () => {
     onboard.walletReset()
     window.localStorage.setItem('walletAddress', '')
     setAddress(null)
+    setOnboardAddress(null)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
     queryClient.removeQueries()
     apolloClient.clearStore()
@@ -140,7 +164,8 @@ export const useOnboard = () => {
   const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useAtom(onboardAtom)
-  const [address, setAddress] = useAtom(addressAtom)
+  const address = useAtomValue(addressAtom)
+  const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
   const setWeb3 = useUpdateAtom(web3Atom)
   const setSigner = useUpdateAtom(signerAtom)
   const setNotify = useUpdateAtom(notifyAtom)
@@ -190,7 +215,7 @@ export const useOnboard = () => {
   useAppEffect(() => {
     const onboard = initOnboard(
       {
-        address: setAddress,
+        address: setOnboardAddress,
         network: onNetworkChange,
         wallet: onWalletUpdate,
       },
@@ -224,6 +249,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       : usePokt === 'true'
       ? `https://eth-${network}.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID}`
       : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
     networkId: networkId,
@@ -232,7 +258,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
     subscriptions: subscriptions,
     walletSelect: {
       description: `<div>
-          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>.</p>
+          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on August 25, 2022.</p>
           </div > `,
 
       wallets: [

@@ -6,7 +6,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import React, { memo, useEffect, useMemo } from 'react'
+import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { useAtomValue } from 'jotai'
@@ -15,12 +15,19 @@ import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { addressAtom, networkIdAtom, onboardAddressAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
 import { useSwaps } from 'src/state/positions/hooks'
+import { useUpdateAtom } from 'jotai/utils'
+import useAppEffect from '@hooks/useAppEffect'
+import WalletFailModal from '@components/WalletFailModal'
+import { checkIsValidAddress } from 'src/state/wallet/apis'
+import TimeAgo from 'javascript-time-ago'
+import en from 'javascript-time-ago/locale/en'
 
+TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
 function MyApp({ Component, pageProps }: any) {
@@ -75,6 +82,31 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
+  const setAddress = useUpdateAtom(addressAtom)
+  const onboardAddress = useAtomValue(onboardAddressAtom)
+  const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+  const loadingRef = useRef(true)
+
+  useAppEffect(() => {
+    setTimeout(() => {
+      loadingRef.current = false
+    }, 2000)
+  }, [])
+
+  useAppEffect(() => {
+    if (loadingRef.current || !onboardAddress) {
+      return
+    }
+
+    checkIsValidAddress(onboardAddress).then((valid) => {
+      if (valid) {
+        setAddress(onboardAddress)
+      } else {
+        setWalletFailVisible(true)
+      }
+    })
+  }, [onboardAddress, setAddress, setWalletFailVisible])
+
   useOnboard()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
@@ -109,6 +141,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <ComputeSwapsProvider>
+          <WalletFailModal />
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>

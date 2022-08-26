@@ -1,4 +1,4 @@
-import { Button } from '@material-ui/core'
+import { Button, Link as MatLink } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import MoreHorizIcon from '@material-ui/icons/MoreHorizOutlined'
@@ -175,16 +175,22 @@ const SettingMenu = () => {
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
-                <ListItemText>Infura</ListItemText>
+                <ListItemText>Alchemy</ListItemText>
               </Typography>
-              <ListItemText>This app fetches on-chain data and constructs contract calls with Infura API</ListItemText>
+              <ListItemText>This app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
-                <ListItemText>The Graph</ListItemText>
+                <ListItemText>Chainalysis</ListItemText>
               </Typography>
-              <ListItemText>{`This app fetches blockchain data from the Graph's hosted service`}</ListItemText>
+              <ListItemText>
+                The app securely reviews your wallet address using the Chainalysis, Inc. API for risk and compliance
+                reasons.{' '}
+                <MatLink href={`${location.origin}/terms-of-service-faq`} target="_blank">
+                  Learn More
+                </MatLink>
+              </ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
@@ -192,6 +198,20 @@ const SettingMenu = () => {
                 <ListItemText>Fathom</ListItemText>
               </Typography>
               <ListItemText>This app logs anonymized usage data to make improvements</ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Sentry</ListItemText>
+              </Typography>
+              <ListItemText>The app logs blocked address events using the Sentry</ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>The Graph</ListItemText>
+              </Typography>
+              <ListItemText>{`This app fetches blockchain data from the Graph's hosted service`}</ListItemText>
             </ListItem>
           </List>
         </Box>

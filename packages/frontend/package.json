@@ -48,6 +48,7 @@
         "fzero": "^0.2.4",
         "graphql": "^16.1.0",
         "gray-matter": "^4.0.3",
+        "javascript-time-ago": "^2.5.7",
         "jotai": "^1.5.3",
         "kaktana-react-lightweight-charts": "^2.0.0",
         "lodash": "^4.17.21",
@@ -65,6 +66,7 @@
     },
     "devDependencies": {
         "@babel/preset-react": "^7.16.7",
+        "@sentry/nextjs": "^7.10.0",
         "@synthetixio/synpress": "^1.1.1",
         "@testing-library/dom": "^8.11.3",
         "@testing-library/jest-dom": "^5.16.2",

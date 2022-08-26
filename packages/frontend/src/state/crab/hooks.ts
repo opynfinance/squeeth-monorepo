@@ -59,7 +59,6 @@ import { crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContra
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import floatifyBigNums from '@utils/floatifyBigNums'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
