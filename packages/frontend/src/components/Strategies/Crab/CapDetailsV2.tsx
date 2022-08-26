@@ -10,7 +10,8 @@ const useStyles = makeStyles((theme) =>
       padding: theme.spacing(2, 5),
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
-      width: '640px',
+      width: '100%',
+      // maxWidth: '640px',
     },
     vaultDetails: {
       display: 'flex',

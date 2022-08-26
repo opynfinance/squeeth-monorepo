@@ -48,43 +48,81 @@ import { StrategyPnLV2 } from '@components/Strategies/Crab/StrategyPnLV2'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(4, 20),
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      maxWidth: '1500px',
+      [theme.breakpoints.down('md')]: {
+        padding: theme.spacing(5, 5),
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(4, 4),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(2, 2),
+      },
+      margin: '0 auto',
+      maxWidth: '1080px',
     },
     header: {
       display: 'flex',
-      alignItems: 'center',
       marginTop: theme.spacing(4),
     },
+    description: {
+      marginTop: theme.spacing(4),
+      [theme.breakpoints.up('md')]: {
+        margin: '20px 0',
+        width: '685px',
+      },
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+    },
     body: {
-      display: 'flex',
       marginTop: theme.spacing(3),
+      width: '100%',
+      margin: '0',
+      padding: '0',
+      display: 'flex',
+      [theme.breakpoints.down('md')]: {
+        flexDirection: 'column-reverse',
+      },
     },
     tradeCard: {
+      margin: theme.spacing('0', 'auto', '20px'),
       width: '350px',
-      maxHeight: '440px',
-      minHeight: '350px',
-      height: 'fit-content',
-      position: 'sticky',
-      top: '75px',
-      margin: theme.spacing('-120px', '50px'),
+      [theme.breakpoints.up('lg')]: {
+        width: '350px',
+        maxHeight: '440px',
+        minHeight: '350px',
+        height: 'fit-content',
+        position: 'sticky',
+        top: '75px',
+        margin: theme.spacing('-160px', '50px'),
+      },
     },
     tradeForm: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(2),
-      marginTop: theme.spacing(4),
     },
+    tradeCardDesktop: {
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+      },
+
+      margin: theme.spacing('-120px', '50px'),
+    },
+    details: {},
     overview: {
-      display: 'flex',
+      display: 'grid',
+      [theme.breakpoints.up('md')]: {
+        gridTemplateColumns: '1fr 1fr 1fr',
+      },
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: '1fr 1fr',
+      },
+      [theme.breakpoints.down('xs')]: {
+        gridTemplateColumns: '1fr',
+      },
+      gridGap: theme.spacing(2),
       columnGap: '20px',
       marginTop: theme.spacing(3),
-    },
-    details: {
-      display: 'flex',
-      flexDirection: 'column',
-      paddingRight: theme.spacing(5),
     },
     chartContainer: {
       padding: theme.spacing(0),
@@ -103,7 +141,9 @@ const useStyles = makeStyles((theme) =>
     connectWalletDiv: {
       display: 'flex',
       flexDirection: 'column',
-      paddingRight: theme.spacing(5),
+    },
+    strategiesConnectWalletBtn: {
+      padding: theme.spacing(1),
     },
     tabBackGround: {
       position: 'sticky',
@@ -229,7 +269,7 @@ const Strategies: React.FC = () => {
               </div>
             </div>
             {displayCrabV1 ? (
-              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
                 Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
                 either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable
@@ -240,7 +280,7 @@ const Strategies: React.FC = () => {
                 </a>
               </Typography>
             ) : (
-              <Typography variant="subtitle1" color="textSecondary" style={{ width: '60%', marginTop: '8px' }}>
+              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
                 Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercentV2 * 100).toFixed(2)}%</b>{' '}
                 in either direction between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab
@@ -273,8 +313,6 @@ const Strategies: React.FC = () => {
                       Tooltips.StrategyEarnFunding
                     }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
-                </div>
-                <div className={classes.overview}>
                   <StrategyInfoItem
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                       day: 'numeric',
@@ -318,8 +356,8 @@ const Strategies: React.FC = () => {
                 {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>
-              {supportedNetwork && (
-                <div className={classes.tradeCard}>
+              <div className={classes.tradeCard}>
+                {supportedNetwork && (
                   <div className={classes.tradeForm}>
                     {!!address ? (
                       <CrabTradeComponent
@@ -328,12 +366,14 @@ const Strategies: React.FC = () => {
                       />
                     ) : (
                       <div className={classes.connectWalletDiv}>
-                        <LinkButton onClick={() => selectWallet()}>Connect Wallet</LinkButton>
+                        <LinkButton className={classes.strategiesConnectWalletBtn} onClick={() => selectWallet()}>
+                          Connect Wallet
+                        </LinkButton>
                       </div>
                     )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         )}
