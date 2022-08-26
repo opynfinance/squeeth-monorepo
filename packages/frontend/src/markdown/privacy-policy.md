@@ -38,7 +38,7 @@ Third party analytics tools collect or use information about your use of the Int
 
 However, if you’d like to entirely exclude your anonymized visits from showing up in our analytics, go to the Fathom Analytics Exclude Your Visits page for opt-out instructions.
 
-#### 5. Governmental Entities
+#### 5. Sanctions and Risk Management
 
 We use Chainalysis, a third party blockchain intelligence service provider to detect, prevent, and mitigate financial crime and other illicit or harmful activities on the Interface. Chainalysis combines on-chain data and real-world investigations to identify financial crime and other high-risk activities. Opyn applies an industry-wide standard of risk categories (e.g., sanctions, ransomware, child exploitation, stolen funds). Addresses that fall into a risk category are blocked from accessing the Squeeth App. User wallet addresses connecting to the Squeeth app will be cross-checked using a Chainalysis API with designated risk categories. Your address is shared with Chainalysis, but no metadata or IP addresses are shared. Users are not identified in this risk-assessment process.  We do not retain the information we collect any longer than necessary for these purposes.
 
