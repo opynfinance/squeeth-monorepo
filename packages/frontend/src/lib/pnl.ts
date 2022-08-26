@@ -122,6 +122,15 @@ export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber 
   return currentValue.dividedBy(cost).minus(1).times(100)
 }
 
+export function pnlv2(currentValue: BigNumber, realizedValue: BigNumber,  depositedValue: BigNumber): BigNumber {
+  return realizedValue.plus(currentValue).minus(depositedValue)
+}
+
+export function pnlInPerctv2(currentValue: BigNumber, realizedProfit: BigNumber, totalDepositValue: BigNumber): BigNumber {
+  if (totalDepositValue.isEqualTo(0)) return BIG_ZERO
+  return currentValue.plus(realizedProfit). dividedBy(totalDepositValue).minus(1).times(100)
+}
+
 const getSwapsWithEthPrice = async (swaps: swaps_swaps[]) => {
   const timestamps = swaps.map((s) => Number(s.timestamp) * 1000)
 
