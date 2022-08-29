@@ -78,8 +78,8 @@ export const useOpenPositionDeposit = () => {
       const amount0Min = amount0New.times(new BigNumber(1).minus(slippage)).toFixed(0)
       const amount1Min = amount1New.times(new BigNumber(1).minus(slippage)).toFixed(0)
 
-      const collateralToWithdraw = fromTokenAmount(withdrawAmount, OSQUEETH_DECIMALS)
-      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+      const collateralToWithdraw = fromTokenAmount(withdrawAmount, WETH_DECIMALS)
+      const ethIndexPrice = toTokenAmount(index, WETH_DECIMALS).sqrt()
       const vaultShortAmt = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
       const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)
 
@@ -149,64 +149,115 @@ export const useFlashClosePosition = () => {
   const getExactOut = useGetExactOut()
   const getDecreaseLiquidity = useGetDecreaseLiquidity()
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const closePosition = useAppCallback(async (vaultId: number, liquidityPercentage: number, burnPercentage: number, collateralToWithdraw: number, burnExactRemoved: boolean, slippage: number, onTxConfirmed?: () => void) => {
-    const vaultBefore = await getVault(vaultId)
-    const uniTokenId = vaultBefore?.NFTCollateralId 
-    const position = await getPosition(uniTokenId)
+  const index = useAtomValue(indexAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const flashClosePosition = useAppCallback(
+    async (
+      vaultId: number,
+      liquidityPercentage: number,
+      burnPercentage: number,
+      withdrawAmount: number,
+      burnExactRemoved: boolean,
+      slippage: number,
+      onTxConfirmed?: () => void,
+    ) => {
+      const vaultBefore = await getVault(vaultId)
+      const uniTokenId = vaultBefore?.NFTCollateralId
+      const position = await getPosition(uniTokenId)
 
-    if (
-      !controllerContract ||
-      !controllerHelperContract ||
-      !address ||
-      !position ||
-      !vaultBefore ||
-      !vaultBefore.shortAmount
-    )
-      return
+      if (
+        !controllerContract ||
+        !controllerHelperContract ||
+        !address ||
+        !position ||
+        !vaultBefore ||
+        !vaultBefore.shortAmount
+      )
+        return
 
-    const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-    const debtInEthPromise = getDebtAmount(shortAmount)
+      const shortAmount = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
 
-    // Get current LP positions
-    const { amount0, amount1 } = await getDecreaseLiquidity(uniTokenId, position.liquidity, 0, 0, Math.floor(Date.now() / 1000 + 86400))
-    const wPowerPerpAmountInLP = isWethToken0 ? amount1 : amount0
-   
-    const amountToLiquidate = new BigNumber(wPowerPerpAmountInLP).times(liquidityPercentage)
-    const amountToBurn = shortAmount.times(burnPercentage)
-    const limitEthPromise = amountToLiquidate.gt(amountToBurn) ? getExactIn(amountToLiquidate.minus(amountToBurn), true)
-                            : getExactOut(amountToBurn.minus(amountToLiquidate), true)
-    
-    const [debtInEth, limitEth] = await Promise.all([debtInEthPromise, limitEthPromise])
-    const limitPrice = new BigNumber(limitEth).div(amountToLiquidate.minus(amountToBurn).abs()).times(new BigNumber(1).minus(slippage))
+      // Get current LP positions
+      const { amount0, amount1 } = await getDecreaseLiquidity(
+        uniTokenId,
+        position.liquidity,
+        0,
+        0,
+        Math.floor(Date.now() / 1000 + 86400),
+      )
+      const wPowerPerpAmountInLP = isWethToken0 ? amount1 : amount0
 
-    const collateralToFlashloan = debtInEth.multipliedBy(COLLAT_RATIO_FLASHLOAN)
+      const amountToLiquidate = new BigNumber(wPowerPerpAmountInLP).times(liquidityPercentage)
+      const amountToBurn = shortAmount.times(burnPercentage)
+      const limitEth = await (amountToLiquidate.gt(amountToBurn)
+        ? getExactIn(amountToLiquidate.minus(amountToBurn), true)
+        : getExactOut(amountToBurn.minus(amountToLiquidate), true))
 
-    const amount0Min = new BigNumber(amount0).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
-    const amount1Min = new BigNumber(amount1).times(liquidityPercentage).times(new BigNumber(1).minus(slippage)).toFixed(0)
+      const collateralToWithdraw = fromTokenAmount(withdrawAmount, WETH_DECIMALS)
+      const ethIndexPrice = toTokenAmount(index, WETH_DECIMALS).sqrt()
+      const vaultShortAmt = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)
 
-    const flashloanCloseVaultLpNftParam = {
-      vaultId: vaultId,
-      tokenId: uniTokenId,
-      liquidity: position.liquidity,
-      liquidityPercentage: fromTokenAmount(liquidityPercentage, 18).toFixed(0),
-      wPowerPerpAmountToBurn: amountToBurn.toFixed(0),
-      collateralToFlashloan: collateralToFlashloan.toFixed(0),
-      collateralToWithdraw: collateralToWithdraw.toFixed(0),
-      limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
-      amount0Min,
-      amount1Min,
-      poolFee: POOL_FEE,
-      burnExactRemoved,
-    }
+      const flashLoanAmount = new BigNumber(COLLAT_RATIO_FLASHLOAN + FLASHLOAN_BUFFER)
+        .times(vaultShortAmt)
+        .times(normFactor)
+        .times(ethIndexPrice)
+        .div(INDEX_SCALE)
+        .minus(vaultCollateralAmt)
+      const flashLoanAmountPos = BigNumber.max(flashLoanAmount, 0)
 
-    return handleTransaction(
-      await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
-        from: address,
-      }),
-      onTxConfirmed,
-    )
-  }, [address, controllerHelperContract, controllerContract, handleTransaction, getDebtAmount, getVault, getPosition, getExactIn, getExactOut, getDecreaseLiquidity, isWethToken0])
-  return closePosition
+      const limitPrice = new BigNumber(limitEth)
+        .div(amountToLiquidate.minus(amountToBurn).abs())
+        .times(new BigNumber(1).minus(slippage))
+
+      const amount0Min = new BigNumber(amount0)
+        .times(liquidityPercentage)
+        .times(new BigNumber(1).minus(slippage))
+        .toFixed(0)
+      const amount1Min = new BigNumber(amount1)
+        .times(liquidityPercentage)
+        .times(new BigNumber(1).minus(slippage))
+        .toFixed(0)
+
+      const flashloanCloseVaultLpNftParam = {
+        vaultId: vaultId,
+        tokenId: uniTokenId,
+        liquidity: position.liquidity,
+        liquidityPercentage: fromTokenAmount(liquidityPercentage, 18).toFixed(0),
+        wPowerPerpAmountToBurn: amountToBurn.toFixed(0),
+        collateralToFlashloan: flashLoanAmountPos.toFixed(0),
+        collateralToWithdraw: collateralToWithdraw.toFixed(0),
+        limitPriceEthPerPowerPerp: fromTokenAmount(limitPrice, 18).toFixed(0),
+        amount0Min,
+        amount1Min,
+        poolFee: POOL_FEE,
+        burnExactRemoved,
+      }
+
+      return handleTransaction(
+        await controllerHelperContract.methods.flashloanCloseVaultLpNft(flashloanCloseVaultLpNftParam).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [
+      address,
+      controllerHelperContract,
+      controllerContract,
+      handleTransaction,
+      getDebtAmount,
+      getVault,
+      getPosition,
+      getExactIn,
+      getExactOut,
+      getDecreaseLiquidity,
+      isWethToken0,
+      index,
+      normFactor,
+    ],
+  )
+  return flashClosePosition
 }
 
 /*** GETTERS ***/
@@ -400,10 +451,9 @@ export const useGetExactOut = () => {
   return getExactOut
 }
 
-
 export const useGetQuote = () => {
   const contract = useAtomValue(quoterContractAtom)
-  const {weth, oSqueeth} = useAtomValue(addressesAtom)
+  const { weth, oSqueeth } = useAtomValue(addressesAtom)
 
   const getQuote = useCallback(
     async (amount: BigNumber, squeethIn: boolean) => {
@@ -414,7 +464,7 @@ export const useGetQuote = () => {
         tokenOut: squeethIn ? weth : oSqueeth,
         amountIn: amount.toFixed(0),
         fee: 3000,
-        sqrtPriceLimitX96: 0
+        sqrtPriceLimitX96: 0,
       }
 
       const quote = await contract.methods.quoteExactInputSingle(QuoteExactInputSingleParams).call()
