@@ -5,8 +5,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy } = deployments;
 
-  if (network.name == 'goerli') return;
-
   const { deployer } = await getNamedAccounts();
   await deploy("Oracle", { from: deployer, log: true, skipIfAlreadyDeployed: true });
   await deploy("ShortPowerPerp", { from: deployer, log: true, args: ['short Squeeth', 'sSQTH'], skipIfAlreadyDeployed: true });

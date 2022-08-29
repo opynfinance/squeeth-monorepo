@@ -5,13 +5,6 @@ import { getUniswapDeployments, getWETH } from '../tasks/utils'
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
-  if (network.name === "ropsten" || network.name === "mainnet") {
-    return
-  }
-
-  if (network.name == 'goerli') return;
-
-
   const { deployer } = await getNamedAccounts();
 
   const controller = await ethers.getContract("Controller", deployer);

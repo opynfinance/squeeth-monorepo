@@ -8,9 +8,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
 
   const { deployer } = await getNamedAccounts();
-  if (network.name === "ropsten" || network.name === "mainnet") {
-    return
-  }
 
   const controller = await ethers.getContract("Controller", deployer);
   const oracle = await ethers.getContract("Oracle", deployer);
@@ -20,13 +17,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
   const squeethPoolAddr = await getPoolAddress(wsqueeth, weth, uniswapFactory)
-
-  if (network.name === "mainnet" || network.name === "ropsten") {
-    return
-  }
-
-  if (network.name == 'goerli') return;
-
 
   // strategy parameters
   const hedgeTimeThreshold = 86400
