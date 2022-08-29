@@ -43,6 +43,7 @@ import {
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
+import { StrategyPnLV2 } from '@components/Strategies/Crab/StrategyPnLV2'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -351,6 +352,7 @@ const Strategies: React.FC = () => {
                     tooltip={Tooltips.StrategyCollRatio}
                   />
                 </div>
+                {displayCrabV1 ? null : <StrategyPnLV2 />}
                 {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>
