@@ -40,8 +40,8 @@ const CrabPosition: React.FC = () => {
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
-    return pnlInPerctv2(currentCrabPositionValue, withdrawnUsdAmount, depositedValueUsd,remainingShares)
-  }, [currentCrabPositionValue,  withdrawnUsdAmount, depositedValueUsd,remainingShares])
+    return pnlInPerctv2(currentCrabPositionValue, depositedValueUsd,remainingShares)
+  }, [currentCrabPositionValue, depositedValueUsd,remainingShares])
 
   const loading = useAppMemo(() => {
     console.log('Crab position loading : ', isCrabPositonLoading, isCrabPositionValueLoading)
