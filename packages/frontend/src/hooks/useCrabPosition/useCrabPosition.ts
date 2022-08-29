@@ -16,6 +16,7 @@ import {
   currentCrabPositionValueInETHAtom,
   currentCrabPositionValueInETHAtomV2,
 } from 'src/state/crab/atoms'
+import BigNumber from 'bignumber.js'
 
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
@@ -118,10 +119,10 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const { depositedEth, usdAmount: depositedUsd, withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO,depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO }
+  const { depositedEth, usdAmount: depositedUsd, withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd,remainingShares  } = useAppMemo(() => {
+    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO,depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, remainingShares : BIG_ZERO }
 
-    const { depositedEth, usdAmount,withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd } = txHistoryData?.reduce(
+    const { depositedEth, usdAmount,withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd, depositedLpAmount, withdrawnLpAmount } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
@@ -130,16 +131,20 @@ export const useCrabPositionV2 = (user: string) => {
         ) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
+          acc.depositedLpAmount = acc.lpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
           acc.depositedValueEth = acc.depositedValueEth.plus(tx.ethAmount)
           acc.depositedValueUsd = acc.depositedValueUsd.plus(tx.ethUsdValue)
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
+          acc.withdrawnLpAmount = acc.lpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)
           acc.withdrawnEth = acc.withdrawnEth.plus(tx.ethAmount)
           acc.withdrawnUsdAmount = acc.withdrawnUsdAmount.plus(tx.ethUsdValue)
         }
+
+       
         // Reset to zero if position closed
         if (acc.lpAmount.isZero()) {
           acc.depositedEth = BIG_ZERO
@@ -150,10 +155,12 @@ export const useCrabPositionV2 = (user: string) => {
 
         return acc
       },
-      { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO , depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO},
+      { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO , depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, depositedLpAmount: BIG_ZERO,withdrawnLpAmount : BIG_ZERO},
     )
 
-    return { depositedEth, usdAmount, withdrawnEth, withdrawnUsdAmount, depositedValueEth,depositedValueUsd}
+   const remainingShares =  new BigNumber(1).minus(withdrawnLpAmount.dividedBy(depositedLpAmount))
+
+    return { depositedEth, usdAmount, withdrawnEth, withdrawnUsdAmount, depositedValueEth,depositedValueUsd, remainingShares }
   }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
@@ -183,7 +190,8 @@ export const useCrabPositionV2 = (user: string) => {
     withdrawnEth,
     withdrawnUsdAmount,
     depositedValueEth,
-    depositedValueUsd
+    depositedValueUsd,
+    remainingShares
   }
 }
 

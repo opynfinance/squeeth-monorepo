@@ -35,13 +35,13 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { loading: isCrabPositonLoading, depositedUsd, depositedValueUsd, withdrawnUsdAmount } = useCrabPositionV2(address || '')
+  const { loading: isCrabPositonLoading, depositedUsd, depositedValueUsd, withdrawnUsdAmount,remainingShares } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
-    return pnlInPerctv2(currentCrabPositionValue, withdrawnUsdAmount, depositedValueUsd)
-  }, [currentCrabPositionValue,  withdrawnUsdAmount, depositedValueUsd])
+    return pnlInPerctv2(currentCrabPositionValue, withdrawnUsdAmount, depositedValueUsd,remainingShares)
+  }, [currentCrabPositionValue,  withdrawnUsdAmount, depositedValueUsd,remainingShares])
 
   const loading = useAppMemo(() => {
     console.log('Crab position loading : ', isCrabPositonLoading, isCrabPositionValueLoading)
