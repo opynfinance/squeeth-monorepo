@@ -16,6 +16,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
+  if (network.name == 'goerli') return;
+
   // Load contracts
   const oracle = await ethers.getContract("Oracle", deployer);
   const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);
@@ -62,15 +64,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const alsig = "0x0144571202B48d8B3EEE3A95E4140B7144F8b72F"
 
-  if (network.name === "mainnet") {
-    try {
-      const tx = await controller.transferOwnership(alsig, { from: deployer });
-      await ethers.provider.waitForTransaction(tx.hash, 1)
-      console.log(`Ownership transferred! 🥭`);
-    } catch (error) {
-      console.log(`Ownership transfer failed`)
-    }
-  }
+  // if (network.name === "mainnet") {
+  //   try {
+  //     const tx = await controller.transferOwnership(alsig, { from: deployer });
+  //     await ethers.provider.waitForTransaction(tx.hash, 1)
+  //     console.log(`Ownership transferred! 🥭`);
+  //   } catch (error) {
+  //     console.log(`Ownership transfer failed`)
+  //   }
+  // }
 
 }
 

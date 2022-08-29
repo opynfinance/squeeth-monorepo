@@ -20,12 +20,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const squeethPoolAddr = await getPoolAddress(wsqueeth, weth, uniswapFactory)
 
-
-  console.log(controller.address)
-
-
-
-
   const exec = await getExec(deployer, network.name)
   const euler = await getEuler(deployer, network.name)
   const dWethToken = await getDwethToken(deployer, network.name)
@@ -43,7 +37,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: migrationArgs,
-    skipIfAlreadyDeployed: true
+    skipIfAlreadyDeployed: true,
   });
 
   console.log(`Successfully deploy CrabMigration`)
@@ -60,7 +54,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: timelockArgs,
-    skipIfAlreadyDeployed: true
+    skipIfAlreadyDeployed: true,
   });
 
 
@@ -90,17 +84,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
   // Deploy Crabv2 contract
-  await deploy("CrabStrategyV2", {
-    from: deployer,
-    log: true,
-    args: v2args,
-    skipIfAlreadyDeployed: true
-  });
+  // await deploy("CrabStrategyV2", {
+  //   from: deployer,
+  //   log: true,
+  //   args: v2args,
+  //   skipIfAlreadyDeployed: true,
+  // });
 
-  createArgumentFile('CrabStrategyV2', network.name, v2args)
+  // createArgumentFile('CrabStrategyV2', network.name, v2args)
 
 
-  console.log(`Successfully deploy CrabStrategyV2`)
+  // console.log(`Successfully deploy CrabStrategyV2`)
 }
 
 export default func;

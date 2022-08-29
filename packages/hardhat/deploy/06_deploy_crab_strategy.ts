@@ -25,6 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
+  if (network.name == 'goerli') return;
+
+
   // strategy parameters
   const hedgeTimeThreshold = 86400
   const hedgePriceThreshold = ethers.utils.parseUnits('0.01')

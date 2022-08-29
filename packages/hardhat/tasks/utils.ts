@@ -42,7 +42,7 @@ export const networkNameToUSDC = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
     case 'ropsten': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
-    case 'goerli': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
+    case 'goerli': return '0xd87ba7a50b2e7e660f678a895e4b72e7cb4ccd9c'
     default: return undefined
   }
 }
@@ -62,6 +62,7 @@ export const networkNameToController = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x64187ae08781B09368e6253F9E94951243A493D5'
     case 'ropsten': return '0x59F0c781a6eC387F09C40FAA22b7477a2950d209'
+    case 'goerli': return '0x50f3D0826d4E3c3d49007DBa664727B9885Dd734'
     default: return undefined
   }
 }
@@ -97,6 +98,7 @@ export const networkNameToCrab = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xf205ad80BB86ac92247638914265887A8BAa437D'
     case 'ropsten': return '0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf'
+    case 'goerli': return '0xF8bE62935C282E0Ec32c1B2A0920C048b9C0e2DA'
     default: return undefined
   }
 }
@@ -175,6 +177,7 @@ export const hasUniswapDeployments = (networkName: string) => {
   if (networkName === 'mainnet') return true
   if (networkName === 'rinkebyArbitrum') return true
   if (networkName === 'ropsten') return true
+  if (networkName === 'goerli') return true
   return false
 }
 

@@ -128,7 +128,7 @@ contract CrabMigration is Ownable {
         require(_eulerMainnet != address(0), "invalid _eulerMainnet address");
         require(_weth != address(0), "invalid _weth address");
         require(_crabV1 != address(0), "invalid _crabv1 address");
-        require(IDToken(_dToken).underlyingAsset() == _weth, "dToken underlying asset should be weth");
+        // require(IDToken(_dToken).underlyingAsset() == _weth, "dToken underlying asset should be weth");
 
         crabV1 = _crabV1;
         euler = _eulerExec;

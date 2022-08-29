@@ -9,9 +9,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
 
+
   if (network.name === "ropsten" || network.name === "mainnet") {
     return
   }
+
+  if (network.name == 'goerli') return;
+
   const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
 
   // Get Tokens
@@ -30,9 +34,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log(`SQU/ETH Pool created 🐑. Address: ${squeethWethPool.address}`)
 
-  if (network.name === "mainnet") {
-    return
-  }
+  // if (network.name === "mainnet" || network.name === "goerli") {
+  //   return
+  // }
   const ethPriceInDai = 3300
   const ethUSDPool = await createUniPool(ethPriceInDai, usdc, weth9, positionManager, uniswapFactory)
   const tx2 = await ethUSDPool.increaseObservationCardinalityNext(128)

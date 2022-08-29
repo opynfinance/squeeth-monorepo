@@ -9,6 +9,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     return
   }
 
+  if (network.name == 'goerli') return;
+
+
   const { deployer } = await getNamedAccounts();
 
   const controller = await ethers.getContract("Controller", deployer);
