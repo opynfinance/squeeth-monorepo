@@ -75,6 +75,8 @@ export default function Positions() {
     depositedUsd: depositedUsdV2,
     depositedValueUsd: depositedValueUsdV2,
     remainingShares: remainingSharesV2,
+    remainingDepositUsd: remainingDepositUsdV2,
+    remainingDepositEth:remainingDepositEthV2,
     loading: isCrabPositonLoadingV2,
   } = useCrabPositionV2(address || '')
   const {
@@ -172,8 +174,8 @@ export default function Positions() {
 
         {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
           <CrabPosition
-            depositedEth={depositedEthV2}
-            depositedUsd={depositedUsdV2}
+            depositedEth={remainingDepositEthV2}
+            depositedUsd={remainingDepositUsdV2}
             loading={isCrabV2loading}
             pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
             pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}

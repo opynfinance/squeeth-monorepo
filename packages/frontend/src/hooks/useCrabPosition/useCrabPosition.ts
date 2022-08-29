@@ -119,8 +119,8 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const { depositedEth, usdAmount: depositedUsd, withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd,remainingShares  } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO,depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, remainingShares : BIG_ZERO }
+  const { depositedEth, usdAmount: depositedUsd, withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd,remainingShares,remainingDepositUsd,remainingDepositEth  } = useAppMemo(() => {
+    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, withdrawnEth: BIG_ZERO, withdrawnUsdAmount: BIG_ZERO,depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, remainingShares : BIG_ZERO, remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
 
     const { depositedEth, usdAmount,withdrawnEth, withdrawnUsdAmount,depositedValueEth,depositedValueUsd, depositedLpAmount, withdrawnLpAmount } = txHistoryData?.reduce(
       (acc, tx) => {
@@ -159,9 +159,11 @@ export const useCrabPositionV2 = (user: string) => {
     )
 
    const remainingShares =  new BigNumber(1).minus(withdrawnLpAmount.dividedBy(depositedLpAmount))
+   const remainingDepositUsd = remainingShares.multipliedBy(depositedValueUsd)
+   const remainingDepositEth = remainingShares.multipliedBy(depositedValueEth)
 
 
-    return { depositedEth, usdAmount, withdrawnEth, withdrawnUsdAmount, depositedValueEth,depositedValueUsd, remainingShares }
+    return { depositedEth, usdAmount, withdrawnEth, withdrawnUsdAmount, depositedValueEth,depositedValueUsd, remainingShares,remainingDepositUsd,remainingDepositEth }
   }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
@@ -188,11 +190,11 @@ export const useCrabPositionV2 = (user: string) => {
     minPnL,
     minPnlUsd,
     loading: crabLoading || txHistoryLoading,
-    withdrawnEth,
-    withdrawnUsdAmount,
     depositedValueEth,
     depositedValueUsd,
-    remainingShares
+    remainingShares,
+    remainingDepositUsd,
+    remainingDepositEth
   }
 }
 
