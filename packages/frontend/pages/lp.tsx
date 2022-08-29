@@ -15,7 +15,7 @@ import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
-import { useClosePosition, useOpenPositionDeposit, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
+import { useFlashClosePosition, useOpenPositionDeposit, useRebalanceGeneralSwap } from 'src/state/lp/hooks'
 import { useCollectFees } from 'src/state/lp/hooks'
 import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
@@ -103,7 +103,7 @@ export function LPCalculator() {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const squeethPrice = useGetTwapSqueethPrice()
   const openLPPosition = useOpenPositionDeposit()
-  const closeLPPosition = useClosePosition()
+  const closeLPPosition = useFlashClosePosition()
   const collectFees = useCollectFees()
   const rebalanceSwap = useRebalanceGeneralSwap()
   const updateOperator = useUpdateOperator()
