@@ -141,8 +141,8 @@ export const useTransactionHistory = () => {
 
   const crabV2Transactions = (crabV2Data || [])?.map((c) => {
     const transactionType =
-      c.type === CrabStrategyV2TxType.FLASH_DEPOSIT
-        ? TransactionType.CRAB_V2_FLASH_DEPOSIT
+      (c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1)
+        ? TransactionType.CRAB_V2_FLASH_DEPOSIT 
         : TransactionType.CRAB_V2_FLASH_WITHDRAW
     const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
 

@@ -118,10 +118,10 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const { depositedEth, usdAmount: depositedUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO }
+  const { depositedEth, usdAmount: depositedUsd, depostiLpPerEth, depostiLpPerUsd, withrawnLpPerEth, withrawnLpPerUsd, withdrawnLpAmount, lpAmount } = useAppMemo(() => {
+    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, depostiLpPerEth: BIG_ZERO, depostiLpPerUsd: BIG_ZERO, withrawnLpPerEth: BIG_ZERO, withrawnLpPerUsd: BIG_ZERO, withdrawnLpAmount: BIG_ZERO, lpAmount: BIG_ZERO }
 
-    const { depositedEth, usdAmount } = txHistoryData?.reduce(
+    const { depositedEth, usdAmount, depostiLpPerEth, depostiLpPerUsd, withrawnLpPerEth, withrawnLpPerUsd, withdrawnLpAmount,lpAmount } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
@@ -131,10 +131,15 @@ export const useCrabPositionV2 = (user: string) => {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
+          acc.depostiLpPerEth = acc.depostiLpPerEth.plus(tx.ethAmount.div(tx.lpAmount))
+          acc.depostiLpPerUsd = acc.depostiLpPerUsd.plus(tx.ethUsdValue.div(tx.lpAmount))
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
-          acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)
+          acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue),
+          acc.withdrawnLpAmount = acc.lpAmount.plus(tx.lpAmount)
+          acc.withrawnLpPerEth = acc.withrawnLpPerEth.plus(tx.ethAmount.div(tx.lpAmount))
+          acc.withrawnLpPerUsd = acc.withrawnLpPerUsd.plus(tx.ethUsdValue.div(tx.lpAmount))
         }
         // Reset to zero if position closed
         if (acc.lpAmount.isZero()) {
@@ -144,10 +149,10 @@ export const useCrabPositionV2 = (user: string) => {
 
         return acc
       },
-      { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO },
+      { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO,  depostiLpPerEth: BIG_ZERO, depostiLpPerUsd: BIG_ZERO, withrawnLpPerEth: BIG_ZERO, withrawnLpPerUsd: BIG_ZERO, withdrawnLpAmount: BIG_ZERO },
     )
 
-    return { depositedEth, usdAmount }
+    return { depositedEth, usdAmount, depostiLpPerEth, depostiLpPerUsd, withrawnLpPerEth, withrawnLpPerUsd, withdrawnLpAmount, lpAmount }
   }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
@@ -174,6 +179,12 @@ export const useCrabPositionV2 = (user: string) => {
     minPnL,
     minPnlUsd,
     loading: crabLoading || txHistoryLoading,
+    depostiLpPerEth,
+    depostiLpPerUsd,
+    withrawnLpPerEth,
+    withrawnLpPerUsd,
+    withdrawnLpAmount,
+    lpAmount,
   }
 }
 

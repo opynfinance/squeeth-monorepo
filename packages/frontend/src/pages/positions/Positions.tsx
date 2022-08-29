@@ -39,7 +39,7 @@ import {
   useSetStrategyData,
   useSetStrategyDataV2,
 } from 'src/state/crab/hooks'
-import { pnl, pnlInPerct } from 'src/lib/pnl'
+import { pnl, pnlInPerct, unRealizedPnl, realizedPnl } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
@@ -73,6 +73,10 @@ export default function Positions() {
   const {
     depositedEth: depositedEthV2,
     depositedUsd: depositedUsdV2,
+    lpAmount: lpAmountV2,
+    depostiLpPerUsd: depostitLpPerUsdV2,
+    withrawnLpPerUsd: withrawnLpPerUsdV2,
+    withdrawnLpAmount:  withdrawnLpAmountV2,
     loading: isCrabPositonLoadingV2,
   } = useCrabPositionV2(address || '')
   const {
@@ -97,8 +101,13 @@ export default function Positions() {
   }, [currentCrabPositionValue, depositedUsd])
 
   const pnlWMidPriceInUSDV2 = useAppMemo(() => {
-    return pnl(currentCrabPositionValueV2, depositedUsdV2)
+    return unRealizedPnl(depostitLpPerUsdV2, withrawnLpPerUsdV2, lpAmountV2 )
   }, [currentCrabPositionValueV2, depositedUsdV2])
+
+  // const pnlRealizedWMidPriceInUSDV2 = useAppMemo(() => {
+  //   return realizedPnl(depostitLpPerUsdV2, withrawnLpPerUsdV2, withdrawnLpAmountV2 )
+  // }, [currentCrabPositionValueV2, depositedUsdV2])
+
   const pnlWMidPriceInPerctV2 = useAppMemo(() => {
     return pnlInPerct(currentCrabPositionValueV2, depositedUsdV2)
   }, [currentCrabPositionValueV2, depositedUsdV2])

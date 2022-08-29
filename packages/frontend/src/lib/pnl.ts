@@ -122,6 +122,17 @@ export function pnlInPerct(currentValue: BigNumber, cost: BigNumber): BigNumber 
   return currentValue.dividedBy(cost).minus(1).times(100)
 }
 
+export function realizedPnl(depositCostPerToken: BigNumber, withrawnCostPerToken: BigNumber, lpAmountWithdrawnFromStrategy: BigNumber): BigNumber {
+  let performancePerToken = withrawnCostPerToken.minus(depositCostPerToken)
+  return performancePerToken.times(lpAmountWithdrawnFromStrategy)
+}
+
+
+export function unRealizedPnl(depositCostPerToken: BigNumber, withrawnCostPerToken: BigNumber, lpAmountInStrategy: BigNumber): BigNumber {
+  let performancePerToken = withrawnCostPerToken.minus(depositCostPerToken)
+  return performancePerToken.times(lpAmountInStrategy)
+}
+
 const getSwapsWithEthPrice = async (swaps: swaps_swaps[]) => {
   const timestamps = swaps.map((s) => Number(s.timestamp) * 1000)
 
