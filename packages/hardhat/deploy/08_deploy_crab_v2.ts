@@ -84,17 +84,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 
   // Deploy Crabv2 contract
-  // await deploy("CrabStrategyV2", {
-  //   from: deployer,
-  //   log: true,
-  //   args: v2args,
-  //   skipIfAlreadyDeployed: true,
-  // });
+  await deploy("CrabStrategyV2", {
+    from: deployer,
+    log: true,
+    args: v2args,
+    skipIfAlreadyDeployed: true,
+  });
 
-  // createArgumentFile('CrabStrategyV2', network.name, v2args)
+  createArgumentFile('CrabStrategyV2', network.name, v2args)
 
 
-  // console.log(`Successfully deploy CrabStrategyV2`)
+  console.log(`Successfully deploy CrabStrategyV2`)
 }
 
 export default func;
