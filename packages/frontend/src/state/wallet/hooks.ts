@@ -27,8 +27,6 @@ import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
-import TimeAgo from 'javascript-time-ago'
-import { differenceInMonths, format } from 'date-fns'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)

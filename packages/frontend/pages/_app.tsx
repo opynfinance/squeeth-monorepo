@@ -85,16 +85,10 @@ const Init = () => {
   const setAddress = useUpdateAtom(addressAtom)
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
-  const loadingRef = useRef(true)
+  const firstAddressCheck = useRef(true)
 
   useAppEffect(() => {
-    setTimeout(() => {
-      loadingRef.current = false
-    }, 2000)
-  }, [])
-
-  useAppEffect(() => {
-    if (loadingRef.current || !onboardAddress) {
+    if (!onboardAddress) {
       return
     }
 
@@ -102,7 +96,11 @@ const Init = () => {
       if (valid) {
         setAddress(onboardAddress)
       } else {
-        setWalletFailVisible(true)
+        if (firstAddressCheck.current) {
+          firstAddressCheck.current = false
+        } else {
+          setWalletFailVisible(true)
+        }
       }
     })
   }, [onboardAddress, setAddress, setWalletFailVisible])
