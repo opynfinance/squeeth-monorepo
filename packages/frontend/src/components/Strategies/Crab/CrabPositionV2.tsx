@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { Tooltips } from '@constants/enums'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2 } from 'src/state/crab/hooks'
-import { pnlInPerct } from 'src/lib/pnl'
+import { pnlInPerctv2 } from 'src/lib/pnl'
 import useAppMemo from '@hooks/useAppMemo'
 import { userMigratedSharesAtom } from 'src/state/crabMigration/atom'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
@@ -35,13 +35,13 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { loading: isCrabPositonLoading, depositedUsd } = useCrabPositionV2(address || '')
+  const { loading: isCrabPositonLoading, depositedUsd, depositedValueUsd, withdrawnUsdAmount } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
-    return pnlInPerct(currentCrabPositionValue, depositedUsd)
-  }, [currentCrabPositionValue, depositedUsd])
+    return pnlInPerctv2(currentCrabPositionValue, withdrawnUsdAmount, depositedValueUsd)
+  }, [currentCrabPositionValue,  withdrawnUsdAmount, depositedValueUsd])
 
   const loading = useAppMemo(() => {
     console.log('Crab position loading : ', isCrabPositonLoading, isCrabPositionValueLoading)
