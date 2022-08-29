@@ -131,14 +131,14 @@ export const useCrabPositionV2 = (user: string) => {
         ) {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
-          acc.depositedLpAmount = acc.lpAmount.plus(tx.lpAmount)
+          acc.depositedLpAmount = acc.depositedLpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
           acc.depositedValueEth = acc.depositedValueEth.plus(tx.ethAmount)
           acc.depositedValueUsd = acc.depositedValueUsd.plus(tx.ethUsdValue)
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
-          acc.withdrawnLpAmount = acc.lpAmount.plus(tx.lpAmount)
+          acc.withdrawnLpAmount = acc.withdrawnLpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)
           acc.withdrawnEth = acc.withdrawnEth.plus(tx.ethAmount)
           acc.withdrawnUsdAmount = acc.withdrawnUsdAmount.plus(tx.ethUsdValue)
@@ -159,6 +159,7 @@ export const useCrabPositionV2 = (user: string) => {
     )
 
    const remainingShares =  new BigNumber(1).minus(withdrawnLpAmount.dividedBy(depositedLpAmount))
+
 
     return { depositedEth, usdAmount, withdrawnEth, withdrawnUsdAmount, depositedValueEth,depositedValueUsd, remainingShares }
   }, [txHistoryData, txHistoryLoading])
