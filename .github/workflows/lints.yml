@@ -16,4 +16,4 @@ jobs:
           version: nightly
 
       - name: Run fmt
-        run: forge fmt
+        run: cd packages/bull-vault && forge fmt
