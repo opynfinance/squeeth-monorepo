@@ -12,3 +12,6 @@
 [submodule "packages/bull-vault/lib/solenv"]
 	path = packages/bull-vault/lib/solenv
 	url = https://github.com/memester-xyz/solenv
+[submodule "packages/bull-vault/lib/openzeppelin-contracts"]
+	path = packages/bull-vault/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
