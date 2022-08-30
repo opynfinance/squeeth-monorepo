@@ -1,9 +1,10 @@
-name: Lints
+name: Founry
 
 on: [push]
 
 jobs:
-  lints:
+  check:
+    name: Forge lints
     runs-on: ubuntu-latest
 
     steps:

@@ -1,6 +1,6 @@
 on: [push]
 
-name: test
+name: Foundry
 
 jobs:
   check:
