@@ -1,0 +1,58 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x6080604052348015600f57600080fd5b50603f80601d6000396000f3fe6080604052600080fdfea264697066735822122071e6d7427e9d4c700d4395c78e451b3aef7a55624c7e19e051b65f0dec93726264736f6c634300080d0033",
+    "sourceMap": "65:20:8:-:0;;;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x6080604052600080fdfea264697066735822122071e6d7427e9d4c700d4395c78e451b3aef7a55624c7e19e051b65f0dec93726264736f6c634300080d0033",
+    "sourceMap": "65:20:8:-:0;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "ast": {
+    "absolutePath": "src/SqueethUtil.sol",
+    "id": 21628,
+    "exportedSymbols": {
+      "Contract": [
+        21627
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "39:47:8",
+    "nodes": [
+      {
+        "id": 21626,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:8",
+        "literals": [
+          "solidity",
+          "=",
+          "0.8",
+          ".13"
+        ]
+      },
+      {
+        "id": 21627,
+        "nodeType": "ContractDefinition",
+        "src": "65:20:8",
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "Contract",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          21627
+        ],
+        "name": "Contract",
+        "nameLocation": "74:8:8",
+        "scope": 21628,
+        "usedErrors": []
+      }
+    ],
+    "license": "UNLICENSED"
+  },
+  "id": 8
+}
