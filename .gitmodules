@@ -18,3 +18,6 @@
 [submodule "packages/bull-vault/lib/openzeppelin-contracts"]
 	path = packages/bull-vault/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "packages/bull-vault/lib/v3-core"]
+	path = packages/bull-vault/lib/v3-core
+	url = https://github.com/Uniswap/v3-core
