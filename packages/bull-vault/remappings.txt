@@ -3,3 +3,8 @@ forge-std/=lib/forge-std/src/
 openzeppelin-contracts/=lib/openzeppelin-contracts/
 solenv/=lib/solenv/src/
 solidity-stringutils/=lib/solenv/lib/solidity-stringutils/src/
+squeeth-monorepo/=lib/squeeth-monorepo/packages/hardhat/contracts
+
+
+
+@openzeppelin/=lib/openzeppelin-contracts/
