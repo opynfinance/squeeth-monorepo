@@ -15,3 +15,6 @@
 [submodule "packages/bull-vault/lib/openzeppelin-contracts"]
 	path = packages/bull-vault/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "packages/bull-vault/lib/squeeth-monorepo"]
+	path = packages/bull-vault/lib/squeeth-monorepo
+	url = https://github.com/opynfinance/squeeth-monorepo
