@@ -45,7 +45,7 @@
       "versionRequirement": ">=0.5.0",
       "artifacts": {
         "DSTest": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "test.sol/DSTest.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "test.sol/DSTest.json"
         }
       }
     },
@@ -87,7 +87,7 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "Script": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Script.sol/Script.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Script.sol/Script.json"
         }
       }
     },
@@ -131,16 +131,16 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "Test": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Test.sol/Test.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Test.sol/Test.json"
         },
         "stdError": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Test.sol/stdError.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Test.sol/stdError.json"
         },
         "stdMath": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Test.sol/stdMath.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Test.sol/stdMath.json"
         },
         "stdStorage": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Test.sol/stdStorage.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Test.sol/stdStorage.json"
         }
       }
     },
@@ -178,7 +178,7 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "Vm": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Vm.sol/Vm.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Vm.sol/Vm.json"
         }
       }
     },
@@ -216,7 +216,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "console.sol/console.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "console.sol/console.json"
         }
       }
     },
@@ -254,12 +254,12 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console2": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "console2.sol/console2.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "console2.sol/console2.json"
         }
       }
     },
     "script/Contract.s.sol": {
-      "lastModificationDate": 1661855405052,
+      "lastModificationDate": 1661857929288,
       "contentHash": "3642d05d9c479368231825c40aaa276a",
       "sourceName": "script/Contract.s.sol",
       "solcConfig": {
@@ -297,12 +297,12 @@
       "versionRequirement": "^0.8.13",
       "artifacts": {
         "ContractScript": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Contract.s.sol/ContractScript.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Contract.s.sol/ContractScript.json"
         }
       }
     },
     "src/Contract.sol": {
-      "lastModificationDate": 1661855405052,
+      "lastModificationDate": 1661857929288,
       "contentHash": "0a4db02f64172ef6ba21d89f49444a92",
       "sourceName": "src/Contract.sol",
       "solcConfig": {
@@ -335,12 +335,50 @@
       "versionRequirement": "^0.8.13",
       "artifacts": {
         "Contract": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Contract.sol/Contract.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Contract.sol/Contract.json"
+        }
+      }
+    },
+    "src/SqueethUtil.sol": {
+      "lastModificationDate": 1661933615409,
+      "contentHash": "a26eb1db4b3c121e4dd47d9c0be063ed",
+      "sourceName": "src/SqueethUtil.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs"
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": "=0.8.13",
+      "artifacts": {
+        "Contract": {
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "SqueethUtil.sol/Contract.json"
         }
       }
     },
     "test/Contract.t.sol": {
-      "lastModificationDate": 1661855405052,
+      "lastModificationDate": 1661857929288,
       "contentHash": "848ba83feec29a2e4d286c118102ae20",
       "sourceName": "test/Contract.t.sol",
       "solcConfig": {
@@ -380,7 +418,7 @@
       "versionRequirement": "^0.8.13",
       "artifacts": {
         "ContractTest": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Contract.t.sol/ContractTest.json"
+          "0.8.13+commit.abaa5c0e.Darwin.appleclang": "Contract.t.sol/ContractTest.json"
         }
       }
     }
