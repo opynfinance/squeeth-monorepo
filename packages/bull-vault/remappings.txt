@@ -4,7 +4,9 @@ openzeppelin-contracts/=lib/openzeppelin-contracts/
 solenv/=lib/solenv/src/
 solidity-stringutils/=lib/solenv/lib/solidity-stringutils/src/
 squeeth-monorepo/=lib/squeeth-monorepo/packages/hardhat/contracts
+uniswap/v3-core=/lib/v3-core
 
 
 
+@uniswap/=lib
 @openzeppelin/=lib/openzeppelin-contracts/
