@@ -120,40 +120,30 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
   const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd  } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, remainingShares : BIG_ZERO, remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
-
-    const { depositedEth, usdAmount, lpAmount, totalSharesDeposited/*,depositedValueEth,depositedValueUsd, depositedLpAmount, withdrawnLpAmount */} = txHistoryData?.reduce(
+    if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
+    const { totalSharesDeposited, totalSharesWithdrawn,  totalUSDDeposit, totalETHDeposit} = txHistoryData?.reduce(
       (acc, tx) => {
+        
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT_V1
         ) {
-          acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
-          acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
-          acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
-          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
+          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount);
+          acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue);
+          acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount);
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
-          acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
-          acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
-          acc.usdAmount = acc.usdAmount.minus(tx.ethUsdValue)
+          acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount);
         }
 
-       
-        // Reset to zero if position closed
-        if (acc.lpAmount.isZero()) {
-          acc.depositedEth = BIG_ZERO
-          acc.usdAmount = BIG_ZERO
-          acc.totalSharesDeposited = BIG_ZERO
-        }
         return acc
       },
-      { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO, totalSharesDeposited: BIG_ZERO },
+      { totalSharesDeposited: BIG_ZERO, totalSharesWithdrawn:BIG_ZERO ,  totalUSDDeposit: BIG_ZERO, totalETHDeposit: BIG_ZERO },
     )
 
-   const remainingShares =  lpAmount.div(totalSharesDeposited);
-   const remainingDepositUsd = remainingShares.multipliedBy(usdAmount)
-   const remainingDepositEth = remainingShares.multipliedBy(depositedEth)
+   const remainingShares =  new BigNumber(1).minus(totalSharesWithdrawn.div(totalSharesDeposited));
+   const remainingDepositUsd = remainingShares.multipliedBy(totalUSDDeposit)
+   const remainingDepositEth = remainingShares.multipliedBy(totalETHDeposit)
 
 
     return { remainingDepositUsd, remainingDepositEth }

@@ -8,6 +8,5 @@ export const checkIsValidAddress = async (address: string) => {
     Sentry.captureMessage(`Risk address ${address} is blocked.`)
   }
 
-  return true;
-  //return data.valid
+  return data.valid
 }
