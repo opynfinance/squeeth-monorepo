@@ -1,5 +1,6 @@
 {
   "hooks": {
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "pre-push": "cd packages/bull-vault && forge fmt && git commit -a -m 'auto foundry lint commit'"
   }
 }
