@@ -49,7 +49,8 @@
     "deploy-and-graph": "yarn deploy && yarn graph-ship-local",
     "theme": "yarn workspace @squeeth/frontend theme",
     "watch-theme": "yarn workspace @squeeth/frontend watch",
-    "lint-contracts": "yarn workspace @squeeth/hardhat lint"
+    "lint-contracts": "yarn workspace @squeeth/hardhat lint",
+    "pre-push": "cd packages/bull-vault && forge fmt && git commit -a -m 'auto foundry lint commit'"
   },
   "workspaces": {
     "packages": [
