@@ -188,7 +188,6 @@ export const useCrabPositionV2 = (user: string) => {
     minPnL,
     minPnlUsd,
     loading: crabLoading || txHistoryLoading,
-    remainingShares,
     remainingDepositUsd,
     remainingDepositEth
   }
