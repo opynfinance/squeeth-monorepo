@@ -35,6 +35,7 @@ contract SqueethUtil {
         wPowerPerp = address(powerTokenController.wPowerPerp());
         vaultId = powerTokenController.mintWPowerPerpAmount(0, 0, 0);
     }
+    
     /**
      * @notice get power token strategy vault ID 
      * @return vault ID
