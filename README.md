@@ -11,7 +11,7 @@
 
 ## 🤔 What is Squeeth
 
-The squeeth contract is designed for users to long or short a special index: Eth², as an implementation of a Power Perpetual.
+The squeeth contract is designed for usersasasffa to long or short a special index: Eth², as an implementation of a Power Perpetual.
 
 <p align="center">
 <img height="150" src="https://i.imgur.com/bGue31m.png"> </img>
