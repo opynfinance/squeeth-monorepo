@@ -73,10 +73,6 @@ export default function Positions() {
   const {
     depositedEth: depositedEthV2,
     depositedUsd: depositedUsdV2,
-    depositedValueUsd: depositedValueUsdV2,
-    remainingShares: remainingSharesV2,
-    remainingDepositUsd: remainingDepositUsdV2,
-    remainingDepositEth:remainingDepositEthV2,
     loading: isCrabPositonLoadingV2,
   } = useCrabPositionV2(address || '')
   const {
@@ -100,11 +96,11 @@ export default function Positions() {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
   const pnlWMidPriceInUSDV2 = useAppMemo(() => {
-    return pnlv2(currentCrabPositionValueV2,depositedValueUsdV2, remainingSharesV2 )
-  }, [currentCrabPositionValueV2, depositedUsdV2,remainingSharesV2])
+    return pnlv2(currentCrabPositionValueV2,depositedUsdV2 )
+  }, [currentCrabPositionValueV2, depositedUsdV2])
   const pnlWMidPriceInPerctV2 = useAppMemo(() => {
-    return pnlInPerctv2(currentCrabPositionValueV2,depositedValueUsdV2,remainingSharesV2)
-  }, [currentCrabPositionValueV2, depositedValueUsdV2,remainingSharesV2])
+    return pnlInPerctv2(currentCrabPositionValueV2,depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -174,8 +170,8 @@ export default function Positions() {
 
         {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
           <CrabPosition
-            depositedEth={remainingDepositEthV2}
-            depositedUsd={remainingDepositUsdV2}
+            depositedEth={depositedEthV2}
+            depositedUsd={depositedUsdV2}
             loading={isCrabV2loading}
             pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
             pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
