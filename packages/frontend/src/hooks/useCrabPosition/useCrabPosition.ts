@@ -119,7 +119,7 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const { depositedEth: remainingDepositEth, usdAmount: remainingDepositUsd  } = useAppMemo(() => {
+  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd  } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { depositedEth: BIG_ZERO, usdAmount: BIG_ZERO, depositedValueEth: BIG_ZERO,depositedValueUsd: BIG_ZERO, remainingShares : BIG_ZERO, remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
 
     const { depositedEth, usdAmount, lpAmount, totalSharesDeposited/*,depositedValueEth,depositedValueUsd, depositedLpAmount, withdrawnLpAmount */} = txHistoryData?.reduce(
@@ -132,7 +132,7 @@ export const useCrabPositionV2 = (user: string) => {
           acc.depositedEth = acc.depositedEth.plus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.plus(tx.lpAmount)
           acc.usdAmount = acc.usdAmount.plus(tx.ethUsdValue)
-          acc.totalSharesDeposited = acc.lpAmount.plus(tx.lpAmount)
+          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
           acc.depositedEth = acc.depositedEth.minus(tx.ethAmount)
           acc.lpAmount = acc.lpAmount.minus(tx.lpAmount)
@@ -146,7 +146,6 @@ export const useCrabPositionV2 = (user: string) => {
           acc.usdAmount = BIG_ZERO
           acc.totalSharesDeposited = BIG_ZERO
         }
-
         return acc
       },
       { depositedEth: BIG_ZERO, lpAmount: BIG_ZERO, usdAmount: BIG_ZERO, totalSharesDeposited: BIG_ZERO },
@@ -162,14 +161,14 @@ export const useCrabPositionV2 = (user: string) => {
 
   const calculateCurrentValue = useAppCallback(async () => {
     const minCurrentUsd = currentEthValue.times(ethIndexPrice)
-    const minPnlUsd = minCurrentUsd.minus(remainingDepositUsd)
+    const minPnlUsd = minCurrentUsd.minus(depositedUsd)
 
     setMinCurrentEth(currentEthValue)
     setMinCurrentUsd(minCurrentUsd)
 
     setMinPnlUsd(minPnlUsd)
-    setMinPnL(minPnlUsd.div(remainingDepositUsd).times(100))
-  }, [currentEthValue, depositedUsd,depositedValueUsd, ethIndexPrice])
+    setMinPnL(minPnlUsd.div(depositedUsd).times(100))
+  }, [currentEthValue, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
     if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) return
@@ -184,8 +183,6 @@ export const useCrabPositionV2 = (user: string) => {
     minPnL,
     minPnlUsd,
     loading: crabLoading || txHistoryLoading,
-    remainingDepositUsd,
-    remainingDepositEth
   }
 }
 
