@@ -37,7 +37,7 @@ jobs:
   checkout-and-install:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -58,7 +58,7 @@ jobs:
   compile:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -79,7 +79,7 @@ jobs:
   lint:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -94,7 +94,7 @@ jobs:
   unit-test-contracts:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -109,7 +109,7 @@ jobs:
   integration-test-contracts:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -124,7 +124,7 @@ jobs:
   # deploy-test:
   #   working_directory: ~/squeeth/packages/hardhat
   #   docker:
-  #     - image: circleci/node:16.6.0
+  #     - image: cimg/node:16.6.0
   #   steps:
   #     - checkout:
   #         path: ~/squeeth
@@ -139,7 +139,7 @@ jobs:
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -154,7 +154,7 @@ jobs:
   e2e-test:
     working_directory:  ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
@@ -170,7 +170,7 @@ jobs:
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -191,7 +191,7 @@ jobs:
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
