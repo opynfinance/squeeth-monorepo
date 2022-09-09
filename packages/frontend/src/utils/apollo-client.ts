@@ -11,7 +11,7 @@ const httpLinkRP = new HttpLink({
 })
 
 const httpLinkGL = new HttpLink({
-  uri: '',
+  uri: 'https://api.thegraph.com/subgraphs/name/stakewise/uniswap-v3-goerli',
 })
 
 const httpLinkRPSqueeth = new HttpLink({
