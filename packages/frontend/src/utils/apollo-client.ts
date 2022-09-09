@@ -23,7 +23,7 @@ const httpLinkMNSqueeth = new HttpLink({
 })
 
 const httpLinkGLSqueeth = new HttpLink({
-  uri: '',
+  uri: 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-goerli',
 })
 
 const wsLinkRP =
@@ -49,7 +49,7 @@ const wsLinkMN =
   const wsLinkGL =
     typeof window !== 'undefined'
       ? new WebSocketLink({
-          uri: '',
+          uri: 'wss://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3-goerli',
           options: {
             reconnect: true,
           },
@@ -80,7 +80,7 @@ const wsLinkMNSqueeth =
 const wsLinkGLSqueeth =
   typeof window !== 'undefined'
     ? new WebSocketLink({
-        uri: '',
+        uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth-goerli',
         options: {
           reconnect: true,
         },
