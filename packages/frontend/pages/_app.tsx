@@ -26,6 +26,7 @@ import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
+import '@utils/amplitude'
 
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
