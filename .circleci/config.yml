@@ -22,9 +22,6 @@ workflows:
       - contract-size:
           requires:
             - compile
-      # - deploy-test:
-      #     requires:
-      #       - compile
       - e2e-test:
           requires:
             - compile
@@ -121,21 +118,6 @@ jobs:
           name: Integration tests
           command: yarn test:crab-integration
     
-  # deploy-test:
-  #   working_directory: ~/squeeth/packages/hardhat
-  #   docker:
-  #     - image: cimg/node:16.6.0
-  #   steps:
-  #     - checkout:
-  #         path: ~/squeeth
-  #     - restore_cache:
-  #         key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
-  #     - restore_cache:
-  #         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-  #     - run:
-  #         name: Deploy
-  #         command: npx hardhat deploy --network ropsten
-
   contract-size:
     working_directory: ~/squeeth/packages/hardhat
     docker:
