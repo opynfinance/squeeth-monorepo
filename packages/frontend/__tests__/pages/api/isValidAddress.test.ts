@@ -11,16 +11,14 @@
     valid: boolean,
     madeThirdPartyConnection: boolean
   }
- 
 
  describe('/api/isValidAddress/[address] API Endpoint', () => {
 
    const safeAddress = '0xa3cb04d8bd927eec8826bd77b7c71abe3d29c081'
    const highRiskAddress = '0x098B716B8Aaf21512996dC57EB0615e2383E2f96'
    const invalidAddress = 'jksd'
-
    
-   function mockRequestResponse(method: RequestMethod = 'GET', address: string) {
+   function makeRequestResponse(method: RequestMethod = 'GET', address: string) {
      const {
        req,
        res,
@@ -28,18 +26,9 @@
      req.query = { address: address };
      return { req, res };
    }
- 
-   it('should return a successful response from isValidAddress API', async () => {
-     const { req, res } = mockRequestResponse('GET',safeAddress);
-
-     await requestHandler(req, res)
-
-     expect(res.statusCode).toBe(200);
-     expect(res.statusMessage).toEqual('OK');
-   });
 
    it('should return TRUE for a safe address supplied', async () => {
-    const { req, res } = mockRequestResponse('GET',safeAddress);
+    const { req, res } = makeRequestResponse('GET',safeAddress);
 
     await requestHandler(req, res);
 
@@ -49,7 +38,7 @@
    });
 
    it('should return FALSE for a risky address supplied', async () => {
-     const { req, res } = mockRequestResponse('GET',highRiskAddress);
+     const { req, res } = makeRequestResponse('GET',highRiskAddress);
      
      await requestHandler(req, res);
  
@@ -59,9 +48,9 @@
    });
 
 
-   it('should return TRUE for errors encountered when quering third-party service', async () => {
+   it('should return TRUE for all errors encountered when querying third-party service', async () => {
 
-    const { req, res } = mockRequestResponse('GET',invalidAddress);
+    const { req, res } = makeRequestResponse('GET',invalidAddress);
     
     await requestHandler(req, res);
 
