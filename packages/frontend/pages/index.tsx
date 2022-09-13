@@ -46,6 +46,7 @@ import {
   transactionLoadingAtom,
   supportedNetworkAtom,
 } from 'src/state/wallet/atoms'
+import Announcement from '@components/Announcement'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -470,10 +471,11 @@ const SqueethInfo: React.FC = () => {
                 Funding
               </Typography>
               <Tooltip
-                title={`${Tooltips.FundingPayments}. ${actualTradeType === TradeType.LONG
+                title={`${Tooltips.FundingPayments}. ${
+                  actualTradeType === TradeType.LONG
                     ? 'Funding is paid out of your position'
                     : 'Funding is paid continuously to you from oSQTH token holders'
-                  }`}
+                }`}
               >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
@@ -632,9 +634,10 @@ function TradePage() {
 
 export function App() {
   return (
-    // <TradeProvider>
-    <TradePage />
-    // </TradeProvider>
+    <>
+      <Announcement />
+      <TradePage />
+    </>
   )
 }
 
