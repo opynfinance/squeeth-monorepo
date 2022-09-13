@@ -11,7 +11,7 @@ const httpLinkRP = new HttpLink({
 })
 
 const httpLinkGL = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/stakewise/uniswap-v3-goerli',
+  uri: 'https://api.thegraph.com/subgraphs/name/haythem96/uniswap-v3-goerli',
 })
 
 const httpLinkRPSqueeth = new HttpLink({
@@ -49,7 +49,7 @@ const wsLinkMN =
   const wsLinkGL =
     typeof window !== 'undefined'
       ? new WebSocketLink({
-          uri: 'wss://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3-goerli',
+          uri: 'wss://api.thegraph.com/subgraphs/name/haythem96/uniswap-v3-goerli',
           options: {
             reconnect: true,
           },
