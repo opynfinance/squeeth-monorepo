@@ -16,12 +16,11 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
           address,
         },
       ],
-      { headers: { Token: process.env.NEXT_PUBLIC_AML_API_KEY ?? '' } },
+      { headers: { Token: process.env.AML_API_KEY ?? '' } },
     )
    
     if (data && data?.[0]?.rating)
     isValidAddress = (data?.[0].rating === 'highRisk') ? false : true 
-    
 
     res.status(200).json({ valid: isValidAddress, madeThirdPartyConnection: true })
 
