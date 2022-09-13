@@ -1,11 +1,22 @@
-import { Box, Link } from '@material-ui/core'
+import { Box, createStyles, IconButton, Link, makeStyles, Typography } from '@material-ui/core'
 import React, { useEffect, useState } from 'react'
-import { GreyButton } from './Button'
-import { Modal } from './Modal/Modal'
+import CloseIcon from '@material-ui/icons/Close'
 
 const ANNOUNCEMENT_KEY = 'DISABLE_MERGE_ANNOUNCEMENT'
 
+const useStyles = makeStyles((theme) =>
+  createStyles({
+    container: {
+      backgroundColor: theme.palette.background.lightStone,
+      padding: theme.spacing(1, 0),
+      display: 'flex',
+      justifyContent: 'center',
+    },
+  }),
+)
+
 const Announcement: React.FC = () => {
+  const styles = useStyles()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -18,17 +29,21 @@ const Announcement: React.FC = () => {
     localStorage.setItem(ANNOUNCEMENT_KEY, 'true')
   }
 
+  if (!visible) return null
+
   return (
-    <Modal title="POS Merge Announcement" open={visible} handleClose={() => setVisible(false)}>
-      <Box px="10px">
-        The Merge is coming.{' '}
+    <Box py="8" className={styles.container}>
+      <Typography align="center" variant="body2" component="span">
+        The Merge is coming. Read more here about what Opyn users should know about the merge{' '}
         <Link href="/pos-merge" target="_blank">
-          Read more here about what Opyn users should know about the merge
+          here
         </Link>
-        .
-      </Box>
-      <GreyButton onClick={dontShowAgain}>Don&apos;t show again</GreyButton>
-    </Modal>
+        .{' '}
+        <IconButton onClick={dontShowAgain} aria-label="close" size="small">
+          <CloseIcon fontSize="small" style={{ color: '#fff' }} />
+        </IconButton>
+      </Typography>
+    </Box>
   )
 }
 
