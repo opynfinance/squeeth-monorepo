@@ -34,7 +34,7 @@ const Announcement: React.FC = () => {
   return (
     <Box py="8" className={styles.container}>
       <Typography align="center" variant="body2" component="span">
-        The Merge is coming. Read more here about what Opyn users should know about the merge{' '}
+        The Merge is coming. Read more about what Opyn users should know about the merge{' '}
         <Link href="/pos-merge" target="_blank">
           here
         </Link>
