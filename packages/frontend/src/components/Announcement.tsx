@@ -21,10 +21,9 @@ const Announcement: React.FC = () => {
   return (
     <Modal title="POS Merge Announcement" open={visible} handleClose={() => setVisible(false)}>
       <Box px="10px">
-        The Merge is approaching, and Opyn users don&apos;t need to do anything. This includes users trading Squeeth &
-        those deposited in the Crab Strategy.{' '}
-        <Link href="http://localhost:3000/pos-merge" target="_blank">
-          What Opyn users should know ahead of merge
+        The Merge is coming.{' '}
+        <Link href="/pos-merge" target="_blank">
+          Read more here about what Opyn users should know about the merge
         </Link>
         .
       </Box>
