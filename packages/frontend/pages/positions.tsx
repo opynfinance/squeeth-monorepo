@@ -1,3 +1,4 @@
+import Announcement from '@components/Announcement'
 import ConnectWallet from '@pages/positions/ConnectWallet'
 import Positions from '@pages/positions/Positions'
 import { useAtomValue } from 'jotai'
@@ -7,7 +8,13 @@ const PositionsPage = () => {
   const address = useAtomValue(addressAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
-  if (address && supportedNetwork) return <Positions />
+  if (address && supportedNetwork)
+    return (
+      <>
+        <Announcement />
+        <Positions />
+      </>
+    )
 
   return <ConnectWallet />
 }
