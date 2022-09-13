@@ -2,7 +2,7 @@
  * @jest-environment node
  */
  import { createMocks, RequestMethod, createRequest, createResponse } from 'node-mocks-http';
- import type { NextApiRequest, NextApiResponse } from 'next';
+ import type { NextApiResponse } from 'next';
  import requestHandler from '../../../pages/api/isValidAddress';
  import axios from 'axios';
  
