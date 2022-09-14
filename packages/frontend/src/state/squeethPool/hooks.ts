@@ -375,6 +375,7 @@ export const useBuyForWETH = () => {
   const getBuyParamForETH = useGetBuyParamForETH()
   const buyForWETH = async (amount: BigNumber) => {
     const exactInputParam = await getBuyParamForETH(new BigNumber(amount))
+    console.log('Buy for WETH')
 
     const txHash = await handleTransaction(
       swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
@@ -465,12 +466,18 @@ export const useAutoRoutedBuyAndRefund = () => {
       const wethContract = new web3.eth.Contract(wethAbi as any, weth)
       await wethContract.methods.approve(swapRouter2, fromTokenAmount(amount, WETH_DECIMALS).toFixed(0))
 
+      const gasEstimate = await swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata]).estimateGas({
+        to: swapRouter2,
+        value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
+        from: address,
+      })
+
       const result = await handleTransaction(
         swapRouter2Contract?.methods.multicall([route?.methodParameters?.calldata]).send({
             to: swapRouter2,
             value: fromTokenAmount(amount, WETH_DECIMALS).toFixed(0),
             from: address,
-            gasPrice: new BigNumber(route?.gasPriceWei.toString() || 0).multipliedBy(1.2).toFixed(0),
+            gas: gasEstimate
         }),
         onTxConfirmed,
       )
