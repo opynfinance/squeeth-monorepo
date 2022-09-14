@@ -31,7 +31,7 @@ const wsLinkRP =
     ? new WebSocketLink({
         uri: 'wss://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten',
         options: {
-          reconnect: true,
+          reconnect: false,
         },
       })
     : null
@@ -41,7 +41,7 @@ const wsLinkMN =
     ? new WebSocketLink({
         uri: 'wss://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
         options: {
-          reconnect: true,
+          reconnect: false,
         },
       })
     : null
@@ -51,7 +51,7 @@ const wsLinkMN =
       ? new WebSocketLink({
           uri: 'wss://api.thegraph.com/subgraphs/name/haythem96/uniswap-v3-goerli',
           options: {
-            reconnect: true,
+            reconnect: false,
           },
         })
       : null
@@ -61,7 +61,7 @@ const wsLinkRPSqueeth =
     ? new WebSocketLink({
         uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten',
         options: {
-          reconnect: true,
+          reconnect: false,
         },
       })
     : null
@@ -71,7 +71,7 @@ const wsLinkMNSqueeth =
     ? new WebSocketLink({
         uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth',
         options: {
-          reconnect: true,
+          reconnect: false,
         },
       })
     : null
@@ -82,7 +82,7 @@ const wsLinkGLSqueeth =
     ? new WebSocketLink({
         uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth-goerli',
         options: {
-          reconnect: true,
+          reconnect: false,
         },
       })
     : null
