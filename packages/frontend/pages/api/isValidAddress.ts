@@ -20,7 +20,7 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     )
    
     if (data && data?.[0]?.rating)
-    isValidAddress = (data?.[0].rating === 'highRisk') ? false : true 
+      isValidAddress = (data?.[0].rating === 'highRisk') ? false : true 
 
     res.status(200).json({ valid: isValidAddress, madeThirdPartyConnection: true })
 
