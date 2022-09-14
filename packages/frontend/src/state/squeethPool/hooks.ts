@@ -375,7 +375,6 @@ export const useBuyForWETH = () => {
   const getBuyParamForETH = useGetBuyParamForETH()
   const buyForWETH = async (amount: BigNumber) => {
     const exactInputParam = await getBuyParamForETH(new BigNumber(amount))
-    console.log('Buy for WETH')
 
     const txHash = await handleTransaction(
       swapRouterContract?.methods.exactInputSingle(exactInputParam).send({
