@@ -66,19 +66,19 @@ const config: HardhatUserConfig = {
   defaultNetwork,
   networks: {
     hardhat: {
-      initialBaseFeePerGas: 0,
       saveDeployments: false, // only used in cicd to test deployments
       mining: {
         auto: true
       },
       forking: {
         enabled: process.env.MAINNET_FORK === 'true',
-        url: `https://eth-mainnet.alchemyapi.io/v2/${process.env.ALCHEMY_KEY}`,
+        url: `${process.env.FORK_RPC_ENDPOINT}`,
         blockNumber: 14845140
       },
       accounts: {
         accountsBalance: '1000000000000000000000000000'
       },
+      hardfork: 'merge'
     },
     localhost: {
       url: "http://localhost:8545",
