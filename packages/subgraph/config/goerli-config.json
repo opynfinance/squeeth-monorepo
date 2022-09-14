@@ -27,5 +27,7 @@
   "Timelock": "0x95A9A4A6c9F8Ca5e92a498682a91aa7821C3c0b6",
   "Timelock-start-block": 7477295,
   "WPowerPerp": "0x8899b3e3934a9D213371aBe25EE63C27e54796E0",
-  "WPowerPerp-start-block": 7475017
+  "WPowerPerp-start-block": 7475017,
+  "Quoter": "0x5a6c52810a0E0059282754E5B035a52EB15fAfC1",
+  "Quoter-start-block": 7591385
 }
