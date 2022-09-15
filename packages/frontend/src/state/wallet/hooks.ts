@@ -27,6 +27,8 @@ import { useApolloClient } from '@apollo/client'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
+import { setUserId } from '@amplitude/analytics-browser'
+import { EVENT_NAME, trackEvent } from '@utils/amplitude'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
@@ -43,6 +45,9 @@ export const useSelectWallet = () => {
           checkIsValidAddress(onboardAddress).then((valid) => {
             if (valid) {
               setAddress(onboardAddress)
+              // Analytics
+              setUserId(onboardAddress)
+              trackEvent(EVENT_NAME.WALLET_CONNECTED)
             } else {
               setWalletFailVisible(true)
             }

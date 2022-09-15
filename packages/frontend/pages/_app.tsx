@@ -27,6 +27,10 @@ import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import '@utils/amplitude'
+import { setUserId } from '@amplitude/analytics-browser'
+import { EVENT_NAME, initializeAmplitude, trackEvent } from '@utils/amplitude'
+
+initializeAmplitude()
 
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -96,6 +100,8 @@ const Init = () => {
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
         setAddress(onboardAddress)
+        setUserId(onboardAddress)
+        trackEvent(EVENT_NAME.WALLET_CONNECTED)
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
