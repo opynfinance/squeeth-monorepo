@@ -31,6 +31,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import { normFactorAtom } from 'src/state/controller/atoms'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppMemo from '@hooks/useAppMemo'
+import Link from 'next/link'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -71,9 +72,6 @@ const useStyles = makeStyles((theme) =>
     hintTitleText: {
       marginRight: '.5em',
     },
-    mintContainer: {
-      marginTop: theme.spacing(3),
-    },
     vaultCollatInfo: {
       display: 'flex',
       alignItems: 'center',
@@ -84,10 +82,22 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(0.5),
       color: theme.palette.text.secondary,
     },
+    link: {
+      color: theme.palette.primary.main,
+      marginBottom: theme.spacing(1),
+      margin: 'auto',
+      width: '300px',
+      textDecoration: 'underline'
+    },
   }),
 )
 
-const Mint: React.FC = () => {
+type MintProps = {
+  onMint: () => void
+  showManageLink?: boolean
+}
+
+export const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
   const classes = useStyles()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
@@ -96,14 +106,11 @@ const Mint: React.FC = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { loading: vaultIDLoading } = useVaultManager()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const normalizationFactor = useAtomValue(normFactorAtom)
   const openDepositAndMint = useOpenDepositAndMint()
   const getShortAmountFromDebt = useGetShortAmountFromDebt()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollat, existingCollatPercent } = useVaultData(vault)
-
-  const { dispatch } = useLPState()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))
   const [collatAmount, setCollatAmount] = useState('0')
@@ -119,7 +126,7 @@ const Mint: React.FC = () => {
     try {
       if (vaultIDLoading) return
       await openDepositAndMint(Number(vaultId), mintAmount, collatAmountBN)
-      dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
+      onMint()
     } catch (e) {
       console.log(e)
     }
@@ -146,6 +153,8 @@ const Mint: React.FC = () => {
   useAppEffect(() => {
     if (collatPercent < 150) {
       setMinCollRatioError('Minimum collateral ratio is 150%')
+    } else {
+      setMinCollRatioError('')
     }
 
     if (connected && collatAmountBN.isGreaterThan(balance ?? BIG_ZERO)) {
@@ -162,7 +171,13 @@ const Mint: React.FC = () => {
   }, [collatAmountBN, mintAmount, getCollatRatioAndLiqPrice, vault?.shortAmount])
 
   return (
-    <div className={classes.mintContainer}>
+    <div>
+      {vaultId && showManageLink ? (
+        <Typography className={classes.link} style={{ margin: 'auto' }}>
+          <Link href={`vault/${vaultId}`}>Manage Vault</Link>
+        </Typography>
+      ) : null}
+      <div style={{ marginBottom: '16px' }} />
       <PrimaryInput
         id="lp-page-mint-eth-input"
         value={collatAmount}
@@ -188,7 +203,7 @@ const Mint: React.FC = () => {
         }
         error={connected && collatAmountBN.plus(existingCollat).lt(MIN_COLLATERAL_AMOUNT)}
       />
-      <div className={classes.thirdHeading}>
+      <div className={classes.divider}>
         <TextField
           size="small"
           value={collatPercent}
@@ -260,7 +275,11 @@ const Mint: React.FC = () => {
 
 const GetSqueeth: React.FC = () => {
   const classes = useStyles()
-  const { lpState } = useLPState()
+  const { lpState, dispatch } = useLPState()
+
+  const onMint = () => {
+    dispatch({ type: LPActions.GO_TO_PROVIDE_LIQUIDITY })
+  }
 
   return (
     <>
@@ -277,10 +296,10 @@ const GetSqueeth: React.FC = () => {
             isLPage
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={true}
-            // closeTitle="Sell squeeth ERC20"
+          // closeTitle="Sell squeeth ERC20"
           />
         ) : (
-          <Mint />
+          <MintSqueeth onMint={onMint} />
         )}
       </motion.div>
     </>
