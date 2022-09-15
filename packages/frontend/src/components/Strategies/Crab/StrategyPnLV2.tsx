@@ -6,7 +6,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
 
 import { atom, useAtom, useAtomValue } from 'jotai'
-import { graphOptions } from '@constants/diagram'
+import { crabV2graphOptions } from '@constants/diagram'
 
 
 export type ChartDataInfo = {
@@ -79,10 +79,11 @@ function StrategyPnLV2() {
 
  
     const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabPnL*100 })) ;
+    const zeroSeries = [{ price: 0, color: '#9dbdba' }]
 
     const chartOptions = useAppMemo(() => {
         return {
-            ...graphOptions,
+            ...crabV2graphOptions,
             localization: {
             priceFormatter: (num: number) => num.toFixed(2) + '%',
             },
@@ -103,11 +104,12 @@ function StrategyPnLV2() {
         if (mode === ChartType.PNL)
         return [
             {
-              data: pnlSeries, legend: 'CrabV2 PNL (%) '
+              data: pnlSeries, legend: 'CrabV2 PNL (%) ', priceLines: zeroSeries
             }
         ]
     }, [  pnlSeries, mode])
 
+ 
 
     return (
         <div className={classes.container}>
