@@ -67,6 +67,8 @@ import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { getEthPriceAtHedge } from '@utils/pricer'
+import { EVENT_NAME } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -506,6 +508,8 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
+
   const flashDeposit = useAppCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !vault) return
@@ -526,13 +530,22 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
-      return await handleTransaction(
-        contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0), poolFeePercent).send({
-          from: address,
-          value: fromTokenAmount(amount, 18).toFixed(0),
-        }),
-        onTxConfirmed,
-      )
+      track(EVENT_NAME.DEPOSIT_CRAB_CLICK, { amount: amount.plus(_ethBorrow) })
+      try {
+        const tx = await handleTransaction(
+          contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0), poolFeePercent).send({
+            from: address,
+            value: fromTokenAmount(amount, 18).toFixed(0),
+          }),
+          onTxConfirmed,
+        )
+
+        track(EVENT_NAME.DEPOSIT_CRAB_SUCCESS)  
+        return tx
+      } catch (e) {
+        track(EVENT_NAME.DEPOSIT_CRAB_FAILED, {  })
+        throw e
+      }
     },
     [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
   )
@@ -618,6 +631,7 @@ export const useFlashWithdrawV2 = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
+  const { track } = useAmplitude()
 
   const flashWithdraw = useCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
@@ -628,14 +642,22 @@ export const useFlashWithdrawV2 = () => {
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
-      return await handleTransaction(
-        contract.methods
-          .flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
-          .send({
-            from: address,
-          }),
-        onTxConfirmed,
-      )
+      track(EVENT_NAME.WITHDRAW_CRAB_CLICK)
+      try {
+        const tx = await handleTransaction(
+          contract.methods
+            .flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
+            .send({
+              from: address,
+            }),
+          onTxConfirmed,
+        )
+        track(EVENT_NAME.WITHDRAW_CRAB_SUCCESS)
+        return tx
+      } catch (e) {
+        track(EVENT_NAME.WITHDRAW_CRAB_FAILED)
+        throw e
+      }
     },
     [contract, address, handleTransaction, calculateEthWillingToPay],
   )

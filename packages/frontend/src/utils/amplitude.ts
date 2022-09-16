@@ -2,6 +2,7 @@ import { init, track } from '@amplitude/analytics-browser'
 
 const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY
 
+// Should be called once before calling track event
 export const initializeAmplitude = () => {
   if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
 
@@ -18,8 +19,8 @@ export const initializeAmplitude = () => {
 }
 
 export const trackEvent = (eventName: EVENT_NAME, eventProps?: Record<string, unknown>) => {
+  console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
   if (!analyticsEnabled) {
-    console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return
   }
 
@@ -28,4 +29,10 @@ export const trackEvent = (eventName: EVENT_NAME, eventProps?: Record<string, un
 
 export enum EVENT_NAME {
   WALLET_CONNECTED = 'WALLET_CONNECTED',
+  DEPOSIT_CRAB_CLICK = 'DEPOSIT_CRAB_CLICK',
+  DEPOSIT_CRAB_SUCCESS = 'DEPOSIT_CRAB_SUCCESS',
+  DEPOSIT_CRAB_FAILED = 'DEPOSIT_CRAB_FAILED',
+  WITHDRAW_CRAB_CLICK = 'WITHDRAW_CRAB_CLICK',
+  WITHDRAW_CRAB_SUCCESS = 'WITHDRAW_CRAB_SUCCESS',
+  WITHDRAW_CRAB_FAILED = 'WITHDRAW_CRAB_FAILED',
 }

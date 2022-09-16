@@ -28,7 +28,8 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import '@utils/amplitude'
 import { setUserId } from '@amplitude/analytics-browser'
-import { EVENT_NAME, initializeAmplitude, trackEvent } from '@utils/amplitude'
+import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
 
 initializeAmplitude()
 
@@ -91,6 +92,7 @@ const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const firstAddressCheck = useRef(true)
+  const { track } = useAmplitude()
 
   useAppEffect(() => {
     if (!onboardAddress) {
@@ -101,7 +103,7 @@ const Init = () => {
       if (valid) {
         setAddress(onboardAddress)
         setUserId(onboardAddress)
-        trackEvent(EVENT_NAME.WALLET_CONNECTED)
+        track(EVENT_NAME.WALLET_CONNECTED)
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
@@ -110,7 +112,7 @@ const Init = () => {
         }
       }
     })
-  }, [onboardAddress, setAddress, setWalletFailVisible])
+  }, [onboardAddress, setAddress, setWalletFailVisible, track])
 
   useOnboard()
   useUpdateSqueethPrices()

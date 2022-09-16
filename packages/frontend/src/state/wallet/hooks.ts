@@ -28,13 +28,15 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
 import { setUserId } from '@amplitude/analytics-browser'
-import { EVENT_NAME, trackEvent } from '@utils/amplitude'
+import { EVENT_NAME } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+  const { track } = useAmplitude()
 
   const onWalletSelect = async () => {
     if (!onboard) return
@@ -47,7 +49,7 @@ export const useSelectWallet = () => {
               setAddress(onboardAddress)
               // Analytics
               setUserId(onboardAddress)
-              trackEvent(EVENT_NAME.WALLET_CONNECTED)
+              track(EVENT_NAME.WALLET_CONNECTED)
             } else {
               setWalletFailVisible(true)
             }
