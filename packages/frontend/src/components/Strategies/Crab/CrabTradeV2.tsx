@@ -45,6 +45,7 @@ import CrabPositionV2 from './CrabPositionV2'
 import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
 import { useUpdateSharesData } from 'src/state/crabMigration/hooks'
 import useAppMemo from '@hooks/useAppMemo'
+import { LinkWrapper } from '@components/LinkWrapper'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -392,8 +393,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   depositError
                     ? depositError
                     : warning
-                    ? warning
-                    : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                      ? warning
+                      : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
@@ -474,7 +475,11 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">High price impact. Try a smaller size.</Typography>
+                <Typography variant="caption">High price impact. Try smaller amount or contact us through {' '}
+                  <LinkWrapper href="https://tiny.cc/opyndiscord" >
+                    discord
+                  </LinkWrapper> about OTC
+                </Typography>
               </div>
             ) : null}
             {withdrawPriceImpactWarning && depositOption !== 0 ? (
@@ -488,7 +493,11 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">High price impact. Try a smaller size.</Typography>
+                <Typography variant="caption">High price impact. Try smaller amount or contact us through {' '}
+                  <LinkWrapper href="https://tiny.cc/opyndiscord" >
+                    discord
+                  </LinkWrapper> about OTC
+                </Typography>
               </div>
             ) : null}
             <TradeInfoItem
@@ -527,8 +536,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   Number(depositPriceImpact) > 3 || !!warning
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : depositFundingWarning || depositPriceImpactWarning
-                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                    : { marginTop: '8px' }
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
                 }
               >
                 {!txLoading && (depositFundingWarning || depositPriceImpactWarning) ? (
@@ -551,8 +560,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   Number(withdrawPriceImpact) > 3
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : withdrawFundingWarning || withdrawPriceImpactWarning
-                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                    : { marginTop: '8px' }
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
                 }
                 onClick={() => withdraw()}
                 disabled={txLoading || !!withdrawError}
