@@ -12,15 +12,18 @@ export const initializeAmplitude = () => {
       deviceModel: false,
       ipAddress: false,
       osName: true,
-      osVersion: false,
+      osVersion: true,
       platform: true,
+    },
+    attribution: {
+      trackNewCampaigns: true,
     },
   })
 }
 
 export const trackEvent = (eventName: EVENT_NAME, eventProps?: Record<string, unknown>) => {
-  console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
   if (!analyticsEnabled) {
+    console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return
   }
 
