@@ -12,7 +12,6 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
-import "hardhat/console.sol";
 
 contract CrabOTC is ReentrancyGuard, EIP712 {
     using StrategyMath for uint256;
@@ -41,6 +40,15 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         uint256 crabAmount,
         uint256 wSqueethAmount,
         uint256 depositedAmount,
+        uint256 executedPrice,
+        address trader
+    );
+
+    event WithdrawOTC(
+        address indexed depositor,
+        uint256 crabAmount,
+        uint256 ethSent,
+        uint256 wSqueethAmount,
         uint256 executedPrice,
         address trader
     );
@@ -78,15 +86,12 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
 
         _order.quantity = wSqueethQuantity;
 
-        console.log(wSqueethQuantity);
-
         uint256 neededEth = _totalEth.sub(depositedEth);
         uint256 wethAmount = _order.quantity.wmul(_order.price);
         require(wethAmount >= neededEth, "Need more ETH");
 
         IWETH9(weth).transferFrom(_order.trader, address(this), wethAmount);
         IWETH9(weth).withdraw(wethAmount);
-        console.log(_totalEth, address(this).balance);
 
         ICrabStrategyV2(crab).deposit{value: _totalEth}();
         uint256 crabAmount = IERC20(crab).balanceOf(address(this));
@@ -128,6 +133,8 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         if (excessEth > uint256(0)) {
             payable(msg.sender).sendValue(excessEth);
         }
+
+        emit WithdrawOTC(msg.sender, _crabAmount, excessEth, _order.quantity, _order.price, _order.trader);
     }
 
     /**
