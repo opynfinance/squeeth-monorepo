@@ -177,6 +177,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
   const getTypeAndDomainData = () => {
     const typeData = {
         Order: [
+            { type: "address", name: "initiator" },
             { type: "address", name: "trader" },
             { type: "uint256", name: "quantity" },
             { type: "uint256", name: "price" },
@@ -214,6 +215,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
       // and prepare the trade
       const orderHash = {
         bidId: 0,
+        initiator: depositor.address,
         trader: trader.address,
         quantity: oSqthToMint, // 0.03sqth
         price: traderPrice.toString(),
@@ -274,6 +276,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
       // and prepare the trade
       const orderHash = {
         bidId: 0,
+        initiator: depositor.address,
         trader: trader.address,
         quantity: debt_minted, // 0.03sqth
         price: traderPrice.toString(),
@@ -308,7 +311,6 @@ describe("Crab V2 integration test: Crab OTC", function () {
 
       // ensure trader gets his fair share
       // his ending balance - starting balance - sqth*price = 0
-      
     })
   })
 })

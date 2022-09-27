@@ -24,6 +24,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
     mapping(address => mapping(uint256 => bool)) public nonces;
 
     struct Order {
+        address initiator;
         address trader;
         uint256 quantity;
         uint256 price;
@@ -54,7 +55,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
     );
 
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
-        keccak256("Order(address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)");
+        keccak256("Order(address initiator,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)");
 
     constructor(address _crab) EIP712("CrabOTC", "2") {
         require(_crab != address(0), "Invalid crab address");
@@ -95,17 +96,17 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
 
         ICrabStrategyV2(crab).deposit{value: _totalEth}();
         uint256 crabAmount = IERC20(crab).balanceOf(address(this));
-        IERC20(crab).transfer(msg.sender, crabAmount);
+        IERC20(crab).transfer(_order.initiator, crabAmount);
         IERC20(wPowerPerp).transfer(_order.trader, wSqueethQuantity);
 
         uint256 excessEth = address(this).balance;
 
         if (excessEth > uint256(0)) {
             depositedEth = depositedEth.sub(excessEth);
-            payable(msg.sender).sendValue(excessEth);
+            payable(_order.initiator).sendValue(excessEth);
         }
 
-        emit DepositOTC(msg.sender, crabAmount, wSqueethQuantity, depositedEth, _order.price, _order.trader);
+        emit DepositOTC(_order.initiator, crabAmount, wSqueethQuantity, depositedEth, _order.price, _order.trader);
     }
 
     function withdraw(
@@ -119,7 +120,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         require(_order.quantity >= quantity, "Order quantity is less than needed");
         _order.quantity = quantity;
 
-        IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
+        IERC20(crab).transferFrom(_order.initiator, address(this), _crabAmount);
         IERC20(wPowerPerp).transferFrom(_order.trader, address(this), quantity);
         IERC20(wPowerPerp).approve(crab, quantity);
 
@@ -131,10 +132,10 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         uint256 excessEth = address(this).balance;
 
         if (excessEth > uint256(0)) {
-            payable(msg.sender).sendValue(excessEth);
+            payable(_order.initiator).sendValue(excessEth);
         }
 
-        emit WithdrawOTC(msg.sender, _crabAmount, excessEth, _order.quantity, _order.price, _order.trader);
+        emit WithdrawOTC(_order.initiator, _crabAmount, excessEth, _order.quantity, _order.price, _order.trader);
     }
 
     /**
@@ -165,6 +166,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_BALANCE_TYPEHASH,
+                _order.initiator,
                 _order.trader,
                 _order.quantity,
                 _order.price,
