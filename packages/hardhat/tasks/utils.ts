@@ -42,7 +42,7 @@ export const networkNameToUSDC = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
     case 'ropsten': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
-    case 'goerli': return '0xd87ba7a50b2e7e660f678a895e4b72e7cb4ccd9c'
+    case 'goerli': return '0x061Ab84aB0fE23C3fD09Cd94820f9592fc983FFB'
     default: return undefined
   }
 }
@@ -53,7 +53,7 @@ export const networkNameToWeth = (name: string) => {
     case 'mainnet': return '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
     case 'ropsten': return '0xc778417e063141139fce010982780140aa0cd5ab'
     case 'rinkebyArbitrum': return '0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681'
-    case 'goerli': return '0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6'
+    case 'goerli': return '0x71Cc058a2338Ad211AC2aFd3fCdb10F2e1bb7741'
     default: return undefined
   }
 }
