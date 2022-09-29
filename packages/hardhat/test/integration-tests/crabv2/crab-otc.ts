@@ -243,7 +243,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
       
       const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
       const cr1 = wdiv(debt1, collat1);
-      expect(cr1.toString()).eq(cr0.toString());
+      expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
 
       const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
 
@@ -258,7 +258,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
       const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
       const slippage = wmul(debt_minted, oSqthPrice.sub(traderPrice));
       expect(crab_value.toString()).to.eq('4950503080995704313');
-      expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.eq(5); //5 wei rounding error; should be zero
+      expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.eq(5); // 5 wei rounding error; should be zero
     })
     it("Should withdraw OTC",async () => {
       const start_eth_balance = await depositor.getBalance();
@@ -291,7 +291,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
 
       const { typeData, domainData } = getTypeAndDomainData();
       const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-      //await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
+      // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
       const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder);
       const gas_paid0 = await getGasPaid(tx0);
       const gas_paid = await getGasPaid(tx1);
@@ -299,14 +299,15 @@ describe("Crab V2 integration test: Crab OTC", function () {
 
       const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
       const cr1 = wdiv(debt1, collat1);
-      expect(cr0.sub(cr1).toNumber()).to.eq(1);
+      expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
 
-      //depositor should not have lost money
+
+      // depositor should not have lost money
       const ending_eth_balance = await depositor.getBalance();
       // ending eth - starting eth = crab value -slippage - gas paid
       const slippage = wmul(debt_minted, traderPrice.sub(oSqthPrice));
       const val = ending_eth_balance.sub(start_eth_balance).sub(starting_crab_value).add(slippage);
-      //expect(ending_eth_balance.sub(start_eth_balance).toString()).to.eq('4925361440493556482');
+      // expect(ending_eth_balance.sub(start_eth_balance).toString()).to.eq('4925361440493556482');
       expect(val.add(gas_paid).add(gas_paid0).toNumber()).to.eq(0);
 
       // ensure trader gets his fair share
