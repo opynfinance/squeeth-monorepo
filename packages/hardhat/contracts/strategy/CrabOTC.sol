@@ -7,13 +7,12 @@ import {ICrabStrategyV2} from "../interfaces/ICrabStrategyV2.sol";
 import {IWETH9} from "../interfaces/IWETH9.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {EIP712} from "@openzeppelin/contracts/drafts/EIP712.sol";
 import {ECDSA} from "@openzeppelin/contracts/cryptography/ECDSA.sol";
 import {StrategyMath} from "./base/StrategyMath.sol";
 
-contract CrabOTC is ReentrancyGuard, EIP712 {
+contract CrabOTC is EIP712 {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -55,7 +54,9 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
     );
 
     bytes32 private constant _CRAB_BALANCE_TYPEHASH =
-        keccak256("Order(address initiator,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)");
+        keccak256(
+            "Order(address initiator,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
+        );
 
     constructor(address _crab) EIP712("CrabOTC", "2") {
         require(_crab != address(0), "Invalid crab address");
@@ -78,7 +79,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         uint256 _totalEth,
         uint256 _minPrice,
         Order memory _order
-    ) external payable nonReentrant {
+    ) external payable {
         _verifyOrder(_order, true, _minPrice);
         uint256 depositedEth = msg.value;
 
@@ -113,7 +114,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
         uint256 _crabAmount,
         uint256 _maxPrice,
         Order memory _order
-    ) external payable nonReentrant {
+    ) external payable {
         _verifyOrder(_order, false, _maxPrice);
 
         uint256 quantity = _getDebtFromStrategyAmount(_crabAmount);
@@ -144,7 +145,7 @@ contract CrabOTC is ReentrancyGuard, EIP712 {
      * @param _nonce number that is to be traded only once
      */
     function _useNonce(address _trader, uint256 _nonce) internal {
-        require(!nonces[_trader][_nonce], "C27");
+        require(!nonces[_trader][_nonce], "Nonce already used");
         nonces[_trader][_nonce] = true;
     }
 
