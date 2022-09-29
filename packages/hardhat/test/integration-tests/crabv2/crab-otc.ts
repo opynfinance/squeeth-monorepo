@@ -257,12 +257,10 @@ describe("Crab V2 integration test: Crab OTC", function () {
 
       const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
       const slippage = wmul(debt_minted, oSqthPrice.sub(traderPrice));
-      expect(crab_value.toString()).to.eq('4950503080995704313');
-      expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.eq(5); // 5 wei rounding error; should be zero
+      expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.lt(5).to.be.gt(-5); // 5 wei rounding error; should be zero
     })
     it("Should withdraw OTC",async () => {
       const start_eth_balance = await depositor.getBalance();
-      const starting_crab_value = BigNumber.from('4950503080995704313');
 
 
       const [, , collat, debt] = await crabStrategy.getVaultDetails()
@@ -273,6 +271,8 @@ describe("Crab V2 integration test: Crab OTC", function () {
       const tx0 = await crabStrategy.connect(depositor).approve(crabOTC.address, ethers.constants.MaxUint256);
       const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
       const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
+      const startingCrabValue = wdiv(debt_minted , cr0).sub(wmul(debt_minted, oSqthPrice))
+
       // and prepare the trade
       const orderHash = {
         bidId: 0,
@@ -306,9 +306,9 @@ describe("Crab V2 integration test: Crab OTC", function () {
       const ending_eth_balance = await depositor.getBalance();
       // ending eth - starting eth = crab value -slippage - gas paid
       const slippage = wmul(debt_minted, traderPrice.sub(oSqthPrice));
-      const val = ending_eth_balance.sub(start_eth_balance).sub(starting_crab_value).add(slippage);
+      const val = ending_eth_balance.sub(start_eth_balance).sub(startingCrabValue).add(slippage);
       // expect(ending_eth_balance.sub(start_eth_balance).toString()).to.eq('4925361440493556482');
-      expect(val.add(gas_paid).add(gas_paid0).toNumber()).to.eq(0);
+      expect(val.add(gas_paid).add(gas_paid0).toNumber()).to.lt(5).to.be.gt(-5);
 
       // ensure trader gets his fair share
       // his ending balance - starting balance - sqth*price = 0
