@@ -53,6 +53,17 @@ export const crabV2graphOptions = {
     mode: 0,
     borderVisible: true,
     borderColor: '#878686',
+    position: 'none'
+  },
+  rightPriceScale: {
+    visible: true,
+    borderColor: 'rgba(197, 203, 206, 1)',
+    mode: 1,
+  },
+  leftPriceScale: {
+    visible: true,
+    borderColor: 'rgba(197, 203, 206, 1)',
+    mode: 0,
   },
   timeScale: {
     rightOffset: 5,

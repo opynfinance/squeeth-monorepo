@@ -12,6 +12,9 @@ import { crabV2graphOptions } from '@constants/diagram'
 export type ChartDataInfo = {
     timestamp: number
     crabPnL: number
+    crabEth: number
+    crabUsd: number
+    ethUsd: number
   }
 
 
@@ -79,6 +82,9 @@ function StrategyPnLV2() {
 
  
     const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabPnL*100 })) ;
+    const crabEthSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabEth })) ;
+    const crabUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabUsd })) ;
+    const ethUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.ethUsd })) ;
     const zeroSeries = [{ price: 0, color: '#9dbdba' }]
 
     const chartOptions = useAppMemo(() => {
@@ -99,15 +105,22 @@ function StrategyPnLV2() {
 
     // plot line data
     const lineSeries = useAppMemo(() => {
-        if ( !pnlSeries || pnlSeries.length === 0) return
+        if ( !ethUsdSeries || !pnlSeries || pnlSeries.length === 0 || !crabUsdSeries || !crabEthSeries ) return
 
         if (mode === ChartType.PNL)
         return [
-            {
-              data: pnlSeries, legend: 'CrabV2 PNL (%) ', priceLines: zeroSeries
-            }
+            { data: ethUsdSeries, legend: 'ETH/USD', options: {
+              priceScaleId: "left"
+            } },
+            // {
+            //   data: pnlSeries, legend: 'CrabV2 PNL (%) ', priceLines: zeroSeries
+            // },
+            // { data: crabEthSeries, legend: 'CRAB/ETH' },
+            { data: crabUsdSeries, legend: 'CRAB/USD', options: {
+              priceScaleId: "left"
+            } }
         ]
-    }, [  pnlSeries, mode])
+    }, [  pnlSeries, mode, crabEthSeries,crabUsdSeries,ethUsdSeries ])
 
  
 
