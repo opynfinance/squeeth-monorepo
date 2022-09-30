@@ -88,9 +88,8 @@ contract CrabOTC is EIP712 {
 
         _order.quantity = wSqueethQuantity;
 
-        uint256 neededEth = _totalEth.sub(depositedEth);
         uint256 wethAmount = _order.quantity.wmul(_order.price);
-        require(wethAmount >= neededEth, "Need more ETH");
+        require(wethAmount >= _totalEth.sub(depositedEth), "Need more ETH");
 
         IWETH9(weth).transferFrom(_order.trader, address(this), wethAmount);
         IWETH9(weth).withdraw(wethAmount);
@@ -154,6 +153,7 @@ contract CrabOTC is EIP712 {
         bool _isDeposit,
         uint256 _limitPrice
     ) internal {
+        require(_order.initiator == msg.sender, "Initiator should be the sender");
         if (_isDeposit) {
             require(_order.isBuying, "Should be a buy order");
             require(_order.price >= _limitPrice, "Price lower than limit price");

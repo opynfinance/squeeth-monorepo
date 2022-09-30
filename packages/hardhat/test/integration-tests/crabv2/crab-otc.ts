@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import { ethers, network } from "hardhat"
 import { expect } from "chai";
 import { Contract, BigNumber, providers } from "ethers";
@@ -195,123 +196,156 @@ describe("Crab V2 integration test: Crab OTC", function () {
     return { typeData, domainData };
   };
 
+  it("Should fail if non initiator executed the tx" , async () => {
+    const start_eth_balance = await depositor.getBalance();
+
+    const [, , collat, debt] = await crabStrategy.getVaultDetails()
+    const cr0 = wdiv(debt, collat)
+
+    const oSqthPrice = await getOSQTHPrice()
+    const traderPrice = oSqthPrice.mul(1005).div(1000) // .5%
+    await crabStrategy.connect(depositor).approve(crabOTC.address, ethers.constants.MaxUint256);
+    const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
+    const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
+    const startingCrabValue = wdiv(debt_minted , cr0).sub(wmul(debt_minted, oSqthPrice))
+
+    // and prepare the trade
+    const orderHash = {
+      bidId: 0,
+      initiator: depositor.address,
+      trader: trader.address,
+      quantity: debt_minted, // 0.03sqth
+      price: traderPrice.toString(),
+      isBuying: false,
+      expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+      nonce: 2
+    };
+
+    // Mint and Approve oSQTH
+    await controller.connect(trader).mintWPowerPerpAmount("0", debt_minted, "0", { value:  ethers.utils.parseUnits('100000000')});
+    await wSqueeth.connect(trader).approve(crabOTC.address, ethers.constants.MaxUint256)
+
+    const { typeData, domainData } = getTypeAndDomainData();
+    const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+    // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
+    await expect(crabOTC.connect(trader).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.be.reverted
+  })
 
 
-  describe("Deposit", () => {
-    it("Should deposit OTC",async () => {
-      const start_eth_balance = await depositor.getBalance();
-      const ethToDeposit = ethers.utils.parseEther('5')
-      const oSqthPrice = await getOSQTHPrice()
-      const limitPrice = oSqthPrice.mul(99).div(100) // 1%
+  it("Should deposit OTC",async () => {
+    const start_eth_balance = await depositor.getBalance();
+    const ethToDeposit = ethers.utils.parseEther('5')
+    const oSqthPrice = await getOSQTHPrice()
+    const limitPrice = oSqthPrice.mul(99).div(100) // 1%
 
-      const [, , collat, debt] = await crabStrategy.getVaultDetails()
-      const cr0 = wdiv(debt, collat)
+    const [, , collat, debt] = await crabStrategy.getVaultDetails()
+    const cr0 = wdiv(debt, collat)
 
-      const oSqthToMint = wdiv(debt.sub(wmul(cr0, collat)).sub(wmul(cr0, ethToDeposit)), wmul(cr0, limitPrice).sub(one))
-      const neededETH = wdiv(oSqthToMint, cr0)
+    const oSqthToMint = wdiv(debt.sub(wmul(cr0, collat)).sub(wmul(cr0, ethToDeposit)), wmul(cr0, limitPrice).sub(one))
+    const neededETH = wdiv(oSqthToMint, cr0)
 
 
-      const traderPrice = oSqthPrice.mul(995).div(1000) // .5%
-      // and prepare the trade
-      const orderHash = {
-        bidId: 0,
-        initiator: depositor.address,
-        trader: trader.address,
-        quantity: oSqthToMint, // 0.03sqth
-        price: traderPrice.toString(),
-        isBuying: true,
-        expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
-        nonce: 1
-      };
+    const traderPrice = oSqthPrice.mul(995).div(1000) // .5%
+    // and prepare the trade
+    const orderHash = {
+      bidId: 0,
+      initiator: depositor.address,
+      trader: trader.address,
+      quantity: oSqthToMint, // 0.03sqth
+      price: traderPrice.toString(),
+      isBuying: true,
+      expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+      nonce: 1
+    };
 
-      // Mint and Approve WETH
-      await weth.connect(trader).deposit({
-        value: wmul(oSqthToMint, traderPrice),
-      })
-
-      await weth.connect(trader).approve(crabOTC.address, ethers.constants.MaxUint256)
-
-      const { typeData, domainData } = getTypeAndDomainData();
-      const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-
-      console.log('Osqth to mint:', oSqthToMint.toString(), 'CR0:',cr0.toString(), 'Osqth Price:',oSqthPrice.toString(), 'Collat:', collat.toString(), 'Debt:',debt.toString(), 'Limit price:', limitPrice.toString())
-
-      const tx1 = await crabOTC.connect(depositor).deposit(neededETH, limitPrice, signedOrder, {
-        value: ethToDeposit
-      })
-      const gas_paid = await getGasPaid(tx1);
-      
-      const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
-      const cr1 = wdiv(debt1, collat1);
-      expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
-
-      const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
-
-      // ensure user is not loosing money
-      // balance before = eth balance after + crab value + slippage lost + gazzzz
-      const final_eth_balance = await depositor.getBalance();
-      const eth_spent = start_eth_balance.sub(final_eth_balance);
-      const totalSupply = await crabStrategy.totalSupply();
-      const crab_share = wdiv(collat1.sub(wmul(debt1, oSqthPrice)), totalSupply)
-      const crab_value = wmul(crab_share, deposit_crab_after);
-
-      const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
-      const slippage = wmul(debt_minted, oSqthPrice.sub(traderPrice));
-      expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.lt(5).to.be.gt(-5); // 5 wei rounding error; should be zero
+    // Mint and Approve WETH
+    await weth.connect(trader).deposit({
+      value: wmul(oSqthToMint, traderPrice),
     })
-    it("Should withdraw OTC",async () => {
-      const start_eth_balance = await depositor.getBalance();
 
+    await weth.connect(trader).approve(crabOTC.address, ethers.constants.MaxUint256)
 
-      const [, , collat, debt] = await crabStrategy.getVaultDetails()
-      const cr0 = wdiv(debt, collat)
+    const { typeData, domainData } = getTypeAndDomainData();
+    const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
 
-      const oSqthPrice = await getOSQTHPrice()
-      const traderPrice = oSqthPrice.mul(1005).div(1000) // .5%
-      const tx0 = await crabStrategy.connect(depositor).approve(crabOTC.address, ethers.constants.MaxUint256);
-      const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
-      const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
-      const startingCrabValue = wdiv(debt_minted , cr0).sub(wmul(debt_minted, oSqthPrice))
+    console.log('Osqth to mint:', oSqthToMint.toString(), 'CR0:',cr0.toString(), 'Osqth Price:',oSqthPrice.toString(), 'Collat:', collat.toString(), 'Debt:',debt.toString(), 'Limit price:', limitPrice.toString())
 
-      // and prepare the trade
-      const orderHash = {
-        bidId: 0,
-        initiator: depositor.address,
-        trader: trader.address,
-        quantity: debt_minted, // 0.03sqth
-        price: traderPrice.toString(),
-        isBuying: false,
-        expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
-        nonce: 2
-      };
-
-      // Mint and Approve oSQTH
-      await controller.connect(trader).mintWPowerPerpAmount("0", debt_minted, "0", { value:  ethers.utils.parseUnits('100000000')});
-      await wSqueeth.connect(trader).approve(crabOTC.address, ethers.constants.MaxUint256)
-
-      const { typeData, domainData } = getTypeAndDomainData();
-      const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
-      // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
-      const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder);
-      const gas_paid0 = await getGasPaid(tx0);
-      const gas_paid = await getGasPaid(tx1);
-
-
-      const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
-      const cr1 = wdiv(debt1, collat1);
-      expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
-
-
-      // depositor should not have lost money
-      const ending_eth_balance = await depositor.getBalance();
-      // ending eth - starting eth = crab value -slippage - gas paid
-      const slippage = wmul(debt_minted, traderPrice.sub(oSqthPrice));
-      const val = ending_eth_balance.sub(start_eth_balance).sub(startingCrabValue).add(slippage);
-      // expect(ending_eth_balance.sub(start_eth_balance).toString()).to.eq('4925361440493556482');
-      expect(val.add(gas_paid).add(gas_paid0).toNumber()).to.lt(5).to.be.gt(-5);
-
-      // ensure trader gets his fair share
-      // his ending balance - starting balance - sqth*price = 0
+    const tx1 = await crabOTC.connect(depositor).deposit(neededETH, limitPrice, signedOrder, {
+      value: ethToDeposit
     })
+    const gas_paid = await getGasPaid(tx1);
+    
+    const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
+    const cr1 = wdiv(debt1, collat1);
+    expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
+
+    const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
+
+    // ensure user is not loosing money
+    // balance before = eth balance after + crab value + slippage lost + gazzzz
+    const final_eth_balance = await depositor.getBalance();
+    const eth_spent = start_eth_balance.sub(final_eth_balance);
+    const totalSupply = await crabStrategy.totalSupply();
+    const crab_share = wdiv(collat1.sub(wmul(debt1, oSqthPrice)), totalSupply)
+    const crab_value = wmul(crab_share, deposit_crab_after);
+
+    const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
+    const slippage = wmul(debt_minted, oSqthPrice.sub(traderPrice));
+    expect(eth_spent.sub(crab_value).sub(slippage).sub(gas_paid)).to.lt(5).to.be.gt(-5); // 5 wei rounding error; should be zero
+  })
+
+
+  it("Should withdraw OTC",async () => {
+    const start_eth_balance = await depositor.getBalance();
+
+    const [, , collat, debt] = await crabStrategy.getVaultDetails()
+    const cr0 = wdiv(debt, collat)
+
+    const oSqthPrice = await getOSQTHPrice()
+    const traderPrice = oSqthPrice.mul(1005).div(1000) // .5%
+    const tx0 = await crabStrategy.connect(depositor).approve(crabOTC.address, ethers.constants.MaxUint256);
+    const deposit_crab_after = await crabStrategy.connect(depositor).balanceOf(depositor.address);
+    const debt_minted = await crabStrategy.getWsqueethFromCrabAmount(deposit_crab_after);
+    const startingCrabValue = wdiv(debt_minted , cr0).sub(wmul(debt_minted, oSqthPrice))
+
+    // and prepare the trade
+    const orderHash = {
+      bidId: 0,
+      initiator: depositor.address,
+      trader: trader.address,
+      quantity: debt_minted, // 0.03sqth
+      price: traderPrice.toString(),
+      isBuying: false,
+      expiry: (await provider.getBlock(await provider.getBlockNumber())).timestamp + 600,
+      nonce: 2
+    };
+
+    // Mint and Approve oSQTH
+    await controller.connect(trader).mintWPowerPerpAmount("0", debt_minted, "0", { value:  ethers.utils.parseUnits('100000000')});
+    await wSqueeth.connect(trader).approve(crabOTC.address, ethers.constants.MaxUint256)
+
+    const { typeData, domainData } = getTypeAndDomainData();
+    const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
+    // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
+    const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder);
+    const gas_paid0 = await getGasPaid(tx0);
+    const gas_paid = await getGasPaid(tx1);
+
+
+    const [, , collat1, debt1] = await crabStrategy.getVaultDetails();
+    const cr1 = wdiv(debt1, collat1);
+    expect(cr1.sub(cr0).toNumber()).to.be.lt(2).to.be.gt(-2)
+
+
+    // depositor should not have lost money
+    const ending_eth_balance = await depositor.getBalance();
+    // ending eth - starting eth = crab value -slippage - gas paid
+    const slippage = wmul(debt_minted, traderPrice.sub(oSqthPrice));
+    const val = ending_eth_balance.sub(start_eth_balance).sub(startingCrabValue).add(slippage);
+    // expect(ending_eth_balance.sub(start_eth_balance).toString()).to.eq('4925361440493556482');
+    expect(val.add(gas_paid).add(gas_paid0).toNumber()).to.lt(5).to.be.gt(-5);
+
+    // ensure trader gets his fair share
+    // his ending balance - starting balance - sqth*price = 0
   })
 })
