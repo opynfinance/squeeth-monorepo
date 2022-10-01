@@ -1,4 +1,3 @@
-import Announcement from '@components/Announcement'
 import ConnectWallet from '@pages/positions/ConnectWallet'
 import Positions from '@pages/positions/Positions'
 import { useAtomValue } from 'jotai'
@@ -11,7 +10,6 @@ const PositionsPage = () => {
   if (address && supportedNetwork)
     return (
       <>
-        <Announcement />
         <Positions />
       </>
     )

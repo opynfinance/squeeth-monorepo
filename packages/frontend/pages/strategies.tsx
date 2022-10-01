@@ -44,7 +44,6 @@ import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 import { StrategyPnLV2 } from '@components/Strategies/Crab/StrategyPnLV2'
-import Announcement from '@components/Announcement'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -220,7 +219,6 @@ const Strategies: React.FC = () => {
 
   return (
     <div>
-      <Announcement />
       <div id="rain"></div>
       <Nav />
       <div className={classes.container}>

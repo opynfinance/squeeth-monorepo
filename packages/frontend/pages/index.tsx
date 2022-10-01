@@ -46,7 +46,6 @@ import {
   transactionLoadingAtom,
   supportedNetworkAtom,
 } from 'src/state/wallet/atoms'
-import Announcement from '@components/Announcement'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -635,7 +634,6 @@ function TradePage() {
 export function App() {
   return (
     <>
-      <Announcement />
       <TradePage />
     </>
   )
