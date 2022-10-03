@@ -7,11 +7,16 @@ import { useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
 
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { crabV2graphOptions } from '@constants/diagram'
+import HighchartsReact from "highcharts-react-official"
+import Highcharts from "highcharts/highstock"
 
 
 export type ChartDataInfo = {
     timestamp: number
     crabPnL: number
+    crabEth: number
+    crabUsd: number
+    ethUsd: number
   }
 
 
@@ -63,7 +68,6 @@ const useStyles = makeStyles((theme) =>
       },
   }),
 )
-const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
 const modeAtom = atom<ChartType>((get) => {
     const tradeType = get(chartTradeTypeAtom)
@@ -78,36 +82,60 @@ function StrategyPnLV2() {
     const query = useCrabPnLV2ChartData()
 
  
-    const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ({ time: x.timestamp, value:x.crabPnL*100 })) ;
+    const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabPnL*100 ])) ;
+    const crabEthSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabEth ])) ;
+    const crabUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabUsd ])) ;
+    const ethUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.ethUsd ])) ;
     const zeroSeries = [{ price: 0, color: '#9dbdba' }]
 
-    const chartOptions = useAppMemo(() => {
-        return {
-            ...crabV2graphOptions,
-            localization: {
-            priceFormatter: (num: number) => num.toFixed(2) + '%',
-            },
+
+    const options = {
+      chart: {
+       // backgroundColor: 'transparent',
+        zoomType: 'xy',
+
+      },
+      title: {
+        text: ''
+      },
+      xAxis: {
+        type: 'datetime'
+      },
+      yAxis: [{ //--- Left yAxis
+        title: {
+            text: ''
         }
-        
-    })
-
-    const startTimestamp = useAppMemo(() => (pnlSeries && pnlSeries.length > 0 ? pnlSeries[0].time : 0), [pnlSeries])
-    const endTimestamp = useAppMemo(
-        () => (pnlSeries && pnlSeries.length > 0 ? pnlSeries[pnlSeries.length - 1].time : 0),
-        [pnlSeries],
-    )
-
-    // plot line data
-    const lineSeries = useAppMemo(() => {
-        if ( !pnlSeries || pnlSeries.length === 0) return
-
-        if (mode === ChartType.PNL)
-        return [
-            {
-              data: pnlSeries, legend: 'CrabV2 PNL (%) ', priceLines: zeroSeries
-            }
-        ]
-    }, [  pnlSeries, mode])
+     }, { //--- Right yAxis
+        title: {
+            text: ''
+        },
+        opposite: true
+      }],
+      
+      series: [{
+        type: 'area',
+        name: 'PnL',
+        yAxis: 1,
+        data: pnlSeries,
+      }
+      ,{
+        yAxis: 1,
+        name: 'Crab/Eth',
+        data: crabEthSeries
+      },
+      {
+        yAxis: 0,
+        name: 'Crab/Usd',
+        data: crabUsdSeries
+      }
+      ,{
+        yAxis: 0,
+        name: 'Eth/Usd',
+        data: ethUsdSeries
+      }
+    ]
+    
+  }
 
  
 
@@ -122,17 +150,8 @@ function StrategyPnLV2() {
 
         <div className={classes.payoffContainer} style={{ maxHeight: 'none' }}>
             <div style={{ flex: '1 1 0', marginTop: '8px' }}>
-                {lineSeries ? (
-                <Chart
-                    from={startTimestamp}
-                    to={endTimestamp}
-                    legend={mode}
-                    options={chartOptions}
-                    lineSeries={lineSeries}
-                    autoWidth
-                    height={300}
-                    darkTheme
-                />
+                {pnlSeries ? (
+                <HighchartsReact highcharts={Highcharts} options={options}  />
                 ) : (
                 <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
                     <CircularProgress size={40} color="secondary" />
