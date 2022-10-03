@@ -228,7 +228,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
     const { typeData, domainData } = getTypeAndDomainData();
     const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
     // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
-    await expect(crabOTC.connect(trader).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.be.reverted
+    await expect(crabOTC.connect(trader).withdraw(deposit_crab_after, signedOrder)).to.be.reverted
   })
 
 
@@ -270,7 +270,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
 
     console.log('Osqth to mint:', oSqthToMint.toString(), 'CR0:',cr0.toString(), 'Osqth Price:',oSqthPrice.toString(), 'Collat:', collat.toString(), 'Debt:',debt.toString(), 'Limit price:', limitPrice.toString())
 
-    const tx1 = await crabOTC.connect(depositor).deposit(neededETH, limitPrice, signedOrder, {
+    const tx1 = await crabOTC.connect(depositor).deposit(neededETH, signedOrder, {
       value: ethToDeposit
     })
     const gas_paid = await getGasPaid(tx1);
@@ -327,7 +327,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
     const { typeData, domainData } = getTypeAndDomainData();
     const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
     // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
-    const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder);
+    const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, signedOrder);
     const gas_paid0 = await getGasPaid(tx0);
     const gas_paid = await getGasPaid(tx1);
 

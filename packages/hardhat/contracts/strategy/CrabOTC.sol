@@ -65,6 +65,7 @@ contract CrabOTC is EIP712 {
         weth = ICrabStrategyV2(_crab).weth();
         controller = ICrabStrategyV2(_crab).powerTokenController();
         wPowerPerp = ICrabStrategyV2(_crab).wPowerPerp();
+        IERC20(ICrabStrategyV2(_crab).wPowerPerp()).approve(_crab, type(uint256).max);
     }
 
     /**
@@ -75,21 +76,21 @@ contract CrabOTC is EIP712 {
         nonces[msg.sender][_nonce] = true;
     }
 
-    function deposit(
-        uint256 _totalEth,
-        uint256 _minPrice,
-        Order memory _order
-    ) external payable {
-        _verifyOrder(_order, true, _minPrice);
+    /**
+     * @dev Deposit into strategy by selling the minted oSqth
+     * @param _totalEth Total amount of ETH to deposit value + eth from selling minted oSqth
+     * @param _order A signed order to swap the tokens
+     */
+    function deposit(uint256 _totalEth, Order memory _order) external payable {
+        _verifyOrder(_order);
+        require(_order.isBuying, "Should be a buy order");
+
         uint256 depositedEth = msg.value;
 
         uint256 wSqueethQuantity = _getWSqueethToMint(_totalEth);
         require(_order.quantity >= wSqueethQuantity, "Order quantity is less than needed");
 
-        _order.quantity = wSqueethQuantity;
-
-        uint256 wethAmount = _order.quantity.wmul(_order.price);
-        require(wethAmount >= _totalEth.sub(depositedEth), "Need more ETH");
+        uint256 wethAmount = wSqueethQuantity.wmul(_order.price);
 
         IWETH9(weth).transferFrom(_order.trader, address(this), wethAmount);
         IWETH9(weth).withdraw(wethAmount);
@@ -109,33 +110,34 @@ contract CrabOTC is EIP712 {
         emit DepositOTC(_order.initiator, crabAmount, wSqueethQuantity, depositedEth, _order.price, _order.trader);
     }
 
-    function withdraw(
-        uint256 _crabAmount,
-        uint256 _maxPrice,
-        Order memory _order
-    ) external payable {
-        _verifyOrder(_order, false, _maxPrice);
+    /**
+     * @dev Withdraw from strategy by buying osqth
+     * @param _crabAmount Amount of crab to withdraw
+     * @param _order A signed order to swap the tokens
+     */
+    function withdraw(uint256 _crabAmount, Order memory _order) external payable {
+        _verifyOrder(_order);
+        require(!_order.isBuying, "Should be a sell order");
 
         uint256 quantity = _getDebtFromStrategyAmount(_crabAmount);
         require(_order.quantity >= quantity, "Order quantity is less than needed");
-        _order.quantity = quantity;
 
         IERC20(crab).transferFrom(_order.initiator, address(this), _crabAmount);
         IERC20(wPowerPerp).transferFrom(_order.trader, address(this), quantity);
-        IERC20(wPowerPerp).approve(crab, quantity);
 
         ICrabStrategyV2(crab).withdraw(_crabAmount);
 
         uint256 ethToPay = quantity.wmul(_order.price);
-        payable(_order.trader).sendValue(ethToPay);
+        IWETH9(weth).deposit{value: ethToPay}();
+        IWETH9(weth).transfer(_order.trader, ethToPay);
 
-        uint256 excessEth = address(this).balance;
+        uint256 _withdrawAmount = address(this).balance;
 
-        if (excessEth > uint256(0)) {
-            payable(_order.initiator).sendValue(excessEth);
+        if (_withdrawAmount > uint256(0)) {
+            payable(_order.initiator).sendValue(_withdrawAmount);
         }
 
-        emit WithdrawOTC(_order.initiator, _crabAmount, excessEth, _order.quantity, _order.price, _order.trader);
+        emit WithdrawOTC(_order.initiator, _crabAmount, _withdrawAmount, quantity, _order.price, _order.trader);
     }
 
     /**
@@ -148,19 +150,12 @@ contract CrabOTC is EIP712 {
         nonces[_trader][_nonce] = true;
     }
 
-    function _verifyOrder(
-        Order memory _order,
-        bool _isDeposit,
-        uint256 _limitPrice
-    ) internal {
+    /**
+     * @dev Check if the order is valid or not
+     * @param _order A signed order to swap the tokens
+     */
+    function _verifyOrder(Order memory _order) internal {
         require(_order.initiator == msg.sender, "Initiator should be the sender");
-        if (_isDeposit) {
-            require(_order.isBuying, "Should be a buy order");
-            require(_order.price >= _limitPrice, "Price lower than limit price");
-        } else {
-            require(!_order.isBuying, "Should be a sell order");
-            require(_order.price <= _limitPrice, "Price greater than limit price");
-        }
 
         _useNonce(_order.trader, _order.nonce);
 
@@ -183,6 +178,10 @@ contract CrabOTC is EIP712 {
         require(_order.expiry >= block.timestamp, "Order has expired");
     }
 
+    /**
+     * @dev For the given amount of eth, gives the wsqueeth to mint
+     * @param _ethToDeposit Amount of ETH to deposit
+     */
     function _getWSqueethToMint(uint256 _ethToDeposit) internal view returns (uint256) {
         (, , uint256 collatAmount, uint256 shortAmount) = ICrabStrategyV2(crab).getVaultDetails();
 
