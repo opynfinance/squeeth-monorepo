@@ -90,8 +90,11 @@ function StrategyPnLV2() {
 
 
     const options = {
+      lang: {
+        thousandsSep: ','
+      },
       chart: {
-       // backgroundColor: 'transparent',
+         backgroundColor: 'none',
         zoomType: 'xy',
 
       },
@@ -99,44 +102,97 @@ function StrategyPnLV2() {
         text: ''
       },
       legend: {
-        enabled: true
+        enabled: true,
+        itemMarginTop: 10,
+        backgroundColor: '#343738',
+        borderRadius: 10,
+        itemStyle: {
+          "color": "#BABBBB"
+        }
       },
       xAxis: {
-        type: 'datetime'
+        type: 'datetime',
+        tickWidth: 0,
+        lineWidth: 0,
+        showFirstLabel: true,
+        showLastLabel: true,
+        startOnTick: true,
+        crosshair: {
+            color: '#999'
+        },
+        labels: {
+          style: {
+            color: '#BABBBB'
+          }
+        }
       },
       yAxis: [{ //--- Left yAxis
         title: {
             text: ''
-        }
+        },
+        labels: {
+          style: {
+            color: '#BABBBB'
+          },
+         
+        },
+        gridLineColor: 'rgba(221,221,221,0.1)',
+   
      }, { //--- Right yAxis
         title: {
             text: ''
         },
-       // opposite: true
+        labels: {
+          style: {
+            color: '#BABBBB'
+          }
+        },
+        gridLineColor: 'rgba(221,221,221,0.1)',
+        opposite: true
       }],
       
       series: [{
-        type: 'area',
+        // type: 'spline',
         name: 'PnL',
         yAxis: 1,
         data: pnlSeries,
+        tooltip: {
+          valueDecimals: 4,
+        },
       }
       ,{
         yAxis: 1,
         name: 'Crab/Eth',
-        data: crabEthSeries
+        data: crabEthSeries,
+        tooltip: {
+          valueDecimals: 4
+        },
+        color: "#F5B7B1"
       },
       {
         yAxis: 0,
         name: 'Crab/Usd',
-        data: crabUsdSeries
+        data: crabUsdSeries,
+        tooltip: {
+          valueDecimals: 2
+        },
+        color: "#21618C"
       }
       ,{
         yAxis: 0,
         name: 'Eth/Usd',
-        data: ethUsdSeries
+        data: ethUsdSeries,
+        tooltip: {
+          valueDecimals: 2
+        },
       }
-    ]
+    ],
+    credits: {
+      enabled: false
+    },
+    exporting: {
+      enabled: true
+  },
     
   }
 
@@ -154,7 +210,8 @@ function StrategyPnLV2() {
         <div className={classes.payoffContainer} style={{ maxHeight: 'none' }}>
             <div style={{ flex: '1 1 0', marginTop: '8px' }}>
                 {pnlSeries ? (
-                <HighchartsReact highcharts={Highcharts} options={options} constructorType = { 'stockChart' } />
+                <HighchartsReact highcharts={Highcharts} options={options}  />
+                // <HighchartsReact highcharts={Highcharts} options={options} constructorType = { 'stockChart' } />
                 ) : (
                 <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
                     <CircularProgress size={40} color="secondary" />
