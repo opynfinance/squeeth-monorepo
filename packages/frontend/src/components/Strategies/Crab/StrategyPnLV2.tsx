@@ -82,10 +82,10 @@ function StrategyPnLV2() {
     const query = useCrabPnLV2ChartData()
 
  
-    const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabPnL*100 ])) ;
-    const crabEthSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabEth ])) ;
-    const crabUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.crabUsd ])) ;
-    const ethUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp, x.ethUsd ])) ;
+    const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabPnL*100 ])) ;
+    const crabEthSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEth ])) ;
+    const crabUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabUsd ])) ;
+    const ethUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsd ])) ;
     const zeroSeries = [{ price: 0, color: '#9dbdba' }]
 
 
@@ -98,6 +98,9 @@ function StrategyPnLV2() {
       title: {
         text: ''
       },
+      legend: {
+        enabled: true
+      },
       xAxis: {
         type: 'datetime'
       },
@@ -109,7 +112,7 @@ function StrategyPnLV2() {
         title: {
             text: ''
         },
-        opposite: true
+       // opposite: true
       }],
       
       series: [{
@@ -151,7 +154,7 @@ function StrategyPnLV2() {
         <div className={classes.payoffContainer} style={{ maxHeight: 'none' }}>
             <div style={{ flex: '1 1 0', marginTop: '8px' }}>
                 {pnlSeries ? (
-                <HighchartsReact highcharts={Highcharts} options={options}  />
+                <HighchartsReact highcharts={Highcharts} options={options} constructorType = { 'stockChart' } />
                 ) : (
                 <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
                     <CircularProgress size={40} color="secondary" />
