@@ -228,7 +228,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
     const { typeData, domainData } = getTypeAndDomainData();
     const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
     // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
-    await expect(crabOTC.connect(trader).withdraw(deposit_crab_after, signedOrder)).to.be.reverted
+    await expect(crabOTC.connect(trader).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.be.reverted
   })
 
 
@@ -241,8 +241,8 @@ describe("Crab V2 integration test: Crab OTC", function () {
     const [, , collat, debt] = await crabStrategy.getVaultDetails()
     const cr0 = wdiv(debt, collat)
 
-    const oSqthToMint = wdiv(debt.sub(wmul(cr0, collat)).sub(wmul(cr0, ethToDeposit)), wmul(cr0, limitPrice).sub(one))
-    const neededETH = wdiv(oSqthToMint, cr0)
+    const neededETH = wdiv(ethToDeposit, one.sub(wdiv(wmul(debt, limitPrice), collat))) // wdiv(oSqthToMint, cr0)
+    const oSqthToMint = wdiv(wmul(neededETH, debt), collat)
 
 
     const traderPrice = oSqthPrice.mul(995).div(1000) // .5%
@@ -327,7 +327,7 @@ describe("Crab V2 integration test: Crab OTC", function () {
     const { typeData, domainData } = getTypeAndDomainData();
     const signedOrder = await signTypedData(trader, domainData, typeData, orderHash);
     // await expect(crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder)).to.emit(crabOTC, "WithdrawOTC")
-    const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, signedOrder);
+    const tx1 = await crabOTC.connect(depositor).withdraw(deposit_crab_after, traderPrice, signedOrder);
     const gas_paid0 = await getGasPaid(tx0);
     const gas_paid = await getGasPaid(tx1);
 

@@ -220,3 +220,25 @@ dataSources:
         - event: DepositV1Shares(indexed address,uint256)
           handler: handleDepositV1Shares
       file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabOTC
+    network: {{network}}
+    source:
+      address: "{{CrabOTC}}"
+      abi: CrabOTC
+      startBlock: {{CrabOTC-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabOTC
+          file: ./abis/CrabOTC.json
+      eventHandlers:
+        - event: DepositOTC(indexed address,uint256,uint256,uint256,uint256,address)
+          handler: handleDepositOTC
+        - event: WithdrawOTC(indexed address,uint256,uint256,uint256,uint256,address)
+          handler: handleWithdrawOTC
+      file: ./src/crabV2.ts

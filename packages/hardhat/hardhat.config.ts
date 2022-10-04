@@ -101,9 +101,10 @@ const config: HardhatUserConfig = {
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts: {
-        mnemonic: mnemonic(),
-      },
+      // accounts: {
+      //   mnemonic: mnemonic(),
+      // },
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : { mnemonic: mnemonic() }
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)

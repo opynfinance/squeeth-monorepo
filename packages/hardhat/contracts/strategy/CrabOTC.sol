@@ -88,7 +88,7 @@ contract CrabOTC is EIP712 {
         uint256 depositedEth = msg.value;
 
         uint256 wSqueethQuantity = _getWSqueethToMint(_totalEth);
-        require(_order.quantity >= wSqueethQuantity, "Order quantity is less than needed");
+        require(_order.quantity == wSqueethQuantity, "Order quantity is not same");
 
         uint256 wethAmount = wSqueethQuantity.wmul(_order.price);
 
@@ -115,12 +115,17 @@ contract CrabOTC is EIP712 {
      * @param _crabAmount Amount of crab to withdraw
      * @param _order A signed order to swap the tokens
      */
-    function withdraw(uint256 _crabAmount, Order memory _order) external payable {
+    function withdraw(
+        uint256 _crabAmount,
+        uint256 _maxPrice,
+        Order memory _order
+    ) external payable {
         _verifyOrder(_order);
         require(!_order.isBuying, "Should be a sell order");
 
         uint256 quantity = _getDebtFromStrategyAmount(_crabAmount);
-        require(_order.quantity >= quantity, "Order quantity is less than needed");
+        require(_order.quantity == quantity, "Order quantity is not same");
+        require(_order.price <= _maxPrice, "Order price is greater than max Price");
 
         IERC20(crab).transferFrom(_order.initiator, address(this), _crabAmount);
         IERC20(wPowerPerp).transferFrom(_order.trader, address(this), quantity);

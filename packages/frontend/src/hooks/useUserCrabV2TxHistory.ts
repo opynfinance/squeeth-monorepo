@@ -24,6 +24,8 @@ const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.WITHDRAW) return 'Withdraw'
   if (type === CrabStrategyV2TxType.FLASH_DEPOSIT) return 'Flash Deposit'
   if (type === CrabStrategyV2TxType.FLASH_WITHDRAW) return 'Flash Withdraw'
+  if (type === CrabStrategyV2TxType.DEPOSIT_OTC) return 'Deposit OTC'
+  if (type === CrabStrategyV2TxType.WITHDRAW_OTC) return 'Withdraw OTC'
   if (type === CrabStrategyV2TxType.DEPOSIT_V1) return 'Deposit v1 shares'
 }
 
@@ -49,7 +51,6 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         let ethUsdValue = getUsdAmt(ethAmount, tx.timestamp)
 
         if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
-
           const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
           const oSqthMigrated = new BigNumber(V2_MIGRATION_OSQTH_AMOUNT)
 

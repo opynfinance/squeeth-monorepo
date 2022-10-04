@@ -92,6 +92,14 @@ export const networkNameToCrab = (name: string) => {
   }
 }
 
+export const networkNameToCrabV2 = (name: string) => {
+  switch (name) {
+    case 'mainnet': return '0x3b960e47784150f5a63777201ee2b15253d713e8'
+    case 'ropsten': return '0xdd1e9c25115e0d6e531d9f9e6ab7dbbed15158ce'
+    default: return undefined
+  }
+}
+
 export const getWETH = async (ethers: any, deployer: string, networkName: string) => {
   const wethAddr = networkNameToWeth(networkName)
   if (wethAddr === undefined) {
@@ -151,6 +159,15 @@ export const getDwethToken = async (deployer: string, networkName: string) => {
 
 export const getCrab = (networkName: string) => {
   const crabAddress = networkNameToCrab(networkName)
+  if (crabAddress === undefined) {
+    return ''
+  }
+  // get contract instance at address
+  return crabAddress
+}
+
+export const getCrabV2 = (networkName: string) => {
+  const crabAddress = networkNameToCrabV2(networkName)
   if (crabAddress === undefined) {
     return ''
   }

@@ -22,7 +22,7 @@
   "UniswapV3Factory-start-block": 11342317,
   "WPowerPerp": "0xa4222f78d23593e82Aa74742d25D06720DCa4ab7",
   "WPowerPerp-start-block": 11808030,
-  "CrabStrategyDeployment": "0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf",
+  "CrabStrategyDeployment": "0x0637A9184cf4DD294F8AfA3963DeAC2Dfadfb00F",
   "CrabStrategyDeployment-start-block": 11841072,
   "SqrtPriceMathPartial": "0x565483126A5fC6004455F4e11014C442A61D740c",
   "SqrtPriceMathPartial-start-block": 12325018,
@@ -37,5 +37,7 @@
   "Timelock": "0xF15964458bcA1941dE53fBc004BA7842f4783EC6",
   "Timelock-start-block": 12482222,
   "CrabStrategyV2": "0xdD1e9c25115e0d6e531d9F9E6ab7dbbEd15158Ce",
-  "CrabStrategyV2-start-block": 12581446
+  "CrabStrategyV2-start-block": 12581446,
+  "CrabOTC": "0x5025Cccb4E4493D719BA22BfAFf1c0E26AE8fB9E",
+  "CrabOTC-start-block": 13091841
 }

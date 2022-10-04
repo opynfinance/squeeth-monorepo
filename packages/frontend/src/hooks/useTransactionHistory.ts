@@ -141,7 +141,10 @@ export const useTransactionHistory = () => {
 
   const crabV2Transactions = (crabV2Data || [])?.map((c) => {
     const transactionType =
-      (c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1)
+      c.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
+      c.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
+      c.type === CrabStrategyV2TxType.DEPOSIT_OTC ||
+      c.type === CrabStrategyV2TxType.DEPOSIT
         ? TransactionType.CRAB_V2_FLASH_DEPOSIT
         : TransactionType.CRAB_V2_FLASH_WITHDRAW
     const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
@@ -157,9 +160,12 @@ export const useTransactionHistory = () => {
   })
 
   return {
-    transactions: [...(transactions || []), ...(addRemoveLiquidityTrans || []), ...crabTransactions, ...crabV2Transactions].sort(
-      (transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp,
-    ),
+    transactions: [
+      ...(transactions || []),
+      ...(addRemoveLiquidityTrans || []),
+      ...crabTransactions,
+      ...crabV2Transactions,
+    ].sort((transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp),
     loading,
   }
 }

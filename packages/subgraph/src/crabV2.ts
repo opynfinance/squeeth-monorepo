@@ -39,6 +39,7 @@ import {
 } from "../generated/schema"
 import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
 import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
+import { DepositOTC, WithdrawOTC } from "../generated/CrabOTC/CrabOTC";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
   const strategy = CrabUserTx.load(id)
@@ -111,6 +112,31 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleDepositOTC(event: DepositOTC): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.wSqueethAmount
+  userTx.ethAmount = event.params.depositedAmount
+  userTx.user = event.params.depositor
+  userTx.owner = event.transaction.from
+  userTx.type = 'DEPOSIT_OTC'
+  userTx.timestamp = event.block.timestamp
+  userTx.trader = event.params.trader
+  userTx.lpAmount = event.params.crabAmount
+  userTx.save()
+}
+
+export function handleWithdrawOTC(event: WithdrawOTC): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.wSqueethAmount = event.params.wSqueethAmount
+  userTx.lpAmount = event.params.crabAmount
+  userTx.user = event.params.depositor
+  userTx.owner = event.transaction.from
+  userTx.type = 'WITHDRAW_OTC'
+  userTx.timestamp = event.block.timestamp
+  userTx.trader = event.params.trader
   userTx.save()
 }
 
