@@ -8,7 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network, deployments } = hre;
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
-  
+    
   const feeTier = 3000
 
   // Load contracts

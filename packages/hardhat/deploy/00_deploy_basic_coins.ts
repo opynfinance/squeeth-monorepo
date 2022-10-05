@@ -6,7 +6,7 @@ import { networkNameToWeth, networkNameToUSDC, createArgumentFile } from '../tas
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
-
+  
   console.log(`Start deploying with ${deployer}`)
 
   const { deploy } = deployments;

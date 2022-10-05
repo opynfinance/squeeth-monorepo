@@ -7,7 +7,7 @@ import { one } from '../test/utils';
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
-  
+    
   const { deployer } = await getNamedAccounts();
 
   const controller = await ethers.getContract("Controller", deployer);
@@ -98,6 +98,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
       args: v2args,
       skipIfAlreadyDeployed: true,
+      gasLimit: 10000000
     });
     createArgumentFile('CrabStrategyV2', network.name, v2args)
     console.log(`Successfully deploy CrabStrategyV2`)

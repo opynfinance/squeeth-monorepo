@@ -6,7 +6,7 @@ import { getPoolAddress } from '../test/setup';
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
-  
+    
   const { deployer } = await getNamedAccounts();
 
   const controller = await ethers.getContract("Controller", deployer);
@@ -40,7 +40,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     contract: "CrabStrategy",
     from: deployer,
     log: true,
-    args: crabStrategyArgs
+    args: crabStrategyArgs,
+    gasLimit: 10000000
   });
   createArgumentFile('CrabStrategy', network.name, crabStrategyArgs)
 
