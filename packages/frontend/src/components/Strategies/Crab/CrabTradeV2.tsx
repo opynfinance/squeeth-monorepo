@@ -130,8 +130,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
   const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
-  const isTimeHedgeAvailable = useAtomValue(isTimeHedgeAvailableAtomV2)
-  const isPriceHedgeAvailable = useAtomValue(isPriceHedgeAvailableAtomV2)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
 
   const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
@@ -243,10 +241,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       if (withdrawAmount.gt(currentEthValue)) {
         withdrawError = 'Withdraw amount greater than strategy balance'
       }
-      if (isTimeHedgeAvailable || isPriceHedgeAvailable) {
-        depositError = 'Deposits and withdraws available after the hedge auction'
-        withdrawError = 'Deposits and withdraws available after the hedge auction'
-      }
     }
 
     return { depositError, warning, withdrawError }
@@ -262,8 +256,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     currentImpliedFunding.toString(),
     dailyHistoricalFunding.funding,
     dailyHistoricalFunding.period,
-    isTimeHedgeAvailable,
-    isPriceHedgeAvailable,
   ])
 
   useEffect(() => {

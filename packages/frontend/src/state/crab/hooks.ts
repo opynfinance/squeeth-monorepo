@@ -146,7 +146,9 @@ export const useSetStrategyDataV2 = () => {
       })
     getTimeAtLastHedge(contract).then(setTimeAtLastHedge)
     if (networkId !== Networks.ROPSTEN) {
-      checkTimeHedge(contract).then((h) => setIsTimeHedgeAvailable(h[0]))
+      checkTimeHedge(contract).then((h) => {
+        setIsTimeHedgeAvailable(h)
+      })
       if (process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
         // Check price hedge only if firebase is available
         checkPriceHedgeV2(contract).then(setIsPriceHedgeAvailable)
