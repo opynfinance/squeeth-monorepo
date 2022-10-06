@@ -11,9 +11,8 @@ import Highcharts from 'highcharts'
 export type ChartDataInfo = {
     timestamp: number
     crabPnL: number
-    crabEth: number
-    crabUsd: number
-    ethUsd: number
+    crabEthPnl: number
+    ethUsdPnl: number
   }
 
 const useStyles = makeStyles((theme) =>
@@ -44,11 +43,10 @@ function StrategyPnLV2() {
     
     const classes = useStyles()
     const query = useCrabPnLV2ChartData()
- 
-    const pnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabPnL*100 ])) ;
-    const crabEthSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEth ])) ;
-    const crabUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabUsd ])) ;
-    const ethUsdSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsd ])) ;
+   
+    const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabPnL*100 ])) ;
+    const crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEthPnl ])) ;
+    const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsdPnl ])) ;
 
     useEffect(() => {
       Highcharts.setOptions({
@@ -59,43 +57,34 @@ function StrategyPnLV2() {
      }, []);
 
     const series = [{
-      name: 'PnL',
+      name: 'Crab/USD % Return',
       yAxis: 1,
-      data: pnlSeries,
+      data: crabUsdPnlSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
       },
+      color: "#00e396"
     }
     ,{
       yAxis: 1,
-      name: 'Crab/Eth',
-      data: crabEthSeries,
+      name: 'Crab/ETH % Return',
+      data: crabEthPnlSeries,
       tooltip: {
         valueDecimals: 6,
-        valueSuffix: ' ETH'
+        valueSuffix: '%'
       },
-      color: "#F5B7B1"
-    },
-    {
-      yAxis: 0,
-      name: 'Crab/Usd',
-      data: crabUsdSeries,
-      tooltip: {
-        valueDecimals: 2,
-        valuePrefix: '$'
-      },
-      color: "#21618C"
+      color: "#0d2839"
     }
     ,{
-      yAxis: 0,
-      name: 'Eth/Usd',
-      data: ethUsdSeries,
+      yAxis: 1,
+      name: 'ETH/USD % return',
+      data: ethUsdPnlSeries,
       tooltip: {
         valueDecimals: 2,
-        valuePrefix: '$'
+        valueSuffix: '%'
       },
-      color: '#E59866'
+      color: '#484B3D'
     }
     ]
 
@@ -115,7 +104,7 @@ function StrategyPnLV2() {
           </div>
           <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
               <div style={{ flex: '1 1 0', marginTop: '8px' }}>
-                  {pnlSeries ? (
+                  {crabUsdPnlSeries ? (
                   <HighchartsReact highcharts={Highcharts} options={chartOptions}  />
                   ) : (
                   <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
