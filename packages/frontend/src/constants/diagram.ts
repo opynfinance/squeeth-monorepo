@@ -76,30 +76,6 @@ export const crabV2graphOptions = {
       }
     }
   },
-  yAxis: [{ // Left yAxis
-    title: {
-        text: ''
-    },
-    labels: {
-      style: {
-        color: '#BABBBB'
-      },
-    
-    },
-    gridLineColor: 'rgba(221,221,221,0.1)',
-
- }, { // Right yAxis
-    title: {
-        text: ''
-    },
-    labels: {
-      style: {
-        color: '#BABBBB'
-      }
-    },
-    gridLineColor: 'rgba(221,221,221,0.1)',
-    opposite: true
-  }],
   tooltip: {
     shared: true,
   },

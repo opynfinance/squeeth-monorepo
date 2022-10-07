@@ -1,6 +1,6 @@
-import { Box, CircularProgress, IconButton, Typography,  Hidden, TextField, Tooltip,  InputAdornment, } from '@material-ui/core'
+import { Box, CircularProgress, Typography} from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { memo, useEffect, useState } from 'react'
+import React, { memo, useEffect } from 'react'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
 import { crabV2graphOptions } from '@constants/diagram'
@@ -48,6 +48,14 @@ function StrategyPnLV2() {
     const crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEthPnl ])) ;
     const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsdPnl ])) ;
 
+  
+    const lastMarkerPoints = useAppMemo(() => {
+      const crabUsdMarker = (crabUsdPnlSeries) ? crabUsdPnlSeries[crabUsdPnlSeries?.length -1]: [];
+      const crabEthMarker = (crabEthPnlSeries) ? crabEthPnlSeries[crabEthPnlSeries?.length -1]: [];
+      const ethUsdMarker = (ethUsdPnlSeries) ? ethUsdPnlSeries[ethUsdPnlSeries?.length -1]: [];
+      return [crabUsdMarker[1],crabEthMarker[1],ethUsdMarker[1]]
+    }, [crabUsdPnlSeries,crabEthPnlSeries,ethUsdPnlSeries])
+
     useEffect(() => {
       Highcharts.setOptions({
        lang: {
@@ -58,26 +66,26 @@ function StrategyPnLV2() {
 
     const series = [{
       name: 'Crab/USD % Return',
-      yAxis: 1,
+      yAxis: 0,
       data: crabUsdPnlSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
       },
-      color: "#00e396"
+      color: "#00e396",
     }
     ,{
-      yAxis: 1,
+      yAxis: 0,
       name: 'Crab/ETH % Return',
       data: crabEthPnlSeries,
       tooltip: {
-        valueDecimals: 6,
+        valueDecimals: 2,
         valueSuffix: '%'
       },
-      color: "#0d2839"
+      color: "#184a69"
     }
     ,{
-      yAxis: 1,
+      yAxis: 0,
       name: 'ETH/USD % return',
       data: ethUsdPnlSeries,
       tooltip: {
@@ -88,10 +96,44 @@ function StrategyPnLV2() {
     }
     ]
 
+    const axes = { 
+    
+      yAxis: [{ // Left yAxis
+      title: {
+          text: ''
+      },
+      labels: {
+        style: {
+          color: '#BABBBB'
+        },
+      
+      },
+      gridLineColor: 'rgba(221,221,221,0.1)',
+  
+   },{
+      title: {
+        text: ''
+      },
+      opposite:true,
+      linkedTo:0,
+      tickPositions:lastMarkerPoints,
+      gridLineWidth:0,
+      labels: {
+        style: {
+          color: '#e6e6e6'
+        },
+      format: '{value:.2f}' + '%'
+      }
+    }
+
+  ]
+  }
+
     const chartOptions = useAppMemo(() => {
       return {
           ...crabV2graphOptions,
-          series: series
+          series: series,
+          ...axes
       }
     })
 
@@ -99,7 +141,7 @@ function StrategyPnLV2() {
         <div className={classes.container}>
           <div style={{ display: 'flex', marginTop: '32px' }}>
               <Typography variant="h5" color="primary" style={{}}>
-              Strategy Performance
+              Strategy Performance 
               </Typography>
           </div>
           <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
@@ -120,5 +162,4 @@ function StrategyPnLV2() {
 const ChartMemoized = memo(StrategyPnLV2)
 
 export { ChartMemoized as StrategyPnLV2 }
-
 
