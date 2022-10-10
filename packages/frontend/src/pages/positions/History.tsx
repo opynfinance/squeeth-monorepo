@@ -84,21 +84,32 @@ const History: React.FC = () => {
           ) : (
             <>
               <div className={classes.txItemVal}>
-                <Typography
-                  variant="body2"
-                  className={
-                    tx.transactionType === TransactionType.BUY ||
-                    tx.transactionType === TransactionType.BURN_SHORT ||
-                    tx.transactionType === TransactionType.REMOVE_LIQUIDITY
-                      ? classes.green
-                      : classes.red
-                  }
-                >
-                  {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
-                </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  ${tx.squeethAmount.times(ethPrice).times(ethPrice).div(10000).times(normalizationFactor).toFixed(2)}
-                </Typography>
+                {tx.transactionType != TransactionType.OTC_DEPOSIT &&
+                tx.transactionType != TransactionType.OTC_WITHDRAW ? (
+                  <>
+                    <Typography
+                      variant="body2"
+                      className={
+                        tx.transactionType === TransactionType.BUY ||
+                        tx.transactionType === TransactionType.BURN_SHORT ||
+                        tx.transactionType === TransactionType.REMOVE_LIQUIDITY
+                          ? classes.green
+                          : classes.red
+                      }
+                    >
+                      {tx.squeethAmount.toFixed(8)}&nbsp; oSQTH
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      $
+                      {tx.squeethAmount
+                        .times(ethPrice)
+                        .times(ethPrice)
+                        .div(10000)
+                        .times(normalizationFactor)
+                        .toFixed(2)}
+                    </Typography>
+                  </>
+                ) : null}
               </div>
               <div className={classes.txItemVal}>
                 <Typography
@@ -112,13 +123,17 @@ const History: React.FC = () => {
                   }
                 >
                   {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
-                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
+                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW ||
+                  tx.transactionType === TransactionType.OTC_DEPOSIT ||
+                  tx.transactionType === TransactionType.OTC_WITHDRAW
                     ? `${tx.usdValue.toFixed(2)} USDC`
                     : `${tx.ethAmount.toFixed(4)} WETH`}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
                   {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
-                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
+                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW ||
+                  tx.transactionType === TransactionType.OTC_DEPOSIT ||
+                  tx.transactionType === TransactionType.OTC_WITHDRAW
                     ? `${tx.ethAmount.toFixed(4)} WETH`
                     : `$${tx.usdValue.toFixed(2)}`}
                 </Typography>

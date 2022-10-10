@@ -11,7 +11,6 @@ const getTheme = (mode: Mode) => {
 
   return createTheme({
     ...palette,
-
     breakpoints: {
       values: {
         xs: 0,
