@@ -39,5 +39,7 @@
   "SwapRouter": "0x200775Be10EA5dCee478C193E6B6E66E13d878C0",
   "SwapRouter-start-block": 7718618,
   "UniswapV3Factory": "0x2Db05f50645a7EAEd686bdf64DE3F90Fde2041b3",
-  "UniswapV3Factory-start-block": 7718616
+  "UniswapV3Factory-start-block": 7718616,
+  "CrabNetting": "0xf3e40abf4c06b9454440cb93d42e60de5e67db2a",
+  "CrabNetting-start-block": 7953032
 }

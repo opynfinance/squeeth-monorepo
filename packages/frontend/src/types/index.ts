@@ -94,9 +94,11 @@ export enum CrabStrategyV2TxType {
   FLASH_DEPOSIT_CALLBACK = 'FLASH_DEPOSIT_CALLBACK',
   FLASH_WITHDRAW_CALLBACK = 'FLASH_WITHDRAW_CALLBACK',
   DEPOSIT_V1 = 'DEPOSIT_V1',
+  OTC_DEPOSIT = 'OTC_DEPOSIT',
+  OTC_WITHDRAW = 'OTC_WITHDRAW',
 }
 
-export default class  ChartDataInfo {
+export default class ChartDataInfo {
   time!: number
   value!: number
 }

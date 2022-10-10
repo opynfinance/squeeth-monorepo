@@ -2,6 +2,7 @@ import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS, ZERO
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useOracle } from '@hooks/contracts/useOracle'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
@@ -204,11 +205,35 @@ export const useUpdateSqueethPrices = () => {
   const setSqueethInitialPrice = useUpdateAtom(squeethInitialPriceAtom)
   const setSqueethInitialPriceError = useUpdateAtom(squeethInitialPriceErrorAtom)
   const setReady = useUpdateAtom(readyAtom)
+<<<<<<< HEAD
   const { oSqueeth, weth } = useAtomValue(addressesAtom)
 
   useAppEffect(() => {
     getExactIn(oSqueeth, weth, fromTokenAmount(1, OSQUEETH_DECIMALS), UNI_POOL_FEES, DEFAULT_SLIPPAGE)
       .then((quote) => setSqueethInitialPrice(toTokenAmount(quote.minAmountOut, WETH_DECIMALS)))
+=======
+  const addresses = useAtomValue(addressesAtom)
+
+  const squeethToken = useAtomValue(squeethTokenAtom)
+  const pool = useAtomValue(poolAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const getBuyQuoteForETH = useGetBuyQuoteForETH()
+  const { getTwapSafe } = useOracle()
+  const { squeethPool, oSqueeth, weth } = addresses
+
+  useAppEffect(() => {
+    if (!squeethToken?.address || !pool) return
+    getTwapSafe(squeethPool, oSqueeth, weth, 420)
+      .then((val) => {
+        if (val) setSqueethPrice(val)
+        setSqueethInitialPrice(
+          new BigNumber(
+            !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
+          ),
+        )
+        setReady(true)
+      })
+>>>>>>> 7a9b3971 (Add deposit and withdraw netting UI)
       .catch((error) => {
         console.error(error)
         setSqueethInitialPriceError(getErrorMessage(error))
@@ -221,7 +246,7 @@ export const useUpdateSqueethPrices = () => {
 
 export const useGetWSqueethPositionValue = () => {
   const ethPrice = useETHPrice()
-  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
+  const squeethInitialPrice = useAtomValue(squeethPriceeAtom)
   const getWSqueethPositionValue = useAppCallback(
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
@@ -233,7 +258,7 @@ export const useGetWSqueethPositionValue = () => {
 }
 
 export const useGetWSqueethPositionValueInETH = () => {
-  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
+  const squeethInitialPrice = useAtomValue(squeethPriceeAtom)
   const getWSqueethPositionValueInETH = useAppCallback(
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice)

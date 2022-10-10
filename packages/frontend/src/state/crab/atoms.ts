@@ -45,6 +45,12 @@ export const isPriceHedgeAvailableAtomV2 = atom(false)
 export const crabPositionValueLoadingAtomV2 = atom(true)
 export const userCrabSharesV2 = atom(BIG_ZERO)
 
+export const usdcQueuedAtom = atom(BIG_ZERO)
+export const crabQueuedAtom = atom(BIG_ZERO)
+export const crabUSDValueAtom = atom(BIG_ZERO)
+
+export const isNettingAuctionLiveAtom = atom(false)
+
 export const crabLoadingAtom = atom((get) => {
   const loading = get(loadingAtom)
   const ready = get(readyAtom)

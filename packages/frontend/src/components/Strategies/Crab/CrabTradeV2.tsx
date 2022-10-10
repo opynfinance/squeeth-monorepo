@@ -4,22 +4,22 @@ import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
-import { usePrevious } from 'react-use'
-
 import { PrimaryButtonNew } from '@components/Button'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
-import { LinkWrapper } from '@components/LinkWrapper'
 import Metric from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
 import {
+  crabQueuedAtom,
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
   currentCrabPositionValueAtomV2,
+  isNettingAuctionLiveAtom,
+  usdcQueuedAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -31,8 +31,12 @@ import {
   useFlashDepositUSDC,
   useETHtoCrab,
   useFlashWithdrawV2USDC,
+  useQueueDepositUSDC,
+  useQueueWithdrawCrab,
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
+import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
+import { usePrevious } from 'react-use'
 import {
   currentImpliedFundingAtom,
   dailyHistoricalFundingAtom,
@@ -43,7 +47,6 @@ import {
 import { addressesAtom } from '@state/positions/atoms'
 import { userMigratedSharesETHAtom } from '@state/crabMigration/atom'
 import { useUpdateSharesData } from '@state/crabMigration/hooks'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import useAppMemo from '@hooks/useAppMemo'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
@@ -65,6 +68,7 @@ import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculati
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import usdcLogo from 'public/images/usdc-logo.svg'
+
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -140,6 +144,12 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 500,
       fontSize: '13px',
     },
+    queueNotice: {
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(0, 0, 1.5, 1.5),
+      padding: theme.spacing(2),
+      color: theme.palette.primary.main,
+    }
   }),
 )
 
@@ -158,12 +168,15 @@ enum WithdrawSteps {
   WITHDRAW = 'Withdraw',
 }
 
+const OTC_PRICE_IMPACT_THRESHOLD = process.env.OTC_PRICE_IMPACT_THRESHOLD || 1
+
 const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
   const [depositAmount, setDepositAmount, resetDepositAmount] = useStateWithReset('0')
   const [withdrawAmount, setWithdrawAmount, resetWithdrawAmount] = useStateWithReset('0')
   const [depositOption, setDepositOption] = useState(0)
   const [txLoading, setTxLoading] = useState(false)
+  const [secondaryTxLoading, setSecondaryTxLoading] = useState(false)
   const [depositPriceImpact, setDepositPriceImpact, resetDepositPriceImpact] = useStateWithReset('0')
   const [withdrawPriceImpact, setWithdrawPriceImpact, resetWithdrawPriceImpact] = useStateWithReset('0')
   const [borrowEth, setBorrowEth, resetBorrowEth] = useStateWithReset(new BigNumber(0))
@@ -182,9 +195,14 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     useStateWithReset(new BigNumber(0))
   const [depositEthAmount, setDepositEthAmount] = useState(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(true)
+  const [useQueue, setUseQueue] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
   const [maxClicked, setMaxClicked] = useState(false)
+
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
+  const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -201,7 +219,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
   const withdrawAmountBN = useMemo(() => new BigNumber(withdrawAmount), [withdrawAmount])
 
-  const { usdc, weth, crabHelper, crabStrategy2 } = useAtomValue(addressesAtom)
+  const { usdc, weth, crabHelper, crabStrategy2, crabNetting } = useAtomValue(addressesAtom)
   const { data: balance } = useWalletBalance()
   const { value: usdcBalance } = useTokenBalance(usdc, 15, USDC_DECIMALS)
   const { getExactIn } = useUniswapQuoter()
@@ -214,6 +232,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const flashDepositUSDC = useFlashDepositUSDC(calculateETHtoBorrowFromUniswap)
   const flashWithdrawUSDC = useFlashWithdrawV2USDC()
+  const queueUSDC = useQueueDepositUSDC()
+  const queueCRAB = useQueueWithdrawCrab()
   const getUserCrabForEthAmount = useETHtoCrab()
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -229,6 +249,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
+  const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(usdc, crabNetting, USDC_DECIMALS)
+  const { allowance: crabQueueAllowance, approve: approveQueueCrab } = useUserAllowance(crabStrategy2, crabNetting)
   const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
 
   const prevCrabTxData = usePrevious(data)
@@ -251,6 +273,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const { depositPriceImpactWarning, withdrawPriceImpactWarning } = useAppMemo(() => {
     let depositPriceImpactWarning: Boolean | false
     let withdrawPriceImpactWarning: Boolean | false
+
+    if (useQueue) return { depositPriceImpactWarning: false, withdrawPriceImpactWarning: false }
 
     const squeethPrice =
       depositOption === 0
@@ -279,6 +303,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     ethAmountInFromWithdraw,
     squeethAmountOutFromWithdraw,
     depositOption,
+    useQueue,
   ])
 
   const { depositFundingWarning, withdrawFundingWarning } = useAppMemo(() => {
@@ -419,15 +444,24 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }, [ready, withdrawCrabAmount.toString(), slippage])
 
-  const depositTX = async () => {
-    setTxLoading(true)
+  const depositTX = async (overrideQueue = false) => {
+    const isQueue = !overrideQueue && useQueue
+    if (overrideQueue) {
+      setSecondaryTxLoading(true)
+    } else {
+      setTxLoading(true)
+    }
     try {
-      console.log('USDC: In usdc check')
       if (depositStep === DepositSteps.APPROVE) {
-        await approveUsdc(() => resetTransactionData())
+        if (isQueue) {
+          await approveQueueUsdc(() => resetTransactionData())
+        } else {
+          await approveUsdc(() => resetTransactionData())
+        }
       } else {
-        if (useUsdc) {
-          console.log('USDC: going to flash deposit')
+        if (isQueue) {
+          await queueUSDC(depositAmountBN)
+        } else if (useUsdc) {
           await flashDepositUSDC(depositAmountBN, slippage, () => {
             setStrategyData()
           })
@@ -437,23 +471,35 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
           })
         }
       }
-      setTxLoading(false)
     } catch (e) {
       console.log(e)
       setTxLoading(false)
     }
+    setSecondaryTxLoading(false)
+    setTxLoading(false)
   }
 
-  const withdraw = async () => {
-    setTxLoading(true)
+  const withdraw = async (overrideQueue = false) => {
+    const isQueue = !overrideQueue && useQueue
+    if (overrideQueue) {
+      setSecondaryTxLoading(true)
+    } else {
+      setTxLoading(true)
+    }
     try {
       if (isClaimAndWithdraw) {
         await claimAndWithdrawEth(withdrawAmountBN, slippage)
       } else {
         if (withdrawStep === WithdrawSteps.APPROVE) {
-          await approveCrab(() => resetTransactionData())
+          if (isQueue) {
+            await approveQueueCrab(() => resetTransactionData())
+          } else {
+            await approveCrab(() => resetTransactionData())
+          }
         } else {
-          if (useUsdc) {
+          if (isQueue) {
+            await queueCRAB(withdrawCrabAmount)
+          } else if (useUsdc) {
             await flashWithdrawUSDC(withdrawCrabAmount, slippage)
           } else {
             await flashWithdrawEth(withdrawAmountBN, slippage)
@@ -461,12 +507,12 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
         }
       }
       updateSharesData()
-      setTxLoading(false)
       setStrategyData()
     } catch (e) {
       console.log(e)
-      setTxLoading(false)
     }
+    setSecondaryTxLoading(false)
+    setTxLoading(false)
   }
 
   const handleTokenChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -494,11 +540,19 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     if (maxClicked) setWithdrawAmount(currentUsdcValue.toString())
   }, [maxClicked, currentUsdcValue])
 
-  const depositToken = useMemo(() => (useUsdc ? 'USDC' : 'ETH'), [useUsdc])
+  const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : "ETH"), [useUsdc, useQueue])
+
+  const queueOrUSDC = useQueue || useUsdc
 
   // Update deposit step
   useEffect(() => {
-    if (useUsdc) {
+    if (useQueue) {
+      if (usdcQueueAllowance.lt(depositAmountBN)) {
+        setDepositStep(DepositSteps.APPROVE)
+      } else {
+        setDepositStep(DepositSteps.DEPOSIT)
+      }
+    } else if (useUsdc) {
       if (usdcAllowance.lt(depositAmountBN)) {
         setDepositStep(DepositSteps.APPROVE)
       } else {
@@ -507,11 +561,19 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     } else {
       setDepositStep(DepositSteps.DEPOSIT)
     }
-  }, [useUsdc, usdcAllowance, depositAmountBN])
+  }, [useUsdc, usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
+
+
 
   // Update withdraw step
   useEffect(() => {
-    if (useUsdc) {
+    if (useQueue) {
+      if (crabQueueAllowance.lt(withdrawCrabAmount)) {
+        setWithdrawStep(WithdrawSteps.APPROVE)
+      } else {
+        setWithdrawStep(WithdrawSteps.WITHDRAW)
+      }
+    } else if (useUsdc) {
       if (crabAllowance.lt(withdrawCrabAmount)) {
         setWithdrawStep(WithdrawSteps.APPROVE)
       } else {
@@ -520,18 +582,47 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     } else {
       setWithdrawStep(WithdrawSteps.WITHDRAW)
     }
-  }, [useUsdc, crabAllowance, withdrawCrabAmount])
+  }, [useUsdc, crabAllowance, withdrawCrabAmount, crabQueueAllowance, useQueue])
+
+  useEffect(() => {
+    if (!useUsdc || isNettingAuctionLive) {
+      setUseQueue(false)
+      return
+    }
+
+    if (depositOption === 0 && Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD ||
+      depositOption === 1 && Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+      setUseQueue(true)
+    } else {
+      setUseQueue(false)
+    }
+  }, [depositPriceImpact, depositOption, withdrawPriceImpact, useUsdc, isNettingAuctionLive])
+
+
+  if (isRestricted) {
+    return <RestrictionInfo />
+  }
+
+  const confirmationMessage = useAppMemo(() => {
+    if (depositOption === 0) {
+      if (useQueue) {
+        return `Queued ${depositAmountBN.toFixed(4)} ${depositToken} for deposit`
+      }
+      return `Deposited ${depositAmountBN.toFixed(4)} ${depositToken}`
+    } else {
+      if (useQueue) {
+        return `Queued ${withdrawAmountBN.toFixed(4)} ${depositToken} for withdrawal`
+      }
+      return `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
+    }
+  }, [depositAmountBN, depositOption, depositToken, useQueue, withdrawAmountBN])
 
   return (
     <>
       {confirmed ? (
         <>
           <Confirmed
-            confirmationMessage={
-              depositOption === 0
-                ? `Deposited ${depositAmountBN.toFixed(4)} ${depositToken}`
-                : `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
-            }
+            confirmationMessage={confirmationMessage}
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.CRAB}
           />
@@ -682,29 +773,29 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption" className={classes.infoText}>
-                  High price impact. Try smaller amount or contact us through{' '}
-                  <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
+                <Typography variant="caption">
+                  High price impact. Try smaller amount or {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue deposit'}
                 </Typography>
               </div>
             ) : null}
-            {withdrawPriceImpactWarning && depositOption !== 0 ? (
-              <div className={classes.notice}>
-                <div className={classes.infoIcon}>
-                  <Tooltip
-                    title={
-                      'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
-                    }
-                  >
-                    <InfoIcon fontSize="medium" />
-                  </Tooltip>
+            {
+              withdrawPriceImpactWarning && depositOption !== 0 ? (
+                <div className={classes.notice}>
+                  <div className={classes.infoIcon}>
+                    <Tooltip
+                      title={
+                        'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
+                      }
+                    >
+                      <InfoIcon fontSize="medium" />
+                    </Tooltip>
+                  </div>
+                  <Typography variant="caption">
+                    High price impact. Try smaller amount or {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue withdrawal'}
+                  </Typography>
                 </div>
-                <Typography variant="caption" className={classes.infoText}>
-                  High price impact. Try smaller amount or contact us through{' '}
-                  <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
-                </Typography>
-              </div>
-            ) : null}
+              ) : null
+            }
 
             <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
               {useUsdc && depositOption !== 0 ? (
@@ -785,7 +876,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"
-                  onClick={() => {}}
+                  onClick={() => { }}
                   disabled={true}
                   id="crab-unsupported-network-btn"
                 >
@@ -806,13 +897,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(depositPriceImpact) > 3 || !!warning
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : depositFundingWarning || depositPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                        : { marginTop: '8px' }
                   }
                 >
                   {!txLoading &&
-                  (depositFundingWarning || depositPriceImpactWarning) &&
-                  depositStep === DepositSteps.DEPOSIT ? (
+                    (depositFundingWarning || depositPriceImpactWarning) &&
+                    depositStep === DepositSteps.DEPOSIT ? (
                     'Deposit anyway'
                   ) : !txLoading ? (
                     depositStep
@@ -833,15 +924,15 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(withdrawPriceImpact) > 3
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : withdrawFundingWarning || withdrawPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                        : { marginTop: '8px' }
                   }
                   onClick={() => withdraw()}
                   disabled={txLoading || !!withdrawError}
                 >
                   {!txLoading &&
-                  (withdrawFundingWarning || withdrawPriceImpactWarning) &&
-                  withdrawStep === WithdrawSteps.WITHDRAW ? (
+                    (withdrawFundingWarning || withdrawPriceImpactWarning) &&
+                    withdrawStep === WithdrawSteps.WITHDRAW ? (
                     'Withdraw anyway'
                   ) : !txLoading ? (
                     withdrawStep
@@ -851,9 +942,17 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 </PrimaryButtonNew>
               )}
             </Box>
-          </div>
+          </div >
+          {
+            crabQueued.isGreaterThan(0) || usdcQueued.isGreaterThan(0) ? (
+              <div className={classes.queueNotice}>
+                {usdcQueued.isGreaterThan(0) ? "Your deposit will fully enter the strategy by Tuesday" : "Your withdrawal will fully exit the strategy by Tuesday"}
+              </div>
+            ) : null
+          }
         </>
-      )}
+      )
+      }
     </>
   )
 }
