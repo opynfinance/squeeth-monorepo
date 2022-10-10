@@ -126,12 +126,18 @@ export const useCrabPositionV2 = (user: string) => {
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT_V1
+          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
+          tx.type === CrabStrategyTxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
         ) {
           acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
           acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue)
           acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount)
-        } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
+        } else if (
+          tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.OTC_WITHDRAW
+        ) {
           acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount)
         }
 

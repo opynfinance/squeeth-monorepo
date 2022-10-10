@@ -44,6 +44,12 @@ export const isPriceHedgeAvailableAtomV2 = atom(false)
 export const crabPositionValueLoadingAtomV2 = atom(true)
 export const userCrabSharesV2 = atom(BIG_ZERO)
 
+export const usdcQueuedAtom = atom(BIG_ZERO)
+export const crabQueuedAtom = atom(BIG_ZERO)
+export const crabUSDValueAtom = atom(BIG_ZERO)
+
+export const isNettingAuctionLiveAtom = atom(false)
+
 export const crabLoadingAtom = atom((get) => {
   const loading = get(loadingAtom)
   const ready = get(readyAtom)
@@ -62,13 +68,16 @@ export const crabv2StrategyFilterStartDateAtom = atom<Date>(new Date(CRABV2_STAR
 export const crabv2StrategyFilterEndDateAtom = atom<Date>(new Date())
 
 export const useCrabPnLV2ChartData = () => {
-
   const startDate = useAtomValue(crabv2StrategyFilterStartDateAtom)
   const endDate = useAtomValue(crabv2StrategyFilterEndDateAtom)
 
   return useQuery(
-    ['pnlChart', {startDate, endDate} ],
-    async () => getCrabPnlV2ChartData(Number(startDate.valueOf().toString().slice(0, -3)), Number(endDate.valueOf().toString().slice(0, -3))),
+    ['pnlChart', { startDate, endDate }],
+    async () =>
+      getCrabPnlV2ChartData(
+        Number(startDate.valueOf().toString().slice(0, -3)),
+        Number(endDate.valueOf().toString().slice(0, -3)),
+      ),
     {
       staleTime: Infinity,
       refetchOnWindowFocus: true,

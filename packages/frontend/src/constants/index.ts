@@ -37,6 +37,7 @@ export const USDC_DECIMALS = 6
 export const SWAP_EVENT_TOPIC = '0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67'
 
 export const BIG_ZERO = new BigNumber(0)
+export const BIG_ONE = new BigNumber(10).pow(18)
 export const TWELVEDATA_NO_PRICEDATA_DURATION = 62
 export const BLOCKED_COUNTRIES = ['US', 'BY', 'CU', 'IR', 'IQ', 'CI', 'LR', 'KP', 'SD', 'SY', 'ZW']
 

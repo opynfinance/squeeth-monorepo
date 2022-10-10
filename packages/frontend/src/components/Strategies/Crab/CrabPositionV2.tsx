@@ -11,6 +11,8 @@ import { pnlInPerctv2 } from 'src/lib/pnl'
 import useAppMemo from '@hooks/useAppMemo'
 import { userMigratedSharesAtom } from 'src/state/crabMigration/atom'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
+import CrabQueuedPosition from './CrabQueuedPosition'
+import { crabQueuedAtom, usdcQueuedAtom } from 'src/state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -38,6 +40,9 @@ const CrabPosition: React.FC = () => {
   const { loading: isCrabPositonLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
+
   const classes = useStyles()
   const pnl = useAppMemo(() => {
     return pnlInPerctv2(currentCrabPositionValue, depositedUsd)
@@ -56,32 +61,36 @@ const CrabPosition: React.FC = () => {
     )
   }
 
-  if (currentCrabPositionValue.isZero()) {
-    return null
-  }
+  if (currentCrabPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) return null
 
   return (
     <div className={classes.container}>
-      <Typography color="primary" variant="subtitle1">
-        Position
-      </Typography>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h6" id="crab-pos-bal">
-          {loading ? 'Loading' : `${currentCrabPositionValue.toFixed(2)} USD`}
-        </Typography>
-        {!loading && pnl.isFinite() ? (
-          <Typography
-            variant="body2"
-            style={{ marginLeft: '4px', fontWeight: 600 }}
-            className={pnl.isNegative() ? classes.red : classes.green}
-          >
-            ({pnl.toFixed(2)} %)
+      {!currentCrabPositionValue.isZero() ? (
+        <>
+          <Typography color="primary" variant="subtitle1">
+            Position
           </Typography>
-        ) : null}
-        <Tooltip title={Tooltips.CrabPnL}>
-          <InfoIcon fontSize="small" className={classes.infoIcon} />
-        </Tooltip>
-      </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="h6" id="crab-pos-bal">
+              {loading ? 'Loading' : `${currentCrabPositionValue.toFixed(2)} USD`}
+            </Typography>
+            {!loading && pnl.isFinite() ? (
+              <Typography
+                variant="body2"
+                style={{ marginLeft: '4px', fontWeight: 600 }}
+                className={pnl.isNegative() ? classes.red : classes.green}
+              >
+                ({pnl.toFixed(2)} %)
+              </Typography>
+            ) : null}
+            <Tooltip title={Tooltips.CrabPnL}>
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </div>
+        </>
+      ) : null}
+
+      {usdcQueued.isZero() && crabQueued.isZero() ? null : <CrabQueuedPosition />}
     </div>
   )
 }

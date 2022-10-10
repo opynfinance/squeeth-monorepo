@@ -96,8 +96,6 @@ const useStyles = makeStyles((theme) =>
         maxHeight: '440px',
         minHeight: '350px',
         height: 'fit-content',
-        position: 'sticky',
-        top: '75px',
         margin: theme.spacing('-160px', '50px'),
       },
     },
@@ -320,9 +318,8 @@ const Strategies: React.FC = () => {
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Premium (%)"
-                    tooltip={`${
-                      Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    tooltip={`${Tooltips.StrategyEarnFunding
+                      }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                   <StrategyInfoItem
                     link="https://www.squeethportal.xyz/auctionHistory"

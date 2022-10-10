@@ -18,6 +18,8 @@ import './tasks/addSqueethLiquidity'
 import './tasks/addWethLiquidity'
 import './tasks/buySqueeth'
 import './tasks/buyWeth'
+import './tasks/sellWeth'
+import './tasks/sellSqueeth'
 import './tasks/increaseSlot'
 
 // Load env variables

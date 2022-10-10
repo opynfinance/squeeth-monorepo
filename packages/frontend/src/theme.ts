@@ -25,6 +25,9 @@ const getTheme = (mode: Mode) => {
         'Arial',
         '"Segoe UI Emoji"',
       ].join(','),
+      button: {
+        textTransform: 'none',
+      },
     },
     breakpoints: {
       values: {

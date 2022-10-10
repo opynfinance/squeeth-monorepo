@@ -11,6 +11,7 @@ import {
   V2_MIGRATION_OSQTH_PRICE,
   V2_MIGRATION_ETH_PRICE,
   USDC_DECIMALS,
+  BIG_ONE,
 } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { CrabStrategyV2TxType } from '../types/index'
@@ -70,6 +71,14 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         ) {
           ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
             getUsdAmt(toTokenAmount(tx.excessEth, 18), tx.timestamp),
+          )
+        }
+        if (tx.type === CrabStrategyV2TxType.OTC_DEPOSIT || tx.type === CrabStrategyV2TxType.OTC_WITHDRAW) {
+          ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
+            getUsdAmt(toTokenAmount(tx.ethAmount, 18), tx.timestamp),
+          )
+          ethAmount = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(
+            getUsdAmt(toTokenAmount(BIG_ONE, 18), tx.timestamp),
           )
         }
         const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
