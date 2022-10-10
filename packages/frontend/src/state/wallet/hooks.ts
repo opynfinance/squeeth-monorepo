@@ -213,7 +213,7 @@ export const useOnboard = () => {
   useAppEffect(() => {
     const onboard = initOnboard(
       {
-        address: setOnboardAddress,
+        address: () => setOnboardAddress('0x0Cc9B507A01d74886BAaCbF82B8f4df272cb7925'),
         network: onNetworkChange,
         wallet: onWalletUpdate,
       },
