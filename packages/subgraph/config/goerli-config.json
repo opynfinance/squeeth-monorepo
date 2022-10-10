@@ -41,5 +41,7 @@
   "UniswapV3Factory": "0x55C0ceF3cc64F511C34b18c720bCf38feC6C6fFa",
   "UniswapV3Factory-start-block": 8007327,
   "OpynWETH9": "0x083fd3D47eC8DC56b572321bc4dA8b26f7E82103",
-  "OpynWETH9-start-block": 8006276
+  "OpynWETH9-start-block": 8006276,
+  "CrabNetting": "0xf3e40abf4c06b9454440cb93d42e60de5e67db2a",
+  "CrabNetting-start-block": 7953032
 }

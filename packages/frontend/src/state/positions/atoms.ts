@@ -21,6 +21,7 @@ import {
   CRAB_STRATEGY2,
   CONTROLLER_HELPER,
   CRAB_HELPER,
+  CRAB_NETTING,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -60,6 +61,7 @@ export const addressesAtom = atom((get) => {
     crabStrategy2: CRAB_STRATEGY2[networkId].toLowerCase(),
     controllerHelper: CONTROLLER_HELPER[networkId].toLowerCase(),
     crabHelper: CRAB_HELPER[networkId].toLowerCase(),
+    crabNetting: CRAB_NETTING[networkId].toLowerCase(),
   }
 })
 

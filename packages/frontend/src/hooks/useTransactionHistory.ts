@@ -19,6 +19,20 @@ import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
 
 const bigZero = new BigNumber(0)
 
+const getTransactionType = (c: any) => {
+  if (c.type === CrabStrategyV2TxType.OTC_DEPOSIT) return TransactionType.OTC_DEPOSIT
+
+  if (c.type === CrabStrategyV2TxType.OTC_WITHDRAW) return TransactionType.OTC_WITHDRAW
+
+  return c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1
+    ? c.erc20Token
+      ? TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT
+      : TransactionType.CRAB_V2_FLASH_DEPOSIT
+    : c.erc20Token
+    ? TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
+    : TransactionType.CRAB_V2_FLASH_WITHDRAW
+}
+
 export const useTransactionHistory = () => {
   const { squeethPool, shortHelper, swapRouter } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
@@ -144,14 +158,8 @@ export const useTransactionHistory = () => {
   })
 
   const crabV2Transactions = (crabV2Data || [])?.map((c) => {
-    const transactionType =
-      c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1
-        ? c.erc20Token
-          ? TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT
-          : TransactionType.CRAB_V2_FLASH_DEPOSIT
-        : c.erc20Token
-        ? TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
-        : TransactionType.CRAB_V2_FLASH_WITHDRAW
+    const transactionType = getTransactionType(c)
+
     const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
 
     return {
@@ -160,7 +168,7 @@ export const useTransactionHistory = () => {
       ethAmount: ethAmount.abs(),
       usdValue,
       timestamp,
-      txId: c.id,
+      txId: c.transaction,
     }
   })
 
