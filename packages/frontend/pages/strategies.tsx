@@ -160,8 +160,6 @@ const useStyles = makeStyles((theme) =>
         maxHeight: '452px',
         minHeight: '350px',
         height: 'fit-content',
-        position: 'sticky',
-        top: '75px',
         margin: theme.spacing('-160px', '50px'),
       },
     },
@@ -361,9 +359,8 @@ const Strategies: React.FC = () => {
                     label={
                       <Label
                         label="Historical Daily Premium"
-                        tooltipTitle={`${
-                          Tooltips.StrategyEarnFunding
-                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                        tooltipTitle={`${Tooltips.StrategyEarnFunding
+                          }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                       />
                     }
                     value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}

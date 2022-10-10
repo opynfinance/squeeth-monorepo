@@ -40,6 +40,7 @@ import {
 } from "../generated/schema"
 import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
 import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
+import { CrabNetting, CrabWithdrawn, USDCDeposited } from "../generated/CrabNetting/CrabNetting";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
   let userTx = CrabUserTx.load(id)
@@ -51,6 +52,7 @@ function loadOrCreateTx(id: string): CrabUserTxSchema {
   userTx.ethAmount = BigInt.zero()
   userTx.type = "TRANSFER"
   userTx.timestamp = BigInt.zero()
+  userTx.transaction = id
 
   return userTx
 }
@@ -154,6 +156,38 @@ export function handleFlashWithdrawERC20(event: FlashWithdrawERC20): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.erc20Amount = event.params.withdrawnAmount
   userTx.erc20Token = event.params.withdrawnERC20.toHex()
+  userTx.save()
+}
+
+export function handleNettingDeposit(event: USDCDeposited): void {
+  const userTx = loadOrCreateTx(`${event.transaction.hash.toHex()}-${event.logIndex.toString()}`)
+  const contract = CrabNetting.bind(event.address)
+
+  userTx.erc20Amount = event.params.usdcAmount
+  userTx.lpAmount = event.params.crabAmount
+  userTx.user= event.params.depositor
+  userTx.owner = event.params.depositor
+  userTx.erc20Token = contract.usdc().toHex()
+  userTx.type = 'OTC_DEPOSIT'
+  userTx.timestamp = event.block.timestamp
+  userTx.transaction = event.transaction.hash.toHex()
+
+  userTx.save()
+}
+
+export function handleNettingWithdraw(event: CrabWithdrawn): void {
+  const userTx = loadOrCreateTx(`${event.transaction.hash.toHex()}-${event.logIndex.toString()}`)
+  const contract = CrabNetting.bind(event.address)
+
+  userTx.erc20Amount = event.params.usdcAmount
+  userTx.lpAmount = event.params.crabAmount
+  userTx.user= event.params.withdrawer
+  userTx.owner = event.params.withdrawer
+  userTx.erc20Token = contract.usdc().toHex()
+  userTx.type = 'OTC_WITHDRAW'
+  userTx.timestamp = event.block.timestamp
+  userTx.transaction = event.transaction.hash.toHex()
+
   userTx.save()
 }
 

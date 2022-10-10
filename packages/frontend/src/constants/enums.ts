@@ -20,12 +20,14 @@ export enum TransactionType {
   BURN_SHORT = 'Bought back and burned',
   ADD_LIQUIDITY = 'Added Liquidity',
   REMOVE_LIQUIDITY = 'Removed Liquidity',
-  CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
-  CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
-  CRAB_V2_FLASH_DEPOSIT = 'Flash deposit in crab V2',
-  CRAB_V2_FLASH_WITHDRAW = 'Flash withdraw in crab V2',
-  CRAB_V2_USDC_FLASH_DEPOSIT = 'Flash deposit USDC in crab V2',
-  CRAB_V2_USDC_FLASH_WITHDRAW = 'Flash withdraw USDC in crab V2',
+  CRAB_FLASH_DEPOSIT = 'Deposit in crab',
+  CRAB_FLASH_WITHDRAW = 'Withdraw from crab',
+  CRAB_V2_FLASH_DEPOSIT = 'Deposit to crab V2',
+  CRAB_V2_FLASH_WITHDRAW = 'Withdraw from crab V2',
+  CRAB_V2_USDC_FLASH_DEPOSIT = 'Deposit USDC to crab V2',
+  CRAB_V2_USDC_FLASH_WITHDRAW = 'Withdraw USDC from crab V2',
+  OTC_DEPOSIT = 'Deposit USDC to crab v2',
+  OTC_WITHDRAW = 'Withdraw USDC from crab V2',
 }
 
 export enum CloseType {

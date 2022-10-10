@@ -177,6 +177,7 @@ type CrabUserTx @entity {
   erc20Token: String
   erc20Amount: BigInt
   excessEth: BigInt
+  transaction: String!
 }
 
 type Strategy @entity {

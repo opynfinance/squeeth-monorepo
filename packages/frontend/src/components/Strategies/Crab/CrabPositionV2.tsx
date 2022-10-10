@@ -11,6 +11,8 @@ import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import Metric from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlInPerctv2 } from 'src/lib/pnl'
+import CrabQueuedPosition from './CrabQueuedPosition'
+import { crabQueuedAtom, usdcQueuedAtom } from 'src/state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -55,6 +57,9 @@ const CrabPosition: React.FC = () => {
   const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
+
   const classes = useStyles()
   const pnl = useAppMemo(() => {
     return pnlInPerctv2(currentCrabPositionValue, depositedUsd)
@@ -65,9 +70,7 @@ const CrabPosition: React.FC = () => {
     return isCrabPositionLoading || isCrabPositionValueLoading
   }, [isCrabPositionLoading, isCrabPositionValueLoading])
 
-  if (currentCrabPositionValue.isZero()) {
-    return null
-  }
+  if (currentCrabPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) return null
 
   return (
     <Box>
