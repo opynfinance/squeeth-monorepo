@@ -43,16 +43,68 @@ function StrategyPnLV2() {
     
     const classes = useStyles()
     const query = useCrabPnLV2ChartData()
+    let crabUsdPnlSeries : any[]
+    let crabEthPnlSeries : any[]
+    let ethUsdPnlSeries : any[]
    
-    const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabPnL*100 ])) ;
-    const crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEthPnl ])) ;
-    const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsdPnl ])) ;
+    crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabPnL*100 ])) ;
+    crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.crabEthPnl ])) ;
+    ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => ([ x.timestamp*1000, x.ethUsdPnl ])) ;
 
-  
+
     const lastMarkerPoints = useAppMemo(() => {
       const crabUsdMarker = (crabUsdPnlSeries) ? crabUsdPnlSeries[crabUsdPnlSeries?.length -1]: [];
       const crabEthMarker = (crabEthPnlSeries) ? crabEthPnlSeries[crabEthPnlSeries?.length -1]: [];
       const ethUsdMarker = (ethUsdPnlSeries) ? ethUsdPnlSeries[ethUsdPnlSeries?.length -1]: [];
+
+      let lastCrabUsdItem = (crabUsdPnlSeries) ? crabUsdPnlSeries.pop() : [];
+      let newCrabUsdLastItem = {
+        x: lastCrabUsdItem[0],
+        y: lastCrabUsdItem[1],
+        dataLabels: {
+            align: 'center',
+            enabled: true,
+            useHTML: true,
+            formatter: function() {
+                return '<div style="color:#BABBBB"> Crab/USD 🦀</div>';
+            }
+        }
+     }
+     if(crabUsdPnlSeries)
+     crabUsdPnlSeries.push(newCrabUsdLastItem)
+
+     let lastCrabEthItem = (crabEthPnlSeries) ? crabEthPnlSeries.pop() : [];
+      let newCrabEthLastItem = {
+        x: lastCrabEthItem[0],
+        y: lastCrabEthItem[1],
+        dataLabels: {
+            align: 'center',
+            enabled: true,
+            useHTML: true,
+            formatter: function() {
+                return '<div style="color:#BABBBB"> Crab/ETH </div>';
+            }
+        }
+     }
+     if(crabEthPnlSeries)
+     crabEthPnlSeries.push(newCrabEthLastItem)
+
+     let lastEthUsdItem = (ethUsdPnlSeries) ? ethUsdPnlSeries.pop() : [];
+     let newEthUsdLastItem = {
+       x: lastEthUsdItem[0],
+       y: lastEthUsdItem[1],
+       dataLabels: {
+           align: 'center',
+           enabled: true,
+           useHTML: true,
+           formatter: function() {
+               return '<div style="color:#BABBBB"> ETH/USD </div>';
+           }
+       }
+    }
+    if(ethUsdPnlSeries)
+    ethUsdPnlSeries.push(newEthUsdLastItem)
+
       return [crabUsdMarker[1],crabEthMarker[1],ethUsdMarker[1]]
     }, [crabUsdPnlSeries,crabEthPnlSeries,ethUsdPnlSeries])
 
@@ -72,7 +124,7 @@ function StrategyPnLV2() {
         valueDecimals: 2,
         valueSuffix: '%',
       },
-      color: "#00e396",
+      color: "#2ce6f9",
     }
     ,{
       yAxis: 0,
@@ -82,7 +134,7 @@ function StrategyPnLV2() {
         valueDecimals: 2,
         valueSuffix: '%'
       },
-      color: "#184a69"
+      color: "#5B7184"
     }
     ,{
       yAxis: 0,
@@ -126,7 +178,9 @@ function StrategyPnLV2() {
       }
     }
 
-  ]
+      ],
+
+  
   }
 
     const chartOptions = useAppMemo(() => {
