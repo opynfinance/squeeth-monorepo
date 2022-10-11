@@ -49,6 +49,8 @@
         "fzero": "^0.2.4",
         "graphql": "^16.1.0",
         "gray-matter": "^4.0.3",
+        "highcharts": "^10.2.1",
+        "highcharts-react-official": "^3.1.0",
         "javascript-time-ago": "^2.5.7",
         "jotai": "^1.5.3",
         "kaktana-react-lightweight-charts": "^2.0.0",
