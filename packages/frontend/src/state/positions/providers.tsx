@@ -1,12 +1,12 @@
 import BigNumber from 'bignumber.js'
 import { createContext } from 'react'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { BIG_ZERO, OSQUEETH_DECIMALS } from '@constants/index'
 import { addressesAtom, isWethToken0Atom, positionTypeAtom, isToHidePnLAtom } from './atoms'
 import { useUsdAmount } from '@hooks/useUsdAmount'
 import { PositionType } from '../../types'
-import { useSwaps } from './hooks'
+import { useFirstValidVault, useSwaps } from './hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { FC } from 'react'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -27,12 +27,13 @@ export const ComputeSwapsContext = createContext<ComputeSwapsContextValue | null
 
 export const ComputeSwapsProvider: FC = ({ children }) => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const setPositionType = useUpdateAtom(positionTypeAtom)
+  const [positionType, setPositionType] = useAtom(positionTypeAtom)
   const setIsToHidePnL = useUpdateAtom(isToHidePnLAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data, loading } = useSwaps()
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: oSqueethBal, refetch } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { validVault: vault } = useFirstValidVault()
 
   const computedSwaps = useAppMemo(
     () =>
@@ -98,7 +99,7 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
   )
 
   useAppEffect(() => {
-    if (computedSwaps.squeethAmount.isGreaterThan(0) && oSqueethBal?.isGreaterThan(0)) {
+    if (oSqueethBal?.isGreaterThan(0) && oSqueethBal.isGreaterThan(vault?.shortAmount || 0)) {
       setPositionType(PositionType.LONG)
       // check if user osqth wallet balance is equal to the accumulated amount from tx history
       // if it's not the same, it's likely that they do smt on crab acution or otc or lp etc so dont show the pnl for them
@@ -107,14 +108,14 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
       } else {
         setIsToHidePnL(false)
       }
-    } else if (computedSwaps.squeethAmount.isLessThan(0)) {
+    } else if (oSqueethBal.isLessThan(vault?.shortAmount || 0)) {
       setIsToHidePnL(true)
       setPositionType(PositionType.SHORT)
     } else {
       setIsToHidePnL(false)
       setPositionType(PositionType.NONE)
     }
-  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL])
+  }, [computedSwaps.squeethAmount, oSqueethBal, setPositionType, setIsToHidePnL, vault?.shortAmount])
 
   useAppEffect(() => {
     refetch()
@@ -125,11 +126,9 @@ export const ComputeSwapsProvider: FC = ({ children }) => {
       ...computedSwaps,
       loading,
       squeethAmount:
-        computedSwaps.squeethAmount.isGreaterThan(0) && computedSwaps.squeethAmount.isGreaterThan(oSqueethBal)
-          ? oSqueethBal
-          : computedSwaps.squeethAmount.absoluteValue(),
+        positionType === PositionType.LONG ? oSqueethBal : vault?.shortAmount.minus(oSqueethBal) || BIG_ZERO,
     }),
-    [computedSwaps, oSqueethBal, loading],
+    [computedSwaps, loading, positionType, oSqueethBal, vault?.shortAmount],
   )
 
   return <ComputeSwapsContext.Provider value={value}>{children}</ComputeSwapsContext.Provider>

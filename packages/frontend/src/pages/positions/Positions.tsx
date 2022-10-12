@@ -39,7 +39,7 @@ import {
   useSetStrategyData,
   useSetStrategyDataV2,
 } from 'src/state/crab/hooks'
-import { pnl, pnlInPerct,pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
+import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
@@ -96,10 +96,10 @@ export default function Positions() {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
   const pnlWMidPriceInUSDV2 = useAppMemo(() => {
-    return pnlv2(currentCrabPositionValueV2,depositedUsdV2 )
+    return pnlv2(currentCrabPositionValueV2, depositedUsdV2)
   }, [currentCrabPositionValueV2, depositedUsdV2])
   const pnlWMidPriceInPerctV2 = useAppMemo(() => {
-    return pnlInPerctv2(currentCrabPositionValueV2,depositedUsdV2)
+    return pnlInPerctv2(currentCrabPositionValueV2, depositedUsdV2)
   }, [currentCrabPositionValueV2, depositedUsdV2])
 
   const vaultExists = useAppMemo(() => {
