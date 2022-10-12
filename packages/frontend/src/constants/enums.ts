@@ -93,6 +93,7 @@ export enum Links {
 export const UniswapIFrameOpen = {
   1: `https://app.uniswap.org/#/add/ETH/${OSQUEETH[1]}/3000`,
   3: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[3]}/3000`,
+  5: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[5]}/3000`,
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
@@ -100,6 +101,7 @@ export const UniswapIFrameOpen = {
 export const UniswapIFrameClose = {
   1: 'https://app.uniswap.org/#/pool',
   3: 'https://squeeth-uniswap.netlify.app/#/pool',
+  5: 'https://squeeth-uniswap.netlify.app/#/pool',
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }

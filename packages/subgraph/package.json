@@ -11,11 +11,13 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 opynfinance/squeeth",
     "prepare:ropsten": "mustache config/ropsten-config.json subgraph.template.yaml > subgraph.yaml",
     "deploy:ropsten": "yarn prepare:ropsten && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-ropsten",
-    "prepare:mainnet": "mustache config/mainnet-config.json subgraph.template.yaml > subgraph.yaml"
+    "prepare:mainnet": "mustache config/mainnet-config.json subgraph.template.yaml > subgraph.yaml",
+    "prepare:goerli": "mustache config/goerli-config.json subgraph.template.yaml > subgraph.yaml",
+    "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-goerli"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.25.1",
-    "@graphprotocol/graph-ts": "^0.24.1"
+    "@graphprotocol/graph-cli": "0.33.1",
+    "@graphprotocol/graph-ts": "0.27.0"
   },
   "devDependencies": {
     "mustache": "^4.2.0"

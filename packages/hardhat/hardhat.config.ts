@@ -93,6 +93,13 @@ const config: HardhatUserConfig = {
         mnemonic: mnemonic(),
       },
     },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      // accounts: {
+      //   mnemonic: mnemonic(),
+      // },
+      accounts: ['028b1cc391ec39efccd6a70bab8f4d3f3f7f1b6dd4abf31e6756b4f4e6f6cc76']
+    },
     kovan: {
       url: `https://kovan.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
       accounts: {

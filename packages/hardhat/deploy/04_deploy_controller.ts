@@ -2,31 +2,22 @@ import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { DeployFunction } from 'hardhat-deploy/types';
 
 import { getPoolAddress } from '../test/setup'
-import { getUniswapDeployments, getUSDC, getWETH } from '../tasks/utils'
+import { getUniswapDeployments, getUSDC, getWETH, createArgumentFile } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network, deployments } = hre;
   const { deployer } = await getNamedAccounts();
   const { deploy } = deployments;
-
+    
   const feeTier = 3000
-
-
-  if (network.name === "ropsten" || network.name === "mainnet") {
-    return
-  }
 
   // Load contracts
   const oracle = await ethers.getContract("Oracle", deployer);
   const shortSqueeth = await ethers.getContract("ShortPowerPerp", deployer);
   const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
-
   const weth9 = await getWETH(ethers, deployer, network.name)
-
   const usdc = await getUSDC(ethers, deployer, network.name)
-
   const { uniswapFactory, positionManager } = await getUniswapDeployments(ethers, deployer, network.name)
-
   const ethUSDCPool = await getPoolAddress(weth9, usdc, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
@@ -41,7 +32,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const sqrtPriceMathPartial = await ethers.getContract("SqrtPriceMathPartial", deployer)
 
   // deploy controller
-  await deploy("Controller", { from: deployer, log: true, libraries: { ABDKMath64x64: abdk.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address, TickMathExternal: tickMathExternal.address }, args: [oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, usdc.address, ethUSDCPool, squeethEthPool, positionManager.address, feeTier] });
+  const controllerArgs = [oracle.address, shortSqueeth.address, wsqueeth.address, weth9.address, usdc.address, ethUSDCPool, squeethEthPool, positionManager.address, feeTier]
+  await deploy("Controller", { from: deployer, log: true, libraries: { ABDKMath64x64: abdk.address, SqrtPriceMathPartial: sqrtPriceMathPartial.address, TickMathExternal: tickMathExternal.address }, args: controllerArgs });
+  createArgumentFile('Controller', network.name, controllerArgs)
   const controller = await ethers.getContract("Controller", deployer);
 
   try {
