@@ -41,7 +41,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: crabStrategyArgs,
-    gasLimit: 10000000
+    gasLimit: 10000000,
+    skipIfAlreadyDeployed: true,
   });
   createArgumentFile('CrabStrategy', network.name, crabStrategyArgs)
 

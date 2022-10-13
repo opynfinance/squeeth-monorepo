@@ -21,6 +21,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const ethUSDCPool = await getPoolAddress(weth9, usdc, uniswapFactory)
   const squeethEthPool = await getPoolAddress(weth9, wsqueeth, uniswapFactory)
 
+  if (network.name === 'goerli') return
+
   // deploy abdk library
   await deploy("ABDKMath64x64", { from: deployer, log: true })
   const abdk = await ethers.getContract("ABDKMath64x64", deployer)

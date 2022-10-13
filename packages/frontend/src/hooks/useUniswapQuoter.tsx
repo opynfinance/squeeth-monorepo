@@ -5,7 +5,13 @@ import { quoterContractAtom } from 'src/state/contracts/atoms'
 export const useUniswapQuoter = () => {
   const contract = useAtomValue(quoterContractAtom)
 
-  const getExactIn = async (tokenIn: string, tokenOut: string, amountIn: BigNumber, poolFee: number) => {
+  const getExactIn = async (
+    tokenIn: string,
+    tokenOut: string,
+    amountIn: BigNumber,
+    poolFee: number,
+    slippage: number,
+  ) => {
     if (!contract) return null
 
     const quoteExactInputSingleParams = {
@@ -17,7 +23,11 @@ export const useUniswapQuoter = () => {
     }
 
     const quote = await contract.methods.quoteExactInputSingle(quoteExactInputSingleParams).call()
-    return quote
+    const minAmountOut = new BigNumber(quote.amountOut)
+      .times(100 - slippage)
+      .div(100)
+      .toFixed(0)
+    return { ...quote, minAmountOut }
   }
 
   const getExactOut = async (tokenIn: string, tokenOut: string, amountOut: BigNumber, poolFee: number) => {

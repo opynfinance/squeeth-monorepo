@@ -46,15 +46,15 @@ const wsLinkMN =
       })
     : null
 
-  const wsLinkGL =
-    typeof window !== 'undefined'
-      ? new WebSocketLink({
-          uri: 'wss://api.thegraph.com/subgraphs/name/haythem96/uniswap-v3-goerli',
-          options: {
-            reconnect: false,
-          },
-        })
-      : null
+const wsLinkGL =
+  typeof window !== 'undefined'
+    ? new WebSocketLink({
+        uri: 'wss://api.thegraph.com/subgraphs/name/haythem96/uniswap-v3-goerli',
+        options: {
+          reconnect: false,
+        },
+      })
+    : null
 
 const wsLinkRPSqueeth =
   typeof window !== 'undefined'
@@ -75,7 +75,6 @@ const wsLinkMNSqueeth =
         },
       })
     : null
-
 
 const wsLinkGLSqueeth =
   typeof window !== 'undefined'

@@ -11,7 +11,7 @@ import useAppEffect from '@hooks/useAppEffect'
 
 const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'
 
-export function useUserAllowance(token: string, spenderAddess: string) {
+export function useUserAllowance(token: string, spenderAddess: string | null) {
   const handleTransaction = useHandleTransaction()
   const web3 = useAtomValue(web3Atom)
   const address = useAtomValue(addressAtom)

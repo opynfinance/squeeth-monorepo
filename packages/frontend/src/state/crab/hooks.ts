@@ -51,19 +51,20 @@ import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
-import { fromTokenAmount } from '@utils/calculations'
+import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
-import { crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
+import { crabHelperContractAtom, crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
-import { BIG_ZERO } from '@constants/index'
+import { BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
+import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -526,6 +527,53 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
   )
 
   return flashDeposit
+}
+
+export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
+  const maxCap = useAtomValue(maxCapAtomV2)
+  const address = useAtomValue(addressAtom)
+  const { usdc, weth } = useAtomValue(addressesAtom)
+  const network = useAtomValue(networkIdAtom)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const contract = useAtomValue(crabHelperContractAtom)
+  const { getExactIn } = useUniswapQuoter()
+  const handleTransaction = useHandleTransaction()
+
+  const usdcFee = network === Networks.GOERLI ? UNI_POOL_FEES : ETH_USDC_POOL_FEES
+
+  const flashDepositUSDC = useAppCallback(
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract || !vault) return
+
+      const usdcAmount = fromTokenAmount(amount, USDC_DECIMALS)
+      const quote = await getExactIn(usdc, weth, usdcAmount, usdcFee, slippage)
+      const ethAmount = new BigNumber(quote.minAmountOut)
+      let { ethBorrow: _ethBorrow } = await calculateETHtoBorrowFromUniswap(toTokenAmount(ethAmount, 18), slippage)
+      // Just to make sure the issue never happens
+      if (_ethBorrow.isZero()) {
+        Fathom.trackGoal('HOUQK7NR', 0)
+        alert('Some error occurred. Refresh the page!')
+        throw new Error('Some error occurred. Refresh the page!')
+      }
+      const _allowedEthToBorrow = maxCap.minus(toTokenAmount(ethAmount, 18).plus(vault.collateralAmount))
+      if (_ethBorrow.gt(_allowedEthToBorrow)) {
+        _ethBorrow = _allowedEthToBorrow
+      }
+
+      // TODO: fix it so it uses v2 ratio, not v1.
+      const ethBorrow = fromTokenAmount(_ethBorrow, 18)
+      const ethDeposit = ethAmount
+      return await handleTransaction(
+        contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount, ethDeposit, usdcFee, UNI_POOL_FEES, usdc).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
+  )
+
+  return flashDepositUSDC
 }
 
 export const useFlashWithdraw = () => {

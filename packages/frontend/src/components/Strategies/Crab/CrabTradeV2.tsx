@@ -12,9 +12,9 @@ import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressAtom, connectedWalletAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO, ETH_USDC_POOL_FEES, FUNDING_PERIOD, INDEX_SCALE, USDC_DECIMALS, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, WETH_DECIMALS, YEAR } from '../../../constants'
+import { BIG_ZERO, ETH_USDC_POOL_FEES, FUNDING_PERIOD, INDEX_SCALE, UNI_POOL_FEES, USDC_DECIMALS, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, WETH_DECIMALS, YEAR } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import InfoIcon from '@material-ui/icons/Info'
 
@@ -31,6 +31,7 @@ import {
   useFlashWithdrawEthV2,
   useCalculateEthWillingToPayV2,
   useClaimAndWithdrawEthV2,
+  useFlashDepositUSDC,
 } from 'src/state/crab/hooks'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { useMap, usePrevious } from 'react-use'
@@ -49,6 +50,8 @@ import { LinkWrapper } from '@components/LinkWrapper'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
+import { Networks } from '@types/index'
+import { useUserAllowance } from '@hooks/contracts/useAllowance'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -124,6 +127,11 @@ type CrabTradeV2Type = {
   depositedAmount: BigNumber
 }
 
+enum DepositSteps {
+  APPROVE = 'Approve USDC',
+  DEPOSIT = 'Deposit'
+}
+
 const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
   const [depositAmount, setDepositAmount] = useState(new BigNumber(0))
@@ -138,16 +146,18 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw] = useState(new BigNumber(0))
   const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw] = useState(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(false)
+  const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
   const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
+  const network = useAtomValue(networkIdAtom)
 
   const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
   const isClaimAndWithdraw = migratedCurrentEthValue.gt(0)
 
-  const { usdc, weth } = useAtomValue(addressesAtom)
+  const { usdc, weth, crabHelper } = useAtomValue(addressesAtom)
   const { data: balance } = useWalletBalance()
   const { value: usdcBalance } = useTokenBalance(usdc, 15, USDC_DECIMALS)
   const { getExactIn } = useUniswapQuoter()
@@ -158,6 +168,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
   const updateSharesData = useUpdateSharesData()
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
+  const flashDepositUSDC = useFlashDepositUSDC(calculateETHtoBorrowFromUniswap)
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
@@ -170,6 +181,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
+  const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper)
   const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
 
   const prevCrabTxData = usePrevious(data)
@@ -287,8 +299,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
         setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
       })
     } else {
-      getExactIn(usdc, weth, fromTokenAmount(depositAmount, USDC_DECIMALS), ETH_USDC_POOL_FEES).then((usdcq) => {
-        calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.amountOut, WETH_DECIMALS), slippage).then((q) => {
+      const fee = network === Networks.GOERLI ? UNI_POOL_FEES : ETH_USDC_POOL_FEES
+      getExactIn(usdc, weth, fromTokenAmount(depositAmount, USDC_DECIMALS), fee, slippage).then((usdcq) => {
+        calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.minAmountOut, WETH_DECIMALS), slippage).then((q) => {
           setDepositPriceImpact(q.priceImpact)
           setBorrowEth(q.ethBorrow)
           setEthAmountOutFromDeposit(q.amountOut)
@@ -308,13 +321,25 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     })
   }, [ready, withdrawAmount.toString(), slippage])
 
-  const deposit = async () => {
+  const depositTX = async () => {
     setTxLoading(true)
     try {
-      await flashDeposit(depositAmount, slippage, () => {
-        setTxLoading(false)
-        setStrategyData()
-      })
+      console.log('USDC: In usdc check')
+      if (depositStep === DepositSteps.APPROVE) {
+        await approveUsdc(() => resetTransactionData())
+      } else {
+        if (useUsdc) {
+          console.log('USDC: going to flash deposit')
+          await flashDepositUSDC(depositAmount, slippage, () => {
+            setStrategyData()
+          })
+        } else {
+          await flashDeposit(depositAmount, slippage, () => {
+            setStrategyData()
+          })
+        }
+      }
+      setTxLoading(false)
     } catch (e) {
       console.log(e)
       setTxLoading(false)
@@ -344,6 +369,19 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }
 
   const depositToken = useMemo(() => (useUsdc ? 'USDC' : "ETH"), [useUsdc])
+
+  // Update deposit step
+  useEffect(() => {
+    if (useUsdc) {
+      if (usdcAllowance.lt(depositAmount)) {
+        setDepositStep(DepositSteps.APPROVE)
+      } else {
+        setDepositStep(DepositSteps.DEPOSIT)
+      }
+    } else {
+      setDepositStep(DepositSteps.DEPOSIT)
+    }
+  }, [useUsdc, usdcAllowance, depositAmount])
 
   if (isRestricted) {
     return <RestrictionInfo />
@@ -575,7 +613,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     ? 'outlined'
                     : 'contained'
                 }
-                onClick={() => deposit()}
+                onClick={() => depositTX()}
                 disabled={txLoading || !!depositError}
                 style={
                   Number(depositPriceImpact) > 3 || !!warning
@@ -588,7 +626,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 {!txLoading && (depositFundingWarning || depositPriceImpactWarning) ? (
                   'Deposit anyway'
                 ) : !txLoading ? (
-                  'Deposit'
+                  depositStep
                 ) : (
                   <CircularProgress color="primary" size="1.5rem" />
                 )}

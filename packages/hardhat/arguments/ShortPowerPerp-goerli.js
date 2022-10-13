@@ -1,1 +1,1 @@
-module.exports = ["short Squeeth", "sSQTH"];
+module.exports = ["short Squeeth","sSQTH"]
