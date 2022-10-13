@@ -34,7 +34,7 @@ enum ChartType {
   // Comparison = 'Comparison',
   Details = 'Details',
   Risks = 'Risks',
-  Funding = 'Funding',
+  Funding = 'Premium',
 }
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
@@ -114,7 +114,6 @@ function LongChart() {
   const [tradeType, setTradeType] = useAtom(chartTradeTypeAtom)
   const query = useLongChartData()
 
-
   const longEthPNL = query.data?.longEthPNL
   const longSeries = query.data?.longSeries
   const positionSizeSeries = query.data?.positionSizeSeries
@@ -134,11 +133,11 @@ function LongChart() {
         { data: longEthPNL, legend: 'Long ETH PNL (%)' },
         {
           data: longSeries.slice(0, liveIndex),
-          legend: `Long Squeeth PNL (%) Simulated incl. funding`,
+          legend: `Long Squeeth PNL (%) Simulated incl. premiums`,
         },
         {
           data: longSeries.slice(liveIndex),
-          legend: `Long Squeeth PNL (%) LIVE (incl. funding)`,
+          legend: `Long Squeeth PNL (%) LIVE (incl. premiums)`,
         },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]
@@ -194,7 +193,7 @@ function LongChart() {
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           {/* <SqueethTab label="Details" /> */}
-          <SqueethTab label="Funding" />
+          <SqueethTab label="Premium" />
           <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
@@ -238,7 +237,7 @@ function LongChart() {
           <Typography variant="body2" className={classes.cardDetail}>
             Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
             liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-            goes down (excluding funding). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this
+            goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this
             position. Enter the position by purchasing an ERC20 token.{' '}
             <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
               {' '}
@@ -265,9 +264,9 @@ function LongChart() {
             Risks
           </Typography>
           <Typography variant="body2" className={classes.cardDetail}>
-            Funding is paid out of your position, similar to selling a small amount of squeeth at funding, reducing your
-            position size. Holding the position for a long period of time without upward movements in ETH can lose
-            considerable funds to funding payments.
+            Premiums are is paid out of your position, similar to selling a small amount of squeeth as you earn
+            premiums, reducing your position size. Holding the position for a long period of time without upward
+            movements in ETH can lose considerable funds to premium payments.
             <br /> <br />
             Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
             are experimental technology and we encourage caution only risking funds you can afford to lose.
@@ -328,7 +327,7 @@ function LongChart() {
             <Typography variant="body2" className={classes.cardDetail} style={{ fontSize: '14px' }}>
               Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
               liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-              goes down (excluding funding). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this
+              goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay premiums for this
               position. Enter the position by purchasing an ERC20 token.{' '}
               <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
                 {' '}

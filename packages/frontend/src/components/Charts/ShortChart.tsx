@@ -90,7 +90,7 @@ function ShortChart({
           aria-label="Sub nav tabs"
         >
           <SqueethTab label="Payoff" />
-          <SqueethTab label="Funding" />
+          <SqueethTab label="Premium" />
           <SqueethTab label="Risks" />
         </SqueethTabs>
       </div>

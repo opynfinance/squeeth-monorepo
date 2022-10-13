@@ -399,7 +399,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
     console.log(currentImpliedFunding, FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding, Number(amount) > 0)
     if (currentImpliedFunding <= FUNDING_MOVE_THRESHOLD * dailyHistoricalFunding.funding && Number(amount) > 0) {
       const fundingPercent = (1 - currentImpliedFunding / dailyHistoricalFunding.funding) * 100
-      lowVolError = `Funding is ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`
+      lowVolError = `Premiums are ${fundingPercent.toFixed(0)}% below yesterday. Consider buying later`
     }
     if (
       !open &&

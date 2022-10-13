@@ -347,7 +347,7 @@ const Header: React.FC = () => {
             {tradeType === TradeType.LONG ? (
               <>Perpetual leverage without liquidations</>
             ) : (
-              <>Earn funding for selling ETH collateralized squeeth</>
+              <>Earn premiums for selling ETH collateralized squeeth</>
             )}
           </Typography>
         </div>
@@ -437,10 +437,10 @@ const SqueethInfo: React.FC = () => {
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
-                Historical Daily Funding
+                Historical Daily Premium
               </Typography>
               <Tooltip
-                title={`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
+                title={`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
               >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
@@ -454,7 +454,7 @@ const SqueethInfo: React.FC = () => {
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
-                Current Implied Funding
+                Current Implied Premium
               </Typography>
               <Tooltip title={Tooltips.CurrentImplFunding}>
                 <InfoIcon fontSize="small" className={classes.infoIcon} />

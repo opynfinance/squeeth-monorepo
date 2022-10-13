@@ -364,7 +364,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
       Number(ethTradeAmount) > 0
     ) {
       const fundingPercent = (currentImpliedFunding / dailyHistoricalFunding.funding - 1) * 100
-      highVolError = `Funding ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
+      highVolError = `Premiums are ${fundingPercent.toFixed(0)}% above yesterday. Consider buying later`
     }
   }
 
@@ -529,7 +529,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 <TradeInfoItem
                   label="Value if ETH up 2x"
                   value={Number((squeethExposure * 4).toFixed(2)).toLocaleString()}
-                  tooltip="The value of your position if ETH goes up 2x, not including funding"
+                  tooltip="The value of your position if ETH goes up 2x, not including premiums"
                   frontUnit="$"
                   id="open-short-eth-up-2x"
                 />
@@ -537,7 +537,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 <TradeInfoItem
                   label="Value if ETH down 50%"
                   value={Number((squeethExposure * 0.25).toFixed(2)).toLocaleString()}
-                  tooltip="The value of your position if ETH goes down 50%, not including funding"
+                  tooltip="The value of your position if ETH goes down 50%, not including premiums"
                   frontUnit="$"
                   id="open-short-eth-down-50%"
                 />
