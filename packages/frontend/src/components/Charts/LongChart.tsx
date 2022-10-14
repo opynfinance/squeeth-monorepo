@@ -264,9 +264,9 @@ function LongChart() {
             Risks
           </Typography>
           <Typography variant="body2" className={classes.cardDetail}>
-            Premiums are is paid out of your position, similar to selling a small amount of squeeth as you earn
-            premiums, reducing your position size. Holding the position for a long period of time without upward
-            movements in ETH can lose considerable funds to premium payments.
+            Premiums are paid out of your position, similar to selling a small amount of squeeth as you earn premiums,
+            reducing your position size. Holding the position for a long period of time without upward movements in ETH
+            can lose considerable funds to premium payments.
             <br /> <br />
             Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
             are experimental technology and we encourage caution only risking funds you can afford to lose.
