@@ -17,7 +17,7 @@ import {
   Transfer,
   CrabStrategyV2
 } from "../generated/CrabStrategyV2/CrabStrategyV2"
-import { BigInt, log } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, ethereum, json, log } from "@graphprotocol/graph-ts"
 
 import { QueueTransaction } from "../generated/Timelock/Timelock";
 
@@ -92,7 +92,20 @@ export function handleWithdrawShutdown(event: WithdrawShutdown): void {
 export function handleFlashDeposit(event: FlashDeposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.tradedAmountOut
-  userTx.ethAmount = (userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')).plus(event.transaction.value)
+  log.info('USDC Deposit: {}, {}', [event.transaction.value.toString(), event.transaction.input.toHexString()])
+  if (event.transaction.value.isZero()) {
+    log.info('USDC zero', [])
+    const constructedInput = '0x' + event.transaction.input.toHex().substring(10)
+    let dec = ethereum.decode('(uint256,uint256,uint256,uint24,uint24,address)', Bytes.fromHexString(constructedInput))
+    if (dec) {
+      const decoded = dec.toTuple()
+      log.info('USDC input {}', [constructedInput])
+      log.info('USDC input {} {}', [decoded[0].toBigInt().toString(), decoded[2].toBigInt().toString()])
+      userTx.ethAmount = (userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')).plus(decoded[2].toBigInt())
+    }
+  } else {
+    userTx.ethAmount = (userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')).plus(event.transaction.value)
+  }
   userTx.user = event.params.depositor
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_DEPOSIT'

@@ -51,7 +51,7 @@ import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
-import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
+import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
@@ -192,6 +192,8 @@ export const useCalculateEthWillingToPayV2 = () => {
 
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const getBuyQuote = useGetBuyQuote()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+
   const calculateEthWillingToPay = useCallback(
     async (amount: BigNumber, slippage: number) => {
       const emptyState = {
@@ -199,10 +201,12 @@ export const useCalculateEthWillingToPayV2 = () => {
         maximumAmountIn: new BigNumber(0),
         priceImpact: '0',
         squeethDebt: new BigNumber(0),
+        ethToGet: new BigNumber(0)
       }
       if (!vault) return emptyState
 
       const squeethDebt = await getWsqueethFromCrabAmount(amount, contract)
+      const  collat = await getCollateralFromCrabAmount(amount, contract, vault)
       console.log('Debt', squeethDebt?.toString(), amount.toString())
       if (!squeethDebt) return emptyState
 
@@ -210,6 +214,7 @@ export const useCalculateEthWillingToPayV2 = () => {
       return {
         ...ethWillingToPayQuote,
         squeethDebt,
+        ethToGet: collat?.minus(ethWillingToPayQuote.maximumAmountIn) || BIG_ZERO
       }
     },
     [contract, getBuyQuote, vault?.id],
@@ -539,7 +544,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const { getExactIn } = useUniswapQuoter()
   const handleTransaction = useHandleTransaction()
 
-  const usdcFee = network === Networks.GOERLI ? UNI_POOL_FEES : ETH_USDC_POOL_FEES
+  const usdcFee = getUSDCPoolFee(network)
 
   const flashDepositUSDC = useAppCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
@@ -632,6 +637,45 @@ export const useFlashWithdrawV2 = () => {
   return flashWithdraw
 }
 
+export const useFlashWithdrawV2USDC = () => {
+  const contract = useAtomValue(crabHelperContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
+  const { getExactIn } = useUniswapQuoter()
+  const { usdc, weth } = useAtomValue(addressesAtom)
+  const network = useAtomValue(networkIdAtom)
+
+  const usdcFee = getUSDCPoolFee(network)
+
+  const flashWithdrawUSDC = useCallback(
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      const { maximumAmountIn: _ethWillingToPay, ethToGet } = await calculateEthWillingToPay(amount, slippage)
+      console.log(_ethWillingToPay.toString())
+      const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
+      const crabAmount = fromTokenAmount(amount, 18)
+      const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(ethToGet, 18), usdcFee, slippage)
+      console.log('Min amount out USDC', minAmountOut.toString())
+      const poolFeePercent = 3000
+      return await handleTransaction(
+        contract.methods
+          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut, usdcFee, poolFeePercent)
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction, calculateEthWillingToPay],
+  )
+
+  return flashWithdrawUSDC
+}
+
+
+
 export const useClaimWithdrawV2 = () => {
   const contract = useAtomValue(crabMigrationContractAtom)
   const handleTransaction = useHandleTransaction()
@@ -701,6 +745,18 @@ export const useFlashWithdrawEthV2 = () => {
   )
 
   return flashWithdrawEth
+}
+
+export const useETHtoCrab = () => {
+  const { crabStrategy2 } = useAtomValue(addressesAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionETHActualAtomV2)
+  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
+
+  const getUserCrabForEthAmount = useAppCallback((ethAmount: BigNumber) => {
+    return ethAmount.div(currentEthValue).times(userCrabBalance)
+  }, [currentEthValue, userCrabBalance])
+
+  return getUserCrabForEthAmount
 }
 
 export const useClaimAndWithdrawEthV2 = () => {
