@@ -9,7 +9,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { getNamedAccounts, ethers, network } = hre;
   const { deployer } = await getNamedAccounts();
   const { positionManager, uniswapFactory } = await getUniswapDeployments(ethers, deployer, network.name)
-  if (network.name === "goerli") {
+  if (network.name === "goerli" || network.name === "mainnet") {
     return
   }
     

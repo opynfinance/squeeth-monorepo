@@ -152,7 +152,7 @@ export const CONTROLLER_HELPER: Address = {
 }
 
 export const CRAB_HELPER: Address = {
-  1: '',
+  1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
   5: '0x660BA6A7EedbF18CC3041cE3B1223385298e3275',
   421611: '',

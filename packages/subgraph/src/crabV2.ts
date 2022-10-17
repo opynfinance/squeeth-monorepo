@@ -92,9 +92,7 @@ export function handleWithdrawShutdown(event: WithdrawShutdown): void {
 export function handleFlashDeposit(event: FlashDeposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.tradedAmountOut
-  log.info('USDC Deposit: {}, {}', [event.transaction.value.toString(), event.transaction.input.toHexString()])
   if (event.transaction.value.isZero()) {
-    log.info('USDC zero', [])
     const constructedInput = '0x' + event.transaction.input.toHex().substring(10)
     let dec = ethereum.decode('(uint256,uint256,uint256,uint24,uint24,address)', Bytes.fromHexString(constructedInput))
     if (dec) {
