@@ -20,6 +20,7 @@ import {
 import { BigInt, Bytes, ethereum, json, log } from "@graphprotocol/graph-ts"
 
 import { QueueTransaction } from "../generated/Timelock/Timelock";
+import { FlashDepositERC20, FlashWithdrawERC20 } from "../generated/CrabHelper/CrabHelper";
 
 import {
   CrabHedgeTimeThreshold,
@@ -41,17 +42,26 @@ import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabM
 import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
-  const strategy = CrabUserTx.load(id)
-  if (strategy) return strategy
+  let userTx = CrabUserTx.load(id)
+  if (userTx) return userTx
 
-  return new CrabUserTx(id)
+  userTx = new CrabUserTx(id)
+  userTx.owner = Bytes.empty()
+  userTx.user = Bytes.empty()
+  userTx.ethAmount = BigInt.zero()
+  userTx.type = "TRANSFER"
+  userTx.timestamp = BigInt.zero()
+
+  return userTx
 }
 
 function loadOrCreateStrategy(id: string): Strategy {
-  const strategy = Strategy.load(id)
+  let strategy = Strategy.load(id)
   if (strategy) return strategy
 
-  return new Strategy(id)
+  strategy =  new Strategy(id)
+  strategy.totalSupply = BigInt.zero()
+  return strategy
 }
 
 export function handleDeposit(event: Deposit): void {
@@ -132,6 +142,21 @@ export function handleFlashDepositCallback(event: FlashDepositCallback): void {
   userTx.save()
 }
 
+export function handleFlashDepositERC20(event: FlashDepositERC20): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.erc20Amount = event.params.depositedAmount
+  userTx.erc20Token = event.params.depositedERC20.toHex()
+  userTx.excessEth = event.params.returnedEth
+  userTx.save()
+}
+
+export function handleFlashWithdrawERC20(event: FlashWithdrawERC20): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.erc20Amount = event.params.withdrawnAmount
+  userTx.erc20Token = event.params.withdrawnERC20.toHex()
+  userTx.save()
+}
+
 export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.params.excess
@@ -152,7 +177,7 @@ export function handleTransfer(event: Transfer): void {
     userTx.lpAmount = event.params.value
     userTx.save()
 
-    strategy.totalSupply = strategy.totalSupply.plus(event.params.value)
+    strategy.totalSupply = (strategy.totalSupply || BigInt.zero()).plus(event.params.value)
     strategy.save()
   }
   // Burning token
