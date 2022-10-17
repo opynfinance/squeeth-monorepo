@@ -270,7 +270,7 @@ const Strategies: React.FC = () => {
             </div>
             {displayCrabV1 ? (
               <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
+                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in
                 either direction each day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable
                 in USD terms, stacking ETH if price drops and selling ETH if price increases.
@@ -281,7 +281,7 @@ const Strategies: React.FC = () => {
               </Typography>
             ) : (
               <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current funding, crab would
+                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
                 be profitable if ETH moves less than approximately <b>{(profitableMovePercentV2 * 100).toFixed(2)}%</b>{' '}
                 in either direction between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab
                 aims to be profitable in USD terms, stacking ETH if price drops and selling ETH price increases.
@@ -303,15 +303,15 @@ const Strategies: React.FC = () => {
                   />
                   <StrategyInfoItem
                     value={(currentImpliedFunding * 100).toFixed(2)}
-                    label="Current Implied Funding (%)"
+                    label="Current Implied Premium (%)"
                     tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                   />
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
-                    label="Historical Daily Funding (%)"
+                    label="Historical Daily Premium (%)"
                     tooltip={`${
                       Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily funding based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                    }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                   />
                   <StrategyInfoItem
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {

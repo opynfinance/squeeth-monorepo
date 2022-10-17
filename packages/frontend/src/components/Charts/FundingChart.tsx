@@ -40,7 +40,7 @@ const FundingChart = () => {
   const classes = useStyles()
 
   const fundingTypes = [
-    { id: 'funding', text: 'Funding' },
+    { id: 'funding', text: 'Premium' },
     {
       id: 'vol',
       text: 'VOL',

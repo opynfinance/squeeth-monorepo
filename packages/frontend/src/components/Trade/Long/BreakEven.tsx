@@ -23,7 +23,7 @@ const BreakEven: React.FC = () => {
       <TradeInfoItem
         label="ETH move to breakeven"
         value={breakEven.toFixed(3)}
-        tooltip={`To breakeven ETH to needs to move to ${breakEven.toFixed(3)}% in one day, since current funding is 
+        tooltip={`To breakeven ETH to needs to move to ${breakEven.toFixed(3)}% in one day, since current premiums are 
         ${(currentFunding * 100).toFixed(2)}%`}
         unit="%"
         id="open-long-eth-breakdown"

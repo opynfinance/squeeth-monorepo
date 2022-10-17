@@ -106,22 +106,22 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
     if (vault === Vaults.ETHBull)
       return [
         { data: longEthPNL, legend: 'Long ETH' },
-        { data: seriesRebalance, legend: 'ETH Bull Strategy (incl. funding)' },
+        { data: seriesRebalance, legend: 'ETH Bull Strategy (incl. premium)' },
       ]
     if (vault === Vaults.CrabVault)
       return [
-        { data: seriesRebalance, legend: 'Crab Strategy PNL (incl. funding)' },
+        { data: seriesRebalance, legend: 'Crab Strategy PNL (incl. premium)' },
         { data: getStableYieldPNL(longAmount), legend: 'Compound Interest yield' },
       ]
     if (vault === Vaults.ETHBear)
       return [
         { data: shortEthPNL, legend: 'Short ETH' },
-        { data: seriesRebalance, legend: 'ETH Bear Strategy (incl. funding)' },
+        { data: seriesRebalance, legend: 'ETH Bear Strategy (incl. premium)' },
       ]
     if (vault === Vaults.Short)
       return [
         { data: compoundSeries, legend: 'Compound PNL (%)' },
-        { data: shortSeries, legend: 'Crab PnL (%) (incl. funding)' },
+        { data: shortSeries, legend: 'Crab PnL (%) (incl. premium)' },
         // { data: convertPNLToPriceChart(shortEthPNL, startingETHPrice), legend: 'Short ETH' },
         // { data: convertPNLToPriceChart(shortSeries, startingETHPrice), legend: 'Short Squeeth (incl. funding)' },
       ]
