@@ -339,6 +339,98 @@
         }
       }
     },
+    "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol": {
+      "lastModificationDate": 1661933923259,
+      "contentHash": "c3182e6b8f07757216a2a963341c905c",
+      "sourceName": "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "IERC20Detailed": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IERC20Detailed.sol/IERC20Detailed.json"
+        }
+      }
+    },
+    "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol": {
+      "lastModificationDate": 1661933923262,
+      "contentHash": "766dec7a41494d7e1ee0ea034401a23a",
+      "sourceName": "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol"
+      ],
+      "versionRequirement": ">=0.5.0, <0.8.0",
+      "artifacts": {
+        "OracleLibrary": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "OracleLibrary.sol/OracleLibrary.json"
+        }
+      }
+    },
     "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol": {
       "lastModificationDate": 1661933923276,
       "contentHash": "41aba5f9aae697bde02511335d64d902",
@@ -376,6 +468,624 @@
       "artifacts": {
         "StrategyMath": {
           "0.7.6+commit.7338295f.Darwin.appleclang": "StrategyMath.sol/StrategyMath.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol": {
+      "lastModificationDate": 1661939612428,
+      "contentHash": "e6badd8268772b99e7ca397aff11a965",
+      "sourceName": "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol"
+      ],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3Pool": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3Pool.sol/IUniswapV3Pool.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol": {
+      "lastModificationDate": 1661939612429,
+      "contentHash": "a8ba2d37b0107911ae0e3b0e123cbd83",
+      "sourceName": "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3SwapCallback": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3SwapCallback.sol/IUniswapV3SwapCallback.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol": {
+      "lastModificationDate": 1661939612430,
+      "contentHash": "83d338eb1394008c808a20ac7c5bab0c",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolActions": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolActions.sol/IUniswapV3PoolActions.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol": {
+      "lastModificationDate": 1661939612430,
+      "contentHash": "25b71180ec9f5132a158334971ee2ace",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolDerivedState": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolDerivedState.sol/IUniswapV3PoolDerivedState.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol": {
+      "lastModificationDate": 1661939612430,
+      "contentHash": "05abb59ec113db1046f7dadc78bb297b",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolEvents": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolEvents.sol/IUniswapV3PoolEvents.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol": {
+      "lastModificationDate": 1661939612430,
+      "contentHash": "e236e09a9d654fb2f20a6da5dba2bd2f",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolImmutables": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolImmutables.sol/IUniswapV3PoolImmutables.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol": {
+      "lastModificationDate": 1661939612430,
+      "contentHash": "1b06ecc79e75f836c446ccf286e671e4",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolOwnerActions": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolOwnerActions.sol/IUniswapV3PoolOwnerActions.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol": {
+      "lastModificationDate": 1661939612431,
+      "contentHash": "0488495ef9087b4513d3b43634035ef9",
+      "sourceName": "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "IUniswapV3PoolState": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "IUniswapV3PoolState.sol/IUniswapV3PoolState.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/libraries/FullMath.sol": {
+      "lastModificationDate": 1661939612432,
+      "contentHash": "c3f03759b6500f54f402f1963af1c256",
+      "sourceName": "lib/v3-core/contracts/libraries/FullMath.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.4.0, <0.8.0",
+      "artifacts": {
+        "FullMath": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "FullMath.sol/FullMath.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/libraries/SafeCast.sol": {
+      "lastModificationDate": 1661939612434,
+      "contentHash": "c89128b97d009587db99cae7763cfef0",
+      "sourceName": "lib/v3-core/contracts/libraries/SafeCast.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "SafeCast": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "SafeCast.sol/SafeCast.json"
+        }
+      }
+    },
+    "lib/v3-core/contracts/libraries/TickMath.sol": {
+      "lastModificationDate": 1661939612435,
+      "contentHash": "6bd9ce5056f36b9763627bce69998c83",
+      "sourceName": "lib/v3-core/contracts/libraries/TickMath.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0, <0.8.0",
+      "artifacts": {
+        "TickMath": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "TickMath.sol/TickMath.json"
+        }
+      }
+    },
+    "lib/v3-periphery/contracts/libraries/BytesLib.sol": {
+      "lastModificationDate": 1661940491827,
+      "contentHash": "d8d928d03b62efad7c9e282c57a46dc6",
+      "sourceName": "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0, <0.8.0",
+      "artifacts": {
+        "BytesLib": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "BytesLib.sol/BytesLib.json"
+        }
+      }
+    },
+    "lib/v3-periphery/contracts/libraries/CallbackValidation.sol": {
+      "lastModificationDate": 1661940491827,
+      "contentHash": "f5bc5a752dc549cd04857c14ae0ad40d",
+      "sourceName": "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "CallbackValidation": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "CallbackValidation.sol/CallbackValidation.json"
+        }
+      }
+    },
+    "lib/v3-periphery/contracts/libraries/Path.sol": {
+      "lastModificationDate": 1661940491830,
+      "contentHash": "8c77deefa62a7600476db7122c811951",
+      "sourceName": "lib/v3-periphery/contracts/libraries/Path.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol"
+      ],
+      "versionRequirement": ">=0.6.0",
+      "artifacts": {
+        "Path": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "Path.sol/Path.json"
+        }
+      }
+    },
+    "lib/v3-periphery/contracts/libraries/PoolAddress.sol": {
+      "lastModificationDate": 1661940491831,
+      "contentHash": "6cec4f6b237de21ad97bf32c19a2e0d8",
+      "sourceName": "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": ">=0.5.0",
+      "artifacts": {
+        "PoolAddress": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "PoolAddress.sol/PoolAddress.json"
         }
       }
     },
@@ -425,8 +1135,8 @@
       }
     },
     "src/BullBase.sol": {
-      "lastModificationDate": 1666083209017,
-      "contentHash": "9c627afb42da7dcada384ca0b30c1cdb",
+      "lastModificationDate": 1666089879719,
+      "contentHash": "ab1937ea7838da6d567ae01ace65f9ff",
       "sourceName": "src/BullBase.sol",
       "solcConfig": {
         "settings": {
@@ -467,6 +1177,174 @@
       "artifacts": {
         "BullBase": {
           "0.7.6+commit.7338295f.Darwin.appleclang": "BullBase.sol/BullBase.json"
+        }
+      }
+    },
+    "src/LeverageBull.sol": {
+      "lastModificationDate": 1666091290037,
+      "contentHash": "ba79ec35d40fe59a588a2bdeccab69db",
+      "sourceName": "src/LeverageBull.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "LeverageBull": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "LeverageBull.sol/LeverageBull.json"
+        }
+      }
+    },
+    "src/PayableBull.sol": {
+      "lastModificationDate": 1666091414017,
+      "contentHash": "ca7f9798c9eb2ed9d1a7fe4b854a52ae",
+      "sourceName": "src/PayableBull.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol",
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/SafeCast.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol",
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "lib/v3-periphery/contracts/libraries/Path.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "src/BullBase.sol",
+        "src/LeverageBull.sol",
+        "src/UniBull.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "PayableBull": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "PayableBull.sol/PayableBull.json"
+        }
+      }
+    },
+    "src/UniBull.sol": {
+      "lastModificationDate": 1666091174452,
+      "contentHash": "c190af0d4c25a6f70703f1279efdcccb",
+      "sourceName": "src/UniBull.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/SafeCast.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol",
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "lib/v3-periphery/contracts/libraries/Path.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "UniBull": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "UniBull.sol/UniBull.json"
         }
       }
     }
