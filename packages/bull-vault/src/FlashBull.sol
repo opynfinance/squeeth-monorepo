@@ -16,19 +16,6 @@ contract FlashBull {
 
     BullStrategy private bullStrategy;
 
-    /// @dev enum to differentiate between Uniswap swap callback function source
-    enum FLASH_SOURCE {
-        GENERAL_SWAP,
-        FLASH_DEPOSIT,
-        FLASH_WITHDRAW
-    }
-
-    // struct FlashDepositData {}
-    // // TODO
-
-    // struct FlashWithdrawData {}
-    // // TODO
-
     constructor(address _bull) {
         bullStrategy = BullStrategy(_bull);
     }

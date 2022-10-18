@@ -2,18 +2,30 @@
 pragma solidity =0.7.6;
 
 // contract
-import {BullBase} from "./BullBase.sol";
-import {LeverageBull} from "./LeverageBull.sol";
-import {UniBull} from "./UniBull.sol";
+import {BullStrategy} from "./BullStrategy.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 /**
- * @notice BullStrategy contract
+ * @notice PayableBull contract
  * @author opyn team
  */
-contract PayableBull is BullBase, LeverageBull, UniBull {
+contract PayableBull {
     using StrategyMath for uint256;
 
-    constructor(address _crab, address _factory) BullBase(_crab, "Bull Vault", "BullVault") UniBull(_factory) {}
+    BullStrategy private bullStrategy;
+
+    constructor(address _bull) {
+        bullStrategy = BullStrategy(_bull);
+    }
+
+    /**
+     * @notice payable deposit
+     * @dev deposit ETH into crab vault, deposit crab and ETH collateral into bull and leverage component
+     */
+    function deposit(uint256 _crabAmount) external payable {
+        // deposit ETH into crab
+        // approve bullStrategy to transfer Crab
+        // call bullStrategy.deposit()
+    }
 }
