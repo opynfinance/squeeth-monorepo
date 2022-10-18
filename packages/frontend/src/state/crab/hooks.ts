@@ -569,7 +569,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = ethAmount
       return await handleTransaction(
-        contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount, ethDeposit, usdcFee, UNI_POOL_FEES, usdc).send({
+        contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount.toFixed(0), ethDeposit.toFixed(0), usdcFee, UNI_POOL_FEES, usdc).send({
           from: address,
         }),
         onTxConfirmed,
@@ -661,7 +661,7 @@ export const useFlashWithdrawV2USDC = () => {
       const poolFeePercent = 3000
       return await handleTransaction(
         contract.methods
-          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut, usdcFee, poolFeePercent)
+          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut.toFixed(0), usdcFee, poolFeePercent)
           .send({
             from: address,
           }),
