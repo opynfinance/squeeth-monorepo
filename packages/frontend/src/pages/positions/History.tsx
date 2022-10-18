@@ -114,7 +114,7 @@ const History: React.FC = () => {
                   {tx.ethAmount.toFixed(4)}&nbsp; WETH
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
+                  ${tx.usdValue.toFixed(2)}
                 </Typography>
               </div>
             </>

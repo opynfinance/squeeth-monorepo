@@ -64,7 +64,13 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         }
         if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW && usdc.toLowerCase() === tx.erc20Token?.toLowerCase()) {
           ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS)
-          console.log('Here', ethUsdValue.toString())
+        } else if (
+          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT &&
+          usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
+        ) {
+          ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
+            getUsdAmt(toTokenAmount(tx.excessEth, 18), tx.timestamp),
+          )
         }
         const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
         const oSqueethAmount = toTokenAmount(tx.wSqueethAmount, OSQUEETH_DECIMALS)

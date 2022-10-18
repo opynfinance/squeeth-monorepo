@@ -3,7 +3,11 @@ import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 
 import { TransactionType } from '../constants'
-import { transactions_positionSnapshots } from '../queries/uniswap/__generated__/transactions'
+import {
+  transactions,
+  transactionsVariables,
+  transactions_positionSnapshots,
+} from '../queries/uniswap/__generated__/transactions'
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { useUserCrabV2TxHistory } from './useUserCrabV2TxHistory'
@@ -23,10 +27,10 @@ export const useTransactionHistory = () => {
   const swapsData = useAtomValue(swapsAtom)
   const swaps = swapsData?.swaps
 
-  const { data, loading } = useQuery(TRANSACTIONS_QUERY, {
+  const { data, loading } = useQuery<transactions, transactionsVariables>(TRANSACTIONS_QUERY, {
     variables: {
       poolAddress: squeethPool,
-      owner: address,
+      owner: address || '',
       origin: address || '',
       recipients: [shortHelper, address || '', swapRouter],
       orderDirection: 'desc',
@@ -141,7 +145,7 @@ export const useTransactionHistory = () => {
 
   const crabV2Transactions = (crabV2Data || [])?.map((c) => {
     const transactionType =
-      (c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1)
+      c.type === CrabStrategyV2TxType.FLASH_DEPOSIT || c.type === CrabStrategyV2TxType.DEPOSIT_V1
         ? TransactionType.CRAB_V2_FLASH_DEPOSIT
         : TransactionType.CRAB_V2_FLASH_WITHDRAW
     const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
@@ -157,9 +161,12 @@ export const useTransactionHistory = () => {
   })
 
   return {
-    transactions: [...(transactions || []), ...(addRemoveLiquidityTrans || []), ...crabTransactions, ...crabV2Transactions].sort(
-      (transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp,
-    ),
+    transactions: [
+      ...(transactions || []),
+      ...(addRemoveLiquidityTrans || []),
+      ...crabTransactions,
+      ...crabV2Transactions,
+    ].sort((transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp),
     loading,
   }
 }
