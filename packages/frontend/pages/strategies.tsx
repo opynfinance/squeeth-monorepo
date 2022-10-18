@@ -306,19 +306,11 @@ const Strategies: React.FC = () => {
                     tooltip={Tooltips.SpotPrice}
                     priceType="spot"
                   />
-                  {displayCrabV1 ? (
-                    <StrategyInfoItem
-                      value={(profitableMovePercent * 100).toFixed(2)}
-                      label="Current Profit Threshold (%)"
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  ) : (
-                    <StrategyInfoItem
-                      value={(profitableMovePercentV2 * 100).toFixed(2)}
-                      label="Current Profit Threshold (%)"
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  )}
+                  <StrategyInfoItem
+                    value={(currentImpliedFunding * 100).toFixed(2)}
+                    label="Current Implied Premium (%)"
+                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
+                  />
                   <StrategyInfoItem
                     value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
                     label="Historical Daily Premium (%)"
@@ -347,11 +339,19 @@ const Strategies: React.FC = () => {
                       '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
                     }
                   />
-                  <StrategyInfoItem
-                    value={(currentImpliedFunding * 100).toFixed(2)}
-                    label="Current Implied Premium (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
-                  />
+                  {displayCrabV1 ? (
+                    <StrategyInfoItem
+                      value={(profitableMovePercent * 100).toFixed(2)}
+                      label="Current Profit Threshold (%)"
+                      tooltip={Tooltips.StrategyProfitThreshold}
+                    />
+                  ) : (
+                    <StrategyInfoItem
+                      value={(profitableMovePercentV2 * 100).toFixed(2)}
+                      label="Current Profit Threshold (%)"
+                      tooltip={Tooltips.StrategyProfitThreshold}
+                    />
+                  )}
                   <StrategyInfoItem
                     link="https://squeeth.opyn.co/vault/286"
                     value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
