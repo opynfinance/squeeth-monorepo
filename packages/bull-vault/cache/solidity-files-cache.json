@@ -1135,8 +1135,8 @@
       }
     },
     "src/BullStrategy.sol": {
-      "lastModificationDate": 1666131580534,
-      "contentHash": "9f3f57891a97de80d0c67257cc141814",
+      "lastModificationDate": 1666131586490,
+      "contentHash": "313b52892326a29728e8ec7f205ac68d",
       "sourceName": "src/BullStrategy.sol",
       "solcConfig": {
         "settings": {
@@ -1200,8 +1200,8 @@
       }
     },
     "src/FlashBull.sol": {
-      "lastModificationDate": 1666131529246,
-      "contentHash": "98707448538c61cf864f4ce2f88088da",
+      "lastModificationDate": 1666131586490,
+      "contentHash": "444ecac049d5e42fe37eb6b2e9681e3e",
       "sourceName": "src/FlashBull.sol",
       "solcConfig": {
         "settings": {
@@ -1308,8 +1308,8 @@
       }
     },
     "src/PayableBull.sol": {
-      "lastModificationDate": 1666131457084,
-      "contentHash": "f36aed387221d419c3e8a68d75b1d466",
+      "lastModificationDate": 1666131586490,
+      "contentHash": "c9465590f05ac2effac0398c22055a3d",
       "sourceName": "src/PayableBull.sol",
       "solcConfig": {
         "settings": {
@@ -1430,6 +1430,86 @@
       "artifacts": {
         "UniBull": {
           "0.7.6+commit.7338295f.Darwin.appleclang": "UniBull.sol/UniBull.json"
+        }
+      }
+    },
+    "test/e2e/BullStrategyTestFork.t.sol": {
+      "lastModificationDate": 1666134169527,
+      "contentHash": "4694e3d6577f0dfcf91de8e21a357ead",
+      "sourceName": "test/e2e/BullStrategyTestFork.t.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": null,
+      "artifacts": {
+        "BullStrategyTestFork.t": {
+          "0.8.15+commit.e14f2714.Darwin.appleclang": "BullStrategyTestFork.t.sol/BullStrategyTestFork.t.json"
+        }
+      }
+    },
+    "test/unit-test/BullStrategyTest.t.sol": {
+      "lastModificationDate": 1666134249391,
+      "contentHash": "3400490029bdb8663bc00b1705cab81f",
+      "sourceName": "test/unit-test/BullStrategyTest.t.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [],
+      "versionRequirement": null,
+      "artifacts": {
+        "BullStrategyTest.t": {
+          "0.8.15+commit.e14f2714.Darwin.appleclang": "BullStrategyTest.t.sol/BullStrategyTest.t.json"
         }
       }
     }
