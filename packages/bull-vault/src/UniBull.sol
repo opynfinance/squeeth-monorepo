@@ -61,13 +61,13 @@ contract UniBull is IUniswapV3SwapCallback {
         (address tokenIn, address tokenOut, uint24 fee) = data.path.decodeFirstPool();
 
         //ensure that callback comes from uniswap pool
-        address pool = address(CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee));
+        CallbackValidation.verifyCallback(factory, tokenIn, tokenOut, fee);
 
         //determine the amount that needs to be repaid as part of the flashswap
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _uniFlashSwap(data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
     }
 
     /**
@@ -83,7 +83,6 @@ contract UniBull is IUniswapV3SwapCallback {
      */
     function _uniFlashSwap(
         address, /*_caller*/
-        address, /*_pool*/
         address, /*_tokenIn*/
         address, /*_tokenOut*/
         uint24, /*_fee*/
@@ -101,8 +100,8 @@ contract UniBull is IUniswapV3SwapCallback {
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
-    function _getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
-        internal
+    function getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
+        external
         view
         returns (uint256)
     {
