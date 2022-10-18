@@ -1134,10 +1134,75 @@
         }
       }
     },
-    "src/BullBase.sol": {
-      "lastModificationDate": 1666089879719,
-      "contentHash": "ab1937ea7838da6d567ae01ace65f9ff",
-      "sourceName": "src/BullBase.sol",
+    "src/BullStrategy.sol": {
+      "lastModificationDate": 1666131580534,
+      "contentHash": "9f3f57891a97de80d0c67257cc141814",
+      "sourceName": "src/BullStrategy.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol",
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/SafeCast.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol",
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "lib/v3-periphery/contracts/libraries/Path.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "src/LeverageBull.sol",
+        "src/UniBull.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "BullStrategy": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "BullStrategy.sol/BullStrategy.json"
+        }
+      }
+    },
+    "src/FlashBull.sol": {
+      "lastModificationDate": 1666131529246,
+      "contentHash": "98707448538c61cf864f4ce2f88088da",
+      "sourceName": "src/FlashBull.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -1243,8 +1308,8 @@
       }
     },
     "src/PayableBull.sol": {
-      "lastModificationDate": 1666131586490,
-      "contentHash": "c9465590f05ac2effac0398c22055a3d",
+      "lastModificationDate": 1666131457084,
+      "contentHash": "f36aed387221d419c3e8a68d75b1d466",
       "sourceName": "src/PayableBull.sol",
       "solcConfig": {
         "settings": {
@@ -1311,254 +1376,6 @@
     "src/UniBull.sol": {
       "lastModificationDate": 1666091420425,
       "contentHash": "45e2855d84a584fb88d16f1e48fe1e37",
-      "sourceName": "src/UniBull.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
-        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
-        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
-        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
-        "lib/v3-core/contracts/libraries/FullMath.sol",
-        "lib/v3-core/contracts/libraries/SafeCast.sol",
-        "lib/v3-core/contracts/libraries/TickMath.sol",
-        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
-        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
-        "lib/v3-periphery/contracts/libraries/Path.sol",
-        "lib/v3-periphery/contracts/libraries/PoolAddress.sol"
-      ],
-      "versionRequirement": "=0.7.6",
-      "artifacts": {
-        "UniBull": {
-          "0.7.6+commit.7338295f.Darwin.appleclang": "UniBull.sol/UniBull.json"
-        }
-      }
-    },
-    "test/e2e/BullStrategyTestFork.t.sol": {
-      "lastModificationDate": 1666134169527,
-      "contentHash": "4694e3d6577f0dfcf91de8e21a357ead",
-      "sourceName": "test/e2e/BullStrategyTestFork.t.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": null,
-      "artifacts": {
-        "BullStrategyTestFork.t": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "BullStrategyTestFork.t.sol/BullStrategyTestFork.t.json"
-        }
-      }
-    },
-    "test/unit-test/BullStrategyTest.t.sol": {
-      "lastModificationDate": 1666134249391,
-      "contentHash": "3400490029bdb8663bc00b1705cab81f",
-      "sourceName": "test/unit-test/BullStrategyTest.t.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [],
-      "versionRequirement": null,
-      "artifacts": {
-        "BullStrategyTest.t": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "BullStrategyTest.t.sol/BullStrategyTest.t.json"
-        }
-      }
-    },
-    "src/LeverageBull.sol": {
-      "lastModificationDate": 1666091290037,
-      "contentHash": "ba79ec35d40fe59a588a2bdeccab69db",
-      "sourceName": "src/LeverageBull.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol"
-      ],
-      "versionRequirement": "=0.7.6",
-      "artifacts": {
-        "LeverageBull": {
-          "0.7.6+commit.7338295f.Darwin.appleclang": "LeverageBull.sol/LeverageBull.json"
-        }
-      }
-    },
-    "src/PayableBull.sol": {
-      "lastModificationDate": 1666091414017,
-      "contentHash": "ca7f9798c9eb2ed9d1a7fe4b854a52ae",
-      "sourceName": "src/PayableBull.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
-        "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
-        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
-        "lib/openzeppelin-contracts/contracts/utils/Context.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol",
-        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
-        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
-        "lib/v3-core/contracts/libraries/FullMath.sol",
-        "lib/v3-core/contracts/libraries/SafeCast.sol",
-        "lib/v3-core/contracts/libraries/TickMath.sol",
-        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
-        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
-        "lib/v3-periphery/contracts/libraries/Path.sol",
-        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
-        "src/BullBase.sol",
-        "src/LeverageBull.sol",
-        "src/UniBull.sol"
-      ],
-      "versionRequirement": "=0.7.6",
-      "artifacts": {
-        "PayableBull": {
-          "0.7.6+commit.7338295f.Darwin.appleclang": "PayableBull.sol/PayableBull.json"
-        }
-      }
-    },
-    "src/UniBull.sol": {
-      "lastModificationDate": 1666091174452,
-      "contentHash": "c190af0d4c25a6f70703f1279efdcccb",
       "sourceName": "src/UniBull.sol",
       "solcConfig": {
         "settings": {
