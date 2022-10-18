@@ -1134,10 +1134,10 @@
         }
       }
     },
-    "src/BullBase.sol": {
-      "lastModificationDate": 1666089879719,
-      "contentHash": "ab1937ea7838da6d567ae01ace65f9ff",
-      "sourceName": "src/BullBase.sol",
+    "src/BullStrategy.sol": {
+      "lastModificationDate": 1666131580534,
+      "contentHash": "9f3f57891a97de80d0c67257cc141814",
+      "sourceName": "src/BullStrategy.sol",
       "solcConfig": {
         "settings": {
           "optimizer": {
@@ -1171,18 +1171,103 @@
         "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
         "lib/openzeppelin-contracts/contracts/utils/Context.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol"
+        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol",
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/SafeCast.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol",
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "lib/v3-periphery/contracts/libraries/Path.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "src/LeverageBull.sol",
+        "src/UniBull.sol"
       ],
       "versionRequirement": "=0.7.6",
       "artifacts": {
-        "BullBase": {
-          "0.7.6+commit.7338295f.Darwin.appleclang": "BullBase.sol/BullBase.json"
+        "BullStrategy": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "BullStrategy.sol/BullStrategy.json"
+        }
+      }
+    },
+    "src/FlashBull.sol": {
+      "lastModificationDate": 1666131529246,
+      "contentHash": "98707448538c61cf864f4ce2f88088da",
+      "sourceName": "src/FlashBull.sol",
+      "solcConfig": {
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "appendCBOR": true
+          },
+          "outputSelection": {
+            "*": {
+              "": [
+                "ast"
+              ],
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ]
+            }
+          },
+          "evmVersion": "london",
+          "libraries": {}
+        }
+      },
+      "imports": [
+        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
+        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
+        "lib/openzeppelin-contracts/contracts/utils/Context.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
+        "lib/squeeth-monorepo/packages/hardhat/contracts/strategy/base/StrategyMath.sol",
+        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
+        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
+        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
+        "lib/v3-core/contracts/libraries/FullMath.sol",
+        "lib/v3-core/contracts/libraries/SafeCast.sol",
+        "lib/v3-core/contracts/libraries/TickMath.sol",
+        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
+        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
+        "lib/v3-periphery/contracts/libraries/Path.sol",
+        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
+        "src/BullStrategy.sol",
+        "src/LeverageBull.sol",
+        "src/UniBull.sol"
+      ],
+      "versionRequirement": "=0.7.6",
+      "artifacts": {
+        "FlashBull": {
+          "0.7.6+commit.7338295f.Darwin.appleclang": "FlashBull.sol/FlashBull.json"
         }
       }
     },
     "src/LeverageBull.sol": {
-      "lastModificationDate": 1666091290037,
-      "contentHash": "ba79ec35d40fe59a588a2bdeccab69db",
+      "lastModificationDate": 1666091420422,
+      "contentHash": "a3d40429972e3f4a0ceff0a87daeeea3",
       "sourceName": "src/LeverageBull.sol",
       "solcConfig": {
         "settings": {
@@ -1223,8 +1308,8 @@
       }
     },
     "src/PayableBull.sol": {
-      "lastModificationDate": 1666091414017,
-      "contentHash": "ca7f9798c9eb2ed9d1a7fe4b854a52ae",
+      "lastModificationDate": 1666131457084,
+      "contentHash": "f36aed387221d419c3e8a68d75b1d466",
       "sourceName": "src/PayableBull.sol",
       "solcConfig": {
         "settings": {
@@ -1277,7 +1362,7 @@
         "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
         "lib/v3-periphery/contracts/libraries/Path.sol",
         "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
-        "src/BullBase.sol",
+        "src/BullStrategy.sol",
         "src/LeverageBull.sol",
         "src/UniBull.sol"
       ],
@@ -1289,8 +1374,8 @@
       }
     },
     "src/UniBull.sol": {
-      "lastModificationDate": 1666091174452,
-      "contentHash": "c190af0d4c25a6f70703f1279efdcccb",
+      "lastModificationDate": 1666091420425,
+      "contentHash": "45e2855d84a584fb88d16f1e48fe1e37",
       "sourceName": "src/UniBull.sol",
       "solcConfig": {
         "settings": {

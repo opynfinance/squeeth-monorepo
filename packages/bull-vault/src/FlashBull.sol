@@ -7,10 +7,11 @@ import {BullStrategy} from "./BullStrategy.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 /**
- * @notice PayableBull contract
+ * @notice FlashBull contract
+ * @dev handle the flashswap interactions
  * @author opyn team
  */
-contract PayableBull {
+contract FlashBull {
     using StrategyMath for uint256;
 
     BullStrategy private bullStrategy;
@@ -21,11 +22,6 @@ contract PayableBull {
 
     /**
      * @notice payable deposit
-     * @dev deposit ETH into crab vault, deposit crab and ETH collateral into bull and leverage component
      */
-    function deposit(uint256 _crabAmount) external payable {
-        // deposit ETH into crab
-        // approve bullStrategy to transfer Crab
-        // call bullStrategy.deposit()
-    }
+    function flashDeposit() external payable {}
 }
