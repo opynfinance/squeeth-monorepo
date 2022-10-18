@@ -18,17 +18,24 @@ import { CrabAuction, CrabStrategyTx, Strategy } from "../generated/schema"
 import { CRAB_V1_ADDR } from "./constants"
 
 function loadOrCreateTx(id: string): CrabStrategyTx {
-  const strategy = CrabStrategyTx.load(id)
+  let strategy = CrabStrategyTx.load(id)
   if (strategy) return strategy
 
-  return new CrabStrategyTx(id)
+  strategy = new CrabStrategyTx(id)
+  strategy.type = "Transfer"
+  strategy.lpAmount = BigInt.zero()
+  strategy.ethAmount = BigInt.zero()
+  strategy.timestamp = BigInt.zero()
+  return strategy
 }
 
 function loadOrCreateStrategy(id: string): Strategy {
-  const strategy = Strategy.load(id)
+  let strategy = Strategy.load(id)
   if (strategy) return strategy
 
-  return new Strategy(id)
+  strategy =  new Strategy(id)
+  strategy.totalSupply = BigInt.zero()
+  return strategy
 }
 
 export function handleDeposit(event: Deposit): void {
@@ -140,6 +147,7 @@ export function handleExecuteSellAuction(event: ExecuteSellAuction): void {
   auction.isSellingSqueeth = true
   auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
   auction.timestamp = event.block.timestamp
+  auction.owner = event.transaction.from
   auction.save()
 }
 
@@ -150,5 +158,6 @@ export function handleExecuteBuyAuction(event: ExecuteBuyAuction): void {
   auction.isSellingSqueeth = false
   auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
   auction.timestamp = event.block.timestamp
+  auction.owner = event.transaction.from
   auction.save()
 }

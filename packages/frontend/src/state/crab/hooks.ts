@@ -661,7 +661,7 @@ export const useFlashWithdrawV2USDC = () => {
       const poolFeePercent = 3000
       return await handleTransaction(
         contract.methods
-          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut.toFixed(0), usdcFee, poolFeePercent)
+          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut, usdcFee, poolFeePercent)
           .send({
             from: address,
           }),
