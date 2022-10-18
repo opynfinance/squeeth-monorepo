@@ -15,6 +15,9 @@ contract PayableBull {
 
     BullStrategy private bullStrategy;
 
+    /// @dev ETH deposited into Crab strategy
+    uint256 public crabETH;
+
     constructor(address _bull) {
         bullStrategy = BullStrategy(_bull);
     }
@@ -23,7 +26,7 @@ contract PayableBull {
      * @notice payable deposit
      * @dev deposit ETH into crab vault, deposit crab and ETH collateral into bull and leverage component
      */
-    function deposit(uint256 _crabAmount) external payable {
+    function deposit(uint256 _crabETH) external payable {
         // deposit ETH into crab
         // approve bullStrategy to transfer Crab
         // call bullStrategy.deposit()
