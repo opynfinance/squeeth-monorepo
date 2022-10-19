@@ -20,7 +20,7 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
 
     /// @dev Crab contract address
     address public immutable crab;
-    
+
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
 
@@ -35,7 +35,7 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
 
     /// @dev the highest CR we can have before rebalancing
     uint256 public crUpper;
-    
+
     /// @dev the lowest CR we can have before rebalancing
     uint256 public crLower;
 
