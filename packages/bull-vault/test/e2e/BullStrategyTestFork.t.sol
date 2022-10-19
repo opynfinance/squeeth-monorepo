@@ -34,7 +34,7 @@
 //         vm.label(address(usdc), "USDC");
 //         vm.label(address(squeeth), "oSQTH");
 
-//         // to execute tx on behalf user1 
+//         // to execute tx on behalf user1
 //         // vm.prank(user1);
 //         squeeth.approve(address(bullStrategy), type(uint256).max);
 //     }

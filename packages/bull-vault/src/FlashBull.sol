@@ -22,13 +22,11 @@ contract FlashBull {
         FLASH_WITHDRAW
     }
 
-    struct FlashDepositData {
-        // TODO
-    }
+    struct FlashDepositData {}
+    // TODO
 
-    struct FlashWithdrawData {
-        // TODO
-    }
+    struct FlashWithdrawData {}
+    // TODO
 
     constructor(address _bull) {
         bullStrategy = BullStrategy(_bull);
