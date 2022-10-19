@@ -15,9 +15,11 @@ contract LeverageBull {
     uint256 private constant ONE = 1e18;
     uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
 
-    // TODO: keep those here or read directly from leverage component?
-    uint256 public ethCollateralInLeverage;
-    uint256 public usdcBorrowed;
+    /// @dev USD debt in leverage component
+    uint256 public usdcDebt;
+
+    /// @dev ETH in leverage component collateral
+    uint256 public ethCollateral;
 
     /**
      * @notice deposit ETH into leverage component and borrow USDC
@@ -37,8 +39,8 @@ contract LeverageBull {
             usdcToBorrow = usdcToBorrow.wmul(_bullShare).wdiv(ONE.sub(_bullShare));
         }
 
-        ethCollateralInLeverage = ethCollateralInLeverage.add(ethToLend);
-        usdcToBorrow = usdcBorrowed.add(usdcToBorrow);
+        ethCollateral = ethCollateral.add(ethToLend);
+        usdcDebt = usdcDebt.add(usdcToBorrow);
 
         // TODO: call leverage component
     }
