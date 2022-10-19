@@ -8,3 +8,4 @@ v3-core/=lib/v3-core/contracts/
 v3-periphery/=lib/v3-periphery/contracts/
 @openzeppelin=lib/openzeppelin-contracts/
 @uniswap/v3-core/=lib/v3-core/
+@uniswap/v3-periphery/=lib/v3-periphery/
