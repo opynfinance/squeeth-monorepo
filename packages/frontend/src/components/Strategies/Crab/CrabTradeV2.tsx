@@ -152,6 +152,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw] = useState(new BigNumber(0))
   const [usdcAmountOutFromWithdraw, setUSDCAmountOutFromWithdraw] = useState(new BigNumber(0))
   const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw] = useState(new BigNumber(0))
+  const [depositEthAmount, setDepositEthAmount] = useState(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
@@ -268,9 +269,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     let warning: string | undefined
 
     if (connected) {
-      if (depositAmount.plus(depositedAmount).gte(maxCap)) {
+      if (depositEthAmount.plus(depositedAmount).gte(maxCap)) {
         depositError = 'Amount greater than strategy cap'
-      } else if (depositAmount.plus(depositedAmount).plus(borrowEth).gte(maxCap)) {
+      } else if (depositEthAmount.plus(depositedAmount).plus(borrowEth).gte(maxCap)) {
         depositError = `Amount greater than strategy cap since it flash borrows ${borrowEth.toFixed(
           2,
         )} ETH. Input a smaller amount`
@@ -289,6 +290,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     return { depositError, warning, withdrawError }
   }, [
     connected,
+    depositEthAmount.toString(),
     depositAmount.toString(),
     depositedAmount.toString(),
     maxCap.toString(),
@@ -319,6 +321,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     if (!ready || depositOption !== 0) return
 
     if (!useUsdc) {
+      setDepositEthAmount(depositAmount)
       calculateETHtoBorrowFromUniswap(depositAmount, slippage).then((q) => {
         setDepositPriceImpact(q.priceImpact)
         setBorrowEth(q.ethBorrow)
@@ -328,6 +331,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     } else {
       const fee = getUSDCPoolFee(network)
       getExactIn(usdc, weth, fromTokenAmount(depositAmount, USDC_DECIMALS), fee, slippage).then((usdcq) => {
+        setDepositEthAmount(toTokenAmount(usdcq.amountOut, WETH_DECIMALS))
         calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.minAmountOut, WETH_DECIMALS), slippage).then((q) => {
           setDepositPriceImpact(q.priceImpact)
           setBorrowEth(q.ethBorrow)
@@ -350,7 +354,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     } else {
       const fee = getUSDCPoolFee(network)
       calculateEthWillingToPay(withdrawCrabAmount, slippage).then(async (q) => {
-        const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(q.ethToGet, 18), fee, slippage)
+        const { minAmountOut, amountOut } = await getExactIn(weth, usdc, fromTokenAmount(q.ethToGet, 18), fee, slippage)
         setUSDCAmountOutFromWithdraw(toTokenAmount(minAmountOut, USDC_DECIMALS))
         setWithdrawPriceImpact(q.priceImpact)
         setEthAmountInFromWithdraw(q.amountIn)
