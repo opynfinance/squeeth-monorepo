@@ -16,7 +16,7 @@ contract PayableBull {
     BullStrategy private bullStrategy;
 
     /// @dev ETH deposited into Crab strategy
-    uint256 public crabETH;
+    uint256 public totalCrabETH;
 
     constructor(address _bull) {
         bullStrategy = BullStrategy(_bull);
