@@ -21,6 +21,7 @@ import InfoIcon from '@material-ui/icons/Info'
 import {
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
+  currentCrabPositionValueAtomV2,
 } from 'src/state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -151,12 +152,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw] = useState(new BigNumber(0))
   const [usdcAmountOutFromWithdraw, setUSDCAmountOutFromWithdraw] = useState(new BigNumber(0))
   const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw] = useState(new BigNumber(0))
-  const [useUsdc, setUseUsdc] = useState(false)
+  const [useUsdc, setUseUsdc] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
+  const currentUsdcValue = useAtomValue(currentCrabPositionValueAtomV2)
   const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
   const network = useAtomValue(networkIdAtom)
@@ -190,7 +192,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const address = useAtomValue(addressAtom)
-  const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper)
+  const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
   const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
 
@@ -277,7 +279,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       } else if (useUsdc && usdcBalance.lt(depositAmount)) {
         depositError = 'Insufficient USDC balance'
       }
-      if (withdrawAmount.gt(currentEthValue)) {
+      if (!useUsdc && withdrawAmount.gt(currentEthValue)) {
+        withdrawError = 'Withdraw amount greater than strategy balance'
+      } else if (useUsdc && withdrawAmount.gt(currentUsdcValue)) {
         withdrawError = 'Withdraw amount greater than strategy balance'
       }
     }
@@ -292,15 +296,24 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     balance?.toString(),
     withdrawAmount.toString(),
     currentEthValue.toString(),
+    currentUsdcValue.toString(),
     currentImpliedFunding.toString(),
     dailyHistoricalFunding.funding,
     dailyHistoricalFunding.period,
     useUsdc,
   ])
 
+  const withdrawEthAmount = useAppMemo(() => {
+    if (!useUsdc) return withdrawAmount
+    else {
+      return withdrawAmount.div(currentUsdcValue).times(currentEthValue)
+    }
+  }, [withdrawAmount, useUsdc, currentUsdcValue, currentEthValue])
+
+
   const withdrawCrabAmount = useAppMemo(() => {
-    return getUserCrabForEthAmount(withdrawAmount)
-  }, [withdrawAmount])
+    return getUserCrabForEthAmount(withdrawEthAmount || BIG_ZERO)
+  }, [withdrawEthAmount])
 
   useEffect(() => {
     if (!ready || depositOption !== 0) return
@@ -432,6 +445,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }, [useUsdc, crabAllowance, withdrawCrabAmount])
 
+
   if (isRestricted) {
     return <RestrictionInfo />
   }
@@ -443,8 +457,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
           <Confirmed
             confirmationMessage={
               depositOption === 0
-                ? `Deposited ${depositAmount.toFixed(4)} ETH`
-                : `Withdrawn ${withdrawAmount.toFixed(4)} ETH`
+                ? `Deposited ${depositAmount.toFixed(4)} ${depositToken}`
+                : `Withdrawn ${withdrawAmount.toFixed(4)} ${depositToken}`
             }
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.CRAB}
@@ -531,20 +545,20 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 value={withdrawAmount.toString()}
                 onChange={(v) => setWithdrawAmount(new BigNumber(v))}
                 label="Amount"
-                tooltip="Amount of ETH to withdraw"
+                tooltip={`Amount of ${depositToken} to withdraw`}
                 actionTxt="Max"
-                unit="ETH"
-                convertedValue={ethIndexPrice.times(withdrawAmount).toFixed(2)}
+                unit={depositToken}
+                convertedValue={useUsdc ? withdrawAmount.toFixed(2) : ethIndexPrice.times(withdrawAmount).toFixed(2)}
                 hint={
                   withdrawError ? (
                     withdrawError
                   ) : (
                     <span>
-                      Position <span id="current-crab-eth-bal-input">{currentEthValue.toFixed(6)}</span> ETH
+                      Position <span id="current-crab-eth-bal-input">{useUsdc ? currentUsdcValue.toFixed(2) : currentEthValue.toFixed(6)}</span> {depositToken}
                     </span>
                   )
                 }
-                onActionClicked={() => setWithdrawAmount(currentEthValue)}
+                onActionClicked={() => setWithdrawAmount(useUsdc ? currentUsdcValue : currentEthValue)}
                 error={!!withdrawError}
               />
             )}
