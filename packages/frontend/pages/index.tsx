@@ -35,6 +35,7 @@ import {
   indexAtom,
   markAtom,
   dailyHistoricalFundingAtom,
+  osqthRefVolAtom,
 } from 'src/state/controller/atoms'
 import { usePositionsAndFeesComputation } from 'src/state/positions/hooks'
 import { actualTradeTypeAtom, ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from 'src/state/trade/atoms'
@@ -46,6 +47,7 @@ import {
   transactionLoadingAtom,
   supportedNetworkAtom,
 } from 'src/state/wallet/atoms'
+import { Link, OpenInNew } from '@material-ui/icons'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -407,6 +409,7 @@ const SqueethInfo: React.FC = () => {
   const mark = useAtomValue(markAtom)
   const index = useAtomValue(indexAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
+  const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const normFactor = useAtomValue(normFactorAtom)
   usePositionsAndFeesComputation()
@@ -487,52 +490,70 @@ const SqueethInfo: React.FC = () => {
         {/* hard coded width layout to align with the prev line */}
 
         {showAdvanced ? (
-          <div className={classes.squeethInfoSubGroup}>
-            <div className={classes.infoItem}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  ETH&sup2; Price
-                </Typography>
-                <Tooltip title={Tooltips.SpotPrice}>
-                  <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
+          <><div className={classes.squeethInfoSubGroup}>
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    ETH&sup2; Price
+                  </Typography>
+                  <Tooltip title={Tooltips.SpotPrice}>
+                    <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
               </div>
-              <Typography>${Number(toTokenAmount(index, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
-            </div>
-            <div className={classes.infoItem}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Mark Price
-                </Typography>
-                <Tooltip title={`${Tooltips.Mark}. ${Tooltips.SpotPrice}`}>
-                  <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Mark Price
+                  </Typography>
+                  <Tooltip title={`${Tooltips.Mark}. ${Tooltips.SpotPrice}`}>
+                    <FiberManualRecordIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
               </div>
-              <Typography>${Number(toTokenAmount(mark, 18).toFixed(0)).toLocaleString() || 'loading'}</Typography>
-            </div>
-            <div className={classes.infoItem}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Implied Volatility
-                </Typography>
-                <Tooltip title={Tooltips.ImplVol}>
-                  <InfoIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Implied Volatility
+                  </Typography>
+                  <Tooltip title={Tooltips.ImplVol}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
               </div>
-              <Typography>{(impliedVol * 100).toFixed(2)}%</Typography>
-            </div>
-            <div className={classes.infoItem}>
-              <div className={classes.infoLabel}>
-                <Typography color="textSecondary" variant="body2">
-                  Norm Factor
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Reference Volatility
+                  </Typography>
+                  <Tooltip title={Tooltips.osqthRefVol}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>{(osqthRefVol).toFixed(2)}%
+                  <a target="_blank" href={`https://etherscan.io/address`} rel="noreferrer">
+                    <OpenInNew fontSize="small" className={classes.infoIcon} />
+                  </a>
                 </Typography>
-                <Tooltip title={Tooltips.NormFactor}>
-                  <InfoIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
+                
               </div>
-              <Typography>{normFactor.toFixed(4)}</Typography>
-            </div>
           </div>
+          <div className={classes.squeethInfoSubGroup}>
+              <div className={classes.infoItem}>
+                <div className={classes.infoLabel}>
+                  <Typography color="textSecondary" variant="body2">
+                    Norm Factor
+                  </Typography>
+                  <Tooltip title={Tooltips.NormFactor}>
+                    <InfoIcon fontSize="small" className={classes.infoIcon} />
+                  </Tooltip>
+                </div>
+                <Typography>{normFactor.toFixed(4)}</Typography>
+              </div>
+          </div></>
         ) : null}
         <div className={classes.squeethInfoSubGroup}>
           <button className={classes.advancedDetails} onClick={toggleAdvanced}>

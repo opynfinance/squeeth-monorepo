@@ -10,6 +10,7 @@ import {
   impliedVolAtom,
   indexAtom,
   normFactorAtom,
+  osqthRefVolAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -23,6 +24,7 @@ import {
   getDailyHistoricalFunding,
   getIndex,
   getMark,
+  getOsqthRefVol,
 } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
@@ -450,10 +452,21 @@ const useMark = () => {
   return mark
 }
 
+const useOsqthRefVol =  async () : Promise<number> =>  {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [OsqthRefVol, setOsqthRefVol] = useAtom(osqthRefVolAtom)
+  useEffect(() => {
+    getOsqthRefVol().then(setOsqthRefVol)
+  }, [address,networkId])
+  return OsqthRefVol
+}
+
 export const useInitController = () => {
   useIndex()
   useMark()
   useCurrentImpliedFunding()
   useDailyHistoricalFunding()
   useNormFactor()
+  useOsqthRefVol()
 }

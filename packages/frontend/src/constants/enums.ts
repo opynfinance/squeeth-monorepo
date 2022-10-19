@@ -80,6 +80,8 @@ export enum Tooltips {
   FundingMonthly = 'Monthly premium is calculated as (Daily Premium * 30)',
   FundingAnnual = 'Annual Premium is calculated as (Daily Premium * 365.25)',
   VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
+  osqthRefVol = 'Squeeth reference volatility based on deribit options and squeeth replicating portfolio...Click link icon to learn more',
+ 
 }
 
 export enum Links {
