@@ -93,6 +93,7 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
+    // fuzz testing is awesome!
     function testFuzzingDeposit(uint256 _crabAmount) public {
         vm.assume(_crabAmount < IERC20(crabV2).balanceOf(user1));
         vm.assume(_crabAmount > 0);
