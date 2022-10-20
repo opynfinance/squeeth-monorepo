@@ -22,7 +22,7 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { SqueethTab, SqueethTabs } from '@components/Tabs'
 import Trade from '@components/Trade'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
-import { Vaults } from '../src/constants'
+import { squeethRefVolDocLink, Vaults } from '../src/constants'
 import { Tooltips } from '@constants/enums'
 import { useRestrictUser } from '@context/restrict-user'
 
@@ -534,7 +534,7 @@ const SqueethInfo: React.FC = () => {
                   </Tooltip>
                 </div>
                 <Typography>{(osqthRefVol).toFixed(2)}%
-                  <a target="_blank" href={`https://colab.research.google.com/drive/1HTM_2j0jmda9tzN_uskBPz9Rpma8Lp3C`} rel="noreferrer">
+                  <a target="_blank" href={squeethRefVolDocLink} rel="noreferrer">
                     <OpenInNew fontSize="small" className={classes.infoIcon} />
                   </a>
                 </Typography>

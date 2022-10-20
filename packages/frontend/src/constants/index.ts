@@ -44,3 +44,5 @@ export const V2_MIGRATION_OSQTH_PRICE = 0.0897
 export const V2_MIGRATION_ETH_AMOUNT = 790.186510787310292814
 export const V2_MIGRATION_OSQTH_AMOUNT = 4604.57349514942255453
 export const V2_MIGRATION_SUPPLY = 519.994374902152348633
+
+export const squeethRefVolDocLink = 'https://colab.research.google.com/drive/1HTM_2j0jmda9tzN_uskBPz9Rpma8Lp3C'
