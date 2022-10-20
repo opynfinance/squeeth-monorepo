@@ -2,12 +2,9 @@ on: [push]
 
 name: Foundry
 
-env:
-  FORK_URL: ${{secrets.FORK_URL}}    
-
 jobs:
   check:
-    name: Forge test
+    name: Forge build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -20,4 +17,4 @@ jobs:
           version: nightly
 
       - name: Run tests
-        run: cd packages/bull-vault && forge test -vvv
+        run: cd packages/bull-vault && forge build
