@@ -220,3 +220,25 @@ dataSources:
         - event: DepositV1Shares(indexed address,uint256)
           handler: handleDepositV1Shares
       file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabHelper
+    network: {{network}}
+    source:
+      address: "{{CrabHelper}}"
+      abi: CrabHelper
+      startBlock: {{CrabHelper-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabHelper
+          file: ./abis/CrabHelper.json
+      eventHandlers:
+        - event: FlashDepositERC20(indexed address,address,uint256,uint256,uint256,uint256)
+          handler: handleFlashDepositERC20
+        - event: FlashWithdrawERC20(indexed address,address,uint256,uint256,uint256)
+          handler: handleFlashWithdrawERC20
+      file: ./src/crabV2.ts

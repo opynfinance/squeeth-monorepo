@@ -12,6 +12,7 @@ import uniABI from '../../abis/uniswapPool.json'
 import shortAbi from '../../abis/shortHelper.json'
 import crabMigrationAbi from '../../abis/crabMigration.json'
 import quoterAbi from '../../abis/quoter.json'
+import crabHelperAbi from '../../abis/crabHelper.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -29,7 +30,7 @@ export const crabStrategyContractAtom = atom<Contract | null>((get) => {
   return getContract(web3, crabStrategy, crabStrategyAbi)
 })
 
-export const crabStrategyContractAtomV2  = atom<Contract | null>((get) => {
+export const crabStrategyContractAtomV2 = atom<Contract | null>((get) => {
   const web3 = get(web3Atom)
   const { crabStrategy2 } = get(addressesAtom)
   if (!web3) return null
@@ -90,4 +91,11 @@ export const controllerHelperHelperContractAtom = atom<Contract | null>((get) =>
   const { controllerHelper } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, controllerHelper, controllerHelperAbi)
+})
+
+export const crabHelperContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { crabHelper } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, crabHelper, crabHelperAbi)
 })

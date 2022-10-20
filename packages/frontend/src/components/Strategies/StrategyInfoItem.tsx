@@ -41,30 +41,55 @@ type StrategyProps = {
   label: string
   tooltip?: React.ReactNode
   priceType?: string
+  link?: string
 }
 
-const StrategyInfoItem: React.FC<StrategyProps> = ({ value, label, tooltip, priceType }) => {
+const StrategyInfoItem: React.FC<StrategyProps> = ({ value, label, tooltip, priceType, link }) => {
   const classes = useStyles()
 
-  return (
-    <div className={classes.container}>
-      <Typography className={classes.overviewValue}>{value}</Typography>
-      <div className={classes.infoLabel}>
-        <Typography className={classes.overviewTitle}>{label} </Typography>
-        {tooltip ? (
-          <Tooltip title={tooltip}>
-            {priceType === 'twap' ? (
-              <AccessTimeIcon className={classes.infoIcon} />
-            ) : priceType === 'spot' ? (
-              <FiberManualRecordIcon className={classes.infoIcon} />
-            ) : (
-              <InfoIcon className={classes.infoIcon} />
-            )}
-          </Tooltip>
-        ) : null}
+  if (link) {
+    return (
+      <div className={classes.container}>
+        <a href={link}>
+          <Typography className={classes.overviewValue}>{value}</Typography>
+          <div className={classes.infoLabel}>
+            <Typography className={classes.overviewTitle}>{label} </Typography>
+            {tooltip ? (
+              <Tooltip title={tooltip}>
+                {priceType === 'twap' ? (
+                  <AccessTimeIcon className={classes.infoIcon} />
+                ) : priceType === 'spot' ? (
+                  <FiberManualRecordIcon className={classes.infoIcon} />
+                ) : (
+                  <InfoIcon className={classes.infoIcon} />
+                )}
+              </Tooltip>
+            ) : null}
+          </div>
+        </a>
       </div>
-    </div>
-  )
+    )
+  } else {
+    return (
+      <div className={classes.container}>
+        <Typography className={classes.overviewValue}>{value}</Typography>
+        <div className={classes.infoLabel}>
+          <Typography className={classes.overviewTitle}>{label} </Typography>
+          {tooltip ? (
+            <Tooltip title={tooltip}>
+              {priceType === 'twap' ? (
+                <AccessTimeIcon className={classes.infoIcon} />
+              ) : priceType === 'spot' ? (
+                <FiberManualRecordIcon className={classes.infoIcon} />
+              ) : (
+                <InfoIcon className={classes.infoIcon} />
+              )}
+            </Tooltip>
+          ) : null}
+        </div>
+      </div>
+    )
+  }
 }
 
 export default StrategyInfoItem

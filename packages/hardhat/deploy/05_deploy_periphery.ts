@@ -15,7 +15,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await deploy("ShortHelper", {
     from: deployer,
     log: true,
-    args: shortHelperArgs
+    args: shortHelperArgs,
+    skipIfAlreadyDeployed: true,
   });
   createArgumentFile('ShortHelper', network.name, shortHelperArgs)
   console.log(`Successfully deploy ShortHelper 🥦`)

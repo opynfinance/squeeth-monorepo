@@ -51,19 +51,20 @@ import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
-import { fromTokenAmount } from '@utils/calculations'
+import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
-import { crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
+import { crabHelperContractAtom, crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
-import { BIG_ZERO } from '@constants/index'
+import { BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
+import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -191,6 +192,8 @@ export const useCalculateEthWillingToPayV2 = () => {
 
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const getBuyQuote = useGetBuyQuote()
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+
   const calculateEthWillingToPay = useCallback(
     async (amount: BigNumber, slippage: number) => {
       const emptyState = {
@@ -198,10 +201,12 @@ export const useCalculateEthWillingToPayV2 = () => {
         maximumAmountIn: new BigNumber(0),
         priceImpact: '0',
         squeethDebt: new BigNumber(0),
+        ethToGet: new BigNumber(0)
       }
       if (!vault) return emptyState
 
       const squeethDebt = await getWsqueethFromCrabAmount(amount, contract)
+      const  collat = await getCollateralFromCrabAmount(amount, contract, vault)
       console.log('Debt', squeethDebt?.toString(), amount.toString())
       if (!squeethDebt) return emptyState
 
@@ -209,6 +214,7 @@ export const useCalculateEthWillingToPayV2 = () => {
       return {
         ...ethWillingToPayQuote,
         squeethDebt,
+        ethToGet: collat?.minus(ethWillingToPayQuote.maximumAmountIn) || BIG_ZERO
       }
     },
     [contract, getBuyQuote, vault?.id],
@@ -528,6 +534,53 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
   return flashDeposit
 }
 
+export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
+  const maxCap = useAtomValue(maxCapAtomV2)
+  const address = useAtomValue(addressAtom)
+  const { usdc, weth } = useAtomValue(addressesAtom)
+  const network = useAtomValue(networkIdAtom)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const contract = useAtomValue(crabHelperContractAtom)
+  const { getExactIn } = useUniswapQuoter()
+  const handleTransaction = useHandleTransaction()
+
+  const usdcFee = getUSDCPoolFee(network)
+
+  const flashDepositUSDC = useAppCallback(
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract || !vault) return
+
+      const usdcAmount = fromTokenAmount(amount, USDC_DECIMALS)
+      const quote = await getExactIn(usdc, weth, usdcAmount, usdcFee, slippage)
+      const ethAmount = new BigNumber(quote.minAmountOut)
+      let { ethBorrow: _ethBorrow } = await calculateETHtoBorrowFromUniswap(toTokenAmount(ethAmount, 18), slippage)
+      // Just to make sure the issue never happens
+      if (_ethBorrow.isZero()) {
+        Fathom.trackGoal('HOUQK7NR', 0)
+        alert('Some error occurred. Refresh the page!')
+        throw new Error('Some error occurred. Refresh the page!')
+      }
+      const _allowedEthToBorrow = maxCap.minus(toTokenAmount(ethAmount, 18).plus(vault.collateralAmount))
+      if (_ethBorrow.gt(_allowedEthToBorrow)) {
+        _ethBorrow = _allowedEthToBorrow
+      }
+
+      // TODO: fix it so it uses v2 ratio, not v1.
+      const ethBorrow = fromTokenAmount(_ethBorrow, 18)
+      const ethDeposit = ethAmount
+      return await handleTransaction(
+        contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount.toFixed(0), ethDeposit.toFixed(0), usdcFee, UNI_POOL_FEES, usdc).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
+  )
+
+  return flashDepositUSDC
+}
+
 export const useFlashWithdraw = () => {
   const contract = useAtomValue(crabStrategyContractAtom)
   const handleTransaction = useHandleTransaction()
@@ -583,6 +636,45 @@ export const useFlashWithdrawV2 = () => {
 
   return flashWithdraw
 }
+
+export const useFlashWithdrawV2USDC = () => {
+  const contract = useAtomValue(crabHelperContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
+  const { getExactIn } = useUniswapQuoter()
+  const { usdc, weth } = useAtomValue(addressesAtom)
+  const network = useAtomValue(networkIdAtom)
+
+  const usdcFee = getUSDCPoolFee(network)
+
+  const flashWithdrawUSDC = useCallback(
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      const { maximumAmountIn: _ethWillingToPay, ethToGet } = await calculateEthWillingToPay(amount, slippage)
+      console.log(_ethWillingToPay.toString())
+      const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
+      const crabAmount = fromTokenAmount(amount, 18)
+      const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(ethToGet, 18), usdcFee, slippage)
+      console.log('Min amount out USDC', minAmountOut.toString())
+      const poolFeePercent = 3000
+      return await handleTransaction(
+        contract.methods
+          .flashWithdrawERC20(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), usdc, minAmountOut, usdcFee, poolFeePercent)
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction, calculateEthWillingToPay],
+  )
+
+  return flashWithdrawUSDC
+}
+
+
 
 export const useClaimWithdrawV2 = () => {
   const contract = useAtomValue(crabMigrationContractAtom)
@@ -653,6 +745,18 @@ export const useFlashWithdrawEthV2 = () => {
   )
 
   return flashWithdrawEth
+}
+
+export const useETHtoCrab = () => {
+  const { crabStrategy2 } = useAtomValue(addressesAtom)
+  const currentEthValue = useAtomValue(currentCrabPositionETHActualAtomV2)
+  const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
+
+  const getUserCrabForEthAmount = useAppCallback((ethAmount: BigNumber) => {
+    return ethAmount.div(currentEthValue).times(userCrabBalance)
+  }, [currentEthValue, userCrabBalance])
+
+  return getUserCrabForEthAmount
 }
 
 export const useClaimAndWithdrawEthV2 = () => {

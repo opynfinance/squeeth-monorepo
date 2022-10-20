@@ -20,7 +20,7 @@
         "start:server": "serve tests/test-dapp -p 3000",
         "test:e2e:ci": "start-server-and-test 'yarn start:server' http-get://localhost:3000 'yarn run cypress'",
         "codegen:uniswap": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/uniswap/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/kmkoushik/uniswap-v3-ropsten'",
-        "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten'"
+        "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-goerli'"
     },
     "dependencies": {
         "@apollo/client": "^3.4.10",
