@@ -53,6 +53,7 @@ import { addressesAtom } from 'src/state/positions/atoms'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { Networks } from '../../../types'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
+import useAppEffect from '@hooks/useAppEffect'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -156,6 +157,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [useUsdc, setUseUsdc] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
+  const [maxClicked, setMaxClicked] = useState(false)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -419,6 +421,16 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     else setDepositAmount(usdcBalance)
   }
 
+  const setWithdrawMax = () => {
+    setMaxClicked(true)
+    if (!useUsdc) setWithdrawAmount(currentEthValue)
+    else setWithdrawAmount(currentUsdcValue)
+  }
+
+  useAppEffect(() => {
+    if (maxClicked) setWithdrawAmount(currentUsdcValue)
+  }, [maxClicked, currentUsdcValue])
+
   const depositToken = useMemo(() => (useUsdc ? 'USDC' : "ETH"), [useUsdc])
 
   // Update deposit step
@@ -547,7 +559,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               <PrimaryInput
                 id="crab-withdraw-eth-input"
                 value={withdrawAmount.toString()}
-                onChange={(v) => setWithdrawAmount(new BigNumber(v))}
+                onChange={(v) => {
+                  setMaxClicked(false)
+                  setWithdrawAmount(new BigNumber(v))
+                }}
                 label="Amount"
                 tooltip={`Amount of ${depositToken} to withdraw`}
                 actionTxt="Max"
@@ -562,7 +577,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     </span>
                   )
                 }
-                onActionClicked={() => setWithdrawAmount(useUsdc ? currentUsdcValue : currentEthValue)}
+                onActionClicked={setWithdrawMax}
                 error={!!withdrawError}
               />
             )}
@@ -653,7 +668,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             <TradeInfoItem
               label="Slippage"
               value={slippage.toString()}
-              tooltip="The strategy uses a uniswap flashswap to make a deposit. You can adjust slippage for this swap by clicking the gear icon"
+              tooltip={`${depositOption === 0 ? 'The strategy uses a uniswap flashswap to make a deposit' : 'The strategy uses a uniswap to make a withdrawal'}. You can adjust slippage for this swap by clicking the gear icon`}
               unit="%"
             />
             {depositOption === 0 ? (

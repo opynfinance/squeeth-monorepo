@@ -111,10 +111,16 @@ const History: React.FC = () => {
                       : classes.green
                   }
                 >
-                  {tx.ethAmount.toFixed(4)}&nbsp; WETH
+                  {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
+                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
+                    ? `${tx.usdValue.toFixed(2)} USDC`
+                    : `${tx.ethAmount.toFixed(4)} WETH`}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  ${tx.usdValue.toFixed(2)}
+                  {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
+                  tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
+                    ? `${tx.ethAmount.toFixed(4)} WETH`
+                    : `$${tx.usdValue.toFixed(2)}`}
                 </Typography>
               </div>
             </>
