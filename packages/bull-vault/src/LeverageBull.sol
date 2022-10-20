@@ -100,4 +100,17 @@ contract LeverageBull {
     function _borrowUsdcFromEuler(uint256 _usdcToBorrow) internal {
         IEulerDToken(dToken).borrow(0, _usdcToBorrow);
     }
+
+    function _repayAndWithdrawFromLeverage(_bullShare) internal {
+        IEulerDToken(dToken).repay(0, _calcUsdcToRepay(_bullShare));
+        IEulerEToken(eToken).withdraw(0, _calcEthToWithdraw(_bullShare));
+    }
+
+    function _calcEthToWithdraw(uint256 _bullShare) internal view returns (uint256) {
+        return _bullShare.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+    }
+    
+    function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
+        return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
 }

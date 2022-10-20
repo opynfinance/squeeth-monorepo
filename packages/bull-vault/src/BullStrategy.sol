@@ -111,7 +111,22 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
 
-    function withdraw() external {}
+    function withdraw(uint256 _crabAmount) external {
+        uint256 share = _crabAmount.wdiv(totalSupply());
+        uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
+        uint256 crabShare = crabToRedeem.wdiv(IERC20(crab).totalSupply());
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 wPowerPerpToRedeem = crabShare.wmul(squeethInCrab);
+        uint256 ethToWithdrawFromCrab = crabShare.wmul(ethInCrab);
+        uint256 usdcToRepay = _calcUsdcToRepay(share);
+        uint256 wethToWithdrawFromLeverage = _calcEthToWithdraw(share);
+        
+        IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
+        IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
+        ICrabStrategyV2(crab).withdraw(crabToRedeem);
+        
+        IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
+    }
 
     function _uniFlashSwap(
         address, /*_caller*/
