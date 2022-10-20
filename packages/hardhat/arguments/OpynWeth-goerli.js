@@ -1,1 +1,1 @@
-module.exports = ["OpynWETH", "OpynWETH", "18"];
+module.exports = ["OpynWETH","OpynWETH","18"]

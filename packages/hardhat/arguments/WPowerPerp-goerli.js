@@ -1,1 +1,1 @@
-module.exports = ["Opyn Squeeth", "oSQTH"];
+module.exports = ["Opyn Squeeth","oSQTH"]
