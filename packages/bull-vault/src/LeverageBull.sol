@@ -70,7 +70,7 @@ contract LeverageBull {
             ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
             usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
         } else {
-            ethToLend = IEulerEToken(eToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
             usdcToBorrow =
                 IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
         }

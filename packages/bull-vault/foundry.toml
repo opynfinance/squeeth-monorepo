@@ -8,7 +8,7 @@ optimizer = true
 optimizer_runs = 2000
 
 [profile.fuzz]
-runs = 500
+runs = 2000
 max_local_rejects = 1024
 max_global_rejects = 65536
 seed = '0x3e8'
