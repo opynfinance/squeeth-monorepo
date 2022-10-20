@@ -59,6 +59,9 @@ const useStyles = makeStyles((theme) =>
       flexDirection: 'column',
       padding: theme.spacing(2, 3),
     },
+    link: {
+      color: theme.palette.primary.main,
+    },
     settingsButton: {
       marginTop: theme.spacing(0.5),
       marginLeft: theme.spacing(37),
@@ -385,8 +388,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   depositError
                     ? depositError
                     : warning
-                      ? warning
-                      : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                    ? warning
+                    : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                 }
                 convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                 onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
@@ -420,8 +423,17 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 <InfoIcon fontSize="medium" />
               </div>
               <Typography variant="caption" color="textSecondary">
-                Crab aims to earn yield in dollar terms. It does this by stacking ETH when price decreases and selling
-                ETH when price increases.
+                Crab aims to earn yield in dollar terms. A crab position reduces ETH holdings when the price of ETH
+                increases. It increases ETH holdings when the price of ETH decreases.{' '}
+                <a
+                  className={classes.link}
+                  href="https://twitter.com/wadepros/status/1580566152844955649?s=20&t=Z4KHUkfbzOfhvauqS7cUwQ"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {' '}
+                  Learn more.{' '}
+                </a>
               </Typography>
             </div>
             {depositFundingWarning && depositOption === 0 ? (
@@ -467,10 +479,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">High price impact. Try smaller amount or contact us through {' '}
-                  <LinkWrapper href="https://tiny.cc/opyndiscord" >
-                    discord
-                  </LinkWrapper> about OTC
+                <Typography variant="caption">
+                  High price impact. Try smaller amount or contact us through{' '}
+                  <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
                 </Typography>
               </div>
             ) : null}
@@ -485,10 +496,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">High price impact. Try smaller amount or contact us through {' '}
-                  <LinkWrapper href="https://tiny.cc/opyndiscord" >
-                    discord
-                  </LinkWrapper> about OTC
+                <Typography variant="caption">
+                  High price impact. Try smaller amount or contact us through{' '}
+                  <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
                 </Typography>
               </div>
             ) : null}
@@ -528,8 +538,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   Number(depositPriceImpact) > 3 || !!warning
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : depositFundingWarning || depositPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                    : { marginTop: '8px' }
                 }
               >
                 {!txLoading && (depositFundingWarning || depositPriceImpactWarning) ? (
@@ -552,8 +562,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   Number(withdrawPriceImpact) > 3
                     ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                     : withdrawFundingWarning || withdrawPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                    : { marginTop: '8px' }
                 }
                 onClick={() => withdraw()}
                 disabled={txLoading || !!withdrawError}
