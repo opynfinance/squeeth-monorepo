@@ -2,6 +2,9 @@ on: [push]
 
 name: Foundry
 
+env:
+  FORK_URL: ${{secrets.API_KEY}}    
+
 jobs:
   check:
     name: Forge fuzz testing
