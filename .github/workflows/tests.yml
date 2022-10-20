@@ -17,4 +17,4 @@ jobs:
           version: nightly
 
       - name: Run tests
-        run: cd packages/bull-vault & forge test -vvv
+        run: cd packages/bull-vault && forge test -vvv
