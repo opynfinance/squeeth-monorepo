@@ -3,7 +3,7 @@ on: [push]
 name: Foundry
 
 env:
-  FORK_URL: ${{secrets.API_KEY}}    
+  FORK_URL: ${{secrets.FORK_URL}}    
 
 jobs:
   check:
