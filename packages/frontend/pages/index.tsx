@@ -534,7 +534,7 @@ const SqueethInfo: React.FC = () => {
                   </Tooltip>
                 </div>
                 <Typography>{(osqthRefVol).toFixed(2)}%
-                  <a target="_blank" href={`https://etherscan.io/address`} rel="noreferrer">
+                  <a target="_blank" href={`https://colab.research.google.com/drive/1HTM_2j0jmda9tzN_uskBPz9Rpma8Lp3C`} rel="noreferrer">
                     <OpenInNew fontSize="small" className={classes.infoIcon} />
                   </a>
                 </Typography>
