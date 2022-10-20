@@ -101,7 +101,7 @@ contract LeverageBull {
         IEulerDToken(dToken).borrow(0, _usdcToBorrow);
     }
 
-    function _repayAndWithdrawFromLeverage(_bullShare) internal {
+    function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
         IEulerDToken(dToken).repay(0, _calcUsdcToRepay(_bullShare));
         IEulerEToken(eToken).withdraw(0, _calcEthToWithdraw(_bullShare));
     }
