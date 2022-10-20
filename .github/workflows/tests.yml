@@ -2,6 +2,9 @@ on: [push]
 
 name: Foundry
 
+env:
+  FORK_URL: ${{secrets.FORK_URL}}    
+
 jobs:
   check:
     name: Forge test
