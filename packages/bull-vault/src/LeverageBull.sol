@@ -71,7 +71,8 @@ contract LeverageBull {
             usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
         } else {
             ethToLend = IEulerEToken(eToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
+            usdcToBorrow =
+                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
         }
 
         _depositEthInEuler(ethToLend, true);
@@ -93,7 +94,7 @@ contract LeverageBull {
     }
 
     /**
-     * @dev borrow USDC from Euler against deposited collateral 
+     * @dev borrow USDC from Euler against deposited collateral
      * @param _usdcToBorrow amount of USDC to borrow
      */
     function _borrowUsdcFromEuler(uint256 _usdcToBorrow) internal {

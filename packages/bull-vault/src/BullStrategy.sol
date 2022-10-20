@@ -103,8 +103,8 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
         uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
         uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 crabUsdPrice =
-            (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))).wdiv(IERC20(crab).totalSupply());
+        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
+            .wdiv(IERC20(crab).totalSupply());
 
         (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, crabUsdPrice, ethUsdPrice);
 
