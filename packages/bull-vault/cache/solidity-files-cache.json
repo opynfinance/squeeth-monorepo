@@ -91,7 +91,7 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "Script": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Script.sol/Script.json"
+          "0.7.6+commit.7338295f.Darwin.appleclang": "Script.sol/Script.json"
         }
       }
     },
@@ -186,7 +186,7 @@
       "versionRequirement": ">=0.6.0, <0.9.0",
       "artifacts": {
         "Vm": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "Vm.sol/Vm.json"
+          "0.7.6+commit.7338295f.Darwin.appleclang": "Vm.sol/Vm.json"
         }
       }
     },
@@ -226,7 +226,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "console.sol/console.json"
+          "0.7.6+commit.7338295f.Darwin.appleclang": "console.sol/console.json"
         }
       }
     },
@@ -266,7 +266,7 @@
       "versionRequirement": ">=0.4.22, <0.9.0",
       "artifacts": {
         "console2": {
-          "0.8.15+commit.e14f2714.Darwin.appleclang": "console2.sol/console2.json"
+          "0.7.6+commit.7338295f.Darwin.appleclang": "console2.sol/console2.json"
         }
       }
     },
@@ -2747,7 +2747,7 @@
       }
     },
     "src/BullStrategy.sol": {
-      "lastModificationDate": 1666258756493,
+      "lastModificationDate": 1666261499424,
       "contentHash": "179da86bb7ab4f65f75c7bbf5e1f05ea",
       "sourceName": "src/BullStrategy.sol",
       "solcConfig": {
@@ -2779,6 +2779,7 @@
         }
       },
       "imports": [
+        "lib/forge-std/src/console.sol",
         "lib/openzeppelin-contracts/contracts/introspection/IERC165.sol",
         "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
@@ -2833,7 +2834,7 @@
       }
     },
     "src/FlashBull.sol": {
-      "lastModificationDate": 1666258756491,
+      "lastModificationDate": 1666261499422,
       "contentHash": "ceaf21fecb089cac17adc57e90b58948",
       "sourceName": "src/FlashBull.sol",
       "solcConfig": {
@@ -2865,6 +2866,7 @@
         }
       },
       "imports": [
+        "lib/forge-std/src/console.sol",
         "lib/openzeppelin-contracts/contracts/introspection/IERC165.sol",
         "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
@@ -2920,8 +2922,8 @@
       }
     },
     "src/LeverageBull.sol": {
-      "lastModificationDate": 1666258756493,
-      "contentHash": "88469aceb70ce1801b8c154d07d2888c",
+      "lastModificationDate": 1666269583197,
+      "contentHash": "ed583efc5ce59d586bf810ac696d275c",
       "sourceName": "src/LeverageBull.sol",
       "solcConfig": {
         "settings": {
@@ -2952,6 +2954,7 @@
         }
       },
       "imports": [
+        "lib/forge-std/src/console.sol",
         "lib/openzeppelin-contracts/contracts/introspection/IERC165.sol",
         "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
@@ -2986,7 +2989,7 @@
       }
     },
     "src/PayableBull.sol": {
-      "lastModificationDate": 1666258756489,
+      "lastModificationDate": 1666261499421,
       "contentHash": "e8e9ae690df27d1cd16848538e5455df",
       "sourceName": "src/PayableBull.sol",
       "solcConfig": {
@@ -3018,6 +3021,7 @@
         }
       },
       "imports": [
+        "lib/forge-std/src/console.sol",
         "lib/openzeppelin-contracts/contracts/introspection/IERC165.sol",
         "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
         "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
@@ -3293,8 +3297,8 @@
       }
     },
     "test/e2e/BullStrategyTestFork.t.sol": {
-      "lastModificationDate": 1666264632028,
-      "contentHash": "95deb9baed16661ae2c9b32e53c83797",
+      "lastModificationDate": 1666271484797,
+      "contentHash": "b50d6314d759f749bbd3c8949d90bddc",
       "sourceName": "test/e2e/BullStrategyTestFork.t.sol",
       "solcConfig": {
         "settings": {
@@ -3399,67 +3403,6 @@
       "artifacts": {
         "BullStrategyTestFork": {
           "0.7.6+commit.7338295f.Darwin.appleclang": "BullStrategyTestFork.t.sol/BullStrategyTestFork.json"
-        }
-      }
-    },
-    "test/helper/BullStrategyHelper.sol": {
-      "lastModificationDate": 1666258756491,
-      "contentHash": "328d02f7c2fd84831b3c827d17548818",
-      "sourceName": "test/helper/BullStrategyHelper.sol",
-      "solcConfig": {
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 2000
-          },
-          "metadata": {
-            "bytecodeHash": "ipfs",
-            "appendCBOR": true
-          },
-          "outputSelection": {
-            "*": {
-              "": [
-                "ast"
-              ],
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata"
-              ]
-            }
-          },
-          "evmVersion": "london",
-          "libraries": {}
-        }
-      },
-      "imports": [
-        "lib/openzeppelin-contracts/contracts/math/SafeMath.sol",
-        "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/interfaces/IERC20Detailed.sol",
-        "lib/squeeth-monorepo/packages/hardhat/contracts/libs/OracleLibrary.sol",
-        "lib/v3-core/contracts/interfaces/IUniswapV3Pool.sol",
-        "lib/v3-core/contracts/interfaces/callback/IUniswapV3SwapCallback.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolDerivedState.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolEvents.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolImmutables.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolOwnerActions.sol",
-        "lib/v3-core/contracts/interfaces/pool/IUniswapV3PoolState.sol",
-        "lib/v3-core/contracts/libraries/FullMath.sol",
-        "lib/v3-core/contracts/libraries/SafeCast.sol",
-        "lib/v3-core/contracts/libraries/TickMath.sol",
-        "lib/v3-periphery/contracts/libraries/BytesLib.sol",
-        "lib/v3-periphery/contracts/libraries/CallbackValidation.sol",
-        "lib/v3-periphery/contracts/libraries/Path.sol",
-        "lib/v3-periphery/contracts/libraries/PoolAddress.sol",
-        "src/UniBull.sol"
-      ],
-      "versionRequirement": "=0.7.6",
-      "artifacts": {
-        "BullStrategyHelper": {
-          "0.7.6+commit.7338295f.Darwin.appleclang": "BullStrategyHelper.sol/BullStrategyHelper.json"
         }
       }
     },
