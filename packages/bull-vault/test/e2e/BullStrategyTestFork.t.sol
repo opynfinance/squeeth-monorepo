@@ -70,7 +70,7 @@ contract BullStrategyTestFork is Test {
         vm.label(usdc, "USDC");
         vm.label(weth, "WETH");
 
-        vm.deal(user1, 100e18);
+        vm.deal(user1, 100000000e18);
         // this is a crab whale, get some crab token from
         vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
         IERC20(crabV2).transfer(user1, 100e18);
@@ -81,50 +81,76 @@ contract BullStrategyTestFork is Test {
 
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
-            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
-        );
-        uint256 squeethEthPrice =
-            uniBullHelper.getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 crabUsdPrice =
-            (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))).wdiv(crabV2.totalSupply());
-        uint256 wethToLend;
-        uint256 usdcToBorrow;
-        {
-            wethToLend = bullStrategy.TARGET_CR().wmul(crabToDeposit).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-            usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
-        }
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit);
 
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
         vm.stopPrank();
 
-        uint256 bullDelta = IEulerEToken(eToken).balanceOf(address(bullStrategy)).wmul(ethUsdPrice).wdiv(
-            crabToDeposit.wmul(crabUsdPrice).add(
-                IEulerEToken(eToken).balanceOf(address(bullStrategy)).wmul(ethUsdPrice)
-            ).sub(usdcToBorrow)
-        );
-
-        console.log("wethToLend", wethToLend);
-        console.log("ethInCrab", ethInCrab);
-        console.log("squeethInCrab", squeethInCrab);
-        console.log("bullDelta", bullDelta);
-        console.log("ethUsdPrice", ethUsdPrice);
-        console.log("squeethEthPrice", squeethEthPrice);
-        console.log("crabUsdPrice", crabUsdPrice);
-        console.log("crabV2.totalSupply()", crabV2.totalSupply());
-
         assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+    }
 
+    function testFuzzingDeposit(uint256 _crabAmount) public {
+        vm.assume(_crabAmount < IERC20(crabV2).balanceOf(user1));
+        vm.assume(_crabAmount > 0);
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabAmount);
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
+        bullStrategy.deposit{value: wethToLend}(_crabAmount);
+        vm.stopPrank();
+
+        uint256 bullToMint;
+        uint256 share = _crabAmount.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
+        if (share == 1e18) {
+            bullToMint = _crabAmount;
+        } else {
+            uint256 bullTotalSupply = bullStrategy.totalSupply();
+            bullToMint = share.wmul(bullTotalSupply).wdiv(uint256(1e18).sub(bullTotalSupply));
+        }     
+        
+        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(crabV2.vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+    }
+
+    function _calcCollateralAndBorrowAmount(uint256 _crabToDeposit) internal view returns (uint256, uint256) {
+        uint256 ethUsdPrice = uniBullHelper.getTwap(
+            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+        );
+        uint256 squeethEthPrice =
+            uniBullHelper.getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
+            .wdiv(crabV2.totalSupply());
+        uint256 wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+        uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+
+        return (wethToLend, usdcToBorrow);
+    }
+
+    function _calcTotalEthDelta(uint256 _crabToDeposit) internal view returns (uint256) {
+        uint256 ethUsdPrice = uniBullHelper.getTwap(
+            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+        );
+        uint256 squeethEthPrice =
+            uniBullHelper.getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
+            .wdiv(crabV2.totalSupply());
+        uint256 totalEthDelta = (IEulerEToken(eToken).balanceOf(address(bullStrategy)).wmul(ethUsdPrice)).wdiv(
+            _crabToDeposit.wmul(crabUsdPrice).add(
+                IEulerEToken(eToken).balanceOf(address(bullStrategy)).wmul(ethUsdPrice)
+            ).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12))
+        );
     }
 }
