@@ -55,3 +55,4 @@ yarn-error.log*
 
 
 packages/bull-vault/out
+packages/bull-vault/cache/
