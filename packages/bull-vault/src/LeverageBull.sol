@@ -33,6 +33,8 @@ contract LeverageBull {
     /// @dev euler dToken that represent the borrowed asset
     address internal dToken;
 
+    event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+
     /**
      * @dev constructor
      * @param _euler euler address
@@ -101,15 +103,37 @@ contract LeverageBull {
         IEulerDToken(dToken).borrow(0, _usdcToBorrow);
     }
 
+    /**
+     * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
+     * @param _bullShare amount of bull share to burn
+     */
     function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
-        IEulerDToken(dToken).repay(0, _calcUsdcToRepay(_bullShare));
-        IEulerEToken(eToken).withdraw(0, _calcEthToWithdraw(_bullShare));
+        uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
+        uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
+
+        IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
+        IEulerDToken(dToken).repay(0, usdcToRepay);
+        IEulerEToken(eToken).withdraw(0, wethToWithdraw);
+
+        IWETH9(weth).withdraw(wethToWithdraw);
+
+        emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
-    function _calcEthToWithdraw(uint256 _bullShare) internal view returns (uint256) {
+    /**
+     * @dev calculate amount of WETH to withdraw from Euler based on amount of share of bull token
+     * @param _bullShare bull share amount
+     * @return WETH to withdraw
+     */
+    function _calcWethToWithdraw(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
     
+    /**
+     * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
+     * @param _bullShare bull share amount
+     * @return USDC to repay
+     */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
     }
