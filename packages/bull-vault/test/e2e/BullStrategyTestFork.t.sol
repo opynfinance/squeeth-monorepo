@@ -160,7 +160,7 @@ contract BullStrategyTestFork is Test {
         vm.assume(_crabAmount >= 1e18);
 
         uint256 bullToMint = _calcBullToMint(_crabAmount);
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabAmount);     
+        (uint256 wethToLend,) = _calcCollateralAndBorrowAmount(_crabAmount);     
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
         bullStrategy.deposit{value: wethToLend}(_crabAmount);
@@ -180,18 +180,11 @@ contract BullStrategyTestFork is Test {
         uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
-        console.log("bullStrategy.totalSupply()", bullStrategy.totalSupply());
-
         vm.startPrank(user1);
         IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
         IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
         bullStrategy.withdraw(bullToMint);
         vm.stopPrank();  
-
-        console.log("ethInLendingBefore", ethInLendingBefore);
-        console.log("wethToWithdraw", wethToWithdraw);
-        console.log("ethInLendingBefore.sub(wethToWithdraw)", ethInLendingBefore.sub(wethToWithdraw));
-        console.log("IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))", IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)));
 
         assertEq(usdcBorrowedBefore.sub(usdcToRepay), IEulerDToken(dToken).balanceOf(address(bullStrategy)), "Bull USDC debt amount mismatch");
         assertEq(ethInLendingBefore.sub(wethToWithdraw), IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), "Bull ETH in leverage amount mismatch");
@@ -232,7 +225,7 @@ contract BullStrategyTestFork is Test {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crabV2).balanceOf(address(bullStrategy)));
         uint256 crabTotalSupply = IERC20(crabV2).totalSupply();
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (, uint256 squeethInCrab) = _getCrabVaultDetails();
         return (crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply), crabToRedeem);
     }
 
