@@ -13,6 +13,9 @@ export const USER_CRAB_V2_TX_QUERY = gql`
       wSqueethAmount
       lpAmount
       timestamp
+      excessEth
+      erc20Token
+      erc20Amount
     }
   }
 `

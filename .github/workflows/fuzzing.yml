@@ -1,0 +1,23 @@
+on: [push]
+
+name: Foundry
+
+env:
+  FORK_URL: ${{secrets.FORK_URL}}    
+
+jobs:
+  check:
+    name: Forge fuzz testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run tests
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv

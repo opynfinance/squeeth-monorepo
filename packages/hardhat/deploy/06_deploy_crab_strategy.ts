@@ -8,6 +8,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deploy } = deployments;
     
   const { deployer } = await getNamedAccounts();
+  if (network.name === 'mainnet') return
 
   const controller = await ethers.getContract("Controller", deployer);
   const oracle = await ethers.getContract("Oracle", deployer);
@@ -41,7 +42,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     log: true,
     args: crabStrategyArgs,
-    gasLimit: 10000000
+    gasLimit: 10000000,
+    skipIfAlreadyDeployed: true,
   });
   createArgumentFile('CrabStrategy', network.name, crabStrategyArgs)
 

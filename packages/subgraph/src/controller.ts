@@ -422,6 +422,8 @@ function getTransactionDetail(
   vaultHistory.timestamp = timestamp;
   vaultHistory.from = from;
   vaultHistory.sender = sender;
+  vaultHistory.ethCollateralAmount = BigInt.zero()
+  vaultHistory.oSqthAmount = BigInt.zero();
 
   if (action == "DEPOSIT_COLLAT" || action == "WITHDRAW_COLLAT") {
     vaultHistory.ethCollateralAmount = amount;

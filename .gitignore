@@ -34,7 +34,9 @@ build
 
 # misc
 .DS_Store
-.env*
+.env
+
+packages/hardhat/.env*
 
 # debug
 npm-debug.log*
@@ -55,3 +57,4 @@ yarn-error.log*
 
 
 packages/bull-vault/out
+packages/bull-vault/cache
