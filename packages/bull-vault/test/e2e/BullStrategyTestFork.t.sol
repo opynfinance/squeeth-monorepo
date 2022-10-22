@@ -134,8 +134,7 @@ contract BullStrategyTestFork is Test {
     /*****************************************************************************************************************************************************
     /************************************************************* Fuzz testing is awesome! *************************************************************/
     function testFuzzingDeposit(uint256 _crabAmount) public {
-        vm.assume(_crabAmount < IERC20(crabV2).balanceOf(user1));
-        vm.assume(_crabAmount > 0);
+        _crabAmount = bound(_crabAmount, 0, IERC20(crabV2).balanceOf(user1));
 
         uint256 bullToMint = _calcBullToMint(_crabAmount);
         (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabAmount);
@@ -156,8 +155,8 @@ contract BullStrategyTestFork is Test {
     }
 
     function testFuzzingWithdraw(uint256 _crabAmount) public {
-        vm.assume(_crabAmount < IERC20(crabV2).balanceOf(user1));
-        vm.assume(_crabAmount >= 1e18);
+        // use bound() instead of vm.assume for better performance in fuzzing
+        _crabAmount = bound(_crabAmount, 1e18, IERC20(crabV2).balanceOf(user1));
 
         uint256 bullToMint = _calcBullToMint(_crabAmount);
         (uint256 wethToLend,) = _calcCollateralAndBorrowAmount(_crabAmount);     
