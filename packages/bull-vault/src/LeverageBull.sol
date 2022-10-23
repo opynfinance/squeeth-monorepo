@@ -52,7 +52,14 @@ contract LeverageBull {
         IERC20(usdc).approve(_euler, type(uint256).max);
     }
 
-        /**
+    function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        external view
+        returns (uint256, uint256)
+    {
+        return _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
+    }
+
+    /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handle only the leverage component part
      * @param _crabAmount amount of crab token deposited
@@ -61,7 +68,7 @@ contract LeverageBull {
      * @param _ethUsdPrice ETH price in USDC
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
-    function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
         internal view
         returns (uint256, uint256)
     {
@@ -92,7 +99,7 @@ contract LeverageBull {
         internal
         returns (uint256, uint256)
     {
-        (uint256 ethToLend, uint256 usdcToBorrow) = calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
+        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
 
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
