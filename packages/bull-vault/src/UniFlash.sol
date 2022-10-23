@@ -75,19 +75,79 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         // _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
-        _uniFlashSwap(
-            UniFlashswapCallbackData(
-                pool, data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource
-            )
-        );
+        _uniFlashSwap(UniFlashswapCallbackData(pool, data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource));
     }
 
     /**
      * @notice function to be called by uniswap callback.
      * @dev this function should be overridden by the child contract
-     * @param _uniFlashSwapData UniFlashswapCallbackData struct
+     * param _pool uni pool address
+     * param _caller initial strategy function caller
+     * param _tokenIn token address sold
+     * param _tokenOut token address bought
+     * param _fee pool fee
+     * param _amountToPay amount to pay for the pool second token
+     * param _callData arbitrary data assigned with the flashswap call
+     * param _callSource function call source
      */
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual {}
+    function _uniFlashSwap(
+        // address, /*_pool*/
+        // address, /*_caller*/
+        // address, /*_tokenIn*/
+        // address, /*_tokenOut*/
+        // uint24, /*_fee*/
+        // uint256, /*_amountToPay*/
+        // bytes memory _callData,
+        // uint8 _callSource
+        UniFlashswapCallbackData memory _uniFlashSwapData
+    ) internal virtual {}
+
+    /**
+     * @notice get twap converted with base & quote token decimals
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @return price of 1 base currency in quote currency. scaled by 1e18
+     */
+    function _getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
+        internal
+        view
+        returns (uint256)
+    {
+        // if the period is already checked, request TWAP directly. Will revert if period is too long.
+        if (!_checkPeriod) return _fetchTwap(_pool, _base, _quote, _period);
+
+        // make sure the requested period < maxPeriod the pool recorded.
+        uint32 maxPeriod = _getMaxPeriod(_pool);
+        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
+        return _fetchTwap(_pool, _base, _quote, requestPeriod);
+    }
+
+    /**
+     * @notice get twap converted with base & quote token decimals
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
+     * @param _pool uniswap pool address
+     * @param _base base currency. to get eth/usd price, eth is base token
+     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
+     * @param _period number of seconds in the past to start calculating time-weighted average
+     * @return twap price which is scaled
+     */
+    function _fetchTwap(address _pool, address _base, address _quote, uint32 _period) internal view returns (uint256) {
+        int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
+        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, ONE, _base, _quote);
+
+        uint8 baseDecimals = IERC20Detailed(_base).decimals();
+        uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
+        if (baseDecimals == quoteDecimals) return quoteAmountOut;
+
+        // if quote token has less decimals, the returned quoteAmountOut will be lower, need to scale up by decimal difference
+        if (baseDecimals > quoteDecimals) return quoteAmountOut.mul(10 ** (baseDecimals - quoteDecimals));
+
+        // if quote token has more decimals, the returned quoteAmountOut will be higher, need to scale down by decimal difference
+        return quoteAmountOut.div(10 ** (quoteDecimals - baseDecimals));
+    }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)
