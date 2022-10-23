@@ -118,14 +118,6 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
     }
 
     function _uniFlashSwap(
-        // address _pool,
-        // address, /*_caller*/
-        // address _tokenIn,
-        // address, /*_tokenOut*/
-        // uint24, /*_fee*/
-        // uint256 _amountToPay,
-        // bytes memory, /*_callData*/
-        // uint8 /*_callSource*/
         UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal override {
         IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);

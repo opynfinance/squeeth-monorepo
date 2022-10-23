@@ -125,28 +125,10 @@ contract FlashBull is UniBull {
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      */
     function _uniFlashSwap(
-        // address, /*_pool*/
-        // address _caller,
-        // address _tokenIn,
-        // address _tokenOut,
-        // uint24 _fee,
-        // uint256 _amountToPay,
-        // bytes memory _callData,
-        // uint8 _callSource
         UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
             FlashDepositCrabData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
-            // uint256 usdcAmount;
-            // uint256 totalAmount;
-            // uint256 crabAmount;
-
-            // {
-            //     FlashDepositCrabData memory data = abi.decode(_callData, (FlashDepositCrabData));
-            //     usdcAmount = data.usdcAmount;
-            //     totalAmount = data.totalAmount;
-            //     crabAmount = data.crabAmount;
-            // }
 
             // ETH-USDC swap
             _exactInFlashSwap(
