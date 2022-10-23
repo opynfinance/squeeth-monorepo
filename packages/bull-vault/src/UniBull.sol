@@ -39,6 +39,17 @@ contract UniBull is IUniswapV3SwapCallback {
         bytes callData;
     }
 
+    struct UniFlashswapCallbackData {
+        address pool;
+        address caller;
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        uint256 amountToPay;
+        bytes callData;
+        uint8 callSource;
+    }
+
     /**
      * @dev constructor
      * @param _factory uniswap factory address
@@ -67,12 +78,14 @@ contract UniBull is IUniswapV3SwapCallback {
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        // _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _uniFlashSwap(UniFlashswapCallbackData(pool, data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource));
     }
 
     /**
      * @notice function to be called by uniswap callback.
      * @dev this function should be overridden by the child contract
+     * param _pool uni pool address
      * param _caller initial strategy function caller
      * param _tokenIn token address sold
      * param _tokenOut token address bought
@@ -82,14 +95,15 @@ contract UniBull is IUniswapV3SwapCallback {
      * param _callSource function call source
      */
     function _uniFlashSwap(
-        address, /*_caller*/
-        address, /*_pool*/
-        address, /*_tokenIn*/
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
-        uint256, /*_amountToPay*/
-        bytes memory _callData,
-        uint8 _callSource
+        // address, /*_pool*/
+        // address, /*_caller*/
+        // address, /*_tokenIn*/
+        // address, /*_tokenOut*/
+        // uint24, /*_fee*/
+        // uint256, /*_amountToPay*/
+        // bytes memory _callData,
+        // uint8 _callSource
+        UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal virtual {}
 
     /**

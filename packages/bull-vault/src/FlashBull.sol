@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity =0.7.6;
 
+pragma abicoder v2;
+
 // contract
 import {BullStrategy} from "./BullStrategy.sol";
 import {UniBull} from "./UniBull.sol";
@@ -65,7 +67,7 @@ contract FlashBull is UniBull {
     // struct FlashWithdrawData {}
     // // TODO
 
-    constructor(address _bull, address _powerTokenController) {
+    constructor(address _bull, address _powerTokenController, address _factory) UniBull(_factory) {
         bullStrategy = BullStrategy(_bull);
         wPowerPerp = IController(bullStrategy.powerTokenController()).wPowerPerp();
         weth = IController(bullStrategy.powerTokenController()).weth();
@@ -83,22 +85,28 @@ contract FlashBull is UniBull {
      * @param _poolFee Uniswap pool fee
      */
     function flashDeposit(uint256 _ethToCrab, uint256 _ethToDeposit, uint24 _poolFee) external payable {
-        uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-        uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-        
-        (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy.getCrabVaultDetails();
 
-        // TODO: Helper function for Crab-USD price in BullStrategy.sol
-        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-            .wdiv(IERC20(bullStrategy.crab()).totalSupply());
-        uint256 crabAmount = _ethToCrab.wmul(ethUsdPrice).wdiv(crabUsdPrice);
-        uint256 share = crabAmount.wdiv(IERC20(bullStrategy.crab()).balanceOf(address(bullStrategy)));
+        uint256 crabAmount;
+        uint256 usdcToSell;
+        uint256 wSqueethToSell;
+        {
+            uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            
+            (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy.getCrabVaultDetails();
 
-        // wSqueeth we pay to flashswap
-        uint256 wSqueethToSell = _ethToCrab.wmul(squeethInCrab).wdiv(ethInCrab);
+            // TODO: Helper function for Crab-USD price in BullStrategy.sol
+            uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
+                .wdiv(IERC20(bullStrategy.crab()).totalSupply());
+            crabAmount = _ethToCrab.wmul(ethUsdPrice).wdiv(crabUsdPrice);
+            uint256 share = crabAmount.wdiv(IERC20(bullStrategy.crab()).balanceOf(address(bullStrategy)));
 
-        // USDC we pay to flashswap
-        (uint256 usdcToSell, ) = bullStrategy.calcLeverageEthUsdc(crabAmount, share, crabUsdPrice, ethUsdPrice);
+            // wSqueeth we pay to flashswap
+            wSqueethToSell = _ethToCrab.wmul(squeethInCrab).wdiv(ethInCrab);
+
+            // USDC we pay to flashswap
+            (usdcToSell, ) = bullStrategy.calcLeverageEthUsdc(crabAmount, share, crabUsdPrice, ethUsdPrice);
+        }
 
         // oSQTH-ETH swap
         _exactInFlashSwap(
@@ -115,52 +123,60 @@ contract FlashBull is UniBull {
     /**
      * @notice uniswap flash swap callback function
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
-     * @param _caller address of original function caller
-     * @param _amountToPay amount to pay back for flashswap
-     * @param _callData arbitrary data attached to callback
-     * @param _callSource identifier for which function triggered callback
      */
-    function _strategyFlash(
-        address _caller,
-        address _tokenIn,
-        address _tokenOut,
-        uint24 _fee,
-        uint256 _amountToPay,
-        bytes memory _callData,
-        uint8 _callSource
+    function _uniFlashSwap(
+        // address, /*_pool*/
+        // address _caller,
+        // address _tokenIn,
+        // address _tokenOut,
+        // uint24 _fee,
+        // uint256 _amountToPay,
+        // bytes memory _callData,
+        // uint8 _callSource
+        UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal override {
-        if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
-            FlashDepositCrabData memory data = abi.decode(_callData, (FlashDepositCrabData));
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
+            FlashDepositCrabData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
+            // uint256 usdcAmount;
+            // uint256 totalAmount;
+            // uint256 crabAmount;
+
+            // {
+            //     FlashDepositCrabData memory data = abi.decode(_callData, (FlashDepositCrabData));
+            //     usdcAmount = data.usdcAmount;
+            //     totalAmount = data.totalAmount;
+            //     crabAmount = data.crabAmount;
+            // }
 
             // ETH-USDC swap
             _exactInFlashSwap(
                 usdc,
                 weth,
-                _fee,
+                _uniFlashSwapData.fee,
                 data.usdcAmount,
                 data.totalAmount.sub(msg.value),
                 uint8(FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL),
-                abi.encodePacked(data.crabAmount, _amountToPay, _caller)
+                abi.encodePacked(data.crabAmount, _uniFlashSwapData.amountToPay, _uniFlashSwapData.caller)
             );
-        } else if (FLASH_SOURCE(_callSource) == FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL) {
-            FlashDepositCollateralData memory data = abi.decode(_callData, (FlashDepositCollateralData));
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL) {
+            FlashDepositCollateralData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
 
             // convert WETH to ETH as Uniswap uses WETH
-            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+            // IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            // use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
-            bullStrategy.deposit(data.crabAmount);
+            // // use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
+            // bullStrategy.deposit(data.crabAmount);
 
-            // repay the squeeth flash swap
-            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, data.squeethAmount);
+            // // repay the squeeth flash swap
+            // IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, data.squeethAmount);
 
-            // repay the dollars flash swap
-            IERC20(usdc).transfer(ethUSDCPool, _amountToPay);
+            // // repay the dollars flash swap
+            // IERC20(usdc).transfer(ethUSDCPool, _amountToPay);
 
-            // return excess eth to the user that was not needed for slippage
-            if (address(this).balance > 0) {
-                payable(data.depositor).sendValue(address(this).balance);
-            }
+            // // return excess eth to the user that was not needed for slippage
+            // if (address(this).balance > 0) {
+            //     payable(data.depositor).sendValue(address(this).balance);
+            // }
         }
     }
 
