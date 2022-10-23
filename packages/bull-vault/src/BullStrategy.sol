@@ -102,7 +102,7 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
 
         uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
         uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-        (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
             .wdiv(IERC20(crab).totalSupply());
 
@@ -112,6 +112,10 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
     }
 
     function withdraw() external {}
+
+    function getCrabVaultDetails() external view returns (uint256, uint256) {
+        return _getCrabVaultDetails();
+    }
 
     function _uniFlashSwap(
         address, /*_caller*/
@@ -126,7 +130,7 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
         IERC20(_tokenIn).transfer(_pool, _amountToPay);
     }
 
-    function getCrabVaultDetails() internal view returns (uint256, uint256) {
+    function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
