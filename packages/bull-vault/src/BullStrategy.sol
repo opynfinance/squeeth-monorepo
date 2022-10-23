@@ -103,7 +103,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
         uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-        (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
             .wdiv(IERC20(crab).totalSupply());
 
@@ -112,35 +112,26 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
 
-    /**
-     * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
-     * @param _bullAmount amount of bull token to redeem
-     */
-    function withdraw(uint256 _bullAmount) external {        
-        uint256 share = _bullAmount.wdiv(totalSupply());
-        uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
-        uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
-
-        IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
-        IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
-        _burn(msg.sender, _bullAmount);
-        
-        ICrabStrategyV2(crab).withdraw(crabToRedeem);
-
-        _repayAndWithdrawFromLeverage(share);
-
-        payable(msg.sender).sendValue(address(this).balance);
-
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
-    }
+    function withdraw() external {}
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
 
-    function getCrabVaultDetails() internal view returns (uint256, uint256) {
+    function _uniFlashSwap(
+        address, /*_caller*/
+        address _pool,
+        address _tokenIn,
+        address, /*_tokenOut*/
+        uint24, /*_fee*/
+        uint256 _amountToPay,
+        bytes memory, /*_callData*/
+        uint8 /*_callSource*/
+    ) internal override {
+        IERC20(_tokenIn).transfer(_pool, _amountToPay);
+    }
+
+    function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
