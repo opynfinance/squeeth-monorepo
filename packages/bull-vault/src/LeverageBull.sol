@@ -68,33 +68,6 @@ contract LeverageBull {
      * @param _ethUsdPrice ETH price in USDC
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
-    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
-        internal view
-        returns (uint256, uint256)
-    {
-        uint256 ethToLend;
-        uint256 usdcToBorrow;
-        if (_bullShare == ONE) {
-            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
-            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-        } else {
-            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-            usdcToBorrow =
-                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
-        }
-        return (ethToLend, usdcToBorrow);
-    }
-
-
-    /**
-     * @notice deposit ETH into leverage component and borrow USDC
-     * @dev this function handle only the leverage component part
-     * @param _crabAmount amount of crab token deposited
-     * @param _bullShare amount of bull share minted
-     * @param _crabPrice crab token price in ETH
-     * @param _ethUsdPrice ETH price in USDC
-     * @return ETH deposited as collateral in Euler and borrowed amount of USDC
-     */
     function _leverageDeposit(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
         internal
         returns (uint256, uint256)
@@ -160,5 +133,31 @@ contract LeverageBull {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
+    
+    /**
+     * @notice deposit ETH into leverage component and borrow USDC
+     * @dev this function handle only the leverage component part
+     * @param _crabAmount amount of crab token deposited
+     * @param _bullShare amount of bull share minted
+     * @param _crabPrice crab token price in ETH
+     * @param _ethUsdPrice ETH price in USDC
+     * @return ETH deposited as collateral in Euler and borrowed amount of USDC
+     */
+    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        internal view
+        returns (uint256, uint256)
+    {
+        uint256 ethToLend;
+        uint256 usdcToBorrow;
+        if (_bullShare == ONE) {
+            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
+            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+        } else {
+            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+            usdcToBorrow =
+                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
+        }
+        return (ethToLend, usdcToBorrow);
     }
 }
