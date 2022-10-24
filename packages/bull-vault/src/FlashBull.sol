@@ -7,11 +7,7 @@ pragma abicoder v2;
 import {UniBull} from "./UniBull.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-<<<<<<< HEAD
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-=======
 import {Address} from "openzeppelin/utils/Address.sol";
->>>>>>> b27a3c2c79d8943e92b0c323442d963b13ac8bb7
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
@@ -19,6 +15,7 @@ import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
 import {IBullStrategy} from "./interface/IBullStrategy.sol";
+import {console} from "forge-std/console.sol";
 
 /**
  * @notice FlashBull contract
@@ -30,6 +27,7 @@ contract FlashBull is UniBull {
     using Address for address payable;
 
     uint32 private constant TWAP = 420;
+    uint256 private constant ONE = 1e18;
 
     /// @dev enum to differentiate between Uniswap swap callback function source
     enum FLASH_SOURCE {
@@ -96,8 +94,12 @@ contract FlashBull is UniBull {
             uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
                 .wdiv(IERC20(IBullStrategy(bullStrategy).crab()).totalSupply());
             crabAmount = _ethToCrab.wmul(ethUsdPrice).wdiv(crabUsdPrice);
-            uint256 share = crabAmount.wdiv(IERC20(IBullStrategy(bullStrategy).crab()).balanceOf(address(bullStrategy)));
-
+            uint256 share;
+            if (IERC20(bullStrategy).balanceOf(bullStrategy) == 0) {
+                share = ONE;
+            } else {
+                share = crabAmount.wdiv(IERC20(IBullStrategy(bullStrategy).crab()).balanceOf(bullStrategy));
+            }
             // wSqueeth we pay to flashswap
             wPowerPerpToMint = _ethToCrab.wmul(squeethInCrab).wdiv(ethInCrab);
             // USDC we pay to flashswap
@@ -110,10 +112,17 @@ contract FlashBull is UniBull {
             weth,
             _poolFee,
             wPowerPerpToMint,
-            wPowerPerpToMint.wmul(squeethEthPrice).wmul(2e16),
+            0,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
-            abi.encodePacked(msg.sender, usdcToBorrow, _ethToCrab, crabAmount, ethToLend)
+            abi.encodePacked(usdcToBorrow, _ethToCrab, crabAmount, ethToLend)
         );
+    }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable {
+        require(msg.sender == weth, "Message sender should be WETH");
     }
 
     /**
@@ -132,7 +141,7 @@ contract FlashBull is UniBull {
                 weth,
                 _uniFlashSwapData.fee,
                 data.usdcToBorrow,
-                data.usdcToBorrow.wmul(_getTwap(ethUSDCPool, weth, usdc, TWAP, false)).wmul(1e16),
+                0,
                 uint8(FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT),
                 abi.encodePacked(data.ethToDepositInCrab, data.crabToDeposit, data.ethToLend)
             );
@@ -151,6 +160,7 @@ contract FlashBull is UniBull {
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
+            console.log("Crab balance: ", IERC20(crab).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);            
             IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
