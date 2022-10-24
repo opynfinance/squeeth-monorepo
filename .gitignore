@@ -61,3 +61,6 @@ packages/bull-vault/cache
 
 packages/crab-netting/out
 packages/crab-netting/cache
+
+
+soljson*
