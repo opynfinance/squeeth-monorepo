@@ -6,14 +6,15 @@ import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 import {CrabNetting} from "../src/CrabNetting.sol";
 
-contract USDC is ERC20 {
+contract FixedERC20 is ERC20 {
     constructor(uint256 initialSupply) ERC20("USDC", "USDC") {
         _mint(msg.sender, initialSupply);
     }
 }
 
 contract DepositTest is Test {
-    USDC usdc;
+    FixedERC20 usdc;
+    FixedERC20 crab;
     CrabNetting netting;
 
     uint256 internal ownerPrivateKey;
@@ -24,8 +25,9 @@ contract DepositTest is Test {
     address internal withdrawer;
 
     function setUp() public {
-        usdc = new USDC(10000 * 1e18);
-        netting = new CrabNetting(address(usdc));
+        usdc = new FixedERC20(10000 * 1e18);
+        crab = new FixedERC20(10000 * 1e18);
+        netting = new CrabNetting(address(usdc), address(crab));
 
         ownerPrivateKey = 0xA11CE;
         owner = vm.addr(ownerPrivateKey);
@@ -37,6 +39,7 @@ contract DepositTest is Test {
         withdrawer = vm.addr(withdrawerPk);
 
         usdc.transfer(depositor, 2 * 1e18);
+        crab.transfer(withdrawer, 2 * 1e18);
     }
 
     function testDepositAndWithdraw() public {
@@ -47,5 +50,15 @@ contract DepositTest is Test {
         assertEq(netting.balanceOf(depositor), 2e18);
         netting.withdrawUSDC(1 * 1e18);
         assertEq(netting.balanceOf(depositor), 1e18);
+    }
+
+    function testCrabDepositAndWithdraw() public {
+        vm.startPrank(withdrawer);
+        crab.approve(address(netting), 2 * 1e18);
+        netting.depositCrab(2 * 1e18);
+
+        assertEq(netting.crabBalanceOf(withdrawer), 2e18);
+        netting.withdrawCrab(1 * 1e18);
+        assertEq(netting.crabBalanceOf(withdrawer), 1e18);
     }
 }

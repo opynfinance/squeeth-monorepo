@@ -5,15 +5,20 @@ import "forge-std/console.sol";
 
 contract CrabNetting {
     address usdc;
+    address crab;
+
     mapping(address => uint256) usd_balance;
+    mapping(address => uint256) crab_balance;
     struct Receipt {
         address depositor;
         uint256 amount;
     }
     Receipt[] deposits;
+    Receipt[] crab_deposits;
 
-    constructor(address _usdc) {
+    constructor(address _usdc, address _crab) {
         usdc = _usdc;
+        crab = _crab;
     }
 
     function depositUSDC(uint256 amount) public {
@@ -28,7 +33,23 @@ contract CrabNetting {
         IERC20(usdc).transfer(msg.sender, amount);
     }
 
+    function depositCrab(uint256 amount) public {
+        IERC20(crab).transferFrom(msg.sender, address(this), amount);
+        crab_balance[msg.sender] = crab_balance[msg.sender] + amount;
+        crab_deposits.push(Receipt(msg.sender, amount));
+    }
+
+    function withdrawCrab(uint256 amount) public {
+        require(crab_balance[msg.sender] >= amount);
+        crab_balance[msg.sender] = crab_balance[msg.sender] - amount;
+        IERC20(crab).transfer(msg.sender, amount);
+    }
+
     function balanceOf(address account) public view returns (uint256) {
         return usd_balance[account];
+    }
+
+    function crabBalanceOf(address account) public view returns (uint256) {
+        return crab_balance[account];
     }
 }
