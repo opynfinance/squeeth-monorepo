@@ -193,7 +193,7 @@ function LongChart() {
           <SqueethTab label="Payoff" />
           {/* <SqueethTab label="Comparison" /> */}
           {/* <SqueethTab label="Details" /> */}
-          <SqueethTab label="Premium" />
+          {/* <SqueethTab label="Premium" /> */}
           <SqueethTab label="Risks" />
         </SqueethTabs>
         <Hidden smDown>
