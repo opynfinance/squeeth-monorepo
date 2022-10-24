@@ -29,5 +29,7 @@
   "Timelock": "0x67c083aE303741372F0f321Bf9cAD567CFEFE2DC",
   "Timelock-start-block": 15134581,
   "CrabStrategyV2": "0x3B960E47784150F5a63777201ee2B15253D713e8",
-  "CrabStrategyV2-start-block": 15134614
+  "CrabStrategyV2-start-block": 15134614,
+  "CrabHelper": "0x2F55e27E669F070dEf7B5771dB72f6B31A6d4df8",
+  "CrabHelper-start-block": 15765940
 }

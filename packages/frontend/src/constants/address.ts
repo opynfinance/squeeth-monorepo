@@ -128,7 +128,7 @@ export const CRAB_STRATEGY: Address = {
 export const CRAB_MIGRATION: Address = {
   1: '0xa1cab67a4383312718a5799eaa127906e9d4b19e',
   3: '0xD0fb9d47B5F65d76C6bDf1b9E43a4A2345080B2f',
-  5: '0x5632367328327189A4858ac413A6424fe12F6C8f',  // this is a wrong address, ignore for now
+  5: '0x5632367328327189A4858ac413A6424fe12F6C8f', // this is a wrong address, ignore for now
   421611: '',
   31337: '',
 }
@@ -146,7 +146,15 @@ export const ZERO_ADDR = '0x0000000000000000000000000000000000000000'
 export const CONTROLLER_HELPER: Address = {
   1: '0xfa86d43b41Fa7a759c606130cc81970A955ff816',
   3: '0x7e9C5490e91F93529c6480B46a59D738F6bcEa43',
-  5: '0x50f3D0826d4E3c3d49007DBa664727B9885Dd734',  // this one is wrong too
+  5: '0x50f3D0826d4E3c3d49007DBa664727B9885Dd734', // this one is wrong too
+  421611: '',
+  31337: '',
+}
+
+export const CRAB_HELPER: Address = {
+  1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
+  3: '',
+  5: '0x660BA6A7EedbF18CC3041cE3B1223385298e3275',
   421611: '',
   31337: '',
 }

@@ -10,6 +10,7 @@ import {
   V2_MIGRATION_OSQTH_AMOUNT,
   V2_MIGRATION_OSQTH_PRICE,
   V2_MIGRATION_ETH_PRICE,
+  USDC_DECIMALS,
 } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { CrabStrategyV2TxType } from '../types/index'
@@ -18,6 +19,7 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import useAppMemo from './useAppMemo'
 import BigNumber from 'bignumber.js'
+import { addressesAtom } from 'src/state/positions/atoms'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.DEPOSIT) return 'Deposit'
@@ -29,6 +31,7 @@ const getTxTitle = (type: string) => {
 
 export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
+  const { usdc } = useAtomValue(addressesAtom)
   const { getUsdAmt } = useUsdAmount()
   const { data, loading, startPolling, stopPolling } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
     USER_CRAB_V2_TX_QUERY,
@@ -49,7 +52,6 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         let ethUsdValue = getUsdAmt(ethAmount, tx.timestamp)
 
         if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
-
           const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
           const oSqthMigrated = new BigNumber(V2_MIGRATION_OSQTH_AMOUNT)
 
@@ -59,6 +61,16 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
             .div(V2_MIGRATION_SUPPLY)
 
           ethUsdValue = ethAmount.times(V2_MIGRATION_ETH_PRICE)
+        }
+        if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW && usdc.toLowerCase() === tx.erc20Token?.toLowerCase()) {
+          ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS)
+        } else if (
+          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT &&
+          usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
+        ) {
+          ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
+            getUsdAmt(toTokenAmount(tx.excessEth, 18), tx.timestamp),
+          )
         }
         const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
         const oSqueethAmount = toTokenAmount(tx.wSqueethAmount, OSQUEETH_DECIMALS)
@@ -72,7 +84,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
           txTitle: getTxTitle(tx.type),
         }
       }),
-    [data?.crabUserTxes, getUsdAmt],
+    [data?.crabUserTxes, getUsdAmt, usdc],
   )
 
   return {

@@ -1,5 +1,6 @@
 import { atom } from 'jotai'
 import BigNumber from 'bignumber.js'
+import { ZERO_ADDR } from '@constants/address'
 
 export const mockedCrabLoadingAtom = atom(true)
 export const mockedCrabPositionValueLoadingAtom = atom(true)
@@ -22,3 +23,5 @@ export const mockedUserCrabTxHistoryData = [
     txTitle: 'Flash Deposit',
   },
 ]
+
+export const addressesAtom = atom({ zero: '0x000000000000000000000000000000000000000' })

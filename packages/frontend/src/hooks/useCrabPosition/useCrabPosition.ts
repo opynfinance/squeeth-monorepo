@@ -119,32 +119,35 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
-  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd  } = useAppMemo(() => {
+  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
-    const { totalSharesDeposited, totalSharesWithdrawn,  totalUSDDeposit, totalETHDeposit} = txHistoryData?.reduce(
+    const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
-        
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT_V1
         ) {
-          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount);
-          acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue);
-          acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount);
+          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
+          acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue)
+          acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount)
         } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
-          acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount);
+          acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount)
         }
 
         return acc
       },
-      { totalSharesDeposited: BIG_ZERO, totalSharesWithdrawn:BIG_ZERO ,  totalUSDDeposit: BIG_ZERO, totalETHDeposit: BIG_ZERO },
+      {
+        totalSharesDeposited: BIG_ZERO,
+        totalSharesWithdrawn: BIG_ZERO,
+        totalUSDDeposit: BIG_ZERO,
+        totalETHDeposit: BIG_ZERO,
+      },
     )
 
-   const remainingShares =  new BigNumber(1).minus(totalSharesWithdrawn.div(totalSharesDeposited));
-   const remainingDepositUsd = remainingShares.multipliedBy(totalUSDDeposit)
-   const remainingDepositEth = remainingShares.multipliedBy(totalETHDeposit)
-
+    const remainingShares = new BigNumber(1).minus(totalSharesWithdrawn.div(totalSharesDeposited))
+    const remainingDepositUsd = remainingShares.multipliedBy(totalUSDDeposit)
+    const remainingDepositEth = remainingShares.multipliedBy(totalETHDeposit)
 
     return { remainingDepositUsd, remainingDepositEth }
   }, [txHistoryData, txHistoryLoading])

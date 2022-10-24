@@ -15,6 +15,10 @@ jest.mock('src/state/controller/atoms', () => ({
   indexAtom: jest.requireActual('./mocks').mockedIndexAtom,
 }))
 
+jest.mock('src/state/positions/atoms', () => ({
+  addressesAtom: jest.requireActual('./mocks').addressesAtom,
+}))
+
 jest.mock('../useUserCrabTxHistory', () => ({
   useUserCrabTxHistory: jest.fn(),
 }))

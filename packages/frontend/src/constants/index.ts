@@ -4,6 +4,7 @@ export * from './diagram'
 export * from './enums'
 
 export const UNI_POOL_FEES = 3000
+export const ETH_USDC_POOL_FEES = 500
 
 //17.5 days, 420 hours
 export const FUNDING_PERIOD = 17.5
@@ -14,7 +15,7 @@ export const MIN_COLLATERAL_AMOUNT = 6.9
 
 export const YEAR = 365
 
-export const VOL_PERCENT_FIXED = 0.08
+export const VOL_PERCENT_FIXED = 0.1
 
 export const VOL_PERCENT_SCALAR = 0.1
 
@@ -31,6 +32,7 @@ export const EtherscanPrefix = {
 export const INDEX_SCALE = 10000
 export const OSQUEETH_DECIMALS = 18
 export const WETH_DECIMALS = 18
+export const USDC_DECIMALS = 6
 
 export const SWAP_EVENT_TOPIC = '0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67'
 
