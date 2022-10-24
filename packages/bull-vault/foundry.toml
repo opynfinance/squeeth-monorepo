@@ -30,4 +30,15 @@ line_length = 100
 tab_width = 2
 bracket_spacing = true
 
+[profile.coverage]
+via_ir = true
+
+[profile.coverage.optimizer_details]
+constantOptimizer = true
+yul = true
+
+[profile.coverage.optimizer_details.yulDetails]
+stackAllocation = true
+optimizerSteps = ''
+
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
