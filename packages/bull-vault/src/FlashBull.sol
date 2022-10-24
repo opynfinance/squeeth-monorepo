@@ -8,6 +8,7 @@ import {BullStrategy} from "./BullStrategy.sol";
 import {UniBull} from "./UniBull.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
@@ -22,6 +23,7 @@ import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Po
  */
 contract FlashBull is UniBull {
     using StrategyMath for uint256;
+    using Address for address payable;
 
     BullStrategy private bullStrategy;
 
@@ -144,21 +146,21 @@ contract FlashBull is UniBull {
             FlashDepositCollateralData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
 
             // convert WETH to ETH as Uniswap uses WETH
-            // IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            // // use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
-            // bullStrategy.deposit(data.crabAmount);
+            // use user msg.value and unwrapped WETH from uniswap flash swap proceeds to deposit into strategy
+            bullStrategy.deposit(data.crabAmount);
 
-            // // repay the squeeth flash swap
-            // IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, data.squeethAmount);
+            // repay the squeeth flash swap
+            IWPowerPerp(wPowerPerp).transfer(ethWSqueethPool, data.squeethAmount);
 
-            // // repay the dollars flash swap
-            // IERC20(usdc).transfer(ethUSDCPool, _amountToPay);
+            // repay the dollars flash swap
+            IERC20(usdc).transfer(ethUSDCPool, _uniFlashSwapData.amountToPay);
 
-            // // return excess eth to the user that was not needed for slippage
-            // if (address(this).balance > 0) {
-            //     payable(data.depositor).sendValue(address(this).balance);
-            // }
+            // return excess eth to the user that was not needed for slippage
+            if (address(this).balance > 0) {
+                payable(data.depositor).sendValue(address(this).balance);
+            }
         }
     }
 
