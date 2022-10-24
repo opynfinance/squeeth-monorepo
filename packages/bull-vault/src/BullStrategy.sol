@@ -125,7 +125,6 @@ contract BullStrategy is ERC20, LeverageBull {
     function _uniFlashSwap(
         UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal override {
-        IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
