@@ -69,6 +69,8 @@ contract BullStrategyTestFork is Test {
         vm.label(eulerMarketsModule, "EulerMarkets");
         vm.label(usdc, "USDC");
         vm.label(weth, "WETH");
+        vm.label(wPowerPerp, "oSQTH");
+        vm.label(address(crabV2), "crabV2");
 
         vm.deal(user1, 100000000e18);
         // this is a crab whale, get some crab token from
@@ -81,11 +83,9 @@ contract BullStrategyTestFork is Test {
 
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit);
 
         vm.startPrank(user1);
-        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
-        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
         vm.stopPrank();
 
         assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
@@ -94,10 +94,47 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
-    // fuzz testing is awesome!
+    function testWithdraw() public {
+        uint256 crabToDeposit = 15e18;
+        uint256 bullToMint = _calcBullToMint(crabToDeposit);
+
+        // crabby deposit into bull
+        vm.startPrank(user1);
+        _deposit(crabToDeposit);
+        vm.stopPrank();
+
+       (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToMint);
+        uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToMint);
+        uint256 wethToWithdraw = _calcWethToWithdraw(bullToMint);
+        // transfer some oSQTH from some squeether
+        vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
+        IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
+
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
+        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
+        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
+
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
+        IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
+        bullStrategy.withdraw(bullToMint);
+        vm.stopPrank();  
+
+        assertEq(usdcBorrowedBefore.sub(usdcToRepay), IEulerDToken(dToken).balanceOf(address(bullStrategy)), "Bull USDC debt amount mismatch");
+        assertEq(ethInLendingBefore.sub(wethToWithdraw), IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), "Bull ETH in leverage amount mismatch");
+        assertEq(userUsdcBalanceBefore.sub(usdcToRepay), IERC20(usdc).balanceOf(user1), "User1 USDC balance mismatch");
+        assertEq(userBullBalanceBefore.sub(bullToMint), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(userWPowerPerpBalanceBefore.sub(wPowerPerpToRedeem), IERC20(wPowerPerp).balanceOf(user1), "User1 oSQTH balance mismatch");
+        assertEq(crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull ccrab balance mismatch");
+    }
+
+    /*****************************************************************************************************************************************************
+    /************************************************************* Fuzz testing is awesome! *************************************************************/
     function testFuzzingDeposit(uint256 _crabAmount) public {
-        vm.assume(_crabAmount < IERC20(crabV2).balanceOf(user1));
-        vm.assume(_crabAmount > 0);
+        _crabAmount = bound(_crabAmount, 0, IERC20(crabV2).balanceOf(user1));
 
         uint256 bullToMint = _calcBullToMint(_crabAmount);
         (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabAmount);
@@ -117,6 +154,56 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
     }
 
+    function testFuzzingWithdraw(uint256 _crabAmount) public {
+        // use bound() instead of vm.assume for better performance in fuzzing
+        _crabAmount = bound(_crabAmount, 1e18, IERC20(crabV2).balanceOf(user1));
+
+        uint256 bullToMint = _calcBullToMint(_crabAmount);
+        (uint256 wethToLend,) = _calcCollateralAndBorrowAmount(_crabAmount);     
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
+        bullStrategy.deposit{value: wethToLend}(_crabAmount);
+        vm.stopPrank();
+
+        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToMint);
+        uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToMint);
+        uint256 wethToWithdraw = _calcWethToWithdraw(bullToMint);
+        // transfer some oSQTH from some squeether
+        vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
+        IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
+
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
+        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
+        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
+
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
+        IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
+        bullStrategy.withdraw(bullToMint);
+        vm.stopPrank();  
+
+        assertEq(usdcBorrowedBefore.sub(usdcToRepay), IEulerDToken(dToken).balanceOf(address(bullStrategy)), "Bull USDC debt amount mismatch");
+        assertEq(ethInLendingBefore.sub(wethToWithdraw), IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), "Bull ETH in leverage amount mismatch");
+        assertEq(userUsdcBalanceBefore.sub(usdcToRepay), IERC20(usdc).balanceOf(user1), "User1 USDC balance mismatch");
+        assertEq(userBullBalanceBefore.sub(bullToMint), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(userWPowerPerpBalanceBefore.sub(wPowerPerpToRedeem), IERC20(wPowerPerp).balanceOf(user1), "User1 oSQTH balance mismatch");
+        assertEq(crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull ccrab balance mismatch");
+    }
+
+    /*****************************************************************************************************************************************************
+    /************************************************************* Helper functions for testing! *********************************************************/
+    function _deposit(uint256 _crabToDeposit) internal returns (uint256, uint256) {
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabToDeposit);
+
+        IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
+        bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
+
+        return (wethToLend, usdcToBorrow);
+    }
+
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(crabV2.vaultId());
 
@@ -132,6 +219,24 @@ contract BullStrategyTestFork is Test {
             return share.wmul(bullTotalSupply).wdiv(uint256(1e18).sub(bullTotalSupply));
         }     
     }
+
+    function _calcWPowerPerpAndCrabNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256) {
+        uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
+        uint256 crabToRedeem = share.wmul(IERC20(crabV2).balanceOf(address(bullStrategy)));
+        uint256 crabTotalSupply = IERC20(crabV2).totalSupply();
+        (, uint256 squeethInCrab) = _getCrabVaultDetails();
+        return (crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply), crabToRedeem);
+    }
+
+    function _calcUsdcNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256) {
+        uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
+        return share.wmul(IEulerDToken(dToken).balanceOf(address(bullStrategy)));
+    }
+
+    function _calcWethToWithdraw(uint256 _bullAmount) internal view returns (uint256) {
+        return _bullAmount.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))).wdiv(bullStrategy.totalSupply());
+    }
+
 
     function _calcCollateralAndBorrowAmount(uint256 _crabToDeposit) internal view returns (uint256, uint256) {
         uint256 wethToLend;

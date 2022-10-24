@@ -29,7 +29,7 @@ contract FlashBull {
     // struct FlashWithdrawData {}
     // // TODO
 
-    constructor(address _bull) {
+    constructor(address payable _bull) {
         bullStrategy = BullStrategy(_bull);
     }
 
