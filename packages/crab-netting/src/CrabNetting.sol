@@ -21,35 +21,35 @@ contract CrabNetting {
         crab = _crab;
     }
 
-    function depositUSDC(uint256 amount) public {
-        IERC20(usdc).transferFrom(msg.sender, address(this), amount);
-        usd_balance[msg.sender] = usd_balance[msg.sender] + amount;
-        deposits.push(Receipt(msg.sender, amount));
+    function depositUSDC(uint256 _amount) public {
+        IERC20(usdc).transferFrom(msg.sender, address(this), _amount);
+        usd_balance[msg.sender] = usd_balance[msg.sender] + _amount;
+        deposits.push(Receipt(msg.sender, _amount));
     }
 
-    function withdrawUSDC(uint256 amount) public {
-        require(usd_balance[msg.sender] >= amount);
-        usd_balance[msg.sender] = usd_balance[msg.sender] - amount;
-        IERC20(usdc).transfer(msg.sender, amount);
+    function withdrawUSDC(uint256 _amount) public {
+        require(usd_balance[msg.sender] >= _amount);
+        usd_balance[msg.sender] = usd_balance[msg.sender] - _amount;
+        IERC20(usdc).transfer(msg.sender, _amount);
     }
 
-    function depositCrab(uint256 amount) public {
-        IERC20(crab).transferFrom(msg.sender, address(this), amount);
-        crab_balance[msg.sender] = crab_balance[msg.sender] + amount;
-        crab_deposits.push(Receipt(msg.sender, amount));
+    function depositCrab(uint256 _amount) public {
+        IERC20(crab).transferFrom(msg.sender, address(this), _amount);
+        crab_balance[msg.sender] = crab_balance[msg.sender] + _amount;
+        crab_deposits.push(Receipt(msg.sender, _amount));
     }
 
-    function withdrawCrab(uint256 amount) public {
-        require(crab_balance[msg.sender] >= amount);
-        crab_balance[msg.sender] = crab_balance[msg.sender] - amount;
-        IERC20(crab).transfer(msg.sender, amount);
+    function withdrawCrab(uint256 _amount) public {
+        require(crab_balance[msg.sender] >= _amount);
+        crab_balance[msg.sender] = crab_balance[msg.sender] - _amount;
+        IERC20(crab).transfer(msg.sender, _amount);
     }
 
-    function balanceOf(address account) public view returns (uint256) {
-        return usd_balance[account];
+    function balanceOf(address _account) public view returns (uint256) {
+        return usd_balance[_account];
     }
 
-    function crabBalanceOf(address account) public view returns (uint256) {
-        return crab_balance[account];
+    function crabBalanceOf(address _account) public view returns (uint256) {
+        return crab_balance[_account];
     }
 }
