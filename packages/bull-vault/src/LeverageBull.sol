@@ -98,33 +98,6 @@ contract LeverageBull {
      * @param _crabTotalSupply total supply of crab tokens
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
-    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
-        internal view
-        returns (uint256, uint256)
-    {
-        uint256 ethToLend;
-        uint256 usdcToBorrow;
-        if (_bullShare == ONE) {
-            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
-            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-        } else {
-            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-            usdcToBorrow =
-                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
-        }
-        return (ethToLend, usdcToBorrow);
-    }
-
-
-    /**
-     * @notice deposit ETH into leverage component and borrow USDC
-     * @dev this function handle only the leverage component part
-     * @param _crabAmount amount of crab token deposited
-     * @param _bullShare amount of bull share minted
-     * @param _crabPrice crab token price in ETH
-     * @param _ethUsdPrice ETH price in USDC
-     * @return ETH deposited as collateral in Euler and borrowed amount of USDC
-     */
     function _leverageDeposit(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
         internal
         returns (uint256, uint256)
@@ -157,57 +130,28 @@ contract LeverageBull {
     }
 
     /**
-     * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
-     * @param _bullShare amount of bull share to burn
+     * @notice deposit ETH into leverage component and borrow USDC
+     * @dev this function handle only the leverage component part
+     * @param _crabAmount amount of crab token deposited
+     * @param _bullShare amount of bull share minted
+     * @param _crabPrice crab token price in ETH
+     * @param _ethUsdPrice ETH price in USDC
+     * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
-    function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
-        uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
-        uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
-
-        IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
-        IEulerDToken(dToken).repay(0, usdcToRepay);
-        IEulerEToken(eToken).withdraw(0, wethToWithdraw);
-
-        IWETH9(weth).withdraw(wethToWithdraw);
-
-        emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
-    }
-
-    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _ethInCrab, uint256 _squeethInCrab, uint256 _totalCrabSupply)
-        internal
-        view
+    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        internal view
         returns (uint256, uint256)
     {
-        {
-            if (_bullShare == ONE) {
-                uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-                uint256 crabUsdPrice = (_ethInCrab.wmul(ethUsdPrice).sub(_squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-                .wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-                return (ethToLend, usdcToBorrow);
-            }
+        uint256 ethToLend;
+        uint256 usdcToBorrow;
+        if (_bullShare == ONE) {
+            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
+            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+        } else {
+            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+            usdcToBorrow =
+                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
         }
-        return (IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)),
-               IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12));
-    }
-
-    /**
-     * @dev calculate amount of WETH to withdraw from Euler based on amount of share of bull token
-     * @param _bullShare bull share amount
-     * @return WETH to withdraw
-     */
-    function _calcWethToWithdraw(uint256 _bullShare) internal view returns (uint256) {
-        return _bullShare.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(this)));
-    }
-
-    /**
-     * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
-     * @param _bullShare bull share amount
-     * @return USDC to repay
-     */
-    function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
-        return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+        return (ethToLend, usdcToBorrow);
     }
 }
