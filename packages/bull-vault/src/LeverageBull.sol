@@ -53,7 +53,8 @@ contract LeverageBull {
     }
 
     function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
-        external view
+        external
+        view
         returns (uint256, uint256)
     {
         return _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
@@ -72,7 +73,8 @@ contract LeverageBull {
         internal
         returns (uint256, uint256)
     {
-        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
+        (uint256 ethToLend, uint256 usdcToBorrow) =
+            _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
 
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
@@ -125,7 +127,7 @@ contract LeverageBull {
     function _calcWethToWithdraw(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
-    
+
     /**
      * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
      * @param _bullShare bull share amount
@@ -134,7 +136,7 @@ contract LeverageBull {
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
     }
-    
+
     /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handle only the leverage component part
@@ -145,7 +147,8 @@ contract LeverageBull {
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
     function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
-        internal view
+        internal
+        view
         returns (uint256, uint256)
     {
         uint256 ethToLend;
@@ -154,7 +157,8 @@ contract LeverageBull {
             ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
             usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
         } else {
-            ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+            ethToLend =
+                IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
             usdcToBorrow =
                 IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
         }

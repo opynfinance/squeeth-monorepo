@@ -8,6 +8,7 @@ interface IBullStrategy {
     function powerTokenController() external view returns (address);
     function getCrabVaultDetails() external view returns (uint256, uint256);
     function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
-        external view
+        external
+        view
         returns (uint256, uint256);
 }

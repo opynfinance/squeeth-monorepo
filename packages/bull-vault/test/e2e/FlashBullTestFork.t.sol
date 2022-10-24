@@ -16,6 +16,7 @@ import {BullStrategy} from "../../src/BullStrategy.sol";
 import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import {Controller} from "squeeth-monorepo/core/Controller.sol";
 import {UniBullHelper} from "../helper/UniBullHelper.sol";
+import {FlashBull} from "../../src/FlashBull.sol";
 // lib
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -23,11 +24,12 @@ import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; //
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract FlashBullTestFork is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
 
+    FlashBull internal flashBull;
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
@@ -54,6 +56,7 @@ contract BullStrategyTestFork is Test {
         bullStrategy =
         new BullStrategy(address(crabV2), address(controller), 0x1F98431c8aD98523631AE4a59f267346ea31F984, euler, eulerMarketsModule);
         uniBullHelper = new UniBullHelper(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        flashBull = new FlashBull(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -65,6 +68,7 @@ contract BullStrategyTestFork is Test {
 
         vm.label(user1, "User 1");
         vm.label(address(bullStrategy), "BullStrategy");
+        vm.label(address(flashBull), "FlashBull");
         vm.label(euler, "Euler");
         vm.label(eulerMarketsModule, "EulerMarkets");
         vm.label(usdc, "USDC");
@@ -77,19 +81,20 @@ contract BullStrategyTestFork is Test {
         // some WETH and USDC rich address
         vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
         IERC20(weth).transfer(user1, 10000e18);
-        vm.prank(0x1B7BAa734C00298b9429b518D621753Bb0f6efF2);
-        IERC20(usdc).transfer(user1, 1000e6);
-        vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
-        IERC20(wPowerPerp).transfer(user1, 10e18);
     }
 
-    function testNestedFlashswap() public {
+    function testInitialFlashDeposit() public {
+        uint256 ethToCrab = 5e18;
+        uint256 totalEthToBull = 25e18;
+        uint24 poolFee = 3000;
+
         vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(totalEthToBull, ethToCrab, poolFee);
+        vm.stopPrank();
 
-        IERC20(usdc).transfer(address(uniBullHelper), 1000e6); // transfer USDC to mock receiving USDC from whatever we are doing
-        IERC20(wPowerPerp).transfer(address(uniBullHelper), 1e18); // transfer oSQTH to mock receiving oSQTH from whatever we are doing
-
-        // oSQTH-ETH swap
-        uniBullHelper.exactInFlashSwap(wPowerPerp, weth, 3000, 1e18, 0, uint8(0), "");
+        // assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        // assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        // assertTrue(wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1);
+        // assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 }
