@@ -33,6 +33,8 @@ contract LeverageBull {
     /// @dev euler dToken that represent the borrowed asset
     address internal dToken;
 
+    event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+
     /**
      * @dev constructor
      * @param _euler euler address

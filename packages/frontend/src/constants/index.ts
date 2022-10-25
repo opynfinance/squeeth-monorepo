@@ -15,7 +15,7 @@ export const MIN_COLLATERAL_AMOUNT = 6.9
 
 export const YEAR = 365
 
-export const VOL_PERCENT_FIXED = 0.08
+export const VOL_PERCENT_FIXED = 0.1
 
 export const VOL_PERCENT_SCALAR = 0.1
 

@@ -122,10 +122,10 @@ const FundingChart = () => {
     fundingType.id === 'vol'
       ? 'Annual Vol'
       : fundingDuration.id === 'day'
-      ? 'Daily Funding'
+      ? 'Daily Premium'
       : fundingDuration.id === 'month'
-      ? 'Monthly Funding'
-      : 'Annual Funding'
+      ? 'Monthly Premium'
+      : 'Annual Premium'
 
   return (
     <>

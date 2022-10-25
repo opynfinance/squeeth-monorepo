@@ -20,7 +20,10 @@ import {FlashBull} from "../../src/FlashBull.sol";
 // lib
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+<<<<<<< HEAD
 import {Power2Base} from "squeeth-monorepo/libs/Power2Base.sol";
+=======
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
 
 /**
  * @notice Ropsten fork testing
@@ -29,7 +32,10 @@ contract FlashBullTestFork is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
+<<<<<<< HEAD
     uint128 internal constant ONE = 1e18;
+=======
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
 
     FlashBull internal flashBull;
     BullStrategy internal bullStrategy;
@@ -46,20 +52,27 @@ contract FlashBullTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
+<<<<<<< HEAD
     address internal oracle;
     address internal ethWSqueethPool;
     uint256 ethToCrab = 5e18;
     uint256 totalEthToBull = 20e18;
+=======
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
 
+<<<<<<< HEAD
         oracle = 0x65D66c76447ccB45dAf1e8044e918fA786A483A1;
+=======
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
+<<<<<<< HEAD
         bullStrategy = new BullStrategy(
             address(crabV2),
             address(controller),
@@ -75,13 +88,22 @@ contract FlashBullTestFork is Test {
             0x1F98431c8aD98523631AE4a59f267346ea31F984,
             0x65D66c76447ccB45dAf1e8044e918fA786A483A1
         );
+=======
+        bullStrategy =
+        new BullStrategy(address(crabV2), address(controller), 0x1F98431c8aD98523631AE4a59f267346ea31F984, euler, eulerMarketsModule);
+        uniBullHelper = new UniBullHelper(0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        flashBull = new FlashBull(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
+<<<<<<< HEAD
         ethWSqueethPool = IController(bullStrategy.powerTokenController())
             .wPowerPerpPool();
+=======
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
 
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
@@ -104,6 +126,7 @@ contract FlashBullTestFork is Test {
     }
 
     function testInitialFlashDeposit() public {
+<<<<<<< HEAD
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(
@@ -249,5 +272,19 @@ contract FlashBullTestFork is Test {
             .vaults(crabV2.vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+=======
+        uint256 ethToCrab = 5e18;
+        uint256 totalEthToBull = 25e18;
+        uint24 poolFee = 3000;
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(totalEthToBull, ethToCrab, poolFee);
+        vm.stopPrank();
+
+        // assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        // assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        // assertTrue(wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1);
+        // assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+>>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
     }
 }
