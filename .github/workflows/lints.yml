@@ -16,5 +16,8 @@ jobs:
         with:
           version: nightly
 
-      - name: Run fmt
+      - name: Run fmt on bull vault
         run: cd packages/bull-vault && forge fmt
+
+      - name: Run fmt on crab netting
+        run: cd packages/crab-netting && forge fmt

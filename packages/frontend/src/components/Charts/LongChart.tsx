@@ -237,7 +237,7 @@ function LongChart() {
           <Typography variant="body2" className={classes.cardDetail}>
             Long squeeth (ETH&sup2;) gives you a leveraged position with unlimited upside, protected downside, and no
             liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
-            goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a funding rate for this
+            goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a premium for this
             position. Enter the position by purchasing an ERC20 token.{' '}
             <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
               {' '}

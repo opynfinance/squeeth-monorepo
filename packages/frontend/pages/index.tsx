@@ -470,13 +470,13 @@ const SqueethInfo: React.FC = () => {
           <div className={classes.infoItem}>
             <div className={classes.infoLabel}>
               <Typography color="textSecondary" variant="body2">
-                Funding
+                Premium
               </Typography>
               <Tooltip
                 title={`${Tooltips.FundingPayments}. ${
                   actualTradeType === TradeType.LONG
-                    ? 'Funding is paid out of your position'
-                    : 'Funding is paid continuously to you from oSQTH token holders'
+                    ? 'Premiums are paid out of your position'
+                    : 'Premiums are paid continuously to you from oSQTH token holders'
                 }`}
               >
                 <InfoIcon fontSize="small" className={classes.infoIcon} />

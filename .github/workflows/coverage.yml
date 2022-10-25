@@ -7,7 +7,7 @@ env:
 
 jobs:
   check:
-    name: Forge test
+    name: Forge coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,8 +19,5 @@ jobs:
         with:
           version: nightly
 
-      - name: Run bull tests
-        run: cd packages/bull-vault && forge test -vvv
-
-      - name: Run crab netting tests
-        run: cd packages/crab-netting && forge test -vvv
+      - name: Run tests
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
