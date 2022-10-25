@@ -8,6 +8,8 @@ import {UniBull} from "./UniBull.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
+import {Power2Base} from "squeeth-monorepo/libs/Power2Base.sol";
+
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
@@ -49,6 +51,8 @@ contract FlashBull is UniBull {
     address private immutable ethUSDCPool;
     /// @dev Crab V2 address
     address private immutable crab;
+    /// @dev Uniswap oracle address
+    address public immutable oracle;
 
     address public bullStrategy;
 
@@ -64,8 +68,9 @@ contract FlashBull is UniBull {
         uint256 ethToLend;
     }
 
-    constructor(address _bull, address _factory) UniBull(_factory) {
+    constructor(address _bull, address _factory, address _oracle) UniBull(_factory) {
         bullStrategy = _bull;
+        oracle = _oracle;
         crab = IBullStrategy(_bull).crab();
         wPowerPerp = IController(IBullStrategy(bullStrategy).powerTokenController()).wPowerPerp();
         weth = IController(IBullStrategy(bullStrategy).powerTokenController()).weth();
@@ -86,24 +91,28 @@ contract FlashBull is UniBull {
         uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         uint256 crabAmount;
         uint256 usdcToBorrow;
-        uint256 ethToLend;
-        uint256 wPowerPerpToMint;
+        uint256 ethToSwap;
+        uint256 wSqueethToMint;
+        uint256 ethFee;
         {
-            uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
             (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
+            uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
             uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-                .wdiv(IERC20(IBullStrategy(bullStrategy).crab()).totalSupply());
-            crabAmount = _ethToCrab.wmul(ethUsdPrice).wdiv(crabUsdPrice);
+            .wdiv(IERC20(crab).totalSupply());
+            (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab);
+            crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
+
             uint256 share;
             if (IERC20(bullStrategy).balanceOf(bullStrategy) == 0) {
                 share = ONE;
             } else {
-                share = crabAmount.wdiv(IERC20(IBullStrategy(bullStrategy).crab()).balanceOf(bullStrategy));
+                share = crabAmount.wdiv(IERC20(crab).balanceOf(bullStrategy));
             }
-            // wSqueeth we pay to flashswap
-            wPowerPerpToMint = _ethToCrab.wmul(squeethInCrab).wdiv(ethInCrab);
+
             // USDC we pay to flashswap
-            (ethToLend, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, crabUsdPrice, ethUsdPrice);
+            (, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, crabUsdPrice, ethUsdPrice);
+            // TODO: Confirm this is correct
+            ethToSwap = (usdcToBorrow.wdiv(ethUsdPrice)).mul(1e12);
         }
 
         // oSQTH-ETH swap
@@ -111,10 +120,10 @@ contract FlashBull is UniBull {
             wPowerPerp,
             weth,
             _poolFee,
-            wPowerPerpToMint,
+            wSqueethToMint,
             0,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
-            abi.encodePacked(usdcToBorrow, _ethToCrab, crabAmount, ethToLend)
+            abi.encodePacked(usdcToBorrow, _ethToCrab, crabAmount, ethToSwap)
         );
     }
 
@@ -158,11 +167,8 @@ contract FlashBull is UniBull {
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-
             ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
-            console.log("Crab balance: ", IERC20(crab).balanceOf(address(this)));
-
-            ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);            
+            ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);          
             IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
 
             // repay the dollars flash swap
@@ -170,4 +176,57 @@ contract FlashBull is UniBull {
         }
     }
 
+    function _calcWsqueethToMintAndFee(
+        uint256 _depositedAmount,
+        uint256 _strategyDebtAmount,
+        uint256 _strategyCollateralAmount
+    ) internal view returns (uint256, uint256) {
+        uint256 wSqueethToMint;
+        uint256 feeAdjustment = _calcFeeAdjustment();
+
+        wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+            _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
+        );
+
+        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+
+        return (wSqueethToMint, fee);
+    }
+
+    /**
+     * @notice calculate the fee adjustment factor, which is the amount of ETH owed per 1 wSqueeth minted
+     * @dev the fee is a based off the index value of squeeth and uses a twap scaled down by the PowerPerp's INDEX_SCALE
+     * @return the fee adjustment factor
+     */
+    function _calcFeeAdjustment() internal view returns (uint256) {
+        uint256 wSqueethEthPrice = Power2Base._getTwap(
+            oracle,
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            TWAP,
+            false
+        );
+        uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
+        return wSqueethEthPrice.mul(feeRate).div(10000);
+    }
+
+    /**
+     * @dev calculate amount of strategy token to mint for depositor
+     * @param _amount amount of ETH deposited
+     * @param _strategyCollateralAmount amount of strategy collateral
+     * @param _crabTotalSupply total supply of strategy token
+     * @return amount of strategy token to mint
+     */
+    function _calcSharesToMint(
+        uint256 _amount,
+        uint256 _strategyCollateralAmount,
+        uint256 _crabTotalSupply
+    ) internal pure returns (uint256) {
+        uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
+
+        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
+
+        return _amount;
+    }
 }
