@@ -25,6 +25,8 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
     using SafeCast for uint256;
     using SafeMath for uint256;
 
+    uint256 internal constant ONE = 1e18;
+
     /// @dev Uniswap factory address
     address internal immutable factory;
 
@@ -123,7 +125,7 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      */
     function _fetchTwap(address _pool, address _base, address _quote, uint32 _period) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, ONE, _base, _quote);
+        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, uint128(ONE), _base, _quote);
 
         uint8 baseDecimals = IERC20Detailed(_base).decimals();
         uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
