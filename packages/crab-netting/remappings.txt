@@ -1,0 +1,4 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+squeeth-monorepo/=lib/squeeth-monorepo/packages/hardhat/contracts/
+openzeppelin/=lib/openzeppelin-contracts/contracts/

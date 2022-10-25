@@ -16,5 +16,8 @@ jobs:
         with:
           version: nightly
 
-      - name: Run tests
+      - name: Build bull
         run: cd packages/bull-vault && forge build
+
+      - name: Build crab netting
+        run: cd packages/crab-netting && forge build
