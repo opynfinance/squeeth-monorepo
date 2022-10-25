@@ -33,11 +33,7 @@ contract LeverageBull {
     /// @dev euler dToken that represent the borrowed asset
     address internal dToken;
 
-    event RepayAndWithdrawFromLeverage(
-        address from,
-        uint256 usdcToRepay,
-        uint256 wethToWithdraw
-    );
+    event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
 
     /**
      * @dev constructor
@@ -45,18 +41,10 @@ contract LeverageBull {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(
-        address _euler,
-        address _eulerMarkets,
-        address _powerTokenController
-    ) {
+    constructor(address _euler, address _eulerMarkets, address _powerTokenController) {
         eulerMarkets = _eulerMarkets;
-        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
-            IController(_powerTokenController).weth()
-        );
-        dToken = IEulerMarkets(eulerMarkets).underlyingToDToken(
-            IController(_powerTokenController).quoteCurrency()
-        );
+        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(IController(_powerTokenController).weth());
+        dToken = IEulerMarkets(eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
         weth = IController(_powerTokenController).weth();
         usdc = IController(_powerTokenController).quoteCurrency();
 
@@ -64,19 +52,12 @@ contract LeverageBull {
         IERC20(usdc).approve(_euler, type(uint256).max);
     }
 
-    function calcLeverageEthUsdc(
-        uint256 _crabAmount,
-        uint256 _bullShare,
-        uint256 _crabPrice,
-        uint256 _ethUsdPrice
-    ) external view returns (uint256, uint256) {
-        return
-            _calcLeverageEthUsdc(
-                _crabAmount,
-                _bullShare,
-                _crabPrice,
-                _ethUsdPrice
-            );
+    function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        external
+        view
+        returns (uint256, uint256)
+    {
+        return _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
     }
 
     /**
@@ -88,33 +69,11 @@ contract LeverageBull {
      * @param _ethUsdPrice ETH price in USDC
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
-    function _leverageDeposit(
-        uint256 _crabAmount,
-        uint256 _bullShare,
-        uint256 _crabPrice,
-        uint256 _ethUsdPrice
-    ) internal returns (uint256, uint256) {
-        uint256 ethToLend;
-        uint256 usdcToBorrow;
-
-        if (_bullShare == ONE) {
-            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(
-                _ethUsdPrice
-            );
-            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(
-                1e12
-            );
-        } else {
-            ethToLend = IEulerEToken(eToken)
-                .balanceOfUnderlying(address(this))
-                .wmul(_bullShare)
-                .wdiv(ONE.sub(_bullShare));
-            usdcToBorrow = IEulerDToken(dToken)
-                .balanceOf(address(this))
-                .wmul(_bullShare)
-                .wdiv(ONE.sub(_bullShare))
-                .div(1e12);
-        }
+    function _leverageDeposit(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        internal
+        returns (uint256, uint256)
+    {
+        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(_crabAmount, _bullShare, _crabPrice, _ethUsdPrice);
 
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
@@ -156,39 +115,26 @@ contract LeverageBull {
 
         IWETH9(weth).withdraw(wethToWithdraw);
 
-        emit RepayAndWithdrawFromLeverage(
-            msg.sender,
-            usdcToRepay,
-            wethToWithdraw
-        );
+        emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
-    function _calcLeverageEthUsdc(
-        uint256 _crabAmount,
-        uint256 _bullShare,
-        uint256 _crabPrice,
-        uint256 _ethUsdPrice
-    ) internal view returns (uint256, uint256) {
+    function _calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _crabPrice, uint256 _ethUsdPrice)
+        internal
+        view
+        returns (uint256, uint256)
+    {
         uint256 ethToLend;
         uint256 usdcToBorrow;
         if (_bullShare == ONE) {
-            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(
-                _ethUsdPrice
-            );
-            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(
-                1e12
-            );
+            ethToLend = TARGET_CR.wmul(_crabAmount).wmul(_crabPrice).wdiv(_ethUsdPrice);
+            usdcToBorrow = ethToLend.wmul(_ethUsdPrice).wdiv(TARGET_CR).div(1e12);
         } else {
-            ethToLend = IEulerEToken(eToken)
-                .balanceOfUnderlying(address(this))
-                .wmul(_bullShare)
-                .wdiv(ONE.sub(_bullShare));
-            usdcToBorrow = IEulerDToken(dToken)
-                .balanceOf(address(this))
-                .wmul(_bullShare)
-                .wdiv(ONE.sub(_bullShare))
-                .div(1e12);
+            ethToLend =
+                IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+            usdcToBorrow =
+                IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12);
         }
+
         return (ethToLend, usdcToBorrow);
     }
 
@@ -197,15 +143,8 @@ contract LeverageBull {
      * @param _bullShare bull share amount
      * @return WETH to withdraw
      */
-    function _calcWethToWithdraw(uint256 _bullShare)
-        internal
-        view
-        returns (uint256)
-    {
-        return
-            _bullShare.wmul(
-                IEulerEToken(eToken).balanceOfUnderlying(address(this))
-            );
+    function _calcWethToWithdraw(uint256 _bullShare) internal view returns (uint256) {
+        return _bullShare.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
@@ -213,11 +152,7 @@ contract LeverageBull {
      * @param _bullShare bull share amount
      * @return USDC to repay
      */
-    function _calcUsdcToRepay(uint256 _bullShare)
-        internal
-        view
-        returns (uint256)
-    {
+    function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
     }
 }

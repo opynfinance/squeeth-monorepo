@@ -13,7 +13,6 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
  * @dev Helper contract to expose some function for testing
  */
 contract UniBullHelper is UniBull {
-
     constructor(address _factory) UniBull(_factory) {}
 
     // TODO: to be removed
@@ -38,9 +37,7 @@ contract UniBullHelper is UniBull {
     }
 
     // TODO: to be removed
-    function _uniFlashSwap(
-        UniFlashswapCallbackData memory _uniFlashSwapData
-    ) internal override {
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (uint8(_uniFlashSwapData.callSource) == 0) {
             // ETH-USDC swap
             _exactInFlashSwap(
@@ -55,9 +52,7 @@ contract UniBullHelper is UniBull {
 
             console.log("oSQTH amount to repay second", _uniFlashSwapData.amountToPay);
             IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-
-        }
-        else if (uint8(_uniFlashSwapData.callSource) == 1) {
+        } else if (uint8(_uniFlashSwapData.callSource) == 1) {
             console.log("USDC amount to repay first", _uniFlashSwapData.amountToPay);
             IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }

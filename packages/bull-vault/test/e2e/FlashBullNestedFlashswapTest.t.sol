@@ -90,14 +90,6 @@ contract BullStrategyTestFork is Test {
         IERC20(wPowerPerp).transfer(address(uniBullHelper), 1e18); // transfer oSQTH to mock receiving oSQTH from whatever we are doing
 
         // oSQTH-ETH swap
-        uniBullHelper.exactInFlashSwap(
-            wPowerPerp,
-            weth,
-            3000,
-            1e18,
-            0,
-            uint8(0),
-            ""
-        );
+        uniBullHelper.exactInFlashSwap(wPowerPerp, weth, 3000, 1e18, 0, uint8(0), "");
     }
 }
