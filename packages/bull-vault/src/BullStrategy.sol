@@ -25,7 +25,6 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    uint256 private constant ONE = 1e18;
     uint32 private constant TWAP = 420;
 
     /// @dev set to true when redeemShortShutdown has been called
