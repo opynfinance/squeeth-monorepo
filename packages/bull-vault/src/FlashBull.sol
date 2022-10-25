@@ -87,12 +87,10 @@ contract FlashBull is UniBull {
     /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and dollars, and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
-     * @dev _totalEthToBull must be less than msg.value plus the proceeds from the flash swap
-     * @param _totalEthToBull total ETH that will be deposited in to the strategy which is a combination of msg.value and flash swap proceeds
      * @param _ethToCrab ETH that will be deposited into the crab strategy
      * @param _poolFee Uniswap pool fee
      */
-    function flashDeposit(uint256 _totalEthToBull, uint256 _ethToCrab, uint24 _poolFee) external payable {
+    function flashDeposit(uint256 _ethToCrab, uint24 _poolFee) external payable {
         uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         uint256 crabAmount;
         uint256 usdcToBorrow;
