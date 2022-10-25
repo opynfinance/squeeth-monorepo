@@ -59,13 +59,9 @@ contract UniBullHelper is UniBull {
 
             console.log("oSQTH amount to repay second", _uniFlashSwapData.amountToPay);
             IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-<<<<<<< HEAD
 
         }
         else if (uint8(_uniFlashSwapData.callSource) == 1) {
-=======
-        } else if (uint8(_uniFlashSwapData.callSource) == 1) {
->>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
             console.log("USDC amount to repay first", _uniFlashSwapData.amountToPay);
             IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
