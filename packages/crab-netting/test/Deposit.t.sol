@@ -47,9 +47,9 @@ contract DepositTest is Test {
         usdc.approve(address(netting), 2 * 1e18);
         netting.depositUSDC(2 * 1e18);
 
-        assertEq(netting.balanceOf(depositor), 2e18);
+        assertEq(netting.usd_balance(depositor), 2e18);
         netting.withdrawUSDC(1 * 1e18);
-        assertEq(netting.balanceOf(depositor), 1e18);
+        assertEq(netting.usd_balance(depositor), 1e18);
     }
 
     function testCrabDepositAndWithdraw() public {
@@ -57,8 +57,8 @@ contract DepositTest is Test {
         crab.approve(address(netting), 2 * 1e18);
         netting.depositCrab(2 * 1e18);
 
-        assertEq(netting.crabBalanceOf(withdrawer), 2e18);
+        assertEq(netting.crab_balance(withdrawer), 2e18);
         netting.withdrawCrab(1 * 1e18);
-        assertEq(netting.crabBalanceOf(withdrawer), 1e18);
+        assertEq(netting.crab_balance(withdrawer), 1e18);
     }
 }
