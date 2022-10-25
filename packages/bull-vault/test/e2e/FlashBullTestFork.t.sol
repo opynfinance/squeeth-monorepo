@@ -124,7 +124,7 @@ contract FlashBullTestFork is Test {
             bullStrategy.calcLeverageEthUsdc(crabToBeMinted, bullShare, crabUsdPrice, ethUsdPrice);
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(totalEthToBull, ethToCrab, 3000);
+        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 3000);
         vm.stopPrank();
 
         assertEq(
