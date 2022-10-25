@@ -54,14 +54,10 @@ contract FlashBull is UniBull {
     address public bullStrategy;
 
     struct FlashDepositCrabData {
-        uint256 usdcToBorrow;
         uint256 ethToDepositInCrab;
-        uint256 crabToDeposit;
-        uint256 ethToLend;
     }
 
     struct FlashDepositCollateralData {
-        uint256 ethToDepositInCrab;
         uint256 crabToDeposit;
         uint256 ethToLend;
     }
@@ -126,7 +122,7 @@ contract FlashBull is UniBull {
             wSqueethToMint,
             0,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT),
-            abi.encodePacked(usdcToBorrow, _ethToCrab, crabAmount, ethToLend)
+            abi.encodePacked(_ethToCrab)
         );
 
          // ETH-USDC swap
@@ -137,7 +133,7 @@ contract FlashBull is UniBull {
             usdcToBorrow,
             0,
             uint8(FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT),
-            abi.encodePacked(_ethToCrab, crabAmount, ethToLend)
+            abi.encodePacked(crabAmount, ethToLend)
         );
 
         // return excess eth to the user that was not needed for slippage
