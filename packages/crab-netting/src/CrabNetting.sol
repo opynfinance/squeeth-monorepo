@@ -109,4 +109,26 @@ contract CrabNetting {
         }
         withdrawsIndex = withdrawsIndex + j;
     }
+
+    function depositsQueued() public view returns (uint256) {
+        uint256 j = depositsIndex;
+        uint256 sum;
+        while (j < deposits.length) {
+            sum = sum + deposits[j].amount;
+            console.log(deposits[j].amount);
+            j++;
+        }
+        return sum;
+    }
+
+    function withdrawsQueued() public view returns (uint256) {
+        uint256 j = withdrawsIndex;
+        uint256 sum;
+        while (j < withdraws.length) {
+            sum = sum + withdraws[j].amount;
+            console.log(withdraws[j].amount);
+            j++;
+        }
+        return sum;
+    }
 }

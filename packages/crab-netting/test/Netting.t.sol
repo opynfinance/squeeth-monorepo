@@ -12,7 +12,7 @@ contract FixedERC20 is ERC20 {
     }
 }
 
-contract DepositTest is Test {
+contract NettingTest is Test {
     FixedERC20 usdc;
     FixedERC20 crab;
     CrabNetting netting;
@@ -59,6 +59,7 @@ contract DepositTest is Test {
     }
 
     function testNetting() public {
+        // TODO turn this into a fuzzing test
         assertEq(usdc.balanceOf(withdrawer), 0, "starting balance");
         assertEq(crab.balanceOf(depositor), 0, "depositor got their crab");
         netting.netAtPrice(10, 100e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
@@ -106,7 +107,7 @@ contract DepositTest is Test {
         assertEq(
             usdc.balanceOf(withdrawer),
             400e18,
-            "withdrawer got their usdc"
+            "witadrawer got their usdc"
         );
         assertEq(crab.balanceOf(depositor), 40e18, "depositor got their crab");
     }
