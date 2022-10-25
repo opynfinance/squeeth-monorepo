@@ -38,13 +38,9 @@ contract UniBullHelper is UniBull {
     }
 
     // TODO: to be removed
-<<<<<<< HEAD
     function _uniFlashSwap(
         UniFlashswapCallbackData memory _uniFlashSwapData
     ) internal override {
-=======
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
->>>>>>> c7f1baf08dfd0df481a9fdc1b4a3972c43d1b2ad
         if (uint8(_uniFlashSwapData.callSource) == 0) {
             // ETH-USDC swap
             _exactInFlashSwap(
