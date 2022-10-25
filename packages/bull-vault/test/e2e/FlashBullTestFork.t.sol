@@ -138,6 +138,58 @@ contract FlashBullTestFork is Test {
         assertEq(IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted), bullCrabBalanceBefore);
     }
 
+    /**
+     *
+     * /************************************************************* Fuzz testing is awesome! ************************************************************
+     */
+
+    // function testFuzzingFlashDeposit(uint256 _totalEthToBull) public {
+    //     _totalEthToBull = bound(_totalEthToBull, 4e18, 20e18);
+
+    //     uint256 ethToCrab = _totalEthToBull.wdiv(4);
+    //     ethToCrab = 4e18;
+
+    //     uint256 crabUsdPrice;
+    //     uint256 ethInCrab;
+    //     uint256 squeethInCrab;
+    //     uint256 ethUsdPrice = uniBullHelper.getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+    //     {
+    //         uint256 squeethEthPrice = uniBullHelper.getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+    //         (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
+    //         crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))).wdiv(
+    //             crabV2.totalSupply()
+    //         );
+    //     }
+
+    //     (, uint256 fee) = _calcWsqueethToMintAndFee(ethToCrab, squeethInCrab, ethInCrab);
+    //     uint256 crabToBeMinted = _calcSharesToMint(ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+    //     uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+    //     uint256 bullShare = 1e18;
+    //     (uint256 wethToLend, uint256 usdcToBorrow) =
+    //         bullStrategy.calcLeverageEthUsdc(crabToBeMinted, bullShare, crabUsdPrice, ethUsdPrice);
+
+    //     vm.startPrank(user1);
+    //     flashBull.flashDeposit{value: _totalEthToBull}(ethToCrab, 3000);
+    //     vm.stopPrank();
+
+    //     assertEq(
+    //         IEulerDToken(dToken).balanceOf(address(bullStrategy)),
+    //         usdcToBorrow
+    //     );
+    //     assertEq(
+    //         IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+    //         wethToLend
+    //     );
+    //     assertEq(IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted), bullCrabBalanceBefore);
+    // }
+    
+
+    /**
+     *
+     * /************************************************************* Helper functions! ************************************************************
+     */
+
     function _calcWsqueethToMintAndFee(
         uint256 _depositedAmount,
         uint256 _strategyDebtAmount,
