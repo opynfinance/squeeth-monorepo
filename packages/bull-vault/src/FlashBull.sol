@@ -31,8 +31,8 @@ contract FlashBull is UniBull {
     /// @dev enum to differentiate between Uniswap swap callback function source
     enum FLASH_SOURCE {
         GENERAL_SWAP,
-        FLASH_DEPOSIT,
-        UNI_FLASHSWAP_FLASH_DEPOSIT,
+        FLASH_DEPOSIT_CRAB,
+        FLASH_DEPOSIT_COLLATERAL,
         FLASH_WITHDRAW
     }
 
@@ -121,7 +121,7 @@ contract FlashBull is UniBull {
             _poolFee,
             wSqueethToMint,
             0,
-            uint8(FLASH_SOURCE.FLASH_DEPOSIT),
+            uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
             abi.encodePacked(_ethToCrab)
         );
 
@@ -132,7 +132,7 @@ contract FlashBull is UniBull {
             _poolFee,
             usdcToBorrow,
             0,
-            uint8(FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT),
+            uint8(FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL),
             abi.encodePacked(crabAmount, ethToLend)
         );
 
@@ -149,7 +149,7 @@ contract FlashBull is UniBull {
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
-        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT) {
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
             FlashDepositCrabData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
 
             // convert WETH to ETH as Uniswap uses WETH
@@ -158,7 +158,7 @@ contract FlashBull is UniBull {
 
             // repay the squeeth flash swap
             IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT) {
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
 
