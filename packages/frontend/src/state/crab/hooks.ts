@@ -530,7 +530,7 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
-      track(EVENT_NAME.DEPOSIT_CRAB_CLICK, { amount: amount.plus(_ethBorrow) })
+      track(EVENT_NAME.DEPOSIT_CRAB_CLICK, { amount: amount.plus(_ethBorrow).toString() })
       try {
         const tx = await handleTransaction(
           contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0), poolFeePercent).send({
@@ -562,6 +562,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const contract = useAtomValue(crabHelperContractAtom)
   const { getExactIn } = useUniswapQuoter()
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
 
   const usdcFee = getUSDCPoolFee(network)
 
@@ -587,12 +588,21 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
       // TODO: fix it so it uses v2 ratio, not v1.
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = ethAmount
-      return await handleTransaction(
-        contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount.toFixed(0), ethDeposit.toFixed(0), usdcFee, UNI_POOL_FEES, usdc).send({
-          from: address,
-        }),
-        onTxConfirmed,
-      )
+      track(EVENT_NAME.DEPOSIT_CRAB_USDC_CLICK, { amount: amount.toString() })
+      try {
+        const tx = await handleTransaction(
+          contract.methods.flashDepositERC20(ethBorrow.plus(ethDeposit).toFixed(0), usdcAmount.toFixed(0), ethDeposit.toFixed(0), usdcFee, UNI_POOL_FEES, usdc).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+
+        track(EVENT_NAME.DEPOSIT_CRAB_USDC_SUCCESS)  
+        return tx
+      } catch(e) {
+        track(EVENT_NAME.DEPOSIT_CRAB_USDC_FAILED, {  })
+        console.log(e)
+      }
     },
     [address, contract, handleTransaction, vault?.id, maxCap, calculateETHtoBorrowFromUniswap],
   )
