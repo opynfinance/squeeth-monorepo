@@ -53,14 +53,14 @@ contract FlashBull is UniBull {
 
     address public bullStrategy;
 
-    struct FlashDepositData {
+    struct FlashDepositCrabData {
         uint256 usdcToBorrow;
         uint256 ethToDepositInCrab;
         uint256 crabToDeposit;
         uint256 ethToLend;
     }
 
-    struct UniFlashswapFlashDepositData {
+    struct FlashDepositCollateralData {
         uint256 ethToDepositInCrab;
         uint256 crabToDeposit;
         uint256 ethToLend;
@@ -129,6 +129,17 @@ contract FlashBull is UniBull {
             abi.encodePacked(usdcToBorrow, _ethToCrab, crabAmount, ethToLend)
         );
 
+         // ETH-USDC swap
+        _exactInFlashSwap(
+            usdc,
+            weth,
+            _poolFee,
+            usdcToBorrow,
+            0,
+            uint8(FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT),
+            abi.encodePacked(_ethToCrab, crabAmount, ethToLend)
+        );
+
         // return excess eth to the user that was not needed for slippage
         if (address(this).balance > 0) {
             payable(msg.sender).sendValue(address(this).balance);
@@ -143,28 +154,18 @@ contract FlashBull is UniBull {
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT) {
-            FlashDepositData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositData));
-
-            // ETH-USDC swap
-            _exactInFlashSwap(
-                usdc,
-                weth,
-                _uniFlashSwapData.fee,
-                data.usdcToBorrow,
-                0,
-                uint8(FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT),
-                abi.encodePacked(data.ethToDepositInCrab, data.crabToDeposit, data.ethToLend)
-            );
-
-            // repay the squeeth flash swap
-            IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT) {
-            UniFlashswapFlashDepositData memory data =
-                abi.decode(_uniFlashSwapData.callData, (UniFlashswapFlashDepositData));
+            FlashDepositCrabData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
             ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
+
+            // repay the squeeth flash swap
+            IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.UNI_FLASHSWAP_FLASH_DEPOSIT) {
+            FlashDepositCollateralData memory data =
+                abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
+
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
             IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
 
