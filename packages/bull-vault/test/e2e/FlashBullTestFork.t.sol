@@ -156,7 +156,7 @@ contract FlashBullTestFork is Test {
             );
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 3000, 0, 0);
+        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
         vm.stopPrank();
 
         assertEq(
@@ -178,75 +178,76 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Fuzz testing is awesome! ************************************************************
      */
 
-    // function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
-    //     // totalEthToBull = ethToLend + ethToCrab - usdcToBorrow/ethUsdPrice - squeethToMint*squeethPrice + margin
-    //     _ethToCrab = bound(_ethToCrab, 0, 5e18);
+    function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
+        // totalEthToBull = ethToLend + ethToCrab - usdcToBorrow/ethUsdPrice - squeethToMint*squeethPrice + margin
+        _ethToCrab = bound(_ethToCrab, 0, 5e18);
 
-    //     {
-    //         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-    //         uint256 crabUsdPrice = (
-    //             ethInCrab.wmul(ethPrice()).sub(
-    //                 squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
-    //             )
-    //         ).wdiv(crabV2.totalSupply());
-    //     }
+        {
+            (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+            uint256 crabUsdPrice = (
+                ethInCrab.wmul(ethPrice()).sub(
+                    squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
+                )
+            ).wdiv(crabV2.totalSupply());
+        }
 
-    //     uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
-    //         address(bullStrategy)
-    //     );
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
 
-    //     uint256 crabToBeMinted;
-    //     uint256 totalEthToBull;
-    //     uint256 wethToLend;
-    //     uint256 usdcToBorrow;
-    //     uint256 wSqueethToMint;
-    //     {
-    //         uint256 fee;
-    //         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-    //         (wSqueethToMint, fee) = _calcWsqueethToMintAndFee(
-    //             _ethToCrab,
-    //             squeethInCrab,
-    //             ethInCrab
-    //         );
+        uint256 crabToBeMinted;
+        uint256 totalEthToBull;
+        uint256 wethToLend;
+        uint256 usdcToBorrow;
+        uint256 wSqueethToMint;
+        {
+            uint256 fee;
+            (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+            (wSqueethToMint, fee) = _calcWsqueethToMintAndFee(
+                _ethToCrab,
+                squeethInCrab,
+                ethInCrab
+            );
             
-    //         uint256 crabToBeMinted = _calcSharesToMint(
-    //             _ethToCrab.sub(fee),
-    //             ethInCrab,
-    //             IERC20(crabV2).totalSupply()
-    //         );
+            uint256 crabToBeMinted = _calcSharesToMint(
+                _ethToCrab.sub(fee),
+                ethInCrab,
+                IERC20(crabV2).totalSupply()
+            );
 
-    //         uint256 crabUsdPrice = (
-    //             ethInCrab.wmul(ethPrice()).sub(
-    //                 squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
-    //             )
-    //         ).wdiv(crabV2.totalSupply());
+            uint256 crabUsdPrice = (
+                ethInCrab.wmul(ethPrice()).sub(
+                    squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
+                )
+            ).wdiv(crabV2.totalSupply());
 
-    //         (wethToLend, usdcToBorrow) = bullStrategy
-    //         .calcLeverageEthUsdc(
-    //             crabToBeMinted,
-    //             1e18,
-    //             crabUsdPrice,
-    //             ethPrice()
-    //         );
-    //     }
+            (wethToLend, usdcToBorrow) = bullStrategy
+            .calcLeverageEthUsdc(
+                crabToBeMinted,
+                1e18,
+                crabUsdPrice,
+                ethPrice(),
+                crabV2.totalSupply()
+            );
+        }
 
-    //     vm.startPrank(user1);
-    //     flashBull.flashDeposit{value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)}(_ethToCrab, 3000, 0, 0);
-    //     vm.stopPrank();
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)}(_ethToCrab, 0, 0, 3000);
+        vm.stopPrank();
 
-    //     assertEq(
-    //         IEulerDToken(dToken).balanceOf(address(bullStrategy)),
-    //         usdcToBorrow
-    //     );
-    //     assertEq(
-    //         IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-    //         wethToLend
-    //     );
-    //     assertEq(
-    //         IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
-    //         bullCrabBalanceBefore
-    //     );
-    // }
+        assertEq(
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
+            usdcToBorrow
+        );
+        assertEq(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+            wethToLend
+        );
+        assertEq(
+            IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
+            bullCrabBalanceBefore
+        );
+    }
 
     /**
      *
