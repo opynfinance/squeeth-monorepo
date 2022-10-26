@@ -2,21 +2,30 @@ import { useQuery } from '@apollo/client'
 import { squeethClient } from '@utils/apollo-client'
 
 import NORMHISTORY_QUERY from '../queries/squeeth/normHistoryQuery'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import {
+  normalizationFactorUpdates,
+  normalizationFactorUpdatesVariables,
+} from '@queries/squeeth/__generated__/normalizationFactorUpdates'
 
 export const useNormHistory = () => {
   const networkId = useAtomValue(networkIdAtom)
-  const [skipCount, setSkipCount] = useState(0)
+  const lastId = useRef('')
   const [normHistory, setNormHistory] = useState<any[]>([])
-  const { data, loading } = useQuery(NORMHISTORY_QUERY, {
-    variables: {
-      skipCount,
+  const [fetchingComplete, setFetchingComplete] = useState(false)
+  const { data, loading, refetch } = useQuery<normalizationFactorUpdates, normalizationFactorUpdatesVariables>(
+    NORMHISTORY_QUERY,
+    {
+      variables: {
+        lastID: '',
+      },
+      client: squeethClient[networkId],
+      fetchPolicy: 'cache-and-network',
+      notifyOnNetworkStatusChange: true,
     },
-    client: squeethClient[networkId],
-    fetchPolicy: 'cache-and-network',
-  })
+  )
 
   useEffect(() => {
     if (!loading) {
@@ -27,13 +36,22 @@ export const useNormHistory = () => {
             .concat(data['normalizationFactorUpdates'])
             .filter((val, ind, self) => ind === self.findIndex((item) => item.id === val.id)),
         )
-        setSkipCount(skipCount + 1000)
+        lastId.current = data['normalizationFactorUpdates'][data['normalizationFactorUpdates'].length - 1].id
+
+        if (data['normalizationFactorUpdates'].length === 1000) {
+          refetch({ lastID: lastId.current })
+        } else {
+          setFetchingComplete(true)
+        }
       } else {
-        setSkipCount(0)
+        setFetchingComplete(true)
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading])
 
-  return normHistory
+  return {
+    normHistory,
+    fetchingComplete,
+  }
 }
