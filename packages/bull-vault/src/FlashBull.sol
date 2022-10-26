@@ -85,14 +85,16 @@ contract FlashBull is UniBull {
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
      * @param _ethToCrab ETH that will be deposited into the crab strategy
      * @param _poolFee Uniswap pool fee
+     * @param _minEthFromSqth minimum ETH we will receive from the oSQTH-ETH trade for crab component
+     * @param _minEthFromUsdc minimum ETH we will receive from the USDC-ETH trade for leverage component
      */
-    function flashDeposit(uint256 _ethToCrab, uint24 _poolFee) external payable {
-        uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+    function flashDeposit(uint256 _ethToCrab, uint24 _poolFee, uint256 _minEthFromSqth, uint256 _minEthFromUsdc) external payable {
         uint256 crabAmount;
         uint256 usdcToBorrow;
         uint256 ethToLend;
         uint256 wSqueethToMint;
         {
+            uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
             uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
             uint256 crabUsdPrice = (
@@ -120,7 +122,7 @@ contract FlashBull is UniBull {
             weth,
             _poolFee,
             wSqueethToMint,
-            0,
+            _minEthFromSqth,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
             abi.encodePacked(_ethToCrab)
         );
@@ -131,7 +133,7 @@ contract FlashBull is UniBull {
             weth,
             _poolFee,
             usdcToBorrow,
-            0,
+            _minEthFromUsdc,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL),
             abi.encodePacked(crabAmount, ethToLend)
         );
