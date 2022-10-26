@@ -21,11 +21,9 @@ import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
  */
-contract BullStrategy is ERC20, LeverageBull, UniBull {
+contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
-
-    uint32 private constant TWAP = 420;
 
     /// @dev set to true when redeemShortShutdown has been called
     bool private hasRedeemedInShutdown;
@@ -107,13 +105,8 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
             _mint(msg.sender, bullToMint);
         }
 
-        uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-        uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-            .wdiv(IERC20(crab).totalSupply());
-
-        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, crabUsdPrice, ethUsdPrice);
+        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }

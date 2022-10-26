@@ -94,13 +94,10 @@ contract FlashBull is UniBull {
         uint256 ethToLend;
         uint256 wSqueethToMint;
         {
-            uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
-            uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-            uint256 crabUsdPrice = (
-                ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
-            ).wdiv(IERC20(crab).totalSupply());
+            
             uint256 ethFee;
+            uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
             crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
 
@@ -112,8 +109,7 @@ contract FlashBull is UniBull {
             }
 
             // USDC we pay to flashswap
-            (ethToLend, usdcToBorrow) =
-                IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, crabUsdPrice, ethUsdPrice);
+            (ethToLend, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
         }
 
         // oSQTH-ETH swap

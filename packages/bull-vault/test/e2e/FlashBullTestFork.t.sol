@@ -150,8 +150,9 @@ contract FlashBullTestFork is Test {
             .calcLeverageEthUsdc(
                 crabToBeMinted,
                 bullShare,
-                crabUsdPrice,
-                ethUsdPrice
+                ethInCrab,
+                squeethInCrab,
+                crabV2.totalSupply()
             );
 
         vm.startPrank(user1);
