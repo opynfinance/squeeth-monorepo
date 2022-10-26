@@ -177,11 +177,8 @@ contract FlashBullTestFork is Test {
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
      */
-
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
-        // totalEthToBull = ethToLend + ethToCrab - usdcToBorrow/ethUsdPrice - squeethToMint*squeethPrice + margin
-        _ethToCrab = bound(_ethToCrab, 0, 5e18);
-
+        _ethToCrab = bound(_ethToCrab, 1e18, 1000e18);
         {
             (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
             uint256 crabUsdPrice = (
@@ -253,12 +250,11 @@ contract FlashBullTestFork is Test {
      *
      * /************************************************************* Helper functions! ************************************************************
      */
-
     function squeethPrice() internal view returns (uint256) {
         return uniBullHelper.getTwap(
-            ethUsdcPool,
+            ethWSqueethPool,
+            wPowerPerp,
             weth,
-            usdc,
             TWAP,
             false
         );
