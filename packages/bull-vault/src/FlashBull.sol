@@ -8,7 +8,6 @@ import {UniBull} from "./UniBull.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
-
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
@@ -159,6 +158,8 @@ contract FlashBull is UniBull {
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
+
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
             IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
