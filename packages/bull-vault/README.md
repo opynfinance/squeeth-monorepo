@@ -37,8 +37,9 @@ forge install
 <!-- There are three Foundry profiles for running the test suites, which bypass the IR pipeline to speed up compilation. To run tests, run any of the following: -->
 
 ```bash
-forge test # default profile with 200 fuzz runs
-FOUNDRY_PROFILE=fuzz forge test # with 2000 fuzz runs
+FOUNDRY_PROFILE=test forge test # run only test functions
+FOUNDRY_PROFILE=fuzz forge test # run only fuz testing (function with name that include "Fuzzing")
+FOUNDRY_PROFILE=coverage forge coverage # coverage report
 ```
 
 To run tests, you need to create `.env` file with the variables included in `.env.example`.
@@ -53,7 +54,7 @@ The following modifiers are also available:
 - Level 5 (-vvvvv): Stack traces and setup traces are always displayed.
 
 ```bash
-forge test  -vv
+FOUNDRY_PROFILE=test forge test forge test  -vvvv
 ```
 
 For more information on foundry testing and use, see [Foundry Book installation instructions](https://book.getfoundry.sh/getting-started/installation.html).
