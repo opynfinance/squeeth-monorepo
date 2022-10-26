@@ -21,5 +21,5 @@ export interface normalizationFactorUpdates {
 }
 
 export interface normalizationFactorUpdatesVariables {
-  skipCount?: number | null;
+  lastID?: string | null;
 }
