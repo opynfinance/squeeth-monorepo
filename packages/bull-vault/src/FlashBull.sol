@@ -4,7 +4,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // contract
-import {UniBull} from "./UniBull.sol";import {console} from "forge-std/console.sol";
+import {UniBull} from "./UniBull.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
@@ -112,6 +112,7 @@ contract FlashBull is UniBull {
      * @param _poolFee Uniswap pool fee
      */
     function flashDeposit(uint256 _ethToCrab, uint256 _minEthFromSqth, uint256 _minEthFromUsdc, uint24 _poolFee) external payable {
+        uint256 share;
         uint256 crabAmount;
         uint256 usdcToBorrow;
         uint256 ethToLend;
@@ -124,15 +125,11 @@ contract FlashBull is UniBull {
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
             crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
 
-            uint256 share;
             if (IERC20(bullStrategy).totalSupply() == 0) {
                 share = ONE;
             } else {
                 share = crabAmount.wdiv(IERC20(crab).balanceOf(bullStrategy).add(crabAmount));
             }
-
-            // USDC we pay to flashswap
-            (ethToLend, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
         }
 
         // oSQTH-ETH swap
@@ -145,6 +142,10 @@ contract FlashBull is UniBull {
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
             abi.encodePacked(_ethToCrab)
         );
+
+        (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails(); 
+        // USDC we pay to flashswap
+        (ethToLend, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
          // ETH-USDC swap
         _exactInFlashSwap(
