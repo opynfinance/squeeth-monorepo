@@ -174,6 +174,69 @@ contract FlashBullTestFork is Test {
         );
     }
 
+    function testFlashWithdraw() public {
+        // this is a crab whale, get some crab token from
+        vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
+        IERC20(crabV2).transfer(user1, 10e18);
+        vm.startPrank(user1);
+        _deposit(10e18);
+        vm.stopPrank();
+
+        uint256 bullToRedeem = bullStrategy.balanceOf(user1);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        uint256 ethUsdPrice = uniBullHelper.getTwap(
+            ethUsdcPool,
+            weth,
+            usdc,
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = uniBullHelper.getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            TWAP,
+            false
+        );
+
+        uint256 maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+        uint256 maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(101e16));
+
+        FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
+            bullAmount: bullStrategy.balanceOf(user1),
+            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForUsdc: maxEthForUsdc,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
+
+        uint256 wethToWithdraw = _calcWethToWithdraw(bullToRedeem);
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
+
+        vm.startPrank(user1);
+        bullStrategy.approve(address(flashBull), params.bullAmount);
+        flashBull.flashWithdraw(params);
+        vm.stopPrank();
+
+        assertEq(
+            usdcBorrowedBefore.sub(usdcToRepay),
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
+            "Bull USDC debt amount mismatch"
+        );
+        assertEq(
+            ethInLendingBefore.sub(wethToWithdraw),
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+            "Bull ETH in leverage amount mismatch"
+        );
+        assertEq(userBullBalanceBefore.sub(bullToRedeem), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(
+            crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull crab balance mismatch"
+        );
+    }
+
     /**
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
@@ -248,6 +311,70 @@ contract FlashBullTestFork is Test {
             IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
+        );
+    }
+
+    function testFuzzingFlashWithdraw(uint256 _crabAmount) public {
+        _crabAmount = bound(_crabAmount, 1e18, IERC20(crabV2).balanceOf(0x06CECFbac34101aE41C88EbC2450f8602b3d164b));
+        // this is a crab whale, get some crab token from
+        vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
+        IERC20(crabV2).transfer(user1, _crabAmount);
+        vm.startPrank(user1);
+        _deposit(_crabAmount);
+        vm.stopPrank();
+
+        uint256 bullToRedeem = bullStrategy.balanceOf(user1);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        uint256 ethUsdPrice = uniBullHelper.getTwap(
+            ethUsdcPool,
+            weth,
+            usdc,
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = uniBullHelper.getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            TWAP,
+            false
+        );
+
+        uint256 maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
+        uint256 maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(102e16));
+
+        FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
+            bullAmount: bullStrategy.balanceOf(user1),
+            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForUsdc: maxEthForUsdc,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
+
+        uint256 wethToWithdraw = _calcWethToWithdraw(bullToRedeem);
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
+
+        vm.startPrank(user1);
+        bullStrategy.approve(address(flashBull), params.bullAmount);
+        flashBull.flashWithdraw(params);
+        vm.stopPrank();
+
+        assertEq(
+            usdcBorrowedBefore.sub(usdcToRepay),
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
+            "Bull USDC debt amount mismatch"
+        );
+        assertEq(
+            ethInLendingBefore.sub(wethToWithdraw),
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+            "Bull ETH in leverage amount mismatch"
+        );
+        assertEq(userBullBalanceBefore.sub(bullToRedeem), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(
+            crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull crab balance mismatch"
         );
     }
 
@@ -343,5 +470,62 @@ contract FlashBullTestFork is Test {
             .vaults(crabV2.vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+    }
+
+    function _deposit(uint256 _crabToDeposit) internal returns (uint256, uint256) {
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(_crabToDeposit);
+
+        IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
+        bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
+
+        return (wethToLend, usdcToBorrow);
+    }
+
+    function _calcCollateralAndBorrowAmount(uint256 _crabToDeposit) internal view returns (uint256, uint256) {
+        uint256 wethToLend;
+        uint256 usdcToBorrow;
+        if (IERC20(bullStrategy).totalSupply() == 0) {
+            {
+                uint256 ethUsdPrice = uniBullHelper.getTwap(
+                    controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+                );
+                uint256 squeethEthPrice = uniBullHelper.getTwap(
+                    controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+                );
+                (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+                uint256 crabUsdPrice = (
+                    ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+                ).wdiv(crabV2.totalSupply());
+                wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+            }
+        } else {
+            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
+            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
+                uint256(1e18).sub(share)
+            );
+            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(
+                uint256(1e18).sub(share)
+            ).div(1e12);
+        }
+
+        return (wethToLend, usdcToBorrow);
+    }
+
+    function calcAssetsNeededForFlashWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256, uint256) {
+        uint256 bullShare = _bullAmount.wdiv(bullStrategy.totalSupply());
+        uint256 crabToRedeem = bullShare.wmul(crabV2.balanceOf(address(bullStrategy)));
+        (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy.getCrabVaultDetails();
+        uint256 crabTotalSupply = crabV2.totalSupply();
+        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        uint256 usdcToRepay = bullStrategy.calcUsdcToRepay(bullShare);
+
+        return (crabToRedeem, wPowerPerpToRedeem, usdcToRepay);
+    }
+
+    function _calcWethToWithdraw(uint256 _bullAmount) internal view returns (uint256) {
+        return _bullAmount.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))).wdiv(
+            bullStrategy.totalSupply()
+        );
     }
 }

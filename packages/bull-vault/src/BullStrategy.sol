@@ -54,7 +54,7 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
 
-    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem, uint256 ethToWithdrawFromCrab);
+    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
 
     /**
      * @notice constructor for BullStrategy
@@ -119,9 +119,8 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
-        uint256 ethToWithdrawFromCrab = crabToRedeem.wmul(ethInCrab).wdiv(crabTotalSupply);
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
@@ -132,7 +131,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem, ethToWithdrawFromCrab);
+        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {

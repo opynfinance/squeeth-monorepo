@@ -15,6 +15,7 @@ import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
 import {IBullStrategy} from "./interface/IBullStrategy.sol";
+import {console} from "forge-std/console.sol";
 
 /**
  * @notice FlashBull contract
@@ -31,8 +32,9 @@ contract FlashBull is UniBull {
     enum FLASH_SOURCE {
         GENERAL_SWAP,
         FLASH_DEPOSIT_CRAB,
-        FLASH_DEPOSIT_COLLATERAL,
-        FLASH_WITHDRAW
+        FLASH_DEPOSIT_LENDING_COLLATERAL,
+        FLASH_SWAP_WPOWERPERP,
+        FLASH_WITHDRAW_BULL
     }
 
     /// @dev wPowerPerp address
@@ -52,14 +54,29 @@ contract FlashBull is UniBull {
 
     address public bullStrategy;
 
+    /// @dev params structs
+    struct FlashWithdrawParams {
+        uint256 bullAmount;
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
+    }
+
+    /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
         uint256 ethToDepositInCrab;
     }
-
     struct FlashDepositCollateralData {
         uint256 crabToDeposit;
         uint256 ethToLend;
     }
+    struct FlashWithdrawBullData {
+        uint256 bullToRedeem;
+        uint256 usdcToRepay;
+    }
+
+    event FlashWithdraw();
 
     constructor(address _bull, address _factory, address _oracle) UniBull(_factory) {
         bullStrategy = _bull;
@@ -76,7 +93,7 @@ contract FlashBull is UniBull {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth, "Message sender should be WETH");
+        require(msg.sender == weth || msg.sender == bullStrategy);
     }
 
     /**
@@ -129,7 +146,7 @@ contract FlashBull is UniBull {
             _poolFee,
             usdcToBorrow,
             _minEthFromUsdc,
-            uint8(FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL),
+            uint8(FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL),
             abi.encodePacked(crabAmount, ethToLend)
         );
 
@@ -139,6 +156,54 @@ contract FlashBull is UniBull {
         }
 
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
+    }
+
+    struct FlashSwapWPowerPerpData {
+        uint256 bullToRedeem;
+        uint256 crabToRedeem;
+        uint256 wPowerPerpToRedeem;
+        uint256 usdcToRepay;
+        uint256 maxEthForUsdc;
+        uint256 usdcPoolFee;
+    }
+
+    function flashWithdraw(FlashWithdrawParams calldata _params) external {
+        IERC20(bullStrategy).transferFrom(msg.sender, address(this), _params.bullAmount);
+
+        uint256 usdcToRepay;
+        uint256 crabToRedeem;
+        uint256 wPowerPerpToRedeem;
+
+        {
+            uint256 bullShare = _params.bullAmount.wdiv(IERC20(bullStrategy).totalSupply());
+            crabToRedeem = bullShare.wmul(IERC20(crab).balanceOf(bullStrategy));
+            (, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
+            uint256 crabTotalSupply = IERC20(crab).totalSupply();
+            wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+            usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(bullShare);
+        }
+
+        console.log("_params.maxEthForSqueeth", _params.maxEthForSqueeth);
+
+        // oSQTH-ETH swap
+        _exactOutFlashSwap(
+            weth,
+            wPowerPerp,
+            _params.wPowerPerpPoolFee,
+            wPowerPerpToRedeem,
+            _params.maxEthForSqueeth,
+            uint8(FLASH_SOURCE.FLASH_SWAP_WPOWERPERP),
+            // abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, _params.maxEthForUsdc, uint256(_params.usdcPoolFee))
+            abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, type(uint256).max, uint256(_params.usdcPoolFee))
+        );
+
+        uint256 proceeds = IERC20(weth).balanceOf(address(this));
+        if (proceeds > 0) {
+            IWETH9(weth).withdraw(proceeds);
+            payable(msg.sender).sendValue(proceeds);
+        }
+
+        emit FlashWithdraw();
     }
 
     /**
@@ -155,7 +220,7 @@ contract FlashBull is UniBull {
 
             // repay the squeeth flash swap
             IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_COLLATERAL) {
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
 
@@ -166,6 +231,39 @@ contract FlashBull is UniBull {
 
             // repay the dollars flash swap
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_SWAP_WPOWERPERP) {
+            FlashSwapWPowerPerpData memory data = abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
+
+            IERC20(wPowerPerp).approve(bullStrategy, data.wPowerPerpToRedeem);
+            console.log("data.maxEthForUsdc", data.maxEthForUsdc);
+            console.log("eth to repay for oSQTH", _uniFlashSwapData.amountToPay);
+
+            // ETH-USDC swap
+            _exactOutFlashSwap(
+                weth,
+                usdc,
+                uint24(data.usdcPoolFee),
+                data.usdcToRepay,
+                data.maxEthForUsdc,
+                uint8(FLASH_SOURCE.FLASH_WITHDRAW_BULL),
+                abi.encodePacked(data.bullToRedeem, data.usdcToRepay)
+            );
+
+            IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
+            IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+            payable(_uniFlashSwapData.caller).sendValue(address(this).balance);
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_WITHDRAW_BULL) {
+            FlashWithdrawBullData memory data =
+                abi.decode(_uniFlashSwapData.callData, (FlashWithdrawBullData));
+
+            IERC20(usdc).approve(bullStrategy, data.usdcToRepay);
+            IBullStrategy(bullStrategy).withdraw(data.bullToRedeem);
+
+            console.log("data.usdcToRepay", data.usdcToRepay);
+            console.log("eth to repay for USDC", _uniFlashSwapData.amountToPay);
+
+            IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
+            IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }
 
