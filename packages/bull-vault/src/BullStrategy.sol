@@ -119,7 +119,7 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (uint256 squeethInCrab) = _getCrabVaultDetails();
+        (, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
