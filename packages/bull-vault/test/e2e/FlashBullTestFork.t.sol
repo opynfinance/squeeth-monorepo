@@ -99,7 +99,7 @@ contract FlashBullTestFork is Test {
         IERC20(crabV2).transfer(user1, 100e18);
         // some WETH and USDC rich address
         vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(weth).transfer(user1, 10000e18);
+        IERC20(weth).transfer(user1, 10100e18);
     }
 
     function testInitialFlashDeposit() public {
@@ -179,55 +179,56 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Fuzz testing is awesome! ************************************************************
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
-        _ethToCrab = bound(_ethToCrab, 1e18, 5e18);
+        _ethToCrab = bound(_ethToCrab, 1e16, 1890e18); // 1890 ETH because can't hit Crab cap
+        uint256 crabUsdPrice;
+        uint256 ethInCrab;
+        uint256 squeethInCrab;
+        uint256 ethUsdPrice = uniBullHelper.getTwap(
+            ethUsdcPool,
+            weth,
+            usdc,
+            TWAP,
+            false
+        );
         {
-            (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-            uint256 crabUsdPrice = (
-                ethInCrab.wmul(ethPrice()).sub(
-                    squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
+            uint256 squeethEthPrice = uniBullHelper.getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
+            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
+            crabUsdPrice = (
+                ethInCrab.wmul(ethUsdPrice).sub(
+                    squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                 )
             ).wdiv(crabV2.totalSupply());
         }
 
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
+            _ethToCrab,
+            squeethInCrab,
+            ethInCrab
+        );
+        uint256 crabToBeMinted = _calcSharesToMint(
+            _ethToCrab.sub(fee),
+            ethInCrab,
+            IERC20(crabV2).totalSupply()
+        );
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
             address(bullStrategy)
         );
 
-        uint256 crabToBeMinted;
-        uint256 totalEthToBull;
-        uint256 wethToLend;
-        uint256 usdcToBorrow;
-        uint256 wSqueethToMint;
-        {
-            uint256 fee;
-            (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-            (wSqueethToMint, fee) = _calcWsqueethToMintAndFee(
-                _ethToCrab,
-                squeethInCrab,
-                ethInCrab
-            );
-            
-            uint256 crabToBeMinted = _calcSharesToMint(
-                _ethToCrab.sub(fee),
-                ethInCrab,
-                IERC20(crabV2).totalSupply()
-            );
-
-            uint256 crabUsdPrice = (
-                ethInCrab.wmul(ethPrice()).sub(
-                    squeethInCrab.wmul(squeethPrice()).wmul(ethPrice())
-                )
-            ).wdiv(crabV2.totalSupply());
-
-            (wethToLend, usdcToBorrow) = bullStrategy
+        uint256 bullShare = 1e18;
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
             .calcLeverageEthUsdc(
                 crabToBeMinted,
-                1e18,
-                crabUsdPrice,
-                ethPrice(),
+                bullShare,
+                ethInCrab,
+                squeethInCrab,
                 crabV2.totalSupply()
             );
-        }
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)}(_ethToCrab, 0, 0, 3000);
@@ -235,15 +236,18 @@ contract FlashBullTestFork is Test {
 
         assertEq(
             IEulerDToken(dToken).balanceOf(address(bullStrategy)),
-            usdcToBorrow
+            usdcToBorrow,
+           "Bull USDC debt amount mismatch"
         );
-        assertEq(
+        assertApproxEqAbs(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
+            wethToLend,
+            1000 // Allow 1000 wei difference
         );
         assertEq(
             IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
-            bullCrabBalanceBefore
+            bullCrabBalanceBefore,
+            "Bull crab balance mismatch"
         );
     }
 
