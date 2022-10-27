@@ -220,10 +220,13 @@ contract CrabNetting {
         // TODO the left overs of the previous tx from the flashDeposit will be added here
         to_send.eth = address(this).balance;
 
+        console.log("trying to flashDeposit");
+        console.log(to_send.eth, "to send");
         ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
             _ethToFlashDeposit,
             3000
         );
+        console.log("ending to flashDeposit");
 
         to_send.crab = IERC20(crab).balanceOf(address(this));
 

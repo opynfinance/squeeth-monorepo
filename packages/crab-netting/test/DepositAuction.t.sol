@@ -96,8 +96,8 @@ contract DepositAuctionTest is Test {
         _log(depositsQdInETH, "ETH depo");
 
         // lets get the uniswap price, you can get this from uniswap function in crabstratgegy itself
-        console.log(_getSqthPrice(), "price original");
-        uint256 sqthPrice = (_getSqthPrice() * 988) / 1000;
+        console.log(_getSqthPrice(1e18), "price original");
+        uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
         _log(sqthPrice, "sqth price 15 decimals", 15);
         // get the vault details
         (, , uint256 collateral, uint256 debt) = crab.getVaultDetails();
@@ -145,18 +145,69 @@ contract DepositAuctionTest is Test {
             ICrabStrategyV2(crab).balanceOf(depositor),
             "balance start crab"
         );
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(toFlash, debt, collateral);
+        // ------------- //
         netting.depositAuction(
             depositsQueued,
             depositsQdInETH,
             totalDeposit,
             orders,
             auctionPrice,
-            (toFlash * 982) / 1000
+            (toFlash * mid) / 10**7
             //(excessEth * 396791) / 200000
         );
 
         assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 148e18);
         assertEq(sqth.balanceOf(mm1), toMint);
+    }
+
+    function _findBorrow(
+        uint256 toFlash,
+        uint256 debt,
+        uint256 collateral
+    ) internal returns (uint256) {
+        // we want a precision of six decimals
+        // TODo fix the inifinte loop
+        uint8 decimals = 6;
+
+        uint256 start = 5 * 10**decimals;
+        uint256 end = 30 * 10**decimals;
+        uint256 mid;
+        uint256 ethToBorrow;
+        uint256 totDep;
+        uint256 debtMinted;
+        uint256 ethReceived;
+        while (true) {
+            mid = (start + end) / 2;
+            console.log(mid, "mid");
+            ethToBorrow = (toFlash * mid) / 10**(decimals + 1);
+            console.log(ethToBorrow, "ethborrow");
+            totDep = toFlash + ethToBorrow;
+            debtMinted = (totDep * debt) / collateral;
+
+            // get quote for debt minted and check if eth value is > borrowed but within deviation
+            // if eth value is lesser, then we borrow less so end = mid; else start = mid
+            ethReceived = _getSqthPrice(debtMinted);
+            if (
+                ethReceived >= ethToBorrow &&
+                ethReceived <= (ethToBorrow * 10100) / 10000
+            ) {
+                break;
+            }
+            // mid is the multiple
+            else {
+                if (ethReceived > ethToBorrow) {
+                    start = mid;
+                } else {
+                    end = mid;
+                }
+            }
+        }
+        // why is all the eth not being take in
+        console.log(mid);
+        return mid;
     }
 
     function _isEnough(
@@ -184,13 +235,13 @@ contract DepositAuctionTest is Test {
             );
     }
 
-    function _getSqthPrice() internal returns (uint256) {
+    function _getSqthPrice(uint256 _quantity) internal returns (uint256) {
         return
             quoter.quoteExactInputSingle(
                 address(sqth),
                 address(weth),
                 3000,
-                1e18,
+                _quantity,
                 0
             );
     }
