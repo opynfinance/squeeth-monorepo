@@ -15,7 +15,6 @@ import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
 import {IBullStrategy} from "./interface/IBullStrategy.sol";
-import {console} from "forge-std/console.sol";
 
 /**
  * @notice FlashBull contract
@@ -183,8 +182,6 @@ contract FlashBull is UniBull {
             usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(bullShare);
         }
 
-        console.log("_params.maxEthForSqueeth", _params.maxEthForSqueeth);
-
         // oSQTH-ETH swap
         _exactOutFlashSwap(
             weth,
@@ -193,8 +190,7 @@ contract FlashBull is UniBull {
             wPowerPerpToRedeem,
             _params.maxEthForSqueeth,
             uint8(FLASH_SOURCE.FLASH_SWAP_WPOWERPERP),
-            // abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, _params.maxEthForUsdc, uint256(_params.usdcPoolFee))
-            abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, type(uint256).max, uint256(_params.usdcPoolFee))
+            abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, _params.maxEthForUsdc, uint256(_params.usdcPoolFee))
         );
 
         uint256 proceeds = IERC20(weth).balanceOf(address(this));
@@ -235,8 +231,6 @@ contract FlashBull is UniBull {
             FlashSwapWPowerPerpData memory data = abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
 
             IERC20(wPowerPerp).approve(bullStrategy, data.wPowerPerpToRedeem);
-            console.log("data.maxEthForUsdc", data.maxEthForUsdc);
-            console.log("eth to repay for oSQTH", _uniFlashSwapData.amountToPay);
 
             // ETH-USDC swap
             _exactOutFlashSwap(
@@ -258,9 +252,6 @@ contract FlashBull is UniBull {
 
             IERC20(usdc).approve(bullStrategy, data.usdcToRepay);
             IBullStrategy(bullStrategy).withdraw(data.bullToRedeem);
-
-            console.log("data.usdcToRepay", data.usdcToRepay);
-            console.log("eth to repay for USDC", _uniFlashSwapData.amountToPay);
 
             IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);

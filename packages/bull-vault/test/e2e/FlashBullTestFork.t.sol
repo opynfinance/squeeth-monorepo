@@ -183,24 +183,27 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        uint256 squeethEthPrice = uniBullHelper.getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            TWAP,
-            false
-        );
-
-        uint256 maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-        uint256 maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(101e16));
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 ethToWithdraw, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        {
+            uint256 ethUsdPrice = uniBullHelper.getTwap(
+                ethUsdcPool,
+                weth,
+                usdc,
+                TWAP,
+                false
+            );
+            uint256 squeethEthPrice = uniBullHelper.getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
+            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+        }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullStrategy.balanceOf(user1),
@@ -324,24 +327,28 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        uint256 squeethEthPrice = uniBullHelper.getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            TWAP,
-            false
-        );
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 ethToWithdraw, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        {
+            uint256 ethUsdPrice = uniBullHelper.getTwap(
+                ethUsdcPool,
+                weth,
+                usdc,
+                TWAP,
+                false
+            );
+            uint256 squeethEthPrice = uniBullHelper.getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
 
-        uint256 maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
-        uint256 maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(102e16));
+            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
+            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+        }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullStrategy.balanceOf(user1),
@@ -512,15 +519,16 @@ contract FlashBullTestFork is Test {
         return (wethToLend, usdcToBorrow);
     }
 
-    function calcAssetsNeededForFlashWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256, uint256) {
+    function calcAssetsNeededForFlashWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256, uint256, uint256) {
         uint256 bullShare = _bullAmount.wdiv(bullStrategy.totalSupply());
         uint256 crabToRedeem = bullShare.wmul(crabV2.balanceOf(address(bullStrategy)));
         (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy.getCrabVaultDetails();
         uint256 crabTotalSupply = crabV2.totalSupply();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        uint256 ethToWithdraw = crabToRedeem.wmul(ethInCrab).wdiv(crabTotalSupply);
         uint256 usdcToRepay = bullStrategy.calcUsdcToRepay(bullShare);
 
-        return (crabToRedeem, wPowerPerpToRedeem, usdcToRepay);
+        return (crabToRedeem, wPowerPerpToRedeem, ethToWithdraw, usdcToRepay);
     }
 
     function _calcWethToWithdraw(uint256 _bullAmount) internal view returns (uint256) {
