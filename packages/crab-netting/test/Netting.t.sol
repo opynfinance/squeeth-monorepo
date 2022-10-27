@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 import {CrabNetting} from "../src/CrabNetting.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
 contract FixedERC20 is ERC20 {
     constructor(uint256 initialSupply) ERC20("USDC", "USDC") {
@@ -15,7 +16,10 @@ contract FixedERC20 is ERC20 {
 contract NettingTest is Test {
     FixedERC20 usdc;
     FixedERC20 crab;
+    FixedERC20 weth;
     CrabNetting netting;
+    ISwapRouter public immutable swapRouter =
+        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
     uint256 internal ownerPrivateKey;
     address internal owner;
@@ -27,7 +31,8 @@ contract NettingTest is Test {
     function setUp() public {
         usdc = new FixedERC20(10000 * 1e18);
         crab = new FixedERC20(10000 * 1e18);
-        netting = new CrabNetting(address(usdc), address(crab));
+        weth = new FixedERC20(10000 * 1e18);
+        netting = new CrabNetting(address(usdc), address(crab), address(weth));
 
         ownerPrivateKey = 0xA11CE;
         owner = vm.addr(ownerPrivateKey);

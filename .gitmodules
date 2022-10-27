@@ -33,3 +33,9 @@
 [submodule "packages/crab-netting/lib/openzeppelin-contracts"]
 	path = packages/crab-netting/lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/crab-netting/lib/v3-periphery"]
+	path = packages/crab-netting/lib/v3-periphery
+	url = https://github.com/uniswap/v3-periphery
+[submodule "packages/crab-netting/lib/v3-core"]
+	path = packages/crab-netting/lib/v3-core
+	url = https://github.com/uniswap/v3-core
