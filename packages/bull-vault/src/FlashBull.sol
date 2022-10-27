@@ -74,8 +74,16 @@ contract FlashBull is UniBull {
         uint256 bullToRedeem;
         uint256 usdcToRepay;
     }
+    struct FlashSwapWPowerPerpData {
+        uint256 bullToRedeem;
+        uint256 crabToRedeem;
+        uint256 wPowerPerpToRedeem;
+        uint256 usdcToRepay;
+        uint256 maxEthForUsdc;
+        uint256 usdcPoolFee;
+    }
 
-    event FlashWithdraw();
+    event FlashWithdraw(uint256 bullAmount);
 
     constructor(address _bull, address _factory, address _oracle) UniBull(_factory) {
         bullStrategy = _bull;
@@ -157,15 +165,6 @@ contract FlashBull is UniBull {
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
     }
 
-    struct FlashSwapWPowerPerpData {
-        uint256 bullToRedeem;
-        uint256 crabToRedeem;
-        uint256 wPowerPerpToRedeem;
-        uint256 usdcToRepay;
-        uint256 maxEthForUsdc;
-        uint256 usdcPoolFee;
-    }
-
     function flashWithdraw(FlashWithdrawParams calldata _params) external {
         IERC20(bullStrategy).transferFrom(msg.sender, address(this), _params.bullAmount);
 
@@ -195,7 +194,7 @@ contract FlashBull is UniBull {
 
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit FlashWithdraw();
+        emit FlashWithdraw(_params.bullAmount);
     }
 
     /**
@@ -253,15 +252,18 @@ contract FlashBull is UniBull {
         }
     }
 
+    /**
+     * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     */
     function _calcWsqueethToMintAndFee(
-        uint256 _depositedAmount,
+        uint256 _depositedEthAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount,
         uint256 _squeethEthPrice
     ) internal view returns (uint256, uint256) {
         uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
         uint256 feeAdjustment = _squeethEthPrice.mul(feeRate).div(10000);
-        uint256 wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+        uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
         uint256 fee = wSqueethToMint.wmul(feeAdjustment);
