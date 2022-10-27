@@ -103,7 +103,6 @@ contract FlashBullTestFork is Test {
     }
 
     function testInitialFlashDeposit() public {
-        uint256 totalEthToBull = 4e18;
         uint256 ethToCrab = 5e18;
         uint256 crabUsdPrice;
         uint256 ethInCrab;
@@ -131,7 +130,7 @@ contract FlashBullTestFork is Test {
             ).wdiv(crabV2.totalSupply());
         }
 
-        (, uint256 fee) = _calcWsqueethToMintAndFee(
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             ethToCrab,
             squeethInCrab,
             ethInCrab
@@ -154,6 +153,8 @@ contract FlashBullTestFork is Test {
                 squeethInCrab,
                 crabV2.totalSupply()
             );
+
+        uint256 totalEthToBull = calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
@@ -178,7 +179,7 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Fuzz testing is awesome! ************************************************************
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
-        _ethToCrab = bound(_ethToCrab, 0, 5e18);
+        _ethToCrab = bound(_ethToCrab, 1e18, 5e18);
         {
             (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
             uint256 crabUsdPrice = (
