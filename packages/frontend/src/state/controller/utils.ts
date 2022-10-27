@@ -143,3 +143,15 @@ export async function getCurrentImpliedFunding(contract: Contract | null) {
 
   return Math.log(currMark.dividedBy(currIndex).toNumber()) / FUNDING_PERIOD
 }
+
+export async function getOsqthRefVol() {
+  const response = await fetch(
+    `/api/currentsqueethvol`,
+  ).then((res) => res.json())
+
+  if (response.status === 'error') {
+    throw new Error(response.status)
+  }
+
+  return response*100
+}
