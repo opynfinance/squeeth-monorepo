@@ -201,7 +201,6 @@ contract BullStrategyTestFork is Test {
         IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
         IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
         bullStrategy.withdraw(bullToMint);
-        vm.stopPrank();
 
         assertEq(
             usdcBorrowedBefore.sub(usdcToRepay),

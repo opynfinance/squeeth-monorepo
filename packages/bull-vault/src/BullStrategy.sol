@@ -109,13 +109,14 @@ contract BullStrategy is ERC20, LeverageBull {
         (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
+        require(address(this).balance == 0);
     }
 
     /**
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {
+    function withdraw(uint256 _bullAmount) external {        
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -125,6 +126,7 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
+        
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
         _repayAndWithdrawFromLeverage(share);

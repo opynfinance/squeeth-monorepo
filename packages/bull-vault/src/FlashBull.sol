@@ -193,11 +193,7 @@ contract FlashBull is UniBull {
             abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, _params.maxEthForUsdc, uint256(_params.usdcPoolFee))
         );
 
-        uint256 proceeds = IERC20(weth).balanceOf(address(this));
-        if (proceeds > 0) {
-            IWETH9(weth).withdraw(proceeds);
-            payable(msg.sender).sendValue(proceeds);
-        }
+        payable(msg.sender).sendValue(address(this).balance);
 
         emit FlashWithdraw();
     }
@@ -245,7 +241,6 @@ contract FlashBull is UniBull {
 
             IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-            payable(_uniFlashSwapData.caller).sendValue(address(this).balance);
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_WITHDRAW_BULL) {
             FlashWithdrawBullData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashWithdrawBullData));
