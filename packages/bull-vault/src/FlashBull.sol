@@ -4,7 +4,7 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // contract
-import {UniBull} from "./UniBull.sol";
+import {UniBull} from "./UniBull.sol";import {console} from "forge-std/console.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
