@@ -51,7 +51,7 @@ contract FlashBull is UniFlash {
     /// @dev ETH:USDC Uniswap pool
     address private immutable ethUSDCPool;
     /// @dev bull stratgey address
-    address public immutable bullStrategy;
+    address public bullStrategy;
 
     /// @dev params structs
     struct FlashWithdrawParams {
@@ -88,7 +88,7 @@ contract FlashBull is UniFlash {
 
     event FlashWithdraw(uint256 bullAmount);
 
-    constructor(address _bull, address _factory) UniFlash(_factory) {
+    constructor(address _bull, address _factory, address _oracle) UniFlash(_factory) {
         bullStrategy = _bull;
         crab = IBullStrategy(_bull).crab();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();

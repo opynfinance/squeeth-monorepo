@@ -135,24 +135,6 @@ contract BullStrategy is ERC20, LeverageBull {
         return _getCrabVaultDetails();
     }
 
-    /**
-     * @notice increase internal accounting of bull stragtegy's crab balance
-     * @param _crabAmount crab amount
-     */
-    function _increaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
-        _crabBalance = _crabBalance.add(_crabAmount);
-        return _crabBalance;
-    }
-
-    /**
-     * @notice decrease internal accounting of bull strategy's crab balance
-     * @param _crabAmount crab amount
-     */
-    function _decreaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
-        _crabBalance = _crabBalance.sub(_crabAmount);
-        return _crabBalance;
-    }
-
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());

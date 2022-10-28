@@ -26,11 +26,11 @@ contract LeverageBull {
     uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
-    address internal immutable ethWSqueethPool;
+    address private immutable ethWSqueethPool;
     /// @dev ETH:USDC Uniswap pool
-    address internal immutable ethUSDCPool;
+    address private immutable ethUSDCPool;
     /// @dev wPowerPerp address
-    address internal immutable wPowerPerp;
+    address private immutable wPowerPerp;
     /// @dev USDC address
     address internal immutable usdc;
     /// @dev WETH address
