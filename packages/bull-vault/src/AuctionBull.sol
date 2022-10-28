@@ -36,7 +36,7 @@ contract AuctionBull is UniFlash, Ownable {
         GENERAL_SWAP
     }
 
-    constructor(address _auctionOwner, address _auctionManager, address payable _bull) Ownable() {
+    constructor(address _auctionOwner, address _auctionManager, address _bull) Ownable() {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
@@ -48,7 +48,7 @@ contract AuctionBull is UniFlash, Ownable {
     /**
      * @dev changes the leverage component composition by buying or selling eth
      */
-    function leverageRebalance(bool _isSellingEth, uint256 _amountIn, uint256 _minAmountOut, uint24 _poolFee) external payable {
+    function leverageRebalance(bool _isSellingEth, uint256 _amountIn, uint256 _minAmountOut, uint24 _poolFee) external {
         if (_isSellingEth) {
             // Withdraw ETH from collateral
             IBullStrategy(bullStrategy).withdrawWethFromEuler(_amountIn, false); 
