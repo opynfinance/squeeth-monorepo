@@ -96,8 +96,7 @@ contract BullStrategy is ERC20, LeverageBull {
             _mint(msg.sender, _crabAmount);
         } else {
             share = _crabAmount.wdiv(IERC20(crab).balanceOf(address(this)));
-            uint256 bullTotalSupply = totalSupply();
-            bullToMint = share.wmul(bullTotalSupply).wdiv(ONE.sub(bullTotalSupply));
+            bullToMint = share.wmul(totalSupply()).wdiv(ONE.sub(share));
             _mint(msg.sender, bullToMint);
         }
 

@@ -251,8 +251,7 @@ contract BullStrategyTestFork is Test {
             return _crabToDeposit;
         } else {
             uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
-            uint256 bullTotalSupply = bullStrategy.totalSupply();
-            return share.wmul(bullTotalSupply).wdiv(uint256(1e18).sub(bullTotalSupply));
+            return share.wmul(bullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
     }
 
