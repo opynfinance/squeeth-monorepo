@@ -142,6 +142,40 @@ abstract contract LeverageBull is UniBull {
      * @param _ethToDeposit amount of ETH to deposit
      * @param _wrapEth wrap ETH to WETH if true
      */
+    function depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) external {
+        _depositEthInEuler(_ethToDeposit, _wrapEth);
+    }
+
+    /**
+     * @dev borrow USDC from Euler against deposited collateral
+     * @param _usdcToBorrow amount of USDC to borrow
+     */
+    function borrowUsdcFromEuler(uint256 _usdcToBorrow) external {
+        _borrowUsdcFromEuler(_usdcToBorrow);
+    }
+
+    /**
+     * @dev withdraw eth from collateral in Euler market
+     * @param _ethToWithdraw amount of ETH to withdraw
+     * @param _unwrapWeth unwrap WETH to ETH if true
+     */
+    function withdrawEthFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) external {
+        _withdrawEthFromEuler(_ethToWithdraw, _unwrapWeth);
+    }
+
+    /**
+     * @dev repay USDC to Euler
+     * @param _usdcToRepay amount of USDC to repay
+     */
+    function repayUsdcToEuler(uint256 _usdcToRepay) external {
+        _repayUsdcToEuler(_usdcToRepay);
+    }
+
+    /**
+     * @dev deposit weth as collateral in Euler market
+     * @param _ethToDeposit amount of ETH to deposit
+     * @param _wrapEth wrap ETH to WETH if true
+     */
     function _depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
         if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
@@ -157,6 +191,24 @@ abstract contract LeverageBull is UniBull {
     }
 
     /**
+     * @dev withdraw eth from collateral in Euler market
+     * @param _ethToDeposit amount of ETH to deposit
+     * @param _wrapEth wrap ETH to WETH if true
+     */
+    function _withdrawEthFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) internal {
+        IEulerEToken(eToken).withdraw(0, wethToWithdraw);
+        if (_unwrapWeth) IWETH9(weth).withdraw(_ethToWithdraw);
+    }
+
+    /**
+     * @dev borrow USDC from Euler against deposited collateral
+     * @param _usdcToBorrow amount of USDC to borrow
+     */
+    function _repayUsdcToEuler(uint256 _usdcToRepay) internal {
+        IEulerDToken(dToken).repay(0, _usdcToRepay);
+    }
+
+    /**
      * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
@@ -165,10 +217,8 @@ abstract contract LeverageBull is UniBull {
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 
         IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
-        IEulerDToken(dToken).repay(0, usdcToRepay);
-        IEulerEToken(eToken).withdraw(0, wethToWithdraw);
-
-        IWETH9(weth).withdraw(wethToWithdraw);
+        _repayUsdcToEuler(usdcToRepay);
+        _withdrawEthFromEuler(wethToWithdraw, true);
 
         emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
