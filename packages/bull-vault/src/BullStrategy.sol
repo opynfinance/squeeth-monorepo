@@ -10,7 +10,6 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 import {LeverageBull} from "./LeverageBull.sol";
-import {UniBull} from "./UniBull.sol";
 // lib
 import {Address} from "openzeppelin/utils/Address.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -61,17 +60,14 @@ contract BullStrategy is ERC20, LeverageBull {
      * @dev this will open a vault in the power token contract and store the vault ID
      * @param _crab crab address
      * @param _powerTokenController wPowerPerp Controller address
-     * @param _factory uniswap factory
      */
     constructor(
         address _crab,
         address _powerTokenController,
-        address _factory,
         address _euler,
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
-        UniBull(_factory)
         LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
@@ -138,8 +134,6 @@ contract BullStrategy is ERC20, LeverageBull {
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
-
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {}
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());

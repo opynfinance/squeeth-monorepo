@@ -14,11 +14,11 @@ import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
 import {BullStrategy} from "../../src/BullStrategy.sol";
 import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import {Controller} from "squeeth-monorepo/core/Controller.sol";
-import {UniBullHelper} from "../helper/UniBullHelper.sol";
 import {FlashBull} from "../../src/FlashBull.sol";
 // lib
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {UniOracle} from "../../src/UniOracle.sol";
 
 /**
  * @notice Ropsten fork testing
@@ -33,7 +33,6 @@ contract FlashBullTestFork is Test {
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    UniBullHelper internal uniBullHelper;
 
     address internal weth;
     address internal usdc;
@@ -68,12 +67,8 @@ contract FlashBullTestFork is Test {
         bullStrategy = new BullStrategy(
             address(crabV2),
             address(controller),
-            0x1F98431c8aD98523631AE4a59f267346ea31F984,
             euler,
             eulerMarketsModule
-        );
-        uniBullHelper = new UniBullHelper(
-            0x1F98431c8aD98523631AE4a59f267346ea31F984
         );
         flashBull = new FlashBull(
             address(bullStrategy),
@@ -116,7 +111,7 @@ contract FlashBullTestFork is Test {
         uint256 crabUsdPrice;
         uint256 ethInCrab;
         uint256 squeethInCrab;
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
+        uint256 ethUsdPrice = UniOracle._getTwap(
             ethUsdcPool,
             weth,
             usdc,
@@ -124,7 +119,7 @@ contract FlashBullTestFork is Test {
             false
         );
         {
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -196,14 +191,14 @@ contract FlashBullTestFork is Test {
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = uniBullHelper.getTwap(
+            uint256 ethUsdPrice = UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
                 TWAP,
                 false
             );
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -262,7 +257,7 @@ contract FlashBullTestFork is Test {
         uint256 crabUsdPrice;
         uint256 ethInCrab;
         uint256 squeethInCrab;
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
+        uint256 ethUsdPrice = UniOracle._getTwap(
             ethUsdcPool,
             weth,
             usdc,
@@ -270,7 +265,7 @@ contract FlashBullTestFork is Test {
             false
         );
         {
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -344,14 +339,14 @@ contract FlashBullTestFork is Test {
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = uniBullHelper.getTwap(
+            uint256 ethUsdPrice = UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
                 TWAP,
                 false
             );
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -407,7 +402,7 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Helper functions! ************************************************************
      */
     function squeethPrice() internal view returns (uint256) {
-        return uniBullHelper.getTwap(
+        return UniOracle._getTwap(
             ethWSqueethPool,
             wPowerPerp,
             weth,
@@ -417,7 +412,7 @@ contract FlashBullTestFork is Test {
     }
 
     function ethPrice() internal view returns (uint256) {
-        return uniBullHelper.getTwap(
+        return UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
@@ -441,7 +436,7 @@ contract FlashBullTestFork is Test {
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
-        uint256 wSqueethEthPrice = uniBullHelper.getTwap(
+        uint256 wSqueethEthPrice = UniOracle._getTwap(
             ethWSqueethPool,
             wPowerPerp,
             weth,
@@ -510,10 +505,10 @@ contract FlashBullTestFork is Test {
         uint256 usdcToBorrow;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             {
-                uint256 ethUsdPrice = uniBullHelper.getTwap(
+                uint256 ethUsdPrice = UniOracle._getTwap(
                     controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
                 );
-                uint256 squeethEthPrice = uniBullHelper.getTwap(
+                uint256 squeethEthPrice = UniOracle._getTwap(
                     controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
                 );
                 (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();

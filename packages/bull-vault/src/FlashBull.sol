@@ -3,12 +3,6 @@ pragma solidity =0.7.6;
 
 pragma abicoder v2;
 
-// contract
-import {UniBull} from "./UniBull.sol";
-
-// lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {Address} from "openzeppelin/utils/Address.sol";
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
@@ -16,16 +10,23 @@ import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
 import {IBullStrategy} from "./interface/IBullStrategy.sol";
+// contract
+import {UniFlash} from "./UniFlash.sol";
+// lib
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {Address} from "openzeppelin/utils/Address.sol";
+import {UniOracle} from "./UniOracle.sol";
 
 /**
  * @notice FlashBull contract
  * @dev handle the flashswap interactions
  * @author opyn team
  */
-contract FlashBull is UniBull {
+contract FlashBull is UniFlash {
     using StrategyMath for uint256;
     using Address for address payable;
 
+    uint256 private constant ONE = 1e18;
     uint32 private constant TWAP = 420;
 
     /// @dev enum to differentiate between Uniswap swap callback function source
@@ -43,15 +44,13 @@ contract FlashBull is UniBull {
     address private immutable weth;
     /// @dev usdc address
     address private immutable usdc;
+    /// @dev Crab V2 address
+    address private immutable crab;
     /// @dev ETH:wSqueeth Uniswap pool
     address private immutable ethWSqueethPool;
     /// @dev ETH:USDC Uniswap pool
     address private immutable ethUSDCPool;
-    /// @dev Crab V2 address
-    address private immutable crab;
-    /// @dev Uniswap oracle address
-    address public immutable oracle;
-
+    /// @dev bull stratgey address
     address public bullStrategy;
 
     /// @dev params structs
@@ -86,9 +85,8 @@ contract FlashBull is UniBull {
 
     event FlashWithdraw(uint256 bullAmount);
 
-    constructor(address _bull, address _factory, address _oracle) UniBull(_factory) {
+    constructor(address _bull, address _factory, address _oracle) UniFlash(_factory) {
         bullStrategy = _bull;
-        oracle = _oracle;
         crab = IBullStrategy(_bull).crab();
         wPowerPerp = IController(IBullStrategy(bullStrategy).powerTokenController()).wPowerPerp();
         weth = IController(IBullStrategy(bullStrategy).powerTokenController()).weth();
@@ -122,7 +120,7 @@ contract FlashBull is UniBull {
             (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
             
             uint256 ethFee;
-            uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
             crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
 
