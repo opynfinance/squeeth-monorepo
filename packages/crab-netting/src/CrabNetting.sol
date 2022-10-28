@@ -33,9 +33,8 @@ contract CrabNetting {
     address usdc;
     address crab;
     address weth;
-    address immutable sqth = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
-    ISwapRouter public immutable swapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    address sqth;
+    ISwapRouter swapRouter;
 
     mapping(address => uint256) public usd_balance;
     mapping(address => uint256) public crab_balance;
@@ -53,7 +52,9 @@ contract CrabNetting {
     constructor(
         address _usdc,
         address _crab,
-        address _weth
+        address _weth,
+        address _sqth,
+        address _swapRouter
     ) {
         payable(0x0000000000000000000000000000000000000000).transfer(
             address(this).balance
@@ -61,6 +62,8 @@ contract CrabNetting {
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
+        sqth = _sqth;
+        swapRouter = ISwapRouter(_swapRouter);
 
         // approve crab and sqth so withdraw can happen
         IERC20(crab).approve(crab, 10e36);

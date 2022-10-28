@@ -17,6 +17,7 @@ contract NettingTest is Test {
     FixedERC20 usdc;
     FixedERC20 crab;
     FixedERC20 weth;
+    FixedERC20 sqth;
     CrabNetting netting;
     ISwapRouter public immutable swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
@@ -32,9 +33,15 @@ contract NettingTest is Test {
         usdc = new FixedERC20(10000 * 1e18);
         crab = new FixedERC20(10000 * 1e18);
         weth = new FixedERC20(10000 * 1e18);
-        vm.etch(0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B, address(weth).code);
+        sqth = new FixedERC20(10000 * 1e18);
 
-        netting = new CrabNetting(address(usdc), address(crab), address(weth));
+        netting = new CrabNetting(
+            address(usdc),
+            address(crab),
+            address(weth),
+            address(sqth),
+            address(swapRouter)
+        );
 
         ownerPrivateKey = 0xA11CE;
         owner = vm.addr(ownerPrivateKey);

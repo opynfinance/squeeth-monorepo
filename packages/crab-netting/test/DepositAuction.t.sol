@@ -59,7 +59,13 @@ contract DepositAuctionTest is Test {
         usdc.transfer(depositor, 500000e6);
         vm.stopPrank();
 
-        netting = new CrabNetting(address(usdc), address(crab), address(weth));
+        netting = new CrabNetting(
+            address(usdc),
+            address(crab),
+            address(weth),
+            address(sqth),
+            address(swapRouter)
+        );
         console.log(address(netting).balance, "netting balance at deploy");
         vm.startPrank(depositor);
         usdc.approve(address(netting), 200000 * 1e6);

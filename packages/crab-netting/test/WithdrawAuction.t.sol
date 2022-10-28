@@ -65,7 +65,13 @@ contract TestWithdrawAuction is Test {
         sqth.transfer(mm2, 1000e18);
         vm.stopPrank();
 
-        netting = new CrabNetting(address(usdc), address(crab), address(weth));
+        netting = new CrabNetting(
+            address(usdc),
+            address(crab),
+            address(weth),
+            address(sqth),
+            address(swapRouter)
+        );
 
         // deposit crab for withdrawing
         vm.startPrank(withdrawer);
