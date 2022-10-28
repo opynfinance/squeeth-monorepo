@@ -134,9 +134,7 @@ contract BullStrategy is ERC20, LeverageBull {
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
-
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {}
-
+    
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 

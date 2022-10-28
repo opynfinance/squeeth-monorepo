@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
+import {console2} from "forge-std/console2.sol";
 //interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
@@ -14,11 +15,11 @@ import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
 import {BullStrategy} from "../../src/BullStrategy.sol";
 import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import {Controller} from "squeeth-monorepo/core/Controller.sol";
-import {UniBullHelper} from "../helper/UniBullHelper.sol";
 import {FlashBull} from "../../src/FlashBull.sol";
 // lib
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {UniOracle} from "../../src/UniOracle.sol";
 
 /**
  * @notice Ropsten fork testing
@@ -33,7 +34,6 @@ contract FlashBullTestFork is Test {
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    UniBullHelper internal uniBullHelper;
 
     address internal weth;
     address internal usdc;
@@ -68,17 +68,12 @@ contract FlashBullTestFork is Test {
         bullStrategy = new BullStrategy(
             address(crabV2),
             address(controller),
-            0x1F98431c8aD98523631AE4a59f267346ea31F984,
             euler,
             eulerMarketsModule
         );
-        uniBullHelper = new UniBullHelper(
-            0x1F98431c8aD98523631AE4a59f267346ea31F984
-        );
         flashBull = new FlashBull(
             address(bullStrategy),
-            0x1F98431c8aD98523631AE4a59f267346ea31F984,
-            0x65D66c76447ccB45dAf1e8044e918fA786A483A1
+            0x1F98431c8aD98523631AE4a59f267346ea31F984
         );
         vm.stopPrank();
         usdc = controller.quoteCurrency();
@@ -113,32 +108,7 @@ contract FlashBullTestFork is Test {
 
     function testInitialFlashDeposit() public {
         uint256 ethToCrab = 5e18;
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-            crabUsdPrice = (
-                ethInCrab.wmul(ethUsdPrice).sub(
-                    squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
-                )
-            ).wdiv(crabV2.totalSupply());
-        }
-
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             ethToCrab,
             squeethInCrab,
@@ -196,14 +166,14 @@ contract FlashBullTestFork is Test {
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = uniBullHelper.getTwap(
+            uint256 ethUsdPrice = UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
                 TWAP,
                 false
             );
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -259,26 +229,7 @@ contract FlashBullTestFork is Test {
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
         _ethToCrab = bound(_ethToCrab, 1e16, 1890e18); // 1890 ETH because can't hit Crab cap
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = uniBullHelper.getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-        }
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
 
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             _ethToCrab,
@@ -340,18 +291,18 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 ethToWithdrawFromCrab, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, , uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = uniBullHelper.getTwap(
+            uint256 ethUsdPrice = UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
                 TWAP,
                 false
             );
-            uint256 squeethEthPrice = uniBullHelper.getTwap(
+            uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
@@ -376,8 +327,8 @@ contract FlashBullTestFork is Test {
         uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
-        uint256 ethToWithdrawFromBull = ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
-        userEthBalanceBeforeTx = user1.balance;
+        // uint256 ethToWithdrawFromBull = ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+        // userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
         bullStrategy.approve(address(flashBull), params.bullAmount);
@@ -398,7 +349,7 @@ contract FlashBullTestFork is Test {
         assertEq(
             crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull crab balance mismatch"
         );
-        // ignoring the assert below because I couldn't find a exact way to calc ethToWithdrawFromBull as I'm setting maxToPay higher than the actual slippage
+        // ignoring the assert below because I couldn't find a exact way to calc ethToWithdrawFromBull as I'm setting maxToPay higher than the actual slippage, need to read events
         // assertTrue((user1.balance).sub(userEthBalanceBeforeTx).sub(ethToWithdrawFromBull) <= 1e18);
     }
 
@@ -407,7 +358,7 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Helper functions! ************************************************************
      */
     function squeethPrice() internal view returns (uint256) {
-        return uniBullHelper.getTwap(
+        return UniOracle._getTwap(
             ethWSqueethPool,
             wPowerPerp,
             weth,
@@ -417,7 +368,7 @@ contract FlashBullTestFork is Test {
     }
 
     function ethPrice() internal view returns (uint256) {
-        return uniBullHelper.getTwap(
+        return UniOracle._getTwap(
                 ethUsdcPool,
                 weth,
                 usdc,
@@ -441,7 +392,7 @@ contract FlashBullTestFork is Test {
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
-        uint256 wSqueethEthPrice = uniBullHelper.getTwap(
+        uint256 wSqueethEthPrice = UniOracle._getTwap(
             ethWSqueethPool,
             wPowerPerp,
             weth,
@@ -510,10 +461,10 @@ contract FlashBullTestFork is Test {
         uint256 usdcToBorrow;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             {
-                uint256 ethUsdPrice = uniBullHelper.getTwap(
+                uint256 ethUsdPrice = UniOracle._getTwap(
                     controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
                 );
-                uint256 squeethEthPrice = uniBullHelper.getTwap(
+                uint256 squeethEthPrice = UniOracle._getTwap(
                     controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
                 );
                 (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();

@@ -283,7 +283,7 @@ contract BullStrategyTestFork is Test {
                 uint256 ethUsdPrice = UniOracle._getTwap(
                     controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
                 );
-                uint256 squeethEthPrice = uniBullHelper.getTwap(
+                uint256 squeethEthPrice = UniOracle._getTwap(
                     controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
                 );
                 (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();

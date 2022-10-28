@@ -6,8 +6,6 @@ pragma abicoder v2;
 // interface
 import "v3-core/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "v3-core/interfaces/IUniswapV3Pool.sol";
-import {IERC20Detailed} from "squeeth-monorepo/interfaces/IERC20Detailed.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 
 // lib
 import "v3-periphery/libraries/Path.sol";
@@ -26,8 +24,6 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
     using Path for bytes;
     using SafeCast for uint256;
     using SafeMath for uint256;
-
-    uint256 internal constant ONE = 1e18;
 
     /// @dev Uniswap factory address
     address internal immutable factory;
@@ -92,53 +88,6 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual {}
-
-    /**
-     * @notice get twap converted with base & quote token decimals
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
-     * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return price of 1 base currency in quote currency. scaled by 1e18
-     */
-    function _getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
-        internal
-        view
-        returns (uint256)
-    {
-        // if the period is already checked, request TWAP directly. Will revert if period is too long.
-        if (!_checkPeriod) return _fetchTwap(_pool, _base, _quote, _period);
-
-        // make sure the requested period < maxPeriod the pool recorded.
-        uint32 maxPeriod = _getMaxPeriod(_pool);
-        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
-        return _fetchTwap(_pool, _base, _quote, requestPeriod);
-    }
-
-    /**
-     * @notice get twap converted with base & quote token decimals
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
-     * @param _pool uniswap pool address
-     * @param _base base currency. to get eth/usd price, eth is base token
-     * @param _quote quote currency. to get eth/usd price, usd is the quote currency
-     * @param _period number of seconds in the past to start calculating time-weighted average
-     * @return twap price which is scaled
-     */
-    function _fetchTwap(address _pool, address _base, address _quote, uint32 _period) internal view returns (uint256) {
-        int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, uint128(ONE), _base, _quote);
-
-        uint8 baseDecimals = IERC20Detailed(_base).decimals();
-        uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
-        if (baseDecimals == quoteDecimals) return quoteAmountOut;
-
-        // if quote token has less decimals, the returned quoteAmountOut will be lower, need to scale up by decimal difference
-        if (baseDecimals > quoteDecimals) return quoteAmountOut.mul(10 ** (baseDecimals - quoteDecimals));
-
-        // if quote token has more decimals, the returned quoteAmountOut will be higher, need to scale down by decimal difference
-        return quoteAmountOut.div(10 ** (quoteDecimals - baseDecimals));
-    }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)
@@ -290,47 +239,13 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
     }
 
     /**
-     * @notice swapExactInputSingle swaps a given amount of tokenIn for a maximum possible amount of tokenOut
-     * @dev The calling address must approve this contract to spend at least `amountIn` worth of its tokenIn for this function to succeed.
-     * @param _tokenIn token address to sell
-     * @param _tokenOut token address to receive
-     * @param _from from which user we are selling
-     * @param _to Recipient to get the tokens
-     * @param _amountIn Exact amount to sell
-     * @param _minAmountOut Minimum amount to be paid
-     * @param _fee pool fee
-     * @return amountOut The amount of WETH9 received.
+     * @notice returns the uniswap pool for the given token pair and fee
+     * @dev the pool contract may or may not exist
+     * @param tokenA address of first token
+     * @param tokenB address of second token
+     * @param fee fee tier for pool
      */
-    function _swapExactInputSingle(
-        address _tokenIn,
-        address _tokenOut,
-        address _from,
-        address _to,
-        uint256 _amountIn,
-        uint256 _minAmountOut,
-        uint24 _fee
-    ) internal returns (uint256 amountOut) {
-        // _from must approve this contract
-
-        // Transfer the specified amount of tokenIn to this contract.
-        IERC20(_tokenIn).transferFrom(_from, address(this), _amountIn);
-
-        // Approve the router to spend tokenIn.
-        IERC20(_tokenIn).approve(address(swapRouter), _amountIn);
-
-        // We also set the sqrtPriceLimitx96 to be 0 to ensure we swap our exact input amount.
-        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
-            tokenIn: _tokenIn,
-            tokenOut: _tokenOut,
-            fee: _fee,
-            recipient: _to,
-            deadline: block.timestamp,
-            amountIn: _amountIn,
-            amountOutMinimum: _minAmountOut,
-            sqrtPriceLimitX96: 0
-        });
-
-        // The call to `exactInputSingle` executes the swap.
-        amountOut = swapRouter.exactInputSingle(params);
+    function _getPool(address tokenA, address tokenB, uint24 fee) internal view returns (IUniswapV3Pool) {
+        return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
     }
 }
