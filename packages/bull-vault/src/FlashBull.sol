@@ -51,7 +51,7 @@ contract FlashBull is UniFlash {
     /// @dev ETH:USDC Uniswap pool
     address private immutable ethUSDCPool;
     /// @dev bull stratgey address
-    address public bullStrategy;
+    address public immutable bullStrategy;
 
     /// @dev params structs
     struct FlashWithdrawParams {
@@ -88,7 +88,7 @@ contract FlashBull is UniFlash {
 
     event FlashWithdraw(uint256 bullAmount);
 
-    constructor(address _bull, address _factory, address _oracle) UniFlash(_factory) {
+    constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
         crab = IBullStrategy(_bull).crab();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
@@ -152,7 +152,7 @@ contract FlashBull is UniFlash {
         if (IERC20(bullStrategy).totalSupply() == 0) {
             share = ONE;
         } else {
-            share = crabAmount.wdiv(IBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
+            share = crabAmount.wdiv(IERC20(crab).balanceOf(bullStrategy).add(crabAmount));
         }
         (uint256 ethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(
             crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()

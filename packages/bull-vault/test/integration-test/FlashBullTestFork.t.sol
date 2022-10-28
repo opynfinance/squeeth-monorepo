@@ -107,32 +107,7 @@ contract FlashBullTestFork is Test {
 
     function testInitialFlashDeposit() public {
         uint256 ethToCrab = 5e18;
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = UniOracle._getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-            crabUsdPrice = (
-                ethInCrab.wmul(ethUsdPrice).sub(
-                    squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
-                )
-            ).wdiv(crabV2.totalSupply());
-        }
-
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             ethToCrab,
             squeethInCrab,
@@ -412,26 +387,7 @@ contract FlashBullTestFork is Test {
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
         _ethToCrab = bound(_ethToCrab, 1e16, 1890e18); // 1890 ETH because can't hit Crab cap
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = UniOracle._getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-        }
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
 
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             _ethToCrab,
