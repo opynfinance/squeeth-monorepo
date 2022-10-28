@@ -8,6 +8,8 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IEulerMarkets} from "./interface/IEulerMarkets.sol";
 import {IEulerEToken} from "./interface/IEulerEToken.sol";
 import {IEulerDToken} from "./interface/IEulerDToken.sol";
+// contract
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {UniOracle} from "./UniOracle.sol";
@@ -17,20 +19,21 @@ import {UniOracle} from "./UniOracle.sol";
  * @dev contract that interact mainly with leverage component
  * @author opyn team
  */
-contract LeverageBull {
+contract LeverageBull is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
     uint32 private constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
+    /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
-    address private immutable ethWSqueethPool;
+    address internal immutable ethWSqueethPool;
     /// @dev ETH:USDC Uniswap pool
-    address private immutable ethUSDCPool;
+    address internal immutable ethUSDCPool;
     /// @dev wPowerPerp address
-    address private immutable wPowerPerp;
+    address internal immutable wPowerPerp;
     /// @dev USDC address
     address internal immutable usdc;
     /// @dev WETH address
@@ -41,6 +44,8 @@ contract LeverageBull {
     address internal immutable eToken;
     /// @dev euler dToken that represent the borrowed asset
     address internal immutable dToken;
+    /// @dev auction contract address
+    address public auction;
 
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
 
@@ -50,7 +55,7 @@ contract LeverageBull {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(address _euler, address _eulerMarkets, address _powerTokenController) {
+    constructor(address _owner, address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(IController(_powerTokenController).weth());
         dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
@@ -62,6 +67,15 @@ contract LeverageBull {
 
         IERC20(IController(_powerTokenController).weth()).approve(_euler, type(uint256).max);
         IERC20(IController(_powerTokenController).quoteCurrency()).approve(_euler, type(uint256).max);
+
+        transferOwnership(_owner);
+    }
+
+    function setAuction(address _newAuction) external {
+        require(msg.sender == owner());
+        require(_newAuction != address(0));
+
+        auction = _newAuction;
     }
 
     /**
@@ -69,7 +83,8 @@ contract LeverageBull {
      * @param _ethToDeposit amount of ETH to deposit
      * @param _wrapEth wrap ETH to WETH if true
      */
-    function depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) external {
+    function depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) external {
+        require(_isAuction());
         _depositEthInEuler(_ethToDeposit, _wrapEth);
     }
 
@@ -78,6 +93,7 @@ contract LeverageBull {
      * @param _usdcToBorrow amount of USDC to borrow
      */
     function borrowUsdcFromEuler(uint256 _usdcToBorrow) external {
+        require(_isAuction());
         _borrowUsdcFromEuler(_usdcToBorrow);
     }
 
@@ -86,7 +102,8 @@ contract LeverageBull {
      * @param _ethToWithdraw amount of ETH to withdraw
      * @param _unwrapWeth unwrap WETH to ETH if true
      */
-    function withdrawEthFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) external {
+    function withdrawWethFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) external {
+        require(_isAuction());
         _withdrawEthFromEuler(_ethToWithdraw, _unwrapWeth);
     }
 
@@ -95,6 +112,7 @@ contract LeverageBull {
      * @param _usdcToRepay amount of USDC to repay
      */
     function repayUsdcToEuler(uint256 _usdcToRepay) external {
+        require(_isAuction());
         _repayUsdcToEuler(_usdcToRepay);
     }
 
@@ -221,5 +239,9 @@ contract LeverageBull {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
+
+    function _isAuction() internal view returns (bool) {
+        return msg.sender == auction;
     }
 }

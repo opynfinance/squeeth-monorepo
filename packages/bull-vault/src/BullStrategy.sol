@@ -24,34 +24,13 @@ contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    /// @dev set to true when redeemShortShutdown has been called
-    bool private hasRedeemedInShutdown;
-    /// @dev ETH:wSqueeth Uniswap pool
-    address private immutable ethWSqueethPool;
-    /// @dev ETH:USDC Uniswap pool
-    address private immutable ethUSDCPool;
-    /// @dev wPowerPerp address
-    address private immutable wPowerPerp;
-
     /// @dev Crab contract address
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
 
-    /// @dev true if Bull was initialized
-    bool public isInitialized;
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have before rebalancing
-    uint256 public crLower;
-    /// @dev target CR for our ETH collateral
-    uint256 public crTarget;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
 
@@ -62,19 +41,17 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _powerTokenController wPowerPerp Controller address
      */
     constructor(
+        address _owner,
         address _crab,
         address _powerTokenController,
         address _euler,
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
-        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
+        LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
-        wPowerPerp = IController(_powerTokenController).wPowerPerp();
-        ethWSqueethPool = IController(_powerTokenController).wPowerPerpPool();
-        ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
     }
 
     receive() external payable {

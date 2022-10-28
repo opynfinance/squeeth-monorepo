@@ -5,6 +5,10 @@ pragma solidity =0.7.6;
 interface IBullStrategy {
     function deposit(uint256 _crabAmount) external payable;
     function withdraw(uint256 _bullAmount) external;
+    function withdrawWethFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) external;
+    function repayUsdcToEuler(uint256 _usdcToRepay) external;
+    function depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) external;
+    function borrowUsdcFromEuler(uint256 _usdcToBorrow) external;
     function crab() external view returns (address);
     function powerTokenController() external view returns (address);
     function getCrabVaultDetails() external view returns (uint256, uint256);
