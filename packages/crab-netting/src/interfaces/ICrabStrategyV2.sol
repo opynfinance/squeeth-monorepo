@@ -16,7 +16,14 @@ interface ICrabStrategyV2 is IERC20 {
 
     function deposit() external payable;
 
+    function withdraw(uint256 _crabAmount) external;
+
     function flashDeposit(uint256 _ethToDeposit, uint24 _poolFee)
         external
         payable;
+
+    function getWsqueethFromCrabAmount(uint256 _crabAmount)
+        external
+        view
+        returns (uint256);
 }

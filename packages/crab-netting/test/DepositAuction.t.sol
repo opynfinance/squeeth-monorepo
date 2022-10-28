@@ -76,13 +76,6 @@ contract DepositAuctionTest is Test {
     }
 
     function _findTotalDeposit() internal {
-        // const _ethAmount = toBigNumber(ethAmount || '0', 18)
-        // const _limitPrice = toBigNumber(limitPrice || '0', 18)
-        // const debt = vault.shortAmount
-        // const collat = vault.collateral
-        // totalDeposit = userEth / (1-(debt*oSQTHPx / collateral))
-        // const totalDeposit = wdiv(_ethAmount, BIG_ONE.sub(wdiv(wmul(debt, _limitPrice), collat)))
-        // ====
         // get the usd to deposit remaining
         uint256 depositsQueued = netting.depositsQueued();
         // find the eth value of it

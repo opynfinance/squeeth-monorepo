@@ -39,7 +39,7 @@ contract CrabNetting {
 
     mapping(address => uint256) public usd_balance;
     mapping(address => uint256) public crab_balance;
-    mapping(address => uint256[]) public deposits_index;
+    mapping(address => uint256[]) public deposits_index; // TODO change var name to userReceiptsIndex
     mapping(address => uint256[]) public withdraws_index;
     struct Receipt {
         address sender;
@@ -61,6 +61,13 @@ contract CrabNetting {
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
+
+        // approve crab and sqth so withdraw can happen
+        IERC20(crab).approve(crab, 10e36);
+        IERC20(sqth).approve(crab, 10e36);
+
+        IERC20(weth).approve(address(swapRouter), 10e36);
+        IERC20(usdc).approve(address(swapRouter), 10e36);
     }
 
     function depositUSDC(uint256 _amount) public {
@@ -198,6 +205,7 @@ contract CrabNetting {
         return sum;
     }
 
+    // TODO change order to _orders
     function depositAuction(
         uint256 _depositsQueued,
         uint256 _minEth,
@@ -320,6 +328,78 @@ contract CrabNetting {
         }
 
         console.log(address(this).balance, "ETH not deposited");
+    }
+
+    function withdrawAuction(
+        uint256 _crabToWithdraw,
+        Order[] calldata _orders,
+        uint256 _clearingPrice,
+        uint256 _minUSDC
+    ) external payable {
+        // get all the sqth in
+        for (uint256 i = 0; i < _orders.length; i++) {
+            IERC20(sqth).transferFrom(
+                _orders[i].trader,
+                address(this),
+                _orders[i].quantity
+            );
+        }
+        ICrabStrategyV2(crab).withdraw(_crabToWithdraw);
+        IWETH(weth).deposit{value: address(this).balance}();
+
+        // pay all mms
+        for (uint256 i = 0; i < _orders.length; i++) {
+            IERC20(weth).transfer(
+                _orders[i].trader,
+                (_orders[i].quantity * _clearingPrice) / 1e18
+            );
+        }
+
+        //convert WETH to USDC and send to withdrawers proportionally
+        // convert to USDC
+        ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
+            .ExactInputSingleParams({
+                tokenIn: address(weth),
+                tokenOut: address(usdc),
+                fee: 500,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: IERC20(weth).balanceOf(address(this)),
+                amountOutMinimum: _minUSDC,
+                sqrtPriceLimitX96: 0
+            });
+
+        // The call to `exactInputSingle` executes the swap.
+        uint256 usdcReceived = swapRouter.exactInputSingle(params);
+
+        // pay all withdrawers and mark their withdraws as done
+        uint256 remainingWithdraws = _crabToWithdraw;
+        while (remainingWithdraws > 0) {
+            Receipt storage withdraw = withdraws[withdrawsIndex];
+            if (withdraw.amount <= remainingWithdraws) {
+                remainingWithdraws -= withdraw.amount;
+                crab_balance[withdraw.sender] -= withdraw.amount;
+                withdrawsIndex++;
+
+                // send proportional usdc
+                uint256 usdcAmount = (withdraw.amount * usdcReceived) /
+                    _crabToWithdraw;
+                IERC20(usdc).transfer(withdraw.sender, usdcAmount);
+                withdraw.amount = 0;
+            } else {
+                withdraw.amount -= remainingWithdraws;
+                crab_balance[withdraw.sender] -= withdraw.amount;
+
+                // send proportional usdc
+                uint256 usdcAmount = (remainingWithdraws * usdcReceived) /
+                    _crabToWithdraw;
+                IERC20(usdc).transfer(withdraw.sender, usdcAmount);
+
+                remainingWithdraws = 0;
+            }
+        }
+
+        // check if all balances are zero
     }
 
     receive() external payable {}
