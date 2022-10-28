@@ -33,6 +33,7 @@ contract DepositTest is Test {
         crab = new FixedERC20(10000 * 1e18);
         weth = new FixedERC20(10000 * 1e18);
 
+        vm.etch(0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B, address(weth).code);
         netting = new CrabNetting(address(usdc), address(crab), address(weth));
 
         ownerPrivateKey = 0xA11CE;
