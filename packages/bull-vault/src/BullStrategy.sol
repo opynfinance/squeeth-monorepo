@@ -21,12 +21,9 @@ import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
  */
-contract BullStrategy is ERC20, LeverageBull, UniBull {
+contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
-
-    uint256 private constant ONE = 1e18;
-    uint32 private constant TWAP = 420;
 
     /// @dev set to true when redeemShortShutdown has been called
     bool private hasRedeemedInShutdown;
@@ -57,7 +54,7 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
 
-    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem, uint256 ethToWithdrawFromCrab);
+    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
 
     /**
      * @notice constructor for BullStrategy
@@ -108,13 +105,8 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
             _mint(msg.sender, bullToMint);
         }
 
-        uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-        uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-            .wdiv(IERC20(crab).totalSupply());
-
-        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, crabUsdPrice, ethUsdPrice);
+        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
@@ -123,38 +115,31 @@ contract BullStrategy is ERC20, LeverageBull, UniBull {
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {
+    function withdraw(uint256 _bullAmount) external {        
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
-        uint256 ethToWithdrawFromCrab = crabToRedeem.wmul(ethInCrab).wdiv(crabTotalSupply);
-        
+
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
-        ICrabStrategyV2(crab).withdraw(crabToRedeem);
         
+        ICrabStrategyV2(crab).withdraw(crabToRedeem);
+
         _repayAndWithdrawFromLeverage(share);
 
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem, ethToWithdrawFromCrab);
+        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
-    function _uniFlashSwap(
-        address, /*_caller*/
-        address _pool,
-        address _tokenIn,
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
-        uint256 _amountToPay,
-        bytes memory, /*_callData*/
-        uint8 /*_callSource*/
-    ) internal override {
-        IERC20(_tokenIn).transfer(_pool, _amountToPay);
+    function getCrabVaultDetails() external view returns (uint256, uint256) {
+        return _getCrabVaultDetails();
     }
+
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {}
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());

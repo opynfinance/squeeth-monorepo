@@ -27,7 +27,7 @@ contract UniBull is IUniswapV3SwapCallback {
     using SafeCast for uint256;
     using SafeMath for uint256;
 
-    uint128 private constant ONE = 1e18;
+    uint256 internal constant ONE = 1e18;
 
     /// @dev Uniswap factory address
     address internal immutable factory;
@@ -37,6 +37,17 @@ contract UniBull is IUniswapV3SwapCallback {
         address caller;
         uint8 callSource;
         bytes callData;
+    }
+
+    struct UniFlashswapCallbackData {
+        address pool;
+        address caller;
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        uint256 amountToPay;
+        bytes callData;
+        uint8 callSource;
     }
 
     /**
@@ -67,30 +78,20 @@ contract UniBull is IUniswapV3SwapCallback {
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        // _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
+        _uniFlashSwap(
+            UniFlashswapCallbackData(
+                pool, data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource
+            )
+        );
     }
 
     /**
      * @notice function to be called by uniswap callback.
      * @dev this function should be overridden by the child contract
-     * param _caller initial strategy function caller
-     * param _tokenIn token address sold
-     * param _tokenOut token address bought
-     * param _fee pool fee
-     * param _amountToPay amount to pay for the pool second token
-     * param _callData arbitrary data assigned with the flashswap call
-     * param _callSource function call source
+     * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
-    function _uniFlashSwap(
-        address, /*_caller*/
-        address, /*_pool*/
-        address, /*_tokenIn*/
-        address, /*_tokenOut*/
-        uint24, /*_fee*/
-        uint256, /*_amountToPay*/
-        bytes memory _callData,
-        uint8 _callSource
-    ) internal virtual {}
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual {}
 
     /**
      * @notice get twap converted with base & quote token decimals
@@ -126,7 +127,7 @@ contract UniBull is IUniswapV3SwapCallback {
      */
     function _fetchTwap(address _pool, address _base, address _quote, uint32 _period) internal view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, ONE, _base, _quote);
+        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, uint128(ONE), _base, _quote);
 
         uint8 baseDecimals = IERC20Detailed(_base).decimals();
         uint8 quoteDecimals = IERC20Detailed(_quote).decimals();

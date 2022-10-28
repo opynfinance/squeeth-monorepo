@@ -7,6 +7,9 @@ auto_detect_solc = true
 optimizer = true
 optimizer_runs = 2000
 
+[profile.test]
+no_match_test = "Fuzzing"
+
 [profile.fuzz]
 runs = 2000
 max_local_rejects = 1024
@@ -15,6 +18,7 @@ seed = '0x3e8'
 dictionary_weight = 40
 include_storage = true
 include_push_bytes = true
+match_test = "Fuzzing"
 
 [profile.invariant]
 runs = 256
@@ -32,6 +36,7 @@ bracket_spacing = true
 
 [profile.coverage]
 via_ir = true
+no_match_test = "Fuzzing"
 
 [profile.coverage.optimizer_details]
 constantOptimizer = true
