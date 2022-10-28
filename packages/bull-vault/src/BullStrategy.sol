@@ -111,24 +111,24 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {
+    function withdraw(uint256 _bullAmount) external {        
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
-        uint256 ethToWithdrawFromCrab = crabToRedeem.wmul(ethInCrab).wdiv(crabTotalSupply);
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
+        
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
         _repayAndWithdrawFromLeverage(share);
 
         payable(msg.sender).sendValue(address(this).balance);
 
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem, ethToWithdrawFromCrab);
+        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {
