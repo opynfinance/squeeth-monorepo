@@ -206,7 +206,6 @@ contract DepositAuctionTest is Test {
             }
         }
         // why is all the eth not being take in
-        console.log(mid);
         return mid;
     }
 
@@ -215,7 +214,7 @@ contract DepositAuctionTest is Test {
         uint256 oSqthQuantity,
         uint256 oSqthPrice,
         uint256 _totalDep
-    ) internal returns (bool) {
+    ) internal view returns (bool) {
         uint256 totalAfterSelling = (_userETh +
             ((oSqthQuantity * oSqthPrice)) /
             1e18);

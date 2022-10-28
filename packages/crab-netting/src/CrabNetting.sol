@@ -39,6 +39,8 @@ contract CrabNetting {
 
     mapping(address => uint256) public usd_balance;
     mapping(address => uint256) public crab_balance;
+    mapping(address => uint256[]) public deposits_index;
+    mapping(address => uint256[]) public withdraws_index;
     struct Receipt {
         address sender;
         uint256 amount;
@@ -56,7 +58,6 @@ contract CrabNetting {
         payable(0x0000000000000000000000000000000000000000).transfer(
             address(this).balance
         );
-        console.log(address(this).balance, "balance at constructor");
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
@@ -66,12 +67,27 @@ contract CrabNetting {
         IERC20(usdc).transferFrom(msg.sender, address(this), _amount);
         usd_balance[msg.sender] = usd_balance[msg.sender] + _amount;
         deposits.push(Receipt(msg.sender, _amount));
+        deposits_index[msg.sender].push(deposits.length - 1);
     }
 
     function withdrawUSDC(uint256 _amount) public {
         // TODO ensure final version does not need this check
         //require(usd_balance[msg.sender] >= _amount, "Withdrawing more than balance");
         usd_balance[msg.sender] = usd_balance[msg.sender] - _amount;
+        // remove that _amount the users last deposit
+        uint256 to_remove = _amount;
+        uint256 lastIndex = deposits_index[msg.sender].length - 1;
+        for (uint256 i = lastIndex; i >= 0; i--) {
+            Receipt storage r = deposits[deposits_index[msg.sender][i]];
+            if (r.amount > to_remove) {
+                r.amount -= to_remove;
+                to_remove = 0;
+                break;
+            } else {
+                r.amount = 0;
+                to_remove -= r.amount;
+            }
+        }
         IERC20(usdc).transfer(msg.sender, _amount);
     }
 
@@ -79,12 +95,27 @@ contract CrabNetting {
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crab_balance[msg.sender] = crab_balance[msg.sender] + _amount;
         withdraws.push(Receipt(msg.sender, _amount));
+        withdraws_index[msg.sender].push(withdraws.length - 1);
     }
 
     function withdrawCrab(uint256 _amount) public {
         // TODO ensure final version does not need this check
         // require(crab_balance[msg.sender] >= _amount);
         crab_balance[msg.sender] = crab_balance[msg.sender] - _amount;
+        // remove that _amount the users last deposit
+        uint256 to_remove = _amount;
+        uint256 lastIndex = withdraws_index[msg.sender].length - 1;
+        for (uint256 i = lastIndex; i >= 0; i--) {
+            Receipt storage r = withdraws[withdraws_index[msg.sender][i]];
+            if (r.amount > to_remove) {
+                r.amount -= to_remove;
+                to_remove = 0;
+                break;
+            } else {
+                r.amount = 0;
+                to_remove -= r.amount;
+            }
+        }
         IERC20(crab).transfer(msg.sender, _amount);
     }
 
@@ -148,7 +179,6 @@ contract CrabNetting {
     }
 
     function depositsQueued() public view returns (uint256) {
-        console.log(depositsIndex, "deposit index");
         uint256 j = depositsIndex;
         uint256 sum;
         while (j < deposits.length) {

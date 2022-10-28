@@ -56,6 +56,7 @@ contract DepositTest is Test {
         assertEq(netting.usd_balance(depositor), 2e18);
         netting.withdrawUSDC(1 * 1e18);
         assertEq(netting.usd_balance(depositor), 1e18);
+        assertEq(netting.depositsQueued(), 1e18);
     }
 
     function testCrabDepositAndWithdraw() public {
@@ -66,5 +67,6 @@ contract DepositTest is Test {
         assertEq(netting.crab_balance(withdrawer), 2e18);
         netting.withdrawCrab(1 * 1e18);
         assertEq(netting.crab_balance(withdrawer), 1e18);
+        assertEq(netting.withdrawsQueued(), 1e18);
     }
 }
