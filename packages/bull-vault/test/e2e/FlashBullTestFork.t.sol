@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
+import {console2} from "forge-std/console2.sol";
 //interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
@@ -72,8 +73,7 @@ contract FlashBullTestFork is Test {
         );
         flashBull = new FlashBull(
             address(bullStrategy),
-            0x1F98431c8aD98523631AE4a59f267346ea31F984,
-            0x65D66c76447ccB45dAf1e8044e918fA786A483A1
+            0x1F98431c8aD98523631AE4a59f267346ea31F984
         );
         vm.stopPrank();
         usdc = controller.quoteCurrency();
@@ -108,32 +108,7 @@ contract FlashBullTestFork is Test {
 
     function testInitialFlashDeposit() public {
         uint256 ethToCrab = 5e18;
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = UniOracle._getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-            crabUsdPrice = (
-                ethInCrab.wmul(ethUsdPrice).sub(
-                    squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
-                )
-            ).wdiv(crabV2.totalSupply());
-        }
-
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             ethToCrab,
             squeethInCrab,
@@ -254,26 +229,7 @@ contract FlashBullTestFork is Test {
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
         _ethToCrab = bound(_ethToCrab, 1e16, 1890e18); // 1890 ETH because can't hit Crab cap
-        uint256 crabUsdPrice;
-        uint256 ethInCrab;
-        uint256 squeethInCrab;
-        uint256 ethUsdPrice = UniOracle._getTwap(
-            ethUsdcPool,
-            weth,
-            usdc,
-            TWAP,
-            false
-        );
-        {
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-        }
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
 
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
             _ethToCrab,
@@ -335,7 +291,7 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 ethToWithdrawFromCrab, uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem, , uint256 usdcToRepay) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
@@ -371,8 +327,8 @@ contract FlashBullTestFork is Test {
         uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
-        uint256 ethToWithdrawFromBull = ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
-        userEthBalanceBeforeTx = user1.balance;
+        // uint256 ethToWithdrawFromBull = ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+        // userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
         bullStrategy.approve(address(flashBull), params.bullAmount);
@@ -393,7 +349,7 @@ contract FlashBullTestFork is Test {
         assertEq(
             crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull crab balance mismatch"
         );
-        // ignoring the assert below because I couldn't find a exact way to calc ethToWithdrawFromBull as I'm setting maxToPay higher than the actual slippage
+        // ignoring the assert below because I couldn't find a exact way to calc ethToWithdrawFromBull as I'm setting maxToPay higher than the actual slippage, need to read events
         // assertTrue((user1.balance).sub(userEthBalanceBeforeTx).sub(ethToWithdrawFromBull) <= 1e18);
     }
 
