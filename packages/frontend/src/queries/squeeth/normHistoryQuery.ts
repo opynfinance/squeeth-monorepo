@@ -1,8 +1,10 @@
 import { gql } from '@apollo/client'
 
+// Can't skip more than 5000 items. If we wan't to skip more than that we should use lastID.
+// Refer https://thegraph.com/docs/en/querying/graphql-api/#pagination
 const NORMHISTORY_QUERY = gql`
-  query normalizationFactorUpdates($skipCount: Int) {
-    normalizationFactorUpdates(first: 1000, skip: $skipCount, orderBy: timestamp) {
+  query normalizationFactorUpdates($lastID: String) {
+    normalizationFactorUpdates(first: 1000, orderBy: timestamp, where: { id_gt: $lastID }) {
       id
       oldNormFactor
       newNormFactor

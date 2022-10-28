@@ -24,3 +24,12 @@
 [submodule "packages/bull-vault/lib/v3-periphery"]
 	path = packages/bull-vault/lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
+[submodule "packages/crab-netting/lib/forge-std"]
+	path = packages/crab-netting/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "packages/crab-netting/lib/squeeth-monorepo"]
+	path = packages/crab-netting/lib/squeeth-monorepo
+	url = https://github.com/opynfinance/squeeth-monorepo/
+[submodule "packages/crab-netting/lib/openzeppelin-contracts"]
+	path = packages/crab-netting/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
