@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 
 // contract
 import {UniBull} from "./UniBull.sol";
+
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
@@ -111,7 +112,6 @@ abstract contract LeverageBull is UniBull {
      */
     function _depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
         if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
-
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
         IEulerMarkets(eulerMarkets).enterMarket(0, weth);
     }

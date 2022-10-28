@@ -5,6 +5,7 @@ pragma abicoder v2;
 
 // contract
 import {UniBull} from "./UniBull.sol";
+
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
@@ -145,6 +146,7 @@ contract FlashBull is UniBull {
 
         (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails(); 
         // USDC we pay to flashswap
+
         (ethToLend, usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
          // ETH-USDC swap

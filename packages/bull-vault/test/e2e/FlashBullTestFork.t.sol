@@ -278,11 +278,6 @@ contract FlashBullTestFork is Test {
                 false
             );
             (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-            crabUsdPrice = (
-                ethInCrab.wmul(ethUsdPrice).sub(
-                    squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
-                )
-            ).wdiv(crabV2.totalSupply());
         }
 
         (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
@@ -299,6 +294,11 @@ contract FlashBullTestFork is Test {
             address(bullStrategy)
         );
 
+        {
+            ethInCrab += _ethToCrab;
+            squeethInCrab += wSqueethToMint;
+        }
+
         uint256 bullShare = 1e18;
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
             .calcLeverageEthUsdc(
@@ -306,7 +306,7 @@ contract FlashBullTestFork is Test {
                 bullShare,
                 ethInCrab,
                 squeethInCrab,
-                crabV2.totalSupply()
+                crabV2.totalSupply().add(crabToBeMinted)
             );
 
         vm.startPrank(user1);
@@ -321,7 +321,7 @@ contract FlashBullTestFork is Test {
         assertApproxEqAbs(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
             wethToLend,
-            1000 // Allow 1000 wei difference
+            5
         );
         assertEq(
             IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
