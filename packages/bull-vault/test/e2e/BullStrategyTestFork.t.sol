@@ -42,11 +42,14 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
+    uint256 internal deployerPk;
+    address internal deployer;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
 
+        vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
@@ -59,6 +62,7 @@ contract BullStrategyTestFork is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
+        vm.stopPrank();
 
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);

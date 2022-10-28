@@ -3,6 +3,7 @@ pragma solidity =0.7.6;
 
 // contract
 import {UniBull} from "./UniBull.sol";
+
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
@@ -74,6 +75,15 @@ abstract contract LeverageBull is UniBull {
     }
 
     /**
+     * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
+     * @param _bullShare bull share amount
+     * @return USDC to repay
+     */
+    function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256) {
+        return _calcUsdcToRepay(_bullShare);
+    }
+
+    /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handle only the leverage component part
      * @param _crabAmount amount of crab token deposited
@@ -102,7 +112,6 @@ abstract contract LeverageBull is UniBull {
      */
     function _depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
         if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
-
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
         IEulerMarkets(eulerMarkets).enterMarket(0, weth);
     }
