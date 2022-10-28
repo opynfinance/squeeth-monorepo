@@ -36,7 +36,7 @@ contract AuctionBull is UniFlash, Ownable {
         GENERAL_SWAP
     }
 
-    constructor(address _auctionOwner, address _auctionManager, address _bull) Ownable() {
+    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory) UniFlash(_factory) Ownable() {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
