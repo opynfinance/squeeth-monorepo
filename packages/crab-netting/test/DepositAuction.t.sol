@@ -11,12 +11,6 @@ import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-contract FixedERC20 is ERC20 {
-    constructor(uint256 initialSupply) ERC20("USDC", "USDC") {
-        _mint(msg.sender, initialSupply);
-    }
-}
-
 contract DepositAuctionTest is Test {
     ISwapRouter public immutable swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);

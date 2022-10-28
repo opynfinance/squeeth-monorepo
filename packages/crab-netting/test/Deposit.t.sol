@@ -62,7 +62,7 @@ contract DepositTest is Test {
     function testCrabDepositAndWithdraw() public {
         vm.startPrank(withdrawer);
         crab.approve(address(netting), 2 * 1e18);
-        netting.depositCrab(2 * 1e18);
+        netting.queueCrabForWithdrawal(2 * 1e18);
 
         assertEq(netting.crab_balance(withdrawer), 2e18);
         netting.withdrawCrab(1 * 1e18);

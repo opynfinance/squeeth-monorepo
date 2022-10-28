@@ -91,7 +91,7 @@ contract CrabNetting {
         IERC20(usdc).transfer(msg.sender, _amount);
     }
 
-    function depositCrab(uint256 _amount) public {
+    function queueCrabForWithdrawal(uint256 _amount) public {
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crab_balance[msg.sender] = crab_balance[msg.sender] + _amount;
         withdraws.push(Receipt(msg.sender, _amount));

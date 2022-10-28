@@ -56,9 +56,9 @@ contract NettingTest is Test {
 
         vm.startPrank(withdrawer);
         crab.approve(address(netting), 200 * 1e18);
-        netting.depositCrab(5 * 1e18);
-        netting.depositCrab(4 * 1e18);
-        netting.depositCrab(11 * 1e18);
+        netting.queueCrabForWithdrawal(5 * 1e18);
+        netting.queueCrabForWithdrawal(4 * 1e18);
+        netting.queueCrabForWithdrawal(11 * 1e18);
         assertEq(netting.crab_balance(withdrawer), 20e18);
         vm.stopPrank();
     }
@@ -102,9 +102,9 @@ contract NettingTest is Test {
 
         vm.startPrank(withdrawer);
         crab.approve(address(netting), 200 * 1e18);
-        netting.depositCrab(5 * 1e18);
-        netting.depositCrab(4 * 1e18);
-        netting.depositCrab(11 * 1e18);
+        netting.queueCrabForWithdrawal(5 * 1e18);
+        netting.queueCrabForWithdrawal(4 * 1e18);
+        netting.queueCrabForWithdrawal(11 * 1e18);
         assertEq(netting.crab_balance(withdrawer), 20e18);
         vm.stopPrank();
 
