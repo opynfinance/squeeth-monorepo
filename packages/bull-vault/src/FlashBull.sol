@@ -140,7 +140,7 @@ contract FlashBull is UniFlash {
         if (IERC20(bullStrategy).totalSupply() == 0) {
             share = ONE;
         } else {
-            share = crabAmount.wdiv(IERC20(crab).balanceOf(bullStrategy).add(crabAmount));
+            share = crabAmount.wdiv(IBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
         }
         (uint256 ethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
 
