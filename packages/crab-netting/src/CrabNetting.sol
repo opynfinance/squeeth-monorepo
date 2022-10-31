@@ -91,8 +91,8 @@ contract CrabNetting is Ownable {
                 toRemove = 0;
                 break;
             } else {
-                r.amount = 0;
                 toRemove -= r.amount;
+                r.amount = 0;
             }
         }
         IERC20(usdc).transfer(msg.sender, _amount);
@@ -107,19 +107,21 @@ contract CrabNetting is Ownable {
 
     function withdrawCrab(uint256 _amount) public {
         // require(crabBalance[msg.sender] >= _amount);
+        console.log(crabBalance[msg.sender], "crab balance");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
         uint256 lastIndex = userWithdrawsIndex[msg.sender].length - 1;
         for (uint256 i = lastIndex; i >= 0; i--) {
             Receipt storage r = withdraws[userWithdrawsIndex[msg.sender][i]];
+            console.log(toRemove);
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
                 break;
             } else {
-                r.amount = 0;
                 toRemove -= r.amount;
+                r.amount = 0;
             }
         }
         IERC20(crab).transfer(msg.sender, _amount);

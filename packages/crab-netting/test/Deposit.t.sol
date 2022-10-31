@@ -52,8 +52,8 @@ contract DepositTest is Test {
         withdrawerPk = 0xA11CB;
         withdrawer = vm.addr(withdrawerPk);
 
-        usdc.transfer(depositor, 2 * 1e18);
-        crab.transfer(withdrawer, 2 * 1e18);
+        usdc.transfer(depositor, 20 * 1e18);
+        crab.transfer(withdrawer, 20 * 1e18);
     }
 
     function testDepositAndWithdraw() public {
@@ -67,6 +67,18 @@ contract DepositTest is Test {
         assertEq(netting.depositsQueued(), 1e18);
     }
 
+    function testLargeWithdraw() public {
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 4 * 1e18);
+        netting.depositUSDC(2 * 1e18);
+        netting.depositUSDC(2 * 1e18);
+
+        assertEq(netting.usdBalance(depositor), 4e18);
+        netting.withdrawUSDC(3 * 1e18);
+        assertEq(netting.usdBalance(depositor), 1e18);
+        assertEq(netting.depositsQueued(), 1e18);
+    }
+
     function testCrabDepositAndWithdraw() public {
         vm.startPrank(withdrawer);
         crab.approve(address(netting), 2 * 1e18);
@@ -74,6 +86,18 @@ contract DepositTest is Test {
 
         assertEq(netting.crabBalance(withdrawer), 2e18);
         netting.withdrawCrab(1 * 1e18);
+        assertEq(netting.crabBalance(withdrawer), 1e18);
+        assertEq(netting.withdrawsQueued(), 1e18);
+    }
+
+    function testCrabDepositLargeWithdraw() public {
+        vm.startPrank(withdrawer);
+        crab.approve(address(netting), 4 * 1e18);
+        netting.queueCrabForWithdrawal(2 * 1e18);
+        netting.queueCrabForWithdrawal(2 * 1e18);
+
+        assertEq(netting.crabBalance(withdrawer), 4e18);
+        netting.withdrawCrab(3 * 1e18);
         assertEq(netting.crabBalance(withdrawer), 1e18);
         assertEq(netting.withdrawsQueued(), 1e18);
     }
