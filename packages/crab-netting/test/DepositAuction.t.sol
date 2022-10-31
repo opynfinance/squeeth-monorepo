@@ -66,6 +66,8 @@ contract DepositAuctionTest is Test {
             address(sqth),
             address(swapRouter)
         );
+        vm.prank(address(netting));
+        payable(depositor).transfer(address(netting).balance);
         console.log(address(netting).balance, "netting balance at deploy");
         vm.startPrank(depositor);
         usdc.approve(address(netting), 200000 * 1e6);

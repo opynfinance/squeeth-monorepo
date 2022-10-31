@@ -56,9 +56,6 @@ contract CrabNetting is Ownable {
         address _sqth,
         address _swapRouter
     ) {
-        payable(0x0000000000000000000000000000000000000000).transfer(
-            address(this).balance
-        );
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
