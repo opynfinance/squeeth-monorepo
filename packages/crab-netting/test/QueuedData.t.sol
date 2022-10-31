@@ -30,7 +30,7 @@ contract QueuedDataTest is Test {
     address internal withdrawer;
 
     function setUp() public {
-        usdc = new FixedERC20(10000 * 1e18);
+        usdc = new FixedERC20(10000 * 1e6);
         crab = new FixedERC20(10000 * 1e18);
         weth = new FixedERC20(10000 * 1e18);
         sqth = new FixedERC20(10000 * 1e18);
@@ -53,15 +53,15 @@ contract QueuedDataTest is Test {
         withdrawerPk = 0xA11CB;
         withdrawer = vm.addr(withdrawerPk);
 
-        usdc.transfer(depositor, 400 * 1e18);
+        usdc.transfer(depositor, 400 * 1e6);
         crab.transfer(withdrawer, 40 * 1e18);
 
         vm.startPrank(depositor);
-        usdc.approve(address(netting), 200 * 1e18);
-        netting.depositUSDC(20 * 1e18);
-        netting.depositUSDC(100 * 1e18);
-        netting.depositUSDC(80 * 1e18);
-        assertEq(netting.usd_balance(depositor), 200e18);
+        usdc.approve(address(netting), 200 * 1e6);
+        netting.depositUSDC(20 * 1e6);
+        netting.depositUSDC(100 * 1e6);
+        netting.depositUSDC(80 * 1e6);
+        assertEq(netting.usd_balance(depositor), 200e6);
         vm.stopPrank();
 
         vm.startPrank(withdrawer);
@@ -72,11 +72,11 @@ contract QueuedDataTest is Test {
         assertEq(netting.crab_balance(withdrawer), 20e18);
         vm.stopPrank();
 
-        netting.netAtPrice(10, 100e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        netting.netAtPrice(10e6, 100e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
     }
 
     function testDepositsQueued() public {
-        assertEq(netting.depositsQueued(), 100e18);
+        assertEq(netting.depositsQueued(), 100e6);
     }
 
     function testWithdrawsQueued() public {

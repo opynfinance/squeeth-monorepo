@@ -30,7 +30,7 @@ contract NettingTest is Test {
     address internal withdrawer;
 
     function setUp() public {
-        usdc = new FixedERC20(10000 * 1e18);
+        usdc = new FixedERC20(10000 * 1e6);
         crab = new FixedERC20(10000 * 1e18);
         weth = new FixedERC20(10000 * 1e18);
         sqth = new FixedERC20(10000 * 1e18);
@@ -48,19 +48,21 @@ contract NettingTest is Test {
 
         depositorPk = 0xA11CA;
         depositor = vm.addr(depositorPk);
+        vm.label(depositor, "depositor");
 
         withdrawerPk = 0xA11CB;
         withdrawer = vm.addr(withdrawerPk);
+        vm.label(withdrawer, "withdrawer");
 
-        usdc.transfer(depositor, 400 * 1e18);
+        usdc.transfer(depositor, 400 * 1e6);
         crab.transfer(withdrawer, 40 * 1e18);
 
         vm.startPrank(depositor);
-        usdc.approve(address(netting), 200 * 1e18);
-        netting.depositUSDC(20 * 1e18);
-        netting.depositUSDC(100 * 1e18);
-        netting.depositUSDC(80 * 1e18);
-        assertEq(netting.usd_balance(depositor), 200e18);
+        usdc.approve(address(netting), 200 * 1e6);
+        netting.depositUSDC(20 * 1e6);
+        netting.depositUSDC(100 * 1e6);
+        netting.depositUSDC(80 * 1e6);
+        assertEq(netting.usd_balance(depositor), 200e6);
         vm.stopPrank();
 
         vm.startPrank(withdrawer);
@@ -76,37 +78,45 @@ contract NettingTest is Test {
         // TODO turn this into a fuzzing test
         assertEq(usdc.balanceOf(withdrawer), 0, "starting balance");
         assertEq(crab.balanceOf(depositor), 0, "depositor got their crab");
-        netting.netAtPrice(10, 100e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        netting.netAtPrice(10e6, 100e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(
             usdc.balanceOf(withdrawer),
-            100e18,
+            100e6,
             "withdrawer got their usdc"
         );
-        assertEq(crab.balanceOf(depositor), 10e18, "depositor got their crab");
+        assertEq(
+            crab.balanceOf(depositor),
+            10e18,
+            "depositor did not got their crab"
+        );
     }
 
     function testNettingWithMultipleDeposits() public {
         assertEq(usdc.balanceOf(withdrawer), 0, "withdrawer starting balance");
         assertEq(crab.balanceOf(depositor), 0, "depositor starting balance");
-        netting.netAtPrice(10, 200e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        netting.netAtPrice(10e6, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(
             usdc.balanceOf(withdrawer),
-            200e18,
+            200e6,
             "withdrawer got their usdc"
         );
         assertEq(crab.balanceOf(depositor), 20e18, "depositor got their crab");
     }
 
     function testNettingAfterARun() public {
-        netting.netAtPrice(10, 200e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        netting.netAtPrice(10e6, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
 
         // queue more
         vm.startPrank(depositor);
-        usdc.approve(address(netting), 200 * 1e18);
-        netting.depositUSDC(20 * 1e18);
-        netting.depositUSDC(100 * 1e18);
-        netting.depositUSDC(80 * 1e18);
-        assertEq(netting.usd_balance(depositor), 200e18);
+        usdc.approve(address(netting), 200 * 1e6);
+        netting.depositUSDC(20 * 1e6);
+        netting.depositUSDC(100 * 1e6);
+        netting.depositUSDC(80 * 1e6);
+        assertEq(
+            netting.usd_balance(depositor),
+            200e6,
+            "usd balance not reflecting correctly"
+        );
         vm.stopPrank();
 
         vm.startPrank(withdrawer);
@@ -114,13 +124,17 @@ contract NettingTest is Test {
         netting.queueCrabForWithdrawal(5 * 1e18);
         netting.queueCrabForWithdrawal(4 * 1e18);
         netting.queueCrabForWithdrawal(11 * 1e18);
-        assertEq(netting.crab_balance(withdrawer), 20e18);
+        assertEq(
+            netting.crab_balance(withdrawer),
+            20e18,
+            "crab balance not reflecting correctly"
+        );
         vm.stopPrank();
 
-        netting.netAtPrice(10, 200e18); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        netting.netAtPrice(10e6, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(
             usdc.balanceOf(withdrawer),
-            400e18,
+            400e6,
             "witadrawer got their usdc"
         );
         assertEq(crab.balanceOf(depositor), 40e18, "depositor got their crab");
@@ -129,7 +143,7 @@ contract NettingTest is Test {
     function testCannotWithdrawMoreThanDeposited() public {
         vm.startPrank(depositor);
         vm.expectRevert(stdError.arithmeticError);
-        netting.withdrawUSDC(210e18);
+        netting.withdrawUSDC(210e6);
         vm.stopPrank();
     }
 }

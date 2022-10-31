@@ -30,11 +30,11 @@ struct Portion {
 }
 
 contract CrabNetting {
-    address usdc;
-    address crab;
-    address weth;
-    address sqth;
-    ISwapRouter swapRouter;
+    address public usdc;
+    address public crab;
+    address public weth;
+    address public sqth;
+    ISwapRouter public swapRouter;
 
     mapping(address => uint256) public usd_balance;
     mapping(address => uint256) public crab_balance;
@@ -148,21 +148,27 @@ contract CrabNetting {
                 usd_balance[deposit.sender] =
                     usd_balance[deposit.sender] -
                     deposit.amount;
-                IERC20(crab).transfer(deposit.sender, deposit.amount / _price);
+                IERC20(crab).transfer(
+                    deposit.sender,
+                    (deposit.amount * 1e18) / _price
+                );
                 i++;
             } else {
                 deposits[i].amount = deposit.amount - _quantity;
                 usd_balance[deposit.sender] =
                     usd_balance[deposit.sender] -
                     _quantity;
-                IERC20(crab).transfer(deposit.sender, _quantity / _price);
+                IERC20(crab).transfer(
+                    deposit.sender,
+                    (_quantity * 1e18) / _price
+                );
                 _quantity = 0;
                 delete deposit;
             }
         }
         depositsIndex = depositsIndex + i;
         uint256 j = withdrawsIndex;
-        uint256 crab_quantity = forWithdraw / _price;
+        uint256 crab_quantity = (forWithdraw * 1e18) / _price;
         while (crab_quantity > 0 && j < withdraws.length) {
             Receipt memory withdraw = withdraws[j];
             if (withdraw.amount <= crab_quantity) {
@@ -172,12 +178,15 @@ contract CrabNetting {
                     withdraw.amount;
                 IERC20(usdc).transfer(
                     withdraw.sender,
-                    withdraw.amount * _price
+                    (withdraw.amount * _price) / 1e18
                 );
                 j++;
             } else {
                 withdraws[j].amount = withdraw.amount - crab_quantity;
-                IERC20(usdc).transfer(withdraw.sender, crab_quantity * _price);
+                IERC20(usdc).transfer(
+                    withdraw.sender,
+                    (crab_quantity * _price) / 1e18
+                );
                 crab_balance[withdraw.sender] =
                     crab_balance[withdraw.sender] -
                     crab_quantity;
