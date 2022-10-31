@@ -93,7 +93,7 @@ contract BullStrategy is ERC20, LeverageBull {
         if (totalSupply() == 0) {
             _mint(msg.sender, _crabAmount);
         } else {
-            share = _crabAmount.wdiv(IERC20(crab).balanceOf(address(this)));
+            share = _crabAmount.wdiv(crabBalance);
             bullToMint = share.wmul(totalSupply()).wdiv(ONE.sub(share));
             _mint(msg.sender, bullToMint);
         }
@@ -131,6 +131,24 @@ contract BullStrategy is ERC20, LeverageBull {
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
+    }
+
+    /**
+     * @notice increase internal accounting of bull stragtegy's crab balance
+     * @param _crabAmount crab amount
+     */
+    function _increaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+        _crabBalance = _crabBalance.add(_crabAmount);
+        return _crabBalance;
+    }
+
+    /**
+     * @notice decrease internal accounting of bull strategy's crab balance
+     * @param _crabAmount crab amount
+     */
+    function _decreaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+        _crabBalance = _crabBalance.sub(_crabAmount);
+        return _crabBalance;
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
