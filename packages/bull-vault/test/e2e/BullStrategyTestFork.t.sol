@@ -96,6 +96,32 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
+    function testSecondDeposit() public {
+        uint256 crabToDepositInitially = 10e18;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDepositInitially);
+        vm.stopPrank();
+
+        assertEq(bullStrategy.balanceOf(user1), crabToDepositInitially);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertTrue(wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1);
+        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+
+        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 crabToDepositSecond = 7e18;
+        uint256 bullToMint = _calcBullToMint(crabToDepositSecond);
+        vm.startPrank(user1);
+        (uint256 wethToLendSecond, uint256 usdcToBorrowSecond) = _deposit(crabToDepositSecond);
+        vm.stopPrank();
+
+        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcToBorrow), usdcToBorrowSecond);
+        assertTrue(wethToLendSecond.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)) <= 1);
+        assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
+    }
+
     function testWithdraw() public {
         uint256 crabToDeposit = 15e18;
         uint256 bullToMint = _calcBullToMint(crabToDeposit);
@@ -250,7 +276,7 @@ contract BullStrategyTestFork is Test {
         if (IERC20(bullStrategy).totalSupply() == 0) {
             return _crabToDeposit;
         } else {
-            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
+            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)).add(_crabToDeposit));
             return share.wmul(bullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
     }
@@ -293,7 +319,7 @@ contract BullStrategyTestFork is Test {
                 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
             }
         } else {
-            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
+            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)).add(_crabToDeposit));
             wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );
