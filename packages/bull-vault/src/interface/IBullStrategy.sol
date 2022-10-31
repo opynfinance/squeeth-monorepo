@@ -13,5 +13,6 @@ interface IBullStrategy {
         view
         returns (uint256, uint256);
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256);
+    function getCrabBalance() external view returns (uint256);
 }
 
