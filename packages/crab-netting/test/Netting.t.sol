@@ -103,6 +103,28 @@ contract NettingTest is Test {
         assertEq(crab.balanceOf(depositor), 20e18, "depositor got their crab");
     }
 
+    function testNettingWithPartialReceipt() public {
+        assertEq(usdc.balanceOf(withdrawer), 0, "withdrawer starting balance");
+        assertEq(crab.balanceOf(depositor), 0, "depositor starting balance");
+        netting.netAtPrice(10e6, 30e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        assertEq(
+            netting.depositsQueued(),
+            170e6,
+            "receipts were not updated correctly"
+        );
+        netting.netAtPrice(10e6, 170e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        assertEq(crab.balanceOf(depositor), 20e18, "depositor got their crab");
+    }
+
+    function testNettingAfterWithdraw() public {
+        assertEq(usdc.balanceOf(withdrawer), 0, "withdrawer starting balance");
+        assertEq(crab.balanceOf(depositor), 0, "depositor starting balance");
+        vm.prank(depositor);
+        netting.withdrawUSDC(50e6);
+        netting.netAtPrice(10e6, 150e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        assertEq(crab.balanceOf(depositor), 15e18, "depositor got their crab");
+    }
+
     function testNettingAfterARun() public {
         netting.netAtPrice(10e6, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
 

@@ -153,6 +153,7 @@ contract CrabNetting is Ownable {
                     deposit.sender,
                     (deposit.amount * 1e18) / _price
                 );
+                delete deposits[i];
                 i++;
             } else {
                 deposits[i].amount = deposit.amount - _quantity;
@@ -164,7 +165,6 @@ contract CrabNetting is Ownable {
                     (_quantity * 1e18) / _price
                 );
                 _quantity = 0;
-                delete deposit;
             }
         }
         depositsIndex = depositsIndex + i;
@@ -180,6 +180,7 @@ contract CrabNetting is Ownable {
                     withdraw.sender,
                     (withdraw.amount * _price) / 1e18
                 );
+                delete withdraws[j];
                 j++;
             } else {
                 withdraws[j].amount = withdraw.amount - crabQuantity;
@@ -191,7 +192,6 @@ contract CrabNetting is Ownable {
                     crabBalance[withdraw.sender] -
                     crabQuantity;
                 crabQuantity = 0;
-                delete withdraw;
             }
         }
         withdrawsIndex = withdrawsIndex + j;
