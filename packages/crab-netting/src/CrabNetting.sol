@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "forge-std/console.sol";
 
@@ -29,7 +30,7 @@ struct Portion {
     uint256 sqth;
 }
 
-contract CrabNetting {
+contract CrabNetting is Ownable {
     address public usdc;
     address public crab;
     address public weth;
@@ -38,7 +39,7 @@ contract CrabNetting {
 
     mapping(address => uint256) public usdBalance;
     mapping(address => uint256) public crabBalance;
-    mapping(address => uint256[]) public userDepositsIndex; // TODO change var name to userReceiptsIndex
+    mapping(address => uint256[]) public userDepositsIndex;
     mapping(address => uint256[]) public userWithdrawsIndex;
     struct Receipt {
         address sender;
@@ -109,7 +110,6 @@ contract CrabNetting {
     }
 
     function withdrawCrab(uint256 _amount) public {
-        // TODO ensure final version does not need this check
         // require(crabBalance[msg.sender] >= _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         // remove that _amount the users last deposit
@@ -129,17 +129,18 @@ contract CrabNetting {
         IERC20(crab).transfer(msg.sender, _amount);
     }
 
-    function netAtPrice(uint256 _price, uint256 _quantity) public {
-        // TODO make only owner
-        uint256 forWithdraw = _quantity;
+    function netAtPrice(uint256 _price, uint256 _quantity) public onlyOwner {
+        uint256 crabQuantity = (_quantity * 1e18) / _price;
         require(
             _quantity <= IERC20(usdc).balanceOf(address(this)),
             "Not enough deposits to net"
         );
-        // TODO DO we need to do the same check for crab withdrawals?
-        // can we just do deposits alone and forget about withdrawals netting?
+        require(
+            ((_quantity * 1e18) / _price) <=
+                IERC20(crab).balanceOf(address(this)),
+            "Not enough withdrawals to net"
+        );
 
-        // TODO make sure we dont need SafeMath in final version
         uint256 i = depositsIndex;
         while (_quantity > 0 && i < deposits.length) {
             Receipt memory deposit = deposits[i];
@@ -168,7 +169,6 @@ contract CrabNetting {
         }
         depositsIndex = depositsIndex + i;
         uint256 j = withdrawsIndex;
-        uint256 crabQuantity = (forWithdraw * 1e18) / _price;
         while (crabQuantity > 0 && j < withdraws.length) {
             Receipt memory withdraw = withdraws[j];
             if (withdraw.amount <= crabQuantity) {
@@ -217,22 +217,20 @@ contract CrabNetting {
         return sum;
     }
 
-    // TODO change order to _orders
     function depositAuction(
         uint256 _depositsQueued,
         uint256 _minEth,
         uint256 _totalDeposit,
-        Order[] calldata orders,
+        Order[] calldata _orders,
         uint256 _clearingPrice,
         uint256 _ethToFlashDeposit
-    ) external {
-        console.log(address(this).balance, "ETH balance start");
+    ) public onlyOwner {
         // got all the eth in
-        for (uint256 i = 0; i < orders.length; i++) {
+        for (uint256 i = 0; i < _orders.length; i++) {
             IWETH(weth).transferFrom(
-                orders[i].trader,
+                _orders[i].trader,
                 address(this),
-                (orders[i].quantity * _clearingPrice) / 1e18
+                (_orders[i].quantity * _clearingPrice) / 1e18
             );
         }
         uint256 ethBalance = IWETH(weth).balanceOf(address(this));
@@ -278,8 +276,8 @@ contract CrabNetting {
 
         // send sqth to mms
         uint256 sqth_owed;
-        for (uint256 i = 0; i < orders.length; i++) {
-            sqth_owed += orders[i].quantity;
+        for (uint256 i = 0; i < _orders.length; i++) {
+            sqth_owed += _orders[i].quantity;
         }
         require(
             to_send.sqth >= sqth_owed,
@@ -287,8 +285,8 @@ contract CrabNetting {
         );
 
         // send sqth to mms
-        for (uint256 i = 0; i < orders.length; i++) {
-            IERC20(sqth).transfer(orders[i].trader, orders[i].quantity);
+        for (uint256 i = 0; i < _orders.length; i++) {
+            IERC20(sqth).transfer(_orders[i].trader, _orders[i].quantity);
         }
 
         // send crab to depositors
@@ -341,7 +339,7 @@ contract CrabNetting {
         Order[] calldata _orders,
         uint256 _clearingPrice,
         uint256 _minUSDC
-    ) external payable {
+    ) public onlyOwner {
         // get all the sqth in
         for (uint256 i = 0; i < _orders.length; i++) {
             IERC20(sqth).transferFrom(
