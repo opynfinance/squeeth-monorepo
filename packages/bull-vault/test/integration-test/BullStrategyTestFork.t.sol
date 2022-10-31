@@ -337,7 +337,7 @@ contract BullStrategyTestFork is Test {
             );
             usdcToBorrow = IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
-            ).div(1e12);
+            );
         }
 
         return (wethToLend, usdcToBorrow);
