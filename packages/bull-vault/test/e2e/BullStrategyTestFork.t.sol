@@ -276,14 +276,14 @@ contract BullStrategyTestFork is Test {
         if (IERC20(bullStrategy).totalSupply() == 0) {
             return _crabToDeposit;
         } else {
-            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)).add(_crabToDeposit));
+            uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
             return share.wmul(bullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
     }
 
     function _calcWPowerPerpAndCrabNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256) {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
-        uint256 crabToRedeem = share.wmul(IERC20(crabV2).balanceOf(address(bullStrategy)));
+        uint256 crabToRedeem = share.wmul(bullStrategy.getCrabBalance());
         uint256 crabTotalSupply = IERC20(crabV2).totalSupply();
         (, uint256 squeethInCrab) = _getCrabVaultDetails();
         return (crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply), crabToRedeem);
@@ -319,7 +319,7 @@ contract BullStrategyTestFork is Test {
                 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
             }
         } else {
-            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)).add(_crabToDeposit));
+            uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
             wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );

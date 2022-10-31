@@ -148,7 +148,7 @@ contract FlashBullTestFork is Test {
             wethToLend
         );
         assertEq(
-            IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
+            bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore
         );
     }
@@ -275,7 +275,7 @@ contract FlashBullTestFork is Test {
             5
         );
         assertEq(
-            IERC20(crabV2).balanceOf(address(bullStrategy)).sub(crabToBeMinted),
+            bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
         );
@@ -475,7 +475,7 @@ contract FlashBullTestFork is Test {
                 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
             }
         } else {
-            uint256 share = _crabToDeposit.wdiv(IERC20(crabV2).balanceOf(address(bullStrategy)));
+            uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance());
             wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );

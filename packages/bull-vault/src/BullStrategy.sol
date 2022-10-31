@@ -24,6 +24,9 @@ contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
+    /// @dev the amount of crab token bull strategy own
+    uint256 private _crabBalance;
+
     /// @dev Crab contract address
     address public immutable crab;
     /// @dev PowerToken controller
@@ -68,12 +71,21 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
+     * @notice return the internal accounting of the bull strategy's crab balance 
+     * @return crab token amount hold by the bull strategy
+     */
+    function getCrabBalance() external view returns (uint256) {
+        return _crabBalance;
+    }
+    
+    /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
      * @param _crabAmount amount of crab token
      */
     function deposit(uint256 _crabAmount) external payable {
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
+        uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
         uint256 share = ONE;
         uint256 bullToMint = _crabAmount;
@@ -81,7 +93,7 @@ contract BullStrategy is ERC20, LeverageBull {
         if (totalSupply() == 0) {
             _mint(msg.sender, _crabAmount);
         } else {
-            share = _crabAmount.wdiv(IERC20(crab).balanceOf(address(this)));
+            share = _crabAmount.wdiv(crabBalance);
             bullToMint = share.wmul(totalSupply()).wdiv(ONE.sub(share));
             _mint(msg.sender, bullToMint);
         }
@@ -98,7 +110,7 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function withdraw(uint256 _bullAmount) external {        
         uint256 share = _bullAmount.wdiv(totalSupply());
-        uint256 crabToRedeem = share.wmul(IERC20(crab).balanceOf(address(this)));
+        uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
         (, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
@@ -107,6 +119,7 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
         
+        _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
         _repayAndWithdrawFromLeverage(share);
@@ -118,6 +131,24 @@ contract BullStrategy is ERC20, LeverageBull {
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
+    }
+
+    /**
+     * @notice increase internal accounting of bull stragtegy's crab balance
+     * @param _crabAmount crab amount
+     */
+    function _increaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+        _crabBalance = _crabBalance.add(_crabAmount);
+        return _crabBalance;
+    }
+
+    /**
+     * @notice decrease internal accounting of bull strategy's crab balance
+     * @param _crabAmount crab amount
+     */
+    function _decreaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+        _crabBalance = _crabBalance.sub(_crabAmount);
+        return _crabBalance;
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
