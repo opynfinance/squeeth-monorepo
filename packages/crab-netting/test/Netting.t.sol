@@ -62,7 +62,7 @@ contract NettingTest is Test {
         netting.depositUSDC(20 * 1e6);
         netting.depositUSDC(100 * 1e6);
         netting.depositUSDC(80 * 1e6);
-        assertEq(netting.usd_balance(depositor), 200e6);
+        assertEq(netting.usdBalance(depositor), 200e6);
         vm.stopPrank();
 
         vm.startPrank(withdrawer);
@@ -70,7 +70,7 @@ contract NettingTest is Test {
         netting.queueCrabForWithdrawal(5 * 1e18);
         netting.queueCrabForWithdrawal(4 * 1e18);
         netting.queueCrabForWithdrawal(11 * 1e18);
-        assertEq(netting.crab_balance(withdrawer), 20e18);
+        assertEq(netting.crabBalance(withdrawer), 20e18);
         vm.stopPrank();
     }
 
@@ -113,7 +113,7 @@ contract NettingTest is Test {
         netting.depositUSDC(100 * 1e6);
         netting.depositUSDC(80 * 1e6);
         assertEq(
-            netting.usd_balance(depositor),
+            netting.usdBalance(depositor),
             200e6,
             "usd balance not reflecting correctly"
         );
@@ -125,7 +125,7 @@ contract NettingTest is Test {
         netting.queueCrabForWithdrawal(4 * 1e18);
         netting.queueCrabForWithdrawal(11 * 1e18);
         assertEq(
-            netting.crab_balance(withdrawer),
+            netting.crabBalance(withdrawer),
             20e18,
             "crab balance not reflecting correctly"
         );

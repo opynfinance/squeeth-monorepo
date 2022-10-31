@@ -61,9 +61,9 @@ contract DepositTest is Test {
         usdc.approve(address(netting), 2 * 1e18);
         netting.depositUSDC(2 * 1e18);
 
-        assertEq(netting.usd_balance(depositor), 2e18);
+        assertEq(netting.usdBalance(depositor), 2e18);
         netting.withdrawUSDC(1 * 1e18);
-        assertEq(netting.usd_balance(depositor), 1e18);
+        assertEq(netting.usdBalance(depositor), 1e18);
         assertEq(netting.depositsQueued(), 1e18);
     }
 
@@ -72,9 +72,9 @@ contract DepositTest is Test {
         crab.approve(address(netting), 2 * 1e18);
         netting.queueCrabForWithdrawal(2 * 1e18);
 
-        assertEq(netting.crab_balance(withdrawer), 2e18);
+        assertEq(netting.crabBalance(withdrawer), 2e18);
         netting.withdrawCrab(1 * 1e18);
-        assertEq(netting.crab_balance(withdrawer), 1e18);
+        assertEq(netting.crabBalance(withdrawer), 1e18);
         assertEq(netting.withdrawsQueued(), 1e18);
     }
 }

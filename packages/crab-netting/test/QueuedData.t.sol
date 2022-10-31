@@ -61,7 +61,7 @@ contract QueuedDataTest is Test {
         netting.depositUSDC(20 * 1e6);
         netting.depositUSDC(100 * 1e6);
         netting.depositUSDC(80 * 1e6);
-        assertEq(netting.usd_balance(depositor), 200e6);
+        assertEq(netting.usdBalance(depositor), 200e6);
         vm.stopPrank();
 
         vm.startPrank(withdrawer);
@@ -69,13 +69,13 @@ contract QueuedDataTest is Test {
         netting.queueCrabForWithdrawal(5 * 1e18);
         netting.queueCrabForWithdrawal(4 * 1e18);
         netting.queueCrabForWithdrawal(11 * 1e18);
-        assertEq(netting.crab_balance(withdrawer), 20e18);
+        assertEq(netting.crabBalance(withdrawer), 20e18);
         vm.stopPrank();
 
         netting.netAtPrice(10e6, 100e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
     }
 
-    function testDepositsQueued() public {
+    function testcrabBalanceQueued() public {
         assertEq(netting.depositsQueued(), 100e6);
     }
 
