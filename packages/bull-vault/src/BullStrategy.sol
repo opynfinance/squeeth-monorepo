@@ -24,22 +24,11 @@ contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    /// @dev set to true when redeemShortShutdown has been called
-    bool private hasRedeemedInShutdown;
-    /// @dev ETH:wSqueeth Uniswap pool
-    address private immutable ethWSqueethPool;
-    /// @dev ETH:USDC Uniswap pool
-    address private immutable ethUSDCPool;
-    /// @dev wPowerPerp address
-    address private immutable wPowerPerp;
-
     /// @dev Crab contract address
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
 
-    /// @dev true if Bull was initialized
-    bool public isInitialized;
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
     /// @dev the highest delta we can have without rebalancing
@@ -72,9 +61,6 @@ contract BullStrategy is ERC20, LeverageBull {
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
-        wPowerPerp = IController(_powerTokenController).wPowerPerp();
-        ethWSqueethPool = IController(_powerTokenController).wPowerPerpPool();
-        ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
     }
 
     receive() external payable {
