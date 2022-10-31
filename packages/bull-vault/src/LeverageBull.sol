@@ -155,8 +155,9 @@ contract LeverageBull {
                 return (ethToLend, usdcToBorrow);
             }
         }
-        return (IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)),
-               IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare)).div(1e12));
+        uint256 ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+        uint256 usdcToBorrow = IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+        return (ethToLend, usdcToBorrow);
     }
 
     /**
