@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// TODO is the contract license ok
 pragma solidity ^0.8.13;
 
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
