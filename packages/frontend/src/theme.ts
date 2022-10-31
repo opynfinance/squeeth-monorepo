@@ -1,31 +1,17 @@
 import { createTheme, ThemeOptions } from '@material-ui/core/styles'
 
 export enum Mode {
-  LIGHT = 'light',
+  LIGHT = 'LIGHT',
   DARK = 'DARK',
+  NEW_DARK = 'NEW_DARK',
 }
 
 const getTheme = (mode: Mode) => {
-  const palette = mode === 'light' ? lightPalette : darkPalete
+  const palette = mode === Mode.LIGHT ? lightPalette : mode === Mode.NEW_DARK ? newDarkPalette : darkPalette
 
   return createTheme({
     ...palette,
-    typography: {
-      fontWeightBold: 500,
-      fontFamily: [
-        'Open Sans',
-        'Mulish',
-        'Inter',
-        'Roboto Mono',
-        '-apple-system',
-        'BlinkMacSystemFont',
-        '"Segoe UI"',
-        'Roboto',
-        '"Helvetica Neue"',
-        'Arial',
-        '"Segoe UI Emoji"',
-      ].join(','),
-    },
+
     breakpoints: {
       values: {
         xs: 0,
@@ -76,7 +62,47 @@ const getTheme = (mode: Mode) => {
   })
 }
 
+const getTypography = (mode: Mode) => {
+  if (mode === Mode.NEW_DARK) {
+    return {
+      fontWeightBold: 500,
+      fontFamily: [
+        'DM Sans',
+        'Open Sans',
+        'Mulish',
+        'Inter',
+        'Roboto Mono',
+        '-apple-system',
+        'BlinkMacSystemFont',
+        '"Segoe UI"',
+        'Roboto',
+        '"Helvetica Neue"',
+        'Arial',
+        '"Segoe UI Emoji"',
+      ].join(','),
+    }
+  } else {
+    return {
+      fontWeightBold: 500,
+      fontFamily: [
+        'Open Sans',
+        'Mulish',
+        'Inter',
+        'Roboto Mono',
+        '-apple-system',
+        'BlinkMacSystemFont',
+        '"Segoe UI"',
+        'Roboto',
+        '"Helvetica Neue"',
+        'Arial',
+        '"Segoe UI Emoji"',
+      ].join(','),
+    }
+  }
+}
+
 const lightPalette: ThemeOptions = {
+  typography: getTypography(Mode.LIGHT),
   palette: {
     type: 'light',
     primary: {
@@ -111,7 +137,8 @@ const lightPalette: ThemeOptions = {
   },
 }
 
-const darkPalete: ThemeOptions = {
+const darkPalette: ThemeOptions = {
+  typography: getTypography(Mode.DARK),
   palette: {
     type: 'dark',
     primary: {
@@ -135,6 +162,37 @@ const darkPalete: ThemeOptions = {
     background: {
       stone: 'rgba(255, 255, 255, 0.12)',
       lightStone: 'rgba(255, 255, 255, 0.08)',
+      tooltip: 'rgba(255, 255, 255)',
+      default: '#181B1C',
+    },
+  },
+}
+
+const newDarkPalette: ThemeOptions = {
+  typography: getTypography(Mode.NEW_DARK),
+  palette: {
+    type: 'dark',
+    primary: {
+      main: '#70E3F6',
+      contrastText: '#FFFFFF',
+    },
+    secondary: {
+      main: '#00fff9',
+    },
+    error: {
+      main: '#f5475c',
+    },
+    warning: {
+      light: '#F5B07326',
+      main: '#F5B073',
+    },
+    success: {
+      main: '#49D273',
+      light: '#B2F0C5',
+    },
+    background: {
+      stone: '#242728',
+      lightStone: '#303436',
       tooltip: 'rgba(255, 255, 255)',
       default: '#181B1C',
     },
