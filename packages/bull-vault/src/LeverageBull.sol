@@ -12,6 +12,8 @@ import { IEulerDToken } from "./interface/IEulerDToken.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
+import {console} from "forge-std/console.sol";
+
 /**
  * @notice LeverageBull contract
  * @dev contract that interact mainly with leverage component
