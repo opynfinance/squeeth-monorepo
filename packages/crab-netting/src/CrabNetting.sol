@@ -292,6 +292,7 @@ contract CrabNetting is Ownable {
 
         // send sqth to mms
         for (uint256 i = 0; i < _orders.length; i++) {
+            console.log(_orders[i].trader, _orders[i].quantity);
             IERC20(sqth).transfer(_orders[i].trader, _orders[i].quantity);
         }
 
