@@ -30,6 +30,7 @@ contract LeverageBull is Ownable {
     /// @dev TWAP period
     uint32 private constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
+    /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
@@ -48,6 +49,8 @@ contract LeverageBull is Ownable {
     address internal immutable eToken;
     /// @dev euler dToken that represent the borrowed asset
     address internal immutable dToken;
+    /// @dev auction contract address
+    address public auction;
 
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
 
@@ -57,12 +60,7 @@ contract LeverageBull is Ownable {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(
-        address _owner,
-        address _euler,
-        address _eulerMarkets,
-        address _powerTokenController
-    ) Ownable() {
+    constructor(address _owner, address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
             IController(_powerTokenController).weth()
@@ -217,5 +215,9 @@ contract LeverageBull is Ownable {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
+
+    function _isAuction() internal view returns (bool) {
+        return msg.sender == auction;
     }
 }
