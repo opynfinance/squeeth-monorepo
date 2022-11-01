@@ -324,6 +324,68 @@ contract AuctionBullTestFork is Test {
         vm.stopPrank();
     }
 
+    function testLeverageRebalanceBuy() public {
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
+            address(bullStrategy)
+        );
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(
+            address(bullStrategy)
+        );
+
+        uint256 ethSlippageTolerance = 1e14; 
+
+        uint256 usdcToSell = 10e6;
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        uint256 ethToBuy = usdcToSell.wdiv(ethUsdPrice).mul(1e12);
+        auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
+
+        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
+        uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(
+            address(bullStrategy)
+        );
+        uint256 ethBalanceAfter = IEulerEToken(eToken).balanceOfUnderlying(
+            address(bullStrategy)
+        );
+
+        // The auction contract should hold no remaining funds
+        assertEq(
+            IERC20(usdc).balanceOf(address(auctionBull)),
+            0,
+            "USDC balance of auction contract should be 0"
+        );
+        assertEq(
+            IERC20(weth).balanceOf(address(auctionBull)),
+            0,
+            "WETH balance of auction contract should be 0"
+        );
+        
+        assertEq(
+            bullCrabBalanceBefore,
+            bullCrabBalanceAfter,
+            "Bull's crab balance should not change on leverage rebalance"
+        );
+
+        assertApproxEqAbs(
+            ethBalanceBefore.add(ethToBuy),
+            ethBalanceAfter,
+            ethSlippageTolerance,
+            "Bull ETH in collateral mismatch"
+        );
+
+        assertEq(
+            usdcDebtBefore.add(usdcToSell),
+            usdcDebtAfter,
+            "Bull USDC debt mismatch"
+        );
+    }
+
     // Helper functions
     function _calcWethToWithdraw(uint256 _bullAmount)
         internal
