@@ -14,6 +14,8 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
+import {console} from "forge-std/console.sol";
+
 /**
  * Error codes
  * LB0: ETH sent is greater than ETH to deposit in Euler
