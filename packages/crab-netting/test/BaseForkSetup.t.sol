@@ -2,25 +2,20 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {IWETH} from "../src/interfaces/IWETH.sol";
+import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {CrabNetting} from "../src/CrabNetting.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 
-contract FixedERC20 is ERC20 {
-    constructor(uint256 initialSupply) ERC20("USDC", "USDC") {
-        _mint(msg.sender, initialSupply);
-    }
-}
-
-contract BaseSetup is Test {
-    FixedERC20 usdc;
-    FixedERC20 crab;
-    FixedERC20 weth;
-    FixedERC20 sqth;
+contract BaseForkSetup is Test {
+    ICrabStrategyV2 crab;
+    ERC20 usdc;
+    IWETH weth;
+    ERC20 sqth;
     CrabNetting netting;
-    ISwapRouter public immutable swapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    ISwapRouter swapRouter;
 
     uint256 internal ownerPrivateKey;
     address internal owner;
@@ -30,10 +25,14 @@ contract BaseSetup is Test {
     address internal withdrawer;
 
     function setUp() public virtual {
-        usdc = new FixedERC20(10000 * 1e6);
-        crab = new FixedERC20(10000 * 1e18);
-        weth = new FixedERC20(10000 * 1e18);
-        sqth = new FixedERC20(10000 * 1e18);
+        string memory FORK_URL = vm.envString("FORK_URL");
+        vm.createSelectFork(FORK_URL, 15819213);
+
+        crab = ICrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
+        weth = IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+        usdc = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+        sqth = ERC20(0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B);
+        swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
         netting = new CrabNetting(
             address(usdc),
