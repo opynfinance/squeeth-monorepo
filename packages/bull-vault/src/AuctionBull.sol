@@ -83,7 +83,9 @@ contract AuctionBull is UniFlash, Ownable {
                 ""
             );
             // Deposit ETH in collateral
-            IBullStrategy(bullStrategy).depositWethInEuler(_amountIn, false);
+            uint256 ethToDeposit = IERC20(weth).balanceOf(address(this));
+            IERC20(weth).transfer(address(bullStrategy), ethToDeposit);
+            IBullStrategy(bullStrategy).depositWethInEuler(ethToDeposit, false);
         }
     }
 
