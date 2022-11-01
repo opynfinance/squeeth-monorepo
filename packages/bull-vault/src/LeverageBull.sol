@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity =0.7.6;
 
-// contract
-import {UniBull} from "./UniBull.sol";
-
 // interface
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
@@ -13,36 +10,37 @@ import {IEulerEToken} from "./interface/IEulerEToken.sol";
 import {IEulerDToken} from "./interface/IEulerDToken.sol";
 // lib
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {UniOracle} from "./UniOracle.sol";
 
 /**
  * @notice LeverageBull contract
  * @dev contract that interact mainly with leverage component
  * @author opyn team
  */
-abstract contract LeverageBull is UniBull {
+contract LeverageBull {
     using StrategyMath for uint256;
 
-    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
-
-    /// @dev USDC address
-    address internal usdc;
-    /// @dev WETH address
-    address internal weth;
-
-    /// @dev euler markets module
-    address internal eulerMarkets;
-    /// @dev euler eToken that represent the collateral asset
-    address internal eToken;
-    /// @dev euler dToken that represent the borrowed asset
-    address internal dToken;
-    /// @dev ETH:wSqueeth Uniswap pool
-    address private immutable ethWSqueethPool;
-    /// @dev ETH:USDC Uniswap pool
-    address private immutable ethUSDCPool;
     /// @dev TWAP period
     uint32 private constant TWAP = 420;
+    uint256 internal constant ONE = 1e18;
+    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
+
+    /// @dev ETH:wSqueeth Uniswap pool
+    address internal immutable ethWSqueethPool;
+    /// @dev ETH:USDC Uniswap pool
+    address internal immutable ethUSDCPool;
     /// @dev wPowerPerp address
-    address private immutable wPowerPerp;
+    address internal immutable wPowerPerp;
+    /// @dev USDC address
+    address internal immutable usdc;
+    /// @dev WETH address
+    address internal immutable weth;
+    /// @dev euler markets module
+    address internal immutable eulerMarkets;
+    /// @dev euler eToken that represent the collateral asset
+    address internal immutable eToken;
+    /// @dev euler dToken that represent the borrowed asset
+    address internal immutable dToken;
 
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
 
@@ -55,15 +53,15 @@ abstract contract LeverageBull is UniBull {
     constructor(address _euler, address _eulerMarkets, address _powerTokenController) {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(IController(_powerTokenController).weth());
-        dToken = IEulerMarkets(eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
+        dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
         weth = IController(_powerTokenController).weth();
         usdc = IController(_powerTokenController).quoteCurrency();
         wPowerPerp = IController(_powerTokenController).wPowerPerp();
         ethWSqueethPool = IController(_powerTokenController).wPowerPerpPool();
         ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
 
-        IERC20(weth).approve(_euler, type(uint256).max);
-        IERC20(usdc).approve(_euler, type(uint256).max);
+        IERC20(IController(_powerTokenController).weth()).approve(_euler, type(uint256).max);
+        IERC20(IController(_powerTokenController).quoteCurrency()).approve(_euler, type(uint256).max);
     }
 
     function calcLeverageEthUsdc(uint256 _crabAmount, uint256 _bullShare, uint256 _ethInCrab, uint256 _squeethInCrab, uint256 _totalCrabSupply)
@@ -148,8 +146,8 @@ abstract contract LeverageBull is UniBull {
     {
         {
             if (_bullShare == ONE) {
-                uint256 ethUsdPrice = _getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                uint256 squeethEthPrice = _getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+                uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
+                uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
                 uint256 crabUsdPrice = (_ethInCrab.wmul(ethUsdPrice).sub(_squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
                 .wdiv(_totalCrabSupply);
                 uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
