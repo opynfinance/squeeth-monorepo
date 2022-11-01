@@ -10,7 +10,6 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
   }
   
   const jsonResponse = await axios.get(`${SQUEETH_PORTAL_API}/api/auction/getLastHedge`)
-
   res.status(200).json(jsonResponse.data)
 }
 
