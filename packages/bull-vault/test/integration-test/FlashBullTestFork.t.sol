@@ -4,6 +4,7 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
+import {console2} from "forge-std/console2.sol";
 //interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
