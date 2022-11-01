@@ -35,14 +35,9 @@ contract BullStrategyTestFork is Test {
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
     uint256 internal user1Pk;
-
-    uint256 internal cap;
-
+    uint256 internal ownerPk;
     address internal user1;
     address internal owner;
-    address internal deployer;
-    address internal bullOwner;
-
     address internal weth;
     address internal usdc;
     address internal euler;
