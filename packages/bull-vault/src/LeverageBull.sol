@@ -97,6 +97,7 @@ contract LeverageBull is Ownable {
     function borrowUsdcFromEuler(uint256 _usdcToBorrow) external {
         require(_isAuction());
         _borrowUsdcFromEuler(_usdcToBorrow);
+        IERC20(usdc).transfer(auction, _usdcToBorrow);
     }
 
     /**
@@ -195,7 +196,6 @@ contract LeverageBull is Ownable {
 
     function _withdrawEthFromEuler(uint256 _wethToWithdraw) internal {
         IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
-        // if (_unwrapWeth) IWETH9(weth).withdraw(_wethToWithdraw);
     }
 
     /**
