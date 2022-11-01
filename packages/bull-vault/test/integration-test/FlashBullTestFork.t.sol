@@ -43,14 +43,15 @@ contract FlashBullTestFork is Test {
     address internal wPowerPerp;
     address internal ethWSqueethPool;
     address internal ethUsdcPool;
-    address internal controllerOwner;
+    
+    uint256 internal ownerPk;
     uint256 internal user1Pk;
     uint256 internal deployerPk;
     uint256 internal cap;
     uint256 internal bullOwnerPk;
     address internal user1;
     address internal deployer;
-    address internal bullOwner;
+    address internal owner;
 
     uint256 internal cap;
 
@@ -65,6 +66,9 @@ contract FlashBullTestFork is Test {
         deployerPk = 0xAB11CE;
         deployer = vm.addr(deployerPk);
 
+        ownerPk = 0xA1CCE;
+        owner = vm.addr(ownerPk);
+
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
@@ -75,7 +79,7 @@ contract FlashBullTestFork is Test {
         bullOwner = vm.addr(bullOwnerPk);
 
         bullStrategy = new BullStrategy(
-            deployer,
+            owner,
             address(crabV2),
             address(controller),
             euler,

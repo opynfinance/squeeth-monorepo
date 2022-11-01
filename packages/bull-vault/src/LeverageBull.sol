@@ -31,10 +31,8 @@ contract LeverageBull is Ownable {
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
-    /// @dev WETH decimals - USDC decimals
-    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     /// @dev target CR for our ETH collateral
-    uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
+    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
     address internal immutable ethWSqueethPool;
@@ -65,12 +63,7 @@ contract LeverageBull is Ownable {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(
-        address _owner,
-        address _euler,
-        address _eulerMarkets,
-        address _powerTokenController
-    ) Ownable() {
+    constructor(address _owner, address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
             IController(_powerTokenController).weth()
