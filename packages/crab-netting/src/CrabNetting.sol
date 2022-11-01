@@ -83,9 +83,9 @@ contract CrabNetting is Ownable {
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
-        uint256 lastIndex = userDepositsIndex[msg.sender].length - 1;
-        for (uint256 i = lastIndex; i >= 0; i--) {
-            Receipt storage r = deposits[userDepositsIndex[msg.sender][i]];
+        uint256 lastIndex = userDepositsIndex[msg.sender].length;
+        for (uint256 i = lastIndex; i > 0; i--) {
+            Receipt storage r = deposits[userDepositsIndex[msg.sender][i - 1]];
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
@@ -111,9 +111,11 @@ contract CrabNetting is Ownable {
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
-        uint256 lastIndex = userWithdrawsIndex[msg.sender].length - 1;
-        for (uint256 i = lastIndex; i >= 0; i--) {
-            Receipt storage r = withdraws[userWithdrawsIndex[msg.sender][i]];
+        uint256 lastIndex = userWithdrawsIndex[msg.sender].length;
+        for (uint256 i = lastIndex; i > 0; i--) {
+            Receipt storage r = withdraws[
+                userWithdrawsIndex[msg.sender][i - 1]
+            ];
             console.log(toRemove);
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
@@ -129,6 +131,7 @@ contract CrabNetting is Ownable {
 
     function netAtPrice(uint256 _price, uint256 _quantity) public onlyOwner {
         uint256 crabQuantity = (_quantity * 1e18) / _price;
+        // todo write tests for reverts and may = in branches
         require(
             _quantity <= IERC20(usdc).balanceOf(address(this)),
             "Not enough deposits to net"
@@ -217,12 +220,14 @@ contract CrabNetting is Ownable {
 
     function depositAuction(
         uint256 _depositsQueued,
-        uint256 _minEth,
-        uint256 _totalDeposit,
+        uint256 _minEth, // to get from converting usdc to converting eth to usd
+        uint256 _totalDeposit, // 2x the amount i.e flash depositing calc
         Order[] calldata _orders,
         uint256 _clearingPrice,
-        uint256 _ethToFlashDeposit
+        uint256 _ethToFlashDeposit // the remaining amount to flashDeposit
     ) public onlyOwner {
+        uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
+        console.log(address(this).balance, "ETH not deposited");
         // got all the eth in
         for (uint256 i = 0; i < _orders.length; i++) {
             IWETH(weth).transferFrom(
@@ -234,7 +239,7 @@ contract CrabNetting is Ownable {
         uint256 ethBalance = IWETH(weth).balanceOf(address(this));
         IWETH(weth).withdraw(ethBalance);
 
-        IERC20(usdc).approve(address(swapRouter), _depositsQueued);
+        IERC20(usdc).approve(address(swapRouter), _depositsQueued); // TODO move all approves to constructor
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
                 tokenIn: address(usdc),
@@ -262,6 +267,7 @@ contract CrabNetting is Ownable {
         // TODO the left overs of the previous tx from the flashDeposit will be added here
         to_send.eth = address(this).balance;
 
+        // todo remove console logs
         console.log("trying to flashDeposit");
         console.log(to_send.eth, "to send");
         ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
@@ -270,7 +276,9 @@ contract CrabNetting is Ownable {
         );
         console.log("ending to flashDeposit");
 
-        to_send.crab = IERC20(crab).balanceOf(address(this));
+        to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
+        console.log("total crab to send", to_send.crab);
+        // get the balance between start and now
 
         // send sqth to mms
         uint256 sqth_owed;
@@ -309,9 +317,9 @@ contract CrabNetting is Ownable {
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[depositsIndex].amount = 0;
+                to_send.crab -= portion.crab;
                 depositsIndex++;
             } else {
-                remainingDeposits = 0;
                 usdBalance[deposits[depositsIndex].sender] -= remainingDeposits;
 
                 portion.crab = ((deposits[depositsIndex].amount *
@@ -326,6 +334,8 @@ contract CrabNetting is Ownable {
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[depositsIndex].amount -= remainingDeposits;
+                to_send.crab -= portion.crab;
+                remainingDeposits = 0;
             }
         }
 

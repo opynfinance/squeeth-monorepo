@@ -70,7 +70,7 @@ contract DepositAuctionTest is Test {
         payable(depositor).transfer(address(netting).balance);
         console.log(address(netting).balance, "netting balance at deploy");
         vm.startPrank(depositor);
-        usdc.approve(address(netting), 200000 * 1e6);
+        usdc.approve(address(netting), 500000 * 1e6);
         netting.depositUSDC(200000 * 1e6);
         vm.stopPrank();
     }
@@ -81,6 +81,59 @@ contract DepositAuctionTest is Test {
         // at a price of clearning price
         // create an array of orders
         //netting.depositWithAuctionOrder()
+    }
+
+    function testDepositAuctionPartialFill() public {
+        // Large first deposit. 10 & 40 as the deposit. 20 is the amount to net
+        vm.prank(depositor);
+        netting.depositUSDC(300000 * 1e6); //20+30 50k usdc deposited
+
+        console.log("balance is", netting.depositsQueued());
+        uint256 depositsQueued = 300000 * 1e6;
+        uint256 depositsQdInETH = _convertUSDToETH(depositsQueued);
+
+        uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
+        (, , uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        uint256 totalDeposit = (depositsQdInETH * 1e18) /
+            (1e18 - ((debt * sqthPrice) / collateral));
+        uint256 toMint = (totalDeposit * debt) / collateral;
+        bool trade_works = _isEnough(
+            depositsQdInETH,
+            toMint,
+            sqthPrice,
+            totalDeposit
+        );
+        require(trade_works, "depositing more than we have from sellling");
+
+        orders.push(
+            Order(0, mm1, toMint, sqthPrice, true, 0, 0, 1, 0x00, 0x00)
+        );
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        uint256 auctionPrice = (sqthPrice * 1010) / 1000;
+        uint256 excessEth = (toMint * (auctionPrice - sqthPrice)) / 1e18;
+
+        uint256 toFlash = ((excessEth * collateral) /
+            ((debt * auctionPrice) / 1e18));
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(toFlash, debt, collateral);
+        // ------------- //
+        netting.depositAuction(
+            depositsQueued,
+            depositsQdInETH,
+            totalDeposit,
+            orders,
+            auctionPrice,
+            (toFlash * mid) / 10**7
+            //(excessEth * 396791) / 200000
+        );
+
+        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 200e18);
+        assertEq(netting.usdBalance(depositor), 200000e6);
+        assertEq(sqth.balanceOf(mm1), toMint);
+        assertLe(address(netting).balance, 1e18);
     }
 
     function _findTotalDeposit() internal {

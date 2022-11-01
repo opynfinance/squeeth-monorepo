@@ -67,6 +67,17 @@ contract DepositTest is Test {
         assertEq(netting.depositsQueued(), 1e18);
     }
 
+    function testDepositAndWithdrawFull() public {
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 2 * 1e18);
+        netting.depositUSDC(2 * 1e18);
+
+        assertEq(netting.usdBalance(depositor), 2e18);
+        netting.withdrawUSDC(2 * 1e18);
+        assertEq(netting.usdBalance(depositor), 0e18);
+        assertEq(netting.depositsQueued(), 0e18);
+    }
+
     function testLargeWithdraw() public {
         vm.startPrank(depositor);
         usdc.approve(address(netting), 4 * 1e18);
