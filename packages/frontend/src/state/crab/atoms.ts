@@ -17,6 +17,7 @@ export const crabStrategyCollatRatioAtomV2 = atom(0)
 export const crabStrategyLiquidationPriceAtomV2 = atom(BIG_ZERO)
 export const timeAtLastHedgeAtomV2 = atom(0)
 export const loadingAtomV2 = atom(true)
+export const ethPriceAtLastHedgeAtomV2 = atom(BIG_ZERO)
 
 // export const currentEthValueAtom = atom(BIG_ZERO)
 export const currentEthLoadingAtom = atom(true)

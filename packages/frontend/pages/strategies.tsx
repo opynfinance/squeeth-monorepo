@@ -27,6 +27,7 @@ import {
   crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
+  ethPriceAtLastHedgeAtomV2,
   maxCapAtom,
   maxCapAtomV2,
   timeAtLastHedgeAtom,
@@ -182,6 +183,7 @@ const Strategies: React.FC = () => {
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
+  const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
 
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
@@ -198,9 +200,9 @@ const Strategies: React.FC = () => {
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
-  const ethPrice =   Number(toTokenAmount(index, 18).sqrt())
-  const lowerPriceBandForProfifatability =  ethPrice - (profitableMovePercentV2 * ethPrice)
-  const upperPriceBandForProfifatability =  ethPrice + (profitableMovePercentV2 * ethPrice)
+  const ethPrice =   Number(toTokenAmount(ethPriceAtLastHedge, 18))
+  const lowerPriceBandForProfitability =  ethPrice - (profitableMovePercentV2 * ethPrice)
+  const upperPriceBandForProfitability =  ethPrice + (profitableMovePercentV2 * ethPrice)
  
 
   useEffect(() => {
@@ -352,8 +354,8 @@ const Strategies: React.FC = () => {
                     />
                   ) : (
                     <StrategyInfoItem
-                      value={ lowerPriceBandForProfifatability.toFixed(2)  + " - " +  upperPriceBandForProfifatability.toFixed(2)}
-                      label= {'Profitable ('+ (profitableMovePercentV2 * 100).toFixed(2) + '%) between Eth Prices ($)'} 
+                      value={"~"+lowerPriceBandForProfitability.toFixed(2)  + " - " +upperPriceBandForProfitability.toFixed(2) }
+                      label= {'Aprrox Profitable ('+ (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'} 
                       tooltip={Tooltips.StrategyProfitThreshold}
                     />
                   )}

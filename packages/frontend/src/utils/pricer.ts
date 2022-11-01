@@ -605,3 +605,12 @@ export const getCrabPnlV2ChartData = async () => {
   const data = await response.json()
   return data
 }
+
+export const getEthPriceAtHedge = async() => {
+
+  const url = `/api/auction/lastHedgeAuction`
+  const response = await fetch(url)
+  const data = await response.json()
+
+  return data?.auction?.ethPrice
+}
