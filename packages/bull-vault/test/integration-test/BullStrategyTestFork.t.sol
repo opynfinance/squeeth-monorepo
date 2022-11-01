@@ -33,7 +33,9 @@ contract BullStrategyTestFork is Test {
     Controller internal controller;
 
     uint256 internal user1Pk;
+    uint256 internal ownerPk;
     address internal user1;
+    address internal owner;
     address internal weth;
     address internal usdc;
     address internal euler;
@@ -48,13 +50,16 @@ contract BullStrategyTestFork is Test {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
 
+        ownerPk = 0xA1CCE;
+        owner = vm.addr(ownerPk);
+
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-        new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        new BullStrategy(owner, address(crabV2), address(controller), euler, eulerMarketsModule);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);

@@ -54,13 +54,14 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _powerTokenController wPowerPerp Controller address
      */
     constructor(
+        address _owner,
         address _crab,
         address _powerTokenController,
         address _euler,
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
-        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
+        LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
