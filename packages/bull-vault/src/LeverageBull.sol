@@ -14,6 +14,8 @@ import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {UniOracle} from "./UniOracle.sol";
 
+import {console} from "forge-std/console.sol";
+
 /**
  * @notice LeverageBull contract
  * @dev contract that interact mainly with leverage component
@@ -72,7 +74,7 @@ contract LeverageBull is Ownable {
     }
 
     function setAuction(address _newAuction) external {
-        require(msg.sender == owner());
+        require(msg.sender == owner(), "Only owner can set auction");
         require(_newAuction != address(0));
 
         auction = _newAuction;
@@ -100,11 +102,11 @@ contract LeverageBull is Ownable {
     /**
      * @dev withdraw eth from collateral in Euler market
      * @param _ethToWithdraw amount of ETH to withdraw
-     * @param _unwrapWeth unwrap WETH to ETH if true
      */
-    function withdrawWethFromEuler(uint256 _ethToWithdraw, bool _unwrapWeth) external {
+    function withdrawWethFromEuler(uint256 _ethToWithdraw) external {
         require(_isAuction());
-        _withdrawEthFromEuler(_ethToWithdraw, _unwrapWeth);
+        _withdrawEthFromEuler(_ethToWithdraw);
+        IERC20(weth).transferFrom(address(this), auction, _ethToWithdraw);
     }
 
     /**
@@ -191,9 +193,9 @@ contract LeverageBull is Ownable {
         emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
-    function _withdrawEthFromEuler(uint256 _wethToWithdraw, bool _unwrapWeth) internal {
+    function _withdrawEthFromEuler(uint256 _wethToWithdraw) internal {
         IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
-        if (_unwrapWeth) IWETH9(weth).withdraw(_wethToWithdraw);
+        // if (_unwrapWeth) IWETH9(weth).withdraw(_wethToWithdraw);
     }
 
     /**
