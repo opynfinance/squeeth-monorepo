@@ -33,7 +33,9 @@ contract BullStrategyTestFork is Test {
     Controller internal controller;
 
     uint256 internal user1Pk;
+    uint256 internal ownerPk;
     address internal user1;
+    address internal owner;
     address internal weth;
     address internal usdc;
     address internal euler;
@@ -47,6 +49,9 @@ contract BullStrategyTestFork is Test {
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
+
+        ownerPk = 0xA1CCE;
+        owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
