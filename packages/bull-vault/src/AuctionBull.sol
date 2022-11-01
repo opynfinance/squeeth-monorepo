@@ -9,6 +9,9 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {UniFlash} from "./UniFlash.sol";
 
+import {console} from "forge-std/console.sol";
+
+
 /**
  * @notice AuctionBull contract
  * @author opyn team
@@ -51,7 +54,7 @@ contract AuctionBull is UniFlash, Ownable {
     function leverageRebalance(bool _isSellingEth, uint256 _amountIn, uint256 _minAmountOut, uint24 _poolFee) external {
         if (_isSellingEth) {
             // Withdraw ETH from collateral
-            IBullStrategy(bullStrategy).withdrawWethFromEuler(_amountIn, false); 
+            IBullStrategy(bullStrategy).withdrawWethFromEuler(_amountIn); 
             // swap ETH to USDC
             _exactInFlashSwap(
                 weth,
@@ -63,7 +66,9 @@ contract AuctionBull is UniFlash, Ownable {
                 ""
             );
             // Repay some USDC debt
-            IBullStrategy(bullStrategy).repayUsdcToEuler(IERC20(usdc).balanceOf(address(bullStrategy)));
+            uint256 usdcToRepay = IERC20(usdc).balanceOf(address(this));
+            IERC20(usdc).transfer(address(bullStrategy), usdcToRepay);
+            IBullStrategy(bullStrategy).repayUsdcToEuler(usdcToRepay);
         } else {
             // Borrow more USDC debt
             IBullStrategy(bullStrategy).borrowUsdcFromEuler(_amountIn);
