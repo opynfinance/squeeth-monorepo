@@ -43,7 +43,7 @@ contract FlashBullTestFork is Test {
     address internal wPowerPerp;
     address internal ethWSqueethPool;
     address internal ethUsdcPool;
-    
+
     uint256 internal ownerPk;
     uint256 internal user1Pk;
     uint256 internal deployerPk;
@@ -170,9 +170,10 @@ contract FlashBullTestFork is Test {
             IEulerDToken(dToken).balanceOf(address(bullStrategy)),
             usdcToBorrow
         );
-        assertEq(
+        assertApproxEqAbs(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
+            wethToLend,
+            1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
@@ -226,9 +227,10 @@ contract FlashBullTestFork is Test {
             IEulerDToken(dToken).balanceOf(address(bullStrategy)),
             usdcToBorrow
         );
-        assertEq(
+        assertApproxEqAbs(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
+            wethToLend,
+            1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
@@ -295,12 +297,12 @@ contract FlashBullTestFork is Test {
             usdcToBorrowSecond,
             "Bull USDC debt amount mismatch for second flashdeposit"
         );
-        assertTrue(
-            wethToLendSecond.sub(
-                IEulerEToken(eToken)
-                    .balanceOfUnderlying(address(bullStrategy))
-                    .sub(wethToLendFirst)
-            ) <= 1
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(
+                wethToLendFirst
+            ),
+            wethToLendSecond,
+            1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMintedSecond),
