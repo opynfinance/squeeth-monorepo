@@ -37,16 +37,6 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have before rebalancing
-    uint256 public crLower;
-    /// @dev target CR for our ETH collateral
-    uint256 public crTarget;
 
     event Withdraw(
         address from,
@@ -153,8 +143,8 @@ contract BullStrategy is ERC20, LeverageBull {
         return _getCrabVaultDetails();
     }
 
-    function calcDeltaAndCR() external view returns (uint256, uint256) {
-        return _calcDeltaAndCR();
+    function calcDeltaAndCR(bool _isBuyingUsdc, uint256 _usdcAmount) external view returns (uint256, uint256) {
+        return _calcDeltaAndCR(_isBuyingUsdc, _usdcAmount);
     }
 
     /**
@@ -188,7 +178,8 @@ contract BullStrategy is ERC20, LeverageBull {
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
 
-    function _calcDeltaAndCR() internal view returns (uint256, uint256) {
+    // TODO: Take in crab params when we add full rebalance
+    function _calcDeltaAndCR(bool _isBuyingUsdc, uint256 _usdcAmount) internal view returns (uint256, uint256) {
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 ethUsdPrice = UniOracle._getTwap(
             ethUSDCPool,
@@ -210,8 +201,16 @@ contract BullStrategy is ERC20, LeverageBull {
             )
         ).wdiv(IERC20(crab).totalSupply());
 
-        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(this));
-        uint256 ethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this));
+        uint256 usdcDebt; 
+        uint256 ethInCollateral;
+        uint256 expectedEth = _usdcAmount.wdiv(ethUsdPrice).mul(1e12);
+        if (_isBuyingUsdc) {
+            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).sub(_usdcAmount);
+            ethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this)).sub(expectedEth);
+        } else {
+            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).add(_usdcAmount);
+            ethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this)).add(expectedEth);
+        }
 
         uint256 delta = (ethInCollateral.wmul(ethUsdPrice)).wdiv(
             (_crabBalance.wmul(crabUsdPrice))
