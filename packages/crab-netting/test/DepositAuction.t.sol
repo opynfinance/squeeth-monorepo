@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {BaseForkSetup} from "./BaseForkSetup.t.sol";
 
-import {Order} from "../src/CrabNetting.sol";
+import {Order, DepositAuctionParams} from "../src/CrabNetting.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 
 contract DepositAuctionTest is BaseForkSetup {
@@ -83,13 +83,17 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 mid = _findBorrow(toFlash, debt, collateral);
         // ------------- //
         netting.depositAuction(
-            auctionUSD,
-            auctionETH,
-            totalDeposit,
-            orders,
-            clearingPrice,
-            (toFlash * mid) / 10**7
-            //(excessEth * 396791) / 200000
+            DepositAuctionParams(
+                auctionUSD,
+                auctionETH,
+                totalDeposit,
+                orders,
+                clearingPrice,
+                (toFlash * mid) / 10**7,
+                500,
+                3000
+                //(excessEth * 396791) / 200000
+            )
         );
 
         assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 200e18);
@@ -153,13 +157,16 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 mid = _findBorrow(toFlash, debt, collateral);
         // ------------- //
         netting.depositAuction(
-            depositsQueued,
-            depositsQdInETH,
-            totalDeposit,
-            orders,
-            auctionPrice,
-            (toFlash * mid) / 10**7
-            //(excessEth * 396791) / 200000
+            DepositAuctionParams(
+                depositsQueued,
+                depositsQdInETH,
+                totalDeposit,
+                orders,
+                auctionPrice,
+                (toFlash * mid) / 10**7,
+                500,
+                3000
+            )
         );
 
         assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 148e18);

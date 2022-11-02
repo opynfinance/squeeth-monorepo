@@ -29,6 +29,17 @@ struct Portion {
     uint256 sqth;
 }
 
+struct DepositAuctionParams {
+    uint256 depositsQueued;
+    uint256 minEth; // to get from converting usdc to converting eth to usd
+    uint256 totalDeposit; // 2x the amount i.e flash depositing calc
+    Order[] orders;
+    uint256 clearingPrice;
+    uint256 ethToFlashDeposit; // the remaining amount to flashDeposit
+    uint24 usdEthFee;
+    uint24 flashDepositFee;
+}
+
 contract CrabNetting is Ownable {
     address public usdc;
     address public crab;
@@ -218,48 +229,41 @@ contract CrabNetting is Ownable {
         return sum;
     }
 
-    function depositAuction(
-        uint256 _depositsQueued,
-        uint256 _minEth, // to get from converting usdc to converting eth to usd
-        uint256 _totalDeposit, // 2x the amount i.e flash depositing calc
-        Order[] calldata _orders,
-        uint256 _clearingPrice,
-        uint256 _ethToFlashDeposit // the remaining amount to flashDeposit
-    ) public onlyOwner {
+    function depositAuction(DepositAuctionParams calldata _p) public onlyOwner {
         uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
         console.log(address(this).balance, "ETH not deposited");
         // got all the eth in
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i = 0; i < _p.orders.length; i++) {
             IWETH(weth).transferFrom(
-                _orders[i].trader,
+                _p.orders[i].trader,
                 address(this),
-                (_orders[i].quantity * _clearingPrice) / 1e18
+                (_p.orders[i].quantity * _p.clearingPrice) / 1e18
             );
         }
         uint256 ethBalance = IWETH(weth).balanceOf(address(this));
         IWETH(weth).withdraw(ethBalance);
 
-        IERC20(usdc).approve(address(swapRouter), _depositsQueued); // TODO move all approves to constructor
+        IERC20(usdc).approve(address(swapRouter), _p.depositsQueued); // TODO move all approves to constructor
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
                 tokenIn: address(usdc),
                 tokenOut: address(weth),
-                fee: 500,
+                fee: _p.usdEthFee,
                 recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: _depositsQueued,
-                amountOutMinimum: _minEth,
+                amountIn: _p.depositsQueued,
+                amountOutMinimum: _p.minEth,
                 sqrtPriceLimitX96: 0
             });
 
         // The call to `exactInputSingle` executes the swap.
         uint256 wethReceived = swapRouter.exactInputSingle(params);
         require(
-            (ethBalance + wethReceived) >= _totalDeposit,
+            (ethBalance + wethReceived) >= _p.totalDeposit,
             "Need more ETH than Total deposit"
         );
         IWETH(weth).withdraw(wethReceived);
-        ICrabStrategyV2(crab).deposit{value: _totalDeposit}();
+        ICrabStrategyV2(crab).deposit{value: _p.totalDeposit}();
         // todo think about adding 1 to the sqth to auction
 
         Portion memory to_send;
@@ -270,10 +274,13 @@ contract CrabNetting is Ownable {
         // todo remove console logs
         console.log("trying to flashDeposit");
         console.log(to_send.eth, "to send");
-        ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
-            _ethToFlashDeposit,
-            3000
-        );
+
+        if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
+            ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
+                _p.ethToFlashDeposit,
+                _p.flashDepositFee
+            );
+        }
         console.log("ending to flashDeposit");
 
         to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
@@ -282,8 +289,8 @@ contract CrabNetting is Ownable {
 
         // send sqth to mms
         uint256 sqth_owed;
-        for (uint256 i = 0; i < _orders.length; i++) {
-            sqth_owed += _orders[i].quantity;
+        for (uint256 i = 0; i < _p.orders.length; i++) {
+            sqth_owed = _p.orders[i].quantity;
         }
         require(
             to_send.sqth >= sqth_owed,
@@ -291,13 +298,13 @@ contract CrabNetting is Ownable {
         );
 
         // send sqth to mms
-        for (uint256 i = 0; i < _orders.length; i++) {
-            console.log(_orders[i].trader, _orders[i].quantity);
-            IERC20(sqth).transfer(_orders[i].trader, _orders[i].quantity);
+        for (uint256 i = 0; i < _p.orders.length; i++) {
+            console.log(_p.orders[i].trader, _p.orders[i].quantity);
+            IERC20(sqth).transfer(_p.orders[i].trader, _p.orders[i].quantity);
         }
 
         // send crab to depositors
-        uint256 remainingDeposits = _depositsQueued;
+        uint256 remainingDeposits = _p.depositsQueued;
         while (remainingDeposits > 0) {
             uint256 queuedAmount = deposits[depositsIndex].amount;
             Portion memory portion;
@@ -306,7 +313,7 @@ contract CrabNetting is Ownable {
                 usdBalance[deposits[depositsIndex].sender] -= queuedAmount;
 
                 portion.crab = ((deposits[depositsIndex].amount *
-                    to_send.crab) / _depositsQueued);
+                    to_send.crab) / _p.depositsQueued);
 
                 IERC20(crab).transfer(
                     deposits[depositsIndex].sender,
@@ -314,7 +321,7 @@ contract CrabNetting is Ownable {
                 );
 
                 portion.eth = ((deposits[depositsIndex].amount * to_send.eth) /
-                    _depositsQueued);
+                    _p.depositsQueued);
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[depositsIndex].amount = 0;
@@ -324,14 +331,14 @@ contract CrabNetting is Ownable {
                 usdBalance[deposits[depositsIndex].sender] -= remainingDeposits;
 
                 portion.crab = ((deposits[depositsIndex].amount *
-                    to_send.crab) / _depositsQueued);
+                    to_send.crab) / _p.depositsQueued);
                 IERC20(crab).transfer(
                     deposits[depositsIndex].sender,
                     portion.crab
                 );
 
                 portion.eth = ((deposits[depositsIndex].amount * to_send.eth) /
-                    _depositsQueued);
+                    _p.depositsQueued);
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[depositsIndex].amount -= remainingDeposits;
