@@ -20,9 +20,6 @@ import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {UniOracle} from "../../src/UniOracle.sol";
 
-/**
- * @notice Ropsten fork testing
- */
 contract BullStrategyTestFork is Test {
     using StrategyMath for uint256;
 
@@ -318,10 +315,10 @@ contract BullStrategyTestFork is Test {
         if (IERC20(bullStrategy).totalSupply() == 0) {
             {
                 uint256 ethUsdPrice = UniOracle._getTwap(
-                    controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+                    controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP
                 );
                 uint256 squeethEthPrice = UniOracle._getTwap(
-                    controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+                    controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP
                 );
                 (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
                 uint256 crabUsdPrice = (
@@ -345,10 +342,10 @@ contract BullStrategyTestFork is Test {
 
     function _calcTotalEthDelta(uint256 _crabToDeposit) internal view returns (uint256) {
         uint256 ethUsdPrice = UniOracle._getTwap(
-            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP
         );
         uint256 squeethEthPrice =
-            UniOracle._getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
+            UniOracle._getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP);
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
             .wdiv(crabV2.totalSupply());

@@ -58,6 +58,7 @@ yarn-error.log*
 
 packages/bull-vault/out
 packages/bull-vault/cache
+packages/bull-vault/lcov.info
 
 packages/crab-netting/out
 packages/crab-netting/cache

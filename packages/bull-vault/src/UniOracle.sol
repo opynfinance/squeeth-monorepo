@@ -13,6 +13,7 @@ import "v3-periphery/libraries/PoolAddress.sol";
 import "v3-core/libraries/SafeCast.sol";
 import {OracleLibrary} from "squeeth-monorepo/libs/OracleLibrary.sol";
 import {SafeMath} from "openzeppelin/math/SafeMath.sol";
+import {console} from "forge-std/console.sol";
 
 /**
  * @notice UniOracle contract
@@ -33,18 +34,12 @@ library UniOracle {
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
-    function _getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
+    function _getTwap(address _pool, address _base, address _quote, uint32 _period)
         internal
         view
         returns (uint256)
     {
-        // if the period is already checked, request TWAP directly. Will revert if period is too long.
-        if (!_checkPeriod) return _fetchTwap(_pool, _base, _quote, _period);
-
-        // make sure the requested period < maxPeriod the pool recorded.
-        uint32 maxPeriod = _getMaxPeriod(_pool);
-        uint32 requestPeriod = _period > maxPeriod ? maxPeriod : _period;
-        return _fetchTwap(_pool, _base, _quote, requestPeriod);
+        return _fetchTwap(_pool, _base, _quote, _period);
     }
 
     /**
@@ -69,32 +64,5 @@ library UniOracle {
 
         // if quote token has more decimals, the returned quoteAmountOut will be higher, need to scale down by decimal difference
         return quoteAmountOut.div(10 ** (quoteDecimals - baseDecimals));
-    }
-
-    /**
-     * @notice get the max period that can be used to request twap
-     * @param _pool uniswap pool address
-     * @return max period can be used to request twap
-     */
-    function _getMaxPeriod(address _pool) private view returns (uint32) {
-        IUniswapV3Pool pool = IUniswapV3Pool(_pool);
-        // observationIndex: the index of the last oracle observation that was written
-        // cardinality: the current maximum number of observations stored in the pool
-        (,, uint16 observationIndex, uint16 cardinality,,,) = pool.slot0();
-
-        // first observation index
-        // it's safe to use % without checking cardinality = 0 because cardinality is always >= 1
-        uint16 oldestObservationIndex = (observationIndex + 1) % cardinality;
-
-        (uint32 oldestObservationTimestamp,,, bool initialized) = pool.observations(oldestObservationIndex);
-
-        if (initialized) return uint32(block.timestamp) - oldestObservationTimestamp;
-
-        // (index + 1) % cardinality is not the oldest index,
-        // probably because cardinality is increased after last observation.
-        // in this case, observation at index 0 should be the oldest.
-        (oldestObservationTimestamp,,,) = pool.observations(0);
-
-        return uint32(block.timestamp) - oldestObservationTimestamp;
     }
 }

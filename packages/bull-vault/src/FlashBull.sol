@@ -125,7 +125,7 @@ contract FlashBull is UniFlash {
             (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
 
             uint256 ethFee;
-            uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP);
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
             crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
         }

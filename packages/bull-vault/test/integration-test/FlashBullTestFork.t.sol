@@ -20,9 +20,6 @@ import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {UniOracle} from "../../src/UniOracle.sol";
 
-/**
- * @notice Ropsten fork testing
- */
 contract FlashBullTestFork is Test {
     using StrategyMath for uint256;
 
@@ -308,15 +305,13 @@ contract FlashBullTestFork is Test {
                 ethUsdcPool,
                 weth,
                 usdc,
-                TWAP,
-                false
+                TWAP
             );
             uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
-                TWAP,
-                false
+                TWAP
             );
             maxEthForSqueeth = wPowerPerpToRedeem.wmul(
                 squeethEthPrice.wmul(101e16)
@@ -473,15 +468,13 @@ contract FlashBullTestFork is Test {
                 ethUsdcPool,
                 weth,
                 usdc,
-                TWAP,
-                false
+                TWAP
             );
             uint256 squeethEthPrice = UniOracle._getTwap(
                 ethWSqueethPool,
                 wPowerPerp,
                 weth,
-                TWAP,
-                false
+                TWAP
             );
 
             maxEthForSqueeth = wPowerPerpToRedeem.wmul(
@@ -548,11 +541,11 @@ contract FlashBullTestFork is Test {
      */
     function squeethPrice() internal view returns (uint256) {
         return
-            UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP);
     }
 
     function ethPrice() internal view returns (uint256) {
-        return UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+        return UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP);
     }
 
     function calcTotalEthToBull(
@@ -579,8 +572,7 @@ contract FlashBullTestFork is Test {
             ethWSqueethPool,
             wPowerPerp,
             weth,
-            TWAP,
-            false
+            TWAP
         );
         uint256 feeRate = IController(bullStrategy.powerTokenController())
             .feeRate();
@@ -658,15 +650,13 @@ contract FlashBullTestFork is Test {
                     controller.ethQuoteCurrencyPool(),
                     controller.weth(),
                     controller.quoteCurrency(),
-                    TWAP,
-                    false
+                    TWAP
                 );
                 uint256 squeethEthPrice = UniOracle._getTwap(
                     controller.wPowerPerpPool(),
                     controller.wPowerPerp(),
                     controller.weth(),
-                    TWAP,
-                    false
+                    TWAP
                 );
                 (
                     uint256 ethInCrab,
