@@ -1,5 +1,8 @@
 {
   "packages/hardhat/**/*.+(js|ts|json|sol)": [
     "yarn lint-contracts"
+  ],
+  "packages/bull-vault/**/*.+(sol)": [
+    "forge fmt"
   ]
 }
