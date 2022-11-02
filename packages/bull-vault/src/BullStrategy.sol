@@ -45,7 +45,11 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
 
-    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event Withdraw(
+        address from,
+        uint256 bullAmount,
+        uint256 wPowerPerpToRedeem
+    );
 
     /**
      * @notice constructor for BullStrategy
@@ -116,9 +120,15 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
         (, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(
+            crabTotalSupply
+        );
 
-        IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
+        IERC20(wPowerPerp).transferFrom(
+            msg.sender,
+            address(this),
+            wPowerPerpToRedeem
+        );
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
 
@@ -136,11 +146,18 @@ contract BullStrategy is ERC20, LeverageBull {
         return _getCrabVaultDetails();
     }
 
+    function calcDeltaAndCR() external view returns (uint256, uint256) {
+        return _calcDeltaAndCR();
+    }
+
     /**
      * @notice increase internal accounting of bull stragtegy's crab balance
      * @param _crabAmount crab amount
      */
-    function _increaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+    function _increaseCrabBalance(uint256 _crabAmount)
+        private
+        returns (uint256)
+    {
         _crabBalance = _crabBalance.add(_crabAmount);
         return _crabBalance;
     }
@@ -149,7 +166,10 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice decrease internal accounting of bull strategy's crab balance
      * @param _crabAmount crab amount
      */
-    function _decreaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+    function _decreaseCrabBalance(uint256 _crabAmount)
+        private
+        returns (uint256)
+    {
         _crabBalance = _crabBalance.sub(_crabAmount);
         return _crabBalance;
     }
@@ -159,5 +179,40 @@ contract BullStrategy is ERC20, LeverageBull {
             IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+    }
+
+    function _calcDeltaAndCR() internal view returns (uint256, uint256) {
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            ethUSDCPool,
+            weth,
+            usdc,
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            TWAP,
+            false
+        );
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(
+                squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
+            )
+        ).wdiv(IERC20(crab).totalSupply());
+
+        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(this));
+        uint256 ethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this));
+
+        uint256 delta = (ethInCollateral.wmul(ethUsdPrice)).wdiv(
+            (_crabBalance.wmul(crabUsdPrice))
+                .add(ethInCollateral.wmul(ethUsdPrice))
+                .sub(usdcDebt.mul(1e12))
+        );
+        
+        uint256 cr = ethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt).div(1e12);
+        return (delta, cr);
     }
 }
