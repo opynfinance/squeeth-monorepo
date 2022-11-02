@@ -310,6 +310,20 @@ contract AuctionBullTestFork is Test {
         assertLt(deltaBefore, deltaAfter);
     }
 
+    function testFailLeverageRebalanceBorrowUsdc() public {
+        uint256 usdcToSell = 1000000e6;
+        vm.startPrank(owner);
+        auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
+        vm.stopPrank();
+    }
+
+    function testFailLeverageRebalanceRepayUsdc() public {
+        uint256 usdcToBuy = 1000000e6;
+        vm.startPrank(owner);
+        auctionBull.leverageRebalance(false, usdcToBuy, 0, 3000);
+        vm.stopPrank();
+    }
+
     // Helper functions
     function _calcWethToWithdraw(uint256 _bullAmount)
         internal
