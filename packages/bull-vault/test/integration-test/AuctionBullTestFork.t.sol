@@ -131,7 +131,7 @@ contract AuctionBullTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
-    function testLeverageRebalanceSell() public {
+    function testLeverageRebalanceRepayUsdc() public {
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
@@ -139,10 +139,9 @@ contract AuctionBullTestFork is Test {
         uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(
             address(bullStrategy)
         );
-        // Should not experience more than $5 slippage
-        uint256 usdcSlippageTolerance = 5e6; 
 
-        uint256 ethToSell = 1e18;
+        uint256 ethSlippageTolerance = 1e14; 
+
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
             controller.weth(),
@@ -150,8 +149,13 @@ contract AuctionBullTestFork is Test {
             TWAP,
             false
         );
-        uint256 usdcToBuy = ethToSell.wmul(ethUsdPrice).div(1e12);
-        auctionBull.leverageRebalance(true, ethToSell, 0, 3000);
+
+        uint256 usdcToBuy = 10e6;
+        uint256 maxEthForUsdc = usdcToBuy.mul(1e12).wdiv(
+            ethUsdPrice.wmul(uint256(1e18).sub(5e15))
+        );
+        uint256 ethToSell = usdcToBuy.wdiv(ethUsdPrice).mul(1e12);
+        auctionBull.leverageRebalance(true, usdcToBuy, maxEthForUsdc, 3000);
 
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(
@@ -182,19 +186,18 @@ contract AuctionBullTestFork is Test {
         assertApproxEqAbs(
             ethBalanceBefore.sub(ethToSell),
             ethBalanceAfter,
-            1,
+            ethSlippageTolerance,
             "Bull ETH in collateral mismatch"
         );
 
-        assertApproxEqAbs(
+        assertEq(
             usdcDebtBefore.sub(usdcToBuy),
             usdcDebtAfter,
-            usdcSlippageTolerance,
             "Bull USDC debt mismatch"
         );
     }
 
-    function testLeverageRebalanceBuy() public {
+    function testLeverageRebalanceBorrowUsdc() public {
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
