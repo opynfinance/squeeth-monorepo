@@ -14,14 +14,14 @@ import {UniFlash} from "./UniFlash.sol";
  * @author opyn team
  */
 contract AuctionBull is UniFlash, Ownable {
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have in leverage component before rebalancing
-    uint256 public leverageCrLower;
+    /// @dev highest delta the auction manager can rebalance to
+    uint256 internal constant DELTA_UPPER = 1.1e18;
+    /// @dev lowest delta the auction manager can rebalance to
+    uint256 internal constant DELTA_LOWER = 0.9e18;
+    /// @dev highest CR the auction manager can rebalance to
+    uint256 internal constant CR_UPPER = 3e18;
+    /// @dev lowest CR the auction manager can rebalance to
+    uint256 internal constant CR_LOWER = 1.5e18;
 
     /// @dev USDC address
     address private immutable usdc;
@@ -51,6 +51,7 @@ contract AuctionBull is UniFlash, Ownable {
      */
     function leverageRebalance(bool _isBuyingUsdc, uint256 _usdcAmount, uint256 _ethThresholdAmount, uint24 _poolFee) external {
         require(msg.sender == auctionManager);
+        _checkValidRebalance(_isBuyingUsdc, _usdcAmount);
         
         if (_isBuyingUsdc) {
             // swap ETH to USDC
@@ -96,5 +97,11 @@ contract AuctionBull is UniFlash, Ownable {
             IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay); 
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
+    }
+
+    function _checkValidRebalance(bool _isBuyingUsdc, uint256 _usdcAmount) internal view {
+        (uint256 delta, uint256 cr) = IBullStrategy(bullStrategy).calcDeltaAndCR(_isBuyingUsdc, _usdcAmount);
+        require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
+        require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
     }
 }
