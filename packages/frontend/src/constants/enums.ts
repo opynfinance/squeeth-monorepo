@@ -75,7 +75,7 @@ export enum Tooltips {
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn premiums by depositing into the strategy',
-  StrategyProfitThreshold = 'Based on current premiums, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge.',
+  StrategyProfitThreshold = 'Based on current premiums, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge. This profitable price range is based on the current premium and will change continuously as the premium changes',
   FullcloseInput = 'Select partial close to edit input',
   FundingVol = 'VOL is calculated as "sqrt(Daily Premium * 365)"',
   FundingDaily = 'Daily premium is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',

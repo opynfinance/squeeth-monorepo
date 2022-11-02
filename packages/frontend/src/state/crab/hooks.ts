@@ -32,6 +32,7 @@ import {
   currentCrabPositionValueInETHAtomV2,
   currentEthLoadingAtomV2,
   currentCrabPositionETHActualAtomV2,
+  ethPriceAtLastHedgeAtomV2,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -65,6 +66,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
+import { getEthPriceAtHedge } from '@utils/pricer'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -124,6 +126,7 @@ export const useSetStrategyDataV2 = () => {
   const getVault = useGetVault()
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const networkId = useAtomValue(networkIdAtom)
+  const setEthPriceAtLastHedge = useUpdateAtom(ethPriceAtLastHedgeAtomV2)
 
   const setStrategyData = useCallback(async () => {
     if (!contract) return
@@ -154,6 +157,9 @@ export const useSetStrategyDataV2 = () => {
         // Check price hedge only if firebase is available
         checkPriceHedgeV2(contract).then(setIsPriceHedgeAvailable)
       }
+        // get eth price at hedge
+        getEthPriceAtHedge().then(setEthPriceAtLastHedge)
+      
     }
   }, [contract, getCollatRatioAndLiqPrice, getVault, networkId])
 
