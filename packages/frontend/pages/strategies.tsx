@@ -200,10 +200,9 @@ const Strategies: React.FC = () => {
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
-  const ethPrice =   Number(toTokenAmount(ethPriceAtLastHedge, 18))
-  const lowerPriceBandForProfitability =  ethPrice - (profitableMovePercentV2 * ethPrice)
-  const upperPriceBandForProfitability =  ethPrice + (profitableMovePercentV2 * ethPrice)
- 
+  const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
+  const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
+  const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
   useEffect(() => {
     if (displayCrabV1) setStrategyData()
@@ -354,8 +353,15 @@ const Strategies: React.FC = () => {
                     />
                   ) : (
                     <StrategyInfoItem
-                      value={"~"+lowerPriceBandForProfitability.toFixed(2)  + " - " +upperPriceBandForProfitability.toFixed(2) }
-                      label= {'Aprrox Profitable ('+ (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'} 
+                      value={
+                        '~' +
+                        lowerPriceBandForProfitability.toFixed(2) +
+                        ' - ' +
+                        upperPriceBandForProfitability.toFixed(2)
+                      }
+                      label={
+                        'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
+                      }
                       tooltip={Tooltips.StrategyProfitThreshold}
                     />
                   )}
