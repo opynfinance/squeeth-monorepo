@@ -9,9 +9,6 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {UniFlash} from "./UniFlash.sol";
 
-import {console} from "forge-std/console.sol";
-
-
 /**
  * @notice AuctionBull contract
  * @author opyn team
@@ -36,7 +33,8 @@ contract AuctionBull is UniFlash, Ownable {
 
     /// @dev enum to differentiate between Uniswap swap callback function source
     enum FLASH_SOURCE {
-        GENERAL_SWAP
+        SELLING_USDC,
+        BUYING_USDC
     }
 
     constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory) UniFlash(_factory) Ownable() {
@@ -51,35 +49,29 @@ contract AuctionBull is UniFlash, Ownable {
     /**
      * @dev changes the leverage component composition by buying or selling eth
      */
-    function leverageRebalance(bool _isSellingEth, uint256 _amountIn, uint256 _minAmountOut, uint24 _poolFee) external {
-        if (_isSellingEth) {
-            // Withdraw ETH from collateral
-            IBullStrategy(bullStrategy).withdrawWethFromEuler(_amountIn); 
+    function leverageRebalance(bool _isBuyingUsdc, uint256 _usdcAmount, uint256 _ethThresholdAmount, uint24 _poolFee) external {
+        if (_isBuyingUsdc) {
             // swap ETH to USDC
-            _exactInFlashSwap(
+            _exactOutFlashSwap(
                 weth,
                 usdc,
                 _poolFee,
-                _amountIn,
-                _minAmountOut,
-                uint8(FLASH_SOURCE.GENERAL_SWAP),
-                ""
+                _usdcAmount,
+                _ethThresholdAmount,
+                uint8(FLASH_SOURCE.BUYING_USDC),
+                abi.encodePacked(_usdcAmount)
             );
-            // Repay some USDC debt
-            uint256 usdcToRepay = IERC20(usdc).balanceOf(address(this));
-            IERC20(usdc).transfer(address(bullStrategy), usdcToRepay);
-            IBullStrategy(bullStrategy).repayUsdcToEuler(usdcToRepay);
         } else {
             // Borrow more USDC debt
-            IBullStrategy(bullStrategy).borrowUsdcFromEuler(_amountIn);
+            IBullStrategy(bullStrategy).borrowUsdcFromEuler(_usdcAmount);
             // swap USDC to ETH 
             _exactInFlashSwap(
                 usdc,
                 weth,
                 _poolFee,
-                _amountIn,
-                _minAmountOut,
-                uint8(FLASH_SOURCE.GENERAL_SWAP),
+                _usdcAmount,
+                _ethThresholdAmount,
+                uint8(FLASH_SOURCE.SELLING_USDC),
                 ""
             );
             // Deposit ETH in collateral
@@ -90,8 +82,17 @@ contract AuctionBull is UniFlash, Ownable {
     }
 
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
-        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.GENERAL_SWAP) {
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SELLING_USDC) {
             IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.BUYING_USDC) {
+            uint256 usdcAmount = abi.decode(_uniFlashSwapData.callData, (uint256));
+            // Repay some USDC debt
+            IERC20(usdc).transfer(address(bullStrategy), usdcAmount);
+            IBullStrategy(bullStrategy).repayUsdcToEuler(usdcAmount);
+            // Withdraw ETH from collateral
+            uint256 ethToWithdraw = _uniFlashSwapData.amountToPay;
+            IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay); 
+            IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }
 }
