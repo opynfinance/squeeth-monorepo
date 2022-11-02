@@ -14,8 +14,6 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
-import {console} from "forge-std/console.sol";
-
 /**
  * Error codes
  * LB0: ETH sent is greater than ETH to deposit in Euler
@@ -30,7 +28,7 @@ contract LeverageBull is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
-    uint32 private constant TWAP = 420;
+    uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
     /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
