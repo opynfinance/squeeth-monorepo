@@ -9,6 +9,9 @@ import "forge-std/console.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 
+import {EIP712} from "openzeppelin/utils/cryptography/draft-EIP712.sol";
+import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+
 struct Order {
     uint256 bidId;
     address trader;
@@ -40,7 +43,19 @@ struct DepositAuctionParams {
     uint24 flashDepositFee;
 }
 
-contract CrabNetting is Ownable {
+struct WithdrawAuctionParams {
+    uint256 crabToWithdraw;
+    Order[] orders;
+    uint256 clearingPrice;
+    uint256 minUSDC;
+}
+
+contract CrabNetting is Ownable, EIP712 {
+    /// @dev typehash for signed orders
+    bytes32 private constant _CRAB_NETTING_TYPEHASH =
+        keccak256(
+            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
+        );
     address public usdc;
     address public crab;
     address public weth;
@@ -59,6 +74,8 @@ contract CrabNetting is Ownable {
     uint256 public depositsIndex;
     Receipt[] public withdraws;
     uint256 public withdrawsIndex;
+    /// @dev store the used flag for a nonce for each address
+    mapping(address => mapping(uint256 => bool)) public nonces;
 
     constructor(
         address _usdc,
@@ -66,7 +83,7 @@ contract CrabNetting is Ownable {
         address _weth,
         address _sqth,
         address _swapRouter
-    ) {
+    ) EIP712("CRABNetting", "1") {
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
@@ -79,6 +96,22 @@ contract CrabNetting is Ownable {
 
         IERC20(weth).approve(address(swapRouter), 10e36);
         IERC20(usdc).approve(address(swapRouter), 10e36);
+    }
+
+    /**
+     * @dev view function to get the domain seperator used in signing
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
+    /**
+     * @notice set nonce to true
+     * @param _nonce the number to be set true
+     */
+    function setNonceTrue(uint256 _nonce) external {
+        nonces[msg.sender][_nonce] = true;
     }
 
     function depositUSDC(uint256 _amount) public {
@@ -229,6 +262,27 @@ contract CrabNetting is Ownable {
         return sum;
     }
 
+    function checkOrder(Order memory _order) internal {
+        _useNonce(_order.trader, _order.nonce);
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _CRAB_NETTING_TYPEHASH,
+                _order.bidId,
+                _order.trader,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
+                _order.expiry,
+                _order.nonce
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(offerSigner == _order.trader, "Signature not correct");
+        require(_order.expiry >= block.timestamp, "order expired");
+    }
+
     function depositAuction(DepositAuctionParams calldata _p) public onlyOwner {
         uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
         console.log(address(this).balance, "ETH not deposited");
@@ -290,6 +344,8 @@ contract CrabNetting is Ownable {
         // send sqth to mms
         uint256 sqth_owed;
         for (uint256 i = 0; i < _p.orders.length; i++) {
+            require(_p.orders[i].isBuying);
+            checkOrder(_p.orders[i]);
             sqth_owed = _p.orders[i].quantity;
         }
         require(
@@ -350,28 +406,28 @@ contract CrabNetting is Ownable {
         console.log(address(this).balance, "ETH not deposited");
     }
 
-    function withdrawAuction(
-        uint256 _crabToWithdraw,
-        Order[] calldata _orders,
-        uint256 _clearingPrice,
-        uint256 _minUSDC
-    ) public onlyOwner {
+    function withdrawAuction(WithdrawAuctionParams calldata _p)
+        public
+        onlyOwner
+    {
         // get all the sqth in
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i = 0; i < _p.orders.length; i++) {
+            checkOrder(_p.orders[i]);
+            require(!_p.orders[i].isBuying);
             IERC20(sqth).transferFrom(
-                _orders[i].trader,
+                _p.orders[i].trader,
                 address(this),
-                _orders[i].quantity
+                _p.orders[i].quantity
             );
         }
-        ICrabStrategyV2(crab).withdraw(_crabToWithdraw);
+        ICrabStrategyV2(crab).withdraw(_p.crabToWithdraw);
         IWETH(weth).deposit{value: address(this).balance}();
 
         // pay all mms
-        for (uint256 i = 0; i < _orders.length; i++) {
+        for (uint256 i = 0; i < _p.orders.length; i++) {
             IERC20(weth).transfer(
-                _orders[i].trader,
-                (_orders[i].quantity * _clearingPrice) / 1e18
+                _p.orders[i].trader,
+                (_p.orders[i].quantity * _p.clearingPrice) / 1e18
             );
         }
 
@@ -385,7 +441,7 @@ contract CrabNetting is Ownable {
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: IERC20(weth).balanceOf(address(this)),
-                amountOutMinimum: _minUSDC,
+                amountOutMinimum: _p.minUSDC,
                 sqrtPriceLimitX96: 0
             });
 
@@ -393,7 +449,7 @@ contract CrabNetting is Ownable {
         uint256 usdcReceived = swapRouter.exactInputSingle(params);
 
         // pay all withdrawers and mark their withdraws as done
-        uint256 remainingWithdraws = _crabToWithdraw;
+        uint256 remainingWithdraws = _p.crabToWithdraw;
         while (remainingWithdraws > 0) {
             Receipt storage withdraw = withdraws[withdrawsIndex];
             if (withdraw.amount <= remainingWithdraws) {
@@ -403,7 +459,7 @@ contract CrabNetting is Ownable {
 
                 // send proportional usdc
                 uint256 usdcAmount = (withdraw.amount * usdcReceived) /
-                    _crabToWithdraw;
+                    _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
                 withdraw.amount = 0;
             } else {
@@ -412,7 +468,7 @@ contract CrabNetting is Ownable {
 
                 // send proportional usdc
                 uint256 usdcAmount = (remainingWithdraws * usdcReceived) /
-                    _crabToWithdraw;
+                    _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
 
                 remainingWithdraws = 0;
@@ -420,6 +476,16 @@ contract CrabNetting is Ownable {
         }
 
         // check if all balances are zero
+    }
+
+    /**
+     * @dev set nonce flag of the trader to true
+     * @param _trader address of the signer
+     * @param _nonce number that is to be traded only once
+     */
+    function _useNonce(address _trader, uint256 _nonce) internal {
+        require(!nonces[_trader][_nonce], "C27");
+        nonces[_trader][_nonce] = true;
     }
 
     receive() external payable {}
