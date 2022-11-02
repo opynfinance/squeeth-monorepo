@@ -1,17 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.13;
 
+// interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
-import "forge-std/console.sol";
-
 import {IWETH} from "../src/interfaces/IWETH.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 
+// contract
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {EIP712} from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+import "forge-std/console.sol";
 
+/// @dev order struct for a signed order from market maker
 struct Order {
     uint256 bidId;
     address trader;
@@ -25,6 +27,7 @@ struct Order {
     bytes32 s;
 }
 
+/// @dev struct to store proportional amounts of erc20s (received or to send)
 struct Portion {
     uint256 usdc;
     uint256 crab;
@@ -32,28 +35,46 @@ struct Portion {
     uint256 sqth;
 }
 
+/// @dev params for deposit auction
 struct DepositAuctionParams {
+    /// @dev USDC to deposit
     uint256 depositsQueued;
-    uint256 minEth; // to get from converting usdc to converting eth to usd
-    uint256 totalDeposit; // 2x the amount i.e flash depositing calc
+    /// @dev minETH equivalent to get from uniswap of the USDC to deposit
+    uint256 minEth;
+    /// @dev total ETH to deposit after selling the minted SQTH
+    uint256 totalDeposit;
+    /// @dev orders to buy sqth
     Order[] orders;
+    /// @dev price from the auction to sell sqth
     uint256 clearingPrice;
-    uint256 ethToFlashDeposit; // the remaining amount to flashDeposit
+    /// @dev remaining ETH to flashDeposit
+    uint256 ethToFlashDeposit;
+    /// @dev fee to pay uniswap for usdETH swap
     uint24 usdEthFee;
+    /// @dev fee to pay uniswap for sqthETH swap
     uint24 flashDepositFee;
 }
 
+/// @dev params for withdraw auction
 struct WithdrawAuctionParams {
     uint256 crabToWithdraw;
     Order[] orders;
     uint256 clearingPrice;
+    /// @dev minUSDC to receive from swapping the ETH obtained by withdrawing
     uint256 minUSDC;
 }
+
+/// @dev receipt used to store deposits and withdraws
 struct Receipt {
     address sender;
     uint256 amount;
 }
 
+/**
+ * @dev CrabNetting contract
+ * @notice Contract for Netting Deposits and Withdrawals
+ * @author Opyn team
+ */
 contract CrabNetting is Ownable, EIP712 {
     /// @dev typehash for signed orders
     bytes32 private constant _CRAB_NETTING_TYPEHASH =
@@ -61,25 +82,99 @@ contract CrabNetting is Ownable, EIP712 {
             "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
         );
 
+    /// @dev owner sets to true when starting auction
     bool public isAuctionLive;
+
+    /// @dev min USDC amounts to withdraw or deposit via netting
+    uint256 public minUSDCAmount;
+
+    /// @dev min CRAB amounts to withdraw or deposit via netting
+    uint256 public minCrabAmount;
+
+    /// @dev address for ERC20 tokens
     address public usdc;
     address public crab;
     address public weth;
     address public sqth;
+
+    /// @dev address for uniswap router
     ISwapRouter public swapRouter;
 
+    /// @dev array index of last processed deposits
     uint256 public depositsIndex;
+
+    /// @dev array index of last processed withdraws
     uint256 public withdrawsIndex;
+
+    /// @dev array of deposit receipts
     Receipt[] public deposits;
+    /// @dev array of withdrawal receipts
     Receipt[] public withdraws;
 
+    /// @dev usd amount to deposit for an address
     mapping(address => uint256) public usdBalance;
+
+    /// @dev crab amount to withdraw for an address
     mapping(address => uint256) public crabBalance;
+
+    /// @dev indexes of deposit receipts of an address
     mapping(address => uint256[]) public userDepositsIndex;
+
+    /// @dev indexes of withdraw receipts of an address
     mapping(address => uint256[]) public userWithdrawsIndex;
+
     /// @dev store the used flag for a nonce for each address
     mapping(address => mapping(uint256 => bool)) public nonces;
 
+    event USDCQueued(
+        address depositor,
+        uint256 amount,
+        uint256 depositorsBalance,
+        uint256 receiptIndex
+    );
+
+    event USDCDeQueued(
+        address depositor,
+        uint256 amount,
+        uint256 depositorsBalance
+    );
+
+    event CrabQueued(
+        address withdrawer,
+        uint256 amount,
+        uint256 withdrawersBalance,
+        uint256 receiptIndex
+    );
+
+    event CrabDeQueued(
+        address withdrawer,
+        uint256 amount,
+        uint256 withdrawersBalance
+    );
+
+    event USDCDeposited(
+        address depositor,
+        uint256 usdcAmount,
+        uint256 crabAmount,
+        uint256 receiptIndex
+    );
+
+    event CrabWithdrawn(
+        address withdrawer,
+        uint256 crabAmount,
+        uint256 usdcAmount,
+        uint256 receiptIndex
+    );
+
+    /**
+     * @notice netting contract constructor
+     * @dev initializes the erc20 address, uniswap router and approves them
+     * @param _usdc address of usdc token
+     * @param _weth address of weth token
+     * @param _sqth address of sqth token
+     * @param _crab address of crab contract token
+     * @param _swapRouter address of uniswap swap router
+     */
     constructor(
         address _usdc,
         address _crab,
@@ -101,16 +196,18 @@ contract CrabNetting is Ownable, EIP712 {
         IERC20(usdc).approve(address(swapRouter), 10e36);
     }
 
-    function toggleAuctionLive() external onlyOwner {
-        isAuctionLive = !isAuctionLive;
-    }
-
     /**
      * @dev view function to get the domain seperator used in signing
      */
-    // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
+    }
+
+    /**
+     * @dev toggles the value of isAuctionLive
+     */
+    function toggleAuctionLive() external onlyOwner {
+        isAuctionLive = !isAuctionLive;
     }
 
     /**
@@ -121,22 +218,61 @@ contract CrabNetting is Ownable, EIP712 {
         nonces[msg.sender][_nonce] = true;
     }
 
-    function depositUSDC(uint256 _amount) public {
+    /**
+     * @notice set minUSDCAmount
+     * @param _amount the number to be set as minUSDC
+     */
+    function setMinUSDC(uint256 _amount) external {
+        minUSDCAmount = _amount;
+    }
+
+    /**
+     * @notice set minCrabAmount
+     * @param _amount the number to be set as minCrab
+     */
+    function setMinCrab(uint256 _amount) external {
+        minCrabAmount = _amount;
+    }
+
+    /**
+     * @notice queue USDC for deposit into crab strategy
+     * @param _amount USDC amount to deposit
+     */
+    function depositUSDC(uint256 _amount) external {
+        require(_amount >= minUSDCAmount);
+
         IERC20(usdc).transferFrom(msg.sender, address(this), _amount);
+
+        // update usd balance of user, add their receipt, and receipt index to user deposits index
         usdBalance[msg.sender] = usdBalance[msg.sender] + _amount;
         deposits.push(Receipt(msg.sender, _amount));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
+
+        emit USDCQueued(
+            msg.sender,
+            _amount,
+            usdBalance[msg.sender],
+            deposits.length - 1
+        );
     }
 
-    function withdrawUSDC(uint256 _amount) public {
+    /**
+     * @notice withdraw USDC from queue
+     * @param _amount USDC amount to dequeue
+     */
+    function withdrawUSDC(uint256 _amount) external {
+        require(_amount >= minUSDCAmount);
         require(!isAuctionLive, "auction is live");
+
         // TODO ensure final version does not need this check
         //require(usdBalance[msg.sender] >= _amount, "Withdrawing more than balance");
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
+
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
-        uint256 lastIndex = userDepositsIndex[msg.sender].length;
-        for (uint256 i = lastIndex; i > 0; i--) {
+        uint256 lastIndexP1 = userDepositsIndex[msg.sender].length;
+        for (uint256 i = lastIndexP1; i > 0; i--) {
+            // todo check gas optimization here by changing to memory
             Receipt storage r = deposits[userDepositsIndex[msg.sender][i - 1]];
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
@@ -145,31 +281,48 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 toRemove -= r.amount;
                 r.amount = 0;
+                delete deposits[userDepositsIndex[msg.sender][i - 1]];
             }
         }
         IERC20(usdc).transfer(msg.sender, _amount);
+
+        emit USDCDeQueued(msg.sender, _amount, usdBalance[msg.sender]);
     }
 
-    function queueCrabForWithdrawal(uint256 _amount) public {
+    /**
+     * @notice queue Crab for withdraw from crab strategy
+     * @param _amount crab amount to withdraw
+     */
+    function queueCrabForWithdrawal(uint256 _amount) external {
+        require(_amount >= minCrabAmount);
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] + _amount;
         withdraws.push(Receipt(msg.sender, _amount));
         userWithdrawsIndex[msg.sender].push(withdraws.length - 1);
+        emit CrabQueued(
+            msg.sender,
+            _amount,
+            crabBalance[msg.sender],
+            withdraws.length - 1
+        );
     }
 
-    function withdrawCrab(uint256 _amount) public {
+    /**
+     * @notice withdraw Crab from queue
+     * @param _amount Crab amount to dequeue
+     */
+    function withdrawCrab(uint256 _amount) external {
+        require(_amount >= minCrabAmount);
         require(!isAuctionLive, "auction is live");
         // require(crabBalance[msg.sender] >= _amount);
-        console.log(crabBalance[msg.sender], "crab balance");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
-        uint256 lastIndex = userWithdrawsIndex[msg.sender].length;
-        for (uint256 i = lastIndex; i > 0; i--) {
+        uint256 lastIndexP1 = userWithdrawsIndex[msg.sender].length;
+        for (uint256 i = lastIndexP1; i > 0; i--) {
             Receipt storage r = withdraws[
                 userWithdrawsIndex[msg.sender][i - 1]
             ];
-            console.log(toRemove);
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
@@ -177,12 +330,19 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 toRemove -= r.amount;
                 r.amount = 0;
+                delete userWithdrawsIndex[msg.sender][i - 1];
             }
         }
         IERC20(crab).transfer(msg.sender, _amount);
+        emit CrabDeQueued(msg.sender, _amount, crabBalance[msg.sender]);
     }
 
-    function netAtPrice(uint256 _price, uint256 _quantity) public onlyOwner {
+    /**
+     * @dev swaps _quantity amount of usdc for crab at _price
+     * @param _price price of crab in usdc
+     * @param _quantity amount of USDC to net
+     */
+    function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
         uint256 crabQuantity = (_quantity * 1e18) / _price;
         // todo write tests for reverts and may = in branches
         require(
@@ -190,68 +350,86 @@ contract CrabNetting is Ownable, EIP712 {
             "Not enough deposits to net"
         );
         require(
-            ((_quantity * 1e18) / _price) <=
-                IERC20(crab).balanceOf(address(this)),
+            crabQuantity <= IERC20(crab).balanceOf(address(this)),
             "Not enough withdrawals to net"
         );
 
+        // process deposits and send crab
         uint256 i = depositsIndex;
+        uint256 amountToSend;
         while (_quantity > 0 && i < deposits.length) {
             Receipt memory deposit = deposits[i];
             if (deposit.amount <= _quantity) {
+                // deposit amount is lesser than quantity use it fully
                 _quantity = _quantity - deposit.amount;
-                usdBalance[deposit.sender] =
-                    usdBalance[deposit.sender] -
-                    deposit.amount;
-                IERC20(crab).transfer(
+                usdBalance[deposit.sender] -= deposit.amount;
+                amountToSend = (deposit.amount * 1e18) / _price;
+                IERC20(crab).transfer(deposit.sender, amountToSend);
+                emit USDCDeposited(
                     deposit.sender,
-                    (deposit.amount * 1e18) / _price
+                    deposit.amount,
+                    amountToSend,
+                    i
                 );
                 delete deposits[i];
                 i++;
             } else {
+                // deposit amount is greater than quantity; use it partially
                 deposits[i].amount = deposit.amount - _quantity;
-                usdBalance[deposit.sender] =
-                    usdBalance[deposit.sender] -
-                    _quantity;
-                IERC20(crab).transfer(
+                usdBalance[deposit.sender] -= _quantity;
+                amountToSend = (_quantity * 1e18) / _price;
+                IERC20(crab).transfer(deposit.sender, amountToSend);
+                emit USDCDeposited(
                     deposit.sender,
-                    (_quantity * 1e18) / _price
+                    deposit.amount,
+                    amountToSend,
+                    i
                 );
                 _quantity = 0;
             }
         }
         depositsIndex = depositsIndex + i;
+
+        // process withdraws and send usdc
         uint256 j = withdrawsIndex;
         while (crabQuantity > 0 && j < withdraws.length) {
             Receipt memory withdraw = withdraws[j];
             if (withdraw.amount <= crabQuantity) {
                 crabQuantity = crabQuantity - withdraw.amount;
-                crabBalance[withdraw.sender] =
-                    crabBalance[withdraw.sender] -
-                    withdraw.amount;
-                IERC20(usdc).transfer(
+                crabBalance[withdraw.sender] -= withdraw.amount;
+                amountToSend = (withdraw.amount * _price) / 1e18;
+                IERC20(usdc).transfer(withdraw.sender, amountToSend);
+
+                emit CrabWithdrawn(
                     withdraw.sender,
-                    (withdraw.amount * _price) / 1e18
+                    withdraw.amount,
+                    amountToSend,
+                    j
                 );
+
                 delete withdraws[j];
                 j++;
             } else {
                 withdraws[j].amount = withdraw.amount - crabQuantity;
-                IERC20(usdc).transfer(
+                crabBalance[withdraw.sender] -= crabQuantity;
+                amountToSend = (crabQuantity * _price) / 1e18;
+                IERC20(usdc).transfer(withdraw.sender, amountToSend);
+
+                emit CrabWithdrawn(
                     withdraw.sender,
-                    (crabQuantity * _price) / 1e18
+                    withdraw.amount,
+                    amountToSend,
+                    j
                 );
-                crabBalance[withdraw.sender] =
-                    crabBalance[withdraw.sender] -
-                    crabQuantity;
+
                 crabQuantity = 0;
             }
         }
         withdrawsIndex = withdrawsIndex + j;
     }
 
-    function depositsQueued() public view returns (uint256) {
+    /// @dev @return sum usdc amount in queue
+    function depositsQueued() external view returns (uint256) {
         uint256 j = depositsIndex;
         uint256 sum;
         while (j < deposits.length) {
@@ -261,7 +439,8 @@ contract CrabNetting is Ownable, EIP712 {
         return sum;
     }
 
-    function withdrawsQueued() public view returns (uint256) {
+    /// @dev @return sum crab amount in queue
+    function withdrawsQueued() external view returns (uint256) {
         uint256 j = withdrawsIndex;
         uint256 sum;
         while (j < withdraws.length) {
