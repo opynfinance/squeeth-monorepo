@@ -175,6 +175,7 @@ const newDarkPalette: ThemeOptions = {
     primary: {
       main: '#70E3F6',
       contrastText: '#FFFFFF',
+      dark: '#0ebcd8', // todo: not sure what this should be since its not specified in figma
     },
     secondary: {
       main: '#00fff9',
@@ -194,7 +195,7 @@ const newDarkPalette: ThemeOptions = {
       stone: '#242728',
       lightStone: '#303436',
       tooltip: 'rgba(255, 255, 255)',
-      default: '#181B1C',
+      default: '#191B1C',
     },
   },
 }
