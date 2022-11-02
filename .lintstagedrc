@@ -3,6 +3,6 @@
     "yarn lint-contracts"
   ],
   "packages/bull-vault/**/*.+(sol)": [
-    "forge fmt"
+    "FOUNDRY_PROFILE=fmt forge fmt"
   ]
 }

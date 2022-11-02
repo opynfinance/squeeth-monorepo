@@ -31,7 +31,7 @@ include_storage = true
 include_push_bytes = true
 
 [profile.fmt]
-line_length = 100
+line_length = 120
 tab_width = 2
 bracket_spacing = true
 
