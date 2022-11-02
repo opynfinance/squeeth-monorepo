@@ -31,7 +31,7 @@ contract LeverageBull is Ownable {
     uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
     /// @dev target CR for our ETH collateral
-    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
+    uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
     address internal immutable ethWSqueethPool;
