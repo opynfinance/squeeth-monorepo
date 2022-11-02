@@ -155,7 +155,9 @@ contract AuctionBullTestFork is Test {
             ethUsdPrice.wmul(uint256(1e18).sub(5e15))
         );
         uint256 ethToSell = usdcToBuy.wdiv(ethUsdPrice).mul(1e12);
+        vm.startPrank(owner);
         auctionBull.leverageRebalance(true, usdcToBuy, maxEthForUsdc, 3000);
+        vm.stopPrank();
 
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(
@@ -217,7 +219,9 @@ contract AuctionBullTestFork is Test {
             false
         );
         uint256 ethToBuy = usdcToSell.wdiv(ethUsdPrice).mul(1e12);
+        vm.startPrank(owner);
         auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
+        vm.stopPrank();
 
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(
