@@ -16,6 +16,7 @@ import {BullStrategy} from "../../src/BullStrategy.sol";
 import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import {Controller} from "squeeth-monorepo/core/Controller.sol";
 import {AuctionBull} from "../../src/AuctionBull.sol";
+import {FlashBull} from "../../src/FlashBull.sol";
 // lib
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -28,8 +29,10 @@ contract AuctionBullTestFork is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
+    uint128 internal constant ONE = 1e18;
 
     BullStrategy internal bullStrategy;
+    FlashBull internal flashBull;
     AuctionBull internal auctionBull;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
@@ -41,6 +44,9 @@ contract AuctionBullTestFork is Test {
     address internal weth;
     address internal usdc;
     address internal euler;
+    address internal factory;
+    address internal ethWSqueethPool;
+    address internal ethUsdcPool;
     address internal eulerMarketsModule;
     address internal eToken;
     address internal dToken;
@@ -56,6 +62,7 @@ contract AuctionBullTestFork is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
+        factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
@@ -71,13 +78,16 @@ contract AuctionBullTestFork is Test {
             owner,
             owner,
             address(bullStrategy),
-            0x1F98431c8aD98523631AE4a59f267346ea31F984
+            factory
         );
+        flashBull = new FlashBull(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
+        ethWSqueethPool = controller.wPowerPerpPool();
+        ethUsdcPool = controller.ethQuoteCurrencyPool();
         vm.stopPrank();
 
         vm.startPrank(owner);
@@ -105,33 +115,59 @@ contract AuctionBullTestFork is Test {
         IERC20(weth).transfer(user1, 10000e18);
 
         // Put some money in bull to start with
-        uint256 crabToDeposit = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
+            ethToCrab,
+            squeethInCrab,
+            ethInCrab
+        );
+        uint256 crabToBeMinted = _calcSharesToMint(
+            ethToCrab.sub(fee),
+            ethInCrab,
+            IERC20(crabV2).totalSupply()
+        );
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
+
+        uint256 bullShare = 1e18;
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
+            .calcLeverageEthUsdc(
+                crabToBeMinted,
+                bullShare,
+                ethInCrab,
+                squeethInCrab,
+                crabV2.totalSupply()
+            );
+
+        uint256 totalEthToBull = calcTotalEthToBull(
+            wethToLend,
+            ethToCrab,
+            usdcToBorrow,
+            wSqueethToMint
+        );
 
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
+        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
         vm.stopPrank();
 
-        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
-
-        assertEq(
-            bullCrabBalanceAfter.sub(crabToDeposit),
-            bullCrabBalanceBefore
-        );
-        assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
         assertEq(
             IEulerDToken(dToken).balanceOf(address(bullStrategy)),
             usdcToBorrow
         );
-        (
-            wethToLend.sub(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
-            ) <= 1
+        assertEq(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+            wethToLend
         );
-        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+        assertEq(
+            bullStrategy.getCrabBalance().sub(crabToBeMinted),
+            bullCrabBalanceBefore
+        );
     }
 
     function testLeverageRebalanceRepayUsdc() public {
+        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR();
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
@@ -167,6 +203,8 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
+        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR();
+
         // The auction contract should hold no remaining funds
         assertEq(
             IERC20(usdc).balanceOf(address(auctionBull)),
@@ -197,9 +235,16 @@ contract AuctionBullTestFork is Test {
             usdcDebtAfter,
             "Bull USDC debt mismatch"
         );
+        // Delta should decrease when we sell some ETH
+        assertGt(
+            deltaBefore,
+            deltaAfter
+        );
     }
 
     function testLeverageRebalanceBorrowUsdc() public {
+        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR();
+
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
@@ -231,6 +276,8 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
+        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR();
+
         // The auction contract should hold no remaining funds
         assertEq(
             IERC20(usdc).balanceOf(address(auctionBull)),
@@ -260,6 +307,11 @@ contract AuctionBullTestFork is Test {
             usdcDebtBefore.add(usdcToSell),
             usdcDebtAfter,
             "Bull USDC debt mismatch"
+        );
+        // Delta should increase when we buy more ETH
+        assertLt(
+            deltaBefore,
+            deltaAfter
         );
     }
 
@@ -358,5 +410,76 @@ contract AuctionBullTestFork is Test {
             .vaults(crabV2.vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+    }
+
+    function calcTotalEthToBull(
+        uint256 wethToLend,
+        uint256 ethToCrab,
+        uint256 usdcToBorrow,
+        uint256 wSqueethToMint
+    ) internal view returns (uint256) {
+        uint256 totalEthToBull = wethToLend
+            .add(ethToCrab)
+            .sub(usdcToBorrow.wdiv(ethPrice()))
+            .sub(wSqueethToMint.wmul(squeethPrice()))
+            .add(1e16);
+        return totalEthToBull;
+    }
+
+    /**
+     * @dev calculate amount of strategy token to mint for depositor
+     * @param _amount amount of ETH deposited
+     * @param _strategyCollateralAmount amount of strategy collateral
+     * @param _crabTotalSupply total supply of strategy token
+     * @return amount of strategy token to mint
+     */
+    function _calcSharesToMint(
+        uint256 _amount,
+        uint256 _strategyCollateralAmount,
+        uint256 _crabTotalSupply
+    ) internal pure returns (uint256) {
+        uint256 depositorShare = _amount.wdiv(
+            _strategyCollateralAmount.add(_amount)
+        );
+
+        if (_crabTotalSupply != 0) {
+            return
+                _crabTotalSupply.wmul(depositorShare).wdiv(
+                    uint256(ONE).sub(depositorShare)
+                );
+        }
+
+        return _amount;
+    }
+
+    function _calcWsqueethToMintAndFee(
+        uint256 _depositedAmount,
+        uint256 _strategyDebtAmount,
+        uint256 _strategyCollateralAmount
+    ) internal view returns (uint256, uint256) {
+        uint256 wSqueethToMint;
+        uint256 wSqueethEthPrice = squeethPrice();
+        uint256 feeRate = IController(bullStrategy.powerTokenController())
+            .feeRate();
+        uint256 feeAdjustment = wSqueethEthPrice.mul(feeRate).div(10000);
+
+        wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+            _strategyCollateralAmount.add(
+                _strategyDebtAmount.wmul(feeAdjustment)
+            )
+        );
+
+        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+
+        return (wSqueethToMint, fee);
+    }
+
+    function squeethPrice() internal view returns (uint256) {
+        return
+            UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+    }
+
+    function ethPrice() internal view returns (uint256) {
+        return UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
     }
 }
