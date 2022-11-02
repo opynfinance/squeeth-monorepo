@@ -384,6 +384,11 @@ contract AuctionBullTestFork is Test {
             usdcDebtAfter,
             "Bull USDC debt mismatch"
         );
+        // Delta should increase when we buy more ETH
+        assertLt(
+            deltaBefore,
+            deltaAfter
+        );
     }
 
     // Helper functions
