@@ -50,6 +50,8 @@ contract AuctionBull is UniFlash, Ownable {
      * @dev changes the leverage component composition by buying or selling eth
      */
     function leverageRebalance(bool _isBuyingUsdc, uint256 _usdcAmount, uint256 _ethThresholdAmount, uint24 _poolFee) external {
+        require(msg.sender == auctionManager);
+        
         if (_isBuyingUsdc) {
             // swap ETH to USDC
             _exactOutFlashSwap(
