@@ -85,4 +85,28 @@ contract DepositTest is BaseSetup {
         assertEq(netting.crabBalance(withdrawer), 1e6);
         assertEq(netting.withdrawsQueued(), 1e6);
     }
+
+    function testCannotWithdrawCrabWhenAuctionLive() public {
+        netting.toggleAuctionLive();
+
+        vm.startPrank(withdrawer);
+        crab.approve(address(netting), 2 * 1e18);
+        netting.queueCrabForWithdrawal(2 * 1e18);
+
+        vm.expectRevert(bytes("auction is live"));
+        netting.withdrawCrab(2 * 1e18);
+        vm.stopPrank();
+    }
+
+    function testCannotWithdrawUSDCWhenAuctionLive() public {
+        netting.toggleAuctionLive();
+
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 2 * 1e6);
+        netting.depositUSDC(2 * 1e6);
+
+        vm.expectRevert(bytes("auction is live"));
+        netting.withdrawUSDC(2 * 1e6);
+        vm.stopPrank();
+    }
 }

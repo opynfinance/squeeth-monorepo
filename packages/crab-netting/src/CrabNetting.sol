@@ -49,6 +49,10 @@ struct WithdrawAuctionParams {
     uint256 clearingPrice;
     uint256 minUSDC;
 }
+struct Receipt {
+    address sender;
+    uint256 amount;
+}
 
 contract CrabNetting is Ownable, EIP712 {
     /// @dev typehash for signed orders
@@ -56,24 +60,23 @@ contract CrabNetting is Ownable, EIP712 {
         keccak256(
             "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
         );
+
+    bool public isAuctionLive;
     address public usdc;
     address public crab;
     address public weth;
     address public sqth;
     ISwapRouter public swapRouter;
 
+    uint256 public depositsIndex;
+    uint256 public withdrawsIndex;
+    Receipt[] public deposits;
+    Receipt[] public withdraws;
+
     mapping(address => uint256) public usdBalance;
     mapping(address => uint256) public crabBalance;
     mapping(address => uint256[]) public userDepositsIndex;
     mapping(address => uint256[]) public userWithdrawsIndex;
-    struct Receipt {
-        address sender;
-        uint256 amount;
-    }
-    Receipt[] public deposits;
-    uint256 public depositsIndex;
-    Receipt[] public withdraws;
-    uint256 public withdrawsIndex;
     /// @dev store the used flag for a nonce for each address
     mapping(address => mapping(uint256 => bool)) public nonces;
 
@@ -96,6 +99,10 @@ contract CrabNetting is Ownable, EIP712 {
 
         IERC20(weth).approve(address(swapRouter), 10e36);
         IERC20(usdc).approve(address(swapRouter), 10e36);
+    }
+
+    function toggleAuctionLive() external onlyOwner {
+        isAuctionLive = !isAuctionLive;
     }
 
     /**
@@ -122,6 +129,7 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     function withdrawUSDC(uint256 _amount) public {
+        require(!isAuctionLive, "auction is live");
         // TODO ensure final version does not need this check
         //require(usdBalance[msg.sender] >= _amount, "Withdrawing more than balance");
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
@@ -150,6 +158,7 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     function withdrawCrab(uint256 _amount) public {
+        require(!isAuctionLive, "auction is live");
         // require(crabBalance[msg.sender] >= _amount);
         console.log(crabBalance[msg.sender], "crab balance");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
@@ -403,6 +412,7 @@ contract CrabNetting is Ownable, EIP712 {
             }
         }
 
+        isAuctionLive = false;
         console.log(address(this).balance, "ETH not deposited");
     }
 
@@ -475,6 +485,7 @@ contract CrabNetting is Ownable, EIP712 {
             }
         }
 
+        isAuctionLive = false;
         // check if all balances are zero
     }
 
