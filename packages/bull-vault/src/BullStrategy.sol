@@ -7,6 +7,8 @@ pragma abicoder v2;
 import {IController} from "squeeth-monorepo/interfaces/IController.sol";
 import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {IEulerEToken} from "./interface/IEulerEToken.sol";
+import {IEulerDToken} from "./interface/IEulerDToken.sol";
 // contract
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 import {LeverageBull} from "./LeverageBull.sol";
@@ -14,6 +16,7 @@ import {LeverageBull} from "./LeverageBull.sol";
 import {Address} from "openzeppelin/utils/Address.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import {UniOracle} from "./UniOracle.sol";
 
 /**
  * @notice BullStrategy contract
@@ -45,7 +48,11 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
 
-    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event Withdraw(
+        address from,
+        uint256 bullAmount,
+        uint256 wPowerPerpToRedeem
+    );
 
     /**
      * @notice constructor for BullStrategy
@@ -72,13 +79,13 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice return the internal accounting of the bull strategy's crab balance 
+     * @notice return the internal accounting of the bull strategy's crab balance
      * @return crab token amount hold by the bull strategy
      */
     function getCrabBalance() external view returns (uint256) {
         return _crabBalance;
     }
-    
+
     /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
@@ -100,7 +107,13 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
+        (, uint256 usdcBorrowed) = _leverageDeposit(
+            bullToMint,
+            share,
+            ethInCrab,
+            squeethInCrab,
+            IERC20(crab).totalSupply()
+        );
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
@@ -109,17 +122,23 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {        
+    function withdraw(uint256 _bullAmount) external {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
         (, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(
+            crabTotalSupply
+        );
 
-        IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
+        IERC20(wPowerPerp).transferFrom(
+            msg.sender,
+            address(this),
+            wPowerPerpToRedeem
+        );
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
-        
+
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
@@ -134,11 +153,18 @@ contract BullStrategy is ERC20, LeverageBull {
         return _getCrabVaultDetails();
     }
 
+    function calcDeltaAndCR() external view returns (uint256, uint256) {
+        return _calcDeltaAndCR();
+    }
+
     /**
      * @notice increase internal accounting of bull stragtegy's crab balance
      * @param _crabAmount crab amount
      */
-    function _increaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+    function _increaseCrabBalance(uint256 _crabAmount)
+        private
+        returns (uint256)
+    {
         _crabBalance = _crabBalance.add(_crabAmount);
         return _crabBalance;
     }
@@ -147,14 +173,53 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice decrease internal accounting of bull strategy's crab balance
      * @param _crabAmount crab amount
      */
-    function _decreaseCrabBalance(uint256 _crabAmount) private returns (uint256) {
+    function _decreaseCrabBalance(uint256 _crabAmount)
+        private
+        returns (uint256)
+    {
         _crabBalance = _crabBalance.sub(_crabAmount);
         return _crabBalance;
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
+        VaultLib.Vault memory strategyVault = IController(powerTokenController)
+            .vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
+    }
+
+    function _calcDeltaAndCR() internal view returns (uint256, uint256) {
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            ethUSDCPool,
+            weth,
+            usdc,
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            ethWSqueethPool,
+            wPowerPerp,
+            weth,
+            TWAP,
+            false
+        );
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(
+                squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
+            )
+        ).wdiv(IERC20(crab).totalSupply());
+
+        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(this));
+        uint256 ethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this));
+
+        uint256 delta = (ethInCollateral.wmul(ethUsdPrice)).wdiv(
+            (_crabBalance.wmul(crabUsdPrice))
+                .add(ethInCollateral.wmul(ethUsdPrice))
+                .sub(usdcDebt.mul(1e12))
+        );
+        
+        uint256 cr = ethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt).div(1e12);
+        return (delta, cr);
     }
 }
