@@ -3,14 +3,16 @@ pragma solidity =0.7.6;
 
 import "forge-std/Test.sol";
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 contract EulerEtokenMock is ERC20, Test {
+    using StrategyMath for uint256;
     // asset to deposit as collateral
     address public underlying;
 
     mapping(address => uint256) internal underlyingBalance;
 
-    constructor(address _underlying) {
+    constructor(address _underlying, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
         underlying = _underlying;
     }
 

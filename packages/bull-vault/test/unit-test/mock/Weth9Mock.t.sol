@@ -13,6 +13,9 @@ contract WETH9Mock is ERC20, Test {
 
     mapping(address => uint256) public balances;
 
+    constructor() ERC20("WETH9", "wETH9") {
+    }
+
     function deposit() external payable {
         balances[msg.sender] = balances[msg.sender].add(msg.value);
         _mint(msg.sender, msg.value);

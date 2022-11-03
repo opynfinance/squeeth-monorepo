@@ -3,9 +3,11 @@
 pragma solidity =0.7.6;
 
 import "forge-std/Test.sol";
+import {IWPowerPerp} from "squeeth-monorepo/interfaces/IWPowerPerp.sol";
 import {SafeMath} from "openzeppelin/math/SafeMath.sol";
 import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 import {Address} from "openzeppelin/utils/Address.sol";
+import {ShortPowerPerp} from "squeeth-monorepo/core/ShortPowerPerp.sol";
 
 contract ControllerMock is Test {
     using SafeMath for uint256;
@@ -17,12 +19,13 @@ contract ControllerMock is Test {
     address public weth;
     address public quoteCurrency;
     address public ethQuoteCurrencyPool;
-    address public wPowerPerp;
     address public wPowerPerpPool;
-    address public quoteCurrency;
 
     uint256 public normalizationFactor;
     uint256 public feeRate = 0;
+
+    address public wPowerPerp;
+    ShortPowerPerp internal shortPowerPerp;
 
     /// @dev The token ID vault data
     mapping(uint256 => VaultLib.Vault) public vaults;
@@ -33,14 +36,14 @@ contract ControllerMock is Test {
         address _ethQuoteCurrencyPool,
         address _wPowerPerp,
         address _wPowerPerpPool,
-        address _quoteCurrency
-    ) public {
+        address _shortPowerPerp
+    ) {
         weth = _weth;
         quoteCurrency = _quoteCurrency;
         ethQuoteCurrencyPool = _ethQuoteCurrencyPool;
         wPowerPerp = _wPowerPerp;
         wPowerPerpPool = _wPowerPerpPool;
-        quoteCurrency = _quoteCurrency;
+        shortPowerPerp = ShortPowerPerp(_shortPowerPerp);
 
         normalizationFactor = 1e18;
     }
@@ -114,7 +117,7 @@ contract ControllerMock is Test {
         cachedVault.addShort(amountToMint);
         vaults[_vaultId] = cachedVault;
 
-        wPowerPerp.mint(_account, amountToMint);
+        IWPowerPerp(wPowerPerp).mint(_account, amountToMint);
     }
 
     function _removeShort(
@@ -126,10 +129,14 @@ contract ControllerMock is Test {
         cachedVault.removeShort(_amount);
         vaults[_vaultId] = cachedVault;
 
-        wPowerPerp.burn(_account, _amount);
+        IWPowerPerp(wPowerPerp).burn(_account, _amount);
     }
 
     function getExpectedNormalizationFactor() external view returns (uint256) {
         return normalizationFactor;
+    }
+
+    function _canModifyVault(uint256 _vaultId, address _account) internal view returns (bool) {
+        return true;
     }
 }
