@@ -74,7 +74,7 @@ const LPPage: React.FC = () => {
             />
 
             <PrimaryButton id="deposit-btn" className={classes.depositBtn} onClick={() => setPreviewModalOpen(true)}>
-              Connect wallet to deposit
+              Preview deposit
             </PrimaryButton>
           </Box>
         </Grid>
