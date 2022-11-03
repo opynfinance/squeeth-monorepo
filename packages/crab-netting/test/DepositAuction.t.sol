@@ -203,6 +203,93 @@ contract DepositAuctionTest is BaseForkSetup {
         assertEq(sqth.balanceOf(mm1), toMint);
     }
 
+    // TODO warp to get ETH price up, write a test to make it fail because mm not getting enough sqth
+    // then fix
+    function testDepositAuctionEthUp() public {
+        /** 
+        DepositAuctionParams memory p;
+        // get the usd to deposit remaining
+        p.depositsQueued = netting.depositsQueued();
+        // find the eth value of it
+        p.minEth = _convertUSDToETH(p.depositsQueued);
+
+        // lets get the uniswap price, you can get this from uniswap function in crabstratgegy itself
+        uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
+        // get the vault details
+        (, , uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        // get the total deposit
+        uint256 toMint;
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
+            p.minEth,
+            collateral,
+            debt,
+            sqthPrice
+        );
+        // --------
+        // then write a test suite with a high eth value where it fails
+        bool trade_works = _isEnough(
+            p.minEth,
+            toMint,
+            sqthPrice,
+            p.totalDeposit
+        );
+        require(trade_works, "depositing more than we have from sellling");
+
+        // if i sell the sqth and get eth add to user eth, will it be > total deposit
+
+        // then reduce the total value to get more trade value like in crab otc looping
+        // find out the root cause of this rounding issue
+
+        // turns out the issue did not occur,
+        // so we go ahead as though the auction closed for 0.993 osqth price
+
+        Order memory order = Order(
+            0,
+            mm1,
+            toMint,
+            sqthPrice,
+            true,
+            block.timestamp,
+            0,
+            1,
+            0x00,
+            0x00
+        );
+
+        bytes32 digest = sig.getTypedDataHash(order);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(mm1Pk, digest);
+        order.v = v;
+        order.r = r;
+        order.s = s;
+        orders.push(order);
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        p.orders = orders;
+        p.clearingPrice = (sqthPrice * 1010) / 1000;
+        uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
+
+        p.ethToFlashDeposit = ((excessEth * collateral) /
+            ((debt * p.clearingPrice) / 1e18));
+
+        console.log(
+            ICrabStrategyV2(crab).balanceOf(depositor),
+            "balance start crab"
+        );
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
+        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        p.usdEthFee = 500;
+        p.flashDepositFee = 3000;
+        // ------------- //
+        netting.depositAuction(p);
+
+        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 148e18);
+        assertEq(sqth.balanceOf(mm1), toMint);
+        */
+    }
+
     function _findBorrow(
         uint256 toFlash,
         uint256 debt,

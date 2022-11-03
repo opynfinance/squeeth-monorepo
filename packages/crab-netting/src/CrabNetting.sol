@@ -471,17 +471,41 @@ contract CrabNetting is Ownable, EIP712 {
         require(_order.expiry >= block.timestamp, "order expired");
     }
 
+    function _debtToMint(uint256 _amount) internal view returns (uint256) {
+        // todo add fee adjustment
+        (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
+            .getVaultDetails();
+        uint256 wSqueethToMint = (_amount * (debt)) / collateral;
+        return wSqueethToMint;
+    }
+
+    // todo fix for ETH price going up, so less ETH to deposit, so less sqth used; not full sqth
     function depositAuction(DepositAuctionParams calldata _p) public onlyOwner {
+        uint256 sqthToSell = _debtToMint(_p.totalDeposit);
         uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
         console.log(address(this).balance, "ETH not deposited");
-        // got all the eth in
-        for (uint256 i = 0; i < _p.orders.length; i++) {
-            IWETH(weth).transferFrom(
-                _p.orders[i].trader,
-                address(this),
-                (_p.orders[i].quantity * _p.clearingPrice) / 1e18
-            );
+
+        // get all the eth in
+        uint256 remainingToSell = sqthToSell;
+        for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
+            if (_p.orders[i].quantity >= remainingToSell) {
+                IWETH(weth).transferFrom(
+                    _p.orders[i].trader,
+                    address(this),
+                    (remainingToSell * _p.clearingPrice) / 1e18
+                );
+                remainingToSell = 0;
+            } else {
+                IWETH(weth).transferFrom(
+                    _p.orders[i].trader,
+                    address(this),
+                    (_p.orders[i].quantity * _p.clearingPrice) / 1e18
+                );
+                remainingToSell -= _p.orders[i].quantity;
+            }
         }
+        require(remainingToSell == 0, "not enough buy orders for sqth");
+
         uint256 ethBalance = IWETH(weth).balanceOf(address(this));
         IWETH(weth).withdraw(ethBalance);
 
@@ -542,9 +566,19 @@ contract CrabNetting is Ownable, EIP712 {
         );
 
         // send sqth to mms
-        for (uint256 i = 0; i < _p.orders.length; i++) {
+        remainingToSell = sqthToSell;
+        for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             console.log(_p.orders[i].trader, _p.orders[i].quantity);
-            IERC20(sqth).transfer(_p.orders[i].trader, _p.orders[i].quantity);
+            if (_p.orders[i].quantity < remainingToSell) {
+                IERC20(sqth).transfer(
+                    _p.orders[i].trader,
+                    _p.orders[i].quantity
+                );
+                remainingToSell -= _p.orders[i].quantity;
+            } else {
+                IERC20(sqth).transfer(_p.orders[i].trader, remainingToSell);
+                remainingToSell -= 0;
+            }
         }
 
         // send crab to depositors
