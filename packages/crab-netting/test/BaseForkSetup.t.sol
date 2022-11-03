@@ -18,6 +18,7 @@ contract BaseForkSetup is Test {
     CrabNetting netting;
     ISwapRouter swapRouter;
     IQuoter quoter;
+    uint256 activeFork;
 
     uint256 internal ownerPrivateKey;
     address internal owner;
@@ -36,7 +37,7 @@ contract BaseForkSetup is Test {
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
-        vm.createSelectFork(FORK_URL, 15819213);
+        activeFork = vm.createSelectFork(FORK_URL, 15819213);
 
         crab = ICrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         weth = IWETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);

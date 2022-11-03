@@ -203,15 +203,13 @@ contract DepositAuctionTest is BaseForkSetup {
         assertEq(sqth.balanceOf(mm1), toMint);
     }
 
-    // TODO warp to get ETH price up, write a test to make it fail because mm not getting enough sqth
-    // then fix
     function testDepositAuctionEthUp() public {
-        /** 
         DepositAuctionParams memory p;
         // get the usd to deposit remaining
         p.depositsQueued = netting.depositsQueued();
         // find the eth value of it
         p.minEth = _convertUSDToETH(p.depositsQueued);
+        console.log("Starting ETH", p.minEth / 10**18);
 
         // lets get the uniswap price, you can get this from uniswap function in crabstratgegy itself
         uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
@@ -225,15 +223,13 @@ contract DepositAuctionTest is BaseForkSetup {
             debt,
             sqthPrice
         );
+        console.log("Auctioning for ", toMint / 10**18, "sqth");
         // --------
         // then write a test suite with a high eth value where it fails
-        bool trade_works = _isEnough(
-            p.minEth,
-            toMint,
-            sqthPrice,
-            p.totalDeposit
+        require(
+            _isEnough(p.minEth, toMint, sqthPrice, p.totalDeposit),
+            "depositing more than we have from sellling"
         );
-        require(trade_works, "depositing more than we have from sellling");
 
         // if i sell the sqth and get eth add to user eth, will it be > total deposit
 
@@ -249,7 +245,7 @@ contract DepositAuctionTest is BaseForkSetup {
             toMint,
             sqthPrice,
             true,
-            block.timestamp,
+            block.timestamp + 26000000,
             0,
             1,
             0x00,
@@ -283,11 +279,43 @@ contract DepositAuctionTest is BaseForkSetup {
         p.usdEthFee = 500;
         p.flashDepositFee = 3000;
         // ------------- //
-        netting.depositAuction(p);
 
-        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 148e18);
-        assertEq(sqth.balanceOf(mm1), toMint);
-        */
+        vm.stopPrank();
+        assertEq(activeFork, vm.activeFork());
+        vm.makePersistent(address(netting));
+        vm.makePersistent(address(weth));
+        vm.makePersistent(address(usdc));
+
+        vm.rollFork(activeFork, 15829113);
+        p.minEth = _convertUSDToETH(p.depositsQueued);
+        console.log("Ending ETH", p.minEth / 10**18);
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
+            p.minEth,
+            collateral,
+            debt,
+            sqthPrice
+        );
+        console.log("Using only", toMint / 10**18, "sqth");
+
+        uint256 mm1Balance = weth.balanceOf(mm1);
+        netting.depositAuction(p);
+        assertLe(
+            ((toMint * p.clearingPrice) / 10**18) -
+                (mm1Balance - weth.balanceOf(mm1)),
+            180
+        );
+
+        assertApproxEqRel(
+            ICrabStrategyV2(crab).balanceOf(depositor),
+            134e18,
+            0.01e18
+        );
+        assertApproxEqRel(
+            sqth.balanceOf(mm1),
+            toMint,
+            0.001e18,
+            "All minted not sold, check if we sold only what we took for"
+        );
     }
 
     function _findBorrow(
@@ -308,9 +336,7 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 ethReceived;
         while (true) {
             mid = (start + end) / 2;
-            console.log(mid, "mid");
             ethToBorrow = (toFlash * mid) / 10**(decimals + 1);
-            console.log(ethToBorrow, "ethborrow");
             totDep = toFlash + ethToBorrow;
             debtMinted = (totDep * debt) / collateral;
 
