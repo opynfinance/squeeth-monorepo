@@ -18,7 +18,8 @@ export type ChartDataInfo = {
     crabPnL: number
     crabEthPnl: number
     ethUsdPnl: number
-  }
+}
+
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -48,14 +49,13 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
     },
     grid: {
-       width: "80%"
+       width: "60%"
     }
   }),
 )
 
-function StrategyPnLV2() {
+function CrabStrategyV2PnLChart() {
     
-
     const classes = useStyles()
 
     const minDate = CRABV2_START_DATE
@@ -218,14 +218,8 @@ function StrategyPnLV2() {
 
 
     return (
-      
-        <div className={classes.container}>
-          <div style={{ display: 'flex', marginTop: '32px' }}>
-              <Typography variant="h5" color="primary" style={{}}>
-              Strategy Performance 
-              </Typography>
-          </div>
-          <div className={classes.navDiv}>
+      <>
+       {/* <div> */}
           <MuiPickersUtilsProvider utils={MomentUtils}>
             <Grid container className={classes.grid} justifyContent="space-around">
               <DatePicker
@@ -252,12 +246,10 @@ function StrategyPnLV2() {
                   clearable
                 />
               </Grid>
-            </MuiPickersUtilsProvider>
-
-    
-          </div>
-          <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
-            <div style={{ flex: '1 1 0', marginTop: '8px' }}>
+          </MuiPickersUtilsProvider>
+        {/* </div> */}
+        <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
+          <div style={{ flex: '1 1 0', marginTop: '8px' }}>
                   {crabUsdPnlSeries ? (
                   <HighchartsReact highcharts={Highcharts} options={chartOptions}  />
                   ) : (
@@ -265,13 +257,14 @@ function StrategyPnLV2() {
                       <CircularProgress size={40} color="secondary" />
                   </Box>
                   )}
-            </div> 
-          </div>  
-        </div>
+          </div> 
+        </div>  
+      </>
+         
     )
 }
 
-const ChartMemoized = memo(StrategyPnLV2)
+const ChartMemoized = memo(CrabStrategyV2PnLChart)
 
-export { ChartMemoized as StrategyPnLV2 }
+export { ChartMemoized as CrabStrategyV2PnLChart }
 
