@@ -48,6 +48,9 @@ contract BullStrategyTestFork is Test {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
 
+        deployerPk = 0xA11CD;
+        deployer = vm.addr(deployerPk);
+
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;

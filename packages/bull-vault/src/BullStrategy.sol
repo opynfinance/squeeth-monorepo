@@ -67,7 +67,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(crab));
+        require(msg.sender == weth || msg.sender == address(crab), "BS0");
     }
 
     /**
