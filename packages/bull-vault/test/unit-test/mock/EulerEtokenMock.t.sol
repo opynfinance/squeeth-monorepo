@@ -12,8 +12,9 @@ contract EulerEtokenMock is ERC20, Test {
 
     mapping(address => uint256) internal underlyingBalance;
 
-    constructor(address _underlying, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
+    constructor(address _underlying, string memory _name, string memory _symbol, uint8 _decimals) ERC20(_name, _symbol) {
         underlying = _underlying;
+        _setupDecimals(_decimals);
     }
 
     function deposit(uint256 subAccountId, uint256 amount) external {

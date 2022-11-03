@@ -9,8 +9,9 @@ contract EulerDtokenMock is ERC20, Test {
     // asset to borrow/repay
     address underlying;
 
-    constructor(address _underlying, string memory _name, string memory _symbol) ERC20(_name, _symbol) {
+    constructor(address _underlying, string memory _name, string memory _symbol, uint8 _decimals) ERC20(_name, _symbol) {
         underlying = _underlying;
+        _setupDecimals(_decimals);
     }
 
     function borrow(uint256 subAccountId, uint256 amount) external {

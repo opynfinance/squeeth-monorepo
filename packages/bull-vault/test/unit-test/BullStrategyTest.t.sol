@@ -60,11 +60,12 @@ contract BullStrategyTest is Test {
         usdc = new MockErc20("USDC", "USDC", 6);
         weth = new WETH9Mock();
         eulerMarket = new EulerMarketsMock();
-        eToken = new EulerEtokenMock(address(weth), "eWETH", "eWETH");
-        dToken = new EulerDtokenMock(address(usdc), "dUSDC", "dUSDC");
+        eToken = new EulerEtokenMock(address(weth), "eWETH", "eWETH", 18);
+        dToken = new EulerDtokenMock(address(usdc), "dUSDC", "dUSDC", 6);
 
-        bullStrategy =
-        new BullStrategy(address(0), address(0), address(0), address(0));
+        _deployUniswap();
+        // bullStrategy =
+        // new BullStrategy(address(0), address(0), address(0), address(0));
         vm.stopPrank();
 
         user1Pk = 0xA11CE;
@@ -85,6 +86,10 @@ contract BullStrategyTest is Test {
     function _deployUniswap() internal {
         uniFactory = address(new UniswapV3Factory());
         uniNonFungibleManager = new NonfungiblePositionManager(uniFactory, address(weth), address(0));
+    }
+
+    function _createUniPool(address _tokenA, address _tokenB, uint256 _price) internal {
+
     }
 
     function sqrt(uint256 x) internal pure returns (uint256){
