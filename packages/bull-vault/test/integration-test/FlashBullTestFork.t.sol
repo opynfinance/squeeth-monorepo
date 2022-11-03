@@ -114,7 +114,7 @@ contract FlashBullTestFork is Test {
         IERC20(weth).transfer(user1, 10100e18);
     }
 
-    function testInitialFlashDeposit() public {
+    function testFlashDeposit() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
             .getCrabVaultDetails();
@@ -132,11 +132,10 @@ contract FlashBullTestFork is Test {
             address(bullStrategy)
         );
 
-        uint256 bullShare = 1e18;
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
             .calcLeverageEthUsdc(
                 crabToBeMinted,
-                bullShare,
+                1e18,
                 ethInCrab,
                 squeethInCrab,
                 crabV2.totalSupply()
@@ -174,6 +173,8 @@ contract FlashBullTestFork is Test {
             );
         }
 
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(
             ethToCrab,
@@ -194,6 +195,11 @@ contract FlashBullTestFork is Test {
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore
+        );
+        assertEq(
+            bullToMint,
+            bullStrategy.balanceOf(user1),
+            "User1 bull balance mismatch"
         );
     }
 
@@ -215,11 +221,11 @@ contract FlashBullTestFork is Test {
             address(bullStrategy)
         );
 
-        uint256 bullShare = 1e18;
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
             .calcLeverageEthUsdc(
                 crabToBeMinted,
-                bullShare,
+                1e18,
                 ethInCrab,
                 squeethInCrab,
                 crabV2.totalSupply()
@@ -277,14 +283,19 @@ contract FlashBullTestFork is Test {
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore
         );
-
+        assertEq(
+            bullToMint,
+            bullStrategy.balanceOf(user1),
+            "User1 bull balance mismatch"
+        );
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
+        uint256 bullCrabBalanceBeforeSecond = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
         uint256 bullUsdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
         );
-
         (uint256 ethInCrabSecond, uint256 squeethInCrabSecond) = testUtil
             .getCrabVaultDetails();
         uint256 ethToCrabSecond = 7e18;
@@ -302,28 +313,21 @@ contract FlashBullTestFork is Test {
             ethInCrabSecond,
             IERC20(crabV2).totalSupply()
         );
-        uint256 bullCrabBalanceBeforeSecond = IERC20(crabV2).balanceOf(
-            address(bullStrategy)
-        );
 
-        uint256 bullShareSecond;
-        {
-            uint256 bullToMint = testUtil.calcBullToMint(crabToBeMintedSecond);
-            bullShareSecond = bullToMint.wdiv(
-                bullStrategy.totalSupply().add(bullToMint)
-            );
-        }
+        uint256 bullToMintSecond = testUtil.calcBullToMint(
+            crabToBeMintedSecond
+        );
         (uint256 wethToLendSecond, uint256 usdcToBorrowSecond) = bullStrategy
             .calcLeverageEthUsdc(
                 crabToBeMintedSecond,
-                bullShareSecond,
+                bullToMintSecond.wdiv(
+                    bullStrategy.totalSupply().add(bullToMintSecond)
+                ),
                 ethInCrabSecond,
                 squeethInCrabSecond,
                 crabV2.totalSupply()
             );
 
-        uint256 minEthFromSqueethSecond;
-        uint256 minEthFromUsdcSecond;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(
                 ethUsdcPool,
@@ -339,25 +343,31 @@ contract FlashBullTestFork is Test {
                 TWAP,
                 false
             );
-            minEthFromSqueethSecond = wSqueethToMintSecond.wmul(
-                squeethEthPrice.wmul(99e16)
+
+            vm.startPrank(user1);
+            flashBull.flashDeposit{
+                value: calcTotalEthToBull(
+                    wethToLendSecond,
+                    ethToCrabSecond,
+                    usdcToBorrowSecond,
+                    wSqueethToMintSecond
+                )
+            }(
+                ethToCrabSecond,
+                wSqueethToMintSecond.wmul(squeethEthPrice.wmul(99e16)),
+                usdcToBorrowSecond.mul(1e12).wdiv(
+                    ethUsdPrice.wmul(uint256(1e18).add(5e15))
+                ),
+                3000
             );
-            minEthFromUsdcSecond = usdcToBorrowSecond.mul(1e12).wdiv(
-                ethUsdPrice.wmul(uint256(1e18).add(5e15))
-            );
+            vm.stopPrank();
         }
 
-        vm.startPrank(user1);
-        flashBull.flashDeposit{
-            value: calcTotalEthToBull(
-                wethToLendSecond,
-                ethToCrabSecond,
-                usdcToBorrowSecond,
-                wSqueethToMintSecond
-            )
-        }(ethToCrabSecond, minEthFromSqueethSecond, minEthFromUsdcSecond, 3000);
-        vm.stopPrank();
-
+        assertEq(
+            userBullBalanceBefore.add(bullToMintSecond),
+            bullStrategy.balanceOf(user1),
+            "Bull balance mismatch for second flashdeposit"
+        );
         assertEq(
             IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(
                 bullUsdcDebtBefore
@@ -479,7 +489,7 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Fuzz testing is awesome! ************************************************************
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
-        _ethToCrab = bound(_ethToCrab, 1e16, 600e18); 
+        _ethToCrab = bound(_ethToCrab, 1e16, 600e18);
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
             .getCrabVaultDetails();
 
@@ -502,11 +512,11 @@ contract FlashBullTestFork is Test {
             squeethInCrab += wSqueethToMint;
         }
 
-        uint256 bullShare = 1e18;
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
             .calcLeverageEthUsdc(
                 crabToBeMinted,
-                bullShare,
+                1e18,
                 ethInCrab,
                 squeethInCrab,
                 crabV2.totalSupply().add(crabToBeMinted)
@@ -562,6 +572,11 @@ contract FlashBullTestFork is Test {
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
+        );
+        assertEq(
+            bullToMint,
+            bullStrategy.balanceOf(user1),
+            "User1 bull balance mismatch"
         );
     }
 
