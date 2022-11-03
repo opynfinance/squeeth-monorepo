@@ -2,11 +2,16 @@ import { Box, CircularProgress, Typography} from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo, useEffect } from 'react'
 import useAppMemo from '@hooks/useAppMemo'
-import { useCrabPnLV2ChartData } from 'src/state/ethPriceCharts/atoms'
+import { crabv2StrategyFilterEndDateAtom, crabv2StrategyFilterStartDateAtom, useCrabPnLV2ChartData } from 'src/state/crab/atoms'
 import { crabV2graphOptions } from '@constants/diagram'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
-
+import Grid from "@material-ui/core/Grid";
+import MomentUtils from "@date-io/moment";
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import "date-fns";
+import { CRABV2_START_DATE } from '@constants/index'
+import { useAtom } from 'jotai'
 
 export type ChartDataInfo = {
     timestamp: number
@@ -36,12 +41,27 @@ const useStyles = makeStyles((theme) =>
       },
        
     },
+    navDiv: {
+      display: 'flex',
+      marginBottom: theme.spacing(2),
+      marginTop: theme.spacing(2),
+      alignItems: 'center',
+    },
+    grid: {
+       width: "80%"
+    }
   }),
 )
 
 function StrategyPnLV2() {
     
+
     const classes = useStyles()
+
+    const minDate = CRABV2_START_DATE
+    const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
+    const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
+
     const query = useCrabPnLV2ChartData()
     let crabUsdPnlSeries : any[]
     let crabEthPnlSeries : any[]
@@ -53,14 +73,18 @@ function StrategyPnLV2() {
 
 
     const lastMarkerPoints = useAppMemo(() => {
-      const crabUsdMarker = (crabUsdPnlSeries) ? crabUsdPnlSeries[crabUsdPnlSeries?.length -1]: [];
-      const crabEthMarker = (crabEthPnlSeries) ? crabEthPnlSeries[crabEthPnlSeries?.length -1]: [];
-      const ethUsdMarker = (ethUsdPnlSeries) ? ethUsdPnlSeries[ethUsdPnlSeries?.length -1]: [];
+      const crabUsdMarkerArray = (crabUsdPnlSeries) ? crabUsdPnlSeries[crabUsdPnlSeries?.length -1]: [];
+      const crabEthMarkerArray = (crabEthPnlSeries) ? crabEthPnlSeries[crabEthPnlSeries?.length -1]: [];
+      const ethUsdMarkerArray = (ethUsdPnlSeries) ? ethUsdPnlSeries[ethUsdPnlSeries?.length -1]: [];
+
+      const crabUsdMarker = (crabUsdMarkerArray) ? crabUsdMarkerArray[1] : 0
+      const crabEthMarker = (crabEthMarkerArray) ? crabEthMarkerArray[1] : 0
+      const ethUsdMarker = (ethUsdMarkerArray) ? ethUsdMarkerArray[1] : 0
 
       let lastCrabUsdItem = (crabUsdPnlSeries) ? crabUsdPnlSeries.pop() : [];
       let newCrabUsdLastItem = {
-        x: lastCrabUsdItem[0],
-        y: lastCrabUsdItem[1],
+        x: lastCrabUsdItem && lastCrabUsdItem[0],
+        y: lastCrabUsdItem && lastCrabUsdItem[1],
         dataLabels: {
             align: 'center',
             enabled: true,
@@ -75,8 +99,8 @@ function StrategyPnLV2() {
 
      let lastCrabEthItem = (crabEthPnlSeries) ? crabEthPnlSeries.pop() : [];
       let newCrabEthLastItem = {
-        x: lastCrabEthItem[0],
-        y: lastCrabEthItem[1],
+        x: lastCrabEthItem && lastCrabEthItem[0],
+        y: lastCrabEthItem && lastCrabEthItem[1],
         dataLabels: {
             align: 'center',
             enabled: true,
@@ -91,8 +115,8 @@ function StrategyPnLV2() {
 
      let lastEthUsdItem = (ethUsdPnlSeries) ? ethUsdPnlSeries.pop() : [];
      let newEthUsdLastItem = {
-       x: lastEthUsdItem[0],
-       y: lastEthUsdItem[1],
+       x: lastEthUsdItem && lastEthUsdItem[0],
+       y: lastEthUsdItem && lastEthUsdItem[1],
        dataLabels: {
            align: 'center',
            enabled: true,
@@ -105,7 +129,7 @@ function StrategyPnLV2() {
     if(ethUsdPnlSeries)
     ethUsdPnlSeries.push(newEthUsdLastItem)
 
-      return [crabUsdMarker[1],crabEthMarker[1],ethUsdMarker[1]]
+      return [crabUsdMarker,crabEthMarker,ethUsdMarker]
     }, [crabUsdPnlSeries,crabEthPnlSeries,ethUsdPnlSeries])
 
     useEffect(() => {
@@ -190,16 +214,50 @@ function StrategyPnLV2() {
           ...axes
       }
     })
+  
+
 
     return (
+      
         <div className={classes.container}>
           <div style={{ display: 'flex', marginTop: '32px' }}>
               <Typography variant="h5" color="primary" style={{}}>
               Strategy Performance 
               </Typography>
           </div>
+          <div className={classes.navDiv}>
+          <MuiPickersUtilsProvider utils={MomentUtils}>
+            <Grid container className={classes.grid} justifyContent="space-around">
+              <DatePicker
+                  label="Start Date"
+                  placeholder="MM/DD/YYYY"
+                  format={"MM/DD/YYYY"}
+                  value={startDate}
+                  minDate={minDate}
+                  onChange={d => setStartDate(d || new Date())}
+                  animateYearScrolling={false}
+                  autoOk={true}
+                  clearable
+                />
+                
+                <DatePicker
+                  label="End Date"
+                  placeholder="MM/DD/YYYY"
+                  format={"MM/DD/YYYY"}
+                  value={endDate}
+                  minDate={startDate}
+                  onChange={d => setEndDate(d || new Date())}
+                  animateYearScrolling={false}
+                  autoOk={true}
+                  clearable
+                />
+              </Grid>
+            </MuiPickersUtilsProvider>
+
+    
+          </div>
           <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
-              <div style={{ flex: '1 1 0', marginTop: '8px' }}>
+            <div style={{ flex: '1 1 0', marginTop: '8px' }}>
                   {crabUsdPnlSeries ? (
                   <HighchartsReact highcharts={Highcharts} options={chartOptions}  />
                   ) : (
