@@ -16,6 +16,8 @@ import {UniFlash} from "./UniFlash.sol";
 import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import {Address} from "openzeppelin/utils/Address.sol";
 import {UniOracle} from "./UniOracle.sol";
+import {console} from "forge-std/console.sol";
+
 
 /**
  * @notice FlashBull contract
@@ -224,7 +226,7 @@ contract FlashBull is UniFlash {
             FlashSwapWPowerPerpData memory data = abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
 
             IERC20(wPowerPerp).approve(bullStrategy, data.wPowerPerpToRedeem);
-
+            console.log("ethForSqueeth", _uniFlashSwapData.amountToPay);
             // ETH-USDC swap
             _exactOutFlashSwap(
                 weth,
@@ -241,6 +243,7 @@ contract FlashBull is UniFlash {
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_WITHDRAW_BULL) {
             FlashWithdrawBullData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashWithdrawBullData));
+            console.log("ethForUsdc", _uniFlashSwapData.amountToPay);
 
             IERC20(usdc).approve(bullStrategy, data.usdcToRepay);
             IBullStrategy(bullStrategy).withdraw(data.bullToRedeem);
