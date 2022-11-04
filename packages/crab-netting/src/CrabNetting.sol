@@ -449,6 +449,10 @@ contract CrabNetting is Ownable, EIP712 {
         return sum;
     }
 
+    /**
+     * @dev checks the expiry nonce and signer of an order
+     * @param _order is the Order struct
+     */
     function checkOrder(Order memory _order) internal {
         _useNonce(_order.trader, _order.nonce);
         bytes32 structHash = keccak256(
@@ -470,6 +474,10 @@ contract CrabNetting is Ownable, EIP712 {
         require(_order.expiry >= block.timestamp, "order expired");
     }
 
+    /**
+     * @dev calculates wSqueeth minted when amount is deposited
+     * @param _amount to deposit into crab
+     */
     function _debtToMint(uint256 _amount) internal view returns (uint256) {
         // todo add fee adjustment
         (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
@@ -478,9 +486,14 @@ contract CrabNetting is Ownable, EIP712 {
         return wSqueethToMint;
     }
 
-    // todo fix for ETH price going up, so less ETH to deposit, so less sqth used; not full sqth
-    // eth at 1340 -> then eth goes upto 1440 . 2400 auction ; 2200 sqth
-    function depositAuction(DepositAuctionParams calldata _p) external {
+    /**
+     * @dev takes in orders from mm's to buy sqth and deposits the usd amount in q to crab long with eth from selling sqth
+     * @param _p DepositAuction Params that contain orders, usdToDeposit, uniswap min amount and fee
+     */
+    function depositAuction(DepositAuctionParams calldata _p)
+        external
+        onlyOwner
+    {
         uint256 sqthToSell = _debtToMint(_p.totalDeposit);
         uint256 initCrabBalance = IERC20(crab).balanceOf(address(this)); // todo should we?
 
@@ -531,10 +544,17 @@ contract CrabNetting is Ownable, EIP712 {
         to_send.eth = address(this).balance;
 
         if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
-            ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
-                _p.ethToFlashDeposit,
-                _p.flashDepositFee
-            );
+            if (to_send.eth <= _p.ethToFlashDeposit) {
+                ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
+                    _p.ethToFlashDeposit,
+                    _p.flashDepositFee
+                );
+            } else {
+                ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
+                    to_send.eth,
+                    _p.flashDepositFee
+                );
+            }
         }
 
         to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
