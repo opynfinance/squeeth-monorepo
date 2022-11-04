@@ -15,7 +15,7 @@ contract EulerMarketsMock is Test {
         underlyingToDtoken[_underlying] = _dToken;
     }
 
-    function enterMarket(uint256 _subAccountId, address _newMarket) external {
+    function enterMarket(uint256 /*_subAccountId*/, address /*_newMarket*/) external pure {
         return;
     }
 

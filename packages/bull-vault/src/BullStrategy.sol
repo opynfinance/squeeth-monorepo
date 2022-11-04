@@ -16,6 +16,11 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
+ * Error codes
+ * BS0: Can't receive ETH from this sender
+ */
+ 
+/**
  * @notice BullStrategy contract
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team

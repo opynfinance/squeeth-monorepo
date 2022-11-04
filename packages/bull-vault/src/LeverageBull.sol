@@ -13,6 +13,11 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { UniOracle } from "./UniOracle.sol";
 
 /**
+ * Error codes
+ * LB0: ETH sent is greater than ETH to deposit in Euler
+ */
+
+/**
  * @notice LeverageBull contract
  * @dev contract that interact mainly with leverage component
  * @author opyn team
@@ -94,6 +99,7 @@ contract LeverageBull {
     /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handle only the leverage component part
+     * @param _ethAmount amount of ETH deposited from user
      * @param _crabAmount amount of crab token deposited
      * @param _bullShare amount of bull share minted
      * @param _ethInCrab eth in crab strategy
@@ -111,6 +117,8 @@ contract LeverageBull {
         (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
+
+        require(ethToLend == _ethAmount, "LB0"); 
 
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);

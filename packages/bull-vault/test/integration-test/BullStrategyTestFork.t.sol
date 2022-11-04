@@ -107,12 +107,6 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
-    function testScenarioFork() public {
-        vm.startPrank(user1);
-        vm.expectRevert(bytes("invalid input"));
-        bullStrategy.forTestExpectRevert(50);
-    }
-
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
@@ -216,6 +210,38 @@ contract BullStrategyTestFork is Test {
             crabV2.balanceOf(address(bullStrategy)),
             "Bull ccrab balance mismatch"
         );
+    }
+
+    function testReceiveFromNonWethOrCrab() public {
+        vm.startPrank(user1);
+        (bool status, bytes memory returndata) = address(bullStrategy).call{ value: 5e18 }("");
+        vm.stopPrank();
+        assertFalse(status);
+        assertEq(_getRevertMsg(returndata), "BS0");
+    }
+
+    function testSendLessEthComparedToCrabAmount() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend.wdiv(2e18)}(crabToDeposit);
+        vm.stopPrank();
+    }
+
+    function testSendTooMuchCrabRelativeToEth() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
     }
 
     /**
