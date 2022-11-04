@@ -113,11 +113,22 @@ contract BullStrategyUnitTest is Test {
         vm.deal(user1, 100000000e18);
     }
 
-    function testRevertReceive() public {
-        vm.prank(user1);
-        vm.expectRevert(bytes4("BS0"));
-        address(bullStrategy).call{ value: 5e18 }("");
+    // using .call() and checking status because for no reason expectRevert always pass this test even with diff error message
+    // we can only use (bool status, bytes memory returndata) without expectRevert, because expectRevert mess with returndata and switch status from 0 to 1
+    // therefore hard to get error message from returndata combined with expectRevert()
+    function testFailReceive() public {
+        vm.startPrank(user1);
+        (bool status, bytes memory returndata) = address(bullStrategy).call{ value: 5e18 }("");
+        assertFalse(status);
+        assertEq(_getRevertMsg(returndata), "BS0");
+        vm.stopPrank();
     }
+
+    // function testFailScenario() public {
+    //     vm.startPrank(user1);
+    //     vm.expectRevert(bytes("invalid input"));
+    //     bullStrategy.forTestExpectRevert(50);
+    // }
 
     // TODO: move to helper later when test refactor PR is merged
     function _deployUniswap() internal returns (address payable, address payable) {
@@ -125,6 +136,17 @@ contract BullStrategyUnitTest is Test {
         address payable _uniNonFungibleManager = payable(address(new NonfungiblePositionManager(address(uniFactory), address(weth), address(0))));
 
         return (_uniFactory, _uniNonFungibleManager);
+    }
+
+    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+        // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+        if (_returnData.length < 68) return 'Transaction reverted silently';
+
+        assembly {
+            // Slice the sighash.
+            _returnData := add(_returnData, 0x04)
+        }
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
     }
 
     // TODO: move to helper later when test refactor PR is merged
