@@ -61,6 +61,7 @@ struct WithdrawAuctionParams {
     uint256 clearingPrice;
     /// @dev minUSDC to receive from swapping the ETH obtained by withdrawing
     uint256 minUSDC;
+    uint24 ethUSDFee;
 }
 
 /// @dev receipt used to store deposits and withdraws
@@ -494,10 +495,18 @@ contract CrabNetting is Ownable, EIP712 {
         external
         onlyOwner
     {
-        uint256 sqthToSell = _debtToMint(_p.totalDeposit);
-        uint256 initCrabBalance = IERC20(crab).balanceOf(address(this)); // todo should we?
+        /**
+        step 1: get eth from mm
+        step 2: get eth from deposit usdc
+        step 3: crab deposit
+        step 4: flash deposit
+        step 5: send sqth to mms
+        step 6: send crab to depositors
+         */
+        uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
 
-        // get all the eth in
+        uint256 sqthToSell = _debtToMint(_p.totalDeposit);
+        // step 1 get all the eth in
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             if (_p.orders[i].quantity >= remainingToSell) {
@@ -518,33 +527,31 @@ contract CrabNetting is Ownable, EIP712 {
         }
         require(remainingToSell == 0, "not enough buy orders for sqth");
 
-        IERC20(usdc).approve(address(swapRouter), _p.depositsQueued); // TODO move all approves to constructor
+        // step 2
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({ // todo think about doing an exactOutSwap
-            tokenIn: address(usdc),
-            tokenOut: address(weth),
-            fee: _p.usdEthFee,
-            recipient: address(this),
-            deadline: block.timestamp,
-            amountIn: _p.depositsQueued,
-            amountOutMinimum: _p.minEth,
-            sqrtPriceLimitX96: 0
-        });
-
-        // The call to `exactInputSingle` executes the swap.
+            .ExactInputSingleParams({
+                tokenIn: address(usdc),
+                tokenOut: address(weth),
+                fee: _p.usdEthFee,
+                recipient: address(this),
+                deadline: block.timestamp,
+                amountIn: _p.depositsQueued,
+                amountOutMinimum: _p.minEth,
+                sqrtPriceLimitX96: 0
+            });
         swapRouter.exactInputSingle(params);
 
-        IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this))); // todo move to line 538
+        // step 3
+        IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));
         ICrabStrategyV2(crab).deposit{value: _p.totalDeposit}();
-        // todo think about adding 1 to the sqth to auction
 
+        // step 4
         Portion memory to_send;
-        to_send.sqth = IERC20(sqth).balanceOf(address(this));
         // TODO the left overs of the previous tx from the flashDeposit will be added here
         to_send.eth = address(this).balance;
-
         if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
             if (to_send.eth <= _p.ethToFlashDeposit) {
+                // we cant send more than the flashDeposit
                 ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
                     _p.ethToFlashDeposit,
                     _p.flashDepositFee
@@ -557,9 +564,8 @@ contract CrabNetting is Ownable, EIP712 {
             }
         }
 
-        to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
-        // get the balance between start and now
-
+        // step 5
+        to_send.sqth = IERC20(sqth).balanceOf(address(this));
         remainingToSell = to_send.sqth;
         for (uint256 j = 0; j < _p.orders.length && remainingToSell > 0; j++) {
             require(_p.orders[j].isBuying);
@@ -576,9 +582,13 @@ contract CrabNetting is Ownable, EIP712 {
             }
         }
 
-        // send crab to depositors
+        // step 6 send crab to depositors
         uint256 remainingDeposits = _p.depositsQueued;
         uint256 k = depositsIndex;
+
+        to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
+        // get the balance between start and now
+        to_send.eth = address(this).balance;
         while (remainingDeposits > 0) {
             uint256 queuedAmount = deposits[k].amount;
             Portion memory portion;
@@ -591,12 +601,11 @@ contract CrabNetting is Ownable, EIP712 {
 
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = ((deposits[k].amount * to_send.eth) /
-                    _p.depositsQueued); // todo remove this if tammy
-                //payable(deposits[depositsIndex].sender).transfer(portion.eth);
+                // portion.eth = ((deposits[k].amount * to_send.eth) /
+                //     _p.depositsQueued); // todo remove this if tammy
+                // payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[k].amount = 0;
-                //to_send.crab -= portion.crab; // todo write a test that fails then fix this
                 k++; // todo make this i
             } else {
                 usdBalance[deposits[k].sender] -= remainingDeposits;
@@ -605,9 +614,9 @@ contract CrabNetting is Ownable, EIP712 {
                     _p.depositsQueued);
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = ((remainingDeposits * to_send.eth) /
-                    _p.depositsQueued);
-                //payable(deposits[depositsIndex].sender).transfer(portion.eth);
+                // portion.eth = ((remainingDeposits * to_send.eth) /
+                //     _p.depositsQueued);
+                // payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
                 deposits[k].amount -= remainingDeposits;
                 //to_send.crab -= portion.crab; // todo remove this
@@ -618,10 +627,23 @@ contract CrabNetting is Ownable, EIP712 {
         isAuctionLive = false;
     }
 
+    /**
+     * @dev takes in orders from mm's to sell sqth and withdraws the crab amount in q
+     * @param _p Withdraw Params that contain orders, crabToWithdraw, uniswap min amount and fee
+     */
     function withdrawAuction(WithdrawAuctionParams calldata _p)
         public
         onlyOwner
     {
+        /**
+        step 1: get sqth from mms
+        step 2: withdraw from crab
+        step 3: send eth to mms
+        step 4: convert eth to usdc
+        step 5: send usdc to withdrawers
+         */
+
+        // step 1 get sqth from mms
         uint256 sqthRequired = ICrabStrategyV2(crab).getWsqueethFromCrabAmount(
             _p.crabToWithdraw
         );
@@ -645,10 +667,12 @@ contract CrabNetting is Ownable, EIP712 {
                 toPull = 0;
             }
         }
-        ICrabStrategyV2(crab).withdraw(_p.crabToWithdraw);
-        IWETH(weth).deposit{value: address(this).balance}();
 
-        // pay all mms
+        // step 2 withdraw from crab
+        ICrabStrategyV2(crab).withdraw(_p.crabToWithdraw);
+
+        // step 3 pay all mms
+        IWETH(weth).deposit{value: address(this).balance}();
         toPull = sqthRequired;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             if (_p.orders[i].quantity < toPull) {
@@ -666,24 +690,21 @@ contract CrabNetting is Ownable, EIP712 {
             }
         }
 
-        //convert WETH to USDC and send to withdrawers proportionally
-        // convert to USDC
+        // step 4 convert to USDC
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
                 tokenIn: address(weth),
                 tokenOut: address(usdc),
-                fee: 500,
+                fee: _p.ethUSDFee,
                 recipient: address(this),
                 deadline: block.timestamp,
                 amountIn: IERC20(weth).balanceOf(address(this)),
                 amountOutMinimum: _p.minUSDC,
                 sqrtPriceLimitX96: 0
             });
-
-        // The call to `exactInputSingle` executes the swap.
         uint256 usdcReceived = swapRouter.exactInputSingle(params);
 
-        // pay all withdrawers and mark their withdraws as done
+        // step 5 pay all withdrawers and mark their withdraws as done
         uint256 remainingWithdraws = _p.crabToWithdraw;
         uint256 j = withdrawsIndex;
         while (remainingWithdraws > 0) {

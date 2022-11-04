@@ -101,6 +101,7 @@ contract TestWithdrawAuction is BaseForkSetup {
             1e18;
 
         params.minUSDC = (quote.convertWETHToUSDC(equityInEth) * 999) / 1000;
+        params.ethUSDFee = 500;
         // get equivalent usdc quote with slippage and send
 
         // call withdrawAuction on netting contract
