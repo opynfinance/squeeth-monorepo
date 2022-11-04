@@ -116,19 +116,23 @@ contract BullStrategyUnitTest is Test {
     // using .call() and checking status because for no reason expectRevert always pass this test even with diff error message
     // we can only use (bool status, bytes memory returndata) without expectRevert, because expectRevert mess with returndata and switch status from 0 to 1
     // therefore hard to get error message from returndata combined with expectRevert()
-    function testFailReceive() public {
+    function testReceive() public {
+        // vm.deal(address(weth), 10e18);
+        // vm.startPrank(address(weth));
         vm.startPrank(user1);
+        vm.expectRevert(bytes4("BSa0"));
         (bool status, bytes memory returndata) = address(bullStrategy).call{ value: 5e18 }("");
-        assertFalse(status);
-        assertEq(_getRevertMsg(returndata), "BS0");
+        console.log("status", status);
+        // assertFalse(!status);
+        // assertEq(_getRevertMsg(returndata), "BS0");
         vm.stopPrank();
     }
 
-    // function testFailScenario() public {
-    //     vm.startPrank(user1);
-    //     vm.expectRevert(bytes("invalid input"));
-    //     bullStrategy.forTestExpectRevert(50);
-    // }
+    function testScenario() public {
+        vm.startPrank(user1);
+        vm.expectRevert(bytes("invalid input"));
+        bullStrategy.forTestExpectRevert(50);
+    }
 
     // TODO: move to helper later when test refactor PR is merged
     function _deployUniswap() internal returns (address payable, address payable) {

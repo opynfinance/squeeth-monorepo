@@ -107,6 +107,12 @@ contract BullStrategyTestFork is Test {
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
+    function testScenarioFork() public {
+        vm.startPrank(user1);
+        vm.expectRevert(bytes("invalid input"));
+        bullStrategy.forTestExpectRevert(50);
+    }
+
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
