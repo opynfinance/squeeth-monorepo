@@ -53,7 +53,7 @@ contract AuctionBullTestFork is Test {
     address internal wPowerPerp;
     uint256 internal deployerPk;
     address internal deployer;
-    
+
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
@@ -156,9 +156,10 @@ contract AuctionBullTestFork is Test {
             IEulerDToken(dToken).balanceOf(address(bullStrategy)),
             usdcToBorrow
         );
-        assertEq(
+        assertApproxEqAbs(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
+            wethToLend,
+            1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
@@ -167,7 +168,7 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceRepayUsdc() public {
-        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR();
+        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR(false, 0);
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
             address(bullStrategy)
@@ -176,7 +177,7 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
-        uint256 ethSlippageTolerance = 1e14; 
+        uint256 ethSlippageTolerance = 1e14;
 
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
@@ -203,7 +204,7 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
-        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR();
+        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR(false, 0);
 
         // The auction contract should hold no remaining funds
         assertEq(
@@ -216,7 +217,7 @@ contract AuctionBullTestFork is Test {
             0,
             "WETH balance of auction contract should be 0"
         );
-        
+
         assertEq(
             bullCrabBalanceBefore,
             bullCrabBalanceAfter,
@@ -236,14 +237,11 @@ contract AuctionBullTestFork is Test {
             "Bull USDC debt mismatch"
         );
         // Delta should decrease when we sell some ETH
-        assertGt(
-            deltaBefore,
-            deltaAfter
-        );
+        assertGt(deltaBefore, deltaAfter);
     }
 
     function testLeverageRebalanceBorrowUsdc() public {
-        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR();
+        (uint256 deltaBefore, ) = bullStrategy.calcDeltaAndCR(false, 0);
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(
@@ -253,7 +251,7 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
-        uint256 ethSlippageTolerance = 1e14; 
+        uint256 ethSlippageTolerance = 1e14;
 
         uint256 usdcToSell = 10e6;
         uint256 ethUsdPrice = UniOracle._getTwap(
@@ -276,7 +274,7 @@ contract AuctionBullTestFork is Test {
             address(bullStrategy)
         );
 
-        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR();
+        (uint256 deltaAfter, ) = bullStrategy.calcDeltaAndCR(false, 0);
 
         // The auction contract should hold no remaining funds
         assertEq(
@@ -289,7 +287,7 @@ contract AuctionBullTestFork is Test {
             0,
             "WETH balance of auction contract should be 0"
         );
-        
+
         assertEq(
             bullCrabBalanceBefore,
             bullCrabBalanceAfter,
@@ -309,10 +307,21 @@ contract AuctionBullTestFork is Test {
             "Bull USDC debt mismatch"
         );
         // Delta should increase when we buy more ETH
-        assertLt(
-            deltaBefore,
-            deltaAfter
-        );
+        assertLt(deltaBefore, deltaAfter);
+    }
+
+    function testFailLeverageRebalanceBorrowUsdc() public {
+        uint256 usdcToSell = 1000000e6;
+        vm.startPrank(owner);
+        auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
+        vm.stopPrank();
+    }
+
+    function testFailLeverageRebalanceRepayUsdc() public {
+        uint256 usdcToBuy = 1000000e6;
+        vm.startPrank(owner);
+        auctionBull.leverageRebalance(false, usdcToBuy, 0, 3000);
+        vm.stopPrank();
     }
 
     // Helper functions
