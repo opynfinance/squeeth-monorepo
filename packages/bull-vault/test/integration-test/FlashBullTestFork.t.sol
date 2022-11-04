@@ -206,7 +206,7 @@ contract FlashBullTestFork is Test {
         );
     }
 
-    function testFailFlashDepositSqthSlippage() public {
+    function testScenarioFlashDepositSqthSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
             .getCrabVaultDetails();
@@ -268,6 +268,7 @@ contract FlashBullTestFork is Test {
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         vm.startPrank(user1);
+        vm.expectRevert(bytes("amount out less than min"));
         flashBull.flashDeposit{value: totalEthToBull}(
             ethToCrab,
             minEthFromSqueeth,
@@ -275,10 +276,9 @@ contract FlashBullTestFork is Test {
             3000
         );
         vm.stopPrank();
-        // TODO: expectRevert
     }
 
-    function testFailFlashDepositUsdcSlippage() public {
+    function testScenarioFlashDepositUsdcSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
             .getCrabVaultDetails();
@@ -340,6 +340,7 @@ contract FlashBullTestFork is Test {
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         vm.startPrank(user1);
+        vm.expectRevert(bytes("amount out less than min"));
         flashBull.flashDeposit{value: totalEthToBull}(
             ethToCrab,
             minEthFromSqueeth,
@@ -347,10 +348,9 @@ contract FlashBullTestFork is Test {
             3000
         );
         vm.stopPrank();
-        // TODO: expectRevert
     }
 
-    function testFailFlashDepositInsufficientValue() public {
+    function testScenarioFlashDepositInsufficientValue() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
             .getCrabVaultDetails();
@@ -412,6 +412,7 @@ contract FlashBullTestFork is Test {
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         vm.startPrank(user1);
+        vm.expectRevert();
         flashBull.flashDeposit{value: totalEthToBull.sub(5e18)}(
             ethToCrab,
             minEthFromSqueeth,
@@ -419,7 +420,6 @@ contract FlashBullTestFork is Test {
             3000
         );
         vm.stopPrank();
-        // TODO: expectRevert
     }
 
     function testSecondFlashDeposit() public {
@@ -703,7 +703,7 @@ contract FlashBullTestFork is Test {
         );
     }
 
-    function testFailFlashWithdrawInsufficientBull() public {
+    function testScenarioFlashWithdrawInsufficientBull() public {
         // this is a crab whale, get some crab token from
         vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
         IERC20(crabV2).transfer(user1, 10e18);
@@ -768,13 +768,12 @@ contract FlashBullTestFork is Test {
 
         vm.startPrank(user1);
         bullStrategy.approve(address(flashBull), params.bullAmount);
+        vm.expectRevert(bytes("ERC20: transfer amount exceeds balance"));
         flashBull.flashWithdraw(params);
         vm.stopPrank();
-
-        // TODO: expectRevert
     }
 
-    function testFailFlashWithdrawUsdcSlippage() public {
+    function testScenarioFlashWithdrawUsdcSlippage() public {
         // this is a crab whale, get some crab token from
         vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
         IERC20(crabV2).transfer(user1, 10e18);
@@ -839,13 +838,14 @@ contract FlashBullTestFork is Test {
 
         vm.startPrank(user1);
         bullStrategy.approve(address(flashBull), params.bullAmount);
+        vm.expectRevert(bytes("amount in greater than max"));
         flashBull.flashWithdraw(params);
         vm.stopPrank();
 
         // TODO: expectRevert
     }
 
-    function testFailFlashWithdrawSqthSlippage() public {
+    function testScenarioFlashWithdrawSqthSlippage() public {
         // this is a crab whale, get some crab token from
         vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
         IERC20(crabV2).transfer(user1, 10e18);
@@ -907,13 +907,12 @@ contract FlashBullTestFork is Test {
             .sub(maxEthForSqueeth)
             .add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
-
+        
         vm.startPrank(user1);
         bullStrategy.approve(address(flashBull), params.bullAmount);
+        vm.expectRevert(bytes("amount in greater than max"));
         flashBull.flashWithdraw(params);
         vm.stopPrank();
-
-        // TODO: expectRevert
     }
 
 
