@@ -206,6 +206,222 @@ contract FlashBullTestFork is Test {
         );
     }
 
+    function testFailFlashDepositSqthSlippage() public {
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
+            .getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
+            ethToCrab,
+            squeethInCrab,
+            ethInCrab
+        );
+        uint256 crabToBeMinted = _calcSharesToMint(
+            ethToCrab.sub(fee),
+            ethInCrab,
+            IERC20(crabV2).totalSupply()
+        );
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
+            .calcLeverageEthUsdc(
+                crabToBeMinted,
+                1e18,
+                ethInCrab,
+                squeethInCrab,
+                crabV2.totalSupply()
+            );
+
+        uint256 totalEthToBull = calcTotalEthToBull(
+            wethToLend,
+            ethToCrab,
+            usdcToBorrow,
+            wSqueethToMint
+        );
+
+        uint256 minEthFromSqueeth;
+        uint256 minEthFromUsdc;
+        {
+            uint256 ethUsdPrice = UniOracle._getTwap(
+                ethUsdcPool,
+                weth,
+                usdc,
+                TWAP,
+                false
+            );
+            uint256 squeethEthPrice = UniOracle._getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
+            minEthFromSqueeth = wSqueethToMint.wmul(
+                squeethEthPrice.wmul(101e16)
+            );
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
+                ethUsdPrice.wmul(uint256(1e18).add(5e15))
+            );
+        }
+
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(
+            ethToCrab,
+            minEthFromSqueeth,
+            minEthFromUsdc,
+            3000
+        );
+        vm.stopPrank();
+        // TODO: expectRevert
+    }
+
+    function testFailFlashDepositUsdcSlippage() public {
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
+            .getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
+            ethToCrab,
+            squeethInCrab,
+            ethInCrab
+        );
+        uint256 crabToBeMinted = _calcSharesToMint(
+            ethToCrab.sub(fee),
+            ethInCrab,
+            IERC20(crabV2).totalSupply()
+        );
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
+            .calcLeverageEthUsdc(
+                crabToBeMinted,
+                1e18,
+                ethInCrab,
+                squeethInCrab,
+                crabV2.totalSupply()
+            );
+
+        uint256 totalEthToBull = calcTotalEthToBull(
+            wethToLend,
+            ethToCrab,
+            usdcToBorrow,
+            wSqueethToMint
+        );
+
+        uint256 minEthFromSqueeth;
+        uint256 minEthFromUsdc;
+        {
+            uint256 ethUsdPrice = UniOracle._getTwap(
+                ethUsdcPool,
+                weth,
+                usdc,
+                TWAP,
+                false
+            );
+            uint256 squeethEthPrice = UniOracle._getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
+            minEthFromSqueeth = wSqueethToMint.wmul(
+                squeethEthPrice.wmul(99e16)
+            );
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
+                ethUsdPrice.wmul(uint256(1e18).sub(5e15))
+            );
+        }
+
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(
+            ethToCrab,
+            minEthFromSqueeth,
+            minEthFromUsdc,
+            3000
+        );
+        vm.stopPrank();
+        // TODO: expectRevert
+    }
+
+    function testFailFlashDepositInsufficientValue() public {
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
+            .getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
+            ethToCrab,
+            squeethInCrab,
+            ethInCrab
+        );
+        uint256 crabToBeMinted = _calcSharesToMint(
+            ethToCrab.sub(fee),
+            ethInCrab,
+            IERC20(crabV2).totalSupply()
+        );
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
+            address(bullStrategy)
+        );
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
+            .calcLeverageEthUsdc(
+                crabToBeMinted,
+                1e18,
+                ethInCrab,
+                squeethInCrab,
+                crabV2.totalSupply()
+            );
+
+        uint256 totalEthToBull = calcTotalEthToBull(
+            wethToLend,
+            ethToCrab,
+            usdcToBorrow,
+            wSqueethToMint
+        );
+
+        uint256 minEthFromSqueeth;
+        uint256 minEthFromUsdc;
+        {
+            uint256 ethUsdPrice = UniOracle._getTwap(
+                ethUsdcPool,
+                weth,
+                usdc,
+                TWAP,
+                false
+            );
+            uint256 squeethEthPrice = UniOracle._getTwap(
+                ethWSqueethPool,
+                wPowerPerp,
+                weth,
+                TWAP,
+                false
+            );
+            minEthFromSqueeth = wSqueethToMint.wmul(
+                squeethEthPrice.wmul(99e16)
+            );
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
+                ethUsdPrice.wmul(uint256(1e18).add(5e15))
+            );
+        }
+
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull.sub(5e18)}(
+            ethToCrab,
+            minEthFromSqueeth,
+            minEthFromUsdc,
+            3000
+        );
+        vm.stopPrank();
+        // TODO: expectRevert
+    }
+
     function testSecondFlashDeposit() public {
         uint256 ethToCrabInitial = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
