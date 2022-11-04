@@ -74,12 +74,6 @@ contract AuctionBullTestFork is Test {
             euler,
             eulerMarketsModule
         );
-        auctionBull = new AuctionBull(
-            owner,
-            owner,
-            address(bullStrategy),
-            factory
-        );
         flashBull = new FlashBull(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
@@ -88,6 +82,13 @@ contract AuctionBullTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
+        auctionBull = new AuctionBull(
+            owner,
+            owner,
+            address(bullStrategy),
+            factory,
+            ethWSqueethPool
+        );
         vm.stopPrank();
 
         vm.startPrank(owner);
