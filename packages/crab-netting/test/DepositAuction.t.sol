@@ -203,6 +203,9 @@ contract DepositAuctionTest is BaseForkSetup {
         assertEq(sqth.balanceOf(mm1), toMint);
     }
 
+    // TODO find a way to make this reusable and test easily
+    // for multiple ETH movements and external events like partial fills
+    // eth going down
     function testDepositAuctionEthUp() public {
         DepositAuctionParams memory p;
         // get the usd to deposit remaining

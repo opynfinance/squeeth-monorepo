@@ -11,7 +11,6 @@ import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {EIP712} from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
-import "forge-std/console.sol";
 
 /// @dev order struct for a signed order from market maker
 struct Order {
@@ -262,10 +261,8 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function withdrawUSDC(uint256 _amount) external {
         require(_amount >= minUSDCAmount);
-        require(!isAuctionLive, "auction is live");
+        require(!isAuctionLive, "auction is live"); // todo think about setting a time of the week , maker dao's codebase
 
-        // TODO ensure final version does not need this check
-        //require(usdBalance[msg.sender] >= _amount, "Withdrawing more than balance");
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
 
         // remove that _amount the users last deposit
@@ -280,7 +277,7 @@ contract CrabNetting is Ownable, EIP712 {
                 break;
             } else {
                 toRemove -= r.amount;
-                r.amount = 0;
+                r.amount = 0; // todo remove this and run test
                 delete deposits[userDepositsIndex[msg.sender][i - 1]];
             }
         }
@@ -357,7 +354,8 @@ contract CrabNetting is Ownable, EIP712 {
         // process deposits and send crab
         uint256 i = depositsIndex;
         uint256 amountToSend;
-        while (_quantity > 0 && i < deposits.length) {
+        while (_quantity > 0) {
+            // todo may be second check is not required
             Receipt memory deposit = deposits[i];
             if (deposit.amount <= _quantity) {
                 // deposit amount is lesser than quantity use it fully
@@ -371,7 +369,7 @@ contract CrabNetting is Ownable, EIP712 {
                     amountToSend,
                     i
                 );
-                delete deposits[i];
+                delete deposits[i]; // todo may be just write a teset to ensure it does not screwn up the ReceiptUserMapping
                 i++;
             } else {
                 // deposit amount is greater than quantity; use it partially
@@ -388,11 +386,12 @@ contract CrabNetting is Ownable, EIP712 {
                 _quantity = 0;
             }
         }
-        depositsIndex = depositsIndex + i;
+        depositsIndex = i;
 
         // process withdraws and send usdc
         uint256 j = withdrawsIndex;
-        while (crabQuantity > 0 && j < withdraws.length) {
+        while (crabQuantity > 0) {
+            // may be j check is not required todo
             Receipt memory withdraw = withdraws[j];
             if (withdraw.amount <= crabQuantity) {
                 crabQuantity = crabQuantity - withdraw.amount;
@@ -425,7 +424,7 @@ contract CrabNetting is Ownable, EIP712 {
                 crabQuantity = 0;
             }
         }
-        withdrawsIndex = withdrawsIndex + j;
+        withdrawsIndex = j;
     }
 
     /// @dev @return sum usdc amount in queue
@@ -475,15 +474,15 @@ contract CrabNetting is Ownable, EIP712 {
         // todo add fee adjustment
         (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
             .getVaultDetails();
-        uint256 wSqueethToMint = (_amount * (debt)) / collateral;
+        uint256 wSqueethToMint = (_amount * (debt)) / collateral; // not added fee todo
         return wSqueethToMint;
     }
 
     // todo fix for ETH price going up, so less ETH to deposit, so less sqth used; not full sqth
-    function depositAuction(DepositAuctionParams calldata _p) public onlyOwner {
+    // eth at 1340 -> then eth goes upto 1440 . 2400 auction ; 2200 sqth
+    function depositAuction(DepositAuctionParams calldata _p) external {
         uint256 sqthToSell = _debtToMint(_p.totalDeposit);
-        uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
-        console.log(address(this).balance, "ETH not deposited");
+        uint256 initCrabBalance = IERC20(crab).balanceOf(address(this)); // todo should we?
 
         // get all the eth in
         uint256 remainingToSell = sqthToSell;
@@ -506,29 +505,23 @@ contract CrabNetting is Ownable, EIP712 {
         }
         require(remainingToSell == 0, "not enough buy orders for sqth");
 
-        uint256 ethBalance = IWETH(weth).balanceOf(address(this));
-        IWETH(weth).withdraw(ethBalance);
-
         IERC20(usdc).approve(address(swapRouter), _p.depositsQueued); // TODO move all approves to constructor
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
-            .ExactInputSingleParams({
-                tokenIn: address(usdc),
-                tokenOut: address(weth),
-                fee: _p.usdEthFee,
-                recipient: address(this),
-                deadline: block.timestamp,
-                amountIn: _p.depositsQueued,
-                amountOutMinimum: _p.minEth,
-                sqrtPriceLimitX96: 0
-            });
+            .ExactInputSingleParams({ // todo think about doing an exactOutSwap
+            tokenIn: address(usdc),
+            tokenOut: address(weth),
+            fee: _p.usdEthFee,
+            recipient: address(this),
+            deadline: block.timestamp,
+            amountIn: _p.depositsQueued,
+            amountOutMinimum: _p.minEth,
+            sqrtPriceLimitX96: 0
+        });
 
         // The call to `exactInputSingle` executes the swap.
-        uint256 wethReceived = swapRouter.exactInputSingle(params);
-        require(
-            (ethBalance + wethReceived) >= _p.totalDeposit,
-            "Need more ETH than Total deposit"
-        );
-        IWETH(weth).withdraw(wethReceived);
+        swapRouter.exactInputSingle(params);
+
+        IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this))); // todo move to line 538
         ICrabStrategyV2(crab).deposit{value: _p.totalDeposit}();
         // todo think about adding 1 to the sqth to auction
 
@@ -537,121 +530,120 @@ contract CrabNetting is Ownable, EIP712 {
         // TODO the left overs of the previous tx from the flashDeposit will be added here
         to_send.eth = address(this).balance;
 
-        // todo remove console logs
-        console.log("trying to flashDeposit");
-        console.log(to_send.eth, "to send");
-
         if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
             ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
                 _p.ethToFlashDeposit,
                 _p.flashDepositFee
             );
         }
-        console.log("ending to flashDeposit");
 
         to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
-        console.log("total crab to send", to_send.crab);
         // get the balance between start and now
 
-        // send sqth to mms
-        uint256 sqth_owed;
-        for (uint256 i = 0; i < _p.orders.length; i++) {
-            require(_p.orders[i].isBuying);
-            checkOrder(_p.orders[i]);
-            sqth_owed = _p.orders[i].quantity;
-        }
-        require(
-            to_send.sqth >= sqth_owed,
-            "Deposit did not get enough sqth to give MMs"
-        );
-
-        // send sqth to mms
-        remainingToSell = sqthToSell;
-        for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
-            console.log(_p.orders[i].trader, _p.orders[i].quantity);
-            if (_p.orders[i].quantity < remainingToSell) {
+        remainingToSell = to_send.sqth;
+        for (uint256 j = 0; j < _p.orders.length && remainingToSell > 0; j++) {
+            require(_p.orders[j].isBuying);
+            checkOrder(_p.orders[j]);
+            if (_p.orders[j].quantity < remainingToSell) {
                 IERC20(sqth).transfer(
-                    _p.orders[i].trader,
-                    _p.orders[i].quantity
+                    _p.orders[j].trader,
+                    _p.orders[j].quantity
                 );
-                remainingToSell -= _p.orders[i].quantity;
+                remainingToSell -= _p.orders[j].quantity;
             } else {
-                IERC20(sqth).transfer(_p.orders[i].trader, remainingToSell);
-                remainingToSell -= 0;
+                IERC20(sqth).transfer(_p.orders[j].trader, remainingToSell);
+                remainingToSell = 0;
             }
         }
 
         // send crab to depositors
         uint256 remainingDeposits = _p.depositsQueued;
+        uint256 k = depositsIndex;
         while (remainingDeposits > 0) {
-            uint256 queuedAmount = deposits[depositsIndex].amount;
+            uint256 queuedAmount = deposits[k].amount;
             Portion memory portion;
             if (queuedAmount <= remainingDeposits) {
                 remainingDeposits = remainingDeposits - queuedAmount;
-                usdBalance[deposits[depositsIndex].sender] -= queuedAmount;
+                usdBalance[deposits[k].sender] -= queuedAmount;
 
-                portion.crab = ((deposits[depositsIndex].amount *
-                    to_send.crab) / _p.depositsQueued);
-
-                IERC20(crab).transfer(
-                    deposits[depositsIndex].sender,
-                    portion.crab
-                );
-
-                portion.eth = ((deposits[depositsIndex].amount * to_send.eth) /
+                portion.crab = ((deposits[k].amount * to_send.crab) /
                     _p.depositsQueued);
+
+                IERC20(crab).transfer(deposits[k].sender, portion.crab);
+
+                portion.eth = ((deposits[k].amount * to_send.eth) /
+                    _p.depositsQueued); // todo remove this if tammy
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
-                deposits[depositsIndex].amount = 0;
-                to_send.crab -= portion.crab;
-                depositsIndex++;
+                deposits[k].amount = 0;
+                //to_send.crab -= portion.crab; // todo write a test that fails then fix this
+                k++; // todo make this i
             } else {
-                usdBalance[deposits[depositsIndex].sender] -= remainingDeposits;
+                usdBalance[deposits[k].sender] -= remainingDeposits;
 
-                portion.crab = ((deposits[depositsIndex].amount *
-                    to_send.crab) / _p.depositsQueued);
-                IERC20(crab).transfer(
-                    deposits[depositsIndex].sender,
-                    portion.crab
-                );
+                portion.crab = ((remainingDeposits * to_send.crab) /
+                    _p.depositsQueued);
+                IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = ((deposits[depositsIndex].amount * to_send.eth) /
+                portion.eth = ((remainingDeposits * to_send.eth) /
                     _p.depositsQueued);
                 //payable(deposits[depositsIndex].sender).transfer(portion.eth);
 
-                deposits[depositsIndex].amount -= remainingDeposits;
-                to_send.crab -= portion.crab;
+                deposits[k].amount -= remainingDeposits;
+                //to_send.crab -= portion.crab; // todo remove this
                 remainingDeposits = 0;
             }
         }
-
+        depositsIndex = k;
         isAuctionLive = false;
-        console.log(address(this).balance, "ETH not deposited");
     }
 
     function withdrawAuction(WithdrawAuctionParams calldata _p)
         public
         onlyOwner
     {
-        // get all the sqth in
-        for (uint256 i = 0; i < _p.orders.length; i++) {
+        uint256 sqthRequired = ICrabStrategyV2(crab).getWsqueethFromCrabAmount(
+            _p.crabToWithdraw
+        );
+        uint256 toPull = sqthRequired;
+        for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             checkOrder(_p.orders[i]);
             require(!_p.orders[i].isBuying);
-            IERC20(sqth).transferFrom(
-                _p.orders[i].trader,
-                address(this),
-                _p.orders[i].quantity
-            );
+            if (_p.orders[i].quantity < toPull) {
+                toPull -= _p.orders[i].quantity;
+                IERC20(sqth).transferFrom(
+                    _p.orders[i].trader,
+                    address(this),
+                    _p.orders[i].quantity
+                );
+            } else {
+                IERC20(sqth).transferFrom(
+                    _p.orders[i].trader,
+                    address(this),
+                    toPull
+                );
+                toPull = 0;
+            }
         }
         ICrabStrategyV2(crab).withdraw(_p.crabToWithdraw);
         IWETH(weth).deposit{value: address(this).balance}();
 
         // pay all mms
-        for (uint256 i = 0; i < _p.orders.length; i++) {
-            IERC20(weth).transfer(
-                _p.orders[i].trader,
-                (_p.orders[i].quantity * _p.clearingPrice) / 1e18
-            );
+        toPull = sqthRequired;
+        for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
+            if (_p.orders[i].quantity < toPull) {
+                IERC20(weth).transfer(
+                    _p.orders[i].trader,
+                    (_p.orders[i].quantity * _p.clearingPrice) / 1e18
+                );
+                toPull -= _p.orders[i].quantity;
+            } else {
+                IERC20(weth).transfer(
+                    _p.orders[i].trader,
+                    (toPull * _p.clearingPrice) / 1e18
+                );
+                toPull = 0;
+            }
         }
 
         //convert WETH to USDC and send to withdrawers proportionally
@@ -673,12 +665,14 @@ contract CrabNetting is Ownable, EIP712 {
 
         // pay all withdrawers and mark their withdraws as done
         uint256 remainingWithdraws = _p.crabToWithdraw;
+        uint256 j = withdrawsIndex;
         while (remainingWithdraws > 0) {
-            Receipt storage withdraw = withdraws[withdrawsIndex];
+            Receipt storage withdraw = withdraws[j];
             if (withdraw.amount <= remainingWithdraws) {
+                // full usage
                 remainingWithdraws -= withdraw.amount;
                 crabBalance[withdraw.sender] -= withdraw.amount;
-                withdrawsIndex++;
+                j++; // todo make it j
 
                 // send proportional usdc
                 uint256 usdcAmount = (withdraw.amount * usdcReceived) /
@@ -697,7 +691,7 @@ contract CrabNetting is Ownable, EIP712 {
                 remainingWithdraws = 0;
             }
         }
-
+        withdrawsIndex = j;
         isAuctionLive = false;
         // check if all balances are zero
     }
