@@ -17,8 +17,8 @@ const useEndAdornmentStyles = makeStyles((theme) =>
       borderRadius: '6px',
     },
     logo: {
-      width: '11px',
-      height: '23px',
+      width: '20px',
+      height: '20px',
       marginRight: theme.spacing(0.75),
     },
     symbol: {
@@ -35,7 +35,7 @@ const EndAdornment: React.FC<{ logo: string; symbol: string }> = ({ logo, symbol
     <InputAdornment position="end">
       <div className={classes.container}>
         <div className={classes.logo}>
-          <Image src={logo} alt="logo" />
+          <Image src={logo} alt="logo" width="100%" height="100%" />
         </div>
 
         <Typography className={classes.symbol}>{symbol}</Typography>

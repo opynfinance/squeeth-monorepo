@@ -15,8 +15,8 @@ const useTokenLogoStyles = makeStyles((theme) =>
       justifyContent: 'center',
     },
     logo: {
-      height: '24px',
-      width: '14px',
+      height: '20px',
+      width: '20px',
     },
   }),
 )
@@ -27,7 +27,7 @@ const TokenLogo: React.FC<{ logoSrc: string }> = ({ logoSrc }) => {
   return (
     <div className={classes.logoContainer}>
       <div className={classes.logo}>
-        <Image src={logoSrc} alt="logo" />
+        <Image src={logoSrc} alt="logo" height="100%" width="100%" />
       </div>
     </div>
   )

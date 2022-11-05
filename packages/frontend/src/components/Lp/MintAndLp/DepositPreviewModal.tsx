@@ -5,8 +5,9 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import Image from 'next/image'
 import clsx from 'clsx'
 
-import { PrimaryButton } from '@components/Button'
+import { AltPrimaryButton } from '@components/Button'
 import ethLogo from 'public/images/eth-logo.svg'
+import sqthLogo from 'public/images/squeeth-logo.svg'
 import walletIcon from 'public/images/wallet.svg'
 import InfoBox from './InfoBox'
 import TokenPrice from './TokenPrice'
@@ -15,14 +16,6 @@ import TokenLogo from './TokenLogo'
 import Checkbox from './Checkbox'
 import CollateralRatioSlider from './CollateralRatioSlider'
 import { SimpleInput } from './Input'
-
-const useButtonStyles = makeStyles({
-  primary: {
-    textTransform: 'initial',
-    fontWeight: 700,
-    fontSize: '16px',
-  },
-})
 
 const useTextStyles = makeStyles({
   light: {
@@ -104,7 +97,7 @@ const useModalStyles = makeStyles((theme) =>
   }),
 )
 
-const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+const LPSettings: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [useDefaultPriceChange, setUseDefaultPriceRange] = useState(false)
   const [useUniswapNftAsCollateral, setUseUniswapNftAsCollateral] = useState(true)
   const [useDefaultCollateralRatio, setUseDefaultCollateralRatio] = useState(true)
@@ -113,7 +106,6 @@ const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
   const textClasses = useTextStyles()
-  const buttonClasses = useButtonStyles()
 
   return (
     <>
@@ -144,15 +136,15 @@ const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
       <div className={classes.subSection}>
         <div className={classes.priceRangeSectionHeader}>
           <div className={classes.priceRangeSectionHeaderLeftColumn}>
-            <TokenLogo logoSrc={ethLogo} />
+            <TokenLogo logoSrc={sqthLogo} />
 
             <div>
               <Typography variant="h4" className={classes.sectionTitle}>
                 Price range
               </Typography>
               <TokenPrice
-                symbol="ETH"
-                price="2108.10"
+                symbol="oSQTH"
+                price="70"
                 styleProps={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px' }}
               />
             </div>
@@ -175,7 +167,7 @@ const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per ETH
+                  Per oSQTH
                 </InputAdornment>
               ),
             }}
@@ -193,7 +185,7 @@ const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per ETH
+                  Per oSQTH
                 </InputAdornment>
               ),
             }}
@@ -315,9 +307,9 @@ const LPSettingsStep: React.FC<{ onComplete: () => void }> = ({ onComplete }) =>
       </div>
 
       <Box marginTop="32px">
-        <PrimaryButton id="confirm-deposit-btn" fullWidth={true} className={buttonClasses.primary} onClick={onComplete}>
-          {'Preview deposit'}
-        </PrimaryButton>
+        <AltPrimaryButton id="confirm-deposit-btn" onClick={onComplete} fullWidth>
+          Confirm deposit
+        </AltPrimaryButton>
       </Box>
     </>
   )
@@ -344,7 +336,6 @@ const useWaitForConfirmationStyles = makeStyles((theme) =>
 
 const WaitForConfirmation: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const classes = useWaitForConfirmationStyles()
-  const btnClasses = useButtonStyles()
 
   return (
     <Box display="flex" flexDirection="column" alignItems="center" gridGap="48px">
@@ -356,9 +347,9 @@ const WaitForConfirmation: React.FC<{ onComplete: () => void }> = ({ onComplete 
 
       <Typography className={classes.title}>Confirm transaction in your wallet</Typography>
       <Box>
-        <PrimaryButton className={btnClasses.primary} id="confirm-tx-btn" fullWidth={true} onClick={onComplete}>
-          {'Simulate confirm transaction'}
-        </PrimaryButton>
+        <AltPrimaryButton id="confirm-tx-btn" onClick={onComplete} fullWidth>
+          Simulate confirm transaction
+        </AltPrimaryButton>
       </Box>
     </Box>
   )
@@ -397,31 +388,28 @@ const StepperIcon: React.FC<{ isActive: boolean }> = ({ isActive }) => {
   )
 }
 
-const useTxStatusStyles = makeStyles((theme) =>
-  createStyles({
-    title: {
-      fontSize: '22px',
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    stepLabel: {
-      fontSize: '16px',
-      color: 'rgba(255, 255, 255, 0.7)',
-      fontWeight: 400,
-    },
-    activeStepLabel: {
-      fontWeight: 700,
-      color: 'rgba(255, 255, 255, 1)',
-    },
-  }),
-)
+const useTxStatusStyles = makeStyles({
+  title: {
+    fontSize: '22px',
+    fontWeight: 700,
+    letterSpacing: '-0.01em',
+  },
+  stepLabel: {
+    fontSize: '16px',
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: 400,
+  },
+  activeStepLabel: {
+    fontWeight: 700,
+    color: 'rgba(255, 255, 255, 1)',
+  },
+})
 
 const TxStatus: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const classes = useTxStatusStyles()
-  const btnClasses = useButtonStyles()
   const stepperClasses = useStepperStyles()
 
-  const [activeStep, setActiveStep] = React.useState(0)
+  const [activeStep] = React.useState(0)
   const steps = getSteps()
 
   return (
@@ -443,9 +431,9 @@ const TxStatus: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         })}
       </Stepper>
 
-      <PrimaryButton className={btnClasses.primary} id="view-dashboard-btn" fullWidth={true} onClick={onComplete}>
-        {'View dashboard'}
-      </PrimaryButton>
+      <AltPrimaryButton id="view-dashboard-btn" onClick={onComplete} fullWidth>
+        View dashboard
+      </AltPrimaryButton>
     </Box>
   )
 }
@@ -471,7 +459,7 @@ const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClo
   return (
     <Modal open={isOpen} onClose={handleClose} aria-labelledby="modal-title">
       <Box className={classes.container}>
-        {activeStep === 0 && <LPSettingsStep onComplete={handleNext} />}
+        {activeStep === 0 && <LPSettings onComplete={handleNext} />}
         {activeStep === 1 && <WaitForConfirmation onComplete={handleNext} />}
         {activeStep === 2 && <TxStatus onComplete={handleClose} />}
       </Box>

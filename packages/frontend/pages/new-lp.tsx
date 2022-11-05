@@ -1,12 +1,12 @@
 import Nav from '@components/Nav'
 import { createStyles, makeStyles, ThemeProvider } from '@material-ui/core/styles'
-import { Grid, Typography, Box } from '@material-ui/core'
+import { Grid, Typography } from '@material-ui/core'
 import React, { useState } from 'react'
 
-import { PrimaryButton } from '@components/Button'
+import { AltPrimaryButton } from '@components/Button'
 import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
 import getTheme, { Mode } from '../src/theme'
-import ethLogo from '../public/images/eth-logo.svg'
+import sqthLogo from '../public/images/squeeth-logo.svg'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -27,11 +27,7 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 400,
       color: theme.palette.grey[400],
     },
-    depositBtn: {
-      fontSize: '16px',
-      fontWeight: 700,
-      textTransform: 'initial',
-      width: '100%',
+    margin: {
       marginTop: theme.spacing(4),
     },
   }),
@@ -39,7 +35,7 @@ const useStyles = makeStyles((theme) =>
 
 const LPPage: React.FC = () => {
   const classes = useStyles()
-  const [ethAmount, setEthAmount] = useState(0)
+  const [sqthAmount, setSqthAmount] = useState(0)
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
 
   return (
@@ -58,25 +54,28 @@ const LPPage: React.FC = () => {
           </Typography>
         </Grid>
         <Grid item xs md>
-          <Box>
-            <Typography className={classes.title} variant="subtitle1">
-              Deposit tokens
-            </Typography>
+          <Typography className={classes.title} variant="subtitle1">
+            Deposit tokens
+          </Typography>
 
-            <TokenInput
-              id="eth-amount-input"
-              value={ethAmount}
-              onChange={(value) => setEthAmount(value)}
-              tokenPrice="1500"
-              tokenLogo={ethLogo}
-              tokenSymbol="ETH"
-              tokenBalance="12.34"
-            />
+          <TokenInput
+            id="eth-amount-input"
+            value={sqthAmount}
+            onChange={setSqthAmount}
+            tokenPrice="1500"
+            tokenLogo={sqthLogo}
+            tokenSymbol="oSQTH"
+            tokenBalance="12.34"
+          />
 
-            <PrimaryButton id="deposit-btn" className={classes.depositBtn} onClick={() => setPreviewModalOpen(true)}>
-              Preview deposit
-            </PrimaryButton>
-          </Box>
+          <AltPrimaryButton
+            className={classes.margin}
+            id="preview-deposit-btn"
+            onClick={() => setPreviewModalOpen(true)}
+            fullWidth
+          >
+            Preview deposit
+          </AltPrimaryButton>
         </Grid>
       </Grid>
 
