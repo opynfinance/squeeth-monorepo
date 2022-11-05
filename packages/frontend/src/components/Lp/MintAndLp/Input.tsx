@@ -29,12 +29,12 @@ const useSimpleInputStyles = makeStyles((theme) =>
   }),
 )
 
-type CustomProps = {
+type SimpleInputCustomProps = {
   hasBorder?: boolean
 }
-type InputProps = StandardTextFieldProps & CustomProps
+type SimpleInputProps = StandardTextFieldProps & SimpleInputCustomProps
 
-export const SimpleInput: React.FC<InputProps> = ({
+export const SimpleInput: React.FC<SimpleInputProps> = ({
   id,
   label,
   value,
