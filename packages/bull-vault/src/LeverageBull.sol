@@ -65,12 +65,7 @@ contract LeverageBull is Ownable {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(
-        address _owner,
-        address _euler,
-        address _eulerMarkets,
-        address _powerTokenController
-    ) Ownable() {
+    constructor(address _owner, address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
             IController(_powerTokenController).weth()
@@ -90,37 +85,6 @@ contract LeverageBull is Ownable {
         );
 
         transferOwnership(_owner);
-    }
-
-    function setAuction(address _auction) external onlyOwner {
-        require(_auction != address(0), "BS3");
-
-        emit SetAuction(auction, _auction);
-
-        auction = _auction;
-    }
-
-    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
-        require(msg.sender == auction, "LB1");
-
-        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
-        IEulerDToken(dToken).repay(0, _usdcToRepay);
-        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
-
-        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
-
-        emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
-    }
-
-    function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
-        require(msg.sender == auction, "LB1");
-
-        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
-
-        IEulerEToken(eToken).deposit(0, _wethToDeposit);
-        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
-
-        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
     }
 
     function calcLeverageEthUsdc(
@@ -163,7 +127,7 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
+        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
@@ -172,7 +136,7 @@ contract LeverageBull is Ownable {
         _depositWethInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
