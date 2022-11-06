@@ -211,9 +211,7 @@ contract FlashBullTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(
-            params
-        );
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
         assertApproxEqAbs(
@@ -251,7 +249,9 @@ contract FlashBullTestFork is Test {
             FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
                 ethToCrab: ethToCrabSecond,
                 minEthFromSqth: wSqueethToMintSecond.wmul(squeethEthPrice.wmul(99e16)),
-                minEthFromUsdc: usdcToBorrowSecond.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15))),
+                minEthFromUsdc: usdcToBorrowSecond.mul(1e12).wdiv(
+                    ethUsdPrice.wmul(uint256(1e18).add(5e15))
+                    ),
                 wPowerPerpPoolFee: uint24(3000),
                 usdcPoolFee: uint24(3000)
             });
@@ -261,9 +261,7 @@ contract FlashBullTestFork is Test {
                 value: calcTotalEthToBull(
                     wethToLendSecond, ethToCrabSecond, usdcToBorrowSecond, wSqueethToMintSecond
                     )
-            }(
-                params
-            );
+            }(params);
             vm.stopPrank();
         }
 
@@ -396,13 +394,15 @@ contract FlashBullTestFork is Test {
         vm.startPrank(user1);
         flashBull.flashDeposit{
             value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)
-        }(FlashBull.FlashDepositParams({
-            ethToCrab: _ethToCrab,
-            minEthFromSqth: minEthFromSqueeth,
-            minEthFromUsdc: minEthFromUsdc,
-            wPowerPerpPoolFee: uint24(3000),
-            usdcPoolFee: uint24(3000)
-        }));
+        }(
+            FlashBull.FlashDepositParams({
+                ethToCrab: _ethToCrab,
+                minEthFromSqth: minEthFromSqueeth,
+                minEthFromUsdc: minEthFromUsdc,
+                wPowerPerpPoolFee: uint24(3000),
+                usdcPoolFee: uint24(3000)
+            })
+        );
         vm.stopPrank();
 
         assertEq(
@@ -418,7 +418,11 @@ contract FlashBullTestFork is Test {
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
         );
-        assertEq(testUtil.calcBullToMint(crabToBeMinted), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(
+            testUtil.calcBullToMint(crabToBeMinted),
+            bullStrategy.balanceOf(user1),
+            "User1 bull balance mismatch"
+        );
     }
 
     function testFuzzingFlashWithdraw(uint256 _crabAmount) public {
