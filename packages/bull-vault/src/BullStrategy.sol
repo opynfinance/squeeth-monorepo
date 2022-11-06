@@ -105,7 +105,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         (, uint256 usdcBorrowed) = _leverageDeposit(
-            bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+            msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);

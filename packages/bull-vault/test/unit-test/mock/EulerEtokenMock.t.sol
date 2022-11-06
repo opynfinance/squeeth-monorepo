@@ -28,13 +28,13 @@ contract EulerEtokenMock is ERC20, Test {
         _setupDecimals(_decimals);
     }
 
-    function deposit(uint256 subAccountId, uint256 amount) external {
+    function deposit(uint256 /*subAccountId*/, uint256 amount) external {
         euler.executeTransfer(underlying, msg.sender, address(euler), amount);
         underlyingBalance[msg.sender] = underlyingBalance[msg.sender].add(amount);
         _mint(msg.sender, amount);
     }
 
-    function withdraw(uint256 subAccountId, uint256 amount) external {
+    function withdraw(uint256 /*subAccountId*/, uint256 amount) external {
         underlyingBalance[msg.sender] = underlyingBalance[msg.sender].sub(amount);
         _burn(msg.sender, amount);
         euler.executeTransfer(underlying, address(euler), msg.sender, amount);

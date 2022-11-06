@@ -222,10 +222,9 @@ contract BullStrategyTestFork is Test {
 
     function testSendLessEthComparedToCrabAmount() public {
         uint256 crabToDeposit = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
         bullStrategy.deposit{value: wethToLend.wdiv(2e18)}(crabToDeposit);
@@ -234,10 +233,9 @@ contract BullStrategyTestFork is Test {
 
     function testSendTooMuchCrabRelativeToEth() public {
         uint256 crabToDeposit = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
@@ -372,5 +370,16 @@ contract BullStrategyTestFork is Test {
     function _calcUsdcNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256) {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
         return share.wmul(IEulerDToken(dToken).balanceOf(address(bullStrategy)));
+    }
+
+    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+        // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+        if (_returnData.length < 68) return 'Transaction reverted silently';
+
+        assembly {
+            // Slice the sighash.
+            _returnData := add(_returnData, 0x04)
+        }
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
     }
 }

@@ -38,6 +38,21 @@ contract FlashBull is UniFlash {
         FLASH_WITHDRAW_BULL
     }
 
+    /// @dev wPowerPerp address
+    address private immutable wPowerPerp;
+    /// @dev weth address
+    address private immutable weth;
+    /// @dev usdc address
+    address private immutable usdc;
+    /// @dev Crab V2 address
+    address private immutable crab;
+    /// @dev ETH:wSqueeth Uniswap pool
+    address private immutable ethWSqueethPool;
+    /// @dev ETH:USDC Uniswap pool
+    address private immutable ethUSDCPool;
+    /// @dev bull stratgey address
+    address public immutable bullStrategy;
+    
     /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
         uint256 ethToDepositInCrab;
@@ -62,18 +77,16 @@ contract FlashBull is UniFlash {
         uint256 usdcPoolFee;
     }
 
-    event FlashWithdraw(uint256 bullAmount);
-
-    constructor(address _bull, address _factory) UniFlash(_factory) {
-        bullStrategy = _bull;
-        crab = IBullStrategy(_bull).crab();
-        wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
-        weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
-        usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
-        ethUSDCPool =
-            IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+    /// @dev params structs
+    struct FlashWithdrawParams {
+        uint256 bullAmount;
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
     }
+
+    event FlashWithdraw(uint256 bullAmount);
 
     constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;

@@ -52,7 +52,6 @@ contract BullStrategyUnitTest is Test {
     }
 
     function _deploySqueethEcosystem(
-        address _ethQuoteCurrencyPool,
         uint256 _squeethEthPrice,
         uint24 _poolFee
     ) internal {
