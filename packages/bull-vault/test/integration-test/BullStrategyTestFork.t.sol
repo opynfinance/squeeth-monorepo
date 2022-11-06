@@ -68,7 +68,7 @@ contract BullStrategyTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-            new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
+        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -81,7 +81,7 @@ contract BullStrategyTestFork is Test {
         cap = 100000e18;
         vm.prank(bullOwner);
         bullStrategy.setCap(cap);
-        
+
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
 
