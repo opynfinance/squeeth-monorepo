@@ -108,6 +108,7 @@ contract LeverageBull {
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC
      */
     function _leverageDeposit(
+        uint256 _ethAmount,
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
