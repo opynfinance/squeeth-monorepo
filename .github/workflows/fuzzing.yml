@@ -6,7 +6,7 @@ env:
   FORK_URL: ${{secrets.FORK_URL}}    
 
 jobs:
-  check:
+  fuzzing-bull-vault:
     name: Forge fuzz testing
     runs-on: ubuntu-latest
     steps:

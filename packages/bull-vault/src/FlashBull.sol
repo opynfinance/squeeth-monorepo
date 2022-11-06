@@ -53,15 +53,6 @@ contract FlashBull is UniFlash {
     /// @dev bull stratgey address
     address public immutable bullStrategy;
 
-    /// @dev params structs
-    struct FlashWithdrawParams {
-        uint256 bullAmount;
-        uint256 maxEthForSqueeth;
-        uint256 maxEthForUsdc;
-        uint24 wPowerPerpPoolFee;
-        uint24 usdcPoolFee;
-    }
-
     /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
         uint256 ethToDepositInCrab;
@@ -84,6 +75,15 @@ contract FlashBull is UniFlash {
         uint256 usdcToRepay;
         uint256 maxEthForUsdc;
         uint256 usdcPoolFee;
+    }
+
+    /// @dev params structs
+    struct FlashWithdrawParams {
+        uint256 bullAmount;
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
     }
 
     event FlashWithdraw(uint256 bullAmount);

@@ -48,6 +48,9 @@ contract BullStrategyTestFork is Test {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
 
+        deployerPk = 0xA11CD;
+        deployer = vm.addr(deployerPk);
+
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
@@ -209,6 +212,36 @@ contract BullStrategyTestFork is Test {
         );
     }
 
+    function testReceiveFromNonWethOrCrab() public {
+        vm.startPrank(user1);
+        (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
+        vm.stopPrank();
+        assertFalse(status);
+        assertEq(_getRevertMsg(returndata), "BS0");
+    }
+
+    function testSendLessEthComparedToCrabAmount() public {
+        uint256 crabToDeposit = 10e18;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend.wdiv(2e18)}(crabToDeposit);
+        vm.stopPrank();
+    }
+
+    function testSendTooMuchCrabRelativeToEth() public {
+        uint256 crabToDeposit = 10e18;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
+    }
+
     /**
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
@@ -337,5 +370,16 @@ contract BullStrategyTestFork is Test {
     function _calcUsdcNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256) {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
         return share.wmul(IEulerDToken(dToken).balanceOf(address(bullStrategy)));
+    }
+
+    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+        // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+        if (_returnData.length < 68) return "Transaction reverted silently";
+
+        assembly {
+            // Slice the sighash.
+            _returnData := add(_returnData, 0x04)
+        }
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
     }
 }

@@ -16,6 +16,11 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
+ * Error codes
+ * BS0: Can't receive ETH from this sender
+ */
+
+/**
  * @notice BullStrategy contract
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
@@ -67,7 +72,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(crab));
+        require(msg.sender == weth || msg.sender == address(crab), "BS0");
     }
 
     /**
@@ -100,7 +105,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         (, uint256 usdcBorrowed) = _leverageDeposit(
-            bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+            msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
