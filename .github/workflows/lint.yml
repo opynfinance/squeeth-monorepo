@@ -3,7 +3,7 @@ name: Foundry
 on: [push]
 
 jobs:
-  check:
+  check-bull-vault:
     name: Forge fmt check bull vault
     runs-on: ubuntu-latest
 
@@ -19,7 +19,7 @@ jobs:
       - name: Run fmt on crab netting
         run: cd packages/crab-netting && forge fmt --check
 
-  check:
+  check-crab-netting:
     name: Forge fmt check crab netting 
     runs-on: ubuntu-latest
 
