@@ -78,13 +78,6 @@ contract FlashBull is UniFlash {
     }
 
     /// @dev flashDeposit params structs
-    struct FlashDepositParams {
-        uint256 ethToCrab;
-        uint256 minEthFromSqth;
-        uint256 minEthFromUsdc;
-        uint24 wPowerPerpPoolFee;
-        uint24 usdcPoolFee;
-    }
 
     /// @dev flashWithdraw params structs
     struct FlashWithdrawParams {
@@ -115,12 +108,22 @@ contract FlashBull is UniFlash {
         require(msg.sender == weth || msg.sender == bullStrategy);
     }
 
+    struct FlashDepositParams {
+        uint256 ethToCrab;
+        uint256 minEthFromSqth;
+        uint256 minEthFromUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
+    }
+
     /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and dollars, and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
      * @param _params FlashDepositParams params
      */
-    function flashDeposit(FlashDepositParams calldata _params) external payable {
+    function flashDeposit(
+        FlashDepositParams calldata _params
+    ) external payable {
         uint256 crabAmount;
         uint256 wSqueethToMint;
         uint256 ethInCrab;
@@ -131,12 +134,10 @@ contract FlashBull is UniFlash {
             uint256 ethFee;
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(
-                _params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice
-            );
-            crabAmount = _calcSharesToMint(
-                _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
-            );
+            (wSqueethToMint, ethFee) =
+                _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
+            crabAmount =
+                _calcSharesToMint(_params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
         }
 
         // oSQTH-ETH swap
