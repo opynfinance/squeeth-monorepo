@@ -124,6 +124,7 @@ contract LeverageBull {
         _borrowUsdcFromEuler(usdcToBorrow);
 
         return (ethToLend, usdcToBorrow);
+      }
     }
 
     /**
