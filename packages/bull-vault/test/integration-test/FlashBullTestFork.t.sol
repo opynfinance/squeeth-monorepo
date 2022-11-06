@@ -55,6 +55,8 @@ contract FlashBullTestFork is Test {
     address internal deployer;
     address internal bullOwner;
 
+    uint256 internal cap;
+
     // var to avoid stack too deep in test functions
     uint256 userEthBalanceBeforeTx;
     uint256 bullToMint;
@@ -101,6 +103,9 @@ contract FlashBullTestFork is Test {
             address(crabV2)
         );
         controllerOwner = controller.owner();
+
+        cap = 100000e18;
+        bullStrategy.setCap(cap);
 
         vm.stopPrank();
 
