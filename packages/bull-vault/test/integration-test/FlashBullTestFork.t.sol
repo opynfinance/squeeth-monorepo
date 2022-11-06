@@ -51,6 +51,8 @@ contract FlashBullTestFork is Test {
     address internal user1;
     address internal deployer;
 
+    uint256 internal cap;
+
     // var to avoid stack too deep in test functions
     uint256 userEthBalanceBeforeTx;
     uint256 bullToMint;
@@ -92,6 +94,9 @@ contract FlashBullTestFork is Test {
             dToken,
             address(crabV2)
         );
+
+        cap = 100000e18;
+        bullStrategy.setCap(cap);
 
         vm.stopPrank();
         user1Pk = 0xA11CE;
