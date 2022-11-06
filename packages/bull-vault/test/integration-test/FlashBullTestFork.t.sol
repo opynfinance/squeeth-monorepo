@@ -599,11 +599,7 @@ contract FlashBullTestFork is Test {
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
         );
-        assertEq(
-            bullToMint,
-            bullStrategy.balanceOf(user1),
-            "User1 bull balance mismatch"
-        );
+        assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
     function testScenarioFlashWithdrawSqthSlippage() public {
