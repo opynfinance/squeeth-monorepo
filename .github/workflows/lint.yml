@@ -17,7 +17,7 @@ jobs:
           version: nightly
 
       - name: Run fmt on bull vault
-        run: cd packages/bull-vault && forge fmt --check
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
 
   check-crab-netting:
     name: Forge fmt check crab netting 
