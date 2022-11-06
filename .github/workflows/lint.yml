@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   check:
-    name: Forge lints
+    name: Forge fmt check bull vault
     runs-on: ubuntu-latest
 
     steps:
@@ -16,8 +16,21 @@ jobs:
         with:
           version: nightly
 
-      - name: Run fmt on bull vault
-        run: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+      - name: Run fmt on crab netting
+        run: cd packages/crab-netting && forge fmt --check
+
+  check:
+    name: Forge fmt check crab netting 
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Run fmt on crab netting
         run: cd packages/crab-netting && forge fmt --check
