@@ -8,21 +8,21 @@ import { SafeMath } from "openzeppelin/math/SafeMath.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 
 contract WETH9Mock is ERC20, Test {
-  using SafeMath for uint256;
-  using Address for address payable;
+    using SafeMath for uint256;
+    using Address for address payable;
 
-  mapping(address => uint256) public balances;
+    mapping(address => uint256) public balances;
 
-  constructor() ERC20("WETH9", "wETH9") { }
+    constructor() ERC20("WETH9", "wETH9") { }
 
-  function deposit() external payable {
-    balances[msg.sender] = balances[msg.sender].add(msg.value);
-    _mint(msg.sender, msg.value);
-  }
+    function deposit() external payable {
+        balances[msg.sender] = balances[msg.sender].add(msg.value);
+        _mint(msg.sender, msg.value);
+    }
 
-  function withdraw(uint256 wad) external {
-    balances[msg.sender] = balances[msg.sender].sub(wad);
-    _burn(msg.sender, wad);
-    payable(msg.sender).sendValue(wad);
-  }
+    function withdraw(uint256 wad) external {
+        balances[msg.sender] = balances[msg.sender].sub(wad);
+        _burn(msg.sender, wad);
+        payable(msg.sender).sendValue(wad);
+    }
 }

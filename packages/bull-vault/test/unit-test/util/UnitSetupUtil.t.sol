@@ -22,57 +22,59 @@ import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 contract BullStrategyUnitTest is Test {
-  using StrategyMath for uint256;
+    using StrategyMath for uint256;
 
-  NonfungiblePositionManager internal uniNonFungibleManager;
-  ShortPowerPerp internal shortPowerPerp;
-  WPowerPerp internal wPowerPerp;
-  Controller internal controller;
-  WETH9Mock internal weth;
-  MockErc20 internal usdc;
-  UniswapV3Factory internal uniFactory;
-  CrabStrategyV2 internal crabV2;
+    NonfungiblePositionManager internal uniNonFungibleManager;
+    ShortPowerPerp internal shortPowerPerp;
+    WPowerPerp internal wPowerPerp;
+    Controller internal controller;
+    WETH9Mock internal weth;
+    MockErc20 internal usdc;
+    UniswapV3Factory internal uniFactory;
+    CrabStrategyV2 internal crabV2;
 
-  address internal ethWPowerPerpPool;
-  address internal ethUsdcPool;
+    address internal ethWPowerPerpPool;
+    address internal ethUsdcPool;
 
-  uint256 internal timelockPk;
-  uint256 internal deployerPk;
-  uint256 internal user1Pk;
-  uint256 internal randomPk;
-  address internal deployer;
-  address internal user1;
-  address internal random;
-  address internal timelock;
+    uint256 internal timelockPk;
+    uint256 internal deployerPk;
+    uint256 internal user1Pk;
+    uint256 internal randomPk;
+    address internal deployer;
+    address internal user1;
+    address internal random;
+    address internal timelock;
 
-  function _deployUniswap() internal {
-    uniFactory = new UniswapV3Factory();
-    uniNonFungibleManager =
-      new NonfungiblePositionManager(address(uniFactory), address(weth), address(0));
-  }
+    function _deployUniswap() internal {
+        uniFactory = new UniswapV3Factory();
+        uniNonFungibleManager =
+            new NonfungiblePositionManager(address(uniFactory), address(weth), address(0));
+    }
 
-  function _deploySqueethEcosystem(
-    address _ethQuoteCurrencyPool,
-    uint256 _squeethEthPrice,
-    uint24 _poolFee
-  ) internal {
-    usdc = new MockErc20("USDC", "USDC", 6);
-    weth = new WETH9Mock();
+    function _deploySqueethEcosystem(
+        address _ethQuoteCurrencyPool,
+        uint256 _squeethEthPrice,
+        uint24 _poolFee
+    ) internal {
+        usdc = new MockErc20("USDC", "USDC", 6);
+        weth = new WETH9Mock();
 
-    ethUsdcPool = _createUniPoolAndInitialize(address(usdc), address(weth), 3300e18, uint24(3000));
-    vm.warp(block.timestamp + 1000);
-    IUniswapV3Pool(ethUsdcPool).increaseObservationCardinalityNext(500);
+        ethUsdcPool =
+            _createUniPoolAndInitialize(address(usdc), address(weth), 3300e18, uint24(3000));
+        vm.warp(block.timestamp + 1000);
+        IUniswapV3Pool(ethUsdcPool).increaseObservationCardinalityNext(500);
 
-    wPowerPerp = new WPowerPerp("oSQTH", "oSQTH");
-    address _shortPowerPerp = address(new ShortPowerPerp("ShortPowerPerp", "sOSQTH"));
-    address _oracle = address(new Oracle());
+        wPowerPerp = new WPowerPerp("oSQTH", "oSQTH");
+        address _shortPowerPerp = address(new ShortPowerPerp("ShortPowerPerp", "sOSQTH"));
+        address _oracle = address(new Oracle());
 
-    ethWPowerPerpPool =
-      _createUniPoolAndInitialize(address(weth), address(wPowerPerp), _squeethEthPrice, _poolFee);
-    vm.warp(block.timestamp + 1000);
-    IUniswapV3Pool(ethWPowerPerpPool).increaseObservationCardinalityNext(500);
+        ethWPowerPerpPool = _createUniPoolAndInitialize(
+            address(weth), address(wPowerPerp), _squeethEthPrice, _poolFee
+        );
+        vm.warp(block.timestamp + 1000);
+        IUniswapV3Pool(ethWPowerPerpPool).increaseObservationCardinalityNext(500);
 
-    controller = new Controller(
+        controller = new Controller(
             _oracle,
             _shortPowerPerp,
             address(wPowerPerp),
@@ -84,50 +86,50 @@ contract BullStrategyUnitTest is Test {
             _poolFee
         );
 
-    wPowerPerp.init(address(controller));
-    ShortPowerPerp(_shortPowerPerp).init(address(controller));
+        wPowerPerp.init(address(controller));
+        ShortPowerPerp(_shortPowerPerp).init(address(controller));
 
-    crabV2 =
-    new CrabStrategyV2(address(controller), _oracle, address(weth), address(uniFactory), ethWPowerPerpPool, timelock, timelock, uint256(100), uint256(1e17));
-  }
-
-  function _createUniPoolAndInitialize(
-    address _tokenA,
-    address _tokenB,
-    uint256 _tokenBPriceInA,
-    uint24 _fee
-  ) internal returns (address) {
-    bool isTokenAToken0 = _tokenA < _tokenB;
-
-    if (ERC20(_tokenA).decimals() < ERC20(_tokenB).decimals()) {
-      _tokenBPriceInA =
-        _tokenBPriceInA.div(10 ** (ERC20(_tokenB).decimals() - ERC20(_tokenA).decimals()));
-    } else {
-      _tokenBPriceInA =
-        _tokenBPriceInA.mul(10 ** (ERC20(_tokenA).decimals() - ERC20(_tokenB).decimals()));
+        crabV2 =
+        new CrabStrategyV2(address(controller), _oracle, address(weth), address(uniFactory), ethWPowerPerpPool, timelock, timelock, uint256(100), uint256(1e17));
     }
 
-    // this may be wrong
-    uint160 sqrtX96Price = isTokenAToken0
-      ? uint160(sqrt(uint256(1e18).div(_tokenBPriceInA)).mul(2 ** 96))
-      : uint160(sqrt(_tokenBPriceInA.mul(1e18)).mul(2 ** 96));
+    function _createUniPoolAndInitialize(
+        address _tokenA,
+        address _tokenB,
+        uint256 _tokenBPriceInA,
+        uint24 _fee
+    ) internal returns (address) {
+        bool isTokenAToken0 = _tokenA < _tokenB;
 
-    (_tokenA, _tokenB) = isTokenAToken0 ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
+        if (ERC20(_tokenA).decimals() < ERC20(_tokenB).decimals()) {
+            _tokenBPriceInA =
+                _tokenBPriceInA.div(10 ** (ERC20(_tokenB).decimals() - ERC20(_tokenA).decimals()));
+        } else {
+            _tokenBPriceInA =
+                _tokenBPriceInA.mul(10 ** (ERC20(_tokenA).decimals() - ERC20(_tokenB).decimals()));
+        }
 
-    address pool = uniFactory.createPool(_tokenA, _tokenB, _fee);
+        // this may be wrong
+        uint160 sqrtX96Price = isTokenAToken0
+            ? uint160(sqrt(uint256(1e18).div(_tokenBPriceInA)).mul(2 ** 96))
+            : uint160(sqrt(_tokenBPriceInA.mul(1e18)).mul(2 ** 96));
 
-    IUniswapV3Pool(pool).initialize(sqrtX96Price);
+        (_tokenA, _tokenB) = isTokenAToken0 ? (_tokenA, _tokenB) : (_tokenB, _tokenA);
 
-    return pool;
-  }
+        address pool = uniFactory.createPool(_tokenA, _tokenB, _fee);
 
-  function sqrt(uint256 x) internal pure returns (uint256) {
-    uint256 n = x / 2;
-    uint256 lstX = 0;
-    while (n != lstX) {
-      lstX = n;
-      n = (n + x / n) / 2;
+        IUniswapV3Pool(pool).initialize(sqrtX96Price);
+
+        return pool;
     }
-    return n;
-  }
+
+    function sqrt(uint256 x) internal pure returns (uint256) {
+        uint256 n = x / 2;
+        uint256 lstX = 0;
+        while (n != lstX) {
+            lstX = n;
+            n = (n + x / n) / 2;
+        }
+        return n;
+    }
 }
