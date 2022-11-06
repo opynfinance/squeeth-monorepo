@@ -2,15 +2,14 @@
 pragma solidity =0.7.6;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IBullStrategy} from "./interface/IBullStrategy.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IBullStrategy } from "./interface/IBullStrategy.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
-import {Ownable} from "openzeppelin/access/Ownable.sol";
-import {UniFlash} from "./UniFlash.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
+import { UniFlash } from "./UniFlash.sol";
 
-import {console} from "forge-std/console.sol";
-
+import { console } from "forge-std/console.sol";
 
 /**
  * @notice AuctionBull contract
@@ -40,7 +39,10 @@ contract AuctionBull is UniFlash, Ownable {
         BUYING_USDC
     }
 
-    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory) UniFlash(_factory) Ownable() {
+    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory)
+        UniFlash(_factory)
+        Ownable()
+    {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
@@ -52,10 +54,15 @@ contract AuctionBull is UniFlash, Ownable {
     /**
      * @dev changes the leverage component composition by buying or selling eth
      */
-    function leverageRebalance(bool _isBuyingUsdc, uint256 _usdcAmount, uint256 _ethThresholdAmount, uint24 _poolFee) external {
+    function leverageRebalance(
+        bool _isBuyingUsdc,
+        uint256 _usdcAmount,
+        uint256 _ethThresholdAmount,
+        uint24 _poolFee
+    ) external {
         require(msg.sender == auctionManager);
         _checkValidRebalance(_isBuyingUsdc, _usdcAmount);
-        
+
         if (_isBuyingUsdc) {
             // swap ETH to USDC
             _exactOutFlashSwap(
@@ -70,7 +77,7 @@ contract AuctionBull is UniFlash, Ownable {
         } else {
             // Borrow more USDC debt
             IBullStrategy(bullStrategy).borrowUsdcFromEuler(_usdcAmount);
-            // swap USDC to ETH 
+            // swap USDC to ETH
             _exactInFlashSwap(
                 usdc,
                 weth,
@@ -89,7 +96,9 @@ contract AuctionBull is UniFlash, Ownable {
 
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SELLING_USDC) {
-            IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+            IERC20(_uniFlashSwapData.tokenIn).transfer(
+                _uniFlashSwapData.pool, _uniFlashSwapData.amountToPay
+            );
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.BUYING_USDC) {
             uint256 usdcAmount = abi.decode(_uniFlashSwapData.callData, (uint256));
             // Repay some USDC debt
@@ -97,13 +106,14 @@ contract AuctionBull is UniFlash, Ownable {
             IBullStrategy(bullStrategy).repayUsdcToEuler(usdcAmount);
             // Withdraw ETH from collateral
             uint256 ethToWithdraw = _uniFlashSwapData.amountToPay;
-            IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay); 
+            IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay);
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }
 
     function _checkValidRebalance(bool _isBuyingUsdc, uint256 _usdcAmount) internal view {
-        (uint256 delta, uint256 cr) = IBullStrategy(bullStrategy).calcDeltaAndCR(_isBuyingUsdc, _usdcAmount);
+        (uint256 delta, uint256 cr) =
+            IBullStrategy(bullStrategy).calcDeltaAndCR(_isBuyingUsdc, _usdcAmount);
         require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
         require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
     }
