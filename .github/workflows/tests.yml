@@ -6,7 +6,7 @@ env:
   FORK_URL: ${{secrets.FORK_URL}}    
 
 jobs:
-  check:
+  test-bull-vault:
     name: Forge test
     runs-on: ubuntu-latest
     steps:
@@ -21,6 +21,19 @@ jobs:
 
       - name: Run tests
         run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
+
+  test-crab-netting:
+    name: Forge test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Run crab netting tests
         run: cd packages/crab-netting && forge test -vvv
