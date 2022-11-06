@@ -155,14 +155,6 @@ contract FlashBullTestFork is Test {
             usdcPoolFee: uint24(3000)
         });
 
-        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
-            ethToCrab: ethToCrab,
-            minEthFromSqth: minEthFromSqueeth,
-            minEthFromUsdc: minEthFromUsdc,
-            wPowerPerpPoolFee: uint24(3000),
-            usdcPoolFee: uint24(3000)
-        });
-
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
@@ -376,7 +368,6 @@ contract FlashBullTestFork is Test {
             squeethInCrab += wSqueethToMint;
         }
 
-        // uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
             crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply().add(crabToBeMinted)
         );
@@ -390,6 +381,7 @@ contract FlashBullTestFork is Test {
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(95e16));
             minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(101e16));
         }
+        bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         vm.startPrank(user1);
         flashBull.flashDeposit{
@@ -419,7 +411,7 @@ contract FlashBullTestFork is Test {
             "Bull crab balance mismatch"
         );
         assertEq(
-            testUtil.calcBullToMint(crabToBeMinted),
+            bullToMint,
             bullStrategy.balanceOf(user1),
             "User1 bull balance mismatch"
         );
