@@ -119,7 +119,7 @@ contract LeverageBull {
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(ethToLend == _ethAmount, "LB0"); 
+        require(ethToLend == _ethAmount, "LB0");
 
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);

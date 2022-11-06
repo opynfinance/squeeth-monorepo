@@ -52,7 +52,7 @@ contract FlashBull is UniFlash {
     address private immutable ethUSDCPool;
     /// @dev bull stratgey address
     address public immutable bullStrategy;
-    
+
     /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
         uint256 ethToDepositInCrab;

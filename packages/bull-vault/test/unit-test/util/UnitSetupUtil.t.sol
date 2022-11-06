@@ -51,10 +51,7 @@ contract BullStrategyUnitTest is Test {
             new NonfungiblePositionManager(address(uniFactory), address(weth), address(0));
     }
 
-    function _deploySqueethEcosystem(
-        uint256 _squeethEthPrice,
-        uint24 _poolFee
-    ) internal {
+    function _deploySqueethEcosystem(uint256 _squeethEthPrice, uint24 _poolFee) internal {
         usdc = new MockErc20("USDC", "USDC", 6);
         weth = new WETH9Mock();
 

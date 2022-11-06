@@ -214,7 +214,7 @@ contract BullStrategyTestFork is Test {
 
     function testReceiveFromNonWethOrCrab() public {
         vm.startPrank(user1);
-        (bool status, bytes memory returndata) = address(bullStrategy).call{ value: 5e18 }("");
+        (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
         vm.stopPrank();
         assertFalse(status);
         assertEq(_getRevertMsg(returndata), "BS0");
@@ -374,7 +374,7 @@ contract BullStrategyTestFork is Test {
 
     function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
         // If the _res length is less than 68, then the transaction failed silently (without a revert message)
-        if (_returnData.length < 68) return 'Transaction reverted silently';
+        if (_returnData.length < 68) return "Transaction reverted silently";
 
         assembly {
             // Slice the sighash.
