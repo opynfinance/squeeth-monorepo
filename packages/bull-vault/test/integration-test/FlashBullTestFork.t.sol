@@ -57,6 +57,7 @@ contract FlashBullTestFork is Test {
 
     // var to avoid stack too deep in test functions
     uint256 userEthBalanceBeforeTx;
+    uint256 bullToMint;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -153,7 +154,7 @@ contract FlashBullTestFork is Test {
             minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
-        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+        bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
             ethToCrab: ethToCrab,
@@ -310,7 +311,7 @@ contract FlashBullTestFork is Test {
             _calcSharesToMint(ethToCrabInitial.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
-        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+        bullToMint = testUtil.calcBullToMint(crabToBeMinted);
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
             crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply()
         );
@@ -508,7 +509,6 @@ contract FlashBullTestFork is Test {
             maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
-        // uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
             crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply().add(crabToBeMinted)
         );
@@ -553,6 +553,7 @@ contract FlashBullTestFork is Test {
             maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
             maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
+        bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeem,
@@ -599,7 +600,7 @@ contract FlashBullTestFork is Test {
             "Bull crab balance mismatch"
         );
         assertEq(
-            testUtil.calcBullToMint(crabToBeMinted),
+            bullToMint,
             bullStrategy.balanceOf(user1),
             "User1 bull balance mismatch"
         );
