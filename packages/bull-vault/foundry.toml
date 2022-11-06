@@ -32,7 +32,7 @@ include_push_bytes = true
 
 [profile.fmt]
 line_length = 100
-tab_width = 2
+tab_width = 4
 bracket_spacing = true
 
 [profile.coverage]

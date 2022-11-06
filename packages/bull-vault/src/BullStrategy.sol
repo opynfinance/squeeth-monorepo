@@ -4,16 +4,16 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
-import {LeverageBull} from "./LeverageBull.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { LeverageBull } from "./LeverageBull.sol";
 // lib
-import {Address} from "openzeppelin/utils/Address.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * @notice BullStrategy contract
@@ -71,13 +71,13 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice return the internal accounting of the bull strategy's crab balance 
+     * @notice return the internal accounting of the bull strategy's crab balance
      * @return crab token amount hold by the bull strategy
      */
     function getCrabBalance() external view returns (uint256) {
         return _crabBalance;
     }
-    
+
     /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
@@ -99,7 +99,9 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
+        (, uint256 usdcBorrowed) = _leverageDeposit(
+            bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+        );
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
@@ -108,7 +110,7 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {        
+    function withdraw(uint256 _bullAmount) external {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -118,7 +120,7 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
-        
+
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
@@ -152,7 +154,8 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
+        VaultLib.Vault memory strategyVault =
+            IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }

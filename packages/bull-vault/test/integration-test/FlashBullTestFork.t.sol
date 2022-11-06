@@ -5,21 +5,21 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 //interface
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IEulerMarkets} from "../../src/interface/IEulerMarkets.sol";
-import {IEulerEToken} from "../../src/interface/IEulerEToken.sol";
-import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
+import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
+import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import {TestUtil} from "../util/TestUtil.t.sol";
-import {BullStrategy} from "../../src/BullStrategy.sol";
-import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
-import {Controller} from "squeeth-monorepo/core/Controller.sol";
-import {FlashBull} from "../../src/FlashBull.sol";
+import { TestUtil } from "../util/TestUtil.t.sol";
+import { BullStrategy } from "../../src/BullStrategy.sol";
+import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
+import { Controller } from "squeeth-monorepo/core/Controller.sol";
+import { FlashBull } from "../../src/FlashBull.sol";
 // lib
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {UniOracle} from "../../src/UniOracle.sol";
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
  * @notice Ropsten fork testing
@@ -81,10 +81,8 @@ contract FlashBullTestFork is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        ethWSqueethPool = IController(bullStrategy.powerTokenController())
-            .wPowerPerpPool();
-        ethUsdcPool = IController(bullStrategy.powerTokenController())
-            .ethQuoteCurrencyPool();
+        ethWSqueethPool = IController(bullStrategy.powerTokenController()).wPowerPerpPool();
+        ethUsdcPool = IController(bullStrategy.powerTokenController()).ethQuoteCurrencyPool();
         testUtil = new TestUtil(
             address(bullStrategy),
             address(controller),
@@ -116,248 +114,116 @@ contract FlashBullTestFork is Test {
 
     function testFlashDeposit() public {
         uint256 ethToCrab = 5e18;
-        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
-            .getCrabVaultDetails();
-        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
-            ethToCrab,
-            squeethInCrab,
-            ethInCrab
-        );
-        uint256 crabToBeMinted = _calcSharesToMint(
-            ethToCrab.sub(fee),
-            ethInCrab,
-            IERC20(crabV2).totalSupply()
-        );
-        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
-            address(bullStrategy)
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) =
+            _calcWsqueethToMintAndFee(ethToCrab, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted =
+            _calcSharesToMint(ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply()
         );
 
-        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
-            .calcLeverageEthUsdc(
-                crabToBeMinted,
-                1e18,
-                ethInCrab,
-                squeethInCrab,
-                crabV2.totalSupply()
-            );
-
-        uint256 totalEthToBull = calcTotalEthToBull(
-            wethToLend,
-            ethToCrab,
-            usdcToBorrow,
-            wSqueethToMint
-        );
+        uint256 totalEthToBull =
+            calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
 
         uint256 minEthFromSqueeth;
         uint256 minEthFromUsdc;
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            minEthFromSqueeth = wSqueethToMint.wmul(
-                squeethEthPrice.wmul(99e16)
-            );
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
-                ethUsdPrice.wmul(uint256(1e18).add(5e15))
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(
-            ethToCrab,
-            minEthFromSqueeth,
-            minEthFromUsdc,
-            3000
+            ethToCrab, minEthFromSqueeth, minEthFromUsdc, 3000
         );
         vm.stopPrank();
 
-        assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
-            usdcToBorrow
-        );
-        assertEq(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
-        );
-        assertEq(
-            bullStrategy.getCrabBalance().sub(crabToBeMinted),
-            bullCrabBalanceBefore
-        );
-        assertEq(
-            bullToMint,
-            bullStrategy.balanceOf(user1),
-            "User1 bull balance mismatch"
-        );
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend);
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+        assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
     function testSecondFlashDeposit() public {
         uint256 ethToCrabInitial = 5e18;
-        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
-            .getCrabVaultDetails();
-        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
-            ethToCrabInitial,
-            squeethInCrab,
-            ethInCrab
-        );
-        uint256 crabToBeMinted = _calcSharesToMint(
-            ethToCrabInitial.sub(fee),
-            ethInCrab,
-            IERC20(crabV2).totalSupply()
-        );
-        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
-            address(bullStrategy)
-        );
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) =
+            _calcWsqueethToMintAndFee(ethToCrabInitial, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted =
+            _calcSharesToMint(ethToCrabInitial.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
-            .calcLeverageEthUsdc(
-                crabToBeMinted,
-                1e18,
-                ethInCrab,
-                squeethInCrab,
-                crabV2.totalSupply()
-            );
-
-        uint256 totalEthToBull = calcTotalEthToBull(
-            wethToLend,
-            ethToCrabInitial,
-            usdcToBorrow,
-            wSqueethToMint
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply()
         );
+
+        uint256 totalEthToBull =
+            calcTotalEthToBull(wethToLend, ethToCrabInitial, usdcToBorrow, wSqueethToMint);
 
         uint256 minEthFromSqueeth;
         uint256 minEthFromUsdc;
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            minEthFromSqueeth = wSqueethToMint.wmul(
-                squeethEthPrice.wmul(99e16)
-            );
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
-                ethUsdPrice.wmul(uint256(1e18).add(5e15))
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: totalEthToBull}(
-            ethToCrabInitial,
-            minEthFromSqueeth,
-            minEthFromUsdc,
-            3000
+            ethToCrabInitial, minEthFromSqueeth, minEthFromUsdc, 3000
         );
         vm.stopPrank();
-        assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
-            usdcToBorrow
-        );
-        assertEq(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend
-        );
-        assertEq(
-            bullStrategy.getCrabBalance().sub(crabToBeMinted),
-            bullCrabBalanceBefore
-        );
-        assertEq(
-            bullToMint,
-            bullStrategy.balanceOf(user1),
-            "User1 bull balance mismatch"
-        );
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend);
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+        assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
 
-        uint256 bullCrabBalanceBeforeSecond = IERC20(crabV2).balanceOf(
-            address(bullStrategy)
-        );
-        uint256 bullUsdcDebtBefore = IEulerDToken(dToken).balanceOf(
-            address(bullStrategy)
-        );
-        (uint256 ethInCrabSecond, uint256 squeethInCrabSecond) = testUtil
-            .getCrabVaultDetails();
+        uint256 bullCrabBalanceBeforeSecond = IERC20(crabV2).balanceOf(address(bullStrategy));
+        uint256 bullUsdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        (uint256 ethInCrabSecond, uint256 squeethInCrabSecond) = testUtil.getCrabVaultDetails();
         uint256 ethToCrabSecond = 7e18;
-        (
-            uint256 wSqueethToMintSecond,
-            uint256 feeSecond
-        ) = _calcWsqueethToMintAndFee(
-                ethToCrabSecond,
-                squeethInCrabSecond,
-                ethInCrabSecond
-            );
+        (uint256 wSqueethToMintSecond, uint256 feeSecond) =
+            _calcWsqueethToMintAndFee(ethToCrabSecond, squeethInCrabSecond, ethInCrabSecond);
         uint256 wethToLendFirst = wethToLend;
         uint256 crabToBeMintedSecond = _calcSharesToMint(
-            ethToCrabSecond.sub(feeSecond),
-            ethInCrabSecond,
-            IERC20(crabV2).totalSupply()
+            ethToCrabSecond.sub(feeSecond), ethInCrabSecond, IERC20(crabV2).totalSupply()
         );
 
-        uint256 bullToMintSecond = testUtil.calcBullToMint(
-            crabToBeMintedSecond
+        uint256 bullToMintSecond = testUtil.calcBullToMint(crabToBeMintedSecond);
+        (uint256 wethToLendSecond, uint256 usdcToBorrowSecond) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMintedSecond,
+            bullToMintSecond.wdiv(bullStrategy.totalSupply().add(bullToMintSecond)),
+            ethInCrabSecond,
+            squeethInCrabSecond,
+            crabV2.totalSupply()
         );
-        (uint256 wethToLendSecond, uint256 usdcToBorrowSecond) = bullStrategy
-            .calcLeverageEthUsdc(
-                crabToBeMintedSecond,
-                bullToMintSecond.wdiv(
-                    bullStrategy.totalSupply().add(bullToMintSecond)
-                ),
-                ethInCrabSecond,
-                squeethInCrabSecond,
-                crabV2.totalSupply()
-            );
 
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
 
             vm.startPrank(user1);
             flashBull.flashDeposit{
                 value: calcTotalEthToBull(
-                    wethToLendSecond,
-                    ethToCrabSecond,
-                    usdcToBorrowSecond,
-                    wSqueethToMintSecond
-                )
+                    wethToLendSecond, ethToCrabSecond, usdcToBorrowSecond, wSqueethToMintSecond
+                    )
             }(
                 ethToCrabSecond,
                 wSqueethToMintSecond.wmul(squeethEthPrice.wmul(99e16)),
-                usdcToBorrowSecond.mul(1e12).wdiv(
-                    ethUsdPrice.wmul(uint256(1e18).add(5e15))
-                ),
+                usdcToBorrowSecond.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15))),
                 3000
             );
             vm.stopPrank();
@@ -369,17 +235,13 @@ contract FlashBullTestFork is Test {
             "Bull balance mismatch for second flashdeposit"
         );
         assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(
-                bullUsdcDebtBefore
-            ),
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(bullUsdcDebtBefore),
             usdcToBorrowSecond,
             "Bull USDC debt amount mismatch for second flashdeposit"
         );
         assertTrue(
             wethToLendSecond.sub(
-                IEulerEToken(eToken)
-                    .balanceOfUnderlying(address(bullStrategy))
-                    .sub(wethToLendFirst)
+                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLendFirst)
             ) <= 1
         );
         assertEq(
@@ -407,49 +269,28 @@ contract FlashBullTestFork is Test {
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(
-                squeethEthPrice.wmul(101e16)
-            );
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(
-                ethUsdPrice.wmul(uint256(1e18).sub(5e15))
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
-        FlashBull.FlashWithdrawParams memory params = FlashBull
-            .FlashWithdrawParams({
-                bullAmount: bullStrategy.balanceOf(user1),
-                maxEthForSqueeth: maxEthForSqueeth,
-                maxEthForUsdc: maxEthForUsdc,
-                wPowerPerpPoolFee: uint24(3000),
-                usdcPoolFee: uint24(3000)
-            });
+        FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
+            bullAmount: bullStrategy.balanceOf(user1),
+            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForUsdc: maxEthForUsdc,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
 
         uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToRedeem);
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(
-            address(bullStrategy)
-        );
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(
-            address(bullStrategy)
-        );
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
-        uint256 ethToWithdrawFromBull = ethToWithdrawFromCrab
-            .sub(maxEthForSqueeth)
-            .add(wethToWithdraw.sub(maxEthForUsdc));
+        uint256 ethToWithdrawFromBull =
+            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -477,11 +318,7 @@ contract FlashBullTestFork is Test {
             crabV2.balanceOf(address(bullStrategy)),
             "Bull crab balance mismatch"
         );
-        assertTrue(
-            (user1.balance).sub(userEthBalanceBeforeTx).sub(
-                ethToWithdrawFromBull
-            ) <= 1e17
-        );
+        assertTrue((user1.balance).sub(userEthBalanceBeforeTx).sub(ethToWithdrawFromBull) <= 1e17);
     }
 
     /**
@@ -490,22 +327,13 @@ contract FlashBullTestFork is Test {
      */
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
         _ethToCrab = bound(_ethToCrab, 1e16, 600e18);
-        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil
-            .getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
 
-        (uint256 wSqueethToMint, uint256 fee) = _calcWsqueethToMintAndFee(
-            _ethToCrab,
-            squeethInCrab,
-            ethInCrab
-        );
-        uint256 crabToBeMinted = _calcSharesToMint(
-            _ethToCrab.sub(fee),
-            ethInCrab,
-            IERC20(crabV2).totalSupply()
-        );
-        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(
-            address(bullStrategy)
-        );
+        (uint256 wSqueethToMint, uint256 fee) =
+            _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted =
+            _calcSharesToMint(_ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         {
             ethInCrab += _ethToCrab;
@@ -513,48 +341,23 @@ contract FlashBullTestFork is Test {
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy
-            .calcLeverageEthUsdc(
-                crabToBeMinted,
-                1e18,
-                ethInCrab,
-                squeethInCrab,
-                crabV2.totalSupply().add(crabToBeMinted)
-            );
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply().add(crabToBeMinted)
+        );
 
         uint256 minEthFromSqueeth;
         uint256 minEthFromUsdc;
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
-            minEthFromSqueeth = wSqueethToMint.wmul(
-                squeethEthPrice.wmul(95e16)
-            );
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(
-                ethUsdPrice.wmul(101e16)
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(95e16));
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(101e16));
         }
 
         vm.startPrank(user1);
         flashBull.flashDeposit{
-            value: calcTotalEthToBull(
-                wethToLend,
-                _ethToCrab,
-                usdcToBorrow,
-                wSqueethToMint
-            )
+            value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)
         }(_ethToCrab, minEthFromSqueeth, minEthFromUsdc, 3000);
         vm.stopPrank();
 
@@ -564,27 +367,19 @@ contract FlashBullTestFork is Test {
             "Bull USDC debt amount mismatch"
         );
         assertApproxEqAbs(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            wethToLend,
-            5
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 5
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMinted),
             bullCrabBalanceBefore,
             "Bull crab balance mismatch"
         );
-        assertEq(
-            bullToMint,
-            bullStrategy.balanceOf(user1),
-            "User1 bull balance mismatch"
-        );
+        assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
     function testFuzzingFlashWithdraw(uint256 _crabAmount) public {
         _crabAmount = bound(
-            _crabAmount,
-            1e18,
-            IERC20(crabV2).balanceOf(0x06CECFbac34101aE41C88EbC2450f8602b3d164b)
+            _crabAmount, 1e18, IERC20(crabV2).balanceOf(0x06CECFbac34101aE41C88EbC2450f8602b3d164b)
         );
         // this is a crab whale, get some crab token from
         vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
@@ -594,55 +389,31 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (
-            uint256 crabToRedeem,
-            uint256 wPowerPerpToRedeem,
-            ,
-            uint256 usdcToRepay
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForSqueeth;
         uint256 maxEthForUsdc;
         {
-            uint256 ethUsdPrice = UniOracle._getTwap(
-                ethUsdcPool,
-                weth,
-                usdc,
-                TWAP,
-                false
-            );
-            uint256 squeethEthPrice = UniOracle._getTwap(
-                ethWSqueethPool,
-                wPowerPerp,
-                weth,
-                TWAP,
-                false
-            );
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
 
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(
-                squeethEthPrice.wmul(105e16)
-            );
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(
-                ethUsdPrice.wmul(uint256(1e18).sub(5e15))
-            );
+            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
+            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
-        FlashBull.FlashWithdrawParams memory params = FlashBull
-            .FlashWithdrawParams({
-                bullAmount: bullStrategy.balanceOf(user1),
-                maxEthForSqueeth: maxEthForSqueeth,
-                maxEthForUsdc: maxEthForUsdc,
-                wPowerPerpPoolFee: uint24(3000),
-                usdcPoolFee: uint24(3000)
-            });
+        FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
+            bullAmount: bullStrategy.balanceOf(user1),
+            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForUsdc: maxEthForUsdc,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
 
         uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToRedeem);
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(
-            address(bullStrategy)
-        );
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(
-            address(bullStrategy)
-        );
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
         vm.startPrank(user1);
@@ -679,8 +450,7 @@ contract FlashBullTestFork is Test {
      * /************************************************************* Helper functions! ************************************************************
      */
     function squeethPrice() internal view returns (uint256) {
-        return
-            UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        return UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
     }
 
     function ethPrice() internal view returns (uint256) {
@@ -693,11 +463,9 @@ contract FlashBullTestFork is Test {
         uint256 usdcToBorrow,
         uint256 wSqueethToMint
     ) internal view returns (uint256) {
-        uint256 totalEthToBull = wethToLend
-            .add(ethToCrab)
-            .sub(usdcToBorrow.wdiv(ethPrice()))
-            .sub(wSqueethToMint.wmul(squeethPrice()))
-            .add(1e16);
+        uint256 totalEthToBull = wethToLend.add(ethToCrab).sub(usdcToBorrow.wdiv(ethPrice())).sub(
+            wSqueethToMint.wmul(squeethPrice())
+        ).add(1e16);
         return totalEthToBull;
     }
 
@@ -707,21 +475,13 @@ contract FlashBullTestFork is Test {
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
         uint256 wSqueethToMint;
-        uint256 wSqueethEthPrice = UniOracle._getTwap(
-            ethWSqueethPool,
-            wPowerPerp,
-            weth,
-            TWAP,
-            false
-        );
-        uint256 feeRate = IController(bullStrategy.powerTokenController())
-            .feeRate();
+        uint256 wSqueethEthPrice =
+            UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 feeRate = IController(bullStrategy.powerTokenController()).feeRate();
         uint256 feeAdjustment = wSqueethEthPrice.mul(feeRate).div(10000);
 
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
-            _strategyCollateralAmount.add(
-                _strategyDebtAmount.wmul(feeAdjustment)
-            )
+            _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
 
         uint256 fee = wSqueethToMint.wmul(feeAdjustment);
@@ -741,26 +501,18 @@ contract FlashBullTestFork is Test {
         uint256 _strategyCollateralAmount,
         uint256 _crabTotalSupply
     ) internal pure returns (uint256) {
-        uint256 depositorShare = _amount.wdiv(
-            _strategyCollateralAmount.add(_amount)
-        );
+        uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
         if (_crabTotalSupply != 0) {
-            return
-                _crabTotalSupply.wmul(depositorShare).wdiv(
-                    uint256(ONE).sub(depositorShare)
-                );
+            return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
         }
 
         return _amount;
     }
 
-    function _deposit(uint256 _crabToDeposit)
-        internal
-        returns (uint256, uint256)
-    {
-        (uint256 wethToLend, uint256 usdcToBorrow) = testUtil
-            .calcCollateralAndBorrowAmount(_crabToDeposit);
+    function _deposit(uint256 _crabToDeposit) internal returns (uint256, uint256) {
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(_crabToDeposit);
 
         IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
         bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
@@ -771,26 +523,14 @@ contract FlashBullTestFork is Test {
     function calcAssetsNeededForFlashWithdraw(uint256 _bullAmount)
         internal
         view
-        returns (
-            uint256,
-            uint256,
-            uint256,
-            uint256
-        )
+        returns (uint256, uint256, uint256, uint256)
     {
         uint256 bullShare = _bullAmount.wdiv(bullStrategy.totalSupply());
-        uint256 crabToRedeem = bullShare.wmul(
-            crabV2.balanceOf(address(bullStrategy))
-        );
-        (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy
-            .getCrabVaultDetails();
+        uint256 crabToRedeem = bullShare.wmul(crabV2.balanceOf(address(bullStrategy)));
+        (uint256 ethInCrab, uint256 squeethInCrab) = bullStrategy.getCrabVaultDetails();
         uint256 crabTotalSupply = crabV2.totalSupply();
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(
-            crabTotalSupply
-        );
-        uint256 ethToWithdraw = crabToRedeem.wmul(ethInCrab).wdiv(
-            crabTotalSupply
-        );
+        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        uint256 ethToWithdraw = crabToRedeem.wmul(ethInCrab).wdiv(crabTotalSupply);
         uint256 usdcToRepay = bullStrategy.calcUsdcToRepay(bullShare);
 
         return (crabToRedeem, wPowerPerpToRedeem, ethToWithdraw, usdcToRepay);
