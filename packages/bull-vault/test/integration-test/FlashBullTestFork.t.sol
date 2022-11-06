@@ -76,7 +76,7 @@ contract FlashBullTestFork is Test {
         bullOwner = vm.addr(bullOwnerPk);
 
         bullStrategy = new BullStrategy(
-            bullOwner,
+            deployer,
             address(crabV2),
             address(controller),
             euler,

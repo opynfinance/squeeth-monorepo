@@ -20,7 +20,6 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS0: Can't receive ETH from this sender
  * BS1: Invalid strategy cap
  * BS2: Strategy cap reached max
- * BS3: Can't farm token
  */
 
 /**
@@ -87,6 +86,18 @@ contract BullStrategy is ERC20, LeverageBull {
         );
 
         IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+    }
+
+    /**
+     * @notice set strategy cap
+     * @param _cap startegy cap
+     */
+    function setCap(uint256 _cap) external onlyOwner {
+        require(_cap != 0, "BS1");
+
+        emit SetCap(strategyCap, _cap);
+
+        strategyCap = _cap;
     }
 
     /**

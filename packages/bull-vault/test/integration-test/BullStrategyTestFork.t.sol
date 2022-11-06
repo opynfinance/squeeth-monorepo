@@ -35,7 +35,9 @@ contract BullStrategyTestFork is Test {
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
     uint256 internal user1Pk;
-    uint256 internal ownerPk;
+
+    uint256 internal cap;
+
     address internal user1;
     address internal owner;
     address internal deployer;
@@ -48,8 +50,8 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-
-    uint256 internal cap;
+    address internal deployer;
+    address internal bullOwner;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -66,7 +68,7 @@ contract BullStrategyTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
+            new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -79,7 +81,7 @@ contract BullStrategyTestFork is Test {
         cap = 100000e18;
         vm.prank(bullOwner);
         bullStrategy.setCap(cap);
-
+        
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
 
@@ -111,19 +113,6 @@ contract BullStrategyTestFork is Test {
         vm.startPrank(deployer);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         bullStrategy.setCap(10e18);
-    }
-
-    function testDepositWhenCapFull() public {
-        vm.prank(bullOwner);
-        bullStrategy.setCap(1);
-
-        uint256 crabToDeposit = 1e18;
-        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
-        vm.startPrank(user1);
-        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
-        vm.expectRevert(bytes("BS2"));
-        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
-        vm.stopPrank();
     }
 
     function testInitialDeposit() public {
