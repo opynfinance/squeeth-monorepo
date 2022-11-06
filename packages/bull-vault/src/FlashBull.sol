@@ -78,6 +78,13 @@ contract FlashBull is UniFlash {
     }
 
     /// @dev flashDeposit params structs
+    struct FlashDepositParams {
+        uint256 ethToCrab;
+        uint256 minEthFromSqth;
+        uint256 minEthFromUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
+    }
 
     /// @dev flashWithdraw params structs
     struct FlashWithdrawParams {
@@ -106,14 +113,6 @@ contract FlashBull is UniFlash {
      */
     receive() external payable {
         require(msg.sender == weth || msg.sender == bullStrategy);
-    }
-
-    struct FlashDepositParams {
-        uint256 ethToCrab;
-        uint256 minEthFromSqth;
-        uint256 minEthFromUsdc;
-        uint24 wPowerPerpPoolFee;
-        uint24 usdcPoolFee;
     }
 
     /**
