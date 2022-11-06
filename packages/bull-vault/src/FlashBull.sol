@@ -77,7 +77,9 @@ contract FlashBull is UniFlash {
         uint256 usdcPoolFee;
     }
 
-    /// @dev params structs
+    /// @dev flashDeposit params structs
+
+    /// @dev flashWithdraw params structs
     struct FlashWithdrawParams {
         uint256 bullAmount;
         uint256 maxEthForSqueeth;
@@ -106,19 +108,21 @@ contract FlashBull is UniFlash {
         require(msg.sender == weth || msg.sender == bullStrategy);
     }
 
+    struct FlashDepositParams {
+        uint256 ethToCrab;
+        uint256 minEthFromSqth;
+        uint256 minEthFromUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
+    }
+
     /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and dollars, and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
-     * @param _ethToCrab ETH that will be deposited into the crab strategy
-     * @param _minEthFromSqth minimum ETH we will receive from the oSQTH-ETH trade for crab component
-     * @param _minEthFromUsdc minimum ETH we will receive from the USDC-ETH trade for leverage component
-     * @param _poolFee Uniswap pool fee
+     * @param _params FlashDepositParams params
      */
     function flashDeposit(
-        uint256 _ethToCrab,
-        uint256 _minEthFromSqth,
-        uint256 _minEthFromUsdc,
-        uint24 _poolFee
+        FlashDepositParams calldata _params
     ) external payable {
         uint256 crabAmount;
         uint256 wSqueethToMint;
@@ -131,20 +135,20 @@ contract FlashBull is UniFlash {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (wSqueethToMint, ethFee) =
-                _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
+                _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
             crabAmount =
-                _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
+                _calcSharesToMint(_params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
         }
 
         // oSQTH-ETH swap
         _exactInFlashSwap(
             wPowerPerp,
             weth,
-            _poolFee,
+            _params.wPowerPerpPoolFee,
             wSqueethToMint,
-            _minEthFromSqth,
+            _params.minEthFromSqth,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
-            abi.encodePacked(_ethToCrab)
+            abi.encodePacked(_params.ethToCrab)
         );
 
         (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
@@ -162,9 +166,9 @@ contract FlashBull is UniFlash {
         _exactInFlashSwap(
             usdc,
             weth,
-            _poolFee,
+            _params.usdcPoolFee,
             usdcToBorrow,
-            _minEthFromUsdc,
+            _params.minEthFromUsdc,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL),
             abi.encodePacked(crabAmount, ethToLend)
         );
