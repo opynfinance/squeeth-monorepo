@@ -5,9 +5,12 @@ pragma solidity =0.7.6;
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IEulerEToken } from "./interface/IEulerEToken.sol";
+import { IEulerDToken } from "./interface/IEulerDToken.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { UniFlash } from "./UniFlash.sol";
+import { UniOracle } from "./UniOracle.sol";
 
 import { console } from "forge-std/console.sol";
 
@@ -16,6 +19,9 @@ import { console } from "forge-std/console.sol";
  * @author opyn team
  */
 contract AuctionBull is UniFlash, Ownable {
+    /// @dev TWAP period
+    uint32 internal constant TWAP = 420;
+
     /// @dev highest delta the auction manager can rebalance to
     uint256 internal constant DELTA_UPPER = 1.1e18;
     /// @dev lowest delta the auction manager can rebalance to
@@ -30,6 +36,15 @@ contract AuctionBull is UniFlash, Ownable {
     /// @dev WETH address
     address private immutable weth;
     address private immutable bullStrategy;
+    address private immutable ethWSqueethPool;
+    address private immutable ethUSDCPool;
+    address private immutable wPowerPerp;
+    address private immutable crab;
+    /// @dev euler eToken for WETH
+    address private immutable eToken;
+    /// @dev euler dToken for USDC
+    address private immutable dToken;
+
     /// @dev auction manager
     address public auctionManager;
 
@@ -39,14 +54,20 @@ contract AuctionBull is UniFlash, Ownable {
         BUYING_USDC
     }
 
-    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory)
+    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory, address _crab, address _eToken, address _dToken)
         UniFlash(_factory)
         Ownable()
     {
+        auctionManager = _auctionManager;
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        auctionManager = _auctionManager;
+        ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+        ethUSDCPool = IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+        wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
+        crab = _crab;
+        eToken = _eToken;
+        dToken = _dToken;
 
         transferOwnership(_auctionOwner);
     }
@@ -113,8 +134,49 @@ contract AuctionBull is UniFlash, Ownable {
 
     function _checkValidRebalance(bool _isBuyingUsdc, uint256 _usdcAmount) internal view {
         (uint256 delta, uint256 cr) =
-            IBullStrategy(bullStrategy).calcDeltaAndCR(_isBuyingUsdc, _usdcAmount);
+            _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
         require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
         require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
     }
+
+    function getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount) external view returns (uint256, uint256) {
+        return _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
+    }
+
+    // TODO: Take in crab params when we add full rebalance
+    function _getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount)
+        internal
+        view
+        returns (uint256, uint256)
+    {
+        (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
+        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+        ).wdiv(IERC20(crab).totalSupply());
+
+        uint256 usdcDebt;
+        uint256 wethInCollateral;
+        uint256 expectedWeth = _usdcAmount.wdiv(ethUsdPrice).mul(1e12);
+        if (_isBuyingUsdc) {
+            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).sub(_usdcAmount);
+            wethInCollateral =
+                IEulerEToken(eToken).balanceOfUnderlying(address(this)).sub(expectedWeth);
+        } else {
+            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).add(_usdcAmount);
+            wethInCollateral =
+                IEulerEToken(eToken).balanceOfUnderlying(address(this)).add(expectedWeth);
+        }
+
+        uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
+            (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(wethInCollateral.wmul(ethUsdPrice)).sub(
+                usdcDebt.mul(1e12)
+            )
+        );
+
+        uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt).div(1e12);
+        return (delta, cr);
+    }
+
 }
