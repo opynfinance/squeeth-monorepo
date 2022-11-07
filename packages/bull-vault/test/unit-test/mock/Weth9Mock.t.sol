@@ -2,10 +2,10 @@
 pragma solidity 0.7.6;
 
 import "forge-std/Test.sol";
-import {SafeMath} from "openzeppelin/math/SafeMath.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeMath} from "openzeppelin/math/SafeMath.sol";
-import {Address} from "openzeppelin/utils/Address.sol";
+import { SafeMath } from "openzeppelin/math/SafeMath.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { SafeMath } from "openzeppelin/math/SafeMath.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
 
 contract WETH9Mock is ERC20, Test {
     using SafeMath for uint256;
@@ -13,7 +13,7 @@ contract WETH9Mock is ERC20, Test {
 
     mapping(address => uint256) public balances;
 
-    constructor() ERC20("WETH9", "wETH9") {}
+    constructor() ERC20("WETH9", "wETH9") { }
 
     function deposit() external payable {
         balances[msg.sender] = balances[msg.sender].add(msg.value);

@@ -5,21 +5,21 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 //interface
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
-import {IUniswapV3Pool} from "v3-core/interfaces/IUniswapV3Pool.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { IUniswapV3Pool } from "v3-core/interfaces/IUniswapV3Pool.sol";
 // contract
-import {MockErc20} from "squeeth-monorepo/mocks/MockErc20.sol";
-import {UniswapV3Factory} from "v3-core/UniswapV3Factory.sol";
-import {UniswapV3Pool} from "v3-core/UniswapV3Pool.sol";
-import {NonfungiblePositionManager} from "v3-periphery/NonfungiblePositionManager.sol";
-import {WETH9Mock} from "../mock/Weth9Mock.t.sol";
-import {ShortPowerPerp} from "squeeth-monorepo/core/ShortPowerPerp.sol";
-import {Controller} from "squeeth-monorepo/core/Controller.sol";
-import {Oracle} from "squeeth-monorepo/core/Oracle.sol";
-import {WPowerPerp} from "squeeth-monorepo/core/WPowerPerp.sol";
-import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
+import { MockErc20 } from "squeeth-monorepo/mocks/MockErc20.sol";
+import { UniswapV3Factory } from "v3-core/UniswapV3Factory.sol";
+import { UniswapV3Pool } from "v3-core/UniswapV3Pool.sol";
+import { NonfungiblePositionManager } from "v3-periphery/NonfungiblePositionManager.sol";
+import { WETH9Mock } from "../mock/Weth9Mock.t.sol";
+import { ShortPowerPerp } from "squeeth-monorepo/core/ShortPowerPerp.sol";
+import { Controller } from "squeeth-monorepo/core/Controller.sol";
+import { Oracle } from "squeeth-monorepo/core/Oracle.sol";
+import { WPowerPerp } from "squeeth-monorepo/core/WPowerPerp.sol";
+import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 // lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 contract BullStrategyUnitTest is Test {
     using StrategyMath for uint256;
@@ -47,14 +47,16 @@ contract BullStrategyUnitTest is Test {
 
     function _deployUniswap() internal {
         uniFactory = new UniswapV3Factory();
-        uniNonFungibleManager = new NonfungiblePositionManager(address(uniFactory), address(weth), address(0));
+        uniNonFungibleManager =
+            new NonfungiblePositionManager(address(uniFactory), address(weth), address(0));
     }
 
     function _deploySqueethEcosystem(uint256 _squeethEthPrice, uint24 _poolFee) internal {
         usdc = new MockErc20("USDC", "USDC", 6);
         weth = new WETH9Mock();
 
-        ethUsdcPool = _createUniPoolAndInitialize(address(usdc), address(weth), 3300e18, uint24(3000));
+        ethUsdcPool =
+            _createUniPoolAndInitialize(address(usdc), address(weth), 3300e18, uint24(3000));
         vm.warp(block.timestamp + 1000);
         IUniswapV3Pool(ethUsdcPool).increaseObservationCardinalityNext(500);
 
@@ -62,7 +64,9 @@ contract BullStrategyUnitTest is Test {
         address _shortPowerPerp = address(new ShortPowerPerp("ShortPowerPerp", "sOSQTH"));
         address _oracle = address(new Oracle());
 
-        ethWPowerPerpPool = _createUniPoolAndInitialize(address(weth), address(wPowerPerp), _squeethEthPrice, _poolFee);
+        ethWPowerPerpPool = _createUniPoolAndInitialize(
+            address(weth), address(wPowerPerp), _squeethEthPrice, _poolFee
+        );
         vm.warp(block.timestamp + 1000);
         IUniswapV3Pool(ethWPowerPerpPool).increaseObservationCardinalityNext(500);
 
@@ -85,16 +89,20 @@ contract BullStrategyUnitTest is Test {
         new CrabStrategyV2(address(controller), _oracle, address(weth), address(uniFactory), ethWPowerPerpPool, timelock, timelock, uint256(100), uint256(1e17));
     }
 
-    function _createUniPoolAndInitialize(address _tokenA, address _tokenB, uint256 _tokenBPriceInA, uint24 _fee)
-        internal
-        returns (address)
-    {
+    function _createUniPoolAndInitialize(
+        address _tokenA,
+        address _tokenB,
+        uint256 _tokenBPriceInA,
+        uint24 _fee
+    ) internal returns (address) {
         bool isTokenAToken0 = _tokenA < _tokenB;
 
         if (ERC20(_tokenA).decimals() < ERC20(_tokenB).decimals()) {
-            _tokenBPriceInA = _tokenBPriceInA.div(10 ** (ERC20(_tokenB).decimals() - ERC20(_tokenA).decimals()));
+            _tokenBPriceInA =
+                _tokenBPriceInA.div(10 ** (ERC20(_tokenB).decimals() - ERC20(_tokenA).decimals()));
         } else {
-            _tokenBPriceInA = _tokenBPriceInA.mul(10 ** (ERC20(_tokenA).decimals() - ERC20(_tokenB).decimals()));
+            _tokenBPriceInA =
+                _tokenBPriceInA.mul(10 ** (ERC20(_tokenA).decimals() - ERC20(_tokenB).decimals()));
         }
 
         // this may be wrong
