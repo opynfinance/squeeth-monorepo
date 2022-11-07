@@ -190,7 +190,7 @@ contract FlashBullTestFork is Test {
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-        
+
         FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
             ethToCrab: ethToCrab,
             minEthFromSqth: minEthFromSqueeth,
@@ -227,7 +227,7 @@ contract FlashBullTestFork is Test {
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-        
+
         FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
             ethToCrab: ethToCrab,
             minEthFromSqth: minEthFromSqueeth,
@@ -340,7 +340,6 @@ contract FlashBullTestFork is Test {
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-
 
             FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
                 ethToCrab: ethToCrabSecond,
@@ -711,7 +710,7 @@ contract FlashBullTestFork is Test {
         (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
             crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply().add(crabToBeMinted)
         );
-        
+
         FlashBull.FlashDepositParams memory params;
 
         {
@@ -726,7 +725,6 @@ contract FlashBullTestFork is Test {
                 usdcPoolFee: uint24(3000)
             });
         }
-
 
         vm.startPrank(user1);
         flashBull.flashDeposit{value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)}(params);
