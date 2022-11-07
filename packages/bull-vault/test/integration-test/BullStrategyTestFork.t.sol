@@ -116,8 +116,7 @@ contract BullStrategyTestFork is Test {
         bullStrategy.setCap(1);
 
         uint256 crabToDeposit = 1e18;
-        (uint256 wethToLend,) =
-            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS2"));
