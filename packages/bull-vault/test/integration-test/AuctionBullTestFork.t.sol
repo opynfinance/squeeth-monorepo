@@ -133,22 +133,22 @@ contract AuctionBullTestFork is Test {
         _initateDepositInBull();
     }
 
-    function testLeverageRebalanceRepayUsdc() public {
+    function testLeverageRebalanceWhenEthDown() public {
         (uint256 deltaBefore,) = auctionBull.getCurrentDeltaAndCollatRatio();
         console.log("deltaBefore", deltaBefore);
-        // uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        // uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        // uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
         // uint256 ethSlippageTolerance = 1e14;
 
-        // uint256 ethUsdPrice = UniOracle._getTwap(
-        //     controller.ethQuoteCurrencyPool(),
-        //     controller.weth(),
-        //     controller.quoteCurrency(),
-        //     TWAP,
-        //     false
-        // );
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
 
         // uint256 usdcToBuy = 10e6;
         // uint256 maxEthForUsdc = usdcToBuy.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));

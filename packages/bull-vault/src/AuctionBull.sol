@@ -125,6 +125,15 @@ contract AuctionBull is UniFlash, Ownable {
         _isValidLeverageRebalance();
     }
 
+    function getCurrentDeltaAndCollatRatio()
+        external
+        view
+        returns (uint256, uint256)
+    {
+        return _getCurrentDeltaAndCollatRatio();
+    }
+
+
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SELLING_USDC) {
             IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(IERC20(weth).balanceOf(address(this)), _uniFlashSwapData.amountToPay);
@@ -149,14 +158,6 @@ contract AuctionBull is UniFlash, Ownable {
         (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
         require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
         require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
-    }
-
-    function getCurrentDeltaAndCollatRatio()
-        external
-        view
-        returns (uint256, uint256)
-    {
-        return _getCurrentDeltaAndCollatRatio();
     }
 
     /**
