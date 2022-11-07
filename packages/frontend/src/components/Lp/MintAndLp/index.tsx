@@ -1,5 +1,5 @@
 import DepositPreviewModal from './DepositPreviewModal'
-import TokenInput from './TokenInput'
+import { TokenInput } from './Input'
 import PageHeader from './PageHeader'
 
 export { DepositPreviewModal, PageHeader, TokenInput }

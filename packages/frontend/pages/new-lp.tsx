@@ -2,11 +2,16 @@ import Nav from '@components/Nav'
 import { createStyles, makeStyles, ThemeProvider } from '@material-ui/core/styles'
 import { Grid, Typography } from '@material-ui/core'
 import React, { useState } from 'react'
+import { useAtomValue } from 'jotai'
 
 import { AltPrimaryButton } from '@components/Button'
 import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
+import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
+import { addressesAtom } from '@state/positions/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { OSQUEETH_DECIMALS } from '@constants/index'
+import squeethLogo from 'public/images/squeeth-logo.svg'
 import getTheme, { Mode } from '../src/theme'
-import sqthLogo from '../public/images/squeeth-logo.svg'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -34,9 +39,15 @@ const useStyles = makeStyles((theme) =>
 )
 
 const LPPage: React.FC = () => {
-  const classes = useStyles()
-  const [sqthAmount, setSqthAmount] = useState(0)
+  const { oSqueeth } = useAtomValue(addressesAtom)
+  const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+
+  const [squeethAmount, setSqueethAmount] = useState('0')
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
+
+  const classes = useStyles()
+  const squeethPrice = getWSqueethPositionValue(1)
 
   return (
     <>
@@ -55,17 +66,17 @@ const LPPage: React.FC = () => {
         </Grid>
         <Grid item xs md>
           <Typography className={classes.title} variant="subtitle1">
-            Deposit tokens
+            Mint Squeeth and LP
           </Typography>
 
           <TokenInput
-            id="eth-amount-input"
-            value={sqthAmount}
-            onChange={setSqthAmount}
-            tokenPrice="1500"
-            tokenLogo={sqthLogo}
-            tokenSymbol="oSQTH"
-            tokenBalance="12.34"
+            id="squeeth-mint-amount"
+            value={squeethAmount}
+            onInputChange={setSqueethAmount}
+            symbol="oSQTH"
+            logo={squeethLogo}
+            price={squeethPrice.toString()}
+            balance={squeethBalance.toString()}
           />
 
           <AltPrimaryButton
@@ -74,12 +85,16 @@ const LPPage: React.FC = () => {
             onClick={() => setPreviewModalOpen(true)}
             fullWidth
           >
-            Preview deposit
+            Preview transaction
           </AltPrimaryButton>
         </Grid>
       </Grid>
 
-      <DepositPreviewModal isOpen={isPreviewModalOpen} onClose={() => setPreviewModalOpen(false)} />
+      <DepositPreviewModal
+        squeethToMint={squeethAmount}
+        isOpen={isPreviewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+      />
     </>
   )
 }

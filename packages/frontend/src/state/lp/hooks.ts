@@ -15,7 +15,6 @@ import useAppCallback from '@hooks/useAppCallback'
 import { addressAtom } from '../wallet/atoms'
 import { Contract } from 'web3-eth-contract'
 import { useHandleTransaction } from '../wallet/hooks'
-import { ethers } from 'ethers'
 import { useCallback } from 'react'
 import { useGetDebtAmount, useGetVault } from '../controller/hooks'
 import { indexAtom, normFactorAtom } from '../controller/atoms'
@@ -28,6 +27,59 @@ const x96 = new BigNumber(2).pow(96)
 const FLASHLOAN_BUFFER = 0.02
 
 /*** ACTIONS ***/
+
+export const useGetDepositAmounts = () => {
+  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+  const index = useAtomValue(indexAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const getVault = useGetVault()
+  const getCollateralToLP = useGetCollateralToLP()
+
+  const getDepositAmounts = useAppCallback(
+    async (
+      squeethToMint: BigNumber,
+      lowerTickInput: number,
+      upperTickInput: number,
+      vaultId: number,
+      collatRatio: number,
+      withdrawAmount: number,
+    ) => {
+      const vaultBefore = await getVault(vaultId)
+
+      if (!squeethPoolContract || !vaultBefore || !vaultBefore.shortAmount || !vaultBefore.collateralAmount) return null
+
+      const mintWSqueethAmount = fromTokenAmount(squeethToMint, OSQUEETH_DECIMALS)
+      const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
+      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
+      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
+
+      const collateralToLp = await getCollateralToLP(mintWSqueethAmount, lowerTick, upperTick, tick)
+      if (!collateralToLp) return
+
+      const collateralToWithdraw = fromTokenAmount(withdrawAmount, OSQUEETH_DECIMALS)
+      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+      const vaultShortAmt = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
+      const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)
+
+      const oSQTHInETH = mintWSqueethAmount.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
+      const collateralToMint = new BigNumber(collatRatio)
+        .times(vaultShortAmt.plus(mintWSqueethAmount).times(normFactor).times(ethIndexPrice).div(INDEX_SCALE))
+        .minus(vaultCollateralAmt.minus(collateralToWithdraw).plus(collateralToLp).plus(oSQTHInETH))
+
+      const collateralToMintPos = BigNumber.max(collateralToMint, 0)
+      const total = collateralToLp.plus(collateralToMintPos).minus(collateralToWithdraw)
+
+      return {
+        total: total.toFixed(0),
+        mint: collateralToMintPos.toFixed(0),
+        lp: collateralToLp.toFixed(0),
+      }
+    },
+    [index, normFactor, squeethPoolContract, getCollateralToLP, getVault],
+  )
+
+  return getDepositAmounts
+}
 
 // Opening a mint and LP position and depositing
 export const useOpenPositionDeposit = () => {
@@ -42,6 +94,7 @@ export const useOpenPositionDeposit = () => {
   const normFactor = useAtomValue(normFactorAtom)
   const getVault = useGetVault()
   const getCollateralToLP = useGetCollateralToLP()
+
   const openPositionDeposit = useAppCallback(
     async (
       squeethToMint: BigNumber,
