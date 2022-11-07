@@ -53,6 +53,7 @@ contract LeverageBull is Ownable {
 
     /**
      * @dev constructor
+     * @param _owner owner address
      * @param _euler euler address
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address

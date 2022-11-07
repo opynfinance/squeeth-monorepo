@@ -111,6 +111,20 @@ contract BullStrategyTestFork is Test {
         bullStrategy.setCap(10e18);
     }
 
+    function testDepositWhenCapFull() public {
+        vm.prank(bullOwner);
+        bullStrategy.setCap(1);
+
+        uint256 crabToDeposit = 1e18;
+        (uint256 wethToLend,) =
+            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("BS2"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
+    }
+
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
