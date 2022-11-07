@@ -58,6 +58,8 @@ contract AuctionBullTestFork is Test {
     address internal dToken;
     address internal wPowerPerp;
 
+    uint256 internal cap;
+
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
@@ -102,6 +104,10 @@ contract AuctionBullTestFork is Test {
             dToken
         );
         vm.stopPrank();
+
+        cap = 100000e18;
+        vm.prank(owner);
+        bullStrategy.setCap(cap);
 
         vm.startPrank(owner);
         bullStrategy.setAuction(address(auctionBull));

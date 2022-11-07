@@ -79,6 +79,11 @@ contract AuctionBull is UniFlash, Ownable {
         eToken = _eToken;
         dToken = _dToken;
 
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).weth()).approve(_bull, type(uint256).max);
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(
+            _bull, type(uint256).max
+        );
+
         transferOwnership(_auctionOwner);
     }
 
@@ -88,7 +93,7 @@ contract AuctionBull is UniFlash, Ownable {
     function leverageRebalance(
         bool _isBuyingUsdc,
         uint256 _usdcAmount,
-        uint256 _ethThresholdAmount,
+        uint256 _wethThresholdAmount,
         uint24 _poolFee
     ) external {
         require(msg.sender == auctionManager);
@@ -101,42 +106,40 @@ contract AuctionBull is UniFlash, Ownable {
                 usdc,
                 _poolFee,
                 _usdcAmount,
-                _ethThresholdAmount,
+                _wethThresholdAmount,
                 uint8(FLASH_SOURCE.BUYING_USDC),
                 abi.encodePacked(_usdcAmount)
             );
         } else {
-            // Borrow more USDC debt
-            IBullStrategy(bullStrategy).borrowUsdcFromEuler(_usdcAmount);
             // swap USDC to ETH
             _exactInFlashSwap(
                 usdc,
                 weth,
                 _poolFee,
                 _usdcAmount,
-                _ethThresholdAmount,
+                _wethThresholdAmount,
                 uint8(FLASH_SOURCE.SELLING_USDC),
                 ""
             );
-            // Deposit ETH in collateral
-            uint256 ethToDeposit = IERC20(weth).balanceOf(address(this));
-            IERC20(weth).transfer(address(bullStrategy), ethToDeposit);
-            IBullStrategy(bullStrategy).depositWethInEuler(ethToDeposit, false);
         }
     }
 
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SELLING_USDC) {
+            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(IERC20(weth).balanceOf(address(this)), _uniFlashSwapData.amountToPay);
+
             IERC20(_uniFlashSwapData.tokenIn).transfer(
                 _uniFlashSwapData.pool, _uniFlashSwapData.amountToPay
             );
+
+            IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.BUYING_USDC) {
-            uint256 usdcAmount = abi.decode(_uniFlashSwapData.callData, (uint256));
+            uint256 usdcToRepay = abi.decode(_uniFlashSwapData.callData, (uint256));
             // Repay some USDC debt
-            IERC20(usdc).transfer(address(bullStrategy), usdcAmount);
-            IBullStrategy(bullStrategy).repayUsdcToEuler(usdcAmount);
-            // Withdraw ETH from collateral
-            IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay);
+            IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
+            IBullStrategy(bullStrategy).repayAndWithdrawFromLeverage(usdcToRepay, _uniFlashSwapData.amountToPay);
+
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }
