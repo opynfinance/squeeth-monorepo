@@ -266,53 +266,6 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
     }
 
-    function testFarm() public {
-        uint256 daiAmount = 10e18;
-        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(dai).transfer(address(bullStrategy), daiAmount);
-
-        uint256 daiBalanceBefore = IERC20(dai).balanceOf(bullOwner);
-
-        vm.prank(bullOwner);
-        bullStrategy.farm(dai, bullOwner);
-
-        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
-        assertTrue(
-            wethToLend.sub(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(
-                    ethInLendingBefore
-                )
-            ) <= 2
-        );
-        assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore),
-            usdcToBorrow
-        );
-        assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
-        assertTrue(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
-                <= bullStrategy.strategyCap()
-        );
-    }
-
-    function testFarmWhenCallerNotOwner() public {
-        uint256 daiAmount = 10e18;
-        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
-        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(dai).transfer(address(bullStrategy), daiAmount);
-
-        vm.prank(deployer);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bullStrategy.farm(dai, bullOwner);
-    }
-
-    function testFarmWhenAssetIsNotFarmable() public {
-        vm.prank(bullOwner);
-        vm.expectRevert(bytes("BS3"));
-        bullStrategy.farm(usdc, bullOwner);
-    }
-
     /**
      *
      * /************************************************************* Helper functions for testing! ********************************************************

@@ -118,7 +118,7 @@ contract FlashBullTestFork is Test {
         vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
         IERC20(weth).transfer(user1, 10100e18);
     }
-
+    
     function testFuzzingFlashDeposit(uint256 _ethToCrab) public {
         _ethToCrab = bound(_ethToCrab, 1e16, 600e18);
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
