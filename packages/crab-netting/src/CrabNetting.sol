@@ -516,6 +516,10 @@ contract CrabNetting is Ownable, EIP712 {
         // step 1 get all the eth in
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
+            require(
+                _p.orders[i].isBuying && _p.orders[i].price < _p.clearingPrice
+            );
+            checkOrder(_p.orders[i]);
             if (_p.orders[i].quantity >= remainingToSell) {
                 IWETH(weth).transferFrom(
                     _p.orders[i].trader,
@@ -575,8 +579,6 @@ contract CrabNetting is Ownable, EIP712 {
         to_send.sqth = IERC20(sqth).balanceOf(address(this));
         remainingToSell = to_send.sqth;
         for (uint256 j = 0; j < _p.orders.length && remainingToSell > 0; j++) {
-            require(_p.orders[j].isBuying);
-            checkOrder(_p.orders[j]);
             if (_p.orders[j].quantity < remainingToSell) {
                 IERC20(sqth).transfer(
                     _p.orders[j].trader,
@@ -681,7 +683,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 toPull = sqthRequired;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             checkOrder(_p.orders[i]);
-            require(!_p.orders[i].isBuying);
+            require(
+                !_p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice
+            );
             if (_p.orders[i].quantity < toPull) {
                 toPull -= _p.orders[i].quantity;
                 IERC20(sqth).transferFrom(
