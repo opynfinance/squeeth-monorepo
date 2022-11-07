@@ -21,5 +21,4 @@ interface IBullStrategy {
     function repayUsdcToEuler(uint256 _usdcToRepay) external;
     function borrowUsdcFromEuler(uint256 _usdcToBorrow) external;
     function depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) external;
-    function getCrabBalance() external view returns (uint256);
 }

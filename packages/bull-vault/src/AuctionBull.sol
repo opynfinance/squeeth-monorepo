@@ -11,6 +11,8 @@ import { IEulerDToken } from "./interface/IEulerDToken.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { UniFlash } from "./UniFlash.sol";
 import { UniOracle } from "./UniOracle.sol";
+// lib
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 import { console } from "forge-std/console.sol";
 
@@ -19,6 +21,8 @@ import { console } from "forge-std/console.sol";
  * @author opyn team
  */
 contract AuctionBull is UniFlash, Ownable {
+    using StrategyMath for uint256;
+    
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
 

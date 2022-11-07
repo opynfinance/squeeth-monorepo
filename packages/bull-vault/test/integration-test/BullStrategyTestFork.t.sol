@@ -48,6 +48,8 @@ contract BullStrategyTestFork is Test {
     address internal deployer;
     address internal bullOwner;
 
+    uint256 internal cap;
+
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
