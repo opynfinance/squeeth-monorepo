@@ -280,7 +280,20 @@ contract BullStrategyTestFork is Test {
         vm.prank(bullOwner);
         bullStrategy.farm(dai, bullOwner);
 
-        assertEq(IERC20(dai).balanceOf(bullOwner).sub(daiAmount), daiBalanceBefore);
+        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
+        assertTrue(
+            wethToLend.sub(
+                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(
+                    ethInLendingBefore
+                )
+            ) <= 2
+        );
+        assertEq(
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore),
+            usdcToBorrow
+        );
+        assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
+        assertTrue(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)) <= bullStrategy.strategyCap());
     }
 
     function testFarmWhenCallerNotOwner() public {
