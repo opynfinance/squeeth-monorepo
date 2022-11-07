@@ -97,7 +97,6 @@ contract AuctionBull is UniFlash, Ownable {
         uint24 _poolFee
     ) external {
         require(msg.sender == auctionManager);
-        _checkValidRebalance(_isBuyingUsdc, _usdcAmount);
 
         if (_isBuyingUsdc) {
             // swap ETH to USDC
@@ -122,6 +121,8 @@ contract AuctionBull is UniFlash, Ownable {
                 ""
             );
         }
+
+        _isValidLeverageRebalance();
     }
 
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
@@ -144,24 +145,24 @@ contract AuctionBull is UniFlash, Ownable {
         }
     }
 
-    function _checkValidRebalance(bool _isBuyingUsdc, uint256 _usdcAmount) internal view {
-        (uint256 delta, uint256 cr) = _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
+    function _isValidLeverageRebalance() internal view {
+        (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
         require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
         require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
     }
 
-    function getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount)
+    function getCurrentDeltaAndCollatRatio()
         external
         view
         returns (uint256, uint256)
     {
-        return _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
+        return _getCurrentDeltaAndCollatRatio();
     }
 
     /**
      * @notice get expected bull startegy delta and leverage collat ratio after leverage rebalance
      */
-    function _getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount)
+    function _getCurrentDeltaAndCollatRatio()
         internal
         view
         returns (uint256, uint256)
@@ -174,26 +175,23 @@ contract AuctionBull is UniFlash, Ownable {
             ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
         ).wdiv(IERC20(crab).totalSupply());
 
-        uint256 usdcDebt;
-        uint256 wethInCollateral;
-        uint256 expectedWeth = _usdcAmount.wdiv(ethUsdPrice).mul(1e12);
-        if (_isBuyingUsdc) {
-            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).sub(_usdcAmount);
-            wethInCollateral =
-                IEulerEToken(eToken).balanceOfUnderlying(address(this)).sub(expectedWeth);
-        } else {
-            usdcDebt = IEulerDToken(dToken).balanceOf(address(this)).add(_usdcAmount);
-            wethInCollateral =
-                IEulerEToken(eToken).balanceOfUnderlying(address(this)).add(expectedWeth);
-        }
+        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(this));
+        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this));
 
+        console.log("here");
         uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
             (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(
                 wethInCollateral.wmul(ethUsdPrice)
             ).sub(usdcDebt.mul(1e12))
         );
+        console.log("here2");
+        console.log("delta", delta);
+        console.log("wethInCollateral", wethInCollateral);
+        console.log("ethUsdPrice", ethUsdPrice);
+        console.log("usdcDebt", usdcDebt);
 
-        uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt).div(1e12);
+        uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt.mul(1e12));
+
         return (delta, cr);
     }
 }

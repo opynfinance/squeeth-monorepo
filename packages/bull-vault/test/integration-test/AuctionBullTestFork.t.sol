@@ -134,7 +134,7 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceRepayUsdc() public {
-        (uint256 deltaBefore,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaBefore,) = auctionBull.getCurrentDeltaAndCollatRatio();
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -160,7 +160,7 @@ contract AuctionBullTestFork is Test {
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceAfter = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        (uint256 deltaAfter,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaAfter,) = auctionBull.getCurrentDeltaAndCollatRatio();
 
         // The auction contract should hold no remaining funds
         assertEq(
@@ -193,7 +193,7 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceBorrowUsdc() public {
-        (uint256 deltaBefore,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaBefore,) = auctionBull.getCurrentDeltaAndCollatRatio();
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -218,7 +218,7 @@ contract AuctionBullTestFork is Test {
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceAfter = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        (uint256 deltaAfter,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaAfter,) = auctionBull.getCurrentDeltaAndCollatRatio();
 
         // The auction contract should hold no remaining funds
         assertEq(
@@ -265,7 +265,7 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceBuy() public {
-        (uint256 deltaBefore,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaBefore,) = auctionBull.getCurrentDeltaAndCollatRatio();
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -284,7 +284,7 @@ contract AuctionBullTestFork is Test {
         uint256 ethToBuy = usdcToSell.wdiv(ethUsdPrice).mul(1e12);
         auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
 
-        (uint256 deltaAfter,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+        (uint256 deltaAfter,) = auctionBull.getCurrentDeltaAndCollatRatio();
 
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(address(bullStrategy));
