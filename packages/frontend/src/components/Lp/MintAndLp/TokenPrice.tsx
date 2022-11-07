@@ -1,6 +1,7 @@
 import React from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { Typography } from '@material-ui/core'
+import { Typography, Box, BoxProps } from '@material-ui/core'
+import clsx from 'clsx'
 
 type TokenPriceStyleProps = {
   fontSize: string
@@ -13,25 +14,31 @@ const useTokenPriceStyles = makeStyles((theme) =>
       display: 'flex',
       gap: theme.spacing(1),
     },
-    priceText: (props: TokenPriceStyleProps) => ({
-      fontSize: props.fontSize,
-      color: props.color,
-    }),
+    defaultVariant: {
+      color: 'rgba(255, 255, 255, 0.8)',
+      fontSize: '14px',
+    },
+    smallVariant: {
+      color: 'rgba(255, 255, 255, 0.6)',
+      fontSize: '12px',
+    },
   }),
 )
 
-const TokenPrice: React.FC<{ symbol: string; price: string; styleProps?: TokenPriceStyleProps }> = ({
+const TokenPrice: React.FC<{ symbol: string; price: string; isSmall?: boolean }> = ({
   symbol,
   price,
-  styleProps = { fontSize: '14px', color: 'rgba(255, 255, 255)' },
+  isSmall = false,
 }) => {
-  const classes = useTokenPriceStyles(styleProps)
+  const classes = useTokenPriceStyles()
+
+  const textClassName = isSmall ? classes.smallVariant : classes.defaultVariant
 
   return (
     <div className={classes.priceContainer}>
-      <Typography className={classes.priceText}>{`1 ${symbol}`}</Typography>
-      <Typography className={classes.priceText}>{'='}</Typography>
-      <Typography className={classes.priceText}>{`$${price}`}</Typography>
+      <Typography className={textClassName}>{`1 ${symbol}`}</Typography>
+      <Typography className={textClassName}>{'='}</Typography>
+      <Typography className={textClassName}>{`$${price}`}</Typography>
     </div>
   )
 }

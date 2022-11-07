@@ -1,17 +1,18 @@
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import React from 'react'
-import { Typography } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
 
+import { formatNumber } from '@utils/formatter'
 import TokenLogo from './TokenLogo'
 
-const useTokenDepositStyles = makeStyles((theme) =>
+const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       backgroundColor: 'inherit',
       textAlign: 'left',
       position: 'relative',
       marginBottom: '44px',
-      width: '48%',
+      width: '50%',
       zIndex: 0,
     },
 
@@ -72,32 +73,37 @@ const useTokenDepositStyles = makeStyles((theme) =>
     tokenBalanceLabel: {
       opacity: 0.5,
     },
+    primaryColor: {
+      color: theme.palette.primary.main,
+    },
   }),
 )
 
-type TokenDepositType = {
+type TokenAmountType = {
   amount: string
-  tokenPrice: string
-  tokenSymbol: string
-  tokenLogo: string
-  tokenBalance: string
+  price: string
+  symbol: string
+  logo: string
+  balance: string
 }
 
-const TokenDeposit: React.FC<TokenDepositType> = ({ amount, tokenPrice, tokenSymbol, tokenLogo, tokenBalance }) => {
-  const classes = useTokenDepositStyles()
+const TokenAmount: React.FC<TokenAmountType> = ({ amount, price, symbol, logo, balance }) => {
+  const classes = useStyles()
+
+  const usdValue = price ? Number(amount) * Number(price) : 0
 
   return (
     <div className={classes.container}>
       <div className={classes.mainSection}>
-        <TokenLogo logoSrc={tokenLogo} />
+        <TokenLogo logoSrc={logo} />
         <div className={classes.depositContainer}>
           <div className={classes.amountContainer}>
             <Typography className={classes.amount}>{amount}</Typography>
-            <Typography className={classes.symbol}>{tokenSymbol}</Typography>
+            <Typography className={classes.symbol}>{symbol}</Typography>
           </div>
 
           <Typography variant="caption" className={classes.usdValue}>
-            ${tokenPrice ? parseInt(amount) * parseInt(tokenPrice) : 0}
+            {'$' + formatNumber(usdValue)}
           </Typography>
         </div>
       </div>
@@ -106,12 +112,19 @@ const TokenDeposit: React.FC<TokenDepositType> = ({ amount, tokenPrice, tokenSym
         <Typography variant="subtitle2" className={classes.tokenBalanceLabel}>
           Available
         </Typography>
-        <Typography variant="subtitle2">
-          {tokenBalance} {tokenSymbol}
-        </Typography>
+
+        <Box display="flex" alignItems="center" gridGap="4px">
+          <Typography variant="subtitle2">
+            {formatNumber(Number(balance))} {symbol}
+          </Typography>
+
+          <Typography variant="subtitle2" className={classes.primaryColor}>
+            (Max)
+          </Typography>
+        </Box>
       </div>
     </div>
   )
 }
 
-export default TokenDeposit
+export default TokenAmount
