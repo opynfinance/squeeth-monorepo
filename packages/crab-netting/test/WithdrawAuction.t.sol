@@ -126,6 +126,10 @@ contract TestWithdrawAuction is BaseForkSetup {
             1e18,
             "crab balance"
         );
+        assertEq(
+            netting.crabBalance(address(withdrawer)),
+            11e18 - params.crabToWithdraw
+        );
         assertEq(IWETH(weth).balanceOf(address(netting)), 0, "weth balance");
     }
 }
