@@ -22,7 +22,7 @@ import { console } from "forge-std/console.sol";
  */
 contract AuctionBull is UniFlash, Ownable {
     using StrategyMath for uint256;
-    
+
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
 
