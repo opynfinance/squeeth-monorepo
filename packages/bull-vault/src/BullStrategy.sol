@@ -38,12 +38,15 @@ contract BullStrategy is ERC20, LeverageBull {
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
+    /// @dev auction module address
+    address public auction;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
+    event SetAuction(address oldAuction, address newAuction);
 
     /**
      * @notice constructor for BullStrategy
@@ -73,22 +76,6 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw airdropped asset
-     * @dev can only be called by owner
-     * @param _asset asset address
-     * @param _receiver receiver address
-     */
-    function farm(address _asset, address _receiver) external onlyOwner {
-        require(
-            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
-                && (_asset != dToken) && (_asset != wPowerPerp),
-            "BS3"
-        );
-
-        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
-    }
-
-    /**
      * @notice set strategy cap
      * @param _cap startegy cap
      */
@@ -100,16 +87,12 @@ contract BullStrategy is ERC20, LeverageBull {
         strategyCap = _cap;
     }
 
-    /**
-     * @notice set strategy cap
-     * @param _cap startegy cap
-     */
-    function setCap(uint256 _cap) external onlyOwner {
-        require(_cap != 0, "BS1");
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction != address(0), "BS3");
 
-        emit SetCap(strategyCap, _cap);
+        emit SetAuction(auction, _auction);
 
-        strategyCap = _cap;
+        auction = _auction;
     }
 
     /**
