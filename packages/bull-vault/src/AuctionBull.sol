@@ -54,16 +54,22 @@ contract AuctionBull is UniFlash, Ownable {
         BUYING_USDC
     }
 
-    constructor(address _auctionOwner, address _auctionManager, address _bull, address _factory, address _crab, address _eToken, address _dToken)
-        UniFlash(_factory)
-        Ownable()
-    {
+    constructor(
+        address _auctionOwner,
+        address _auctionManager,
+        address _bull,
+        address _factory,
+        address _crab,
+        address _eToken,
+        address _dToken
+    ) UniFlash(_factory) Ownable() {
         auctionManager = _auctionManager;
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
         ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
-        ethUSDCPool = IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+        ethUSDCPool =
+            IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
         crab = _crab;
         eToken = _eToken;
@@ -133,13 +139,16 @@ contract AuctionBull is UniFlash, Ownable {
     }
 
     function _checkValidRebalance(bool _isBuyingUsdc, uint256 _usdcAmount) internal view {
-        (uint256 delta, uint256 cr) =
-            _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
+        (uint256 delta, uint256 cr) = _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
         require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "Invalid delta after rebalance");
         require(cr <= CR_UPPER && cr >= CR_LOWER, "Invalid CR after rebalance");
     }
 
-    function getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount) external view returns (uint256, uint256) {
+    function getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount)
+        external
+        view
+        returns (uint256, uint256)
+    {
         return _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
     }
 
@@ -149,7 +158,8 @@ contract AuctionBull is UniFlash, Ownable {
         view
         returns (uint256, uint256)
     {
-        (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 squeethInCrab) =
+            IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
         uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
         uint256 crabUsdPrice = (
@@ -170,13 +180,12 @@ contract AuctionBull is UniFlash, Ownable {
         }
 
         uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
-            (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(wethInCollateral.wmul(ethUsdPrice)).sub(
-                usdcDebt.mul(1e12)
-            )
+            (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(
+                wethInCollateral.wmul(ethUsdPrice)
+            ).sub(usdcDebt.mul(1e12))
         );
 
         uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt).div(1e12);
         return (delta, cr);
     }
-
 }
