@@ -51,6 +51,8 @@ contract FlashBullTestFork is Test {
     address internal user1;
     address internal deployer;
 
+    uint256 internal cap;
+
     // var to avoid stack too deep in test functions
     uint256 userEthBalanceBeforeTx;
     uint256 bullToMint;
@@ -68,6 +70,7 @@ contract FlashBullTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy = new BullStrategy(
+            deployer,
             address(crabV2),
             address(controller),
             euler,
@@ -91,6 +94,9 @@ contract FlashBullTestFork is Test {
             dToken,
             address(crabV2)
         );
+
+        cap = 100000e18;
+        bullStrategy.setCap(cap);
 
         vm.stopPrank();
         user1Pk = 0xA11CE;

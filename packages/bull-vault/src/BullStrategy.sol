@@ -18,6 +18,8 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 /**
  * Error codes
  * BS0: Can't receive ETH from this sender
+ * BS1: Invalid strategy cap
+ * BS2: Strategy cap reached max
  */
 
 /**
@@ -51,21 +53,26 @@ contract BullStrategy is ERC20, LeverageBull {
     uint256 public crTarget;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event SetCap(uint256 oldCap, uint256 newCap);
 
     /**
      * @notice constructor for BullStrategy
      * @dev this will open a vault in the power token contract and store the vault ID
+     * @param _owner bull strategy owner
      * @param _crab crab address
      * @param _powerTokenController wPowerPerp Controller address
+     * @param _euler euler address
+     * @param _eulerMarketsModule euler markets module address
      */
     constructor(
+        address _owner,
         address _crab,
         address _powerTokenController,
         address _euler,
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
-        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
+        LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
@@ -81,6 +88,18 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function getCrabBalance() external view returns (uint256) {
         return _crabBalance;
+    }
+
+    /**
+     * @notice set strategy cap
+     * @param _cap startegy cap
+     */
+    function setCap(uint256 _cap) external onlyOwner {
+        require(_cap != 0, "BS1");
+
+        emit SetCap(strategyCap, _cap);
+
+        strategyCap = _cap;
     }
 
     /**
@@ -104,9 +123,11 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        (, uint256 usdcBorrowed) = _leverageDeposit(
+        (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
             msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
+
+        require(_totalWethInEuler <= strategyCap, "BS2");
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
