@@ -33,7 +33,13 @@ contract TestUtil is Test {
     Controller internal controller;
     CrabStrategyV2 internal crabV2;
 
-    constructor(address payable _bullStrategy, address payable _controller, address _eToken, address _dToken, address payable _crabV2) {
+    constructor(
+        address payable _bullStrategy,
+        address payable _controller,
+        address _eToken,
+        address _dToken,
+        address payable _crabV2
+    ) {
         bullStrategy = BullStrategy(_bullStrategy);
         controller = Controller(_controller);
         eToken = _eToken;
@@ -42,8 +48,7 @@ contract TestUtil is Test {
     }
 
     function getCrabVaultDetails() public view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(address(controller))
-            .vaults(crabV2.vaultId());
+        VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(crabV2.vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
@@ -71,9 +76,8 @@ contract TestUtil is Test {
             wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );
-            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(
-                uint256(1e18).sub(share)
-            );
+            usdcToBorrow =
+                IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(uint256(1e18).sub(share));
         }
 
         return (wethToLend, usdcToBorrow);

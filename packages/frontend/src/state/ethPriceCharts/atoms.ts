@@ -37,7 +37,7 @@ const ethPriceChartsQueryKeys = {
   ethPNLCompounding: (ethPrices: any) => ['ethPNLCompounding', { ethPricesData: ethPrices }],
 }
 
-export const daysAtom = atom(365)
+export const daysAtom = atom(30)
 export const collatRatioAtom = atom(1.5)
 export const volMultiplierAtom = atom(1.2)
 

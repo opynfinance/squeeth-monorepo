@@ -32,7 +32,12 @@ contract BullStrategyTestFork is Test {
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
 
+    uint256 internal bullOwnerPk;
+    uint256 internal deployerPk;
     uint256 internal user1Pk;
+
+    uint256 internal cap;
+
     address internal user1;
     address internal weth;
     address internal usdc;
@@ -41,20 +46,24 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-    uint256 internal deployerPk;
     address internal deployer;
+    address internal bullOwner;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
         vm.createSelectFork(FORK_URL, 15781550);
+
+        deployerPk = 0xA11CD;
+        deployer = vm.addr(deployerPk);
+        bullOwnerPk = 0xB11CD;
+        bullOwner = vm.addr(bullOwnerPk);
 
         vm.startPrank(deployer);
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy =
-        new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy = new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -62,6 +71,10 @@ contract BullStrategyTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         testUtil = new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
         vm.stopPrank();
+
+        cap = 100000e18;
+        vm.prank(bullOwner);
+        bullStrategy.setCap(cap);
 
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
@@ -82,6 +95,31 @@ contract BullStrategyTestFork is Test {
         // some WETH and USDC rich address
         vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
         IERC20(weth).transfer(user1, 10000e18);
+    }
+
+    function testSetUp() public {
+        assertTrue(bullStrategy.owner() == bullOwner);
+        assertTrue(bullStrategy.strategyCap() == cap);
+    }
+
+    function testSetCapWhenCallerNotOwner() public {
+        cap = 1000000e18;
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.setCap(10e18);
+    }
+
+    function testDepositWhenCapFull() public {
+        vm.prank(bullOwner);
+        bullStrategy.setCap(1);
+
+        uint256 crabToDeposit = 1e18;
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("BS2"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
     }
 
     function testInitialDeposit() public {
@@ -131,7 +169,9 @@ contract BullStrategyTestFork is Test {
         assertEq(bullCrabBalanceAfter.sub(crabToDepositSecond), bullCrabBalanceBefore);
         assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcToBorrow), usdcToBorrowSecond);
-        assertTrue(wethToLendSecond.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)) <= 1);
+        assertTrue(
+            wethToLendSecond.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)) <= 1
+        );
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
     }
 
@@ -186,6 +226,36 @@ contract BullStrategyTestFork is Test {
         );
     }
 
+    function testReceiveFromNonWethOrCrab() public {
+        vm.startPrank(user1);
+        (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
+        vm.stopPrank();
+        assertFalse(status);
+        assertEq(_getRevertMsg(returndata), "BS0");
+    }
+
+    function testSendLessEthComparedToCrabAmount() public {
+        uint256 crabToDeposit = 10e18;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend.wdiv(2e18)}(crabToDeposit);
+        vm.stopPrank();
+    }
+
+    function testSendTooMuchCrabRelativeToEth() public {
+        uint256 crabToDeposit = 10e18;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
+    }
+
     /**
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
@@ -211,6 +281,7 @@ contract BullStrategyTestFork is Test {
         );
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore), usdcToBorrow);
         assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
+        assertTrue(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)) <= bullStrategy.strategyCap());
     }
 
     function testFuzzingWithdraw(uint256 _crabAmount) public {
@@ -290,5 +361,16 @@ contract BullStrategyTestFork is Test {
     function _calcUsdcNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256) {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
         return share.wmul(IEulerDToken(dToken).balanceOf(address(bullStrategy)));
+    }
+
+    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+        // If the _res length is less than 68, then the transaction failed silently (without a revert message)
+        if (_returnData.length < 68) return "Transaction reverted silently";
+
+        assembly {
+            // Slice the sighash.
+            _returnData := add(_returnData, 0x04)
+        }
+        return abi.decode(_returnData, (string)); // All that remains is the revert string
     }
 }

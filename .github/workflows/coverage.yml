@@ -6,7 +6,7 @@ env:
   FORK_URL: ${{secrets.FORK_URL}}    
 
 jobs:
-  check:
+  coverage-bull-vault:
     name: Forge coverage
     runs-on: ubuntu-latest
     steps:

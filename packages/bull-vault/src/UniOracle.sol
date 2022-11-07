@@ -65,7 +65,9 @@ library UniOracle {
         if (baseDecimals == quoteDecimals) return quoteAmountOut;
 
         // if quote token has less decimals, the returned quoteAmountOut will be lower, need to scale up by decimal difference
-        if (baseDecimals > quoteDecimals) return quoteAmountOut.mul(10 ** (baseDecimals - quoteDecimals));
+        if (baseDecimals > quoteDecimals) {
+            return quoteAmountOut.mul(10 ** (baseDecimals - quoteDecimals));
+        }
 
         // if quote token has more decimals, the returned quoteAmountOut will be higher, need to scale down by decimal difference
         return quoteAmountOut.div(10 ** (quoteDecimals - baseDecimals));
