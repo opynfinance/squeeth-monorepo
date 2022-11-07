@@ -127,8 +127,7 @@ contract TestUtil is Test {
     }
 
     function calcWethToWithdraw(uint256 _bullAmount) external view returns (uint256) {
-        return _bullAmount.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)))
-            .wdiv(bullStrategy.totalSupply());
+        return (_bullAmount.wdiv(bullStrategy.totalSupply())).wmul(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)));
     }
 
     function calcBullToMint(uint256 _crabToDeposit) external view returns (uint256) {

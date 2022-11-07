@@ -160,7 +160,9 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
-        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend);
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
+        );
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
         assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
@@ -204,7 +206,9 @@ contract FlashBullTestFork is Test {
         flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
-        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend);
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
+        );
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
         assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
@@ -263,10 +267,8 @@ contract FlashBullTestFork is Test {
             usdcToBorrowSecond,
             "Bull USDC debt amount mismatch for second flashdeposit"
         );
-        assertTrue(
-            wethToLendSecond.sub(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLendFirst)
-            ) <= 1
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLendFirst), wethToLendSecond, 1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMintedSecond),
