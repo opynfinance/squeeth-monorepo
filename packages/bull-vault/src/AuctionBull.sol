@@ -175,8 +175,8 @@ contract AuctionBull is UniFlash, Ownable {
             ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
         ).wdiv(IERC20(crab).totalSupply());
 
-        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(this));
-        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(this));
+        uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
         console.log("here");
         uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
