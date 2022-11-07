@@ -8,6 +8,8 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IEulerMarkets } from "./interface/IEulerMarkets.sol";
 import { IEulerEToken } from "./interface/IEulerEToken.sol";
 import { IEulerDToken } from "./interface/IEulerDToken.sol";
+// contract
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
@@ -22,7 +24,7 @@ import { UniOracle } from "./UniOracle.sol";
  * @dev contract that interact mainly with leverage component
  * @author opyn team
  */
-contract LeverageBull {
+contract LeverageBull is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
@@ -51,11 +53,17 @@ contract LeverageBull {
 
     /**
      * @dev constructor
+     * @param _owner owner address
      * @param _euler euler address
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(address _euler, address _eulerMarkets, address _powerTokenController) {
+    constructor(
+        address _owner,
+        address _euler,
+        address _eulerMarkets,
+        address _powerTokenController
+    ) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
             IController(_powerTokenController).weth()
@@ -73,6 +81,8 @@ contract LeverageBull {
         IERC20(IController(_powerTokenController).quoteCurrency()).approve(
             _euler, type(uint256).max
         );
+
+        transferOwnership(_owner);
     }
 
     function calcLeverageEthUsdc(
@@ -105,7 +115,7 @@ contract LeverageBull {
      * @param _ethInCrab eth in crab strategy
      * @param _squeethInCrab oSQTH debt of crab strategy
      * @param _crabTotalSupply total supply of crab tokens
-     * @return ETH deposited as collateral in Euler and borrowed amount of USDC
+     * @return ETH deposited as collateral in Euler and borrowed amount of USDC, and total ETH deposited as collateral in Euler
      */
     function _leverageDeposit(
         uint256 _ethAmount,
@@ -114,7 +124,7 @@ contract LeverageBull {
         uint256 _ethInCrab,
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
-    ) internal returns (uint256, uint256) {
+    ) internal returns (uint256, uint256, uint256) {
         (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
@@ -124,7 +134,7 @@ contract LeverageBull {
         _depositEthInEuler(ethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (ethToLend, usdcToBorrow);
+        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
