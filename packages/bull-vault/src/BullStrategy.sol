@@ -38,12 +38,15 @@ contract BullStrategy is ERC20, LeverageBull {
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
+    /// @dev auction module address
+    address public auction;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
+    event SetAuction(address oldAuction, address newAuction);
 
     /**
      * @notice constructor for BullStrategy
@@ -73,14 +76,6 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice return the internal accounting of the bull strategy's crab balance
-     * @return crab token amount hold by the bull strategy
-     */
-    function getCrabBalance() external view returns (uint256) {
-        return _crabBalance;
-    }
-
-    /**
      * @notice set strategy cap
      * @param _cap startegy cap
      */
@@ -90,6 +85,14 @@ contract BullStrategy is ERC20, LeverageBull {
         emit SetCap(strategyCap, _cap);
 
         strategyCap = _cap;
+    }
+
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction != address(0), "BS3");
+
+        emit SetAuction(auction, _auction);
+
+        auction = _auction;
     }
 
     /**
@@ -145,6 +148,14 @@ contract BullStrategy is ERC20, LeverageBull {
         payable(msg.sender).sendValue(address(this).balance);
 
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+    }
+
+    /**
+     * @notice return the internal accounting of the bull strategy's crab balance
+     * @return crab token amount hold by the bull strategy
+     */
+    function getCrabBalance() external view returns (uint256) {
+        return _crabBalance;
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {

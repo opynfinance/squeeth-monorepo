@@ -39,8 +39,14 @@ contract AuctionBullTestFork is Test {
 
     uint256 internal user1Pk;
     uint256 internal ownerPk;
+    uint256 internal deployerPk;
+    uint256 internal auctionManagerPk;
+
     address internal user1;
     address internal owner;
+    address internal deployer;
+    address internal auctionManager;
+
     address internal weth;
     address internal usdc;
     address internal euler;
@@ -51,8 +57,6 @@ contract AuctionBullTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-    uint256 internal deployerPk;
-    address internal deployer;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -60,6 +64,12 @@ contract AuctionBullTestFork is Test {
 
         ownerPk = 0xA1CCE;
         owner = vm.addr(ownerPk);
+        auctionManagerPk = 0xA1DCE;
+        auctionManager = vm.addr(auctionManagerPk);
+        deployerPk = 0xA11CE;
+        deployer = vm.addr(deployerPk);
+        user1Pk = 0xA11DE;
+        user1 = vm.addr(user1Pk);
 
         vm.startPrank(deployer);
         factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
@@ -74,12 +84,6 @@ contract AuctionBullTestFork is Test {
             euler,
             eulerMarketsModule
         );
-        auctionBull = new AuctionBull(
-            owner,
-            owner,
-            address(bullStrategy),
-            factory
-        );
         flashBull = new FlashBull(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
@@ -88,14 +92,20 @@ contract AuctionBullTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
+        auctionBull = new AuctionBull(
+            owner,
+            auctionManager,
+            address(bullStrategy),
+            factory,
+            address(crabV2),
+            eToken,
+            dToken
+        );
         vm.stopPrank();
 
         vm.startPrank(owner);
         bullStrategy.setAuction(address(auctionBull));
         vm.stopPrank();
-
-        user1Pk = 0xA11CE;
-        user1 = vm.addr(user1Pk);
 
         vm.label(user1, "User 1");
         vm.label(address(bullStrategy), "BullStrategy");
@@ -114,32 +124,7 @@ contract AuctionBullTestFork is Test {
         vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
         IERC20(weth).transfer(user1, 10000e18);
 
-        // Put some money in bull to start with
-        uint256 ethToCrab = 5e18;
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        (uint256 wSqueethToMint, uint256 fee) =
-            _calcWsqueethToMintAndFee(ethToCrab, squeethInCrab, ethInCrab);
-        uint256 crabToBeMinted =
-            _calcSharesToMint(ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
-        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
-
-        uint256 bullShare = 1e18;
-        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
-            crabToBeMinted, bullShare, ethInCrab, squeethInCrab, crabV2.totalSupply()
-        );
-
-        uint256 totalEthToBull =
-            calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
-
-        vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
-        vm.stopPrank();
-
-        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
-        assertApproxEqAbs(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
-        );
-        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+        _initateDepositInBull();
     }
 
     function testLeverageRebalanceRepayUsdc() public {
@@ -274,6 +259,8 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceBuy() public {
+        (uint256 deltaBefore,) = auctionBull.getDeltaAndCollatRatio(false, 0);
+
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -290,6 +277,8 @@ contract AuctionBullTestFork is Test {
         );
         uint256 ethToBuy = usdcToSell.wdiv(ethUsdPrice).mul(1e12);
         auctionBull.leverageRebalance(false, usdcToSell, 0, 3000);
+
+        (uint256 deltaAfter,) = auctionBull.getDeltaAndCollatRatio(false, 0);
 
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
         uint256 usdcDebtAfter = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -451,5 +440,34 @@ contract AuctionBullTestFork is Test {
 
     function ethPrice() internal view returns (uint256) {
         return UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+    }
+
+    function _initateDepositInBull() internal {
+        // Put some money in bull to start with
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) =
+            _calcWsqueethToMintAndFee(ethToCrab, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted =
+            _calcSharesToMint(ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+        uint256 bullShare = 1e18;
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMinted, bullShare, ethInCrab, squeethInCrab, crabV2.totalSupply()
+        );
+
+        uint256 totalEthToBull =
+            calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
+        vm.stopPrank();
+
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
+        );
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
     }
 }
