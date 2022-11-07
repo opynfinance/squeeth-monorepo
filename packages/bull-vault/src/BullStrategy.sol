@@ -85,18 +85,6 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice set strategy cap
-     * @param _cap startegy cap
-     */
-    function setCap(uint256 _cap) external onlyOwner {
-        require(_cap != 0, "BS1");
-
-        emit SetCap(strategyCap, _cap);
-
-        strategyCap = _cap;
-    }
-
-    /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
      * @param _crabAmount amount of crab token

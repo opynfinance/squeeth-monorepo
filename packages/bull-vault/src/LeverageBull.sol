@@ -17,7 +17,7 @@ import { UniOracle } from "./UniOracle.sol";
 /**
  * Error codes
  * LB0: ETH sent is greater than ETH to deposit in Euler
- * LB1: 
+ * LB1:
  */
 
 /**
