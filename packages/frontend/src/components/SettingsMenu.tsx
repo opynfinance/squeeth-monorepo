@@ -149,6 +149,7 @@ const SettingMenu = () => {
             </ListItem>
             <ListItem
               className={classes.legalLinks}
+              style={{ marginBottom: '.75em' }}
               onMouseOver={() => handleMouseOver('pp', true)}
               onMouseOut={() => handleMouseOver('pp', false)}
             >
@@ -164,6 +165,28 @@ const SettingMenu = () => {
                 </Link>
               </Typography>
               <Link href="/privacy-policy">
+                <a target="_blank">
+                  <NorthEastOutlinedIcon />
+                </a>
+              </Link>
+            </ListItem>
+            <ListItem
+              className={classes.legalLinks}
+              onMouseOver={() => handleMouseOver('pp', true)}
+              onMouseOut={() => handleMouseOver('pp', false)}
+            >
+              <Typography style={{ display: 'flex', alignItems: 'center' }}>
+                <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
+                <Link href="/cookie-policy">
+                  <a
+                    target="_blank"
+                    style={{ textDecoration: isOver && currentlyOver === 'pp' ? 'underline' : 'none' }}
+                  >
+                    Opyn Cookie Policy
+                  </a>
+                </Link>
+              </Typography>
+              <Link href="/cookie-policy">
                 <a target="_blank">
                   <NorthEastOutlinedIcon />
                 </a>
