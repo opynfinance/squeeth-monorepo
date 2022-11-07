@@ -10,7 +10,6 @@ import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { useAtomValue } from 'jotai'
-
 import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
@@ -26,6 +25,8 @@ import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
+import CookieConsent, { Cookies } from "react-cookie-consent";
+import { CookieNames } from '@hooks/useCookies'
 
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -143,6 +144,23 @@ const TradeApp = ({ Component, pageProps }: any) => {
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>
+      <CookieConsent
+        location="bottom"
+        buttonText="I ACCEPT"
+        cookieName={CookieNames.Consent}
+        style={{ background: "#2B373B" }}
+        buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"5px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
+        expires={150}
+        enableDeclineButton
+        declineButtonText= "DECLINE"
+        declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"5px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
+        flipButtons
+        overlay
+      >
+        We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods, including how to disable them, view our {" "}
+       
+        <span style={{ fontSize: "11px" }}> <a href="/cookie-policy" target="_blank">Cookie Policy</a></span>
+      </CookieConsent>
     </React.Fragment>
   )
 }
