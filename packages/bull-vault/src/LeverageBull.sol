@@ -16,8 +16,8 @@ import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
- * LB0: ETH sent is not equal to ETH to deposit in Euler
- * LB1: caller is not auction address
+ * LB0: ETH sent is greater than ETH to deposit in Euler
+ * LB1: 
  */
 
 /**
@@ -96,6 +96,29 @@ contract LeverageBull is Ownable {
         emit SetAuction(auction, _auction);
 
         auction = _auction;
+    }
+
+    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+        IEulerDToken(dToken).repay(0, _usdcToRepay);
+        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
+
+        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+
+        emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
+    }
+
+    function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+
+        IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
+
+        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
     }
 
     function calcLeverageEthUsdc(
