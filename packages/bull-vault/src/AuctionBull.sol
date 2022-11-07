@@ -155,7 +155,9 @@ contract AuctionBull is UniFlash, Ownable {
         return _getDeltaAndCollatRatio(_isBuyingUsdc, _usdcAmount);
     }
 
-    // TODO: Take in crab params when we add full rebalance
+    /**
+     * @notice get expected bull startegy delta and leverage collat ratio after leverage rebalance
+     */
     function _getDeltaAndCollatRatio(bool _isBuyingUsdc, uint256 _usdcAmount)
         internal
         view
