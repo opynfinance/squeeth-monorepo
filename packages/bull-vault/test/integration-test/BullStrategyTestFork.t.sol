@@ -297,7 +297,10 @@ contract BullStrategyTestFork is Test {
             usdcToBorrow
         );
         assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
-        assertTrue(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)) <= bullStrategy.strategyCap());
+        assertTrue(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
+                <= bullStrategy.strategyCap()
+        );
     }
 
     function testFuzzingWithdraw(uint256 _crabAmount) public {
