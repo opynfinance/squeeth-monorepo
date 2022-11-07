@@ -166,6 +166,13 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 receiptIndex
     );
 
+    event BidTraded(
+        uint256 bidId,
+        address trader,
+        uint256 quantity,
+        uint256 price
+    );
+
     /**
      * @notice netting contract constructor
      * @dev initializes the erc20 address, uniswap router and approves them
@@ -575,9 +582,21 @@ contract CrabNetting is Ownable, EIP712 {
                     _p.orders[j].trader,
                     _p.orders[j].quantity
                 );
+                emit BidTraded(
+                    _p.orders[j].bidId,
+                    _p.orders[j].trader,
+                    _p.orders[j].quantity,
+                    _p.clearingPrice
+                );
                 remainingToSell -= _p.orders[j].quantity;
             } else {
                 IERC20(sqth).transfer(_p.orders[j].trader, remainingToSell);
+                emit BidTraded(
+                    _p.orders[j].bidId,
+                    _p.orders[j].trader,
+                    remainingToSell,
+                    _p.clearingPrice
+                );
                 remainingToSell = 0;
             }
         }
@@ -596,10 +615,16 @@ contract CrabNetting is Ownable, EIP712 {
                 remainingDeposits = remainingDeposits - queuedAmount;
                 usdBalance[deposits[k].sender] -= queuedAmount;
 
-                portion.crab = ((deposits[k].amount * to_send.crab) /
+                portion.crab = ((queuedAmount * to_send.crab) /
                     _p.depositsQueued);
 
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
+                emit USDCDeposited(
+                    deposits[k].sender,
+                    queuedAmount,
+                    portion.crab,
+                    k
+                );
 
                 // portion.eth = ((deposits[k].amount * to_send.eth) /
                 //     _p.depositsQueued); // todo remove this if tammy
@@ -613,6 +638,12 @@ contract CrabNetting is Ownable, EIP712 {
                 portion.crab = ((remainingDeposits * to_send.crab) /
                     _p.depositsQueued);
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
+                emit USDCDeposited(
+                    deposits[k].sender,
+                    remainingDeposits,
+                    portion.crab,
+                    k
+                );
 
                 // portion.eth = ((remainingDeposits * to_send.eth) /
                 //     _p.depositsQueued);
@@ -674,20 +705,24 @@ contract CrabNetting is Ownable, EIP712 {
         // step 3 pay all mms
         IWETH(weth).deposit{value: address(this).balance}();
         toPull = sqthRequired;
+        uint256 quantity;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             if (_p.orders[i].quantity < toPull) {
-                IERC20(weth).transfer(
-                    _p.orders[i].trader,
-                    (_p.orders[i].quantity * _p.clearingPrice) / 1e18
-                );
-                toPull -= _p.orders[i].quantity;
+                quantity = _p.orders[i].quantity;
             } else {
-                IERC20(weth).transfer(
-                    _p.orders[i].trader,
-                    (toPull * _p.clearingPrice) / 1e18
-                );
-                toPull = 0;
+                quantity = toPull;
             }
+            IERC20(weth).transfer(
+                _p.orders[i].trader,
+                (quantity * _p.clearingPrice) / 1e18
+            );
+            toPull -= quantity;
+            emit BidTraded(
+                _p.orders[i].bidId,
+                _p.orders[i].trader,
+                quantity,
+                _p.clearingPrice
+            );
         }
 
         // step 4 convert to USDC
@@ -707,6 +742,7 @@ contract CrabNetting is Ownable, EIP712 {
         // step 5 pay all withdrawers and mark their withdraws as done
         uint256 remainingWithdraws = _p.crabToWithdraw;
         uint256 j = withdrawsIndex;
+        uint256 usdcAmount;
         while (remainingWithdraws > 0) {
             Receipt storage withdraw = withdraws[j];
             if (withdraw.amount <= remainingWithdraws) {
@@ -716,18 +752,32 @@ contract CrabNetting is Ownable, EIP712 {
                 j++; // todo make it j
 
                 // send proportional usdc
-                uint256 usdcAmount = (withdraw.amount * usdcReceived) /
+                usdcAmount =
+                    (withdraw.amount * usdcReceived) /
                     _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
+                emit CrabWithdrawn(
+                    withdraw.sender,
+                    withdraw.amount,
+                    usdcAmount,
+                    j
+                );
                 withdraw.amount = 0;
             } else {
                 withdraw.amount -= remainingWithdraws;
-                crabBalance[withdraw.sender] -= withdraw.amount;
+                crabBalance[withdraw.sender] -= remainingWithdraws;
 
                 // send proportional usdc
-                uint256 usdcAmount = (remainingWithdraws * usdcReceived) /
+                usdcAmount =
+                    (remainingWithdraws * usdcReceived) /
                     _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
+                emit CrabWithdrawn(
+                    withdraw.sender,
+                    remainingWithdraws,
+                    usdcAmount,
+                    j
+                );
 
                 remainingWithdraws = 0;
             }
