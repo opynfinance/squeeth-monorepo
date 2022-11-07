@@ -268,7 +268,9 @@ contract FlashBullTestFork is Test {
             "Bull USDC debt amount mismatch for second flashdeposit"
         );
         assertApproxEqAbs(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLendFirst), wethToLendSecond, 1
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLendFirst),
+            wethToLendSecond,
+            1
         );
         assertEq(
             bullStrategy.getCrabBalance().sub(crabToBeMintedSecond),
