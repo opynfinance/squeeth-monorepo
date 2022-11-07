@@ -136,7 +136,6 @@ contract AuctionBull is UniFlash, Ownable {
             IERC20(usdc).transfer(address(bullStrategy), usdcAmount);
             IBullStrategy(bullStrategy).repayUsdcToEuler(usdcAmount);
             // Withdraw ETH from collateral
-            uint256 ethToWithdraw = _uniFlashSwapData.amountToPay;
             IBullStrategy(bullStrategy).withdrawWethFromEuler(_uniFlashSwapData.amountToPay);
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }

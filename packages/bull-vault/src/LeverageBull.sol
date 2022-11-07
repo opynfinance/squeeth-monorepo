@@ -90,6 +90,14 @@ contract LeverageBull is Ownable {
         transferOwnership(_owner);
     }
 
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction != address(0), "BS3");
+
+        emit SetAuction(auction, _auction);
+
+        auction = _auction;
+    }
+
     function calcLeverageEthUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,

@@ -460,8 +460,16 @@ contract AuctionBullTestFork is Test {
         uint256 totalEthToBull =
             calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
 
+        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
+            ethToCrab: ethToCrab,
+            minEthFromSqth: 0,
+            minEthFromUsdc: 0,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
+
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(ethToCrab, 0, 0, 3000);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);

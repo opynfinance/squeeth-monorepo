@@ -38,15 +38,12 @@ contract BullStrategy is ERC20, LeverageBull {
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
-    /// @dev auction module address
-    address public auction;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
-    event SetAuction(address oldAuction, address newAuction);
 
     /**
      * @notice constructor for BullStrategy
@@ -85,14 +82,6 @@ contract BullStrategy is ERC20, LeverageBull {
         emit SetCap(strategyCap, _cap);
 
         strategyCap = _cap;
-    }
-
-    function setAuction(address _auction) external onlyOwner {
-        require(_auction != address(0), "BS3");
-
-        emit SetAuction(auction, _auction);
-
-        auction = _auction;
     }
 
     /**
