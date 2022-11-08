@@ -134,7 +134,12 @@ contract AuctionBull is UniFlash, Ownable {
     }
 
     /**
-     * @dev changes the leverage component composition by buying or selling USDC
+     * @notice changes the leverage component composition by increasing or decreasing USDC debt
+     * @dev should only be called by auction manager
+     * @param _isSellingUsdc true if startegy is selling USDC, false if not
+     * @param _usdcAmount USDC amount to trade
+     * @param _wethLimitAmount WETH limit price
+     * @param _poolFee USDC/WETH pool fee
      */
     function leverageRebalance(
         bool _isSellingUsdc,
@@ -171,10 +176,18 @@ contract AuctionBull is UniFlash, Ownable {
         _isValidLeverageRebalance();
     }
 
+    /**
+     * @notice get current delta and bull CR ration in Euler
+     * @return delta and CR ratio
+     */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
         return _getCurrentDeltaAndCollatRatio();
     }
 
+    /**
+     * @dev Uniswap V3 internal callback
+     * @param _uniFlashSwapData UniFlashswapCallbackData struct
+     */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (
             FLASH_SOURCE(_uniFlashSwapData.callSource)
@@ -199,6 +212,9 @@ contract AuctionBull is UniFlash, Ownable {
         }
     }
 
+    /**
+     * @notice check if startegy delta and CR ratio is within upper and lower values
+     */
     function _isValidLeverageRebalance() internal view {
         (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
 
@@ -207,7 +223,8 @@ contract AuctionBull is UniFlash, Ownable {
     }
 
     /**
-     * @notice get expected bull startegy delta and leverage collat ratio after leverage rebalance
+     * @notice get current bull startegy delta and leverage collat ratio
+     * @return delta and CR ratio
      */
     function _getCurrentDeltaAndCollatRatio() internal view returns (uint256, uint256) {
         (uint256 ethInCrab, uint256 squeethInCrab) =
