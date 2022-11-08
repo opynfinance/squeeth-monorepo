@@ -41,7 +41,7 @@ contract BullStrategyTestFork is Test {
     address internal owner;
     address internal deployer;
     address internal bullOwner;
-    
+
     address internal weth;
     address internal usdc;
     address internal euler;
