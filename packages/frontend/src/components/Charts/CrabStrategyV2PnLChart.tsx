@@ -7,9 +7,8 @@ import { crabV2graphOptions } from '@constants/diagram'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import Grid from "@material-ui/core/Grid";
-import MomentUtils from "@date-io/moment";
+import DateFnsUtils from "@date-io/date-fns";
 import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
-import "date-fns";
 import { CRABV2_START_DATE } from '@constants/index'
 import { useAtom } from 'jotai'
 
@@ -220,12 +219,12 @@ function CrabStrategyV2PnLChart() {
     return (
       <>
        {/* <div> */}
-          <MuiPickersUtilsProvider utils={MomentUtils}>
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <Grid container className={classes.grid} justifyContent="space-around">
               <DatePicker
                   label="Start Date"
                   placeholder="MM/DD/YYYY"
-                  format={"MM/DD/YYYY"}
+                  format={"MM/dd/yyyy"}
                   value={startDate}
                   minDate={minDate}
                   onChange={d => setStartDate(d || new Date())}
@@ -237,7 +236,7 @@ function CrabStrategyV2PnLChart() {
                 <DatePicker
                   label="End Date"
                   placeholder="MM/DD/YYYY"
-                  format={"MM/DD/YYYY"}
+                  format={"MM/dd/yyyy"}
                   value={endDate}
                   minDate={startDate}
                   onChange={d => setEndDate(d || new Date())}
