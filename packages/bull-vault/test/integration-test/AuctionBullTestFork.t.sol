@@ -156,6 +156,15 @@ contract AuctionBullTestFork is Test {
         _initateDepositInBull();
     }
 
+    function testSetup() public {
+        assertEq(auctionBull.deltaUpper(), 1.1e18);
+        assertEq(auctionBull.deltaLower(), 0.9e18);
+        assertEq(auctionBull.crUpper(), 3e18);
+        assertEq(auctionBull.crLower(), 1.5e18);
+        assertEq(auctionBull.owner(), owner);
+        assertEq(auctionBull.auctionManager(), auctionManager);
+    }
+
     function testLeverageRebalanceWhereCrIsInvalid() public {
         vm.startPrank(user1);
         IWETH9(weth).deposit{value: 50000e18}();
