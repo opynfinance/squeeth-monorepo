@@ -19,6 +19,8 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
  * AB0: caller is not auction manager
  * AB1: Invalid delta after rebalance
  * AB2: Invalid CR after rebalance
+ * AB3: Invalid CR lower and upper values
+ * AB4: Invalid delta lower and upper values
  */
 
 /**
@@ -30,15 +32,6 @@ contract AuctionBull is UniFlash, Ownable {
 
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
-
-    /// @dev highest delta the auction manager can rebalance to
-    uint256 internal constant DELTA_UPPER = 1.1e18;
-    /// @dev lowest delta the auction manager can rebalance to
-    uint256 internal constant DELTA_LOWER = 0.9e18;
-    /// @dev highest CR the auction manager can rebalance to
-    uint256 internal constant CR_UPPER = 3e18;
-    /// @dev lowest CR the auction manager can rebalance to
-    uint256 internal constant CR_LOWER = 1.5e18;
 
     /// @dev USDC address
     address private immutable usdc;
@@ -54,6 +47,15 @@ contract AuctionBull is UniFlash, Ownable {
     /// @dev euler dToken for USDC
     address private immutable dToken;
 
+    /// @dev highest delta the auction manager can rebalance to
+    uint256 public deltaUpper;
+    /// @dev lowest delta the auction manager can rebalance to
+    uint256 public deltaLower;
+    /// @dev highest CR the auction manager can rebalance to
+    uint256 public crUpper;
+    /// @dev lowest CR the auction manager can rebalance to
+    uint256 public crLower;
+
     /// @dev auction manager
     address public auctionManager;
 
@@ -62,6 +64,13 @@ contract AuctionBull is UniFlash, Ownable {
         LEVERAGE_REBALANCE_DECREASE_DEBT,
         LEVERAGE_REBALANCE_INCREASE_DEBT
     }
+
+    event SetCrUpperAndLower(
+        uint256 oldCrLower, uint256 oldCrUpper, uint256 newCrLower, uint256 newCrUpper
+    );
+    event SetDeltaUpperAndLower(
+        uint256 oldDeltaLower, uint256 oldDeltaUpper, uint256 newDeltaLower, uint256 newDeltaUpper
+    );
 
     constructor(
         address _auctionOwner,
@@ -95,12 +104,42 @@ contract AuctionBull is UniFlash, Ownable {
     }
 
     /**
+     * @notice set strategy lower and upper collat ratio
+     * @dev should only be callable by owner
+     * @param _crLower lower CR
+     * @param _crUpper upper CR
+     */
+    function setCrUpperAndLower(uint256 _crLower, uint256 _crUpper) external onlyOwner {
+        require(_crUpper > _crLower, "AB3");
+
+        emit SetCrUpperAndLower(crLower, crUpper, _crLower, _crUpper);
+
+        crLower = _crLower;
+        crUpper = _crUpper;
+    }
+
+    /**
+     * @notice set strategy lower and upper delta
+     * @dev should only be callable by owner
+     * @param _deltaLower lower delta
+     * @param _deltaUpper upper delta
+     */
+    function setDeltaUpperAndLower(uint256 _deltaLower, uint256 _deltaUpper) external onlyOwner {
+        require(_deltaUpper > _deltaLower, "AB4");
+
+        emit SetDeltaUpperAndLower(deltaLower, deltaUpper, _deltaLower, _deltaUpper);
+
+        deltaLower = _deltaLower;
+        deltaUpper = _deltaUpper;
+    }
+
+    /**
      * @dev changes the leverage component composition by buying or selling USDC
      */
     function leverageRebalance(
         bool _isSellingUsdc,
         uint256 _usdcAmount,
-        uint256 _wethThresholdAmount,
+        uint256 _wethLimitAmount,
         uint24 _poolFee
     ) external {
         require(msg.sender == auctionManager, "AB0");
@@ -112,7 +151,7 @@ contract AuctionBull is UniFlash, Ownable {
                 weth,
                 _poolFee,
                 _usdcAmount,
-                _wethThresholdAmount,
+                _wethLimitAmount,
                 uint8(FLASH_SOURCE.LEVERAGE_REBALANCE_INCREASE_DEBT),
                 ""
             );
@@ -123,7 +162,7 @@ contract AuctionBull is UniFlash, Ownable {
                 usdc,
                 _poolFee,
                 _usdcAmount,
-                _wethThresholdAmount,
+                _wethLimitAmount,
                 uint8(FLASH_SOURCE.LEVERAGE_REBALANCE_DECREASE_DEBT),
                 abi.encodePacked(_usdcAmount)
             );
@@ -163,8 +202,8 @@ contract AuctionBull is UniFlash, Ownable {
     function _isValidLeverageRebalance() internal view {
         (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
 
-        require(delta <= DELTA_UPPER && delta >= DELTA_LOWER, "AB1");
-        require(cr <= CR_UPPER && cr >= CR_LOWER, "AB2");
+        require(delta <= deltaUpper && delta >= deltaLower, "AB1");
+        require(cr <= crUpper && cr >= crLower, "AB2");
     }
 
     /**
