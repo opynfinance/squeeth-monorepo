@@ -125,16 +125,16 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(ethToLend == _ethAmount, "LB0");
+        require(wethToLend == _ethAmount, "LB0");
 
-        _depositEthInEuler(ethToLend, true);
+        _depositEthInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+        return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
@@ -190,16 +190,16 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-                return (ethToLend, usdcToBorrow);
+                uint256 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare)
+        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare)
             .wdiv(ONE.sub(_bullShare));
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        return (ethToLend, usdcToBorrow);
+        return (wethToLend, usdcToBorrow);
     }
 
     /**
