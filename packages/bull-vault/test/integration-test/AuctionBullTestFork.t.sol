@@ -126,6 +126,8 @@ contract AuctionBullTestFork is Test {
         vm.startPrank(owner);
         bullStrategy.setCap(cap);
         bullStrategy.setAuction(address(auctionBull));
+        auctionBull.setCrUpperAndLower(1.5e18, 3e18);
+        auctionBull.setDeltaUpperAndLower(0.9e18, 1.1e18);
         vm.stopPrank();
 
         vm.label(user1, "User 1");
