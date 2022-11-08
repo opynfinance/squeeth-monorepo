@@ -668,6 +668,7 @@ contract CrabNetting is Ownable, EIP712 {
         public
         onlyOwner
     {
+        uint256 initEthBalance = IERC20(weth).balanceOf(address(this));
         /**
         step 1: get sqth from mms
         step 2: withdraw from crab
@@ -737,7 +738,8 @@ contract CrabNetting is Ownable, EIP712 {
                 fee: _p.ethUSDFee,
                 recipient: address(this),
                 deadline: block.timestamp,
-                amountIn: IERC20(weth).balanceOf(address(this)),
+                amountIn: IERC20(weth).balanceOf(address(this)) -
+                    initEthBalance,
                 amountOutMinimum: _p.minUSDC,
                 sqrtPriceLimitX96: 0
             });
