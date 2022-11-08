@@ -32,6 +32,8 @@ contract AuctionBull is UniFlash, Ownable {
 
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     /// @dev USDC address
     address private immutable usdc;
@@ -241,10 +243,10 @@ contract AuctionBull is UniFlash, Ownable {
         uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
             (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(
                 wethInCollateral.wmul(ethUsdPrice)
-            ).sub(usdcDebt.mul(1e12))
+            ).sub(usdcDebt.mul(WETH_DECIMALS_DIFF))
         );
 
-        uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt.mul(1e12));
+        uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt.mul(WETH_DECIMALS_DIFF));
 
         return (delta, cr);
     }

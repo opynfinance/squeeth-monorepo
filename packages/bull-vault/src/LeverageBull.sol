@@ -33,6 +33,8 @@ contract LeverageBull is Ownable {
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
@@ -230,10 +232,9 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 wethToLend =
-                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-                return (wethToLend, usdcToBorrow);
+                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                return (ethToLend, usdcToBorrow);
             }
         }
         uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
