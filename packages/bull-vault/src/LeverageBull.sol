@@ -14,10 +14,12 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * LB0: ETH sent is greater than ETH to deposit in Euler
- * LB1: 
+ * LB1:
  */
 
 /**
@@ -100,6 +102,8 @@ contract LeverageBull is Ownable {
 
     function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
         require(msg.sender == auction, "LB1");
+
+        console.log("real weth", IEulerEToken(eToken).balanceOfUnderlying(address(this)));
 
         IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
         IEulerDToken(dToken).repay(0, _usdcToRepay);
