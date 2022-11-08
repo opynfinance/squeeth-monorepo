@@ -511,6 +511,7 @@ contract CrabNetting is Ownable, EIP712 {
         step 6: send crab to depositors
          */
         uint256 initCrabBalance = IERC20(crab).balanceOf(address(this));
+        uint256 initEthBalance = address(this).balance;
 
         uint256 sqthToSell = _debtToMint(_p.totalDeposit);
         // step 1 get all the eth in
@@ -609,7 +610,7 @@ contract CrabNetting is Ownable, EIP712 {
 
         to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
         // get the balance between start and now
-        to_send.eth = address(this).balance;
+        to_send.eth = address(this).balance - initEthBalance;
         while (remainingDeposits > 0) {
             uint256 queuedAmount = deposits[k].amount;
             Portion memory portion;
@@ -628,9 +629,13 @@ contract CrabNetting is Ownable, EIP712 {
                     k
                 );
 
-                // portion.eth = ((deposits[k].amount * to_send.eth) /
-                //     _p.depositsQueued); // todo remove this if tammy
-                // payable(deposits[depositsIndex].sender).transfer(portion.eth);
+                portion.eth = ((queuedAmount * to_send.eth) /
+                    _p.depositsQueued); // todo remove this if tammy
+                if (portion.eth > 1e16) {
+                    payable(deposits[depositsIndex].sender).transfer(
+                        portion.eth
+                    );
+                }
 
                 deposits[k].amount = 0;
                 k++; // todo make this i
@@ -647,12 +652,15 @@ contract CrabNetting is Ownable, EIP712 {
                     k
                 );
 
-                // portion.eth = ((remainingDeposits * to_send.eth) /
-                //     _p.depositsQueued);
-                // payable(deposits[depositsIndex].sender).transfer(portion.eth);
+                portion.eth = ((remainingDeposits * to_send.eth) /
+                    _p.depositsQueued);
+                if (portion.eth > 1e16) {
+                    payable(deposits[depositsIndex].sender).transfer(
+                        portion.eth
+                    );
+                }
 
                 deposits[k].amount -= remainingDeposits;
-                //to_send.crab -= portion.crab; // todo remove this
                 remainingDeposits = 0;
             }
         }

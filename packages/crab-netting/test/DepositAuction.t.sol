@@ -58,7 +58,7 @@ contract DepositAuctionTest is BaseForkSetup {
         netting.depositUSDC(300000 * 1e6); //200+300 500k usdc deposited
 
         p.depositsQueued = 300000 * 1e6;
-        p.minEth = _convertUSDToETH(p.depositsQueued);
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
 
         uint256 toMint;
         (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
@@ -112,12 +112,14 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
         p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
         // ------------- //
+        uint256 depositorBalance = address(depositor).balance;
         netting.depositAuction(p);
 
         assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 200e18);
         assertEq(netting.usdBalance(depositor), 200000e6);
         assertEq(sqth.balanceOf(mm1), toMint);
-        assertLe(address(netting).balance, 1e18);
+        assertLe(address(netting).balance, 1e16);
+        assertGt(address(depositor).balance - depositorBalance, 5e17);
     }
 
     function testDepositAuction() public {
