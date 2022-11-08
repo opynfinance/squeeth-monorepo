@@ -293,6 +293,7 @@ contract DepositAuctionTest is BaseForkSetup {
 
         vm.rollFork(activeFork, 15829113);
         p.minEth = _convertUSDToETH(p.depositsQueued);
+        p.clearingPrice = _getSqthPrice(1e18);
         console.log("Ending ETH", p.minEth / 10**18);
         (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
             p.minEth,
@@ -313,7 +314,7 @@ contract DepositAuctionTest is BaseForkSetup {
         assertApproxEqRel(
             ICrabStrategyV2(crab).balanceOf(depositor),
             134e18,
-            0.01e18
+            0.06e18
         );
         assertApproxEqRel(
             sqth.balanceOf(mm1),

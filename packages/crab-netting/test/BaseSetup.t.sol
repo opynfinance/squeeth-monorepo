@@ -6,6 +6,7 @@ import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 
 import {CrabNetting} from "../src/CrabNetting.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import {IOracle} from "../src/interfaces/IOracle.sol";
 
 contract FixedERC20 is ERC20 {
     constructor(uint256 initialSupply) ERC20("USDC", "USDC") {
@@ -22,6 +23,9 @@ contract BaseSetup is Test {
     ISwapRouter public immutable swapRouter =
         ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
+    IOracle public immutable oracle =
+        IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
+
     uint256 internal ownerPrivateKey;
     address internal owner;
     uint256 internal depositorPk;
@@ -34,13 +38,18 @@ contract BaseSetup is Test {
         crab = new FixedERC20(10000 * 1e18);
         weth = new FixedERC20(10000 * 1e18);
         sqth = new FixedERC20(10000 * 1e18);
+        address sqthETHPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
+        address ethUsdcPool = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
 
         netting = new CrabNetting(
             address(usdc),
             address(crab),
             address(weth),
             address(sqth),
-            address(swapRouter)
+            sqthETHPool,
+            ethUsdcPool,
+            address(swapRouter),
+            address(oracle)
         );
 
         ownerPrivateKey = 0xA11CE;

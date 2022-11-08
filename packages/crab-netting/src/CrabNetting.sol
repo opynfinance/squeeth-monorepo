@@ -4,6 +4,7 @@ pragma solidity ^0.8.13;
 // interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
+import {IOracle} from "../src/interfaces/IOracle.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 
@@ -11,6 +12,8 @@ import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {EIP712} from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+
+import {console} from "forge-std/console.sol";
 
 /// @dev order struct for a signed order from market maker
 struct Order {
@@ -91,6 +94,13 @@ contract CrabNetting is Ownable, EIP712 {
     /// @dev min CRAB amounts to withdraw or deposit via netting
     uint256 public minCrabAmount;
 
+    /// @dev twap period to use for auction calculations
+    uint32 public auctionTwapPeriod = 420 seconds;
+    // @dev OTC price must be within this distance of the uniswap twap price
+    uint256 public otcPriceTolerance = 5e16; // 5%
+    // @dev OTC price tolerance cannot exceed 20%
+    uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
+
     /// @dev address for ERC20 tokens
     address public usdc;
     address public crab;
@@ -99,6 +109,15 @@ contract CrabNetting is Ownable, EIP712 {
 
     /// @dev address for uniswap router
     ISwapRouter public swapRouter;
+
+    /// @dev address for uniswap oracle
+    address public oracle;
+
+    /// @dev address for sqth eth pool
+    address public ethSqueethPool;
+
+    /// @dev address for usdc eth pool
+    address public ethUsdcPool;
 
     /// @dev array index of last processed deposits
     uint256 public depositsIndex;
@@ -156,7 +175,8 @@ contract CrabNetting is Ownable, EIP712 {
         address depositor,
         uint256 usdcAmount,
         uint256 crabAmount,
-        uint256 receiptIndex
+        uint256 receiptIndex,
+        uint256 refundedETH
     );
 
     event CrabWithdrawn(
@@ -173,6 +193,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 price
     );
 
+    event SetAuctionTwapPeriod(uint32 _auctionTwapPeriod);
+    event SetOTCPriceTolerance(uint256 otcPriceTolerance);
+
     /**
      * @notice netting contract constructor
      * @dev initializes the erc20 address, uniswap router and approves them
@@ -187,13 +210,19 @@ contract CrabNetting is Ownable, EIP712 {
         address _crab,
         address _weth,
         address _sqth,
-        address _swapRouter
+        address _ethSqueethPool,
+        address _ethUsdcPool,
+        address _swapRouter,
+        address _oracle
     ) EIP712("CRABNetting", "1") {
         usdc = _usdc;
         crab = _crab;
         weth = _weth;
         sqth = _sqth;
         swapRouter = ISwapRouter(_swapRouter);
+        oracle = _oracle;
+        ethSqueethPool = _ethSqueethPool;
+        ethUsdcPool = _ethUsdcPool;
 
         // approve crab and sqth so withdraw can happen
         IERC20(crab).approve(crab, 10e36);
@@ -348,6 +377,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _quantity amount of USDC to net
      */
     function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
+        _checkCrabPrice(_price);
         uint256 crabQuantity = (_quantity * 1e18) / _price;
         // todo write tests for reverts and may = in branches
         require(
@@ -375,7 +405,8 @@ contract CrabNetting is Ownable, EIP712 {
                     deposit.sender,
                     deposit.amount,
                     amountToSend,
-                    i
+                    i,
+                    0
                 );
                 delete deposits[i]; // todo may be just write a teset to ensure it does not screwn up the ReceiptUserMapping
                 i++;
@@ -389,7 +420,8 @@ contract CrabNetting is Ownable, EIP712 {
                     deposit.sender,
                     deposit.amount,
                     amountToSend,
-                    i
+                    i,
+                    0
                 );
                 _quantity = 0;
             }
@@ -502,6 +534,7 @@ contract CrabNetting is Ownable, EIP712 {
         external
         onlyOwner
     {
+        _checkOTCPrice(_p.clearingPrice, false);
         /**
         step 1: get eth from mm
         step 2: get eth from deposit usdc
@@ -622,12 +655,6 @@ contract CrabNetting is Ownable, EIP712 {
                     _p.depositsQueued);
 
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
-                emit USDCDeposited(
-                    deposits[k].sender,
-                    queuedAmount,
-                    portion.crab,
-                    k
-                );
 
                 portion.eth = ((queuedAmount * to_send.eth) /
                     _p.depositsQueued); // todo remove this if tammy
@@ -635,7 +662,16 @@ contract CrabNetting is Ownable, EIP712 {
                     payable(deposits[depositsIndex].sender).transfer(
                         portion.eth
                     );
+                } else {
+                    portion.eth = 0;
                 }
+                emit USDCDeposited(
+                    deposits[k].sender,
+                    queuedAmount,
+                    portion.crab,
+                    k,
+                    portion.eth
+                );
 
                 deposits[k].amount = 0;
                 k++; // todo make this i
@@ -645,12 +681,6 @@ contract CrabNetting is Ownable, EIP712 {
                 portion.crab = ((remainingDeposits * to_send.crab) /
                     _p.depositsQueued);
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
-                emit USDCDeposited(
-                    deposits[k].sender,
-                    remainingDeposits,
-                    portion.crab,
-                    k
-                );
 
                 portion.eth = ((remainingDeposits * to_send.eth) /
                     _p.depositsQueued);
@@ -658,7 +688,16 @@ contract CrabNetting is Ownable, EIP712 {
                     payable(deposits[depositsIndex].sender).transfer(
                         portion.eth
                     );
+                } else {
+                    portion.eth = 0;
                 }
+                emit USDCDeposited(
+                    deposits[k].sender,
+                    remainingDeposits,
+                    portion.crab,
+                    k,
+                    portion.eth
+                );
 
                 deposits[k].amount -= remainingDeposits;
                 remainingDeposits = 0;
@@ -676,6 +715,7 @@ contract CrabNetting is Ownable, EIP712 {
         public
         onlyOwner
     {
+        _checkOTCPrice(_p.clearingPrice, true);
         uint256 initEthBalance = IERC20(weth).balanceOf(address(this));
         /**
         step 1: get sqth from mms
@@ -802,6 +842,43 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice owner can set the twap period in seconds that is used for calculating twaps for hedging
+     * @param _auctionTwapPeriod the twap period, in seconds
+     */
+    function setAuctionTwapPeriod(uint32 _auctionTwapPeriod)
+        external
+        onlyOwner
+    {
+        require(
+            _auctionTwapPeriod >= 180,
+            "twap period cannot be less than 180"
+        );
+
+        auctionTwapPeriod = _auctionTwapPeriod;
+
+        emit SetAuctionTwapPeriod(_auctionTwapPeriod);
+    }
+
+    /**
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
+     * @param _otcPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
+     */
+    function setOTCPriceTolerance(uint256 _otcPriceTolerance)
+        external
+        onlyOwner
+    {
+        // Tolerance cannot be more than 20%
+        require(
+            _otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE,
+            "Price tolerance has to be less than 20%"
+        );
+
+        otcPriceTolerance = _otcPriceTolerance;
+
+        emit SetOTCPriceTolerance(_otcPriceTolerance);
+    }
+
+    /**
      * @dev set nonce flag of the trader to true
      * @param _trader address of the signer
      * @param _nonce number that is to be traded only once
@@ -809,6 +886,69 @@ contract CrabNetting is Ownable, EIP712 {
     function _useNonce(address _trader, uint256 _nonce) internal {
         require(!nonces[_trader][_nonce], "C27");
         nonces[_trader][_nonce] = true;
+    }
+
+    /**
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @param _price clearing price provided by manager
+     * @param _isAuctionBuying is crab buying or selling oSQTH
+     */
+    function _checkOTCPrice(uint256 _price, bool _isAuctionBuying)
+        internal
+        view
+    {
+        // Get twap
+        uint256 squeethEthPrice = IOracle(oracle).getTwap(
+            ethSqueethPool,
+            sqth,
+            weth,
+            auctionTwapPeriod,
+            true
+        );
+
+        if (_isAuctionBuying) {
+            require(
+                _price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18,
+                "Price too high relative to Uniswap twap."
+            );
+        } else {
+            require(
+                _price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18,
+                "Price too low relative to Uniswap twap."
+            );
+        }
+    }
+
+    function _checkCrabPrice(uint256 _price) internal view {
+        // Get twap
+        uint256 squeethEthPrice = IOracle(oracle).getTwap(
+            ethSqueethPool,
+            sqth,
+            weth,
+            auctionTwapPeriod,
+            true
+        );
+        uint256 usdcEthPrice = IOracle(oracle).getTwap(
+            ethUsdcPool,
+            weth,
+            usdc,
+            auctionTwapPeriod,
+            true
+        );
+        (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
+            .getVaultDetails();
+        uint256 crabFairPrice = ((collateral -
+            ((debt * squeethEthPrice) / 1e18)) * usdcEthPrice) /
+            ICrabStrategyV2(crab).totalSupply();
+        crabFairPrice = crabFairPrice / 1e12; //converting from units of 18 to 6
+        require(
+            _price <= (crabFairPrice * (1e18 + otcPriceTolerance)) / 1e18,
+            "Crab Price too high"
+        );
+        require(
+            _price >= (crabFairPrice * (1e18 - otcPriceTolerance)) / 1e18,
+            "Crab Price too low"
+        );
     }
 
     receive() external payable {}

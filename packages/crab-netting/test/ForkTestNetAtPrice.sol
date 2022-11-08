@@ -29,9 +29,12 @@ contract ForkTestNetAtPrice is BaseForkSetup {
 
         assertEq(usdc.balanceOf(withdrawer), 0);
         assertEq(crab.balanceOf(depositor), 0);
-        netting.netAtPrice(1023290000, 16840842); // $1023.29 per crab and nets $16.84
-        assertApproxEqAbs(usdc.balanceOf(withdrawer), 16840842, 1); // withdrawer gets that amount
-        assertEq(crab.balanceOf(depositor), 16457545759266679); // depositor gets 0.01645755 crab
-        assertEq(netting.crabBalance(withdrawer), 1e18 - 16457545759266679); // ensure crab remains
+        uint256 priceToNet = 1336290000;
+        uint256 quantityToNet = 16840842;
+        netting.netAtPrice(priceToNet, quantityToNet); // $1336.29 per crab and nets $16.84
+        assertApproxEqAbs(usdc.balanceOf(withdrawer), quantityToNet, 1); // withdrawer gets that amount
+        uint256 crabReceived = (quantityToNet * 1e18) / priceToNet;
+        assertEq(crab.balanceOf(depositor), crabReceived); // depositor gets 0.01265755 crab
+        assertEq(netting.crabBalance(withdrawer), 1e18 - crabReceived); // ensure crab remains
     }
 }

@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
+import {IOracle} from "../src/interfaces/IOracle.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {CrabNetting, Order} from "../src/CrabNetting.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
@@ -18,6 +19,7 @@ contract BaseForkSetup is Test {
     CrabNetting netting;
     ISwapRouter swapRouter;
     IQuoter quoter;
+    IOracle oracle;
     uint256 activeFork;
 
     uint256 internal ownerPrivateKey;
@@ -37,6 +39,8 @@ contract BaseForkSetup is Test {
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
+        address sqthETHPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
+        address ethUsdcPool = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
         activeFork = vm.createSelectFork(FORK_URL, 15819213);
 
         crab = ICrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
@@ -45,13 +49,17 @@ contract BaseForkSetup is Test {
         sqth = ERC20(0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B);
         swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
         quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+        oracle = IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
 
         netting = new CrabNetting(
             address(usdc),
             address(crab),
             address(weth),
             address(sqth),
-            address(swapRouter)
+            sqthETHPool,
+            ethUsdcPool,
+            address(swapRouter),
+            address(oracle)
         );
         vm.prank(address(netting));
         payable(depositor).transfer(address(netting).balance);
