@@ -165,6 +165,40 @@ contract AuctionBullTestFork is Test {
         assertEq(auctionBull.auctionManager(), auctionManager);
     }
 
+    function testSetCrUpperLessThanLower() public {
+        vm.prank(owner);
+        vm.expectRevert(bytes("AB3"));
+        auctionBull.setCrUpperAndLower(3e18, 1.5e18);
+    }
+
+    function testSetCrUpperAndLower() public {
+        vm.prank(owner);
+        auctionBull.setCrUpperAndLower(1.5e18, 3e18);
+    }
+
+    function testSetCrUpperAndLowerWhenCallerNotOwner() public {
+        vm.prank(user1);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        auctionBull.setCrUpperAndLower(1.5e18, 3e18);
+    }
+
+    function testSetDeltaUpperLessThanLower() public {
+        vm.prank(owner);
+        vm.expectRevert(bytes("AB4"));
+        auctionBull.setDeltaUpperAndLower(1.1e18, 0.9e18);
+    }
+
+    function testSetDeltaUpperAndLower() public {
+        vm.prank(owner);
+        auctionBull.setDeltaUpperAndLower(0.9e18, 1.1e18);
+    }
+
+    function testSetDeltaUpperAndLowerWhenCallerNotOwner() public {
+        vm.prank(user1);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        auctionBull.setDeltaUpperAndLower(0.9e18, 1.1e18);
+    }
+
     function testLeverageRebalanceWhereCrIsInvalid() public {
         vm.startPrank(user1);
         IWETH9(weth).deposit{value: 50000e18}();
