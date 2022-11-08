@@ -73,6 +73,7 @@ contract AuctionBull is UniFlash, Ownable {
     event SetDeltaUpperAndLower(
         uint256 oldDeltaLower, uint256 oldDeltaUpper, uint256 newDeltaLower, uint256 newDeltaUpper
     );
+    event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
 
     constructor(
         address _auctionOwner,
@@ -176,6 +177,8 @@ contract AuctionBull is UniFlash, Ownable {
         }
 
         _isValidLeverageRebalance();
+
+        emit LeverageRebalance(_isSellingUsdc, _usdcAmount, _wethLimitAmount);
     }
 
     /**
