@@ -14,6 +14,8 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * LB0: ETH sent is greater than ETH to deposit in Euler
@@ -31,6 +33,8 @@ contract LeverageBull is Ownable {
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
@@ -100,6 +104,8 @@ contract LeverageBull is Ownable {
 
     function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
         require(msg.sender == auction, "LB1");
+
+        console.log("real weth", IEulerEToken(eToken).balanceOfUnderlying(address(this)));
 
         IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
         IEulerDToken(dToken).repay(0, _usdcToRepay);
@@ -227,7 +233,8 @@ contract LeverageBull is Ownable {
                     )
                 ).wdiv(_totalCrabSupply);
                 uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                uint256 usdcToBorrow =
+                    ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (ethToLend, usdcToBorrow);
             }
         }
