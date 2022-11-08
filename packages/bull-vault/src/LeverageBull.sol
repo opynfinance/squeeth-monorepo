@@ -125,13 +125,13 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
         require(wethToLend == _ethAmount, "LB0");
 
-        _depositEthInEuler(wethToLend, true);
+        _depositWethInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
         return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
