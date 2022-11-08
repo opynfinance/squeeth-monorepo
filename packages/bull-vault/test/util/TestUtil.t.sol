@@ -47,6 +47,10 @@ contract TestUtil is Test {
         crabV2 = CrabStrategyV2(_crabV2);
     }
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function getCrabVaultDetails() public view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(address(controller)).vaults(crabV2.vaultId());
