@@ -12,6 +12,7 @@ import {
   squeethPoolContractAtom,
 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { addressAtom } from '../wallet/atoms'
 import { Contract } from 'web3-eth-contract'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -306,11 +307,35 @@ export const useGetTickPrices = () => {
 }
 
 export const useGetTicksFromPriceRange = () => {
-  const getTicksFromPriceRange = useCallback((minPrice: number, maxPrice: number) => {
-    const lowerTick = TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(minPrice, 1))
-    const upperTick = TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(maxPrice, 1))
-    return { lowerTick, upperTick }
-  }, [])
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const ethPrice = useETHPrice()
+
+  const getTicksFromPriceRange = useAppCallback(
+    (minOSqthPrice: BigNumber, maxOSqthPrice: BigNumber) => {
+      // $60 - oSQTH
+      // $1500 - ETH
+      // for 1 ETH how many oSQTH - 1500 / 60
+      // "encodeSqrtRatioX96" asks for amount1, amount0
+      const lowerPriceRange = isWethToken0 ? ethPrice.div(maxOSqthPrice) : minOSqthPrice.div(ethPrice)
+      const upperPriceRange = isWethToken0 ? ethPrice.div(minOSqthPrice) : maxOSqthPrice.div(ethPrice)
+
+      const lowerPriceRangeInt = lowerPriceRange.integerValue()
+      const upperPriceRangeInt = upperPriceRange.integerValue()
+
+      const lowerTick =
+        lowerPriceRangeInt.isFinite() && !lowerPriceRangeInt.isZero()
+          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(lowerPriceRangeInt.toNumber(), 1))
+          : TickMath.MIN_TICK
+
+      const upperTick =
+        upperPriceRangeInt.isFinite() && !upperPriceRangeInt.isZero()
+          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(upperPriceRangeInt.toNumber(), 1))
+          : TickMath.MAX_TICK
+
+      return { lowerTick, upperTick }
+    },
+    [isWethToken0, ethPrice],
+  )
 
   return getTicksFromPriceRange
 }
