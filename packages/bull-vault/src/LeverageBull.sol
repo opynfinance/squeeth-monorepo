@@ -130,7 +130,7 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _totalCrabSupply
     ) external view returns (uint256, uint256) {
-        return _calcLeverageEthUsdc(
+        return _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _totalCrabSupply
         );
     }
@@ -163,16 +163,16 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(ethToLend == _ethAmount, "LB0");
+        require(wethToLend == _ethAmount, "LB0");
 
-        _depositEthInEuler(ethToLend, true);
+        _depositWethInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+        return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
@@ -180,7 +180,7 @@ contract LeverageBull is Ownable {
      * @param _ethToDeposit amount of ETH to deposit
      * @param _wrapEth wrap ETH to WETH if true
      */
-    function _depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
+    function _depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
         if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
         IEulerMarkets(eulerMarkets).enterMarket(0, weth);
@@ -211,7 +211,7 @@ contract LeverageBull is Ownable {
         emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
-    function _calcLeverageEthUsdc(
+    function _calcLeverageWethUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
@@ -228,17 +228,18 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow =
-                    ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
-                return (ethToLend, usdcToBorrow);
+                uint256 wethToLend =
+                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare)
-            .wdiv(ONE.sub(_bullShare));
+        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
+            _bullShare
+        ).wdiv(ONE.sub(_bullShare));
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        return (ethToLend, usdcToBorrow);
+        return (wethToLend, usdcToBorrow);
     }
 
     /**
