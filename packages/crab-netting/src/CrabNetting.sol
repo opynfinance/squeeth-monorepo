@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.13;
 
-import {console} from "forge-std/console.sol";
-
 // interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";

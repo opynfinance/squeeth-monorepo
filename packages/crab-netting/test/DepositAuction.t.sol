@@ -9,6 +9,12 @@ import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 
 import {SigUtils} from "./utils/SigUtils.sol";
 
+struct Sign {
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
+
 contract DepositAuctionTest is BaseForkSetup {
     SigUtils sig;
 
@@ -207,7 +213,7 @@ contract DepositAuctionTest is BaseForkSetup {
         Order memory order = Order(
             0,
             mm1,
-            toMint,
+            toMint - 1e18,
             sqthPrice,
             true,
             block.timestamp,
@@ -217,11 +223,32 @@ contract DepositAuctionTest is BaseForkSetup {
             0x00
         );
 
-        bytes32 digest = sig.getTypedDataHash(order);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(mm1Pk, digest);
-        order.v = v;
-        order.r = r;
-        order.s = s;
+        Sign memory s;
+        (s.v, s.r, s.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order));
+        order.v = s.v;
+        order.r = s.r;
+        order.s = s.s;
+
+        Order memory order0 = Order(
+            0,
+            mm1,
+            1e18,
+            sqthPrice,
+            true,
+            block.timestamp,
+            1,
+            1,
+            0x00,
+            0x00
+        );
+
+        Sign memory s0;
+        (s0.v, s0.r, s0.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order0));
+        order0.v = s0.v;
+        order0.r = s0.r;
+        order0.s = s0.s;
+
+        orders.push(order0);
         orders.push(order);
         vm.prank(mm1);
         weth.approve(address(netting), 1e30);
