@@ -3,7 +3,7 @@ import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
-import bn from 'bignumber.js'
+import BigNumber from 'bignumber.js'
 import { TickMath } from '@uniswap/v3-sdk'
 
 import { AltPrimaryButton } from '@components/Button'
@@ -144,8 +144,8 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const textClasses = useTextStyles()
 
   const squeethPrice = getWSqueethPositionValue(1)
-  const collatRatioVal = new bn(collatRatio).div(100).toNumber()
-  const slippageAmountVal = new bn(slippageAmount).div(100).toNumber()
+  const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
+  const slippageAmountVal = new BigNumber(slippageAmount).div(100).toNumber()
 
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
@@ -154,42 +154,42 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
       return
     }
 
-    const minPriceBN = new bn(minPrice)
-    const maxPriceBN = new bn(maxPrice)
-    if (minPriceBN.isLessThanOrEqualTo(0) || maxPriceBN.isLessThanOrEqualTo(0)) {
-      return
-    }
-
-    // still not sure about this
-    // but basically the thought is that lowerPrice is derived from maxPrice since that's in denominator
-    const lowerPrice = ethPrice.div(maxPrice).integerValue(bn.ROUND_FLOOR).toNumber()
-    const upperPrice = ethPrice.div(minPrice).integerValue(bn.ROUND_FLOOR).toNumber()
-
-    const ticks = getTicksFromPriceRange(lowerPrice, upperPrice)
-
+    const ticks = getTicksFromPriceRange(new BigNumber(minPrice), new BigNumber(maxPrice))
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
   }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice, getTicksFromPriceRange])
 
   useAppEffect(() => {
-    getDepositAmounts(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0).then((deposits) => {
+    async function calcDepositAmounts() {
+      const deposits = await getDepositAmounts(new BigNumber(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0)
       if (deposits) {
         setDepositAmounts(deposits)
       }
-    })
+    }
+
+    calcDepositAmounts()
   }, [squeethToMint, lowerTick, upperTick, collatRatioVal, getDepositAmounts])
 
   const openPosition = useAppCallback(async () => {
     try {
-      await openLpPosition(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, slippageAmountVal, 0, () => {
-        console.log('successfully deposited')
-        onComplete()
-      })
+      await openLpPosition(
+        new BigNumber(squeethToMint),
+        lowerTick,
+        upperTick,
+        0,
+        collatRatioVal,
+        slippageAmountVal,
+        0,
+        () => {
+          console.log('successfully deposited')
+          onComplete()
+        },
+      )
     } catch (e) {
       console.log('transaction failed')
       console.log(e)
     }
-  }, [squeethToMint, lowerTick, upperTick, collatRatio, slippageAmount, openLpPosition])
+  }, [squeethToMint, lowerTick, upperTick, collatRatioVal, slippageAmountVal, openLpPosition, onComplete])
 
   return (
     <>
