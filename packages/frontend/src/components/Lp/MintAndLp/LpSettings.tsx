@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -8,15 +8,16 @@ import { TickMath } from '@uniswap/v3-sdk'
 
 import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { addressesAtom } from '@state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { OSQUEETH_DECIMALS } from '@constants/index'
+import useAppCallback from '@hooks/useAppCallback'
+import { addressesAtom } from '@state/positions/atoms'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
-import { useGetDepositAmounts, useGetTicksFromPriceRange } from '@state/lp/hooks'
+import { useGetDepositAmounts, useGetTicksFromPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
+import { slippageAmountAtom } from '@state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-
-import useAppEffect from '@hooks/useAppEffect'
 import { formatNumber } from '@utils/formatter'
+import { OSQUEETH_DECIMALS } from '@constants/index'
+
 import InfoBox from './InfoBox'
 import TokenPrice from './TokenPrice'
 import TokenAmount from './TokenAmount'
@@ -124,14 +125,17 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getTicksFromPriceRange = useGetTicksFromPriceRange()
   const getDepositAmounts = useGetDepositAmounts()
+  const openLpPosition = useOpenPositionDeposit()
+  const slippageAmount = useAtomValue(slippageAmountAtom)
 
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
   const [minPrice, setMinPrice] = useState('0')
   const [maxPrice, setMaxPrice] = useState('0')
   const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
-  const [collateralRatio, setCollateralRatio] = useState(225)
-
+  const [collatRatio, setCollatRatio] = useState(225)
+  const [lowerTick, setLowerTick] = useState(TickMath.MIN_TICK)
+  const [upperTick, setUpperTick] = useState(TickMath.MAX_TICK)
   const [depositAmounts, setDepositAmounts] = useState<DepositAmounts>({ vault: '0', lp: '0', total: '0' })
 
   const classes = useModalStyles()
@@ -140,46 +144,55 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
   const squeethPrice = getWSqueethPositionValue(1)
 
-  useAppEffect(() => {
-    async function calculateDeposits() {
-      let lowerTickInput, upperTickInput
-
-      if (usingDefaultPriceRange) {
-        lowerTickInput = TickMath.MIN_TICK
-        upperTickInput = TickMath.MAX_TICK
-      } else {
-        const minPriceBN = new bn(minPrice)
-        const maxPriceBN = new bn(maxPrice)
-
-        if (minPriceBN.isLessThanOrEqualTo(0) || maxPriceBN.isLessThanOrEqualTo(0)) {
-          return
-        }
-
-        const ticks = getTicksFromPriceRange(
-          ethPrice.div(maxPrice).integerValue(bn.ROUND_FLOOR).toNumber(),
-          ethPrice.div(minPrice).integerValue(bn.ROUND_FLOOR).toNumber(),
-        )
-
-        lowerTickInput = ticks.lowerTick
-        upperTickInput = ticks.upperTick
-      }
-
-      const depositAmounts = await getDepositAmounts(
-        new bn(squeethToMint),
-        lowerTickInput,
-        upperTickInput,
-        0,
-        collateralRatio,
-        0,
-      )
-      if (depositAmounts) {
-        const { vault, lp, total } = depositAmounts
-        setDepositAmounts({ vault, lp, total })
-      }
+  useEffect(() => {
+    if (usingDefaultPriceRange) {
+      return
     }
 
-    calculateDeposits()
-  }, [collateralRatio, maxPrice, minPrice, squeethToMint, usingDefaultPriceRange, ethPrice])
+    const minPriceBN = new bn(minPrice)
+    const maxPriceBN = new bn(maxPrice)
+    if (minPriceBN.isLessThanOrEqualTo(0) || maxPriceBN.isLessThanOrEqualTo(0)) {
+      return
+    }
+
+    // still not sure about this
+    // but basically the thought is that lowerPrice is derived from maxPrice since that's in denominator
+    const lowerPrice = ethPrice.div(maxPrice).integerValue(bn.ROUND_FLOOR).toNumber()
+    const upperPrice = ethPrice.div(minPrice).integerValue(bn.ROUND_FLOOR).toNumber()
+
+    const ticks = getTicksFromPriceRange(lowerPrice, upperPrice)
+
+    setLowerTick(ticks.lowerTick)
+    setUpperTick(ticks.upperTick)
+  }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice])
+
+  useEffect(() => {
+    getDepositAmounts(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatio, 0).then((deposits) => {
+      if (deposits) {
+        setDepositAmounts(deposits)
+      }
+    })
+  }, [squeethToMint, lowerTick, upperTick, collatRatio])
+
+  const openPosition = useAppCallback(async () => {
+    try {
+      await openLpPosition(
+        new bn(squeethToMint),
+        lowerTick,
+        upperTick,
+        0,
+        collatRatio,
+        slippageAmount.toNumber(),
+        0,
+        () => {
+          console.log('successfull')
+          onComplete()
+        },
+      )
+    } catch (e) {
+      console.log(e)
+    }
+  }, [squeethToMint, lowerTick, upperTick, collatRatio, slippageAmount, openLpPosition])
 
   return (
     <>
@@ -307,8 +320,8 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
             <SimpleInput
               id="collateral-ratio-input"
-              value={collateralRatio}
-              onInputChange={(value) => setCollateralRatio(Number(value))}
+              value={collatRatio}
+              onInputChange={(value) => setCollatRatio(Number(value))}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -322,10 +335,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
         </Box>
 
         <div style={{ marginTop: '24px' }}>
-          <CollateralRatioSlider
-            collateralRatio={collateralRatio}
-            onCollateralRatioChange={(val) => setCollateralRatio(val)}
-          />
+          <CollateralRatioSlider collateralRatio={collatRatio} onCollateralRatioChange={(val) => setCollatRatio(val)} />
         </div>
       </div>
 
@@ -381,7 +391,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
       </div>
 
       <Box marginTop="32px">
-        <AltPrimaryButton id="confirm-deposit-btn" onClick={onComplete} fullWidth>
+        <AltPrimaryButton id="confirm-deposit-btn" onClick={openPosition} fullWidth>
           Confirm deposit
         </AltPrimaryButton>
       </Box>
