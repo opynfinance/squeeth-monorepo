@@ -161,7 +161,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         style={{ background: "#2B373B" }}
         buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"5px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
         expires={365}
-     //   enableDeclineButton
+        enableDeclineButton
         declineButtonText= "DECLINE"
         declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"5px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
         flipButtons
