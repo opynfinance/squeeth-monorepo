@@ -16,7 +16,8 @@ import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
- * LB0: ETH sent is greater than ETH to deposit in Euler
+ * LB0: ETH sent is not equal to ETH to deposit in Euler
+ * LB1: caller is not auction address
  */
 
 /**
@@ -28,9 +29,12 @@ contract LeverageBull is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
-    uint32 private constant TWAP = 420;
+    uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
-    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+    /// @dev target CR for our ETH collateral
+    uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
     address internal immutable ethWSqueethPool;
@@ -48,8 +52,11 @@ contract LeverageBull is Ownable {
     address internal immutable eToken;
     /// @dev euler dToken that represent the borrowed asset
     address internal immutable dToken;
+    /// @dev auction contract address
+    address public auction;
 
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event SetAuction(address oldAuction, address newAuction);
 
     /**
      * @dev constructor
@@ -83,6 +90,37 @@ contract LeverageBull is Ownable {
         );
 
         transferOwnership(_owner);
+    }
+
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction != address(0), "BS3");
+
+        emit SetAuction(auction, _auction);
+
+        auction = _auction;
+    }
+
+    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+        IEulerDToken(dToken).repay(0, _usdcToRepay);
+        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
+
+        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+
+        emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
+    }
+
+    function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+
+        IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
+
+        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
     }
 
     function calcLeverageEthUsdc(
@@ -191,7 +229,8 @@ contract LeverageBull is Ownable {
                     )
                 ).wdiv(_totalCrabSupply);
                 uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                uint256 usdcToBorrow =
+                    ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (ethToLend, usdcToBorrow);
             }
         }
@@ -218,5 +257,9 @@ contract LeverageBull is Ownable {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
+
+    function _isAuction() internal view returns (bool) {
+        return msg.sender == auction;
     }
 }
