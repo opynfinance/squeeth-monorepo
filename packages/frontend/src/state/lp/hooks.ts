@@ -1,4 +1,4 @@
-import { nearestUsableTick, TickMath } from '@uniswap/v3-sdk'
+import { nearestUsableTick, TickMath, encodeSqrtRatioX96 } from '@uniswap/v3-sdk'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useAtomValue } from 'jotai'
 import { addressesAtom, isWethToken0Atom } from '../positions/atoms'
@@ -70,9 +70,9 @@ export const useGetDepositAmounts = () => {
       const total = collateralToLp.plus(collateralToMintPos).minus(collateralToWithdraw)
 
       return {
-        total: total.toFixed(0),
-        mint: collateralToMintPos.toFixed(0),
+        vault: collateralToMintPos.toFixed(0),
         lp: collateralToLp.toFixed(0),
+        total: total.toFixed(0),
       }
     },
     [index, normFactor, squeethPoolContract, getCollateralToLP, getVault],
@@ -295,7 +295,7 @@ export const useGetCollateralToLP = () => {
 }
 
 export const useGetTickPrices = () => {
-  const getTickPrices = useCallback(async (lowerTick: Number, upperTick: Number, currentTick: number) => {
+  const getTickPrices = useCallback((lowerTick: Number, upperTick: Number, currentTick: number) => {
     const sqrtLowerPrice = new BigNumber(TickMath.getSqrtRatioAtTick(Number(lowerTick)).toString()).div(x96)
     const sqrtUpperPrice = new BigNumber(TickMath.getSqrtRatioAtTick(Number(upperTick)).toString()).div(x96)
     const sqrtSqueethPrice = new BigNumber(TickMath.getSqrtRatioAtTick(Number(currentTick)).toString()).div(x96)
@@ -303,6 +303,16 @@ export const useGetTickPrices = () => {
   }, [])
 
   return getTickPrices
+}
+
+export const useGetTicksFromPriceRange = () => {
+  const getTicksFromPriceRange = useCallback((minPrice: number, maxPrice: number) => {
+    const lowerTick = TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(minPrice, 1))
+    const upperTick = TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(maxPrice, 1))
+    return { lowerTick, upperTick }
+  }, [])
+
+  return getTicksFromPriceRange
 }
 
 export const useGetDecreaseLiquidity = () => {
