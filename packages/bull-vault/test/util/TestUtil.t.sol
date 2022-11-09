@@ -47,6 +47,10 @@ contract TestUtil is Test {
         crabV2 = CrabStrategyV2(_crabV2);
     }
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function getCrabVaultDetails() public view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(address(controller)).vaults(crabV2.vaultId());
@@ -100,6 +104,24 @@ contract TestUtil is Test {
         return (wethToLend, usdcToBorrow);
     }
 
+    function getCrabPrice() external view returns (uint256) {
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+        (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+        ).wdiv(crabV2.totalSupply());
+        return crabUsdPrice;
+    }
+
     function calcTotalEthDelta(uint256 _crabToDeposit) external view returns (uint256) {
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
@@ -127,8 +149,9 @@ contract TestUtil is Test {
     }
 
     function calcWethToWithdraw(uint256 _bullAmount) external view returns (uint256) {
-        return _bullAmount.wmul(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)))
-            .wdiv(bullStrategy.totalSupply());
+        return (_bullAmount.wdiv(bullStrategy.totalSupply())).wmul(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
+        );
     }
 
     function calcBullToMint(uint256 _crabToDeposit) external view returns (uint256) {
