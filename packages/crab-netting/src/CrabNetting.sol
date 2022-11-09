@@ -549,7 +549,7 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             require(
-                _p.orders[i].isBuying && _p.orders[i].price < _p.clearingPrice
+                _p.orders[i].isBuying && _p.orders[i].price <= _p.clearingPrice
             );
             checkOrder(_p.orders[i]);
             if (_p.orders[i].quantity >= remainingToSell) {
