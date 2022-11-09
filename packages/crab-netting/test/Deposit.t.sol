@@ -15,6 +15,22 @@ contract DepositTest is BaseForkSetup {
         crab.transfer(withdrawer, 20e18);
     }
 
+    function testDepositMin() public {
+        netting.setMinUSDC(1e6);
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 2 * 1e6);
+        netting.depositUSDC(1e6);
+        assertEq(netting.usdBalance(depositor), 1e6);
+    }
+
+    function testDepositLessThanMin() public {
+        netting.setMinUSDC(1e6);
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 5 * 1e5);
+        vm.expectRevert();
+        netting.depositUSDC(5e5);
+    }
+
     function testDepositAndWithdrawPartialUSDC() public {
         vm.startPrank(depositor);
         usdc.approve(address(netting), 2 * 1e6);
