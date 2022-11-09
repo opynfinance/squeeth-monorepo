@@ -74,13 +74,17 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw airdropped asset 
+     * @notice withdraw airdropped asset
      * @dev can only be called by owner
      * @param _asset asset address
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
-        require((_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken) && (_asset != dToken) && (_asset != wPowerPerp), "BS3");
+        require(
+            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
+                && (_asset != dToken) && (_asset != wPowerPerp),
+            "BS3"
+        );
 
         IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
     }

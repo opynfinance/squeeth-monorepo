@@ -300,8 +300,6 @@ contract BullStrategyTestFork is Test {
         bullStrategy.farm(usdc, bullOwner);
     }
 
-
-
     /**
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
