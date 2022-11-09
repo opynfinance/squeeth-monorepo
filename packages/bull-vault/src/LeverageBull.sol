@@ -14,12 +14,10 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
- * LB0: ETH sent is greater than ETH to deposit in Euler
- * LB1:
+ * LB0: ETH sent is not equal to ETH to deposit in Euler
+ * LB1: caller is not auction address
  */
 
 /**
@@ -105,8 +103,6 @@ contract LeverageBull is Ownable {
     function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
         require(msg.sender == auction, "LB1");
 
-        console.log("real weth", IEulerEToken(eToken).balanceOfUnderlying(address(this)));
-
         IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
         IEulerDToken(dToken).repay(0, _usdcToRepay);
         IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
@@ -167,16 +163,16 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(wethToLend == _ethAmount, "LB0");
+        require(wwethToLend == _ethAmount, "LB0");
 
-        _depositWethInEuler(wethToLend, true);
+        _depositWethInEuler(wwethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+        return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
@@ -232,18 +228,18 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
                 uint256 usdcToBorrow =
-                    ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
-                return (ethToLend, usdcToBorrow);
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
+        uint256 wwethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
             _bullShare
         ).wdiv(ONE.sub(_bullShare));
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        return (wethToLend, usdcToBorrow);
+        return (wwethToLend, usdcToBorrow);
     }
 
     /**

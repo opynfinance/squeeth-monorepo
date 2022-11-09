@@ -48,8 +48,6 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-    address internal deployer;
-    address internal bullOwner;
 
     uint256 internal cap;
 
@@ -113,6 +111,19 @@ contract BullStrategyTestFork is Test {
         vm.startPrank(deployer);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         bullStrategy.setCap(10e18);
+    }
+
+    function testDepositWhenCapFull() public {
+        vm.prank(bullOwner);
+        bullStrategy.setCap(1);
+
+        uint256 crabToDeposit = 1e18;
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("BS2"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
     }
 
     function testInitialDeposit() public {
