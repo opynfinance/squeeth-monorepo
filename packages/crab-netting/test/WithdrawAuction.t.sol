@@ -24,6 +24,12 @@ struct Portion {
     uint256 debt;
 }
 
+struct Sign {
+    uint8 v;
+    bytes32 r;
+    bytes32 s;
+}
+
 contract TestWithdrawAuction is BaseForkSetup {
     SigUtils sig;
 
@@ -66,10 +72,29 @@ contract TestWithdrawAuction is BaseForkSetup {
         vm.prank(mm1);
         sqth.approve(address(netting), 1000000e18);
 
+        Order memory order0 = Order(
+            0,
+            mm1,
+            1e18,
+            params.clearingPrice,
+            false,
+            block.timestamp,
+            2,
+            1,
+            0x00,
+            0x00
+        );
+        Sign memory s0;
+        (s0.v, s0.r, s0.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order0));
+        order0.v = s0.v;
+        order0.r = s0.r;
+        order0.s = s0.s;
+        orders.push(order0);
+
         Order memory order = Order(
             0,
             mm1,
-            sqthToBuy,
+            sqthToBuy - 1e18,
             params.clearingPrice,
             false,
             block.timestamp,
@@ -78,13 +103,11 @@ contract TestWithdrawAuction is BaseForkSetup {
             0x00,
             0x00
         );
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            mm1Pk,
-            sig.getTypedDataHash(order)
-        );
-        order.v = v;
-        order.r = r;
-        order.s = s;
+        Sign memory s1;
+        (s1.v, s1.r, s1.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order));
+        order.v = s1.v;
+        order.r = s1.r;
+        order.s = s1.s;
         orders.push(order);
         params.orders = orders;
 

@@ -884,7 +884,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _nonce number that is to be traded only once
      */
     function _useNonce(address _trader, uint256 _nonce) internal {
-        require(!nonces[_trader][_nonce], "C27");
+        require(!nonces[_trader][_nonce], "Nonce already used");
         nonces[_trader][_nonce] = true;
     }
 
