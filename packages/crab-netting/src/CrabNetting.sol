@@ -310,7 +310,6 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 toRemove = _amount;
         uint256 lastIndexP1 = userDepositsIndex[msg.sender].length;
         for (uint256 i = lastIndexP1; i > 0; i--) {
-            // todo check gas optimization here by changing to memory
             Receipt storage r = deposits[userDepositsIndex[msg.sender][i - 1]];
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
@@ -318,7 +317,6 @@ contract CrabNetting is Ownable, EIP712 {
                 break;
             } else {
                 toRemove -= r.amount;
-                r.amount = 0; // todo remove this and run test
                 delete deposits[userDepositsIndex[msg.sender][i - 1]];
             }
         }
@@ -383,7 +381,6 @@ contract CrabNetting is Ownable, EIP712 {
     function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
         _checkCrabPrice(_price);
         uint256 crabQuantity = (_quantity * 1e18) / _price;
-        // todo write tests for reverts and may = in branches
         require(
             _quantity <= IERC20(usdc).balanceOf(address(this)),
             "Not enough deposits to net"
@@ -397,7 +394,6 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 i = depositsIndex;
         uint256 amountToSend;
         while (_quantity > 0) {
-            // todo may be second check is not required
             Receipt memory deposit = deposits[i];
             if (deposit.amount <= _quantity) {
                 // deposit amount is lesser than quantity use it fully
@@ -412,7 +408,7 @@ contract CrabNetting is Ownable, EIP712 {
                     i,
                     0
                 );
-                delete deposits[i]; // todo may be just write a teset to ensure it does not screwn up the ReceiptUserMapping
+                delete deposits[i];
                 i++;
             } else {
                 // deposit amount is greater than quantity; use it partially
@@ -435,7 +431,6 @@ contract CrabNetting is Ownable, EIP712 {
         // process withdraws and send usdc
         uint256 j = withdrawsIndex;
         while (crabQuantity > 0) {
-            // may be j check is not required todo
             Receipt memory withdraw = withdraws[j];
             if (withdraw.amount <= crabQuantity) {
                 crabQuantity = crabQuantity - withdraw.amount;
@@ -523,7 +518,6 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _amount to deposit into crab
      */
     function _debtToMint(uint256 _amount) internal view returns (uint256) {
-        // todo add fee adjustment
         uint256 feeAdjustment = _calcFeeAdjustment();
         (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
             .getVaultDetails();
@@ -598,7 +592,6 @@ contract CrabNetting is Ownable, EIP712 {
 
         // step 4
         Portion memory to_send;
-        // TODO the left overs of the previous tx from the flashDeposit will be added here
         to_send.eth = address(this).balance;
         if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
             if (to_send.eth <= _p.ethToFlashDeposit) {
@@ -663,7 +656,7 @@ contract CrabNetting is Ownable, EIP712 {
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
                 portion.eth = ((queuedAmount * to_send.eth) /
-                    _p.depositsQueued); // todo remove this if tammy
+                    _p.depositsQueued);
                 if (portion.eth > 1e12) {
                     payable(deposits[depositsIndex].sender).transfer(
                         portion.eth
@@ -680,7 +673,7 @@ contract CrabNetting is Ownable, EIP712 {
                 );
 
                 deposits[k].amount = 0;
-                k++; // todo make this i
+                k++;
             } else {
                 usdBalance[deposits[k].sender] -= remainingDeposits;
 
@@ -809,7 +802,7 @@ contract CrabNetting is Ownable, EIP712 {
                 // full usage
                 remainingWithdraws -= withdraw.amount;
                 crabBalance[withdraw.sender] -= withdraw.amount;
-                j++; // todo make it j
+                j++;
 
                 // send proportional usdc
                 usdcAmount =
