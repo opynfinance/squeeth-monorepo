@@ -25,8 +25,15 @@ import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
-import CookieConsent, { Cookies } from "react-cookie-consent";
+import CookieConsent from "react-cookie-consent";
 import { CookieNames } from '@hooks/useCookies'
+import '@utils/amplitude'
+import { setUserId } from '@amplitude/analytics-browser'
+import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
+
+initializeAmplitude()
+
 
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -87,6 +94,7 @@ const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const firstAddressCheck = useRef(true)
+  const { track } = useAmplitude()
 
   useAppEffect(() => {
     if (!onboardAddress) {
@@ -96,6 +104,8 @@ const Init = () => {
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
         setAddress(onboardAddress)
+        setUserId(onboardAddress)
+        track(EVENT_NAME.WALLET_CONNECTED)
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
@@ -104,7 +114,7 @@ const Init = () => {
         }
       }
     })
-  }, [onboardAddress, setAddress, setWalletFailVisible])
+  }, [onboardAddress, setAddress, setWalletFailVisible, track])
 
   useOnboard()
   useUpdateSqueethPrices()

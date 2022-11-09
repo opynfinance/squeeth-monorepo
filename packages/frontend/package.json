@@ -23,6 +23,7 @@
         "codegen:squeeth": "apollo client:codegen --target typescript --globalTypesFile=types/global_apollo.ts --includes=./src/queries/squeeth/**/*.ts  --endpoint 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-goerli'"
     },
     "dependencies": {
+        "@amplitude/analytics-browser": "^1.3.0",
         "@apollo/client": "^3.4.10",
         "@cypress/react": "^5.12.4",
         "@davatar/react": "^1.8.1",
