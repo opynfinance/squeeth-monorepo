@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -10,6 +10,7 @@ import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAppCallback from '@hooks/useAppCallback'
+import useAppEffect from '@hooks/useAppEffect'
 import { addressesAtom } from '@state/positions/atoms'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
 import { useGetDepositAmounts, useGetTicksFromPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
@@ -143,9 +144,13 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const textClasses = useTextStyles()
 
   const squeethPrice = getWSqueethPositionValue(1)
+  const collatRatioVal = new bn(collatRatio).div(100).toNumber()
+  const slippageAmountVal = new bn(slippageAmount).div(100).toNumber()
 
-  useEffect(() => {
+  useAppEffect(() => {
     if (usingDefaultPriceRange) {
+      setLowerTick(TickMath.MIN_TICK)
+      setUpperTick(TickMath.MAX_TICK)
       return
     }
 
@@ -164,32 +169,24 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice])
+  }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice, getTicksFromPriceRange])
 
-  useEffect(() => {
-    getDepositAmounts(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatio, 0).then((deposits) => {
+  useAppEffect(() => {
+    getDepositAmounts(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0).then((deposits) => {
       if (deposits) {
         setDepositAmounts(deposits)
       }
     })
-  }, [squeethToMint, lowerTick, upperTick, collatRatio])
+  }, [squeethToMint, lowerTick, upperTick, collatRatioVal, getDepositAmounts])
 
   const openPosition = useAppCallback(async () => {
     try {
-      await openLpPosition(
-        new bn(squeethToMint),
-        lowerTick,
-        upperTick,
-        0,
-        collatRatio,
-        slippageAmount.toNumber(),
-        0,
-        () => {
-          console.log('successfull')
-          onComplete()
-        },
-      )
+      await openLpPosition(new bn(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, slippageAmountVal, 0, () => {
+        console.log('successfully deposited')
+        onComplete()
+      })
     } catch (e) {
+      console.log('transaction failed')
       console.log(e)
     }
   }, [squeethToMint, lowerTick, upperTick, collatRatio, slippageAmount, openLpPosition])
