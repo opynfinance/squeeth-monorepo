@@ -7,6 +7,7 @@ import {IWETH} from "../src/interfaces/IWETH.sol";
 import {IOracle} from "../src/interfaces/IOracle.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
+import {IController} from "../src/interfaces/IController.sol";
 
 // contract
 import {Ownable} from "openzeppelin/access/Ownable.sol";
@@ -117,6 +118,9 @@ contract CrabNetting is Ownable, EIP712 {
     /// @dev address for usdc eth pool
     address public ethUsdcPool;
 
+    /// @dev address for sqth controller
+    address public sqthController;
+
     /// @dev array index of last processed deposits
     uint256 public depositsIndex;
 
@@ -211,7 +215,8 @@ contract CrabNetting is Ownable, EIP712 {
         address _ethSqueethPool,
         address _ethUsdcPool,
         address _swapRouter,
-        address _oracle
+        address _oracle,
+        address _sqthController
     ) EIP712("CRABNetting", "1") {
         usdc = _usdc;
         crab = _crab;
@@ -221,6 +226,7 @@ contract CrabNetting is Ownable, EIP712 {
         oracle = _oracle;
         ethSqueethPool = _ethSqueethPool;
         ethUsdcPool = _ethUsdcPool;
+        sqthController = _sqthController;
 
         // approve crab and sqth so withdraw can happen
         IERC20(crab).approve(crab, 10e36);
@@ -296,7 +302,7 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function withdrawUSDC(uint256 _amount) external {
         require(_amount >= minUSDCAmount);
-        require(!isAuctionLive, "auction is live"); // todo think about setting a time of the week , maker dao's codebase
+        require(!isAuctionLive, "auction is live");
 
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
 
@@ -518,9 +524,11 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function _debtToMint(uint256 _amount) internal view returns (uint256) {
         // todo add fee adjustment
+        uint256 feeAdjustment = _calcFeeAdjustment();
         (, , uint256 collateral, uint256 debt) = ICrabStrategyV2(crab)
             .getVaultDetails();
-        uint256 wSqueethToMint = (_amount * (debt)) / collateral; // not added fee todo
+        uint256 wSqueethToMint = (_amount * debt) /
+            (collateral + (debt * feeAdjustment));
         return wSqueethToMint;
     }
 
@@ -947,6 +955,18 @@ contract CrabNetting is Ownable, EIP712 {
             _price >= (crabFairPrice * (1e18 - otcPriceTolerance)) / 1e18,
             "Crab Price too low"
         );
+    }
+
+    function _calcFeeAdjustment() internal view returns (uint256) {
+        uint256 squeethEthPrice = IOracle(oracle).getTwap(
+            ethSqueethPool,
+            sqth,
+            weth,
+            auctionTwapPeriod,
+            true
+        );
+        uint256 feeRate = IController(sqthController).feeRate();
+        return (squeethEthPrice * feeRate) / 10000;
     }
 
     receive() external payable {}

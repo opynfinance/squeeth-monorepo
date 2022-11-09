@@ -40,6 +40,7 @@ contract BaseSetup is Test {
         sqth = new FixedERC20(10000 * 1e18);
         address sqthETHPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
         address ethUsdcPool = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
+        address sqthController = 0x64187ae08781B09368e6253F9E94951243A493D5;
 
         netting = new CrabNetting(
             address(usdc),
@@ -49,7 +50,8 @@ contract BaseSetup is Test {
             sqthETHPool,
             ethUsdcPool,
             address(swapRouter),
-            address(oracle)
+            address(oracle),
+            sqthController
         );
 
         ownerPrivateKey = 0xA11CE;

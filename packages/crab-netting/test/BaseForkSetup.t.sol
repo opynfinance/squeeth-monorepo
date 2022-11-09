@@ -41,6 +41,7 @@ contract BaseForkSetup is Test {
         string memory FORK_URL = vm.envString("FORK_URL");
         address sqthETHPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
         address ethUsdcPool = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
+        address sqthController = 0x64187ae08781B09368e6253F9E94951243A493D5;
         activeFork = vm.createSelectFork(FORK_URL, 15819213);
 
         crab = ICrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
@@ -59,7 +60,8 @@ contract BaseForkSetup is Test {
             sqthETHPool,
             ethUsdcPool,
             address(swapRouter),
-            address(oracle)
+            address(oracle),
+            sqthController
         );
         vm.prank(address(netting));
         payable(depositor).transfer(address(netting).balance);
