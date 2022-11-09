@@ -8,6 +8,7 @@ import { AltPrimaryButton } from '@components/Button'
 import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
 import { addressesAtom } from '@state/positions/atoms'
+import { connectedWalletAtom } from '@state/wallet/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { OSQUEETH_DECIMALS } from '@constants/index'
 import squeethLogo from 'public/images/squeeth-logo.svg'
@@ -47,7 +48,10 @@ const LPPage: React.FC = () => {
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
 
   const classes = useStyles()
+
   const squeethPrice = getWSqueethPositionValue(1)
+  const connectedWallet = useAtomValue(connectedWalletAtom)
+  const isDepositButtonDisabled = !connectedWallet || Number(squeethAmount) === 0
 
   return (
     <>
@@ -83,9 +87,10 @@ const LPPage: React.FC = () => {
             className={classes.margin}
             id="preview-deposit-btn"
             onClick={() => setPreviewModalOpen(true)}
+            disabled={isDepositButtonDisabled}
             fullWidth
           >
-            Preview transaction
+            {connectedWallet ? 'Preview transaction' : 'Connect wallet to deposit'}
           </AltPrimaryButton>
         </Grid>
       </Grid>
