@@ -3,7 +3,7 @@ import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
-import BigNumber from 'bignumber.js'
+import bn from 'bignumber.js'
 import { TickMath } from '@uniswap/v3-sdk'
 
 import { AltPrimaryButton } from '@components/Button'
@@ -12,8 +12,7 @@ import { addressesAtom } from '@state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { OSQUEETH_DECIMALS } from '@constants/index'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
-import { useGetDepositAmounts } from '@state/lp/hooks'
-import { getTickFromToken0Price } from '@state/lp/apis'
+import { useGetDepositAmounts, useGetTicksFromPriceRange } from '@state/lp/hooks'
 import { toTokenAmount } from '@utils/calculations'
 
 import useAppEffect from '@hooks/useAppEffect'
@@ -107,35 +106,33 @@ const useModalStyles = makeStyles((theme) =>
   }),
 )
 
-const getTickFromPrice = (price: string) => {
-  if (Number(price) === 0) {
-    return null
-  }
-
-  return getTickFromToken0Price(price)
+const formatTokenAmount = (amount: string | number) => {
+  const withPrecision = Number(toTokenAmount(amount, 18)).toPrecision(3)
+  return Number(withPrecision).toFixed(2)
 }
 
-const formatTokenAmount = (amount: string | number) => {
-  return Number(toTokenAmount(amount, 18)).toFixed(2).toLocaleString()
+interface DepositAmounts {
+  vault: string
+  lp: string
+  total: string
 }
 
 const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = ({ onComplete, squeethToMint }) => {
   const { oSqueeth } = useAtomValue(addressesAtom)
+  const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const ethPrice = useETHPrice()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const getTicksFromPriceRange = useGetTicksFromPriceRange()
   const getDepositAmounts = useGetDepositAmounts()
 
-  const [useDefaultPriceRange, setUseDefaultPriceRange] = useState(true)
+  const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
   const [minPrice, setMinPrice] = useState('0')
   const [maxPrice, setMaxPrice] = useState('0')
-  const [useUniswapNftAsCollat, setUseUniswapNftAsCollat] = useState(true)
-  const [useDefaultCollatRatio, setUseDefaultCollatRatio] = useState(true)
+  const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
+  const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
   const [collateralRatio, setCollateralRatio] = useState(225)
 
-  const [totalDeposit, setTotalDeposit] = useState('0')
-  const [collateralToMint, setCollateralToMint] = useState('0')
-  const [collateralToLp, setCollateralToLp] = useState('0')
+  const [depositAmounts, setDepositAmounts] = useState<DepositAmounts>({ vault: '0', lp: '0', total: '0' })
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
@@ -144,27 +141,45 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const squeethPrice = getWSqueethPositionValue(1)
 
   useAppEffect(() => {
-    async function fetchDepositAmounts() {
-      const lowerTickInput = useDefaultPriceRange ? TickMath.MIN_TICK : getTickFromPrice(minPrice)
-      const upperTickInput = useDefaultPriceRange ? TickMath.MAX_TICK : getTickFromPrice(maxPrice)
+    async function calculateDeposits() {
+      let lowerTickInput, upperTickInput
 
-      if (lowerTickInput === null || upperTickInput === null) {
-        return
+      if (usingDefaultPriceRange) {
+        lowerTickInput = TickMath.MIN_TICK
+        upperTickInput = TickMath.MAX_TICK
+      } else {
+        const minPriceBN = new bn(minPrice)
+        const maxPriceBN = new bn(maxPrice)
+
+        if (minPriceBN.isLessThanOrEqualTo(0) || maxPriceBN.isLessThanOrEqualTo(0)) {
+          return
+        }
+
+        const ticks = getTicksFromPriceRange(
+          ethPrice.div(maxPrice).integerValue(bn.ROUND_FLOOR).toNumber(),
+          ethPrice.div(minPrice).integerValue(bn.ROUND_FLOOR).toNumber(),
+        )
+
+        lowerTickInput = ticks.lowerTick
+        upperTickInput = ticks.upperTick
       }
 
-      getDepositAmounts(new BigNumber(squeethToMint), lowerTickInput, upperTickInput, 0, collateralRatio, 0).then(
-        (data) => {
-          if (data) {
-            setTotalDeposit(data?.total)
-            setCollateralToMint(data?.mint)
-            setCollateralToLp(data?.lp)
-          }
-        },
+      const depositAmounts = await getDepositAmounts(
+        new bn(squeethToMint),
+        lowerTickInput,
+        upperTickInput,
+        0,
+        collateralRatio,
+        0,
       )
+      if (depositAmounts) {
+        const { vault, lp, total } = depositAmounts
+        setDepositAmounts({ vault, lp, total })
+      }
     }
 
-    fetchDepositAmounts()
-  }, [collateralRatio, maxPrice, minPrice, squeethToMint, useDefaultPriceRange])
+    calculateDeposits()
+  }, [collateralRatio, maxPrice, minPrice, squeethToMint, usingDefaultPriceRange, ethPrice])
 
   return (
     <>
@@ -208,8 +223,8 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
           </div>
 
           <Checkbox
-            isChecked={useDefaultPriceRange}
-            onChange={setUseDefaultPriceRange}
+            isChecked={usingDefaultPriceRange}
+            onChange={setUsingDefaultPriceRange}
             name="priceRangeDefault"
             label="Default"
           />
@@ -221,7 +236,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
             label="Min price"
             value={isNaN(Number(minPrice)) ? 0 : minPrice}
             onInputChange={setMinPrice}
-            disabled={useDefaultPriceRange}
+            disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -240,7 +255,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
             label="Max price"
             value={isNaN(Number(maxPrice)) ? 0 : maxPrice}
             onInputChange={setMaxPrice}
-            disabled={useDefaultPriceRange}
+            disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -260,8 +275,8 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
           <ToggleButtonGroup
             size="medium"
-            value={useUniswapNftAsCollat}
-            onChange={(e, value) => setUseUniswapNftAsCollat(value)}
+            value={usingUniswapNftAsCollat}
+            onChange={(e, value) => setUsingUniswapNftAsCollat(value)}
             exclusive
           >
             <ToggleButton classes={toggleButtonClasses} value={true}>
@@ -286,8 +301,8 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
             <Checkbox
               name="priceRangeDefault"
               label="Default"
-              isChecked={useDefaultCollatRatio}
-              onChange={setUseDefaultCollatRatio}
+              isChecked={usingDefaultCollatRatio}
+              onChange={setUsingDefaultCollatRatio}
             />
 
             <SimpleInput
@@ -337,7 +352,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
         <InfoBox>
           <Box display="flex" justifyContent="center" gridGap="6px">
             <Typography>Total Deposit</Typography>
-            <Typography className={textClasses.light}>= {formatTokenAmount(totalDeposit)} ETH</Typography>
+            <Typography className={textClasses.light}>= {formatTokenAmount(depositAmounts.total)} ETH</Typography>
           </Box>
         </InfoBox>
 
@@ -347,7 +362,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
               <Typography className={textClasses.light}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{formatTokenAmount(collateralToLp)}</Typography>
+                <Typography>{formatTokenAmount(depositAmounts.lp)}</Typography>
                 <Typography className={textClasses.light}>ETH</Typography>
               </Box>
             </Box>
@@ -357,7 +372,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
               <Typography className={textClasses.light}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{formatTokenAmount(collateralToMint)}</Typography>
+                <Typography>{formatTokenAmount(depositAmounts.vault)}</Typography>
                 <Typography className={textClasses.light}>ETH</Typography>
               </Box>
             </Box>
