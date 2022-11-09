@@ -7,9 +7,12 @@ pragma abicoder v2;
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { LeverageBull } from "./LeverageBull.sol";
+import { UniFlash } from "./UniFlash.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -20,6 +23,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS0: Can't receive ETH from this sender
  * BS1: Invalid strategy cap
  * BS2: Strategy cap reached max
+ * BS3: redeemShortShutdown must be called first
  */
 
 /**
@@ -27,7 +31,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
  */
-contract BullStrategy is ERC20, LeverageBull {
+contract BullStrategy is ERC20, LeverageBull, UniFlash {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -51,6 +55,19 @@ contract BullStrategy is ERC20, LeverageBull {
     uint256 public crLower;
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
+    /// @dev set to true when redeemShortShutdown has been called
+    bool private hasRedeemedInShutdown;
+    
+    struct ShutdownParams {
+        uint256 maxEthToPay;
+        uint24 ethPoolFee;
+    }
+
+    /// @dev enum to differentiate between Uniswap swap callback function source
+    enum FLASH_SOURCE {
+        SHUTDOWN
+    }
+
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
@@ -69,10 +86,12 @@ contract BullStrategy is ERC20, LeverageBull {
         address _crab,
         address _powerTokenController,
         address _euler,
-        address _eulerMarketsModule
+        address _eulerMarketsModule,
+        address _factory
     )
         ERC20("Bull Vault", "BullVault")
         LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
+        UniFlash(_factory)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
@@ -157,10 +176,56 @@ contract BullStrategy is ERC20, LeverageBull {
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
+    /**
+     * @notice redeem the Crab shares owned by Bull if Squeeth contracts are shutdown and collapse leverage trade to hold ETH only
+     * @param _params Shutdown params
+     */
+
+    function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
+        hasRedeemedInShutdown=true;
+        ICrabStrategyV2(crab).withdrawShutdown(ICrabStrategyV2(crab).balanceOf(address(this)));
+        uint256 usdcToRepay = _calcUsdcToRepay(ONE);
+        _exactOutFlashSwap(
+            weth,
+            usdc,
+            _params.ethPoolFee,
+            usdcToRepay,
+            _params.maxEthToPay,
+            uint8(FLASH_SOURCE.SHUTDOWN),
+            abi.encodePacked("")
+        );
+    }
+    /**
+     * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shutdown
+     * @dev redeemShortShutdown must have been called first
+     * @param _bullAmount bull amount to withdraw
+     */
+    function withdrawShutdown(uint256 _bullAmount) external {
+        require (hasRedeemedInShutdown, "BS3");
+        uint256 share = _bullAmount.wdiv(totalSupply());
+        uint256 ethToReceive = share.wmul(address(this).balance);
+        _burn(msg.sender, _bullAmount);
+        payable(msg.sender).sendValue(ethToReceive);
+    }
+
+
+
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
 
+
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {
+
+            //repay 100% of usdc debt and withdraw 100% of eth collateral
+            _repayAndWithdrawFromLeverage(ONE);
+
+            // repay the weth flash swap
+            IWETH9(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+            }
+        }
     /**
      * @notice increase internal accounting of bull stragtegy's crab balance
      * @param _crabAmount crab amount

@@ -74,7 +74,8 @@ contract FlashBullTestFork is Test {
             address(crabV2),
             address(controller),
             euler,
-            eulerMarketsModule
+            eulerMarketsModule,
+            0x1F98431c8aD98523631AE4a59f267346ea31F984
         );
         flashBull = new FlashBull(
             address(bullStrategy),
