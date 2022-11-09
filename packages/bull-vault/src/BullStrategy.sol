@@ -142,17 +142,19 @@ contract BullStrategy is ERC20, LeverageBull {
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
-    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem) external {
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
+        external
+    {
         require(msg.sender == auction, "BS3");
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
         ICrabStrategyV2(crab).withdraw(_crabToRedeem);
 
-        IWETH9(weth).deposit{value: IERC20(weth).balanceOf(address(this))}();
+        IWETH9(weth).deposit{value: address(this).balance}();
         IWETH9(weth).transfer(msg.sender, IERC20(weth).balanceOf(address(this)));
 
         emit RedeemCrabAndWithdrawEth();
-    } 
+    }
 
     function depositEthIntoCrab(uint256 _ethToDeposit) external {
         require(msg.sender == auction, "BS3");
@@ -162,7 +164,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         ICrabStrategyV2(crab).deposit{value: _ethToDeposit}();
 
-        IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));   
+        IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
     }
 
     /**

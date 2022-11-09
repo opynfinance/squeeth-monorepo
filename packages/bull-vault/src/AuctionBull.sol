@@ -13,10 +13,10 @@ import { IEulerDToken } from "./interface/IEulerDToken.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { UniFlash } from "./UniFlash.sol";
 import { UniOracle } from "./UniOracle.sol";
-import {EIP712} from "openzeppelin/drafts/EIP712.sol";
+import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {ECDSA} from "openzeppelin/cryptography/ECDSA.sol";
+import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
 
 /**
  * Error code
@@ -25,9 +25,9 @@ import {ECDSA} from "openzeppelin/cryptography/ECDSA.sol";
  * AB2: Invalid CR after rebalance
  * AB3: Invalid CR lower and upper values
  * AB4: Invalid delta lower and upper values
- * AB5: 
+ * AB5:
  * AB6:
- * AB7: 
+ * AB7:
  * AB8:
  * AB9:
  * AB10:
@@ -44,10 +44,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     using StrategyMath for uint256;
 
     /// @dev typehash for signed orders
-    bytes32 private constant _FULL_REBALANCE_TYPEHASH =
-        keccak256(
-            "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
-        );
+    bytes32 private constant _FULL_REBALANCE_TYPEHASH = keccak256(
+        "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
+    );
 
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
@@ -88,8 +87,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         LEVERAGE_REBALANCE_DECREASE_DEBT,
         LEVERAGE_REBALANCE_INCREASE_DEBT,
         FULL_REBALANCE_BORROW_USDC_BUY_WETH,
-        FULL_REBALANCE_REPAY_USDC,
-        GENERAL_SWAP
+        FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH,
+        FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB,
+        FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB
     }
 
     struct Order {
@@ -103,6 +103,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint8 v;
         bytes32 r;
         bytes32 s;
+    }
+
+    struct ExecuteCrabDepositParams {
+        uint256 crabAmount;
+        uint256 wethTargetInEuler;
+        uint256 wethLimitPrice;
+        uint256 ethInCrab;
+        uint24 ethUsdcPoolFee;
     }
 
     event SetCrUpperAndLower(
@@ -191,13 +199,32 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         nonces[_trader][_nonce] = true;
     }
 
+    function _calcWPowerPerpAmountFromCrab(
+        bool _isDepositingInCrab,
+        uint256 _crabAmount,
+        uint256 _ethInCrab,
+        uint256 _squeethInCrab
+    ) internal view returns (uint256) {
+        uint256 wPowerPerpAmount;
+        if (_isDepositingInCrab) {
+            uint256 ethToDepositInCrab =
+                _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_ethInCrab);
+            (wPowerPerpAmount,) =
+                _calcWsqueethToMintAndFee(ethToDepositInCrab, _squeethInCrab, _ethInCrab);
+        } else {
+            wPowerPerpAmount = _crabAmount.wmul(_squeethInCrab).wdiv(IERC20(crab).totalSupply());
+        }
+
+        return wPowerPerpAmount;
+    }
+
     /**
      * @dev hedge function to reduce delta using an array of signed orders
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
      * @param _clearingPrice clearing price in weth
      * @param _wethTargetInEuler target WETH collateral amount in leverage component
-     * @param _wethLimitPrice limit price 
+     * @param _wethLimitPrice limit price
      * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
      */
     function fullRebalance(
@@ -206,53 +233,71 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _clearingPrice,
         uint256 _wethTargetInEuler,
         uint256 _wethLimitPrice,
+        uint24 _ethUsdcPoolFee,
         bool _isDepositingInCrab
     ) external onlyOwner {
         require(_clearingPrice > 0, "AB5");
         // _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
-        (uint256 ethInCrab, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
-        uint256 wPowerPerpAmount = _crabAmount.wmul(squeethInCrab).wdiv(IERC20(crab).totalSupply());
+        (uint256 ethInCrab, uint256 squeethInCrab) =
+            IBullStrategy(bullStrategy).getCrabVaultDetails();
+        uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
+            _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
+        );
+        if (_isDepositingInCrab) {
+            // {
+            //     uint256 ethToDepositInCrab = _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(ethInCrab);
+            //     (wPowerPerpAmount, ) = _calcWsqueethToMintAndFee(
+            //         ethToDepositInCrab, squeethInCrab, ethInCrab
+            //     );
+            // }
 
-        // loop through orders, check each order validity
-        // pull funds from orders
-        {
-            uint256 remainingAmount = wPowerPerpAmount;
-            uint256 prevPrice = _orders[0].price;
-            uint256 currentPrice = _orders[0].price;
+            // loop through orders, check each order validity
+            // pull funds from orders
+            {
+                uint256 remainingAmount = wPowerPerpAmount;
+                uint256 prevPrice = _orders[0].price;
+                uint256 currentPrice = _orders[0].price;
 
-            uint256 ordersLength = _orders.length;
-            for (uint256 i; i < ordersLength; ++i) {
-                _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
+                uint256 ordersLength = _orders.length;
+                for (uint256 i; i < ordersLength; ++i) {
+                    _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
 
-                currentPrice = _orders[i].price;
-                // check that orders are in order
-                if (!_isDepositingInCrab) {
-                    require(currentPrice >= prevPrice, "AB7");
-                } else {
-                    require(currentPrice <= prevPrice, "AB8");
-                }
-                prevPrice = currentPrice;
+                    currentPrice = _orders[i].price;
+                    // check that orders are in order
+                    if (_isDepositingInCrab) {
+                        require(currentPrice <= prevPrice, "AB8");
+                    } else {
+                        require(currentPrice >= prevPrice, "AB7");
+                    }
+                    prevPrice = currentPrice;
 
-                _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
+                    _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
 
-                if (remainingAmount > _orders[i].quantity) {
-                    remainingAmount = remainingAmount.sub(_orders[i].quantity);
-                } else {
-                    break;
+                    if (remainingAmount > _orders[i].quantity) {
+                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
+                    } else {
+                        break;
+                    }
                 }
             }
-        }
 
-        if (_isDepositingInCrab) {
             /**
              * if auction depositing into crab:
              * - calc amount of ETH needed to deposit into crab and get crabAmount
              * - if target WETH to have in euler greater than current amount in euler, borrow USDC to buy more WETH and deposit in euler
              * - if target WETH to have in euler less than current amount in euler, remove WETH from euler
-             * - deposit into crab, and pay auction traders wPowerPerp  
+             * - deposit into crab, and pay auction traders wPowerPerp
              */
-            _executeCrabDeposit(_crabAmount, _wethTargetInEuler, _wethLimitPrice, ethInCrab);
+            _executeCrabDeposit(
+                ExecuteCrabDepositParams({
+                    crabAmount: _crabAmount,
+                    wethTargetInEuler: _wethTargetInEuler,
+                    wethLimitPrice: _wethLimitPrice,
+                    ethInCrab: ethInCrab,
+                    ethUsdcPoolFee: _ethUsdcPoolFee
+                })
+            );
             {
                 uint256 remainingAmount = wPowerPerpAmount;
                 uint256 ordersLength = _orders.length;
@@ -266,6 +311,38 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
         } else {
+            // wPowerPerpAmount = _crabAmount.wmul(squeethInCrab).wdiv(IERC20(crab).totalSupply());
+
+            // loop through orders, check each order validity
+            // pull funds from orders
+            {
+                uint256 remainingAmount = wPowerPerpAmount;
+                uint256 prevPrice = _orders[0].price;
+                uint256 currentPrice = _orders[0].price;
+
+                uint256 ordersLength = _orders.length;
+                for (uint256 i; i < ordersLength; ++i) {
+                    _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
+
+                    currentPrice = _orders[i].price;
+                    // check that orders are in order
+                    if (_isDepositingInCrab) {
+                        require(currentPrice <= prevPrice, "AB8");
+                    } else {
+                        require(currentPrice >= prevPrice, "AB7");
+                    }
+                    prevPrice = currentPrice;
+
+                    _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
+
+                    if (remainingAmount > _orders[i].quantity) {
+                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
+                    } else {
+                        break;
+                    }
+                }
+            }
+
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
             {
@@ -281,144 +358,42 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
 
-            _rebalanceLeverageComponent(_wethTargetInEuler, _wethLimitPrice);
+            _rebalanceLeverageComponent(_wethTargetInEuler, _wethLimitPrice, _ethUsdcPoolFee);
         }
     }
 
-    function _executeCrabDeposit(uint256 _crabAmount, uint256 _wethTargetInEuler, uint256 _wethLimitPrice, uint256 _ethInCrab) internal {
-        uint256 wethFromEuler;
-        uint256 ethNeededForCrab = _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_ethInCrab);
+    // function _executeCrabDeposit(uint256 _crabAmount, uint256 _wethTargetInEuler, uint256 _wethLimitPrice, uint256 _ethInCrab, uint24 _ethUsdcPoolFee) internal {
+    function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
+        uint256 totalEthNeededForCrab =
+            _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
+        uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_wethTargetInEuler > wethInCollateral) {
-            uint256 wethToBuy;
-            uint256 usdcToBorrow;
-            {
-                uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                wethToBuy = _wethTargetInEuler.sub(wethInCollateral);
-                usdcToBorrow = wethToBuy.wmul(ethUsdPrice).div(1e12);
-            }
+        if (_params.wethTargetInEuler > wethInCollateral) {
+            uint256 wethToGet =
+                _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
             _exactOutFlashSwap(
                 usdc,
                 weth,
-                3000,
-                wethToBuy,
-                usdcToBorrow.wmul(_wethLimitPrice),
-                uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
-                abi.encodePacked(wethToBuy, usdcToBorrow)
+                _params.ethUsdcPoolFee,
+                wethToGet,
+                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
+                abi.encodePacked(
+                    _params.wethTargetInEuler.sub(wethInCollateral), totalEthNeededForCrab
+                )
             );
         } else {
-            wethFromEuler = wethInCollateral.sub(_wethTargetInEuler);
-            IBullStrategy(bullStrategy).repayAndWithdrawFromLeverage(0, wethFromEuler);
-        }
-        ethNeededForCrab = ethNeededForCrab.sub(wethFromEuler);
-        IBullStrategy(bullStrategy).depositEthIntoCrab(ethNeededForCrab);
-    }
-
-    function _rebalanceLeverageComponent(uint256 _wethTargetInEuler, uint256 _wethLimitPrice) internal {
-        uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
-        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
-            uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-            uint256 wethToBuy = _wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
-            uint256 usdcToBorrow = wethToBuy.wmul(ethUsdPrice).div(1e12);
+            uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
+            uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
             _exactOutFlashSwap(
                 usdc,
                 weth,
-                3000,
-                wethToBuy,
-                usdcToBorrow.wmul(_wethLimitPrice),
-                uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
-                abi.encodePacked(wethToBuy, usdcToBorrow)
+                _params.ethUsdcPoolFee,
+                wethToGet,
+                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
+                abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
             );
-        } else {
-            uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_wethTargetInEuler);
-            uint256 usdcToRepay = _exactInFlashSwap(
-                weth,
-                usdc,
-                3000,
-                wethToSell,
-                wethToSell.wdiv(_wethLimitPrice).div(1e12),
-                uint8(FLASH_SOURCE.GENERAL_SWAP),
-                ""
-            );
-
-            IBullStrategy(bullStrategy).repayAndWithdrawFromLeverage(usdcToRepay, 0);
-        }
-    }
-
-    function _verifyOrder(
-        Order memory _order,
-        uint256 _clearingPrice,
-        bool _isDepositingInCrab
-    ) internal {
-        // check that order trade against hedge direction
-        require(_order.isBuying != _isDepositingInCrab, "AB6");
-        // check that order beats clearing price
-        if (_order.isBuying) {
-            require(_clearingPrice <= _order.price, "AB9");
-        } else {
-            require(_clearingPrice >= _order.price, "AB10");
-        }
-
-        _useNonce(_order.trader, _order.nonce);
-        bytes32 structHash = keccak256(
-            abi.encode(
-                _FULL_REBALANCE_TYPEHASH,
-                _order.bidId,
-                _order.trader,
-                _order.quantity,
-                _order.price,
-                _order.isBuying,
-                _order.expiry,
-                _order.nonce
-            )
-        );
-
-        bytes32 hash = _hashTypedDataV4(structHash);
-        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        require(offerSigner == _order.trader, "AB11");
-        require(_order.expiry >= block.timestamp, "AB12");
-    }
-
-    function _transferFromOrder(
-        Order memory _order,
-        uint256 _remainingAmount,
-        uint256 _clearingPrice
-    ) internal {
-        // adjust quantity for partial fills
-        if (_remainingAmount < _order.quantity) {
-            _order.quantity = _remainingAmount;
-        }
-        
-        if (_order.isBuying) {
-            // trader sends weth and receives oSQTH
-            // weth clearing price for the order
-            uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
-            IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
-        } else {
-            // trader send oSQTH and receives WETH
-            IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
-        }
-    }
-
-    function _transferToOrder(
-        Order memory _order,
-        uint256 _remainingAmount,
-        uint256 _clearingPrice
-    ) internal {
-        // adjust quantity for partial fills
-        if (_remainingAmount < _order.quantity) {
-            _order.quantity = _remainingAmount;
-        }
-        
-        if (_order.isBuying) {
-            // trader sent weth and receives oSQTH
-            // weth clearing price for the order
-            IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
-        } else {
-            // trader sent oSQTH and receives WETH
-            uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
-            IERC20(weth).transfer(_order.trader, wethAmount);
         }
     }
 
@@ -502,28 +477,162 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
             FLASH_SOURCE(_uniFlashSwapData.callSource)
-                == FLASH_SOURCE.GENERAL_SWAP
-        ) {
-            IERC20(_uniFlashSwapData.tokenIn).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (
-            FLASH_SOURCE(_uniFlashSwapData.callSource)
                 == FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH
         ) {
-            (uint256 wethToDeposit, uint256 usdcToBorrow) = abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+            uint256 wethToDeposit = abi.decode(_uniFlashSwapData.callData, (uint256));
 
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(wethToDeposit, usdcToBorrow);
+            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+                wethToDeposit, _uniFlashSwapData.amountToPay
+            );
 
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
             FLASH_SOURCE(_uniFlashSwapData.callSource)
-                == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC
+                == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
-            (uint256 wethToDeposit, uint256 usdcToBorrow) = abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+            uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
 
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(wethToDeposit, usdcToBorrow);
+            IBullStrategy(bullStrategy).repayAndWithdrawFromLeverage(
+                IERC20(usdc).balanceOf(address(this)),
+                _uniFlashSwapData.amountToPay.sub(remainingWeth)
+            );
+
+            IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (
+            FLASH_SOURCE(_uniFlashSwapData.callSource)
+                == FLASH_SOURCE.FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB
+        ) {
+            (uint256 wethToLeverage, uint256 ethToCrab) =
+                abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+
+            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+                wethToLeverage, _uniFlashSwapData.amountToPay
+            );
+
+            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
+
+            IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (
+            FLASH_SOURCE(_uniFlashSwapData.callSource)
+                == FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB
+        ) {
+            (uint256 wethToWithdraw, uint256 ethToCrab) =
+                abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+
+            IBullStrategy(bullStrategy).repayAndWithdrawFromLeverage(0, wethToWithdraw);
+
+            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+                0, _uniFlashSwapData.amountToPay
+            );
+
+            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
+    }
+
+    function _rebalanceLeverageComponent(
+        uint256 _wethTargetInEuler,
+        uint256 _wethLimitPrice,
+        uint24 _ethUsdcPoolFee
+    ) internal {
+        uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
+        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        if (_wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
+            uint256 wethToBuy = _wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+            _exactOutFlashSwap(
+                usdc,
+                weth,
+                _ethUsdcPoolFee,
+                wethToBuy,
+                wethToBuy.wmul(_wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
+                abi.encodePacked(wethToBuy)
+            );
+        } else {
+            uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_wethTargetInEuler);
+            _exactInFlashSwap(
+                weth,
+                usdc,
+                _ethUsdcPoolFee,
+                wethToSell,
+                wethToSell.wmul(_wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH),
+                abi.encodePacked(remainingWeth)
+            );
+        }
+    }
+
+    function _transferToOrder(Order memory _order, uint256 _remainingAmount, uint256 _clearingPrice)
+        internal
+    {
+        // adjust quantity for partial fills
+        if (_remainingAmount < _order.quantity) {
+            _order.quantity = _remainingAmount;
+        }
+
+        if (_order.isBuying) {
+            // trader sent weth and receives oSQTH
+            // weth clearing price for the order
+            IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
+        } else {
+            // trader sent oSQTH and receives WETH
+            uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
+            IERC20(weth).transfer(_order.trader, wethAmount);
+        }
+    }
+
+    function _transferFromOrder(
+        Order memory _order,
+        uint256 _remainingAmount,
+        uint256 _clearingPrice
+    ) internal {
+        // adjust quantity for partial fills
+        if (_remainingAmount < _order.quantity) {
+            _order.quantity = _remainingAmount;
+        }
+
+        if (_order.isBuying) {
+            // trader sends weth and receives oSQTH
+            // weth clearing price for the order
+            uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
+            IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+        } else {
+            // trader send oSQTH and receives WETH
+            IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
+        }
+    }
+
+    function _verifyOrder(Order memory _order, uint256 _clearingPrice, bool _isDepositingInCrab)
+        internal
+    {
+        // check that order trade against hedge direction
+        require(_order.isBuying == _isDepositingInCrab, "AB6");
+        // check that order beats clearing price
+        if (_order.isBuying) {
+            require(_clearingPrice <= _order.price, "AB9");
+        } else {
+            require(_clearingPrice >= _order.price, "AB10");
+        }
+
+        _useNonce(_order.trader, _order.nonce);
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _FULL_REBALANCE_TYPEHASH,
+                _order.bidId,
+                _order.trader,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
+                _order.expiry,
+                _order.nonce
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(offerSigner == _order.trader, "AB11");
+        require(_order.expiry >= block.timestamp, "AB12");
     }
 
     /**
@@ -561,5 +670,24 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 cr = wethInCollateral.wmul(ethUsdPrice).wdiv(usdcDebt.mul(WETH_DECIMALS_DIFF));
 
         return (delta, cr);
+    }
+
+    /**
+     * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     */
+    function _calcWsqueethToMintAndFee(
+        uint256 _depositedEthAmount,
+        uint256 _strategyDebtAmount,
+        uint256 _strategyCollateralAmount
+    ) internal view returns (uint256, uint256) {
+        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
+        uint256 feeAdjustment = squeethEthPrice.mul(feeRate).div(10000);
+        uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+            _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
+        );
+        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+
+        return (wSqueethToMint, fee);
     }
 }

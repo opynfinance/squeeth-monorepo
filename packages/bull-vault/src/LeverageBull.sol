@@ -105,8 +105,6 @@ contract LeverageBull is Ownable {
     function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
         require(msg.sender == auction, "LB1");
 
-        console.log("real weth", IEulerEToken(eToken).balanceOfUnderlying(address(this)));
-
         if (_usdcToRepay > 0) {
             IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
             IEulerDToken(dToken).repay(0, _usdcToRepay);
@@ -204,7 +202,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
+     * @dev repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
     function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
