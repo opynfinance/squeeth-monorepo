@@ -1,4 +1,4 @@
-import { Button, Link as MatLink } from '@material-ui/core'
+import { Button, Link as MatLink, Switch } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import MoreHorizIcon from '@material-ui/icons/MoreHorizOutlined'
@@ -13,6 +13,9 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Link from 'next/link'
 import { useState } from 'react'
+import canStoreCookies from '@hooks/useCookies/canStoreCookies'
+import setCookie from '@hooks/useCookies/setCookie'
+import { CookieNames } from '@hooks/useCookies'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,6 +64,8 @@ const SettingMenu = () => {
   const [isOver, setIsOver] = useState(false)
   const [currentlyOver, setCurrentlyOver] = useState('')
   const [openModal, setOpenModal] = useState(false)
+  const [openCookieModal, setOpenCookieModal] = useState(false)
+  const [consent, setCookieConsent] = useState(canStoreCookies());
   const open = Boolean(anchorEl)
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
@@ -77,6 +82,23 @@ const SettingMenu = () => {
     setCurrentlyOver(current)
     setIsOver(isOver)
   }
+
+  const handleCookieModal = () => {
+    handleClose()
+    setOpenCookieModal((prevState) => !prevState)
+  }
+
+  const AcceptCookie = () => {
+    setCookieConsent(true);
+    setCookie(CookieNames.Consent, 'true')
+  
+};
+
+  const handleCookieConsentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setCookieConsent(event.target.checked);
+      setCookie(CookieNames.Consent, (event.target.checked).toString())
+    
+  };
 
   return (
     <>
@@ -110,6 +132,7 @@ const SettingMenu = () => {
           </a>
         </MenuItem>
         <MenuItem onClick={handleModal}>Legal & Privacy</MenuItem>
+        <MenuItem onClick={handleCookieModal}>Cookies Settings</MenuItem>
       </Menu>
 
       <Modal
@@ -170,28 +193,6 @@ const SettingMenu = () => {
                 </a>
               </Link>
             </ListItem>
-            <ListItem
-              className={classes.legalLinks}
-              onMouseOver={() => handleMouseOver('pp', true)}
-              onMouseOut={() => handleMouseOver('pp', false)}
-            >
-              <Typography style={{ display: 'flex', alignItems: 'center' }}>
-                <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
-                <Link href="/cookie-policy">
-                  <a
-                    target="_blank"
-                    style={{ textDecoration: isOver && currentlyOver === 'pp' ? 'underline' : 'none' }}
-                  >
-                    Opyn Cookie Policy
-                  </a>
-                </Link>
-              </Typography>
-              <Link href="/cookie-policy">
-                <a target="_blank">
-                  <NorthEastOutlinedIcon />
-                </a>
-              </Link>
-            </ListItem>
           </List>
           <Typography>The app uses the following third-party APIs:</Typography>
           <List>
@@ -237,6 +238,43 @@ const SettingMenu = () => {
               <ListItemText>{`This app fetches blockchain data from the Graph's hosted service`}</ListItemText>
             </ListItem>
           </List>
+        </Box>
+      </Modal>
+
+
+      <Modal
+        open={openCookieModal}
+        onClose={handleCookieModal}
+        aria-labelledby="modal-modal-title"
+        aria-describedby="modal-modal-description"
+      >
+        <Box className={classes.legalModal}>
+          <Typography style={{ marginBottom: '1em' }} id="modal-modal-title" variant="h6" component="h2">
+            Cookies Settings
+          </Typography>
+          <Typography style={{marginBottom: '.75em', fontSize: '13px' }}>We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods, including how to disable them, view our {" "}
+                <MatLink href={`${location.origin}/cookie-policy`} target="_blank">
+                  Cookie Policy
+                </MatLink>
+          </Typography>
+
+          {consent ? (
+          <Switch
+              checked={consent}
+              onChange={handleCookieConsentChange}
+              inputProps={{ 'aria-label': 'controlled' }}
+            />
+            ) : (
+
+           <Button
+            variant="outlined"
+            color="primary"
+            onClick={AcceptCookie}
+          >
+            I Accept Cookies
+          </Button>
+             )}
+          
         </Box>
       </Modal>
     </>

@@ -1,4 +1,3 @@
 export enum CookieNames {
-    Consent = 'Consent',
-    DeviceStore = 'DeviceStore',
+    Consent = 'SqCookieControl',
   }

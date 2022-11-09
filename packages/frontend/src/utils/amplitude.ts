@@ -1,16 +1,17 @@
 import { init, track, Types } from '@amplitude/analytics-browser'
 import { getCookieName, CookieStorage } from '@amplitude/analytics-client-common'
+import canStoreCookies from '@hooks/useCookies/canStoreCookies'
 
-const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY
+const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY  && !!canStoreCookies()
 
 // Should be called once before calling track event
 export const initializeAmplitude = () => {
-  console.log('Ampliyude init called')
-  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
+ 
+  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies() ) return
 
   isOptedOut().then((optOut) => {
-    console.log('Opted out', optOut)
-    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
+   // console.log('Opted out', optOut)
+    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY ) return
 
     init(process.env.NEXT_PUBLIC_AMPLITUDE_KEY, undefined, {
       serverZone: Types.ServerZone.EU,
@@ -32,7 +33,7 @@ export const initializeAmplitude = () => {
 
 export const trackEvent = (eventName: EVENT_NAME, eventProps?: Record<string, unknown>) => {
   if (!analyticsEnabled) {
-    console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
+    //console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return
   }
 

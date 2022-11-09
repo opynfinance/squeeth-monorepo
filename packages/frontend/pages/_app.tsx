@@ -160,12 +160,12 @@ const TradeApp = ({ Component, pageProps }: any) => {
         cookieName={CookieNames.Consent}
         style={{ background: "#2B373B" }}
         buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"5px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
-        expires={150}
-        enableDeclineButton
+        expires={365}
+     //   enableDeclineButton
         declineButtonText= "DECLINE"
         declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"5px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
         flipButtons
-        overlay
+       // overlay
       >
         We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods, including how to disable them, view our {" "}
        
