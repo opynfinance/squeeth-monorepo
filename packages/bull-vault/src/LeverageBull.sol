@@ -167,9 +167,9 @@ contract LeverageBull is Ownable {
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(wwethToLend == _ethAmount, "LB0");
+        require(wethToLend == _ethAmount, "LB0");
 
-        _depositWethInEuler(wwethToLend, true);
+        _depositWethInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
         return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
@@ -234,12 +234,12 @@ contract LeverageBull is Ownable {
                 return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 wwethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
+        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
             _bullShare
         ).wdiv(ONE.sub(_bullShare));
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        return (wwethToLend, usdcToBorrow);
+        return (wethToLend, usdcToBorrow);
     }
 
     /**
