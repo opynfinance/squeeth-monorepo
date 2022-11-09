@@ -269,6 +269,39 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
     }
 
+    function testFarm() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        uint256 daiBalanceBefore = IERC20(dai).balanceOf(bullOwner);
+
+        vm.prank(bullOwner);
+        bullStrategy.farm(dai, bullOwner);
+
+        assertEq(IERC20(dai).balanceOf(bullOwner).sub(daiAmount), daiBalanceBefore);
+    }
+
+    function testFarmWhenCallerNotOwner() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.prank(deployer);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
+    function testFarmWhenAssetIsNotFarmable() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("BS3"));
+        bullStrategy.farm(usdc, bullOwner);
+    }
+
+
+
     /**
      *
      * /************************************************************* Fuzz testing is awesome! ************************************************************
