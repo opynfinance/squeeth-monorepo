@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-//import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 //import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
@@ -69,7 +69,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
             usdcToRepay,
             _params.maxEthToPay,
             uint8(FLASH_SOURCE.SHUTDOWN),
-            abi.encodePacked("")
+            abi.encodePacked(usdcToRepay)
         );
     }
 
@@ -80,7 +80,9 @@ contract EmergencyShutdown is UniFlash, Ownable {
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {
 
-            
+            uint256 usdcToRepay = abi.decode(_uniFlashSwapData.callData, (uint256));
+
+            IERC20(usdc).approve(bullStrategy, usdcToRepay);
             IBullStrategy(bullStrategy).shutdownRepayAndWithdraw(_uniFlashSwapData.amountToPay);
 
             // repay the weth flash swap
