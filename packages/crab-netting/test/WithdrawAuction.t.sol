@@ -132,4 +132,45 @@ contract TestWithdrawAuction is BaseForkSetup {
         );
         assertEq(IWETH(weth).balanceOf(address(netting)), 0, "weth balance");
     }
+
+    function testSqthPriceAboveThreshold() public {
+        WithdrawAuctionParams memory params;
+        // find the sqth to buy to make the trade
+        params.crabToWithdraw = 10e18;
+        uint256 sqthToBuy = 1e6;
+        UniswapQuote quote = new UniswapQuote();
+        uint256 sqthPrice = quote.getSqthPrice(1e18);
+        params.clearingPrice = (sqthPrice * 106) / 100;
+
+        // get the orders for that sqth
+
+        Order memory order = Order(
+            0,
+            mm1,
+            sqthToBuy,
+            params.clearingPrice,
+            false,
+            block.timestamp,
+            0,
+            1,
+            0x00,
+            0x00
+        );
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            mm1Pk,
+            sig.getTypedDataHash(order)
+        );
+        order.v = v;
+        order.r = r;
+        order.s = s;
+        orders.push(order);
+        params.orders = orders;
+
+        params.minUSDC = 1e6;
+        params.ethUSDFee = 500;
+        // get equivalent usdc quote with slippage and send
+
+        vm.expectRevert(bytes("Price too high relative to Uniswap twap."));
+        netting.withdrawAuction(params);
+    }
 }

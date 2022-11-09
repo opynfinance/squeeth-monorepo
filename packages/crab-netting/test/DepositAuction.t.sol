@@ -122,6 +122,51 @@ contract DepositAuctionTest is BaseForkSetup {
         assertGt(address(depositor).balance - depositorBalance, 5e17);
     }
 
+    function testSqthPriceTooLow() public {
+        DepositAuctionParams memory p;
+        uint256 sqthPriceLimit = (_getSqthPrice(1e18) * 99) / 100;
+        (, , uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        // Large first deposit. 10 & 40 as the deposit. 20 is the amount to net
+        vm.prank(depositor);
+        netting.depositUSDC(300000 * 1e6); //200+300 500k usdc deposited
+
+        p.depositsQueued = 300000 * 1e6;
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
+
+        uint256 toMint;
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
+            p.minEth,
+            collateral,
+            debt,
+            sqthPriceLimit
+        );
+        Order memory order = Order(
+            0,
+            mm1,
+            toMint,
+            sqthPriceLimit,
+            true,
+            block.timestamp,
+            0,
+            1,
+            0x00,
+            0x00
+        );
+        orders.push(order);
+        p.orders = orders;
+
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        p.clearingPrice = (sqthPriceLimit * 94) / 100;
+        p.usdEthFee = 500;
+        p.flashDepositFee = 3000;
+        p.ethToFlashDeposit = (p.ethToFlashDeposit * 1) / 10**7;
+
+        vm.expectRevert(bytes("Price too low relative to Uniswap twap."));
+        netting.depositAuction(p);
+    }
+
     function testDepositAuction() public {
         DepositAuctionParams memory p;
         // get the usd to deposit remaining

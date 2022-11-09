@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.13;
 
+import {console} from "forge-std/console.sol";
+
 // interface
 import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {IWETH} from "../src/interfaces/IWETH.sol";
@@ -12,8 +14,6 @@ import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {Ownable} from "openzeppelin/access/Ownable.sol";
 import {EIP712} from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
-
-import {console} from "forge-std/console.sol";
 
 /// @dev order struct for a signed order from market maker
 struct Order {
@@ -658,7 +658,7 @@ contract CrabNetting is Ownable, EIP712 {
 
                 portion.eth = ((queuedAmount * to_send.eth) /
                     _p.depositsQueued); // todo remove this if tammy
-                if (portion.eth > 1e16) {
+                if (portion.eth > 1e12) {
                     payable(deposits[depositsIndex].sender).transfer(
                         portion.eth
                     );
@@ -684,7 +684,7 @@ contract CrabNetting is Ownable, EIP712 {
 
                 portion.eth = ((remainingDeposits * to_send.eth) /
                     _p.depositsQueued);
-                if (portion.eth > 1e16) {
+                if (portion.eth > 1e12) {
                     payable(deposits[depositsIndex].sender).transfer(
                         portion.eth
                     );
