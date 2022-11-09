@@ -7,6 +7,10 @@ contract EulerMarketsMock is Test {
     mapping(address => address) internal underlyingToEtoken;
     mapping(address => address) internal underlyingToDtoken;
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function setUnderlyingToEtoken(address _underlying, address _eToken) external {
         underlyingToEtoken[_underlying] = _eToken;
     }

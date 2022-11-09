@@ -23,6 +23,10 @@ contract EulerDtokenMock is ERC20, Test {
         _setupDecimals(_decimals);
     }
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function borrow(uint256, /*subAccountId*/ uint256 amount) external {
         _mint(msg.sender, amount);
         ERC20(underlying).transfer(msg.sender, amount);

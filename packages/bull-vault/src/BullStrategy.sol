@@ -41,16 +41,6 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have before rebalancing
-    uint256 public crLower;
-    /// @dev target CR for our ETH collateral
-    uint256 public crTarget;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
@@ -80,14 +70,6 @@ contract BullStrategy is ERC20, LeverageBull {
 
     receive() external payable {
         require(msg.sender == weth || msg.sender == address(crab), "BS0");
-    }
-
-    /**
-     * @notice return the internal accounting of the bull strategy's crab balance
-     * @return crab token amount hold by the bull strategy
-     */
-    function getCrabBalance() external view returns (uint256) {
-        return _crabBalance;
     }
 
     /**
@@ -155,6 +137,14 @@ contract BullStrategy is ERC20, LeverageBull {
         payable(msg.sender).sendValue(address(this).balance);
 
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+    }
+
+    /**
+     * @notice return the internal accounting of the bull strategy's crab balance
+     * @return crab token amount hold by the bull strategy
+     */
+    function getCrabBalance() external view returns (uint256) {
+        return _crabBalance;
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {

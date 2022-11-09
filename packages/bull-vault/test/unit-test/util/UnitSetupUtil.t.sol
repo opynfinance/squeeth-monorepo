@@ -45,6 +45,10 @@ contract BullStrategyUnitTest is Test {
     address internal random;
     address internal timelock;
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function _deployUniswap() internal {
         uniFactory = new UniswapV3Factory();
         uniNonFungibleManager =
