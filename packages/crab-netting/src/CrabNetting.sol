@@ -302,6 +302,10 @@ contract CrabNetting is Ownable, EIP712 {
         require(!isAuctionLive, "auction is live");
 
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
+        require(
+            usdBalance[msg.sender] >= minUSDCAmount ||
+                usdBalance[msg.sender] == 0
+        );
 
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
@@ -348,6 +352,10 @@ contract CrabNetting is Ownable, EIP712 {
         require(!isAuctionLive, "auction is live");
         // require(crabBalance[msg.sender] >= _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
+        require(
+            crabBalance[msg.sender] >= minCrabAmount ||
+                crabBalance[msg.sender] == 0
+        );
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
         uint256 lastIndexP1 = userWithdrawsIndex[msg.sender].length;
