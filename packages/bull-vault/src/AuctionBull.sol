@@ -17,6 +17,7 @@ import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
+import { console } from "forge-std/console.sol";
 
 /**
  * Error code
@@ -34,6 +35,7 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB11:
  * AB12:
  * AB13: nonce already used
+ * AB14: Price tolerance is too high
  */
 
 /**
@@ -48,10 +50,15 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
     );
 
+    /// @dev 1e18
+    uint256 internal constant ONE = 1e18;
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
     /// @dev WETH decimals - USDC decimals
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+
+    // @dev full rebalance clearing price tolerance cannot exceed 20%
+    uint256 public constant MAX_FULL_REBALANCE_PRICE_TOLERANCE = 2e17; // 20%
 
     /// @dev USDC address
     address private immutable usdc;
@@ -75,6 +82,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     uint256 public crUpper;
     /// @dev lowest CR the auction manager can rebalance to
     uint256 public crLower;
+    /// @dev full rebalance clearing price must be within this distance of the uniswap twap price
+    uint256 public fullRebalancePriceTolerance = 5e16; // 5%
 
     /// @dev auction manager
     address public auctionManager;
@@ -120,6 +129,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 oldDeltaLower, uint256 oldDeltaUpper, uint256 newDeltaLower, uint256 newDeltaUpper
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
+    event SetfullRebalancePriceTolerance(uint256 _oldPriceTolerance, uint256 _newPriceTolerance);
 
     constructor(
         address _auctionOwner,
@@ -160,6 +170,19 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
+     * @param _fullRebalancePriceTolerance the OTC price tolerance, in percent, scaled by 1e18
+     */
+    function setFullRebalancePriceTolerance(uint256 _fullRebalancePriceTolerance) external onlyOwner {
+        // Tolerance cannot be more than 20%
+        require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_PRICE_TOLERANCE, "AB14");
+
+        emit SetfullRebalancePriceTolerance(fullRebalancePriceTolerance, _fullRebalancePriceTolerance);
+
+        fullRebalancePriceTolerance = _fullRebalancePriceTolerance;
+    }
+
+    /**
      * @notice set strategy lower and upper collat ratio
      * @dev should only be callable by owner
      * @param _crLower lower CR
@@ -187,6 +210,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         deltaLower = _deltaLower;
         deltaUpper = _deltaUpper;
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
     }
 
     /**
@@ -235,7 +263,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _wethLimitPrice,
         uint24 _ethUsdcPoolFee,
         bool _isDepositingInCrab
-    ) external onlyOwner {
+    ) external {
+        require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
         // _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
@@ -245,13 +274,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
         );
         if (_isDepositingInCrab) {
-            // {
-            //     uint256 ethToDepositInCrab = _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(ethInCrab);
-            //     (wPowerPerpAmount, ) = _calcWsqueethToMintAndFee(
-            //         ethToDepositInCrab, squeethInCrab, ethInCrab
-            //     );
-            // }
-
             // loop through orders, check each order validity
             // pull funds from orders
             {
@@ -311,8 +333,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
         } else {
-            // wPowerPerpAmount = _crabAmount.wmul(squeethInCrab).wdiv(IERC20(crab).totalSupply());
-
             // loop through orders, check each order validity
             // pull funds from orders
             {
@@ -362,7 +382,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
     }
 
-    // function _executeCrabDeposit(uint256 _crabAmount, uint256 _wethTargetInEuler, uint256 _wethLimitPrice, uint256 _ethInCrab, uint24 _ethUsdcPoolFee) internal {
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
@@ -480,7 +499,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH
         ) {
             uint256 wethToDeposit = abi.decode(_uniFlashSwapData.callData, (uint256));
-
+            console.log("wethToDeposit", wethToDeposit);
             IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 wethToDeposit, _uniFlashSwapData.amountToPay
             );
@@ -547,7 +566,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 wethToBuy,
                 wethToBuy.wmul(_wethLimitPrice).div(WETH_DECIMALS_DIFF),
                 uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
-                abi.encodePacked(wethToBuy)
+                abi.encodePacked(wethToBuy.add(remainingWeth))
             );
         } else {
             uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_wethTargetInEuler);
@@ -690,4 +709,27 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         return (wSqueethToMint, fee);
     }
+
+    /**
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @param _price clearing price provided by manager
+     * @param _isDepositingInCrab is bull depositing in Crab
+     */
+    function _checkFullRebalanceClearingPrice(uint256 _price, bool _isDepositingInCrab) internal view {
+        // Get twap
+        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+
+        if (_isDepositingInCrab) {
+            require(
+                _price >= squeethEthPrice.mul((ONE.sub(fullRebalancePriceTolerance))).div(ONE),
+                "Price too low relative to Uniswap twap."
+            );
+        } else {
+            require(
+                _price <= squeethEthPrice.mul((ONE.add(fullRebalancePriceTolerance))).div(ONE),
+                "Price too high relative to Uniswap twap."
+            );
+        }
+    }
+
 }

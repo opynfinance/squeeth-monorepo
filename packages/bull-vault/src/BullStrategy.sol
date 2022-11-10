@@ -148,6 +148,7 @@ contract BullStrategy is ERC20, LeverageBull {
         require(msg.sender == auction, "BS3");
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
+        IERC20(wPowerPerp).approve(crab, _wPowerPerpToRedeem);
         ICrabStrategyV2(crab).withdraw(_crabToRedeem);
 
         IWETH9(weth).deposit{value: address(this).balance}();

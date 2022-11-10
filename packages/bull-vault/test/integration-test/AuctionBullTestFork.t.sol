@@ -22,6 +22,7 @@ import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 import { AuctionBull } from "../../src/AuctionBull.sol";
 import { FlashBull } from "../../src/FlashBull.sol";
+import { SigUtil } from "../util/SigUtil.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -44,6 +45,7 @@ contract AuctionBullTestFork is Test {
     SwapRouter internal swapRouter;
     TestUtil internal testUtil;
     Quoter internal quoter;
+    SigUtil internal sigUtil;
 
     uint256 internal user1Pk;
     uint256 internal ownerPk;
@@ -67,6 +69,13 @@ contract AuctionBullTestFork is Test {
     address internal wPowerPerp;
 
     uint256 internal cap;
+
+    /// @dev to avoid stack too deep
+    uint256 currentWethInLeverage;
+    uint256 currentDebt;
+    uint256 targetWethInLeverage;
+    uint256 targetDebt;
+    AuctionBull.Order[] orders;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -120,6 +129,7 @@ contract AuctionBullTestFork is Test {
             dToken,
             address(crabV2)
         );
+        sigUtil = new SigUtil(auctionBull.DOMAIN_SEPARATOR());
         vm.stopPrank();
 
         cap = 100000e18;
@@ -139,6 +149,7 @@ contract AuctionBullTestFork is Test {
         vm.label(wPowerPerp, "oSQTH");
         vm.label(address(crabV2), "crabV2");
         vm.label(address(swapRouter), "SwapRouter");
+        vm.label(address(sigUtil), "SigUtils");
 
         vm.deal(user1, 100000000e18);
         // this is a crab whale, get some crab token from
@@ -237,6 +248,174 @@ contract AuctionBullTestFork is Test {
         auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, maxEthForUsdc, 3000);
         vm.stopPrank();
     }
+
+    function testFullRebalanceWhenEthUp() public {
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        console.log("currentWethInLeverage", currentWethInLeverage);
+        console.log("currentDebt", currentDebt);
+        // uint256 ethUsdPrice = UniOracle._getTwap(
+        //     controller.ethQuoteCurrencyPool(),
+        //     controller.weth(),
+        //     controller.quoteCurrency(),
+        //     TWAP,
+        //     false
+        // );
+        // uint256 squeethEthPrice = UniOracle._getTwap(
+        //     controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        // );
+
+        // console.log("ethUsdPrice", ethUsdPrice);
+        // console.log("squeethEthPrice", squeethEthPrice);
+
+        // move prices up
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(swapRouter), 30000000e6);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: usdc,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 30000000e6,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IWETH9(weth).deposit{value: 200e18}();
+        IERC20(weth).approve(address(swapRouter), 200e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: wPowerPerp,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 200e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+
+        (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
+        console.log("targetWeth", targetWethInLeverage);
+        console.log("targetDebt", targetDebt);
+        (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice);
+
+        console.log("isDepositingInCrab", isDepositingInCrab);
+        console.log("crabAmount", crabAmount);
+
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 wPowerPerpAmountToTrade = _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
+        console.log("wPowerPerpAmountToTrade", wPowerPerpAmountToTrade);
+
+        {
+            // trader signature vars
+            uint8 v; 
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: 1,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(user1Pk, bidDigest);
+            AuctionBull.Order memory orderData = AuctionBull.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: 1,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders.push(orderData);           
+        }
+
+        vm.prank(user1);
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+
+        // console.log("ethUsdPrice", ethUsdPrice);
+        // console.log("squeethEthPrice", squeethEthPrice);
+
+        vm.prank(auctionManager);
+        auctionBull.fullRebalance(orders, crabAmount, squeethEthPrice, targetWethInLeverage, ethUsdPrice.wmul(12e17), 3000, isDepositingInCrab);
+
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        console.log("currentWethInLeverage", currentWethInLeverage);
+        console.log("currentDebt", currentDebt);
+    }
+
+    function _calcCrabAmountToTrade(uint256 _currentWethInLeverage, uint256 _currentDebt, uint256 _targetWeth, uint256 _targetDebt, uint256 _ethUsdPrice) internal view returns (uint256, bool) {
+        (uint256 wethDeltaInDollar, bool isWethDeltaInDollarPositive) = (_targetWeth > _currentWethInLeverage) ? (_targetWeth.sub(_currentWethInLeverage).wmul(_ethUsdPrice), false) : (_currentWethInLeverage.sub(_targetWeth).wmul(_ethUsdPrice), true);
+        (uint256 debtDeltaInDollar, bool isDebtDeltaInDollarPositive) = (_targetDebt > _currentDebt) ? (_targetDebt.sub(_currentDebt), false) : (_currentDebt.sub(_targetDebt), true);
+        wethDeltaInDollar = wethDeltaInDollar.div(1e12);
+        bool isDepositingInCrab;
+        uint256 dollarToExchangeWithCrab;
+
+        if (isDebtDeltaInDollarPositive) {
+            if (isWethDeltaInDollarPositive) {
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar > wethDeltaInDollar) ? (debtDeltaInDollar.sub(wethDeltaInDollar), true) : (wethDeltaInDollar.sub(debtDeltaInDollar), false);
+            } else {
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar.add(wethDeltaInDollar), true);
+            }
+        } else {
+            if (!isWethDeltaInDollarPositive) {
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar > wethDeltaInDollar) ? (debtDeltaInDollar.sub(wethDeltaInDollar), false) : (wethDeltaInDollar.sub(debtDeltaInDollar), true);
+            } else {
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar.add(wethDeltaInDollar), false);
+            }
+        }
+
+        uint256 crabAmount = dollarToExchangeWithCrab.mul(1e12).wdiv(testUtil.getCrabPrice());
+
+        return (crabAmount, isDepositingInCrab);
+    }
+
+    function _calcWPowerPerpAmountFromCrab(
+        bool _isDepositingInCrab,
+        uint256 _crabAmount,
+        uint256 _ethInCrab,
+        uint256 _squeethInCrab
+    ) internal view returns (uint256) {
+        uint256 wPowerPerpAmount;
+        if (_isDepositingInCrab) {
+            uint256 ethToDepositInCrab =
+                _crabAmount.wdiv(IERC20(crabV2).totalSupply()).wmul(_ethInCrab);
+            (wPowerPerpAmount,) =
+                _calcWsqueethToMintAndFee(ethToDepositInCrab, _squeethInCrab, _ethInCrab);
+        } else {
+            wPowerPerpAmount = _crabAmount.wmul(_squeethInCrab).wdiv(IERC20(crabV2).totalSupply());
+        }
+
+        return wPowerPerpAmount;
+    }
+
 
     function testLeverageRebalanceWhenEthUp() public {
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -383,6 +562,8 @@ contract AuctionBullTestFork is Test {
         );
     }
 
+
+
     // Helper functions
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
@@ -486,5 +667,27 @@ contract AuctionBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
         );
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+    }
+
+    function _calcTargetCollateralAndDebtInLeverage() internal returns (uint256, uint256) {
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+        ).wdiv(crabV2.totalSupply());
+        uint256 equityValue = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice).add(IERC20(crabV2).balanceOf(address(bullStrategy)).wmul(crabUsdPrice)).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12));
+        uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);        
+        uint256 targetDebt = targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+
+        return (targetCollateral, targetDebt);
     }
 }
