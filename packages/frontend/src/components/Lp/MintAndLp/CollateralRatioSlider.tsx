@@ -107,7 +107,6 @@ function ValueLabelComponent(props: any) {
   const { children, open, value } = props
 
   const classes = useValueLabelStyles(value)
-
   const title = value < 200 ? 'Danger' : value < 225 ? 'Risky' : 'Safe'
 
   return (
@@ -140,7 +139,6 @@ const CollateralRatioSlider: React.FC<CollateralRatioSliderType> = ({
 
   const changeSlider = (val: number) => {
     if (val < MIN_COLLATERAL_RATIO) return
-
     onCollateralRatioChange(val)
   }
 

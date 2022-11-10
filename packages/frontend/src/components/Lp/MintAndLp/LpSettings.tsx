@@ -29,12 +29,6 @@ import CollateralRatioSlider from './CollateralRatioSlider'
 import { SimpleInput } from './Input'
 import squeethLogo from 'public/images/squeeth-logo.svg'
 
-const useTextStyles = makeStyles({
-  light: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-})
-
 const useToggleButtonStyles = makeStyles((theme) => ({
   root: {
     textTransform: 'none',
@@ -61,36 +55,19 @@ const useModalStyles = makeStyles((theme) =>
       overflow: 'scroll',
       display: 'block',
     },
-    titleSection: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    modalTitle: {
+    title: {
       fontSize: '24px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: 700,
     },
     priceContainer: {
       backgroundColor: theme.palette.background.lightStone,
       padding: theme.spacing(0.75, 1.5),
       borderRadius: '8px',
-    },
-
-    subSection: {},
-    priceRangeSectionHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    priceRangeSectionHeaderLeftColumn: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-    },
-    sectionTitle: {
-      fontSize: '18px',
-      fontWeight: 700,
     },
     divider: {
       height: '2px',
@@ -99,12 +76,8 @@ const useModalStyles = makeStyles((theme) =>
       display: 'inline-block',
       width: '100%',
     },
-    priceRangeSection: {
-      marginTop: theme.spacing(3),
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      gap: theme.spacing(2),
+    lightFontColor: {
+      color: 'rgba(255, 255, 255, 0.8)',
     },
   }),
 )
@@ -145,7 +118,6 @@ const LpSettings: React.FC<{
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
-  const textClasses = useTextStyles()
 
   const squeethPrice = getWSqueethPositionValue(1)
   const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
@@ -220,17 +192,17 @@ const LpSettings: React.FC<{
 
   return (
     <>
-      <div className={classes.titleSection}>
-        <Typography id="modal-title" variant="h2" className={classes.modalTitle}>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Typography id="modal-title" variant="h2" className={classes.title}>
           Mint and LP Preview
         </Typography>
 
         <div className={classes.priceContainer}>
           <TokenPrice symbol="ETH" price={formatNumber(Number(ethPrice))} />
         </div>
-      </div>
+      </Box>
 
-      <Box className={classes.subSection} marginTop="32px">
+      <Box marginTop="32px">
         <Typography variant="h4" className={classes.sectionTitle}>
           Mint amounts
         </Typography>
@@ -246,9 +218,9 @@ const LpSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div className={classes.subSection}>
-        <div className={classes.priceRangeSectionHeader}>
-          <div className={classes.priceRangeSectionHeaderLeftColumn}>
+      <div>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" alignItems="center" gridGap="8px">
             <TokenLogo logoSrc={squeethLogo} />
 
             <div>
@@ -257,7 +229,7 @@ const LpSettings: React.FC<{
               </Typography>
               <TokenPrice symbol="oSQTH" price={formatNumber(squeethPrice.toNumber())} isSmall />
             </div>
-          </div>
+          </Box>
 
           <Checkbox
             isChecked={usingDefaultPriceRange}
@@ -265,9 +237,9 @@ const LpSettings: React.FC<{
             name="priceRangeDefault"
             label="Default"
           />
-        </div>
+        </Box>
 
-        <div className={classes.priceRangeSection}>
+        <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="center" gridGap="20px">
           <SimpleInput
             id="min-price"
             label="Min price"
@@ -301,12 +273,12 @@ const LpSettings: React.FC<{
               ),
             }}
           />
-        </div>
+        </Box>
       </div>
 
       <Divider className={classes.divider} />
 
-      <div className={classes.subSection}>
+      <div>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography style={{ fontWeight: 500 }}>Use Uniswap LP NFT as collateral</Typography>
 
@@ -328,7 +300,7 @@ const LpSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div className={classes.subSection}>
+      <div>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h4" className={classes.sectionTitle}>
             Collateralization ratio
@@ -365,54 +337,54 @@ const LpSettings: React.FC<{
 
       <InfoBox marginTop="24px">
         <Box display="flex" justifyContent="space-between" gridGap="12px">
-          <Typography className={textClasses.light}>Liquidation price</Typography>
+          <Typography className={classes.lightFontColor}>Liquidation price</Typography>
           <Box display="flex" gridGap="8px">
             <Typography>$3,018.29</Typography>
-            <Typography className={textClasses.light}>per ETH</Typography>
+            <Typography className={classes.lightFontColor}>per ETH</Typography>
           </Box>
         </Box>
       </InfoBox>
 
       <InfoBox marginTop="6px">
         <Box display="flex" justifyContent="space-between" gridGap="12px">
-          <Typography className={textClasses.light}>Projected APY</Typography>
+          <Typography className={classes.lightFontColor}>Projected APY</Typography>
           <Typography>26.08 %</Typography>
         </Box>
       </InfoBox>
 
       <Divider className={classes.divider} />
 
-      <div className={classes.subSection}>
+      <div>
         <InfoBox>
           <Box display="flex" justifyContent="center" gridGap="6px">
             <Typography>Total Deposit</Typography>
-            <Typography className={textClasses.light}>=</Typography>
+            <Typography className={classes.lightFontColor}>=</Typography>
 
-            <Typography className={textClasses.light}>
+            <Typography className={classes.lightFontColor}>
               {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInTotal)}
             </Typography>
-            <Typography className={textClasses.light}>ETH</Typography>
+            <Typography className={classes.lightFontColor}>ETH</Typography>
           </Box>
         </InfoBox>
 
         <Box display="flex" justifyContent="space-between" gridGap="10px" marginTop="6px">
           <InfoBox>
             <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={textClasses.light}>{'To be LP’ed'}</Typography>
+              <Typography className={classes.lightFontColor}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
                 <Typography> {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInLp)}</Typography>
-                <Typography className={textClasses.light}>ETH</Typography>
+                <Typography className={classes.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
           </InfoBox>
           <InfoBox>
             <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={textClasses.light}>{'Vault'}</Typography>
+              <Typography className={classes.lightFontColor}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
                 <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInVault)}</Typography>
-                <Typography className={textClasses.light}>ETH</Typography>
+                <Typography className={classes.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
           </InfoBox>

@@ -1,6 +1,7 @@
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { Typography, Box } from '@material-ui/core'
+import clsx from 'clsx'
 
 import { formatNumber } from '@utils/formatter'
 import TokenLogo from './TokenLogo'
@@ -15,7 +16,6 @@ const useStyles = makeStyles((theme) =>
       width: '50%',
       zIndex: 0,
     },
-
     mainSection: {
       display: 'flex',
       alignItems: 'center',
@@ -25,7 +25,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: '1em',
       backgroundColor: theme.palette.background.default,
     },
-
     logoContainer: {
       width: '40px',
       height: '40px',
@@ -40,23 +39,11 @@ const useStyles = makeStyles((theme) =>
       height: '24px',
       width: '14px',
     },
-    depositContainer: {
-      marginLeft: theme.spacing(1),
-    },
-    amountContainer: {
-      display: 'flex',
-    },
-    amount: {
+    mediumBold: {
       fontWeight: 500,
     },
-    symbol: {
+    lightColor: {
       opacity: 0.5,
-      fontWeight: 400,
-      marginLeft: theme.spacing(0.5),
-    },
-    usdValue: {
-      opacity: 0.5,
-      fontWeight: 400,
     },
     subSection: {
       position: 'absolute',
@@ -69,9 +56,6 @@ const useStyles = makeStyles((theme) =>
       padding: '40px 16px 12px 16px',
       backgroundColor: theme.palette.background.stone,
       borderRadius: '10px',
-    },
-    tokenBalanceLabel: {
-      opacity: 0.5,
     },
     primaryColor: {
       color: theme.palette.primary.main,
@@ -96,20 +80,20 @@ const TokenAmount: React.FC<TokenAmountType> = ({ amount, price, symbol, logo, b
     <div className={classes.container}>
       <div className={classes.mainSection}>
         <TokenLogo logoSrc={logo} />
-        <div className={classes.depositContainer}>
-          <div className={classes.amountContainer}>
-            <Typography className={classes.amount}>{amount}</Typography>
-            <Typography className={classes.symbol}>{symbol}</Typography>
-          </div>
+        <Box marginLeft="8px">
+          <Box display="flex" alignItems="center" gridGap="4px">
+            <Typography className={classes.mediumBold}>{amount}</Typography>
+            <Typography className={clsx(classes.mediumBold, classes.lightColor)}>{symbol}</Typography>
+          </Box>
 
-          <Typography variant="caption" className={classes.usdValue}>
+          <Typography variant="caption" className={clsx(classes.mediumBold, classes.lightColor)}>
             {'$' + formatNumber(usdValue)}
           </Typography>
-        </div>
+        </Box>
       </div>
 
       <div className={classes.subSection}>
-        <Typography variant="subtitle2" className={classes.tokenBalanceLabel}>
+        <Typography variant="subtitle2" className={classes.lightColor}>
           Available
         </Typography>
 
