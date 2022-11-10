@@ -147,6 +147,12 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
   const slippageAmountVal = new BigNumber(slippageAmount).div(100).toNumber()
 
+  const handleUniswapNftAsCollatToggle = (value: any) => {
+    if (value !== null) {
+      setUsingUniswapNftAsCollat(value)
+    }
+  }
+
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
       setLowerTick(TickMath.MIN_TICK)
@@ -285,9 +291,9 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
           <ToggleButtonGroup
             size="medium"
-            value={usingUniswapNftAsCollat}
-            onChange={(e, value) => setUsingUniswapNftAsCollat(value)}
             exclusive
+            value={usingUniswapNftAsCollat}
+            onChange={(event, value) => handleUniswapNftAsCollatToggle(value)}
           >
             <ToggleButton classes={toggleButtonClasses} value={true}>
               Yes
