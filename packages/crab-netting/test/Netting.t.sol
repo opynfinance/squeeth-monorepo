@@ -15,7 +15,7 @@ contract NettingTest is BaseForkSetup {
         crab.transfer(withdrawer, 40e18);
 
         vm.startPrank(depositor); // makes some USDC deposits
-        usdc.approve(address(netting), 200 * 1e6);
+        usdc.approve(address(netting), 280 * 1e6);
         netting.depositUSDC(20 * 1e6);
         netting.depositUSDC(100 * 1e6);
         netting.depositUSDC(80 * 1e6);
@@ -133,16 +133,18 @@ contract NettingTest is BaseForkSetup {
     function testNettingAfterARun() public {
         uint256 price = 1330e6;
         uint256 quantity = 200e6;
+        vm.startPrank(depositor);
+        netting.withdrawUSDC(80e6);
+        netting.depositUSDC(80e6);
+        vm.stopPrank();
+
         vm.prank(withdrawer);
         netting.withdrawCrab(20e18 - (quantity * 1e18) / price);
-        console.log(
-            netting.crabBalance(withdrawer),
-            "crab balance bfore first netting"
-        );
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
-        console.log(
+        assertEq(
             netting.crabBalance(withdrawer),
-            "crab balance after first netting"
+            0,
+            "crab balance not zero after first netting"
         );
 
         // queue more
@@ -158,6 +160,7 @@ contract NettingTest is BaseForkSetup {
         );
         vm.stopPrank();
 
+        console.log("no issues till here 2");
         vm.startPrank(withdrawer);
         crab.approve(address(netting), 200 * 1e18);
         netting.queueCrabForWithdrawal(5 * 1e18);
@@ -170,7 +173,9 @@ contract NettingTest is BaseForkSetup {
         );
         vm.stopPrank();
 
+        console.log("no issues till here 3");
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
+        console.log("no issues till here 4");
         assertApproxEqAbs(
             usdc.balanceOf(withdrawer),
             400e6,

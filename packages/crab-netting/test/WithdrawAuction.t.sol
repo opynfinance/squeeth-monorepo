@@ -49,7 +49,7 @@ contract TestWithdrawAuction is BaseForkSetup {
 
         // deposit crab for withdrawing
         vm.startPrank(withdrawer);
-        crab.approve(address(netting), 13 * 1e18);
+        crab.approve(address(netting), 19 * 1e18);
         netting.queueCrabForWithdrawal(2 * 1e18);
         netting.queueCrabForWithdrawal(3 * 1e18);
         netting.queueCrabForWithdrawal(6 * 1e18);
@@ -58,6 +58,110 @@ contract TestWithdrawAuction is BaseForkSetup {
     }
 
     function testWithdrawAuction() public {
+        WithdrawAuctionParams memory params;
+        // find the sqth to buy to make the trade
+        params.crabToWithdraw = 10e18;
+        uint256 sqthToBuy = crab.getWsqueethFromCrabAmount(
+            params.crabToWithdraw
+        );
+        UniswapQuote quote = new UniswapQuote();
+        uint256 sqthPrice = quote.getSqthPrice(1e18);
+        params.clearingPrice = (sqthPrice * 1001) / 1000;
+
+        // get the orders for that sqth
+        vm.prank(mm1);
+        sqth.approve(address(netting), 1000000e18);
+
+        Order memory order0 = Order(
+            0,
+            mm1,
+            1e18,
+            params.clearingPrice,
+            false,
+            block.timestamp,
+            2,
+            1,
+            0x00,
+            0x00
+        );
+        Sign memory s0;
+        (s0.v, s0.r, s0.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order0));
+        order0.v = s0.v;
+        order0.r = s0.r;
+        order0.s = s0.s;
+        orders.push(order0);
+
+        Order memory order = Order(
+            0,
+            mm1,
+            sqthToBuy - 1e18,
+            params.clearingPrice,
+            false,
+            block.timestamp,
+            0,
+            1,
+            0x00,
+            0x00
+        );
+        Sign memory s1;
+        (s1.v, s1.r, s1.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order));
+        order.v = s1.v;
+        order.r = s1.r;
+        order.s = s1.s;
+        orders.push(order);
+        params.orders = orders;
+
+        // find the minUSDC to receive
+        // get col and wsqth from crab amount, find the equity value in eth
+        (, , uint256 collateral, ) = crab.getVaultDetails();
+        Portion memory p;
+        p.collateral =
+            (params.crabToWithdraw * collateral) /
+            crab.totalSupply();
+        p.debt = crab.getWsqueethFromCrabAmount(params.crabToWithdraw);
+        uint256 equityInEth = p.collateral -
+            (p.debt * params.clearingPrice) /
+            1e18;
+
+        params.minUSDC = (quote.convertWETHToUSDC(equityInEth) * 999) / 1000;
+        params.ethUSDFee = 500;
+        // get equivalent usdc quote with slippage and send
+
+        // call withdrawAuction on netting contract
+        TimeBalances memory timeUSDC;
+        TimeBalances memory timeWETH;
+        timeUSDC.start = ERC20(usdc).balanceOf(withdrawer);
+        timeWETH.start = IWETH(weth).balanceOf(mm1);
+
+        netting.withdrawAuction(params);
+
+        timeUSDC.end = ERC20(usdc).balanceOf(withdrawer);
+        timeWETH.end = IWETH(weth).balanceOf(mm1);
+        assertGe(timeUSDC.end - timeUSDC.start, params.minUSDC);
+        assertGe(timeWETH.end - timeWETH.start, (sqthToBuy * sqthPrice) / 1e18);
+
+        // and eth recevied for mm
+        assertEq(address(netting).balance, 0);
+        assertEq(ERC20(sqth).balanceOf(address(netting)), 0, "sqth balance");
+        assertLe(ERC20(usdc).balanceOf(address(netting)), 1, "usdc balance");
+        assertEq(
+            ICrabStrategyV2(crab).balanceOf(address(netting)),
+            1e18,
+            "crab balance"
+        );
+        assertEq(
+            netting.crabBalance(address(withdrawer)),
+            11e18 - params.crabToWithdraw
+        );
+        assertEq(IWETH(weth).balanceOf(address(netting)), 0, "weth balance");
+    }
+
+    function testWithdrawAuctionAfterFullWithdraw() public {
+        vm.startPrank(withdrawer);
+        netting.withdrawCrab(6e18);
+        netting.queueCrabForWithdrawal(6e18);
+        vm.stopPrank();
+
         WithdrawAuctionParams memory params;
         // find the sqth to buy to make the trade
         params.crabToWithdraw = 10e18;

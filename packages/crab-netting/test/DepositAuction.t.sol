@@ -37,7 +37,7 @@ contract DepositAuctionTest is BaseForkSetup {
         vm.stopPrank();
 
         vm.startPrank(depositor);
-        usdc.approve(address(netting), 500000 * 1e6);
+        usdc.approve(address(netting), 1500000 * 1e6);
         netting.depositUSDC(200000 * 1e6);
         vm.stopPrank();
 
@@ -126,6 +126,92 @@ contract DepositAuctionTest is BaseForkSetup {
         assertEq(sqth.balanceOf(mm1), toMint);
         assertLe(address(netting).balance, 1e16);
         assertGt(address(depositor).balance - depositorBalance, 5e17);
+    }
+
+    function testDepositAuctionAfterFullWithdrawal() public {
+        vm.startPrank(depositor);
+        console.log(netting.usdBalance(depositor), "depositor balance");
+        netting.withdrawUSDC(netting.usdBalance(depositor));
+        assertEq(netting.usdBalance(depositor), 0, "depositor balancez ero");
+        netting.depositUSDC(200000e6);
+        vm.stopPrank();
+
+        DepositAuctionParams memory p;
+        uint256 sqthPriceLimit = (_getSqthPrice(1e18) * 988) / 1000;
+        (, , uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        // Large first deposit. 10 & 40 as the deposit. 20 is the amount to net
+        vm.prank(depositor);
+        netting.depositUSDC(300000 * 1e6); //200+300 500k usdc deposited
+
+        p.depositsQueued = 300000 * 1e6;
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
+
+        uint256 toMint;
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
+            p.minEth,
+            collateral,
+            debt,
+            sqthPriceLimit
+        );
+        bool trade_works = _isEnough(
+            p.minEth,
+            toMint,
+            sqthPriceLimit,
+            p.totalDeposit
+        );
+        require(trade_works, "depositing more than we have from sellling");
+        Order memory order = Order(
+            0,
+            mm1,
+            toMint,
+            sqthPriceLimit,
+            true,
+            block.timestamp,
+            0,
+            1,
+            0x00,
+            0x00
+        );
+
+        bytes32 digest = sig.getTypedDataHash(order);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(mm1Pk, digest);
+        order.v = v;
+        order.r = r;
+        order.s = s;
+
+        orders.push(order);
+        p.orders = orders;
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        p.clearingPrice = (sqthPriceLimit * 1010) / 1000;
+        uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
+            1e18;
+
+        p.ethToFlashDeposit = ((excessEth * collateral) /
+            ((debt * _getSqthPrice(1e18)) / 1e18));
+
+        p.usdEthFee = 500;
+        p.flashDepositFee = 3000;
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
+        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        // ------------- //
+        uint256 depositorBalance = address(depositor).balance;
+        console.log(depositorBalance, "balance bfore");
+        netting.depositAuction(p);
+
+        console.log(ICrabStrategyV2(crab).balanceOf(depositor), "crab balance");
+        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 222e18);
+        assertEq(netting.usdBalance(depositor), 200000e6);
+        assertEq(sqth.balanceOf(mm1), toMint);
+        assertLe(address(netting).balance, 1e16);
+        assertGt(
+            address(depositor).balance - depositorBalance,
+            5e17,
+            "0.5 eth not remaining"
+        );
     }
 
     function testSqthPriceTooLow() public {

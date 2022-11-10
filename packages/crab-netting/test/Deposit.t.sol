@@ -103,8 +103,16 @@ contract DepositTest is BaseForkSetup {
 
         netting.withdrawCrab(3 * 1e6);
 
-        assertEq(netting.crabBalance(withdrawer), 1e6);
-        assertEq(netting.withdrawsQueued(), 1e6);
+        assertEq(
+            netting.crabBalance(withdrawer),
+            1e6,
+            "withdrawer balance incorrect"
+        );
+        assertEq(
+            netting.withdrawsQueued(),
+            1e6,
+            "withdraws queued balance incorrect"
+        );
     }
 
     function testCannotWithdrawCrabWhenAuctionLive() public {
