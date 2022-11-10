@@ -311,18 +311,21 @@ contract AuctionBullTestFork is Test {
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
         console.log("targetWeth", targetWethInLeverage);
         console.log("targetDebt", targetDebt);
-        (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice);
+        (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
+            currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
+        );
 
         console.log("isDepositingInCrab", isDepositingInCrab);
         console.log("crabAmount", crabAmount);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 wPowerPerpAmountToTrade = _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
+        uint256 wPowerPerpAmountToTrade =
+            _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
         console.log("wPowerPerpAmountToTrade", wPowerPerpAmountToTrade);
 
         {
             // trader signature vars
-            uint8 v; 
+            uint8 v;
             bytes32 r;
             bytes32 s;
             // trader signing bid
@@ -349,7 +352,7 @@ contract AuctionBullTestFork is Test {
                 r: r,
                 s: s
             });
-            orders.push(orderData);           
+            orders.push(orderData);
         }
 
         vm.prank(user1);
@@ -363,7 +366,15 @@ contract AuctionBullTestFork is Test {
         // console.log("squeethEthPrice", squeethEthPrice);
 
         vm.prank(auctionManager);
-        auctionBull.fullRebalance(orders, crabAmount, squeethEthPrice, targetWethInLeverage, ethUsdPrice.wmul(12e17), 3000, isDepositingInCrab);
+        auctionBull.fullRebalance(
+            orders,
+            crabAmount,
+            squeethEthPrice,
+            targetWethInLeverage,
+            ethUsdPrice.wmul(12e17),
+            3000,
+            isDepositingInCrab
+        );
 
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -371,24 +382,46 @@ contract AuctionBullTestFork is Test {
         console.log("currentDebt", currentDebt);
     }
 
-    function _calcCrabAmountToTrade(uint256 _currentWethInLeverage, uint256 _currentDebt, uint256 _targetWeth, uint256 _targetDebt, uint256 _ethUsdPrice) internal view returns (uint256, bool) {
-        (uint256 wethDeltaInDollar, bool isWethDeltaInDollarPositive) = (_targetWeth > _currentWethInLeverage) ? (_targetWeth.sub(_currentWethInLeverage).wmul(_ethUsdPrice), false) : (_currentWethInLeverage.sub(_targetWeth).wmul(_ethUsdPrice), true);
-        (uint256 debtDeltaInDollar, bool isDebtDeltaInDollarPositive) = (_targetDebt > _currentDebt) ? (_targetDebt.sub(_currentDebt), false) : (_currentDebt.sub(_targetDebt), true);
+    function _calcCrabAmountToTrade(
+        uint256 _currentWethInLeverage,
+        uint256 _currentDebt,
+        uint256 _targetWeth,
+        uint256 _targetDebt,
+        uint256 _ethUsdPrice
+    ) internal view returns (uint256, bool) {
+        (uint256 wethDeltaInDollar, bool isWethDeltaInDollarPositive) = (
+            _targetWeth > _currentWethInLeverage
+        )
+            ? (_targetWeth.sub(_currentWethInLeverage).wmul(_ethUsdPrice), false)
+            : (_currentWethInLeverage.sub(_targetWeth).wmul(_ethUsdPrice), true);
+        (uint256 debtDeltaInDollar, bool isDebtDeltaInDollarPositive) = (_targetDebt > _currentDebt)
+            ? (_targetDebt.sub(_currentDebt), false)
+            : (_currentDebt.sub(_targetDebt), true);
         wethDeltaInDollar = wethDeltaInDollar.div(1e12);
         bool isDepositingInCrab;
         uint256 dollarToExchangeWithCrab;
 
         if (isDebtDeltaInDollarPositive) {
             if (isWethDeltaInDollarPositive) {
-                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar > wethDeltaInDollar) ? (debtDeltaInDollar.sub(wethDeltaInDollar), true) : (wethDeltaInDollar.sub(debtDeltaInDollar), false);
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (
+                    debtDeltaInDollar > wethDeltaInDollar
+                )
+                    ? (debtDeltaInDollar.sub(wethDeltaInDollar), true)
+                    : (wethDeltaInDollar.sub(debtDeltaInDollar), false);
             } else {
-                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar.add(wethDeltaInDollar), true);
+                (dollarToExchangeWithCrab, isDepositingInCrab) =
+                    (debtDeltaInDollar.add(wethDeltaInDollar), true);
             }
         } else {
             if (!isWethDeltaInDollarPositive) {
-                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar > wethDeltaInDollar) ? (debtDeltaInDollar.sub(wethDeltaInDollar), false) : (wethDeltaInDollar.sub(debtDeltaInDollar), true);
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (
+                    debtDeltaInDollar > wethDeltaInDollar
+                )
+                    ? (debtDeltaInDollar.sub(wethDeltaInDollar), false)
+                    : (wethDeltaInDollar.sub(debtDeltaInDollar), true);
             } else {
-                (dollarToExchangeWithCrab, isDepositingInCrab) = (debtDeltaInDollar.add(wethDeltaInDollar), false);
+                (dollarToExchangeWithCrab, isDepositingInCrab) =
+                    (debtDeltaInDollar.add(wethDeltaInDollar), false);
             }
         }
 
@@ -415,7 +448,6 @@ contract AuctionBullTestFork is Test {
 
         return wPowerPerpAmount;
     }
-
 
     function testLeverageRebalanceWhenEthUp() public {
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -562,8 +594,6 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-
-
     // Helper functions
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
@@ -684,9 +714,14 @@ contract AuctionBullTestFork is Test {
         uint256 crabUsdPrice = (
             ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
         ).wdiv(crabV2.totalSupply());
-        uint256 equityValue = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice).add(IERC20(crabV2).balanceOf(address(bullStrategy)).wmul(crabUsdPrice)).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12));
-        uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);        
-        uint256 targetDebt = targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+        uint256 equityValue = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(
+            ethUsdPrice
+        ).add(IERC20(crabV2).balanceOf(address(bullStrategy)).wmul(crabUsdPrice)).sub(
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12)
+        );
+        uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);
+        uint256 targetDebt =
+            targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
 
         return (targetCollateral, targetDebt);
     }

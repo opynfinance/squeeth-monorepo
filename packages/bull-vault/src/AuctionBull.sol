@@ -173,11 +173,16 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
      * @param _fullRebalancePriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
-    function setFullRebalancePriceTolerance(uint256 _fullRebalancePriceTolerance) external onlyOwner {
+    function setFullRebalancePriceTolerance(uint256 _fullRebalancePriceTolerance)
+        external
+        onlyOwner
+    {
         // Tolerance cannot be more than 20%
         require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_PRICE_TOLERANCE, "AB14");
 
-        emit SetfullRebalancePriceTolerance(fullRebalancePriceTolerance, _fullRebalancePriceTolerance);
+        emit SetfullRebalancePriceTolerance(
+            fullRebalancePriceTolerance, _fullRebalancePriceTolerance
+            );
 
         fullRebalancePriceTolerance = _fullRebalancePriceTolerance;
     }
@@ -715,7 +720,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _price clearing price provided by manager
      * @param _isDepositingInCrab is bull depositing in Crab
      */
-    function _checkFullRebalanceClearingPrice(uint256 _price, bool _isDepositingInCrab) internal view {
+    function _checkFullRebalanceClearingPrice(uint256 _price, bool _isDepositingInCrab)
+        internal
+        view
+    {
         // Get twap
         uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
 
@@ -731,5 +739,4 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             );
         }
     }
-
 }
