@@ -554,7 +554,7 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             require(
-                _p.orders[i].isBuying && _p.orders[i].price <= _p.clearingPrice
+                _p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice
             );
             checkOrder(_p.orders[i]);
             if (_p.orders[i].quantity >= remainingToSell) {
@@ -677,7 +677,7 @@ contract CrabNetting is Ownable, EIP712 {
                     portion.eth
                 );
 
-                deposits[k].amount = 0;
+                delete deposits[k];
                 k++;
             } else {
                 usdBalance[deposits[k].sender] -= remainingDeposits;
@@ -735,7 +735,7 @@ contract CrabNetting is Ownable, EIP712 {
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             checkOrder(_p.orders[i]);
             require(
-                !_p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice
+                !_p.orders[i].isBuying && _p.orders[i].price <= _p.clearingPrice
             );
             if (_p.orders[i].quantity < toPull) {
                 toPull -= _p.orders[i].quantity;
@@ -809,7 +809,6 @@ contract CrabNetting is Ownable, EIP712 {
                 // full usage
                 remainingWithdraws -= withdraw.amount;
                 crabBalance[withdraw.sender] -= withdraw.amount;
-                j++;
 
                 // send proportional usdc
                 usdcAmount =
@@ -822,7 +821,8 @@ contract CrabNetting is Ownable, EIP712 {
                     usdcAmount,
                     j
                 );
-                withdraw.amount = 0;
+                delete withdraws[j];
+                j++;
             } else {
                 withdraw.amount -= remainingWithdraws;
                 crabBalance[withdraw.sender] -= remainingWithdraws;

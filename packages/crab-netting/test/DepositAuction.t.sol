@@ -84,7 +84,7 @@ contract DepositAuctionTest is BaseForkSetup {
             0,
             mm1,
             toMint,
-            sqthPriceLimit,
+            (sqthPriceLimit * 1005) / 1000,
             true,
             block.timestamp,
             0,
@@ -104,7 +104,7 @@ contract DepositAuctionTest is BaseForkSetup {
         vm.prank(mm1);
         weth.approve(address(netting), 1e30);
 
-        p.clearingPrice = (sqthPriceLimit * 1010) / 1000;
+        p.clearingPrice = (sqthPriceLimit * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
@@ -164,7 +164,7 @@ contract DepositAuctionTest is BaseForkSetup {
             0,
             mm1,
             toMint,
-            sqthPriceLimit,
+            (sqthPriceLimit * 1005) / 1000,
             true,
             block.timestamp,
             0,
@@ -184,7 +184,7 @@ contract DepositAuctionTest is BaseForkSetup {
         vm.prank(mm1);
         weth.approve(address(netting), 1e30);
 
-        p.clearingPrice = (sqthPriceLimit * 1010) / 1000;
+        p.clearingPrice = (sqthPriceLimit * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
@@ -203,7 +203,7 @@ contract DepositAuctionTest is BaseForkSetup {
         netting.depositAuction(p);
 
         console.log(ICrabStrategyV2(crab).balanceOf(depositor), "crab balance");
-        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 222e18);
+        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 221e18);
         assertEq(netting.usdBalance(depositor), 200000e6);
         assertEq(sqth.balanceOf(mm1), toMint);
         assertLe(address(netting).balance, 1e16);
@@ -300,7 +300,7 @@ contract DepositAuctionTest is BaseForkSetup {
             0,
             mm1,
             toMint - 1e18,
-            sqthPrice,
+            (sqthPrice * 1005) / 1000,
             true,
             block.timestamp,
             0,
@@ -319,7 +319,7 @@ contract DepositAuctionTest is BaseForkSetup {
             0,
             mm1,
             1e18,
-            sqthPrice,
+            (sqthPrice * 1005) / 1000,
             true,
             block.timestamp,
             1,
@@ -340,7 +340,7 @@ contract DepositAuctionTest is BaseForkSetup {
         weth.approve(address(netting), 1e30);
 
         p.orders = orders;
-        p.clearingPrice = (sqthPrice * 1010) / 1000;
+        p.clearingPrice = (sqthPrice * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
 
         p.ethToFlashDeposit = ((excessEth * collateral) /
@@ -406,7 +406,7 @@ contract DepositAuctionTest is BaseForkSetup {
             0,
             mm1,
             toMint,
-            sqthPrice,
+            63974748984830990, // sqth price in the future
             true,
             block.timestamp + 26000000,
             0,
@@ -425,7 +425,7 @@ contract DepositAuctionTest is BaseForkSetup {
         weth.approve(address(netting), 1e30);
 
         p.orders = orders;
-        p.clearingPrice = (sqthPrice * 1010) / 1000;
+        p.clearingPrice = (sqthPrice * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
 
         p.ethToFlashDeposit = ((excessEth * collateral) /

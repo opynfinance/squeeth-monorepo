@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
+import {console} from "forge-std/console.sol";
 
 import {Order} from "../../src/CrabNetting.sol";
 
@@ -43,6 +44,7 @@ contract SigUtils {
         view
         returns (bytes32)
     {
+        console.log("her");
         return
             keccak256(
                 abi.encodePacked(
