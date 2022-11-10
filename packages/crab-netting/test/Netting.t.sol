@@ -33,6 +33,29 @@ contract NettingTest is BaseForkSetup {
         // withdrawer has 20 queued and depositor 200
     }
 
+    function testNettingAmountEqlsDeposit() public {
+        uint256 price = 1330e6;
+        uint256 quantity = 20e6;
+        netting.netAtPrice(price, quantity);
+        assertEq(netting.usdBalance(depositor), 180e6);
+        uint256 crabReceived = ((quantity * 1e18) / price);
+        assertEq(crab.balanceOf(depositor), crabReceived);
+    }
+
+    function testNettingAmountEqlsZero() public {
+        uint256 price = 1330e6;
+        uint256 quantity = 0;
+        netting.netAtPrice(price, quantity);
+        assertEq(netting.usdBalance(depositor), 200e6);
+    }
+
+    function testNettingAmountGreaterThanBalance() public {
+        uint256 price = 1330e6;
+        uint256 quantity = 30e10;
+        vm.expectRevert();
+        netting.netAtPrice(price, quantity);
+    }
+
     function testNetting() public {
         // TODO turn this into a fuzzing test
         assertEq(usdc.balanceOf(withdrawer), 0, "starting balance");
