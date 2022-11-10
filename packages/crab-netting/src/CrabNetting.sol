@@ -425,7 +425,7 @@ contract CrabNetting is Ownable, EIP712 {
                 IERC20(crab).transfer(deposit.sender, amountToSend);
                 emit USDCDeposited(
                     deposit.sender,
-                    deposit.amount,
+                    _quantity,
                     amountToSend,
                     i,
                     0
