@@ -191,7 +191,7 @@ const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClo
 
   const resetErrorAndGoBack = () => {
     setTxError('')
-    resetStep
+    resetStep()
   }
 
   const classes = useModalStyles()
