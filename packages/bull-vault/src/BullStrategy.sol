@@ -25,7 +25,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS2: Strategy cap reached max
  * BS3: redeemShortShutdown must be called first
  * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
- * BS5: shutdownRepayAndWithdraw has already been called
+ * BS5: shutdownRepayAndWithdraw has already been called with share of 100%
  * BS6: invalid shutdownContract address set
  */
 
@@ -195,14 +195,17 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
-    function shutdownRepayAndWithdraw(uint256 wethToUniswap) external {
-        require (msg.sender == shutdownContract, "");
-        require (!hasRedeemedInShutdown, "");
-        hasRedeemedInShutdown=true;
+    function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
+        require (msg.sender == shutdownContract, "BS4");
+        require (!hasRedeemedInShutdown, "BS5");
+        if (shareToUnwind == ONE) {
+            hasRedeemedInShutdown=true;
+        }
 
-        ICrabStrategyV2(crab).withdrawShutdown(ICrabStrategyV2(crab).balanceOf(address(this)));
+        uint256 crabToRedeem = shareToUnwind.wmul(ICrabStrategyV2(crab).balanceOf(address(this)));
+        ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
 
-        _repayAndWithdrawFromLeverage(ONE);
+        _repayAndWithdrawFromLeverage(shareToUnwind);
         IWETH9(weth).deposit{value: wethToUniswap}();
         IWETH9(weth).transfer(shutdownContract, wethToUniswap);
     }

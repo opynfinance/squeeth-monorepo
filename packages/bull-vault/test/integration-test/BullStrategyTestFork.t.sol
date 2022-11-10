@@ -228,7 +228,8 @@ contract BullStrategyTestFork is Test {
 
     function testRedeemShortShutdownCallerNowOwner() public {
         EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
-            maxEthToPay: 1000,
+            shareToUnwind: ONE,
+            ethLimitPrice: 1000,
             ethPoolFee: uint24(3000)
         });
         
