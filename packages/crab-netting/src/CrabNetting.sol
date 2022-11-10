@@ -277,7 +277,10 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _amount USDC amount to deposit
      */
     function depositUSDC(uint256 _amount) external {
-        require(_amount >= minUSDCAmount);
+        require(
+            _amount >= minUSDCAmount,
+            "deposit amount smaller than minimum OTC amount"
+        );
 
         IERC20(usdc).transferFrom(msg.sender, address(this), _amount);
 
@@ -304,7 +307,8 @@ contract CrabNetting is Ownable, EIP712 {
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
         require(
             usdBalance[msg.sender] >= minUSDCAmount ||
-                usdBalance[msg.sender] == 0
+                usdBalance[msg.sender] == 0,
+            "remaining amount smaller than minimum, consider removing full balance"
         );
 
         // remove that _amount the users last deposit
@@ -331,7 +335,10 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _amount crab amount to withdraw
      */
     function queueCrabForWithdrawal(uint256 _amount) external {
-        require(_amount >= minCrabAmount);
+        require(
+            _amount >= minCrabAmount,
+            "withdraw amount smaller than minimum OTC amount"
+        );
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] + _amount;
         withdraws.push(Receipt(msg.sender, _amount));
@@ -350,11 +357,11 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function withdrawCrab(uint256 _amount) external {
         require(!isAuctionLive, "auction is live");
-        // require(crabBalance[msg.sender] >= _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         require(
             crabBalance[msg.sender] >= minCrabAmount ||
-                crabBalance[msg.sender] == 0
+                crabBalance[msg.sender] == 0,
+            "remaining amount smaller than minimum, consider removing full balance"
         );
         // remove that _amount the users last deposit
         uint256 toRemove = _amount;
@@ -562,7 +569,8 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             require(
-                _p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice
+                _p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice,
+                "buy order price less than clearing"
             );
             checkOrder(_p.orders[i]);
             if (_p.orders[i].quantity >= remainingToSell) {
@@ -743,7 +751,9 @@ contract CrabNetting is Ownable, EIP712 {
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             checkOrder(_p.orders[i]);
             require(
-                !_p.orders[i].isBuying && _p.orders[i].price <= _p.clearingPrice
+                !_p.orders[i].isBuying &&
+                    _p.orders[i].price <= _p.clearingPrice,
+                "sell order price greater than clearing"
             );
             if (_p.orders[i].quantity < toPull) {
                 toPull -= _p.orders[i].quantity;
