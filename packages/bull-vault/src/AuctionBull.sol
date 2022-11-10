@@ -279,6 +279,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
         );
         if (_isDepositingInCrab) {
+            console.log("#1");
             // loop through orders, check each order validity
             // pull funds from orders
             {
@@ -388,11 +389,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
+        console.log("#2");
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > wethInCollateral) {
+            console.log("#3");
+
             uint256 wethToGet =
                 _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
             _exactOutFlashSwap(
@@ -407,7 +411,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 )
             );
         } else {
+            console.log("#4");
+
             uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
+            console.log("ethNeededForCrab", ethNeededForCrab);
+            console.log("wethFromEuler", wethFromEuler);
+
             uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
             _exactOutFlashSwap(
                 usdc,
