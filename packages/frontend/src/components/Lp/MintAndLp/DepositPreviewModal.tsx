@@ -27,7 +27,7 @@ const useWaitForConfirmationStyles = makeStyles((theme) =>
   }),
 )
 
-const WaitForConfirmation: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+const WaitForConfirmation: React.FC = () => {
   const classes = useWaitForConfirmationStyles()
 
   return (
@@ -39,11 +39,6 @@ const WaitForConfirmation: React.FC<{ onComplete: () => void }> = ({ onComplete 
       </div>
 
       <Typography className={classes.title}>Confirm transaction in your wallet</Typography>
-      <Box>
-        <AltPrimaryButton id="confirm-tx-btn" onClick={onComplete} fullWidth>
-          Simulate confirm transaction
-        </AltPrimaryButton>
-      </Box>
     </Box>
   )
 }
@@ -87,6 +82,9 @@ const useTxStatusStyles = makeStyles({
     fontWeight: 700,
     letterSpacing: '-0.01em',
   },
+  errorMessage: {
+    fontSize: '18px',
+  },
   stepLabel: {
     fontSize: '16px',
     color: 'rgba(255, 255, 255, 0.7)',
@@ -96,9 +94,12 @@ const useTxStatusStyles = makeStyles({
     fontWeight: 700,
     color: 'rgba(255, 255, 255, 1)',
   },
+  buttonMargin: {
+    marginTop: '32px',
+  },
 })
 
-const TxStatus: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+const TxStatusSuccess: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const classes = useTxStatusStyles()
   const stepperClasses = useStepperStyles()
 
@@ -131,6 +132,23 @@ const TxStatus: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   )
 }
 
+const TxStatusFail: React.FC<{ message: string; onBackClick: () => void }> = ({ message, onBackClick }) => {
+  const classes = useTxStatusStyles()
+
+  return (
+    <Box display="flex" flexDirection="column" gridGap="24px">
+      <Typography className={classes.title}>Deposit failed!</Typography>
+      <Typography variant="body1" className={classes.errorMessage}>
+        {message}
+      </Typography>
+
+      <AltPrimaryButton id="go-back-btn" onClick={onBackClick} fullWidth className={classes.buttonMargin}>
+        Go back
+      </AltPrimaryButton>
+    </Box>
+  )
+}
+
 const useModalStyles = makeStyles((theme) =>
   createStyles({
     container: {
@@ -154,13 +172,26 @@ type DepositPreviewModalProps = {
 
 const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClose, squeethToMint }) => {
   const [activeStep, setActiveStep] = React.useState(0)
+  const [txError, setTxError] = React.useState('')
 
-  const handleNext = () => setActiveStep((prevActiveStep) => prevActiveStep + 1)
+  const toConfirmationStep = () => setActiveStep(1)
+  const toTxStatusStep = () => setActiveStep(2)
   const resetStep = () => setActiveStep(0)
 
   const handleClose = () => {
+    setTxError('')
     resetStep()
     onClose()
+  }
+
+  const handleTxFail = (message: string) => {
+    setTxError(message)
+    toTxStatusStep()
+  }
+
+  const resetErrorAndGoBack = () => {
+    setTxError('')
+    resetStep
   }
 
   const classes = useModalStyles()
@@ -168,9 +199,21 @@ const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClo
   return (
     <Modal open={isOpen} onClose={handleClose} aria-labelledby="modal-title">
       <Box className={classes.container}>
-        {activeStep === 0 && <LpSettings onComplete={handleNext} squeethToMint={squeethToMint} />}
-        {activeStep === 1 && <WaitForConfirmation onComplete={handleNext} />}
-        {activeStep === 2 && <TxStatus onComplete={handleClose} />}
+        {activeStep === 0 && (
+          <LpSettings
+            squeethToMint={squeethToMint}
+            onConfirm={toConfirmationStep}
+            onTxSuccess={toTxStatusStep}
+            onTxFail={(message) => handleTxFail(message)}
+          />
+        )}
+        {activeStep === 1 && <WaitForConfirmation />}
+        {activeStep === 2 &&
+          (!!txError ? (
+            <TxStatusFail message={txError} onBackClick={resetErrorAndGoBack} />
+          ) : (
+            <TxStatusSuccess onComplete={handleClose} />
+          ))}
       </Box>
     </Modal>
   )

@@ -110,6 +110,7 @@ export const useOpenPositionDeposit = () => {
       collatRatio: number,
       slippage: number,
       withdrawAmount: number,
+      onTxRequested?: () => void,
       onTxConfirmed?: () => void,
     ) => {
       if (!squeethPoolContract || !contract || !address) return null
@@ -157,6 +158,8 @@ export const useOpenPositionDeposit = () => {
         }),
         onTxConfirmed,
       )
+
+      onTxRequested && onTxRequested()
       return txHash
     },
     [address, squeethPool, contract, handleTransaction, squeethPoolContract, isWethToken0, getDepositAmounts],

@@ -17,6 +17,7 @@ import { useGetDepositAmounts, useGetTicksFromPriceRange, useOpenPositionDeposit
 import { slippageAmountAtom } from '@state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
+import { getErrorMessage } from '@utils/error'
 import { OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from './InfoBox'
@@ -113,7 +114,12 @@ const formatTokenAmount = (amount: string | number) => {
   return Number(withPrecision).toFixed(2)
 }
 
-const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = ({ onComplete, squeethToMint }) => {
+const LpSettings: React.FC<{
+  squeethToMint: string
+  onConfirm: () => void
+  onTxSuccess: () => void
+  onTxFail: (message: string) => void
+}> = ({ squeethToMint, onConfirm, onTxSuccess, onTxFail }) => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
   const ethPrice = useETHPrice()
@@ -189,15 +195,28 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
         slippageAmountVal,
         0,
         () => {
+          onConfirm()
+        },
+        () => {
           console.log('successfully deposited')
-          onComplete()
+          onTxSuccess()
         },
       )
-    } catch (e) {
-      console.log('transaction failed')
-      console.log(e)
+    } catch (error: unknown) {
+      console.log('deposit failed', error)
+      onTxFail(getErrorMessage(error))
     }
-  }, [squeethToMint, lowerTick, upperTick, collatRatioVal, slippageAmountVal, openLpPosition, onComplete])
+  }, [
+    squeethToMint,
+    lowerTick,
+    upperTick,
+    collatRatioVal,
+    slippageAmountVal,
+    openLpPosition,
+    onConfirm,
+    onTxSuccess,
+    onTxFail,
+  ])
 
   return (
     <>
