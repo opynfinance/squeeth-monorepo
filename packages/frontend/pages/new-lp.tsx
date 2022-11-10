@@ -79,8 +79,8 @@ const LPPage: React.FC = () => {
             onInputChange={setSqueethAmount}
             symbol="oSQTH"
             logo={squeethLogo}
-            price={squeethPrice.toString()}
-            balance={squeethBalance.toString()}
+            usdPrice={squeethPrice}
+            balance={squeethBalance}
           />
 
           <AltPrimaryButton

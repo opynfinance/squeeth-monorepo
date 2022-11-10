@@ -2,6 +2,7 @@ import { TextField, StandardTextFieldProps, Typography, InputAdornment } from '@
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import Image from 'next/image'
+import BigNumber from 'bignumber.js'
 
 import { formatNumber } from '@utils/formatter'
 
@@ -191,8 +192,8 @@ const useTokenInputStyles = makeStyles((theme) =>
 
 type TokenInputCustomProps = {
   onInputChange: (value: string) => void
-  price: string
-  balance: string
+  usdPrice: BigNumber
+  balance: BigNumber
   logo: string
   symbol: string
 }
@@ -204,7 +205,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
   id,
   value,
   onInputChange,
-  price,
+  usdPrice,
   balance,
   logo,
   symbol,
@@ -212,7 +213,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
 }) => {
   const classes = useTokenInputStyles()
 
-  const usdValue = isNaN(Number(value)) || isNaN(Number(price)) ? 0 : Number(value) * Number(price)
+  const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
 
   return (
     <div className={classes.container}>
@@ -235,7 +236,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
         />
 
         <Typography variant="subtitle1" className={classes.lightFont}>
-          {'$' + formatNumber(usdValue)}
+          {usdPrice.isZero() ? 'loading...' : '$' + formatNumber(usdValue)}
         </Typography>
       </div>
 
@@ -244,7 +245,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
           Available
         </Typography>
         <Typography variant="caption" className={classes.smallFont}>
-          {formatNumber(Number(balance))} {symbol}
+          {formatNumber(balance.toNumber())} {symbol}
         </Typography>
       </div>
     </div>
