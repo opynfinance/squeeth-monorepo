@@ -17,6 +17,7 @@ import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 import { EmergencyShutdown } from  "../../src/EmergencyShutdown.sol";
+//import { Quoter } from "v3-periphery/contracts/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -50,12 +51,16 @@ contract BullStrategyTestFork is Test {
     address internal wPowerPerp;
     address internal deployer;
     address internal bullOwner;
+    address internal crabOwner;
     address internal controllerOwner;
     address internal ethWSqueethPool;
     address internal ethUsdcPool;
 
-    uint256 internal constant USDC_WETH_DECIMAL_DIFFERENCE = 1e12;
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     uint256 internal constant ONE = 1e18;
+    uint256 internal constant ONE_ONE = 1e36;
+    uint32 internal constant TWAP = 420;
+    uint256 internal constant INDEX_SCALE = 10000;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -72,9 +77,10 @@ contract BullStrategyTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         controllerOwner = controller.owner();
         ethWSqueethPool = controller.wPowerPerpPool();
-        console.log(ethWSqueethPool);
         ethUsdcPool = controller.ethQuoteCurrencyPool();
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
+        //console.log(address(crabV2));
+        crabOwner = crabV2.owner();
         bullStrategy =
         new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule, 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         usdc = controller.quoteCurrency();
@@ -82,6 +88,7 @@ contract BullStrategyTestFork is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
+        //quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown = new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
 
         testUtil =
@@ -90,9 +97,10 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
 
         cap = 100000e18;
-        vm.prank(bullOwner);
+        vm.startPrank(bullOwner);
         bullStrategy.setCap(cap);
-
+        bullStrategy.setShutdownContract(address(emergencyShutdown));
+        vm.stopPrank();
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
 
@@ -239,7 +247,9 @@ contract BullStrategyTestFork is Test {
         emergencyShutdown.redeemShortShutdown(params);
     }
 
-/*     function testEmergencyShutdown() public {
+    function testEmergencyShutdown() public {
+        
+        {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
@@ -280,29 +290,71 @@ contract BullStrategyTestFork is Test {
             ) <= 1
         );
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
+        }
+
+        vm.startPrank(controllerOwner);
+        controller.shutDown();
+        assertEq(controller.isShutDown(), true);
+        vm.stopPrank();
+
+        vm.startPrank(crabOwner);
+        crabV2.redeemShortShutdown();
+        vm.stopPrank();
+
+        //(address operator , uint256 nftId ,uint256 crabCollateral, uint256 crabDebt) = crabV2.getVaultDetails();
 
         vm.startPrank(bullOwner);
-        
-        uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, 1, false);
-        uint256 usdcToRepay = bullStrategy.calcUsdcToRepay(ONE);
-        // to do - add quoter to get real swap, will grab from other PRs
-        uint256 maxEthToPay = usdcToRepay.wdiv(ethUsdPrice).mul(USDC_WETH_DECIMAL_DIFFERENCE).wmul(1.1e18);
+        bullStrategy.setShutdownContract(address(emergencyShutdown));
 
-        uint256 dTokenBalanceBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        uint256 eTokenBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        uint256 contractETHBalanceBefore = address(bullStrategy).balance;
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
 
+        uint256 crabShares = bullStrategy.getCrabBalance();
+        console.log("Crab shares: ",crabShares);
+        uint256 vaultId = crabV2.getStrategyVaultId();
+        console.log("Crab vault id ", vaultId);
+        (address operator , uint256 nftId ,uint256 crabCollateral, uint256 crabDebt) = controller.vaults(vaultId);
+        console.log("Vault details:" );
+        console.log(operator, nftId, crabCollateral, crabDebt);
+
+        //VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(vaultId);
+        //console.log(strategyVault.operator, strategyVault.NftCollateralId, strategyVault.collateralAmount, strategyVault.shortAmount);
+
+        //uint256 wSqueethShare = crabV2.getWsqueethFromCrabAmount(crabShares);
+        //console.log(wSqueethShare,"Squeeth Share from Crab contract for crab shares owned");
+        //uint256 ethShare = crabShares.wmul(crabCollateral).wdiv(crabV2.totalSupply());
+        //uint256 netEthToReceive =  ethShare.sub(wSqueethShare.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE)));
+        //console.log(ethShare, wSqueethShare, contro ller.normalizationFactor(), ethUsdPrice.wdiv(INDEX_SCALE));
+        // to do - add quoter to get real swap
+
+        //uint256 expectedEthToPay = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcToRepay, 0);
+        //console.log("Expected eth to pay", expectedEthToPay);
+
+        //uint256 maxEthToPay = usdcToRepay.wdiv(ethUsdPrice).mul(USDC_WETH_DECIMAL_DIFFERENCE).wmul(1.1e18);
+
+        //uint256 dTokenBalanceBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        //uint256 eTokenBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        //uint256 contractETHBalanceBefore = address(bullStrategy).balance;
+        // to do update with quoter on actual swap
+        //uint256 expectedRedemptionFromLeverage = bullStrategy.calcWethToWithdraw(crabShares).sub(bullStrategy.calcUsdcToRepay(crabShares).mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(0.9e18)));
+        //uint256 totalExpectedRedemption = expectedRedemptionFromLeverage.add(netEthToReceive);
+
+        //console.log(netEthToReceive, "eth to receive from shutdown");
+        //console.log(expectedRedemptionFromLeverage, "eth to receive from leverage");
         EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
-            maxEthToPay: maxEthToPay,
+            shareToUnwind: ONE,
+            ethLimitPrice: ethUsdPrice.wmul(0.9e18),
             ethPoolFee: uint24(3000)
         });
         
         emergencyShutdown.redeemShortShutdown(params);
         vm.stopPrank();
 
-        
+        uint256 contractEthAfter = address(bullStrategy).balance;
+        console.log(contractEthAfter, "contract eth balance");
 
-    } */
+        //assertEq(netEthToReceive,);
+
+    }
 
     function testWithdraw() public {
         uint256 crabToDeposit = 15e18;
