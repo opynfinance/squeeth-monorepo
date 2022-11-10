@@ -108,24 +108,29 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
-        p.ethToFlashDeposit = ((excessEth * collateral) /
-            ((debt * _getSqthPrice(1e18)) / 1e18));
-
         p.usdEthFee = 500;
         p.flashDepositFee = 3000;
 
         // Find the borrow ration for toFlash
-        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
-        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         // ------------- //
         uint256 depositorBalance = address(depositor).balance;
         netting.depositAuction(p);
 
-        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 200e18);
+        assertApproxEqAbs(
+            ICrabStrategyV2(crab).balanceOf(depositor),
+            221e18,
+            1e18
+        );
         assertEq(netting.usdBalance(depositor), 200000e6);
         assertEq(sqth.balanceOf(mm1), toMint);
-        assertLe(address(netting).balance, 1e16);
-        assertGt(address(depositor).balance - depositorBalance, 5e17);
+        assertEq(address(netting).balance, 1);
+        assertApproxEqAbs(
+            address(depositor).balance - depositorBalance,
+            5e17,
+            1e17
+        );
     }
 
     function testDepositAuctionAfterFullWithdrawal() public {
@@ -188,15 +193,12 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
-        p.ethToFlashDeposit = ((excessEth * collateral) /
-            ((debt * _getSqthPrice(1e18)) / 1e18));
-
         p.usdEthFee = 500;
         p.flashDepositFee = 3000;
 
         // Find the borrow ration for toFlash
-        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
-        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         // ------------- //
         uint256 depositorBalance = address(depositor).balance;
         console.log(depositorBalance, "balance bfore");
@@ -212,6 +214,7 @@ contract DepositAuctionTest is BaseForkSetup {
             5e17,
             "0.5 eth not remaining"
         );
+        assertEq(netting.depositsIndex(), 2);
     }
 
     function testSqthPriceTooLow() public {
@@ -259,12 +262,12 @@ contract DepositAuctionTest is BaseForkSetup {
         netting.depositAuction(p);
     }
 
-    function testDepositAuction() public {
+    function testFirstDepositAuction() public {
         DepositAuctionParams memory p;
         // get the usd to deposit remaining
         p.depositsQueued = netting.depositsQueued();
         // find the eth value of it
-        p.minEth = _convertUSDToETH(p.depositsQueued);
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
 
         // lets get the uniswap price, you can get this from uniswap function in crabstratgegy itself
         uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
@@ -342,9 +345,7 @@ contract DepositAuctionTest is BaseForkSetup {
         p.orders = orders;
         p.clearingPrice = (sqthPrice * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
-
-        p.ethToFlashDeposit = ((excessEth * collateral) /
-            ((debt * p.clearingPrice) / 1e18));
+        console.log(excessEth, "excess eth is");
 
         console.log(
             ICrabStrategyV2(crab).balanceOf(depositor),
@@ -352,15 +353,29 @@ contract DepositAuctionTest is BaseForkSetup {
         );
 
         // Find the borrow ration for toFlash
-        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
-        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        console.log(mid, "borrow percentage is");
+        p.ethToFlashDeposit = (excessEth * mid) / 10**7;
+        console.log("after multiplying", p.ethToFlashDeposit);
         p.usdEthFee = 500;
         p.flashDepositFee = 3000;
         // ------------- //
+        console.log(p.depositsQueued, p.minEth, p.totalDeposit, toMint);
+        console.log(p.clearingPrice);
+        uint256 initEthBalance = address(depositor).balance;
         netting.depositAuction(p);
 
-        assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 148e18);
+        assertApproxEqAbs(
+            ICrabStrategyV2(crab).balanceOf(depositor),
+            147e18,
+            1e18
+        );
         assertEq(sqth.balanceOf(mm1), toMint);
+        assertApproxEqAbs(
+            address(depositor).balance - initEthBalance,
+            3e17,
+            1e17
+        );
     }
 
     // TODO find a way to make this reusable and test easily
@@ -428,17 +443,14 @@ contract DepositAuctionTest is BaseForkSetup {
         p.clearingPrice = (sqthPrice * 1005) / 1000;
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
 
-        p.ethToFlashDeposit = ((excessEth * collateral) /
-            ((debt * p.clearingPrice) / 1e18));
-
         console.log(
             ICrabStrategyV2(crab).balanceOf(depositor),
             "balance start crab"
         );
 
         // Find the borrow ration for toFlash
-        uint256 mid = _findBorrow(p.ethToFlashDeposit, debt, collateral);
-        p.ethToFlashDeposit = (p.ethToFlashDeposit * mid) / 10**7;
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         p.usdEthFee = 500;
         p.flashDepositFee = 3000;
         // ------------- //
@@ -469,12 +481,12 @@ contract DepositAuctionTest is BaseForkSetup {
             180
         );
 
-        assertApproxEqRel(
+        assertApproxEqAbs(
             ICrabStrategyV2(crab).balanceOf(depositor),
-            134e18,
-            0.06e18
+            140e18,
+            1e18
         );
-        assertApproxEqRel(
+        assertApproxEqAbs(
             sqth.balanceOf(mm1),
             toMint,
             0.001e18,
@@ -523,7 +535,7 @@ contract DepositAuctionTest is BaseForkSetup {
             }
         }
         // why is all the eth not being take in
-        return mid;
+        return mid + 1e7;
     }
 
     function _isEnough(

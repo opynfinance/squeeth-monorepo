@@ -603,7 +603,7 @@ contract CrabNetting is Ownable, EIP712 {
 
         // step 4
         Portion memory to_send;
-        to_send.eth = address(this).balance;
+        to_send.eth = address(this).balance - initEthBalance;
         if (to_send.eth > 0 && _p.ethToFlashDeposit > 0) {
             if (to_send.eth <= _p.ethToFlashDeposit) {
                 // we cant send more than the flashDeposit
