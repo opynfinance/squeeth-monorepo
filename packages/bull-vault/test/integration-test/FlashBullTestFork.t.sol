@@ -173,7 +173,7 @@ contract FlashBullTestFork is Test {
         assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
-    function testScenarioFlashDepositSqthSlippage() public {
+    function testFlashDepositWithHugeSqthSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
         (uint256 wSqueethToMint, uint256 fee) =
@@ -215,7 +215,7 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
     }
 
-    function testScenarioFlashDepositUsdcSlippage() public {
+    function testFlashDepositWithHugeUsdcSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
         (uint256 wSqueethToMint, uint256 fee) =
