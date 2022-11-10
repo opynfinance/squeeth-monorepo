@@ -113,12 +113,6 @@ const formatTokenAmount = (amount: string | number) => {
   return Number(withPrecision).toFixed(2)
 }
 
-interface DepositAmounts {
-  vault: string
-  lp: string
-  total: string
-}
-
 const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = ({ onComplete, squeethToMint }) => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
@@ -137,7 +131,11 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
   const [collatRatio, setCollatRatio] = useState(225)
   const [lowerTick, setLowerTick] = useState(TickMath.MIN_TICK)
   const [upperTick, setUpperTick] = useState(TickMath.MAX_TICK)
-  const [depositAmounts, setDepositAmounts] = useState<DepositAmounts>({ vault: '0', lp: '0', total: '0' })
+
+  const [depositInTotal, setDepositInTotal] = useState(0)
+  const [depositInLp, setDepositInLp] = useState(0)
+  const [depositInVault, setDepositInVault] = useState(0)
+  const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
@@ -167,10 +165,14 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
 
   useAppEffect(() => {
     async function calcDepositAmounts() {
+      setLoadingDepositAmounts(true)
       const deposits = await getDepositAmounts(new BigNumber(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0)
       if (deposits) {
-        setDepositAmounts(deposits)
+        setDepositInLp(deposits.lpAmount.toNumber())
+        setDepositInVault(deposits.mintAmount.toNumber())
+        setDepositInTotal(deposits.totalAmount.toNumber())
       }
+      setLoadingDepositAmounts(false)
     }
 
     calcDepositAmounts()
@@ -365,7 +367,12 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
         <InfoBox>
           <Box display="flex" justifyContent="center" gridGap="6px">
             <Typography>Total Deposit</Typography>
-            <Typography className={textClasses.light}>= {formatTokenAmount(depositAmounts.total)} ETH</Typography>
+            <Typography className={textClasses.light}>=</Typography>
+
+            <Typography className={textClasses.light}>
+              {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInTotal)}
+            </Typography>
+            <Typography className={textClasses.light}>ETH</Typography>
           </Box>
         </InfoBox>
 
@@ -375,7 +382,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
               <Typography className={textClasses.light}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{formatTokenAmount(depositAmounts.lp)}</Typography>
+                <Typography> {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInLp)}</Typography>
                 <Typography className={textClasses.light}>ETH</Typography>
               </Box>
             </Box>
@@ -385,7 +392,7 @@ const LpSettings: React.FC<{ onComplete: () => void; squeethToMint: string }> = 
               <Typography className={textClasses.light}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{formatTokenAmount(depositAmounts.vault)}</Typography>
+                <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInVault)}</Typography>
                 <Typography className={textClasses.light}>ETH</Typography>
               </Box>
             </Box>
