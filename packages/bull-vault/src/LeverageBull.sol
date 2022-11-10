@@ -230,7 +230,8 @@ contract LeverageBull is Ownable {
                 ).wdiv(_totalCrabSupply);
                 uint256 wethToLend =
                     TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                uint256 usdcToBorrow =
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }
