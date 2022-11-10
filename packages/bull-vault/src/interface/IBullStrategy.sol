@@ -2,8 +2,6 @@
 
 pragma solidity =0.7.6;
 
-import { ILeverageBull } from "./ILeverageBull.sol";
-
 interface IBullStrategy {
     function deposit(uint256 _crabAmount) external payable;
     function withdraw(uint256 _bullAmount) external;
@@ -19,5 +17,4 @@ interface IBullStrategy {
     ) external view returns (uint256, uint256);
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256);
     function getCrabBalance() external view returns (uint256);
-    function shutdownRepayAndWithdraw(uint256 wethToUniswap) external;
 }

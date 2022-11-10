@@ -24,9 +24,6 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS1: Invalid strategy cap
  * BS2: Strategy cap reached max
  * BS3: redeemShortShutdown must be called first
- * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
- * BS5: shutdownRepayAndWithdraw has already been called
- * BS6: invalid shutdownContract address set
  */
 
 /**
@@ -45,8 +42,6 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
-    /// @dev public emergency shutdown contract
-    address public shutdownContract;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
@@ -76,7 +71,6 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
-    event SetShutdownContract(address shutdownContract, address _shutdownContract);
 
     /**
      * @notice constructor for BullStrategy
@@ -126,19 +120,6 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
 
         strategyCap = _cap;
     }
-
-    /**
-     * @notice set shutdown contract that can be used to unwind the strategy if squeeth contracts are shut down
-     * @param _shutdownContract shutdown contract address
-     */
-    function setShutdownContract(address _shutdownContract) external onlyOwner {
-        require(_shutdownContract != address(0), "BS6");
-
-        emit SetShutdownContract(shutdownContract, _shutdownContract);
-
-        shutdownContract = _shutdownContract;
-    }
-
 
     /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
@@ -195,18 +176,25 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
-    function shutdownRepayAndWithdraw(uint256 wethToUniswap) external {
-        require (msg.sender == shutdownContract, "");
-        require (!hasRedeemedInShutdown, "");
+    /**
+     * @notice redeem the Crab shares owned by Bull if Squeeth contracts are shutdown and collapse leverage trade to hold ETH only
+     * @param _params Shutdown params
+     */
+
+    function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
         hasRedeemedInShutdown=true;
-
         ICrabStrategyV2(crab).withdrawShutdown(ICrabStrategyV2(crab).balanceOf(address(this)));
-
-        _repayAndWithdrawFromLeverage(ONE);
-        IWETH9(weth).deposit{value: wethToUniswap}();
-        IWETH9(weth).transfer(shutdownContract, wethToUniswap);
+        uint256 usdcToRepay = _calcUsdcToRepay(ONE);
+        _exactOutFlashSwap(
+            weth,
+            usdc,
+            _params.ethPoolFee,
+            usdcToRepay,
+            _params.maxEthToPay,
+            uint8(FLASH_SOURCE.SHUTDOWN),
+            abi.encodePacked("")
+        );
     }
-
     /**
      * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shutdown
      * @dev redeemShortShutdown must have been called first
@@ -220,10 +208,24 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         payable(msg.sender).sendValue(ethToReceive);
     }
 
+
+
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
 
+
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {
+
+            //repay 100% of usdc debt and withdraw 100% of eth collateral
+            _repayAndWithdrawFromLeverage(ONE);
+
+            // repay the weth flash swap
+            IWETH9(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+            IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
+            }
+        }
     /**
      * @notice increase internal accounting of bull stragtegy's crab balance
      * @param _crabAmount crab amount
