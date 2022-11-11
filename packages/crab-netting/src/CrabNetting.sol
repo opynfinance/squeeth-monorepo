@@ -100,25 +100,25 @@ contract CrabNetting is Ownable, EIP712 {
     uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
 
     /// @dev address for ERC20 tokens
-    address public usdc;
-    address public crab;
-    address public weth;
-    address public sqth;
+    address public immutable usdc;
+    address public immutable crab;
+    address public immutable weth;
+    address public immutable sqth;
 
     /// @dev address for uniswap router
-    ISwapRouter public swapRouter;
+    ISwapRouter public immutable swapRouter;
 
     /// @dev address for uniswap oracle
-    address public oracle;
+    address public immutable oracle;
 
     /// @dev address for sqth eth pool
-    address public ethSqueethPool;
+    address public immutable ethSqueethPool;
 
     /// @dev address for usdc eth pool
-    address public ethUsdcPool;
+    address public immutable ethUsdcPool;
 
     /// @dev address for sqth controller
-    address public sqthController;
+    address public immutable sqthController;
 
     /// @dev array index of last processed deposits
     uint256 public depositsIndex;
@@ -147,49 +147,49 @@ contract CrabNetting is Ownable, EIP712 {
     mapping(address => mapping(uint256 => bool)) public nonces;
 
     event USDCQueued(
-        address depositor,
+        address indexed depositor,
         uint256 amount,
         uint256 depositorsBalance,
-        uint256 receiptIndex
+        uint256 indexed receiptIndex
     );
 
     event USDCDeQueued(
-        address depositor,
+        address indexed depositor,
         uint256 amount,
         uint256 depositorsBalance
     );
 
     event CrabQueued(
-        address withdrawer,
+        address indexed withdrawer,
         uint256 amount,
         uint256 withdrawersBalance,
-        uint256 receiptIndex
+        uint256 indexed receiptIndex
     );
 
     event CrabDeQueued(
-        address withdrawer,
+        address indexed withdrawer,
         uint256 amount,
         uint256 withdrawersBalance
     );
 
     event USDCDeposited(
-        address depositor,
+        address indexed depositor,
         uint256 usdcAmount,
         uint256 crabAmount,
-        uint256 receiptIndex,
+        uint256 indexed receiptIndex,
         uint256 refundedETH
     );
 
     event CrabWithdrawn(
-        address withdrawer,
+        address indexed withdrawer,
         uint256 crabAmount,
         uint256 usdcAmount,
-        uint256 receiptIndex
+        uint256 indexed receiptIndex
     );
 
     event BidTraded(
-        uint256 bidId,
-        address trader,
+        uint256 indexed bidId,
+        address indexed trader,
         uint256 quantity,
         uint256 price
     );
@@ -818,7 +818,7 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 j = withdrawsIndex;
         uint256 usdcAmount;
         while (remainingWithdraws > 0) {
-            Receipt storage withdraw = withdraws[j];
+            Receipt memory withdraw = withdraws[j];
             if (withdraw.amount == 0) {
                 j++;
                 continue;
@@ -842,7 +842,7 @@ contract CrabNetting is Ownable, EIP712 {
                 delete withdraws[j];
                 j++;
             } else {
-                withdraw.amount -= remainingWithdraws;
+                withdraws[j].amount -= remainingWithdraws;
                 crabBalance[withdraw.sender] -= remainingWithdraws;
 
                 // send proportional usdc
