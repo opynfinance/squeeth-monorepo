@@ -24,7 +24,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS2: Strategy cap reached max
  * BS3: redeemShortShutdown must be called first
  * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
- * BS5: shutdownRepayAndWithdraw has already been called with share of 100%
+ * BS5: Can't farm token
  * BS6: invalid shutdownContract address set
  * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  */
@@ -50,16 +50,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have before rebalancing
-    uint256 public crLower;
-    /// @dev target CR for our ETH collateral
-    uint256 public crTarget;
+
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
@@ -95,11 +86,19 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice return the internal accounting of the bull strategy's crab balance
-     * @return crab token amount hold by the bull strategy
+     * @notice withdraw airdropped asset
+     * @dev can only be called by owner
+     * @param _asset asset address
+     * @param _receiver receiver address
      */
-    function getCrabBalance() external view returns (uint256) {
-        return _crabBalance;
+    function farm(address _asset, address _receiver) external onlyOwner {
+        require(
+            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
+                && (_asset != dToken) && (_asset != wPowerPerp),
+            "BS5"
+        );
+
+        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
     }
 
     /**
@@ -209,6 +208,14 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 ethToReceive = share.wmul(address(this).balance);
         _burn(msg.sender, _bullAmount);
         payable(msg.sender).sendValue(ethToReceive);
+    }
+
+    /**
+     * @notice return the internal accounting of the bull strategy's crab balance
+     * @return crab token amount hold by the bull strategy
+     */
+    function getCrabBalance() external view returns (uint256) {
+        return _crabBalance;
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {

@@ -60,7 +60,7 @@ contract FlashBull is UniFlash {
 
     struct FlashDepositCollateralData {
         uint256 crabToDeposit;
-        uint256 ethToLend;
+        uint256 wethToLend;
     }
 
     struct FlashWithdrawBullData {
@@ -157,7 +157,7 @@ contract FlashBull is UniFlash {
         } else {
             share = crabAmount.wdiv(IBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
         }
-        (uint256 ethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(
             crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
 
@@ -169,7 +169,7 @@ contract FlashBull is UniFlash {
             usdcToBorrow,
             _params.minEthFromUsdc,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL),
-            abi.encodePacked(crabAmount, ethToLend)
+            abi.encodePacked(crabAmount, wethToLend)
         );
 
         // return excess eth to the user that was not needed for slippage
@@ -244,7 +244,7 @@ contract FlashBull is UniFlash {
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
-            IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
+            IBullStrategy(bullStrategy).deposit{value: data.wethToLend}(data.crabToDeposit);
 
             // repay the dollars flash swap
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);

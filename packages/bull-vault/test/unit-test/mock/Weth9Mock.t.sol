@@ -15,6 +15,10 @@ contract WETH9Mock is ERC20, Test {
 
     constructor() ERC20("WETH9", "wETH9") { }
 
+    function testToAvoidCoverage() public pure {
+        return;
+    }
+
     function deposit() external payable {
         balances[msg.sender] = balances[msg.sender].add(msg.value);
         _mint(msg.sender, msg.value);

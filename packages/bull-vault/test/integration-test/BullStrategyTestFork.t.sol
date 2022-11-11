@@ -40,10 +40,12 @@ contract BullStrategyTestFork is Test {
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
     uint256 internal user1Pk;
-
-    uint256 internal cap;
-
+    uint256 internal ownerPk;
     address internal user1;
+    address internal owner;
+    address internal deployer;
+    address internal bullOwner;
+
     address internal weth;
     address internal usdc;
     address internal euler;
@@ -51,18 +53,7 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-    address internal deployer;
-    address internal bullOwner;
-    address internal crabOwner;
-    address internal controllerOwner;
-    address internal ethWSqueethPool;
-    address internal ethUsdcPool;
-
-    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
-    uint256 internal constant ONE = 1e18;
-    uint256 internal constant ONE_ONE = 1e36;
-    uint32 internal constant TWAP = 420;
-    uint256 internal constant INDEX_SCALE = 10000;
+    uint256 internal cap;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -77,11 +68,7 @@ contract BullStrategyTestFork is Test {
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
-        controllerOwner = controller.owner();
-        ethWSqueethPool = controller.wPowerPerpPool();
-        ethUsdcPool = controller.ethQuoteCurrencyPool();
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        crabOwner = crabV2.owner();
         bullStrategy =
         new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule, 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         usdc = controller.quoteCurrency();
@@ -305,107 +292,35 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
     }
 
-    /**
-     *
-     * /************************************************************* Fuzz testing is awesome! ************************************************************
-     */
-    function testFuzzingDeposit(uint256 _crabAmount) public {
-        _crabAmount = bound(_crabAmount, 0, IERC20(crabV2).balanceOf(user1));
+    function testFarm() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
 
-        uint256 bullToMint = testUtil.calcBullToMint(_crabAmount);
-        (uint256 wethToLend, uint256 usdcToBorrow) =
-            testUtil.calcCollateralAndBorrowAmount(_crabAmount);
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
+        uint256 daiBalanceBefore = IERC20(dai).balanceOf(bullOwner);
 
-        vm.startPrank(user1);
-        IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{value: wethToLend}(_crabAmount);
-        vm.stopPrank();
+        vm.prank(bullOwner);
+        bullStrategy.farm(dai, bullOwner);
 
-        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
-        assertTrue(
-            wethToLend.sub(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(
-                    ethInLendingBefore
-                )
-            ) <= 2
-        );
-        assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore),
-            usdcToBorrow
-        );
-        assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
-        assertTrue(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
-                <= bullStrategy.strategyCap()
-        );
+        assertEq(IERC20(dai).balanceOf(bullOwner).sub(daiAmount), daiBalanceBefore);
     }
 
-    function testFuzzingWithdraw(uint256 _crabAmount) public {
-        // use bound() instead of vm.assume for better performance in fuzzing
-        _crabAmount = bound(_crabAmount, 1e18, IERC20(crabV2).balanceOf(user1));
+    function testFarmWhenCallerNotOwner() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
 
-        uint256 bullToMint = testUtil.calcBullToMint(_crabAmount);
-        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(_crabAmount);
-        vm.startPrank(user1);
-        IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{value: wethToLend}(_crabAmount);
-        vm.stopPrank();
+        vm.prank(deployer);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.farm(dai, bullOwner);
+    }
 
-        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
-            _calcWPowerPerpAndCrabNeededForWithdraw(bullToMint);
-        uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToMint);
-        uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToMint);
-        // transfer some oSQTH from some squeether
-        vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
-        IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
-
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
-        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
-        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
-
-        vm.startPrank(user1);
-        IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
-        IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
-        bullStrategy.withdraw(bullToMint);
-        vm.stopPrank();
-
-        assertEq(
-            usdcBorrowedBefore.sub(usdcToRepay),
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)),
-            "Bull USDC debt amount mismatch"
-        );
-        assertEq(
-            ethInLendingBefore.sub(wethToWithdraw),
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-            "Bull ETH in leverage amount mismatch"
-        );
-        assertEq(
-            userUsdcBalanceBefore.sub(usdcToRepay),
-            IERC20(usdc).balanceOf(user1),
-            "User1 USDC balance mismatch"
-        );
-        assertEq(
-            userBullBalanceBefore.sub(bullToMint),
-            bullStrategy.balanceOf(user1),
-            "User1 bull balance mismatch"
-        );
-        assertEq(
-            userWPowerPerpBalanceBefore.sub(wPowerPerpToRedeem),
-            IERC20(wPowerPerp).balanceOf(user1),
-            "User1 oSQTH balance mismatch"
-        );
-        assertEq(
-            crabBalanceBefore.sub(crabToRedeem),
-            crabV2.balanceOf(address(bullStrategy)),
-            "Bull ccrab balance mismatch"
-        );
+    function testFarmWhenAssetIsNotFarmable() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("BS5"));
+        bullStrategy.farm(usdc, bullOwner);
     }
 
     /**

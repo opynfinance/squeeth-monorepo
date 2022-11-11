@@ -10,4 +10,8 @@ contract EulerMock is Test {
     {
         ERC20(_asset).transferFrom(_from, _to, _amount);
     }
+
+    function testToAvoidCoverage() public pure {
+        return;
+    }
 }

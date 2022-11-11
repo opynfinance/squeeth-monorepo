@@ -16,7 +16,8 @@ import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
- * LB0: ETH sent is greater than ETH to deposit in Euler
+ * LB0: ETH sent is not equal to ETH to deposit in Euler
+ * LB1: caller is not auction address
  */
 
 /**
@@ -28,9 +29,12 @@ contract LeverageBull is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
-    uint32 private constant TWAP = 420;
+    uint32 internal constant TWAP = 420;
     uint256 internal constant ONE = 1e18;
-    uint256 public constant TARGET_CR = 15e17; // 1.5 collat ratio
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+    /// @dev target CR for our ETH collateral
+    uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
     /// @dev ETH:wSqueeth Uniswap pool
     address internal immutable ethWSqueethPool;
@@ -48,8 +52,11 @@ contract LeverageBull is Ownable {
     address internal immutable eToken;
     /// @dev euler dToken that represent the borrowed asset
     address internal immutable dToken;
+    /// @dev auction contract address
+    address public auction;
 
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event SetAuction(address oldAuction, address newAuction);
 
     /**
      * @dev constructor
@@ -85,6 +92,37 @@ contract LeverageBull is Ownable {
         transferOwnership(_owner);
     }
 
+    function setAuction(address _auction) external onlyOwner {
+        require(_auction != address(0), "BS3");
+
+        emit SetAuction(auction, _auction);
+
+        auction = _auction;
+    }
+
+    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+        IEulerDToken(dToken).repay(0, _usdcToRepay);
+        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
+
+        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+
+        emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
+    }
+
+    function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
+        require(msg.sender == auction, "LB1");
+
+        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+
+        IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
+
+        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
+    }
+
     function calcLeverageEthUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
@@ -92,7 +130,7 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _totalCrabSupply
     ) external view returns (uint256, uint256) {
-        return _calcLeverageEthUsdc(
+        return _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _totalCrabSupply
         );
     }
@@ -134,16 +172,16 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 ethToLend, uint256 usdcToBorrow) = _calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
             _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
         );
 
-        require(ethToLend == _ethAmount, "LB0");
+        require(wethToLend == _ethAmount, "LB0");
 
-        _depositEthInEuler(ethToLend, true);
+        _depositWethInEuler(wethToLend, true);
         _borrowUsdcFromEuler(usdcToBorrow);
 
-        return (ethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
+        return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
     }
 
     /**
@@ -151,7 +189,7 @@ contract LeverageBull is Ownable {
      * @param _ethToDeposit amount of ETH to deposit
      * @param _wrapEth wrap ETH to WETH if true
      */
-    function _depositEthInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
+    function _depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
         if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
         IEulerMarkets(eulerMarkets).enterMarket(0, weth);
@@ -182,7 +220,7 @@ contract LeverageBull is Ownable {
         emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
-    function _calcLeverageEthUsdc(
+    function _calcLeverageWethUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
@@ -199,16 +237,19 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
-                return (ethToLend, usdcToBorrow);
+                uint256 wethToLend =
+                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 usdcToBorrow =
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 ethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare)
-            .wdiv(ONE.sub(_bullShare));
+        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
+            _bullShare
+        ).wdiv(ONE.sub(_bullShare));
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        return (ethToLend, usdcToBorrow);
+        return (wethToLend, usdcToBorrow);
     }
 
     /**
@@ -227,5 +268,9 @@ contract LeverageBull is Ownable {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
+    }
+
+    function _isAuction() internal view returns (bool) {
+        return msg.sender == auction;
     }
 }
