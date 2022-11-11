@@ -13,7 +13,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { addressesAtom } from '@state/positions/atoms'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
-import { useGetDepositAmounts, useGetTicksFromPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
+import { useGetDepositAmounts, useGetTicksFromETHPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -97,15 +97,14 @@ const LpSettings: React.FC<{
 }> = ({ ethToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
-  const getWSqueethPositionValue = useGetWSqueethPositionValue()
-  const getTicksFromPriceRange = useGetTicksFromPriceRange()
+  const getTicksFromETHPriceRange = useGetTicksFromETHPriceRange()
   const getDepositAmounts = useGetDepositAmounts()
   const openLpPosition = useOpenPositionDeposit()
   const slippageAmount = useAtomValue(slippageAmountAtom)
 
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
-  const [minEthLpPrice, setMinEthLpPrice] = useState('0')
-  const [maxEthLpPrice, setMaxEthLpPrice] = useState('0')
+  const [minETHLpPrice, setMinETHLpPrice] = useState('0')
+  const [maxETHLpPrice, setMaxETHLpPrice] = useState('0')
   const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
   const [collatRatio, setCollatRatio] = useState(225)
@@ -120,7 +119,6 @@ const LpSettings: React.FC<{
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
 
-  const squeethPrice = getWSqueethPositionValue(1)
   const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
   const slippageAmountVal = new BigNumber(slippageAmount).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
@@ -138,10 +136,10 @@ const LpSettings: React.FC<{
       return
     }
 
-    const ticks = getTicksFromPriceRange(new BigNumber(minEthLpPrice), new BigNumber(maxEthLpPrice))
+    const ticks = getTicksFromETHPriceRange(new BigNumber(minETHLpPrice), new BigNumber(maxETHLpPrice))
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minEthLpPrice, maxEthLpPrice, getTicksFromPriceRange])
+  }, [usingDefaultPriceRange, minETHLpPrice, maxETHLpPrice, getTicksFromETHPriceRange])
 
   // useAppEffect(() => {
   //   async function calcDepositAmounts() {
@@ -240,8 +238,8 @@ const LpSettings: React.FC<{
             id="min-price"
             label="Min price"
             type="number"
-            value={minEthLpPrice}
-            onInputChange={setMinEthLpPrice}
+            value={minETHLpPrice}
+            onInputChange={setMinETHLpPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
@@ -260,8 +258,8 @@ const LpSettings: React.FC<{
             id="max-price"
             label="Max price"
             type="number"
-            value={maxEthLpPrice}
-            onInputChange={setMaxEthLpPrice}
+            value={maxETHLpPrice}
+            onInputChange={setMaxETHLpPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
