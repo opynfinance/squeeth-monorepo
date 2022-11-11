@@ -368,10 +368,20 @@ contract AuctionBullTestFork is Test {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage);
-        assertEq(userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade), IERC20(wPowerPerp).balanceOf(user1));
-        assertEq(userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.wmul(squeethEthPrice)), IERC20(weth).balanceOf(user1));
-        assertEq(bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy)));
+        assertEq(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
+        );
+        assertEq(
+            userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
+            IERC20(wPowerPerp).balanceOf(user1)
+        );
+        assertEq(
+            userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
+            IERC20(weth).balanceOf(user1)
+        );
+        assertEq(
+            bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy))
+        );
         assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
@@ -501,9 +511,17 @@ contract AuctionBullTestFork is Test {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage);
-        assertEq(userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade), IERC20(wPowerPerp).balanceOf(user1));
-        assertEq(userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.wmul(squeethEthPrice)), IERC20(weth).balanceOf(user1));
+        assertEq(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
+        );
+        assertEq(
+            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
+            IERC20(wPowerPerp).balanceOf(user1)
+        );
+        assertEq(
+            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
+            IERC20(weth).balanceOf(user1)
+        );
         assertApproxEqAbs(
             bullCrabBalanceBefore.add(crabAmount),
             IERC20(crabV2).balanceOf(address(bullStrategy)),
