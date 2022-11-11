@@ -1,12 +1,9 @@
 import React from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { Typography, Box, BoxProps } from '@material-ui/core'
-import clsx from 'clsx'
+import { Typography } from '@material-ui/core'
+import BigNumber from 'bignumber.js'
 
-type TokenPriceStyleProps = {
-  fontSize: string
-  color: string
-}
+import { formatCurrency } from '@utils/formatter'
 
 const useTokenPriceStyles = makeStyles((theme) =>
   createStyles({
@@ -25,20 +22,21 @@ const useTokenPriceStyles = makeStyles((theme) =>
   }),
 )
 
-const TokenPrice: React.FC<{ symbol: string; price: string; isSmall?: boolean }> = ({
+const TokenPrice: React.FC<{ symbol: string; usdPrice: BigNumber; isSmall?: boolean }> = ({
   symbol,
-  price,
+  usdPrice,
   isSmall = false,
 }) => {
   const classes = useTokenPriceStyles()
-
   const textClassName = isSmall ? classes.smallVariant : classes.defaultVariant
 
   return (
     <div className={classes.priceContainer}>
       <Typography className={textClassName}>{`1 ${symbol}`}</Typography>
       <Typography className={textClassName}>{'='}</Typography>
-      <Typography className={textClassName}>{`$${price}`}</Typography>
+      <Typography className={textClassName}>
+        {usdPrice.isZero() ? 'loading...' : formatCurrency(usdPrice.toNumber())}
+      </Typography>
     </div>
   )
 }

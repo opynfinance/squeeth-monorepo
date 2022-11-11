@@ -6,12 +6,12 @@ import { useAtomValue } from 'jotai'
 
 import { AltPrimaryButton } from '@components/Button'
 import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
-import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
-import { addressesAtom } from '@state/positions/atoms'
+import { useWalletBalance } from '@state/wallet/hooks'
 import { connectedWalletAtom } from '@state/wallet/atoms'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { OSQUEETH_DECIMALS } from '@constants/index'
-import squeethLogo from 'public/images/squeeth-logo.svg'
+import { useETHPrice } from '@hooks/useETHPrice'
+import { BIG_ZERO } from '@constants/index'
+import { toTokenAmount } from '@utils/calculations'
+import ethLogo from 'public/images/eth-logo.svg'
 import getTheme, { Mode } from '../src/theme'
 
 const useStyles = makeStyles((theme) =>
@@ -40,18 +40,16 @@ const useStyles = makeStyles((theme) =>
 )
 
 const LPPage: React.FC = () => {
-  const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
-  const getWSqueethPositionValue = useGetWSqueethPositionValue()
+  const { data: walletBalance } = useWalletBalance()
+  const ethPrice = useETHPrice()
+  const connectedWallet = useAtomValue(connectedWalletAtom)
 
-  const [squeethAmount, setSqueethAmount] = useState('0')
+  const [ethAmount, setEthAmount] = useState('0')
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
 
+  const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
   const classes = useStyles()
-
-  const squeethPrice = getWSqueethPositionValue(1)
-  const connectedWallet = useAtomValue(connectedWalletAtom)
-  const isDepositButtonDisabled = !connectedWallet || Number(squeethAmount) === 0
+  const isDepositButtonDisabled = !connectedWallet || Number(ethAmount) === 0
 
   return (
     <>
@@ -74,13 +72,13 @@ const LPPage: React.FC = () => {
           </Typography>
 
           <TokenInput
-            id="squeeth-mint-amount"
-            value={squeethAmount}
-            onInputChange={setSqueethAmount}
-            symbol="oSQTH"
-            logo={squeethLogo}
-            usdPrice={squeethPrice}
-            balance={squeethBalance}
+            id="eth-deposit-amount"
+            value={ethAmount}
+            onInputChange={setEthAmount}
+            symbol="ETH"
+            logo={ethLogo}
+            usdPrice={ethPrice}
+            balance={ethBalance}
           />
 
           <AltPrimaryButton
@@ -96,7 +94,7 @@ const LPPage: React.FC = () => {
       </Grid>
 
       <DepositPreviewModal
-        squeethToMint={squeethAmount}
+        ethToDeposit={ethAmount}
         isOpen={isPreviewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
       />

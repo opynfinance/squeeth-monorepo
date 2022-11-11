@@ -2,8 +2,9 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import React from 'react'
 import { Typography, Box } from '@material-ui/core'
 import clsx from 'clsx'
+import BigNumber from 'bignumber.js'
 
-import { formatNumber } from '@utils/formatter'
+import { formatCurrency, formatBalance } from '@utils/formatter'
 import TokenLogo from './TokenLogo'
 
 const useStyles = makeStyles((theme) =>
@@ -53,6 +54,7 @@ const useStyles = makeStyles((theme) =>
       zIndex: -10,
       display: 'flex',
       justifyContent: 'space-between',
+      alignItems: 'center',
       padding: '40px 16px 12px 16px',
       backgroundColor: theme.palette.background.stone,
       borderRadius: '10px',
@@ -65,16 +67,16 @@ const useStyles = makeStyles((theme) =>
 
 type TokenAmountType = {
   amount: string
-  price: string
+  usdPrice: BigNumber
   symbol: string
   logo: string
-  balance: string
+  balance: BigNumber
 }
 
-const TokenAmount: React.FC<TokenAmountType> = ({ amount, price, symbol, logo, balance }) => {
+const TokenAmount: React.FC<TokenAmountType> = ({ amount, usdPrice, symbol, logo, balance }) => {
   const classes = useStyles()
 
-  const usdValue = price ? Number(amount) * Number(price) : 0
+  const usdValue = usdPrice.multipliedBy(new BigNumber(amount)).toNumber() // value is always "number" type
 
   return (
     <div className={classes.container}>
@@ -87,19 +89,19 @@ const TokenAmount: React.FC<TokenAmountType> = ({ amount, price, symbol, logo, b
           </Box>
 
           <Typography variant="caption" className={clsx(classes.mediumBold, classes.lightColor)}>
-            {'$' + formatNumber(usdValue)}
+            {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
           </Typography>
         </Box>
       </div>
 
       <div className={classes.subSection}>
-        <Typography variant="subtitle2" className={classes.lightColor}>
+        <Typography variant="body2" className={classes.lightColor}>
           Available
         </Typography>
 
         <Box display="flex" alignItems="center" gridGap="4px">
-          <Typography variant="subtitle2">
-            {formatNumber(Number(balance))} {symbol}
+          <Typography variant="body2">
+            {formatBalance(balance.toNumber())} {symbol}
           </Typography>
 
           <Typography variant="subtitle2" className={classes.primaryColor}>

@@ -15,10 +15,11 @@ import { addressesAtom } from '@state/positions/atoms'
 import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
 import { useGetDepositAmounts, useGetTicksFromPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
+import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import { getErrorMessage } from '@utils/error'
-import { OSQUEETH_DECIMALS } from '@constants/index'
+import { OSQUEETH_DECIMALS, BIG_ZERO } from '@constants/index'
 
 import InfoBox from './InfoBox'
 import TokenPrice from './TokenPrice'
@@ -28,6 +29,7 @@ import Checkbox from './Checkbox'
 import CollateralRatioSlider from './CollateralRatioSlider'
 import { SimpleInput } from './Input'
 import squeethLogo from 'public/images/squeeth-logo.svg'
+import ethLogo from 'public/images/eth-logo.svg'
 
 const useToggleButtonStyles = makeStyles((theme) => ({
   root: {
@@ -88,13 +90,12 @@ const formatTokenAmount = (amount: string | number) => {
 }
 
 const LpSettings: React.FC<{
-  squeethToMint: string
+  ethToDeposit: string
   onConfirm: () => void
   onTxSuccess: () => void
   onTxFail: (message: string) => void
-}> = ({ squeethToMint, onConfirm, onTxSuccess, onTxFail }) => {
-  const { oSqueeth } = useAtomValue(addressesAtom)
-  const { value: squeethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+}> = ({ ethToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
+  const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
   const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const getTicksFromPriceRange = useGetTicksFromPriceRange()
@@ -122,6 +123,7 @@ const LpSettings: React.FC<{
   const squeethPrice = getWSqueethPositionValue(1)
   const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
   const slippageAmountVal = new BigNumber(slippageAmount).div(100).toNumber()
+  const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
 
   const handleUniswapNftAsCollatToggle = (value: any) => {
     if (value !== null) {
@@ -141,54 +143,54 @@ const LpSettings: React.FC<{
     setUpperTick(ticks.upperTick)
   }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice, getTicksFromPriceRange])
 
-  useAppEffect(() => {
-    async function calcDepositAmounts() {
-      setLoadingDepositAmounts(true)
-      const deposits = await getDepositAmounts(new BigNumber(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0)
-      if (deposits) {
-        setDepositInLp(deposits.lpAmount.toNumber())
-        setDepositInVault(deposits.mintAmount.toNumber())
-        setDepositInTotal(deposits.totalAmount.toNumber())
-      }
-      setLoadingDepositAmounts(false)
-    }
+  // useAppEffect(() => {
+  //   async function calcDepositAmounts() {
+  //     setLoadingDepositAmounts(true)
+  //     const deposits = await getDepositAmounts(new BigNumber(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0)
+  //     if (deposits) {
+  //       setDepositInLp(deposits.lpAmount.toNumber())
+  //       setDepositInVault(deposits.mintAmount.toNumber())
+  //       setDepositInTotal(deposits.totalAmount.toNumber())
+  //     }
+  //     setLoadingDepositAmounts(false)
+  //   }
 
-    calcDepositAmounts()
-  }, [squeethToMint, lowerTick, upperTick, collatRatioVal, getDepositAmounts])
+  //   calcDepositAmounts()
+  // }, [squeethToMint, lowerTick, upperTick, collatRatioVal, getDepositAmounts])
 
-  const openPosition = useAppCallback(async () => {
-    try {
-      await openLpPosition(
-        new BigNumber(squeethToMint),
-        lowerTick,
-        upperTick,
-        0,
-        collatRatioVal,
-        slippageAmountVal,
-        0,
-        () => {
-          onConfirm()
-        },
-        () => {
-          console.log('successfully deposited')
-          onTxSuccess()
-        },
-      )
-    } catch (error: unknown) {
-      console.log('deposit failed', error)
-      onTxFail(getErrorMessage(error))
-    }
-  }, [
-    squeethToMint,
-    lowerTick,
-    upperTick,
-    collatRatioVal,
-    slippageAmountVal,
-    openLpPosition,
-    onConfirm,
-    onTxSuccess,
-    onTxFail,
-  ])
+  // const openPosition = useAppCallback(async () => {
+  //   try {
+  //     await openLpPosition(
+  //       new BigNumber(squeethToMint),
+  //       lowerTick,
+  //       upperTick,
+  //       0,
+  //       collatRatioVal,
+  //       slippageAmountVal,
+  //       0,
+  //       () => {
+  //         onConfirm()
+  //       },
+  //       () => {
+  //         console.log('successfully deposited')
+  //         onTxSuccess()
+  //       },
+  //     )
+  //   } catch (error: unknown) {
+  //     console.log('deposit failed', error)
+  //     onTxFail(getErrorMessage(error))
+  //   }
+  // }, [
+  //   squeethToMint,
+  //   lowerTick,
+  //   upperTick,
+  //   collatRatioVal,
+  //   slippageAmountVal,
+  //   openLpPosition,
+  //   onConfirm,
+  //   onTxSuccess,
+  //   onTxFail,
+  // ])
 
   return (
     <>
@@ -198,22 +200,16 @@ const LpSettings: React.FC<{
         </Typography>
 
         <div className={classes.priceContainer}>
-          <TokenPrice symbol="ETH" price={formatNumber(Number(ethPrice))} />
+          <TokenPrice symbol="ETH" usdPrice={ethPrice} />
         </div>
       </Box>
 
       <Box marginTop="32px">
         <Typography variant="h4" className={classes.sectionTitle}>
-          Mint amounts
+          Deposit amounts
         </Typography>
 
-        <TokenAmount
-          amount={squeethToMint}
-          price={squeethPrice.toString()}
-          logo={squeethLogo}
-          symbol="oSQTH"
-          balance={squeethBalance.toString()}
-        />
+        <TokenAmount amount={ethToDeposit} usdPrice={ethPrice} logo={ethLogo} symbol="ETH" balance={ethBalance} />
       </Box>
 
       <Divider className={classes.divider} />
@@ -221,13 +217,13 @@ const LpSettings: React.FC<{
       <div>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gridGap="8px">
-            <TokenLogo logoSrc={squeethLogo} />
+            <TokenLogo logoSrc={ethLogo} />
 
             <div>
               <Typography variant="h4" className={classes.sectionTitle}>
                 Price range
               </Typography>
-              <TokenPrice symbol="oSQTH" price={formatNumber(squeethPrice.toNumber())} isSmall />
+              <TokenPrice symbol="ETH" usdPrice={ethPrice} isSmall />
             </div>
           </Box>
 
@@ -249,7 +245,7 @@ const LpSettings: React.FC<{
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per oSQTH
+                  Per ETH
                 </InputAdornment>
               ),
             }}
@@ -268,7 +264,7 @@ const LpSettings: React.FC<{
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per oSQTH
+                  Per ETH
                 </InputAdornment>
               ),
             }}
@@ -392,7 +388,7 @@ const LpSettings: React.FC<{
       </div>
 
       <Box marginTop="32px">
-        <AltPrimaryButton id="confirm-deposit-btn" onClick={openPosition} fullWidth>
+        <AltPrimaryButton id="confirm-deposit-btn" onClick={() => {}} fullWidth>
           Confirm deposit
         </AltPrimaryButton>
       </Box>

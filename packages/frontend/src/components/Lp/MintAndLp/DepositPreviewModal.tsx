@@ -167,10 +167,10 @@ const useModalStyles = makeStyles((theme) =>
 type DepositPreviewModalProps = {
   isOpen: boolean
   onClose: () => void
-  squeethToMint: string
+  ethToDeposit: string
 }
 
-const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClose, squeethToMint }) => {
+const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClose, ethToDeposit }) => {
   const [activeStep, setActiveStep] = React.useState(0)
   const [txError, setTxError] = React.useState('')
 
@@ -201,7 +201,7 @@ const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClo
       <Box className={classes.container}>
         {activeStep === 0 && (
           <LpSettings
-            squeethToMint={squeethToMint}
+            ethToDeposit={ethToDeposit}
             onConfirm={toConfirmationStep}
             onTxSuccess={toTxStatusStep}
             onTxFail={(message) => handleTxFail(message)}
