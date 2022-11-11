@@ -25,14 +25,14 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB2: Invalid CR after rebalance
  * AB3: Invalid CR lower and upper values
  * AB4: Invalid delta lower and upper values
- * AB5:
- * AB6:
- * AB7:
- * AB8:
- * AB9:
- * AB10:
- * AB11:
- * AB12:
+ * AB5: invalid clearing price
+ * AB6: order is not taking the other side of the trade
+ * AB7: current order price smaller than previous order price
+ * AB8: current order price greater than previous order price
+ * AB9: order price is less than clearing price
+ * AB10: order price is greater than clearing price
+ * AB11: order signer is different than order trader
+ * AB12: order already expired
  * AB13: nonce already used
  * AB14: Price tolerance is too high
  */
@@ -633,8 +633,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         );
 
         bytes32 hash = _hashTypedDataV4(structHash);
-        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        require(offerSigner == _order.trader, "AB11");
+        address orderSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(orderSigner == _order.trader, "AB11");
         require(_order.expiry >= block.timestamp, "AB12");
     }
 
