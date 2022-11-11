@@ -33,24 +33,42 @@ const useSimpleInputStyles = makeStyles((theme) =>
   }),
 )
 
-type SimpleInputCustomProps = {
-  onInputChange: (val: string) => void
+interface InputCustomProps {
   hasBorder?: boolean
 }
-type SimpleInputProps = StandardTextFieldProps & SimpleInputCustomProps
+type InputProps = StandardTextFieldProps & InputCustomProps
 
-export const SimpleInput: React.FC<SimpleInputProps> = ({
-  id,
-  label,
-  value,
-  onInputChange,
-  InputProps,
-  InputLabelProps,
-  hasBorder = true,
-  ...props
-}) => {
+export const Input: React.FC<InputProps> = ({ InputProps, InputLabelProps, hasBorder = true, ...props }) => {
   const classes = useSimpleInputStyles()
 
+  return (
+    <TextField
+      InputLabelProps={{
+        classes: {
+          root: classes.label,
+          focused: classes.labelFocused,
+        },
+        ...InputLabelProps,
+      }}
+      InputProps={{
+        disableUnderline: true,
+        classes: {
+          root: clsx(classes.input, hasBorder && classes.inputBorder),
+          focused: classes.inputFocused,
+        },
+        ...InputProps,
+      }}
+      {...props}
+    />
+  )
+}
+
+interface NumberInputCustomProps extends InputCustomProps {
+  onInputChange: (value: string) => void
+}
+type NumberInputProps = StandardTextFieldProps & NumberInputCustomProps
+
+export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, ...props }) => {
   const handleChange = (val: string) => {
     if (Number(val) < 0) {
       return onInputChange('0')
@@ -74,26 +92,11 @@ export const SimpleInput: React.FC<SimpleInputProps> = ({
   }
 
   return (
-    <TextField
-      id={id}
-      label={label}
-      value={value}
+    <Input
+      value={isNaN(Number(value)) ? 0 : value}
       onChange={(event) => handleChange(event.target.value)}
-      InputLabelProps={{
-        classes: {
-          root: classes.label,
-          focused: classes.labelFocused,
-        },
-        ...InputLabelProps,
-      }}
-      InputProps={{
-        disableUnderline: true,
-        classes: {
-          root: clsx(classes.input, hasBorder && classes.inputBorder),
-          focused: classes.inputFocused,
-        },
-        ...InputProps,
-      }}
+      placeholder="0"
+      autoComplete="false"
       {...props}
     />
   )
@@ -190,8 +193,7 @@ const useTokenInputStyles = makeStyles((theme) =>
   }),
 )
 
-type TokenInputCustomProps = {
-  onInputChange: (value: string) => void
+interface TokenInputCustomProps extends NumberInputCustomProps {
   usdPrice: BigNumber
   balance: BigNumber
   logo: string
@@ -201,29 +203,15 @@ type TokenInputProps = StandardTextFieldProps & TokenInputCustomProps
 
 const DecimalRegex = RegExp('^[0-9]*[.]{1}[0-9]*$')
 
-export const TokenInput: React.FC<TokenInputProps> = ({
-  id,
-  value,
-  onInputChange,
-  usdPrice,
-  balance,
-  logo,
-  symbol,
-  ...props
-}) => {
+export const TokenInput: React.FC<TokenInputProps> = ({ value, usdPrice, balance, logo, symbol, ...props }) => {
   const classes = useTokenInputStyles()
-
   const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
 
   return (
     <div className={classes.container}>
       <div className={classes.inputContainer}>
-        <SimpleInput
-          id={id}
-          value={isNaN(Number(value)) ? 0 : value}
-          onInputChange={onInputChange}
-          placeholder="0"
-          autoComplete="false"
+        <NumberInput
+          value={value}
           fullWidth
           hasBorder
           InputProps={{

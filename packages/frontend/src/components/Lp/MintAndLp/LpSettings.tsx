@@ -27,7 +27,7 @@ import TokenAmount from './TokenAmount'
 import TokenLogo from './TokenLogo'
 import Checkbox from './Checkbox'
 import CollateralRatioSlider from './CollateralRatioSlider'
-import { SimpleInput } from './Input'
+import { NumberInput } from './Input'
 import squeethLogo from 'public/images/squeeth-logo.svg'
 import ethLogo from 'public/images/eth-logo.svg'
 
@@ -104,8 +104,8 @@ const LpSettings: React.FC<{
   const slippageAmount = useAtomValue(slippageAmountAtom)
 
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
-  const [minPrice, setMinPrice] = useState('0')
-  const [maxPrice, setMaxPrice] = useState('0')
+  const [minEthLpPrice, setMinEthLpPrice] = useState('0')
+  const [maxEthLpPrice, setMaxEthLpPrice] = useState('0')
   const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
   const [collatRatio, setCollatRatio] = useState(225)
@@ -138,10 +138,10 @@ const LpSettings: React.FC<{
       return
     }
 
-    const ticks = getTicksFromPriceRange(new BigNumber(minPrice), new BigNumber(maxPrice))
+    const ticks = getTicksFromPriceRange(new BigNumber(minEthLpPrice), new BigNumber(maxEthLpPrice))
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minPrice, maxPrice, ethPrice, getTicksFromPriceRange])
+  }, [usingDefaultPriceRange, minEthLpPrice, maxEthLpPrice, getTicksFromPriceRange])
 
   // useAppEffect(() => {
   //   async function calcDepositAmounts() {
@@ -236,11 +236,12 @@ const LpSettings: React.FC<{
         </Box>
 
         <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="center" gridGap="20px">
-          <SimpleInput
+          <NumberInput
             id="min-price"
             label="Min price"
-            value={isNaN(Number(minPrice)) ? 0 : minPrice}
-            onInputChange={setMinPrice}
+            type="number"
+            value={minEthLpPrice}
+            onInputChange={setMinEthLpPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
@@ -255,11 +256,12 @@ const LpSettings: React.FC<{
             <Divider className={classes.divider} />
           </Box>
 
-          <SimpleInput
+          <NumberInput
             id="max-price"
             label="Max price"
-            value={isNaN(Number(maxPrice)) ? 0 : maxPrice}
-            onInputChange={setMaxPrice}
+            type="number"
+            value={maxEthLpPrice}
+            onInputChange={setMaxEthLpPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
@@ -310,7 +312,7 @@ const LpSettings: React.FC<{
               onChange={setUsingDefaultCollatRatio}
             />
 
-            <SimpleInput
+            <NumberInput
               id="collateral-ratio-input"
               value={collatRatio}
               onInputChange={(value) => setCollatRatio(Number(value))}
@@ -327,7 +329,10 @@ const LpSettings: React.FC<{
         </Box>
 
         <div style={{ marginTop: '24px' }}>
-          <CollateralRatioSlider collateralRatio={collatRatio} onCollateralRatioChange={(val) => setCollatRatio(val)} />
+          <CollateralRatioSlider
+            collateralRatio={collatRatio}
+            onCollateralRatioChange={(value) => setCollatRatio(value)}
+          />
         </div>
       </div>
 
