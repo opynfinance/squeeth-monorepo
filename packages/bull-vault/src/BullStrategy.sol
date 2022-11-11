@@ -56,7 +56,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
-    event SetShutdownContract(address shutdownContract, address _shutdownContract);
+    event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
 
     /**
      * @notice constructor for BullStrategy

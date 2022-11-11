@@ -562,7 +562,7 @@ contract BullStrategyTestFork is Test {
         vm.startPrank(user1);
 
         uint256 contractEthBefore = address(bullStrategy).balance;
-        uint256 percentBullToRedeem = 0.5e18; // 500%
+        uint256 percentBullToRedeem = 0.5e18; // 50%
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(address(user1));
         uint256 bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
         uint256 expectedProceeds =
