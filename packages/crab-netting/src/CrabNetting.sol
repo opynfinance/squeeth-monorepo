@@ -567,11 +567,14 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 sqthToSell = _debtToMint(_p.totalDeposit);
         // step 1 get all the eth in
         uint256 remainingToSell = sqthToSell;
+        uint256 prevPrice = _p.orders[0].price;
         for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
             require(
                 _p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice,
                 "buy order price less than clearing"
             );
+            require(prevPrice >= _p.orders[i].price, "orders are not sorted");
+            prevPrice = _p.orders[i].price;
             checkOrder(_p.orders[i]);
             if (_p.orders[i].quantity >= remainingToSell) {
                 IWETH(weth).transferFrom(
@@ -748,6 +751,7 @@ contract CrabNetting is Ownable, EIP712 {
             _p.crabToWithdraw
         );
         uint256 toPull = sqthRequired;
+        uint256 prevPrice = _p.orders[0].price;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             checkOrder(_p.orders[i]);
             require(
@@ -755,6 +759,8 @@ contract CrabNetting is Ownable, EIP712 {
                     _p.orders[i].price <= _p.clearingPrice,
                 "sell order price greater than clearing"
             );
+            require(prevPrice <= _p.orders[i].price, "orders not sorted");
+            prevPrice = _p.orders[i].price;
             if (_p.orders[i].quantity < toPull) {
                 toPull -= _p.orders[i].quantity;
                 IERC20(sqth).transferFrom(
