@@ -17,7 +17,7 @@ import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 import { EmergencyShutdown } from  "../../src/EmergencyShutdown.sol";
-//import { Quoter } from "v3-periphery/contracts/lens/Quoter.sol";
+import {Quoter} from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -34,6 +34,7 @@ contract BullStrategyTestFork is Test {
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
     EmergencyShutdown internal emergencyShutdown;
+    Quoter internal quoter;
 
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
@@ -88,7 +89,7 @@ contract BullStrategyTestFork is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        //quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+        quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown = new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
 
         testUtil =
@@ -127,29 +128,6 @@ contract BullStrategyTestFork is Test {
         assertTrue(bullStrategy.strategyCap() == cap);
         assertTrue(emergencyShutdown.owner() == bullOwner);
         assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
-    }
-
-    function testSetUpEmergencyShutdown() public {
-        assertTrue(emergencyShutdown.owner() == bullOwner);
-        assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
-    }
-
-    function testSetEmergencyShutdownContractCallerNotOwner() public {
-        vm.startPrank(deployer);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        bullStrategy.setShutdownContract(address(emergencyShutdown));
-    }
-
-    function testSetEmergencyShutdownContractZeroAddress() public {
-        vm.startPrank(bullOwner);
-        vm.expectRevert(bytes("BS6"));
-        bullStrategy.setShutdownContract(address(0));
-    }
-
-    function testSetEmergencyShutdownContract() public {
-        vm.startPrank(bullOwner);
-        bullStrategy.setShutdownContract(address(emergencyShutdown));
-        assertEq(bullStrategy.shutdownContract(), address(emergencyShutdown));
     }
 
     function testSetCapWhenCallerNotOwner() public {
@@ -232,128 +210,6 @@ contract BullStrategyTestFork is Test {
             ) <= 1
         );
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
-    }
-
-    function testRedeemShortShutdownCallerNowOwner() public {
-        EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
-            shareToUnwind: ONE,
-            ethLimitPrice: 1000,
-            ethPoolFee: uint24(3000)
-        });
-        
-        vm.startPrank(deployer);
-        vm.expectRevert(bytes("Ownable: caller is not the owner"));
-
-        emergencyShutdown.redeemShortShutdown(params);
-    }
-
-    function testEmergencyShutdown() public {
-        
-        {
-        uint256 crabToDepositInitially = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-
-        vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDepositInitially);
-        vm.stopPrank();
-
-        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
-
-        assertEq(bullCrabBalanceAfter.sub(crabToDepositInitially), bullCrabBalanceBefore);
-        assertEq(bullStrategy.balanceOf(user1), crabToDepositInitially);
-        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
-        assertTrue(
-            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
-        );
-        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
-
-        bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 crabToDepositSecond = 7e18;
-        uint256 bullToMint = testUtil.calcBullToMint(crabToDepositSecond);
-        vm.startPrank(user1);
-        (uint256 wethToLendSecond, uint256 usdcToBorrowSecond) = _deposit(crabToDepositSecond);
-        vm.stopPrank();
-
-        bullCrabBalanceAfter = bullStrategy.getCrabBalance();
-
-        assertEq(bullCrabBalanceAfter.sub(crabToDepositSecond), bullCrabBalanceBefore);
-        assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
-        assertEq(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcToBorrow),
-            usdcToBorrowSecond
-        );
-        assertTrue(
-            wethToLendSecond.sub(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)
-            ) <= 1
-        );
-        assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
-        }
-
-        vm.startPrank(controllerOwner);
-        controller.shutDown();
-        assertEq(controller.isShutDown(), true);
-        vm.stopPrank();
-
-        vm.startPrank(crabOwner);
-        crabV2.redeemShortShutdown();
-        vm.stopPrank();
-
-        //(address operator , uint256 nftId ,uint256 crabCollateral, uint256 crabDebt) = crabV2.getVaultDetails();
-
-        vm.startPrank(bullOwner);
-        bullStrategy.setShutdownContract(address(emergencyShutdown));
-
-        uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-
-        uint256 crabShares = bullStrategy.getCrabBalance();
-        console.log("Crab shares: ",crabShares);
-        uint256 vaultId = crabV2.getStrategyVaultId();
-        console.log("Crab vault id ", vaultId);
-        (address operator , uint256 nftId ,uint256 crabCollateral, uint256 crabDebt) = controller.vaults(vaultId);
-        console.log("Vault details:" );
-        console.log(operator, nftId, crabCollateral, crabDebt);
-
-        //VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(vaultId);
-        //console.log(strategyVault.operator, strategyVault.NftCollateralId, strategyVault.collateralAmount, strategyVault.shortAmount);
-
-        //uint256 wSqueethShare = crabV2.getWsqueethFromCrabAmount(crabShares);
-        //console.log(wSqueethShare,"Squeeth Share from Crab contract for crab shares owned");
-        //uint256 ethShare = crabShares.wmul(crabCollateral).wdiv(crabV2.totalSupply());
-        //uint256 netEthToReceive =  ethShare.sub(wSqueethShare.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE)));
-        //console.log(ethShare, wSqueethShare, contro ller.normalizationFactor(), ethUsdPrice.wdiv(INDEX_SCALE));
-        // to do - add quoter to get real swap
-
-        //uint256 expectedEthToPay = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcToRepay, 0);
-        //console.log("Expected eth to pay", expectedEthToPay);
-
-        //uint256 maxEthToPay = usdcToRepay.wdiv(ethUsdPrice).mul(USDC_WETH_DECIMAL_DIFFERENCE).wmul(1.1e18);
-
-        //uint256 dTokenBalanceBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        //uint256 eTokenBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        //uint256 contractETHBalanceBefore = address(bullStrategy).balance;
-        // to do update with quoter on actual swap
-        //uint256 expectedRedemptionFromLeverage = bullStrategy.calcWethToWithdraw(crabShares).sub(bullStrategy.calcUsdcToRepay(crabShares).mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(0.9e18)));
-        //uint256 totalExpectedRedemption = expectedRedemptionFromLeverage.add(netEthToReceive);
-
-        //console.log(netEthToReceive, "eth to receive from shutdown");
-        //console.log(expectedRedemptionFromLeverage, "eth to receive from leverage");
-        EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
-            shareToUnwind: ONE,
-            ethLimitPrice: ethUsdPrice.wmul(0.9e18),
-            ethPoolFee: uint24(3000)
-        });
-        
-        emergencyShutdown.redeemShortShutdown(params);
-        vm.stopPrank();
-
-        uint256 contractEthAfter = address(bullStrategy).balance;
-        console.log(contractEthAfter, "contract eth balance");
-
-        //assertEq(netEthToReceive,);
-
     }
 
     function testWithdraw() public {

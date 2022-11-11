@@ -16,6 +16,12 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 /**
+ * Error codes
+ * ES1: Strategy has already been fully unwound with redeemShortShutdown()
+ */
+
+
+/**
  * @notice FlashBull contract
  * @dev handle the flashswap interactions
  * @author opyn team
@@ -58,6 +64,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
      */
 
     function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
+        require (!IBullStrategy(bullStrategy).hasRedeemedInShutdown(), "ES1");
         uint256 usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(_params.shareToUnwind);
         _exactOutFlashSwap(
             weth,

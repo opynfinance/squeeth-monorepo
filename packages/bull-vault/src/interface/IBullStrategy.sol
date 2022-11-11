@@ -20,4 +20,5 @@ interface IBullStrategy {
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256);
     function getCrabBalance() external view returns (uint256);
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external;
+    function hasRedeemedInShutdown() external view returns (bool);
 }

@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
+import { console } from "forge-std/console.sol";
 
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
@@ -27,6 +28,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
  * BS5: shutdownRepayAndWithdraw has already been called with share of 100%
  * BS6: invalid shutdownContract address set
+ * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  */
 
 /**
@@ -61,7 +63,7 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
     /// @dev target CR for our ETH collateral
     uint256 public crTarget;
     /// @dev set to true when redeemShortShutdown has been called
-    bool private hasRedeemedInShutdown;
+    bool public hasRedeemedInShutdown;
     
     struct ShutdownParams {
         uint256 maxEthToPay;
@@ -146,6 +148,7 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
      * @param _crabAmount amount of crab token
      */
     function deposit(uint256 _crabAmount) external payable {
+        require (!IController(powerTokenController).isShutDown(), "BS7");
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
@@ -175,6 +178,7 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
+        require (!IController(powerTokenController).isShutDown(), "BS7");
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -197,13 +201,15 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
 
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
         require (msg.sender == shutdownContract, "BS4");
-        require (!hasRedeemedInShutdown, "BS5");
         if (shareToUnwind == ONE) {
             hasRedeemedInShutdown=true;
         }
 
         uint256 crabToRedeem = shareToUnwind.wmul(ICrabStrategyV2(crab).balanceOf(address(this)));
+        _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
+
+        console.log(address(this).balance, "eth balance after redemption");
 
         _repayAndWithdrawFromLeverage(shareToUnwind);
         IWETH9(weth).deposit{value: wethToUniswap}();
