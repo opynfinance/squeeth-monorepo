@@ -34,7 +34,8 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB11: order signer is different than order trader
  * AB12: order already expired
  * AB13: nonce already used
- * AB14: Price tolerance is too high
+ * AB14: clearning price tolerance is too high
+ * AB15: ETH limit price is out of tolerance range
  */
 
 /**
@@ -81,8 +82,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     uint256 public crUpper;
     /// @dev lowest CR the auction manager can rebalance to
     uint256 public crLower;
-    /// @dev full rebalance clearing price must be within this distance of the uniswap twap price
-    uint256 public fullRebalancePriceTolerance = 5e16; // 5%
+    /// @dev full rebalance clearing price must be within this distance of the oSQTH:eth uniswap twap price
+    uint256 public fullRebalanceClearingPriceTolerance = 5e16; // 5%
+    /// @dev full rebalance weth limit price must be within this distance of the eth:usd uniswap twap price
+    uint256 public fullRebalanceWethLimitPriceTolerance = 5e16; // 5%
 
     /// @dev auction manager
     address public auctionManager;
@@ -128,7 +131,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 oldDeltaLower, uint256 oldDeltaUpper, uint256 newDeltaLower, uint256 newDeltaUpper
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
-    event SetfullRebalancePriceTolerance(uint256 _oldPriceTolerance, uint256 _newPriceTolerance);
+    event SetFullRebalanceClearingPriceTolerance(uint256 _oldPriceTolerance, uint256 _newPriceTolerance);
 
     constructor(
         address _auctionOwner,
@@ -172,18 +175,18 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
      * @param _fullRebalancePriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
-    function setFullRebalancePriceTolerance(uint256 _fullRebalancePriceTolerance)
+    function setFullRebalanceClearingPriceTolerance(uint256 _fullRebalancePriceTolerance)
         external
         onlyOwner
     {
         // Tolerance cannot be more than 20%
         require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_PRICE_TOLERANCE, "AB14");
 
-        emit SetfullRebalancePriceTolerance(
-            fullRebalancePriceTolerance, _fullRebalancePriceTolerance
+        emit SetFullRebalanceClearingPriceTolerance(
+            fullRebalanceClearingPriceTolerance, _fullRebalancePriceTolerance
             );
 
-        fullRebalancePriceTolerance = _fullRebalancePriceTolerance;
+        fullRebalanceClearingPriceTolerance = _fullRebalancePriceTolerance;
     }
 
     /**
@@ -252,8 +255,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
 
-        _checkFullRebalanceClearingPrice(_clearingPrice, _isHedgeBuying);
-        
+        _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
+        _checkFullRebalanceLimitPrice(_wethLimitPrice);
+
         (uint256 ethInCrab, uint256 squeethInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
@@ -728,14 +732,33 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         if (_isDepositingInCrab) {
             require(
-                _price >= squeethEthPrice.mul((ONE.sub(fullRebalancePriceTolerance))).div(ONE),
+                _price >= squeethEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
                 "Price too low relative to Uniswap twap."
             );
         } else {
             require(
-                _price <= squeethEthPrice.mul((ONE.add(fullRebalancePriceTolerance))).div(ONE),
+                _price <= squeethEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
                 "Price too high relative to Uniswap twap."
             );
         }
     }
+
+    /**
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @param _wethLimitPrice WETH limit price provided by manager
+     */
+    function _checkFullRebalanceLimitPrice(uint256 _wethLimitPrice)
+        internal
+        view
+    {
+        // Get twap
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
+
+        require (
+            (_wethLimitPrice >= ethUsdPrice.wmul((ONE.sub(fullRebalanceWethLimitPriceTolerance)))) ||
+            (_wethLimitPrice <= ethUsdPrice.wmul((ONE.sub(fullRebalanceWethLimitPriceTolerance)))),
+            "AB15"
+        );
+    }
+
 }
