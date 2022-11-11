@@ -36,6 +36,9 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB13: nonce already used
  * AB14: clearning price tolerance is too high
  * AB15: ETH limit price is out of tolerance range
+ * AB16: WETH limit price tolerance is too high
+ * AB17: Price too low relative to Uniswap twap
+ * AB18: Price too high relative to Uniswap twap
  */
 
 /**
@@ -57,8 +60,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     /// @dev WETH decimals - USDC decimals
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
-    // @dev full rebalance clearing price tolerance cannot exceed 20%
-    uint256 public constant MAX_FULL_REBALANCE_PRICE_TOLERANCE = 2e17; // 20%
+    /// @dev full rebalance clearing price tolerance cannot exceed 20%
+    uint256 public constant MAX_FULL_REBALANCE_CLEARING_PRICE_TOLERANCE = 2e17; // 20%
+    /// @dev full rebalance WETH limit price tolerance cannot exceed 20%
+    uint256 public constant MAX_FULL_REBALANCE_WETH_LIMIT_PRICE_TOLERANCE = 2e17; // 20%
 
     /// @dev USDC address
     address private immutable usdc;
@@ -124,6 +129,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint24 ethUsdcPoolFee;
     }
 
+    struct ExecuteLeverageComponentRebalancingParams {
+        uint256 wethTargetInEuler;
+        uint256 wethLimitPrice;
+        uint24 ethUsdcPoolFee;
+    }
+
     event SetCrUpperAndLower(
         uint256 oldCrLower, uint256 oldCrUpper, uint256 newCrLower, uint256 newCrUpper
     );
@@ -132,6 +143,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
     event SetFullRebalanceClearingPriceTolerance(uint256 _oldPriceTolerance, uint256 _newPriceTolerance);
+    event SetFullRebalanceWethLimitPriceTolerance(uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance);
 
     constructor(
         address _auctionOwner,
@@ -180,13 +192,31 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         onlyOwner
     {
         // Tolerance cannot be more than 20%
-        require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_PRICE_TOLERANCE, "AB14");
+        require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_CLEARING_PRICE_TOLERANCE, "AB14");
 
         emit SetFullRebalanceClearingPriceTolerance(
             fullRebalanceClearingPriceTolerance, _fullRebalancePriceTolerance
             );
 
         fullRebalanceClearingPriceTolerance = _fullRebalancePriceTolerance;
+    }
+
+    /**
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a WETH limit price to the current uniswap twap price
+     * @param _fullRebalanceWethLimitPriceTolerance the WETH limit price tolerance, in percent, scaled by 1e18
+     */
+    function setFullRebalanceWethLimitPriceTolerance(uint256 _fullRebalanceWethLimitPriceTolerance)
+        external
+        onlyOwner
+    {
+        // Tolerance cannot be more than 20%
+        require(_fullRebalanceWethLimitPriceTolerance <= MAX_FULL_REBALANCE_WETH_LIMIT_PRICE_TOLERANCE, "AB16");
+
+        emit SetFullRebalanceWethLimitPriceTolerance(
+            fullRebalanceWethLimitPriceTolerance, _fullRebalanceWethLimitPriceTolerance
+            );
+
+        fullRebalanceWethLimitPriceTolerance = _fullRebalanceWethLimitPriceTolerance;
     }
 
     /**
@@ -217,21 +247,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         deltaLower = _deltaLower;
         deltaUpper = _deltaUpper;
-    }
-
-    // solhint-disable-next-line func-name-mixedcase
-    function DOMAIN_SEPARATOR() external view returns (bytes32) {
-        return _domainSeparatorV4();
-    }
-
-    /**
-     * @dev set nonce flag of the trader to true
-     * @param _trader address of the signer
-     * @param _nonce number that is to be traded only once
-     */
-    function _useNonce(address _trader, uint256 _nonce) internal {
-        require(!nonces[_trader][_nonce], "AB13");
-        nonces[_trader][_nonce] = true;
     }
 
     /**
@@ -368,41 +383,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
 
-            _rebalanceLeverageComponent(_wethTargetInEuler, _wethLimitPrice, _ethUsdcPoolFee);
-        }
-    }
-
-    function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
-        uint256 totalEthNeededForCrab =
-            _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
-        uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
-        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_params.wethTargetInEuler > wethInCollateral) {
-            uint256 wethToGet =
-                _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
-            _exactOutFlashSwap(
-                usdc,
-                weth,
-                _params.ethUsdcPoolFee,
-                wethToGet,
-                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
-                uint8(FLASH_SOURCE.FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
-                abi.encodePacked(
-                    _params.wethTargetInEuler.sub(wethInCollateral), totalEthNeededForCrab
-                )
-            );
-        } else {
-            uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
-            uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
-            _exactOutFlashSwap(
-                usdc,
-                weth,
-                _params.ethUsdcPoolFee,
-                wethToGet,
-                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
-                uint8(FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
-                abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
-            );
+            _executeLeverageComponentRebalancing(ExecuteLeverageComponentRebalancingParams({wethTargetInEuler: _wethTargetInEuler, wethLimitPrice: _wethLimitPrice, ethUsdcPoolFee: _ethUsdcPoolFee}));
         }
     }
 
@@ -451,12 +432,51 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         emit LeverageRebalance(_isSellingUsdc, _usdcAmount, _wethLimitAmount);
     }
 
+    // solhint-disable-next-line func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
     /**
      * @notice get current delta and bull CR ration in Euler
      * @return delta and CR ratio
      */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
         return _getCurrentDeltaAndCollatRatio();
+    }
+
+    function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
+        uint256 totalEthNeededForCrab =
+            _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
+        uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
+        uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        if (_params.wethTargetInEuler > wethInCollateral) {
+            uint256 wethToGet =
+                _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
+            _exactOutFlashSwap(
+                usdc,
+                weth,
+                _params.ethUsdcPoolFee,
+                wethToGet,
+                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
+                abi.encodePacked(
+                    _params.wethTargetInEuler.sub(wethInCollateral), totalEthNeededForCrab
+                )
+            );
+        } else {
+            uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
+            uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
+            _exactOutFlashSwap(
+                usdc,
+                weth,
+                _params.ethUsdcPoolFee,
+                wethToGet,
+                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                uint8(FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
+                abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
+            );
+        }
     }
 
     /**
@@ -539,32 +559,30 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
     }
 
-    function _rebalanceLeverageComponent(
-        uint256 _wethTargetInEuler,
-        uint256 _wethLimitPrice,
-        uint24 _ethUsdcPoolFee
+    function _executeLeverageComponentRebalancing(
+        ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
         uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
-            uint256 wethToBuy = _wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+        if (_params.wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
+            uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
             _exactOutFlashSwap(
                 usdc,
                 weth,
-                _ethUsdcPoolFee,
+                _params.ethUsdcPoolFee,
                 wethToBuy,
-                wethToBuy.wmul(_wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                wethToBuy.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                 uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
                 abi.encodePacked(wethToBuy.add(remainingWeth))
             );
         } else {
-            uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_wethTargetInEuler);
+            uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_params.wethTargetInEuler);
             _exactInFlashSwap(
                 weth,
                 usdc,
-                _ethUsdcPoolFee,
+                _params.ethUsdcPoolFee,
                 wethToSell,
-                wethToSell.wmul(_wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                wethToSell.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                 uint8(FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH),
                 abi.encodePacked(remainingWeth)
             );
@@ -642,6 +660,17 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         require(orderSigner == _order.trader, "AB11");
         require(_order.expiry >= block.timestamp, "AB12");
     }
+
+    /**
+     * @dev set nonce flag of the trader to true
+     * @param _trader address of the signer
+     * @param _nonce number that is to be traded only once
+     */
+    function _useNonce(address _trader, uint256 _nonce) internal {
+        require(!nonces[_trader][_nonce], "AB13");
+        nonces[_trader][_nonce] = true;
+    }
+
 
     /**
      * @notice check if startegy delta and CR ratio is within upper and lower values
@@ -733,12 +762,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_isDepositingInCrab) {
             require(
                 _price >= squeethEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
-                "Price too low relative to Uniswap twap."
+                "AB17"
             );
         } else {
             require(
                 _price <= squeethEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
-                "Price too high relative to Uniswap twap."
+                "AB18"
             );
         }
     }
