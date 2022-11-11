@@ -12,7 +12,6 @@ import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { LeverageBull } from "./LeverageBull.sol";
-import { UniFlash } from "./UniFlash.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -35,7 +34,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
  */
-contract BullStrategy is ERC20, LeverageBull, UniFlash {
+contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -64,14 +63,6 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
-    struct ShutdownParams {
-        uint256 maxEthToPay;
-        uint24 ethPoolFee;
-    }
-
-    /// @dev enum to differentiate between Uniswap swap callback function source
-    enum FLASH_SOURCE { SHUTDOWN }
-
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
     event SetShutdownContract(address shutdownContract, address _shutdownContract);
@@ -90,12 +81,10 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         address _crab,
         address _powerTokenController,
         address _euler,
-        address _eulerMarketsModule,
-        address _factory
+        address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
         LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
-        UniFlash(_factory)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
