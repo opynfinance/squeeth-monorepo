@@ -12,6 +12,8 @@ import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
+import { SwapRouter } from "v3-periphery/SwapRouter.sol";
+import { Quoter } from "v3-periphery/lens/Quoter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
 import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
@@ -130,7 +132,7 @@ contract BullStrategyTestFork is Test {
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-
+        uint256 userEthBalanceBefore = address(user1).balance;
         vm.startPrank(user1);
         (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
         vm.stopPrank();
@@ -143,12 +145,18 @@ contract BullStrategyTestFork is Test {
         assertTrue(
             wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
         );
+        // console.log('userEthBalanceBefore', userEthBalanceBefore);
+        // console.log('balance(user1)', address(user1).balance);
+        // console.log('eulerBalanceBefore', eulerBalanceBefore);
+        // console.log('IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))', IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)));
+        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
 
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
 
         vm.startPrank(user1);
         (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDepositInitially);
@@ -186,7 +194,10 @@ contract BullStrategyTestFork is Test {
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)
             ) <= 1
         );
+        
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
+        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
+
     }
 
     function testWithdraw() public {
@@ -211,6 +222,8 @@ contract BullStrategyTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
         uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
+        uint256 userEthBalanceBefore = address(user1).balance;
+
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
         vm.startPrank(user1);
@@ -249,6 +262,12 @@ contract BullStrategyTestFork is Test {
             crabV2.balanceOf(address(bullStrategy)),
             "Bull ccrab balance mismatch"
         );
+        assertEq(
+            address(user1).balance.sub(userEthBalanceBefore),
+            wethToWithdraw,
+            "Eth balance mismatch"
+        );
+
     }
 
     function testReceiveFromNonWethOrCrab() public {
