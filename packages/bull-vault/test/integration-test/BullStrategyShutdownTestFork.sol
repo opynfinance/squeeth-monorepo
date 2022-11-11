@@ -82,7 +82,6 @@ contract BullStrategyTestFork is Test {
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        //console.log(address(crabV2));
         crabOwner = crabV2.owner();
         bullStrategy =
         new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule, 0x1F98431c8aD98523631AE4a59f267346ea31F984);
@@ -272,9 +271,6 @@ contract BullStrategyTestFork is Test {
         );
         uint256 ethFromCrabRedemption =
             crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
-        // note the below doesnt work as it has wrong order of operations
-        //uint256 ethFromCrabRedemption = crabShares.wmul(ethInCrabAfterShutdown).wdiv(crabV2.totalSupply())
-        console.log(ethFromCrabRedemption, "eth from crab redemption");
 
         vm.startPrank(controllerOwner);
         controller.shutDown();
@@ -288,23 +284,14 @@ contract BullStrategyTestFork is Test {
         vm.startPrank(bullOwner);
         bullStrategy.setShutdownContract(address(emergencyShutdown));
 
-        console.log("Crab shares: ", crabShares);
-        console.log("Vault details:");
-        console.log(crabCollateral, crabDebt);
-
-        //ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-        //console.log("ethusd price", ethUsdPrice);
-
         uint256 expectedEthToPay = quoter.quoteExactOutputSingle(
             weth, usdc, 3000, bullStrategy.calcUsdcToRepay(percentToRedeem), 0
         );
-        console.log("Expected eth to pay", expectedEthToPay);
         uint256 effectivePrice = bullStrategy.calcUsdcToRepay(percentToRedeem).mul(
             WETH_DECIMALS_DIFF
         ).wdiv(expectedEthToPay);
 
         uint256 ethInLeverage = bullStrategy.calcWethToWithdraw(percentToRedeem);
-        console.log("ethInLeverage", ethInLeverage);
         uint256 contractEthBefore = address(bullStrategy).balance;
 
         EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
@@ -433,14 +420,11 @@ contract BullStrategyTestFork is Test {
             // percent to redeem
 
             uint256 percentToRedeem = ONE.div(2); //50%
-            console.log(percentToRedeem);
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 crabBalanceBefore = bullStrategy.getCrabBalance();
             uint256 crabShares = crabBalanceBefore.wmul(percentToRedeem);
-            console.log(crabShares, crabBalanceBefore, "crab shares, crab balance befroE");
             uint256 ethFromCrabRedemption =
                 testUtil.calculateCrabRedemption(crabShares, ethUsdPrice, crabCollateral, crabDebt);
-            console.log("eth from crab redemption:", ethFromCrabRedemption);
 
             vm.startPrank(controllerOwner);
             controller.shutDown();
@@ -511,7 +495,6 @@ contract BullStrategyTestFork is Test {
             uint256 crabShares = crabBalanceBefore.wmul(percentToRedeem);
             uint256 ethFromCrabRedemption =
                 testUtil.calculateCrabRedemption(crabShares, ethUsdPrice, crabCollateral, crabDebt);
-            console.log("eth from crab redemption:", ethFromCrabRedemption);
 
             vm.startPrank(bullOwner);
 
@@ -536,7 +519,6 @@ contract BullStrategyTestFork is Test {
             vm.stopPrank();
 
             uint256 contractEthAfter = address(bullStrategy).balance;
-            console.log(contractEthAfter);
 
             assertEq(
                 contractEthAfter,

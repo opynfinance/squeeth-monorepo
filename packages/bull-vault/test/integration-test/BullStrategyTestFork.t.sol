@@ -5,6 +5,7 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
+
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
@@ -80,7 +81,6 @@ contract BullStrategyTestFork is Test {
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        //console.log(address(crabV2));
         crabOwner = crabV2.owner();
         bullStrategy =
         new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule, 0x1F98431c8aD98523631AE4a59f267346ea31F984);

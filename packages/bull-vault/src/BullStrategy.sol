@@ -3,8 +3,6 @@ pragma solidity =0.7.6;
 
 pragma abicoder v2;
 
-import { console } from "forge-std/console.sol";
-
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
@@ -205,8 +203,6 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         uint256 crabToRedeem = shareToUnwind.wmul(ICrabStrategyV2(crab).balanceOf(address(this)));
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
-
-        console.log(address(this).balance, "eth balance after redemption");
 
         _repayAndWithdrawFromLeverage(shareToUnwind);
         IWETH9(weth).deposit{value: wethToUniswap}();
