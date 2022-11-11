@@ -776,7 +776,7 @@ contract CrabNetting is Ownable, EIP712 {
         ICrabStrategyV2(crab).withdraw(_p.crabToWithdraw);
 
         // step 3 pay all mms
-        IWETH(weth).deposit{value: address(this).balance}();
+        IWETH(weth).deposit{value: address(this).balance - initEthBalance}();
         toPull = sqthRequired;
         uint256 quantity;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {

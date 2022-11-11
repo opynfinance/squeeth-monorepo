@@ -44,7 +44,6 @@ contract SigUtils {
         view
         returns (bytes32)
     {
-        console.log("her");
         return
             keccak256(
                 abi.encodePacked(
