@@ -251,8 +251,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
-        // _checkOTCPrice(_clearingPrice, _isHedgeBuying);
 
+        _checkFullRebalanceClearingPrice(_clearingPrice, _isHedgeBuying);
+        
         (uint256 ethInCrab, uint256 squeethInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
