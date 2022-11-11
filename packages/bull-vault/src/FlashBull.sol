@@ -4,18 +4,18 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
-import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
-import {IBullStrategy} from "./interface/IBullStrategy.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
+import { IBullStrategy } from "./interface/IBullStrategy.sol";
 // contract
-import {UniFlash} from "./UniFlash.sol";
+import { UniFlash } from "./UniFlash.sol";
 // lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {Address} from "openzeppelin/utils/Address.sol";
-import {UniOracle} from "./UniOracle.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { Address } from "openzeppelin/utils/Address.sol";
+import { UniOracle } from "./UniOracle.sol";
 
 /**
  * @notice FlashBull contract
@@ -53,27 +53,21 @@ contract FlashBull is UniFlash {
     /// @dev bull stratgey address
     address public immutable bullStrategy;
 
-    /// @dev params structs
-    struct FlashWithdrawParams {
-        uint256 bullAmount;
-        uint256 maxEthForSqueeth;
-        uint256 maxEthForUsdc;
-        uint24 wPowerPerpPoolFee;
-        uint24 usdcPoolFee;
-    }
-
     /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
         uint256 ethToDepositInCrab;
     }
+
     struct FlashDepositCollateralData {
         uint256 crabToDeposit;
-        uint256 ethToLend;
+        uint256 wethToLend;
     }
+
     struct FlashWithdrawBullData {
         uint256 bullToRedeem;
         uint256 usdcToRepay;
     }
+
     struct FlashSwapWPowerPerpData {
         uint256 bullToRedeem;
         uint256 crabToRedeem;
@@ -81,6 +75,24 @@ contract FlashBull is UniFlash {
         uint256 usdcToRepay;
         uint256 maxEthForUsdc;
         uint256 usdcPoolFee;
+    }
+
+    /// @dev flashDeposit params structs
+    struct FlashDepositParams {
+        uint256 ethToCrab;
+        uint256 minEthFromSqth;
+        uint256 minEthFromUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
+    }
+
+    /// @dev flashWithdraw params structs
+    struct FlashWithdrawParams {
+        uint256 bullAmount;
+        uint256 maxEthForSqueeth;
+        uint256 maxEthForUsdc;
+        uint24 wPowerPerpPoolFee;
+        uint24 usdcPoolFee;
     }
 
     event FlashWithdraw(uint256 bullAmount);
@@ -92,7 +104,8 @@ contract FlashBull is UniFlash {
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
         ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
-        ethUSDCPool = IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+        ethUSDCPool =
+            IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
     }
 
     /**
@@ -105,54 +118,58 @@ contract FlashBull is UniFlash {
     /**
      * @notice flash deposit into strategy, providing ETH, selling wSqueeth and dollars, and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
-     * @param _ethToCrab ETH that will be deposited into the crab strategy
-     * @param _minEthFromSqth minimum ETH we will receive from the oSQTH-ETH trade for crab component
-     * @param _minEthFromUsdc minimum ETH we will receive from the USDC-ETH trade for leverage component
-     * @param _poolFee Uniswap pool fee
+     * @param _params FlashDepositParams params
      */
-    function flashDeposit(uint256 _ethToCrab, uint256 _minEthFromSqth, uint256 _minEthFromUsdc, uint24 _poolFee) external payable {
+    function flashDeposit(FlashDepositParams calldata _params) external payable {
         uint256 crabAmount;
         uint256 wSqueethToMint;
         uint256 ethInCrab;
         uint256 squeethInCrab;
         {
             (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
-            
+
             uint256 ethFee;
-            uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice);
-            crabAmount = _calcSharesToMint(_ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply());
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(
+                _params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice
+            );
+            crabAmount = _calcSharesToMint(
+                _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
+            );
         }
 
         // oSQTH-ETH swap
         _exactInFlashSwap(
             wPowerPerp,
             weth,
-            _poolFee,
+            _params.wPowerPerpPoolFee,
             wSqueethToMint,
-            _minEthFromSqth,
+            _params.minEthFromSqth,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
-            abi.encodePacked(_ethToCrab)
+            abi.encodePacked(_params.ethToCrab)
         );
 
-        (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails(); 
+        (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 share;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             share = ONE;
         } else {
             share = crabAmount.wdiv(IBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
         }
-        (uint256 ethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
+        (uint256 wethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(
+            crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+        );
 
-         // ETH-USDC swap
+        // ETH-USDC swap
         _exactInFlashSwap(
             usdc,
             weth,
-            _poolFee,
+            _params.usdcPoolFee,
             usdcToBorrow,
-            _minEthFromUsdc,
+            _params.minEthFromUsdc,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL),
-            abi.encodePacked(crabAmount, ethToLend)
+            abi.encodePacked(crabAmount, wethToLend)
         );
 
         // return excess eth to the user that was not needed for slippage
@@ -187,7 +204,14 @@ contract FlashBull is UniFlash {
             wPowerPerpToRedeem,
             _params.maxEthForSqueeth,
             uint8(FLASH_SOURCE.FLASH_SWAP_WPOWERPERP),
-            abi.encodePacked(_params.bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, _params.maxEthForUsdc, uint256(_params.usdcPoolFee))
+            abi.encodePacked(
+                _params.bullAmount,
+                crabToRedeem,
+                wPowerPerpToRedeem,
+                usdcToRepay,
+                _params.maxEthForUsdc,
+                uint256(_params.usdcPoolFee)
+            )
         );
 
         payable(msg.sender).sendValue(address(this).balance);
@@ -201,7 +225,8 @@ contract FlashBull is UniFlash {
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
-            FlashDepositCrabData memory data = abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
+            FlashDepositCrabData memory data =
+                abi.decode(_uniFlashSwapData.callData, (FlashDepositCrabData));
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
@@ -209,19 +234,24 @@ contract FlashBull is UniFlash {
 
             // repay the squeeth flash swap
             IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL) {
+        } else if (
+            FLASH_SOURCE(_uniFlashSwapData.callSource)
+                == FLASH_SOURCE.FLASH_DEPOSIT_LENDING_COLLATERAL
+        ) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
 
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
-            IBullStrategy(bullStrategy).deposit{value: data.ethToLend}(data.crabToDeposit);
+            IBullStrategy(bullStrategy).deposit{value: data.wethToLend}(data.crabToDeposit);
 
             // repay the dollars flash swap
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_SWAP_WPOWERPERP) {
-            FlashSwapWPowerPerpData memory data = abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
+        } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_SWAP_WPOWERPERP)
+        {
+            FlashSwapWPowerPerpData memory data =
+                abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
 
             IERC20(wPowerPerp).approve(bullStrategy, data.wPowerPerpToRedeem);
 
@@ -276,14 +306,16 @@ contract FlashBull is UniFlash {
      * @param _crabTotalSupply total supply of strategy token
      * @return amount of strategy token to mint
      */
-    function _calcSharesToMint(uint256 _amount, uint256 _strategyCollateralAmount, uint256 _crabTotalSupply)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _calcSharesToMint(
+        uint256 _amount,
+        uint256 _strategyCollateralAmount,
+        uint256 _crabTotalSupply
+    ) internal pure returns (uint256) {
         uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
 
-        if (_crabTotalSupply != 0) return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
+        if (_crabTotalSupply != 0) {
+            return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
+        }
 
         return _amount;
     }

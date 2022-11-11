@@ -4,16 +4,24 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
-import {LeverageBull} from "./LeverageBull.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { LeverageBull } from "./LeverageBull.sol";
 // lib
-import {Address} from "openzeppelin/utils/Address.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
+
+/**
+ * Error codes
+ * BS0: Can't receive ETH from this sender
+ * BS1: Invalid strategy cap
+ * BS2: Strategy cap reached max
+ * BS3: Can't farm token
+ */
 
 /**
  * @notice BullStrategy contract
@@ -34,50 +42,65 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-    /// @dev the highest delta we can have without rebalancing
-    uint256 public deltaUpper;
-    /// @dev the lowest delta we can have without rebalancing
-    uint256 public deltaLower;
-    /// @dev the highest CR we can have before rebalancing
-    uint256 public crUpper;
-    /// @dev the lowest CR we can have before rebalancing
-    uint256 public crLower;
-    /// @dev target CR for our ETH collateral
-    uint256 public crTarget;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event SetCap(uint256 oldCap, uint256 newCap);
 
     /**
      * @notice constructor for BullStrategy
      * @dev this will open a vault in the power token contract and store the vault ID
+     * @param _owner bull strategy owner
      * @param _crab crab address
      * @param _powerTokenController wPowerPerp Controller address
+     * @param _euler euler address
+     * @param _eulerMarketsModule euler markets module address
      */
     constructor(
+        address _owner,
         address _crab,
         address _powerTokenController,
         address _euler,
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
-        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
+        LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
     }
 
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(crab));
+        require(msg.sender == weth || msg.sender == address(crab), "BS0");
     }
 
     /**
-     * @notice return the internal accounting of the bull strategy's crab balance 
-     * @return crab token amount hold by the bull strategy
+     * @notice withdraw airdropped asset
+     * @dev can only be called by owner
+     * @param _asset asset address
+     * @param _receiver receiver address
      */
-    function getCrabBalance() external view returns (uint256) {
-        return _crabBalance;
+    function farm(address _asset, address _receiver) external onlyOwner {
+        require(
+            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
+                && (_asset != dToken) && (_asset != wPowerPerp),
+            "BS3"
+        );
+
+        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
     }
-    
+
+    /**
+     * @notice set strategy cap
+     * @param _cap startegy cap
+     */
+    function setCap(uint256 _cap) external onlyOwner {
+        require(_cap != 0, "BS1");
+
+        emit SetCap(strategyCap, _cap);
+
+        strategyCap = _cap;
+    }
+
     /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
@@ -99,7 +122,11 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        (, uint256 usdcBorrowed) = _leverageDeposit(bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
+        (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
+            msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+        );
+
+        require(_totalWethInEuler <= strategyCap, "BS2");
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
     }
@@ -108,7 +135,7 @@ contract BullStrategy is ERC20, LeverageBull {
      * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
-    function withdraw(uint256 _bullAmount) external {        
+    function withdraw(uint256 _bullAmount) external {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -118,7 +145,7 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
-        
+
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
@@ -127,6 +154,14 @@ contract BullStrategy is ERC20, LeverageBull {
         payable(msg.sender).sendValue(address(this).balance);
 
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+    }
+
+    /**
+     * @notice return the internal accounting of the bull strategy's crab balance
+     * @return crab token amount hold by the bull strategy
+     */
+    function getCrabBalance() external view returns (uint256) {
+        return _crabBalance;
     }
 
     function getCrabVaultDetails() external view returns (uint256, uint256) {
@@ -152,7 +187,8 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
+        VaultLib.Vault memory strategyVault =
+            IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
