@@ -75,6 +75,8 @@ contract AuctionBullTestFork is Test {
     uint256 currentDebt;
     uint256 targetWethInLeverage;
     uint256 targetDebt;
+    uint256 userWethBalanceBeforeAuction;
+    uint256 userWPowerPerpBalanceBeforeAuction;
     AuctionBull.Order[] orders;
 
     function setUp() public {
@@ -256,53 +258,40 @@ contract AuctionBullTestFork is Test {
     function testFullRebalanceWhenEthUp() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentWethInLeverage", currentWethInLeverage);
-        console.log("currentDebt", currentDebt);
-        // uint256 ethUsdPrice = UniOracle._getTwap(
-        //     controller.ethQuoteCurrencyPool(),
-        //     controller.weth(),
-        //     controller.quoteCurrency(),
-        //     TWAP,
-        //     false
-        // );
-        // uint256 squeethEthPrice = UniOracle._getTwap(
-        //     controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
-        // );
 
-        // console.log("ethUsdPrice", ethUsdPrice);
-        // console.log("squeethEthPrice", squeethEthPrice);
-
-        // move prices up
-        vm.startPrank(user1);
-        IERC20(usdc).approve(address(swapRouter), 30000000e6);
-        swapRouter.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: usdc,
-                tokenOut: weth,
-                fee: uint24(3000),
-                recipient: msg.sender,
-                deadline: block.timestamp,
-                amountIn: 30000000e6,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
-        );
-        IWETH9(weth).deposit{value: 200e18}();
-        IERC20(weth).approve(address(swapRouter), 200e18);
-        swapRouter.exactInputSingle(
-            ISwapRouter.ExactInputSingleParams({
-                tokenIn: weth,
-                tokenOut: wPowerPerp,
-                fee: uint24(3000),
-                recipient: msg.sender,
-                deadline: block.timestamp,
-                amountIn: 200e18,
-                amountOutMinimum: 0,
-                sqrtPriceLimitX96: 0
-            })
-        );
-        vm.stopPrank();
-        vm.warp(block.timestamp + 1000);
+        {
+            // move prices up
+            vm.startPrank(user1);
+            IERC20(usdc).approve(address(swapRouter), 30000000e6);
+            swapRouter.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: usdc,
+                    tokenOut: weth,
+                    fee: uint24(3000),
+                    recipient: msg.sender,
+                    deadline: block.timestamp,
+                    amountIn: 30000000e6,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            );
+            IWETH9(weth).deposit{value: 200e18}();
+            IERC20(weth).approve(address(swapRouter), 200e18);
+            swapRouter.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: weth,
+                    tokenOut: wPowerPerp,
+                    fee: uint24(3000),
+                    recipient: msg.sender,
+                    deadline: block.timestamp,
+                    amountIn: 200e18,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            );
+            vm.stopPrank();
+            vm.warp(block.timestamp + 1000);
+        }
 
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
@@ -313,19 +302,15 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetWeth", targetWethInLeverage);
-        console.log("targetDebt", targetDebt);
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        console.log("isDepositingInCrab", isDepositingInCrab);
-        console.log("crabAmount", crabAmount);
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
             _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
-        console.log("wPowerPerpAmountToTrade", wPowerPerpAmountToTrade);
 
         {
             // trader signature vars
@@ -361,13 +346,12 @@ contract AuctionBullTestFork is Test {
 
         vm.prank(user1);
         IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
-
+        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
+        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
-
-        // console.log("ethUsdPrice", ethUsdPrice);
-        // console.log("squeethEthPrice", squeethEthPrice);
 
         vm.prank(auctionManager);
         auctionBull.fullRebalance(
@@ -380,17 +364,20 @@ contract AuctionBullTestFork is Test {
             isDepositingInCrab
         );
 
+        (, uint256 squeethInCrabAfter) = _getCrabVaultDetails();
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentWethInLeverage", currentWethInLeverage);
-        console.log("currentDebt", currentDebt);
+
+        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage);
+        assertEq(userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade), IERC20(wPowerPerp).balanceOf(user1));
+        assertEq(userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.wmul(squeethEthPrice)), IERC20(weth).balanceOf(user1));
+        assertEq(bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy)));
+        assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
     function testFullRebalanceWhenEthDown() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentWethInLeverage", currentWethInLeverage);
-        console.log("currentDebt", currentDebt);
 
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
@@ -402,9 +389,6 @@ contract AuctionBullTestFork is Test {
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
-
-        console.log("ethUsdPrice", ethUsdPrice);
-        console.log("squeethEthPrice", squeethEthPrice);
 
         // move prices down
         vm.startPrank(user1);
@@ -449,23 +433,16 @@ contract AuctionBullTestFork is Test {
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
 
-        console.log("ethUsdPrice", ethUsdPrice);
-        console.log("squeethEthPrice", squeethEthPrice);
-
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetWeth", targetWethInLeverage);
-        console.log("targetDebt", targetDebt);
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        console.log("isDepositingInCrab", isDepositingInCrab);
-        console.log("crabAmount", crabAmount);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
             _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
-        console.log("wPowerPerpAmountToTrade", wPowerPerpAmountToTrade);
 
         {
             // trader signature vars
@@ -501,13 +478,13 @@ contract AuctionBullTestFork is Test {
 
         vm.prank(user1);
         IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
+        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
-
-        // console.log("ethUsdPrice", ethUsdPrice);
-        // console.log("squeethEthPrice", squeethEthPrice);
 
         vm.prank(auctionManager);
         auctionBull.fullRebalance(
@@ -520,10 +497,18 @@ contract AuctionBullTestFork is Test {
             isDepositingInCrab
         );
 
+        (, uint256 squeethInCrabAfter) = _getCrabVaultDetails();
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentWethInLeverage", currentWethInLeverage);
-        console.log("currentDebt", currentDebt);        
+
+        assertEq(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage);
+        assertEq(userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade), IERC20(wPowerPerp).balanceOf(user1));
+        assertEq(userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.wmul(squeethEthPrice)), IERC20(weth).balanceOf(user1));
+        assertApproxEqAbs(
+            bullCrabBalanceBefore.add(crabAmount),
+            IERC20(crabV2).balanceOf(address(bullStrategy)),
+            1e18
+        );
     }
 
     function _calcCrabAmountToTrade(

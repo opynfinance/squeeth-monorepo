@@ -17,7 +17,6 @@ import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
-import { console } from "forge-std/console.sol";
 
 /**
  * Error code
@@ -232,25 +231,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         nonces[_trader][_nonce] = true;
     }
 
-    function _calcWPowerPerpAmountFromCrab(
-        bool _isDepositingInCrab,
-        uint256 _crabAmount,
-        uint256 _ethInCrab,
-        uint256 _squeethInCrab
-    ) internal view returns (uint256) {
-        uint256 wPowerPerpAmount;
-        if (_isDepositingInCrab) {
-            uint256 ethToDepositInCrab =
-                _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_ethInCrab);
-            (wPowerPerpAmount,) =
-                _calcWsqueethToMintAndFee(ethToDepositInCrab, _squeethInCrab, _ethInCrab);
-        } else {
-            wPowerPerpAmount = _crabAmount.wmul(_squeethInCrab).wdiv(IERC20(crab).totalSupply());
-        }
-
-        return wPowerPerpAmount;
-    }
-
     /**
      * @dev hedge function to reduce delta using an array of signed orders
      * @param _orders list of orders
@@ -279,7 +259,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
         );
         if (_isDepositingInCrab) {
-            console.log("#1");
             // loop through orders, check each order validity
             // pull funds from orders
             {
@@ -389,14 +368,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
-        console.log("#2");
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > wethInCollateral) {
-            console.log("#3");
-
             uint256 wethToGet =
                 _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
             _exactOutFlashSwap(
@@ -411,12 +387,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 )
             );
         } else {
-            console.log("#4");
-
             uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
-            console.log("ethNeededForCrab", ethNeededForCrab);
-            console.log("wethFromEuler", wethFromEuler);
-
             uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
             _exactOutFlashSwap(
                 usdc,
@@ -513,7 +484,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH
         ) {
             uint256 wethToDeposit = abi.decode(_uniFlashSwapData.callData, (uint256));
-            console.log("wethToDeposit", wethToDeposit);
             IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 wethToDeposit, _uniFlashSwapData.amountToPay
             );
@@ -676,6 +646,25 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         require(delta <= deltaUpper && delta >= deltaLower, "AB1");
         require(cr <= crUpper && cr >= crLower, "AB2");
+    }
+
+    function _calcWPowerPerpAmountFromCrab(
+        bool _isDepositingInCrab,
+        uint256 _crabAmount,
+        uint256 _ethInCrab,
+        uint256 _squeethInCrab
+    ) internal view returns (uint256) {
+        uint256 wPowerPerpAmount;
+        if (_isDepositingInCrab) {
+            uint256 ethToDepositInCrab =
+                _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_ethInCrab);
+            (wPowerPerpAmount,) =
+                _calcWsqueethToMintAndFee(ethToDepositInCrab, _squeethInCrab, _ethInCrab);
+        } else {
+            wPowerPerpAmount = _crabAmount.wmul(_squeethInCrab).wdiv(IERC20(crab).totalSupply());
+        }
+
+        return wPowerPerpAmount;
     }
 
     /**
