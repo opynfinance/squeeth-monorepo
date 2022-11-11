@@ -14,5 +14,4 @@ interface ILeverageBull {
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256);
 
     function calcWethToWithdraw(uint256 _bullShare) external view returns (uint256);
-
 }

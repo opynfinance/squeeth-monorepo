@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
+
 import { console } from "forge-std/console.sol";
 
 // interface
@@ -64,17 +65,14 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
     uint256 public crTarget;
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
-    
+
     struct ShutdownParams {
         uint256 maxEthToPay;
         uint24 ethPoolFee;
     }
 
     /// @dev enum to differentiate between Uniswap swap callback function source
-    enum FLASH_SOURCE {
-        SHUTDOWN
-    }
-
+    enum FLASH_SOURCE { SHUTDOWN }
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
@@ -141,14 +139,13 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
         shutdownContract = _shutdownContract;
     }
 
-
     /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
      * @param _crabAmount amount of crab token
      */
     function deposit(uint256 _crabAmount) external payable {
-        require (!IController(powerTokenController).isShutDown(), "BS7");
+        require(!IController(powerTokenController).isShutDown(), "BS7");
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
@@ -178,7 +175,7 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
-        require (!IController(powerTokenController).isShutDown(), "BS7");
+        require(!IController(powerTokenController).isShutDown(), "BS7");
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -200,9 +197,9 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
     }
 
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
-        require (msg.sender == shutdownContract, "BS4");
+        require(msg.sender == shutdownContract, "BS4");
         if (shareToUnwind == ONE) {
-            hasRedeemedInShutdown=true;
+            hasRedeemedInShutdown = true;
         }
 
         uint256 crabToRedeem = shareToUnwind.wmul(ICrabStrategyV2(crab).balanceOf(address(this)));
@@ -222,7 +219,7 @@ contract BullStrategy is ERC20, LeverageBull, UniFlash {
      * @param _bullAmount bull amount to withdraw
      */
     function withdrawShutdown(uint256 _bullAmount) external {
-        require (hasRedeemedInShutdown, "BS3");
+        require(hasRedeemedInShutdown, "BS3");
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 ethToReceive = share.wmul(address(this).balance);
         _burn(msg.sender, _bullAmount);

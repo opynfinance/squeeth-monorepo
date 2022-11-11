@@ -16,8 +16,8 @@ import { TestUtil } from "../util/TestUtil.t.sol";
 import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { EmergencyShutdown } from  "../../src/EmergencyShutdown.sol";
-import {Quoter} from "v3-periphery/lens/Quoter.sol";
+import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
+import { Quoter } from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -90,7 +90,8 @@ contract BullStrategyTestFork is Test {
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
-        emergencyShutdown = new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
+        emergencyShutdown =
+        new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
 
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));

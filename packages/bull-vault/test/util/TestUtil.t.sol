@@ -140,25 +140,32 @@ contract TestUtil is Test {
         }
     }
 
-    function calculateCrabRedemption(uint256 crabShares, uint256 ethUsdPrice, uint256 crabCollateral, uint256 crabDebt) external view returns (uint256){
+    function calculateCrabRedemption(
+        uint256 crabShares,
+        uint256 ethUsdPrice,
+        uint256 crabCollateral,
+        uint256 crabDebt
+    ) external view returns (uint256) {
         uint256 ethInCrabAfterShutdown;
         //this check is not strictly true, but for our tests it works. hasRedeemedInShutdown is a private variable that would be the correct one to check
-        if (controller.isShutDown()) { 
+        if (controller.isShutDown()) {
             console.log("shutdown!");
             ethInCrabAfterShutdown = address(crabV2).balance;
             console.log("eth in crab after shutdown", ethInCrabAfterShutdown);
         } else {
-            ethInCrabAfterShutdown = crabCollateral.sub(crabDebt.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE)));
+            ethInCrabAfterShutdown = crabCollateral.sub(
+                crabDebt.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE))
+            );
             console.log("eth in crab after shutdown", ethInCrabAfterShutdown);
         }
-        
-        uint256 ethFromCrabRedemption = crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
+
+        uint256 ethFromCrabRedemption =
+            crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
 
         console.log(crabShares, "crabShares");
         // note the below doesnt work as it has wrong order of operations - make sure our order of operations is correct for rounding reasons
         //uint256 ethFromCrabRedemption = crabShares.wmul(ethInCrabAfterShutdown).wdiv(crabV2.totalSupply())
 
         return ethFromCrabRedemption;
-
     }
 }
