@@ -12,6 +12,7 @@ import {
 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import { addressAtom } from '../wallet/atoms'
 import { Contract } from 'web3-eth-contract'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -286,18 +287,16 @@ export const useGetTickPrices = () => {
   return getTickPrices
 }
 
-export const useGetTicksFromPriceRange = () => {
+export const useGetTicksFromETHPriceRange = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const ethPrice = useETHPrice()
+  const oSQTHPrice = useOSQTHPrice()
 
-  const getTicksFromPriceRange = useAppCallback(
-    (minOSqthPrice: BigNumber, maxOSqthPrice: BigNumber) => {
-      // $60 - oSQTH
-      // $1500 - ETH
-      // for 1 ETH how many oSQTH - 1500 / 60
-      // "encodeSqrtRatioX96" asks for amount1, amount0
-      const lowerPriceRange = isWethToken0 ? ethPrice.div(maxOSqthPrice) : minOSqthPrice.div(ethPrice)
-      const upperPriceRange = isWethToken0 ? ethPrice.div(minOSqthPrice) : maxOSqthPrice.div(ethPrice)
+  const getTicksFromETHPriceRange = useAppCallback(
+    (minETHPrice: BigNumber, maxETHPrice: BigNumber) => {
+      // encodeSqrtRatioX96 = √P * 2**96, where P = Price of token0 in terms of token1
+      // if isWethToken0 then P = Price(WETH) / Price(oSQTH)
+      const lowerPriceRange = isWethToken0 ? minETHPrice.div(oSQTHPrice) : oSQTHPrice.div(maxETHPrice)
+      const upperPriceRange = isWethToken0 ? maxETHPrice.div(oSQTHPrice) : oSQTHPrice.div(minETHPrice)
 
       const lowerPriceRangeInt = lowerPriceRange.integerValue()
       const upperPriceRangeInt = upperPriceRange.integerValue()
@@ -314,10 +313,10 @@ export const useGetTicksFromPriceRange = () => {
 
       return { lowerTick, upperTick }
     },
-    [isWethToken0, ethPrice],
+    [isWethToken0, oSQTHPrice],
   )
 
-  return getTicksFromPriceRange
+  return getTicksFromETHPriceRange
 }
 
 export const useGetDecreaseLiquidity = () => {
