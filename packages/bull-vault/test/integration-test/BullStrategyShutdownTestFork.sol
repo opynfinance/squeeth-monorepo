@@ -84,7 +84,7 @@ contract BullStrategyTestFork is Test {
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         crabOwner = crabV2.owner();
         bullStrategy =
-        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule, 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -469,9 +469,10 @@ contract BullStrategyTestFork is Test {
             assertEq(
                 IEulerDToken(dToken).balanceOf(address(bullStrategy)), totalUsdcDebt.sub(usdcDebt)
             );
-            assertEq(
+            assertApproxEqAbs(
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
-                totalEthInLeverage.sub(ethInLeverage)
+                totalEthInLeverage.sub(ethInLeverage),
+                1
             );
             assertEq(IERC20(weth).balanceOf(address(bullStrategy)), 0);
             assertEq(IERC20(usdc).balanceOf(address(bullStrategy)), 0);
