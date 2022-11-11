@@ -18,8 +18,8 @@ import { console } from "forge-std/console.sol";
 
 /**
  * Error codes
- * LB0: ETH sent is greater than ETH to deposit in Euler
- * LB1:
+ * LB0: ETH sent is not equal to ETH to deposit in Euler
+ * LB1: caller is not auction address
  */
 
 /**
@@ -235,10 +235,10 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 ethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
                 uint256 usdcToBorrow =
-                    ethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
-                return (ethToLend, usdcToBorrow);
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                return (wethToLend, usdcToBorrow);
             }
         }
         uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(

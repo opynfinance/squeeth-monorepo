@@ -113,6 +113,19 @@ contract BullStrategyTestFork is Test {
         bullStrategy.setCap(10e18);
     }
 
+    function testDepositWhenCapFull() public {
+        vm.prank(bullOwner);
+        bullStrategy.setCap(1);
+
+        uint256 crabToDeposit = 1e18;
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        vm.startPrank(user1);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("BS2"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
+    }
+
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
@@ -265,6 +278,37 @@ contract BullStrategyTestFork is Test {
         vm.expectRevert(bytes("LB0"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
         vm.stopPrank();
+    }
+
+    function testFarm() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        uint256 daiBalanceBefore = IERC20(dai).balanceOf(bullOwner);
+
+        vm.prank(bullOwner);
+        bullStrategy.farm(dai, bullOwner);
+
+        assertEq(IERC20(dai).balanceOf(bullOwner).sub(daiAmount), daiBalanceBefore);
+    }
+
+    function testFarmWhenCallerNotOwner() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.prank(deployer);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
+    function testFarmWhenAssetIsNotFarmable() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("BS4"));
+        bullStrategy.farm(usdc, bullOwner);
     }
 
     /**
