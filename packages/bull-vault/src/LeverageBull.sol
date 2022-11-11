@@ -14,8 +14,6 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "./UniOracle.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * LB0: ETH sent is not equal to ETH to deposit in Euler
@@ -235,7 +233,8 @@ contract LeverageBull is Ownable {
                         _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 wethToLend =
+                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
                 uint256 usdcToBorrow =
                     wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
