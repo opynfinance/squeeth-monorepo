@@ -507,7 +507,6 @@ contract AuctionBullTestFork is Test {
             isDepositingInCrab
         );
 
-        (, uint256 squeethInCrabAfter) = _getCrabVaultDetails();
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -846,7 +845,7 @@ contract AuctionBullTestFork is Test {
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
     }
 
-    function _calcTargetCollateralAndDebtInLeverage() internal returns (uint256, uint256) {
+    function _calcTargetCollateralAndDebtInLeverage() internal view returns (uint256, uint256) {
         uint256 ethUsdPrice = UniOracle._getTwap(
             controller.ethQuoteCurrencyPool(),
             controller.weth(),

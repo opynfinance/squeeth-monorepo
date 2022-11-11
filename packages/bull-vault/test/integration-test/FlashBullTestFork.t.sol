@@ -48,10 +48,11 @@ contract FlashBullTestFork is Test {
 
     uint256 internal user1Pk;
     uint256 internal deployerPk;
-    uint256 internal cap;
     uint256 internal bullOwnerPk;
+
     address internal user1;
     address internal deployer;
+    address internal bullOwner;
 
     uint256 internal cap;
 
