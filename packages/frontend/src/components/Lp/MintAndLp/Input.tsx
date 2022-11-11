@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import Image from 'next/image'
 import BigNumber from 'bignumber.js'
 
-import { formatNumber } from '@utils/formatter'
+import { formatBalance, formatCurrency } from '@utils/formatter'
 
 const useSimpleInputStyles = makeStyles((theme) =>
   createStyles({
@@ -105,7 +105,7 @@ const useTokenInputAdornmentStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '2px 12px',
+      padding: '2px 10px',
       backgroundColor: theme.palette.background.stone,
       borderRadius: '6px',
     },
@@ -236,7 +236,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
         />
 
         <Typography variant="subtitle1" className={classes.lightFont}>
-          {usdPrice.isZero() ? 'loading...' : '$' + formatNumber(usdValue)}
+          {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
         </Typography>
       </div>
 
@@ -245,7 +245,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
           Available
         </Typography>
         <Typography variant="caption" className={classes.smallFont}>
-          {formatNumber(balance.toNumber())} {symbol}
+          {formatBalance(balance.toNumber())} {symbol}
         </Typography>
       </div>
     </div>
