@@ -25,6 +25,7 @@ contract TestUtil is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
+    uint256 internal constant INDEX_SCALE = 10000;
 
     address internal eToken;
     address internal dToken;
@@ -54,7 +55,6 @@ contract TestUtil is Test {
     function getCrabVaultDetails() public view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(address(controller)).vaults(crabV2.vaultId());
-
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
 
@@ -161,5 +161,30 @@ contract TestUtil is Test {
             uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
             return share.wmul(bullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
+    }
+
+    function calculateCrabRedemption(
+        uint256 crabShares,
+        uint256 ethUsdPrice,
+        uint256 crabCollateral,
+        uint256 crabDebt
+    ) external view returns (uint256) {
+        uint256 ethInCrabAfterShutdown;
+        //this check is not strictly true, but for our tests it works. hasRedeemedInShutdown is a private variable that would be the correct one to check
+        if (controller.isShutDown()) {
+            ethInCrabAfterShutdown = address(crabV2).balance;
+        } else {
+            ethInCrabAfterShutdown = crabCollateral.sub(
+                crabDebt.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE))
+            );
+        }
+
+        uint256 ethFromCrabRedemption =
+            crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
+
+        // note the below doesnt work as it has wrong order of operations - make sure our order of operations is correct for rounding reasons
+        //uint256 ethFromCrabRedemption = crabShares.wmul(ethInCrabAfterShutdown).wdiv(crabV2.totalSupply())
+
+        return ethFromCrabRedemption;
     }
 }

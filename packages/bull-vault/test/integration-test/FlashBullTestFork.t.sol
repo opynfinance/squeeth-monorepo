@@ -654,9 +654,7 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-            console.log("maxEthForSqueeth", maxEthForSqueeth);
             maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
-            console.log("maxEthForUsdc", maxEthForUsdc);
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({

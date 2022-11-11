@@ -7,6 +7,8 @@ pragma abicoder v2;
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { LeverageBull } from "./LeverageBull.sol";
@@ -20,7 +22,11 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS0: Can't receive ETH from this sender
  * BS1: Invalid strategy cap
  * BS2: Strategy cap reached max
- * BS3: Can't farm token
+ * BS3: redeemShortShutdown must be called first
+ * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
+ * BS5: Can't farm token
+ * BS6: invalid shutdownContract address set
+ * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  */
 
 /**
@@ -39,12 +45,18 @@ contract BullStrategy is ERC20, LeverageBull {
     address public immutable crab;
     /// @dev PowerToken controller
     address public immutable powerTokenController;
+    /// @dev public emergency shutdown contract
+    address public shutdownContract;
 
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
 
+    /// @dev set to true when redeemShortShutdown has been called
+    bool public hasRedeemedInShutdown;
+
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
+    event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
 
     /**
      * @notice constructor for BullStrategy
@@ -83,7 +95,7 @@ contract BullStrategy is ERC20, LeverageBull {
         require(
             (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
                 && (_asset != dToken) && (_asset != wPowerPerp),
-            "BS3"
+            "BS5"
         );
 
         IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
@@ -102,11 +114,24 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
+     * @notice set shutdown contract that can be used to unwind the strategy if squeeth contracts are shut down
+     * @param _shutdownContract shutdown contract address
+     */
+    function setShutdownContract(address _shutdownContract) external onlyOwner {
+        require(_shutdownContract != address(0), "BS6");
+
+        emit SetShutdownContract(shutdownContract, _shutdownContract);
+
+        shutdownContract = _shutdownContract;
+    }
+
+    /**
      * @notice deposit function that handle minting shares and depositing into the leverage component
      * @dev this function assume the _from depositor already have _crabAmount
      * @param _crabAmount amount of crab token
      */
     function deposit(uint256 _crabAmount) external payable {
+        require(!IController(powerTokenController).isShutDown(), "BS7");
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
@@ -136,6 +161,7 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
+        require(!IController(powerTokenController).isShutDown(), "BS7");
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -154,6 +180,34 @@ contract BullStrategy is ERC20, LeverageBull {
         payable(msg.sender).sendValue(address(this).balance);
 
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+    }
+
+    function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
+        require(msg.sender == shutdownContract, "BS4");
+        if (shareToUnwind == ONE) {
+            hasRedeemedInShutdown = true;
+        }
+
+        uint256 crabToRedeem = shareToUnwind.wmul(ICrabStrategyV2(crab).balanceOf(address(this)));
+        _decreaseCrabBalance(crabToRedeem);
+        ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
+
+        _repayAndWithdrawFromLeverage(shareToUnwind);
+        IWETH9(weth).deposit{value: wethToUniswap}();
+        IWETH9(weth).transfer(shutdownContract, wethToUniswap);
+    }
+
+    /**
+     * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shutdown
+     * @dev redeemShortShutdown must have been called first
+     * @param _bullAmount bull amount to withdraw
+     */
+    function withdrawShutdown(uint256 _bullAmount) external {
+        require(hasRedeemedInShutdown, "BS3");
+        uint256 share = _bullAmount.wdiv(totalSupply());
+        uint256 ethToReceive = share.wmul(address(this).balance);
+        _burn(msg.sender, _bullAmount);
+        payable(msg.sender).sendValue(ethToReceive);
     }
 
     /**
