@@ -19,6 +19,7 @@ import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 import { useMemo } from 'react'
 
+
 const FIVE_MINUTES_IN_MILLISECONDS = 300_000
 const ethPriceChartsQueryKeys = {
   ethPriceRange: (days: number) => ['ethPriceRange', { days }],
@@ -411,23 +412,7 @@ export const useLongChartData = () => {
   )
 }
 
-export const useCrabPnLV2ChartData = () => {
 
 
-  return useQuery(
-    ['pnlChart', ],
-    async () => getCrabPnlV2ChartData(),
-    {
-      staleTime: Infinity,
-      refetchOnWindowFocus: true,
-    },
-  )
-}
-
-export const crabV2DaysAtom = atom(getCrabStartDate())
-
-function getCrabStartDate() {
-  return 30;
-}
 
 

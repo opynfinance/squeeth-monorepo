@@ -48,3 +48,4 @@ export const V2_MIGRATION_OSQTH_AMOUNT = 4604.57349514942255453
 export const V2_MIGRATION_SUPPLY = 519.994374902152348633
 
 export const squeethRefVolDocLink = 'https://colab.research.google.com/drive/1HTM_2j0jmda9tzN_uskBPz9Rpma8Lp3C'
+export const CRABV2_START_DATE = '2022-07-28'
