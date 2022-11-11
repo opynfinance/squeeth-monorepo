@@ -730,7 +730,6 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
 
-            
             // trader signing bid
             orderSig = SigUtil.Order({
                 bidId: 2,
