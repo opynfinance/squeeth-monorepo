@@ -1,8 +1,11 @@
-import { atom } from 'jotai'
+import { atom, useAtomValue } from 'jotai'
 
 import { BIG_ZERO, DEFAULT_SLIPPAGE } from '@constants/index'
 import { Vault } from '../../types'
 import { readyAtom } from '../squeethPool/atoms'
+import { CRABV2_START_DATE } from '@constants/index'
+import { getCrabPnlV2ChartData } from '@utils/pricer'
+import { useQuery } from 'react-query'
 
 export const maxCapAtom = atom(BIG_ZERO)
 export const crabStrategyVaultAtom = atom<Vault | null>(null)
@@ -54,3 +57,21 @@ export const crabLoadingAtomV2 = atom((get) => {
   const currentEthLoading = get(currentEthLoadingAtomV2)
   return loading || !ready || currentEthLoading
 })
+
+export const crabv2StrategyFilterStartDateAtom = atom<Date>(new Date(CRABV2_START_DATE))
+export const crabv2StrategyFilterEndDateAtom = atom<Date>(new Date())
+
+export const useCrabPnLV2ChartData = () => {
+
+  const startDate = useAtomValue(crabv2StrategyFilterStartDateAtom)
+  const endDate = useAtomValue(crabv2StrategyFilterEndDateAtom)
+
+  return useQuery(
+    ['pnlChart', {startDate, endDate} ],
+    async () => getCrabPnlV2ChartData(Number(startDate.valueOf().toString().slice(0, -3)), Number(endDate.valueOf().toString().slice(0, -3))),
+    {
+      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+    },
+  )
+}
