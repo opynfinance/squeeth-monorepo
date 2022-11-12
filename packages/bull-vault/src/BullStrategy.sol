@@ -27,7 +27,6 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS6: invalid shutdownContract address set
  * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  * BS8: Caller is not auction address
-
  */
 
 /**
@@ -209,6 +208,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
     }
+
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
         require(msg.sender == shutdownContract, "BS4");
         if (shareToUnwind == ONE) {
