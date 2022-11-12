@@ -100,7 +100,9 @@ contract LeverageBull is Ownable {
         auction = _auction;
     }
 
-    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
         if (_usdcToRepay > 0) {

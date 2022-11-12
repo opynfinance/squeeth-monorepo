@@ -40,7 +40,6 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB17: Price too low relative to Uniswap twap
  * AB18: Price too high relative to Uniswap twap
  * AB19: Auction manager can not be 0 address
-
  */
 
 /**
@@ -230,8 +229,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     {
         // Tolerance cannot be more than 20%
         require(
-            _rebalanceWethLimitPriceTolerance <= MAX_REBALANCE_WETH_LIMIT_PRICE_TOLERANCE,
-            "AB16"
+            _rebalanceWethLimitPriceTolerance <= MAX_REBALANCE_WETH_LIMIT_PRICE_TOLERANCE, "AB16"
         );
 
         emit SetRebalanceWethLimitPriceTolerance(
@@ -434,7 +432,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
 
-         _checkRebalanceLimitPrice(_wethLimitPrice);
+        _checkRebalanceLimitPrice(_wethLimitPrice);
 
         if (_isSellingUsdc) {
             // swap USDC to WETH
@@ -816,9 +814,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         require(
             (_wethLimitPrice >= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance))))
-                || (
-                    _wethLimitPrice <= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance)))
-                ),
+                || (_wethLimitPrice <= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance)))),
             "AB15"
         );
     }
