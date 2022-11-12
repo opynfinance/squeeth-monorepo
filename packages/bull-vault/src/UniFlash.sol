@@ -77,7 +77,6 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        // _uniFlashSwap(data.caller, pool, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource);
         _uniFlashSwap(
             UniFlashswapCallbackData(
                 pool,
@@ -117,7 +116,7 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
         uint256 _amountOutMinimum,
         uint8 _callSource,
         bytes memory _data
-    ) internal {
+    ) internal returns (uint256) {
         //calls internal uniswap swap function that will trigger a callback for the flash swap
         uint256 amountOut = _exactInputInternal(
             _amountIn,
@@ -133,6 +132,8 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
 
         //slippage limit check
         require(amountOut >= _amountOutMinimum, "amount out less than min");
+
+        return amountOut;
     }
 
     /**

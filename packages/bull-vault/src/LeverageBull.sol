@@ -100,14 +100,19 @@ contract LeverageBull is Ownable {
         auction = _auction;
     }
 
-    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
-        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
-        IEulerDToken(dToken).repay(0, _usdcToRepay);
-        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
-
-        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+        if (_usdcToRepay > 0) {
+            IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+            IEulerDToken(dToken).repay(0, _usdcToRepay);
+        }
+        if (_wethToWithdraw > 0) {
+            IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
+            IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+        }
 
         emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
     }
@@ -115,12 +120,14 @@ contract LeverageBull is Ownable {
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
         require(msg.sender == auction, "LB1");
 
-        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
-
-        IEulerEToken(eToken).deposit(0, _wethToDeposit);
-        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
-
-        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
+        if (_wethToDeposit > 0) {
+            IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+            IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        }
+        if (_usdcToBorrow > 0) {
+            IEulerDToken(dToken).borrow(0, _usdcToBorrow);
+            IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
+        }
     }
 
     function calcLeverageEthUsdc(
@@ -204,7 +211,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
+     * @dev repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
     function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {

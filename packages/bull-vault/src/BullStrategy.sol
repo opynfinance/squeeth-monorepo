@@ -8,7 +8,6 @@ import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { LeverageBull } from "./LeverageBull.sol";
@@ -27,6 +26,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS5: Can't farm token
  * BS6: invalid shutdownContract address set
  * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
+ * BS8: Caller is not auction address
  */
 
 /**
@@ -56,6 +56,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event SetCap(uint256 oldCap, uint256 newCap);
+    event RedeemCrabAndWithdrawEth();
     event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
 
     /**
@@ -180,6 +181,32 @@ contract BullStrategy is ERC20, LeverageBull {
         payable(msg.sender).sendValue(address(this).balance);
 
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+    }
+
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
+        external
+    {
+        require(msg.sender == auction, "BS8");
+
+        IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
+        IERC20(wPowerPerp).approve(crab, _wPowerPerpToRedeem);
+        ICrabStrategyV2(crab).withdraw(_crabToRedeem);
+
+        IWETH9(weth).deposit{value: address(this).balance}();
+        IWETH9(weth).transfer(msg.sender, IERC20(weth).balanceOf(address(this)));
+
+        emit RedeemCrabAndWithdrawEth();
+    }
+
+    function depositEthIntoCrab(uint256 _ethToDeposit) external {
+        require(msg.sender == auction, "BS8");
+
+        IWETH9(weth).transferFrom(msg.sender, address(this), _ethToDeposit);
+        IWETH9(weth).withdraw(_ethToDeposit);
+
+        ICrabStrategyV2(crab).deposit{value: _ethToDeposit}();
+
+        IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
     }
 
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {

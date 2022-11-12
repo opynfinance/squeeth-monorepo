@@ -19,8 +19,13 @@ interface IBullStrategy {
     ) external view returns (uint256, uint256);
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256);
     function getCrabBalance() external view returns (uint256);
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external;
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external;
     function hasRedeemedInShutdown() external view returns (bool);
-    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external;
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external;
+    function TARGET_CR() external view returns (uint256);
+    function depositEthIntoCrab(uint256 _ethToDeposit) external;
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
+        external;
 }
