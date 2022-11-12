@@ -106,7 +106,6 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _cap strategy cap
      */
     function setCap(uint256 _cap) external onlyOwner {
-
         emit SetCap(strategyCap, _cap);
 
         strategyCap = _cap;

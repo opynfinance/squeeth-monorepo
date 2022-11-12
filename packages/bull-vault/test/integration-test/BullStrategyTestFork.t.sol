@@ -122,13 +122,13 @@ contract BullStrategyTestFork is Test {
         cap = 0;
         vm.startPrank(bullOwner);
         bullStrategy.setCap(cap);
-        assertEq(bullStrategy.strategyCap(),cap);
+        assertEq(bullStrategy.strategyCap(), cap);
     }
 
     function testRedeemCrabAndWithdrawWEthWhenCallerNotOwner() public {
         vm.startPrank(deployer);
         vm.expectRevert(bytes("BS8"));
-        bullStrategy.redeemCrabAndWithdrawWEth(0,0);
+        bullStrategy.redeemCrabAndWithdrawWEth(0, 0);
     }
 
     function testDepositEthIntoCrabWhenCallerNotOwner() public {
