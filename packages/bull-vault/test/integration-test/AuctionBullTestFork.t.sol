@@ -36,6 +36,7 @@ contract AuctionBullTestFork is Test {
 
     uint32 internal constant TWAP = 420;
     uint128 internal constant ONE = 1e18;
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     BullStrategy internal bullStrategy;
     FlashBull internal flashBull;
@@ -182,6 +183,24 @@ contract AuctionBullTestFork is Test {
         assertEq(auctionBull.auctionManager(), auctionManager);
     }
 
+    function testSetAuctionManagerZeroAddress() public {
+        vm.prank(owner);
+        vm.expectRevert(bytes("AB19"));
+        auctionBull.setAuctionManager(address(0));
+    }
+
+    function testSetAuctionManagerWhenCallerNotOwner() public {
+        vm.prank(auctionManager);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        auctionBull.setAuctionManager(address(owner));
+    }
+
+    function testSetAuctionManager() public {
+        vm.prank(owner);
+        auctionBull.setAuctionManager(address(owner));
+        assertEq(auctionBull.auctionManager(), address(owner));
+    }
+
     function testSetCrUpperLessThanLower() public {
         vm.prank(owner);
         vm.expectRevert(bytes("AB3"));
@@ -222,10 +241,10 @@ contract AuctionBullTestFork is Test {
         assertEq(auctionBull.fullRebalanceClearingPriceTolerance(), 5e16);
     }
 
-    function testSetFullRebalanceWethLimitPriceTolerance() public {
+    function testSetRebalanceWethLimitPriceTolerance() public {
         vm.prank(owner);
-        auctionBull.setFullRebalanceWethLimitPriceTolerance(5e16);
-        assertEq(auctionBull.fullRebalanceWethLimitPriceTolerance(), 5e16);
+        auctionBull.setRebalanceWethLimitPriceTolerance(5e16);
+        assertEq(auctionBull.rebalanceWethLimitPriceTolerance(), 5e16);
     }
 
     function testSetFullRebalanceClearingPriceToleranceWhenCallerNotOwner() public {
@@ -234,10 +253,10 @@ contract AuctionBullTestFork is Test {
         auctionBull.setFullRebalanceClearingPriceTolerance(5e16);
     }
 
-    function testSetFullRebalanceWethLimitPriceToleranceWhenCallerNotOwner() public {
+    function testSetRebalanceWethLimitPriceToleranceWhenCallerNotOwner() public {
         vm.prank(user1);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        auctionBull.setFullRebalanceWethLimitPriceTolerance(5e16);
+        auctionBull.setRebalanceWethLimitPriceTolerance(5e16);
     }
 
     function testLeverageRebalanceWhereCrIsInvalid() public {
@@ -273,9 +292,10 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 maxEthForUsdc = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(maxEthForUsdc);
         vm.startPrank(auctionManager);
         vm.expectRevert(bytes("AB2"));
-        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, maxEthForUsdc, 3000);
+        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
         vm.stopPrank();
     }
 
@@ -537,7 +557,7 @@ contract AuctionBullTestFork is Test {
             controller.ethQuoteCurrencyPool(),
             controller.weth(),
             controller.quoteCurrency(),
-            TWAP,
+            1,
             false
         );
 
@@ -614,7 +634,7 @@ contract AuctionBullTestFork is Test {
         vm.prank(user1);
         IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
-            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), 1, false
         );
 
         vm.prank(auctionManager);
@@ -1170,8 +1190,9 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 minEthForUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
         vm.startPrank(auctionManager);
-        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, minEthForUsdc, 3000);
+        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
         vm.stopPrank();
 
         (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
@@ -1239,10 +1260,11 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 maxEthForUsdc = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(maxEthForUsdc);
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         vm.startPrank(auctionManager);
-        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, maxEthForUsdc, 3000);
+        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
         vm.stopPrank();
 
         (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
@@ -1372,7 +1394,7 @@ contract AuctionBullTestFork is Test {
             controller.ethQuoteCurrencyPool(),
             controller.weth(),
             controller.quoteCurrency(),
-            TWAP,
+            1,
             false
         );
         uint256 squeethEthPrice = UniOracle._getTwap(
