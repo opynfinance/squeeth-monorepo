@@ -33,6 +33,8 @@ contract BullStrategyTestFork is Test {
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
+    Quoter internal quoter;
+
 
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
@@ -64,6 +66,8 @@ contract BullStrategyTestFork is Test {
         bullOwner = vm.addr(bullOwnerPk);
 
         vm.startPrank(deployer);
+        quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
@@ -145,10 +149,6 @@ contract BullStrategyTestFork is Test {
         assertTrue(
             wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
         );
-        // console.log('userEthBalanceBefore', userEthBalanceBefore);
-        // console.log('balance(user1)', address(user1).balance);
-        // console.log('eulerBalanceBefore', eulerBalanceBefore);
-        // console.log('IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))', IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)));
         assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
@@ -196,7 +196,6 @@ contract BullStrategyTestFork is Test {
         );
         
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
-        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
 
     }
 
@@ -260,13 +259,9 @@ contract BullStrategyTestFork is Test {
         assertEq(
             crabBalanceBefore.sub(crabToRedeem),
             crabV2.balanceOf(address(bullStrategy)),
-            "Bull ccrab balance mismatch"
+            "Bull crab balance mismatch"
         );
-        assertEq(
-            address(user1).balance.sub(userEthBalanceBefore),
-            wethToWithdraw,
-            "Eth balance mismatch"
-        );
+
 
     }
 
