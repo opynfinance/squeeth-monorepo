@@ -18,8 +18,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * Error codes
- * BS0: Can't receive ETH from this sender
- * BS1: Invalid strategy cap
+ * BS1: Can't receive ETH from this sender
  * BS2: Strategy cap reached max
  * BS3: redeemShortShutdown must be called first
  * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
@@ -83,7 +82,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     receive() external payable {
-        require(msg.sender == weth || msg.sender == address(crab), "BS0");
+        require(msg.sender == weth || msg.sender == address(crab), "BS1");
     }
 
     /**
@@ -104,10 +103,9 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /**
      * @notice set strategy cap
-     * @param _cap startegy cap
+     * @param _cap strategy cap
      */
     function setCap(uint256 _cap) external onlyOwner {
-        require(_cap != 0, "BS1");
 
         emit SetCap(strategyCap, _cap);
 
