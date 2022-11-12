@@ -47,7 +47,4 @@ yul = true
 stackAllocation = true
 optimizerSteps = ''
 
-solc_version = "0.8.10"
-
-
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

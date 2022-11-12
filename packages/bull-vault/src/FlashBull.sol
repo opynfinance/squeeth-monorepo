@@ -2,7 +2,6 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
-import { console } from "forge-std/console.sol";
 
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
@@ -174,8 +173,6 @@ contract FlashBull is UniFlash {
         );
 
 
-        console.log('address(this).balance to send back', address(this).balance);
-
         if (address(this).balance > 0) {
             payable(msg.sender).sendValue(address(this).balance);
         }
@@ -233,8 +230,6 @@ contract FlashBull is UniFlash {
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-            console.log('FLASH_DEPOSIT_CRAB', IWETH9(weth).balanceOf(address(this)));
-
             ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
 
             // repay the squeeth flash swap
@@ -245,7 +240,6 @@ contract FlashBull is UniFlash {
         ) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
-            console.log('FLASH_DEPOSIT_LENDING_COLLATERAL', IWETH9(weth).balanceOf(address(this)));
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
