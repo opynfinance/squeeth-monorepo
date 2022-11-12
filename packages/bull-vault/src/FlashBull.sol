@@ -172,7 +172,7 @@ contract FlashBull is UniFlash {
             abi.encodePacked(crabAmount, wethToLend)
         );
 
-
+        // return excess eth to the user that was not needed for slippage
         if (address(this).balance > 0) {
             payable(msg.sender).sendValue(address(this).balance);
         }
@@ -240,6 +240,7 @@ contract FlashBull is UniFlash {
         ) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
+                
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
