@@ -152,6 +152,15 @@ contract LeverageBull is Ownable {
     }
 
     /**
+     * @dev calculate amount of ETH collateral to withdraw to Euler based on amount of share of bull token
+     * @param _bullShare bull share amount
+     * @return WETH to withdraw
+     */
+    function calcWethToWithdraw(uint256 _bullShare) external view returns (uint256) {
+        return _calcWethToWithdraw(_bullShare);
+    }
+
+    /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handle only the leverage component part
      * @param _ethAmount amount of ETH deposited from user
