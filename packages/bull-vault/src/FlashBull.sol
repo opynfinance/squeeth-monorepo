@@ -129,10 +129,8 @@ contract FlashBull is UniFlash {
             (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
 
             uint256 ethFee;
-            uint256 squeethEthPrice =
-                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(
-                _params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice
+                _params.ethToCrab, squeethInCrab, ethInCrab
             );
             crabAmount = _calcSharesToMint(
                 _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
@@ -286,17 +284,22 @@ contract FlashBull is UniFlash {
     function _calcWsqueethToMintAndFee(
         uint256 _depositedEthAmount,
         uint256 _strategyDebtAmount,
-        uint256 _strategyCollateralAmount,
-        uint256 _squeethEthPrice
+        uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
         uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
-        uint256 feeAdjustment = _squeethEthPrice.mul(feeRate).div(10000);
-        uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+        if (feeRate != 0) {
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            uint256 feeAdjustment = squeethEthPrice.mul(feeRate).div(10000);
+            uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
-        );
-        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
-
-        return (wSqueethToMint, fee);
+            );
+            uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+            return (wSqueethToMint, fee);
+        }
+        uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+        _strategyCollateralAmount);
+        return (wSqueethToMint, 0);
     }
 
     /**
