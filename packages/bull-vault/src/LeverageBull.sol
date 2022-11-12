@@ -100,14 +100,19 @@ contract LeverageBull is Ownable {
         auction = _auction;
     }
 
-    function repayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
-        IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
-        IEulerDToken(dToken).repay(0, _usdcToRepay);
-        IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
-
-        IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+        if (_usdcToRepay > 0) {
+            IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+            IEulerDToken(dToken).repay(0, _usdcToRepay);
+        }
+        if (_wethToWithdraw > 0) {
+            IEulerEToken(eToken).withdraw(0, _wethToWithdraw);
+            IERC20(weth).transfer(msg.sender, _wethToWithdraw);
+        }
 
         emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
     }
@@ -115,12 +120,14 @@ contract LeverageBull is Ownable {
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
         require(msg.sender == auction, "LB1");
 
-        IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
-
-        IEulerEToken(eToken).deposit(0, _wethToDeposit);
-        IEulerDToken(dToken).borrow(0, _usdcToBorrow);
-
-        IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
+        if (_wethToDeposit > 0) {
+            IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+            IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        }
+        if (_usdcToBorrow > 0) {
+            IEulerDToken(dToken).borrow(0, _usdcToBorrow);
+            IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
+        }
     }
 
     function calcLeverageEthUsdc(
@@ -142,6 +149,15 @@ contract LeverageBull is Ownable {
      */
     function calcUsdcToRepay(uint256 _bullShare) external view returns (uint256) {
         return _calcUsdcToRepay(_bullShare);
+    }
+
+    /**
+     * @dev calculate amount of ETH collateral to withdraw to Euler based on amount of share of bull token
+     * @param _bullShare bull share amount
+     * @return WETH to withdraw
+     */
+    function calcWethToWithdraw(uint256 _bullShare) external view returns (uint256) {
+        return _calcWethToWithdraw(_bullShare);
     }
 
     /**
@@ -195,7 +211,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev repay USDC debt to euler and withdrae collateral based on the bull share amount to burn
+     * @dev repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
     function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
@@ -230,7 +246,8 @@ contract LeverageBull is Ownable {
                 ).wdiv(_totalCrabSupply);
                 uint256 wethToLend =
                     TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(1e12);
+                uint256 usdcToBorrow =
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }

@@ -5,6 +5,7 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
+
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
@@ -18,6 +19,8 @@ import { TestUtil } from "../util/TestUtil.t.sol";
 import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
+import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
+import { Quoter } from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -33,14 +36,13 @@ contract BullStrategyTestFork is Test {
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
+    EmergencyShutdown internal emergencyShutdown;
     Quoter internal quoter;
-
 
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
     uint256 internal user1Pk;
     uint256 internal ownerPk;
-
     address internal user1;
     address internal owner;
     address internal deployer;
@@ -53,7 +55,6 @@ contract BullStrategyTestFork is Test {
     address internal eToken;
     address internal dToken;
     address internal wPowerPerp;
-
     uint256 internal cap;
 
     function setUp() public {
@@ -79,14 +80,20 @@ contract BullStrategyTestFork is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
+        quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+        emergencyShutdown =
+        new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
+
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
+
         vm.stopPrank();
 
         cap = 100000e18;
-        vm.prank(bullOwner);
+        vm.startPrank(bullOwner);
         bullStrategy.setCap(cap);
-
+        bullStrategy.setShutdownContract(address(emergencyShutdown));
+        vm.stopPrank();
         user1Pk = 0xA11CE;
         user1 = vm.addr(user1Pk);
 
@@ -108,9 +115,11 @@ contract BullStrategyTestFork is Test {
         IERC20(weth).transfer(user1, 10000e18);
     }
 
-    function testSetUp() public {
+    function testSetUpBullStrategy() public {
         assertTrue(bullStrategy.owner() == bullOwner);
         assertTrue(bullStrategy.strategyCap() == cap);
+        assertTrue(emergencyShutdown.owner() == bullOwner);
+        assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
     }
 
     function testSetCapWhenCallerNotOwner() public {
@@ -293,6 +302,37 @@ contract BullStrategyTestFork is Test {
         vm.expectRevert(bytes("LB0"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
         vm.stopPrank();
+    }
+
+    function testFarm() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        uint256 daiBalanceBefore = IERC20(dai).balanceOf(bullOwner);
+
+        vm.prank(bullOwner);
+        bullStrategy.farm(dai, bullOwner);
+
+        assertEq(IERC20(dai).balanceOf(bullOwner).sub(daiAmount), daiBalanceBefore);
+    }
+
+    function testFarmWhenCallerNotOwner() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.prank(deployer);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
+    function testFarmWhenAssetIsNotFarmable() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("BS5"));
+        bullStrategy.farm(usdc, bullOwner);
     }
 
     /**
