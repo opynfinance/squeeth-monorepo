@@ -126,7 +126,6 @@ contract FlashBull is UniFlash {
         uint256 wSqueethToMint;
         uint256 ethInCrab;
         uint256 squeethInCrab;
-        console.log('msg.value',msg.value);
         {
             (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
 
