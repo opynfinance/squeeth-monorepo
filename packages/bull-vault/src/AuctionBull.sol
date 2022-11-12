@@ -413,6 +413,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 })
             );
         }
+
+        _isValidRebalance();
+        //emit event
     }
 
     /**
@@ -457,7 +460,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             );
         }
 
-        _isValidLeverageRebalance();
+        _isValidRebalance();
 
         emit LeverageRebalance(_isSellingUsdc, _usdcAmount, _wethLimitPrice);
     }
@@ -704,7 +707,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     /**
      * @notice check if startegy delta and CR ratio is within upper and lower values
      */
-    function _isValidLeverageRebalance() internal view {
+    function _isValidRebalance() internal view {
         (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
 
         require(delta <= deltaUpper && delta >= deltaLower, "AB1");
