@@ -1190,9 +1190,7 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 minEthForUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcAmount, 0);
-        console.log(minEthForUsdc, usdcAmount);
         uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
-        console.log(limitPrice, "limit price");
         vm.startPrank(auctionManager);
         auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
         vm.stopPrank();
