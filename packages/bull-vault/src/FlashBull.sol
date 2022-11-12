@@ -240,7 +240,6 @@ contract FlashBull is UniFlash {
         ) {
             FlashDepositCollateralData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
-                
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
             ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
