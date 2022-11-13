@@ -26,4 +26,14 @@ interface ICrabStrategyV2 is IERC20 {
         external
         view
         returns (uint256);
+
+    function powerTokenController() external view returns (address);
+
+    function weth() external view returns (address);
+
+    function wPowerPerp() external view returns (address);
+
+    function oracle() external view returns (address);
+
+    function ethWSqueethPool() external view returns (address);
 }

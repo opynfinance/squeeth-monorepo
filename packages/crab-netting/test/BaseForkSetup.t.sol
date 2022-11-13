@@ -39,9 +39,6 @@ contract BaseForkSetup is Test {
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
-        address sqthETHPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
-        address ethUsdcPool = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
-        address sqthController = 0x64187ae08781B09368e6253F9E94951243A493D5;
         activeFork = vm.createSelectFork(FORK_URL, 15819213);
 
         crab = ICrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
@@ -52,17 +49,7 @@ contract BaseForkSetup is Test {
         quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         oracle = IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
 
-        netting = new CrabNetting(
-            address(usdc),
-            address(crab),
-            address(weth),
-            address(sqth),
-            sqthETHPool,
-            ethUsdcPool,
-            address(swapRouter),
-            address(oracle),
-            sqthController
-        );
+        netting = new CrabNetting(address(crab), address(swapRouter));
         vm.prank(address(netting));
         payable(depositor).transfer(address(netting).balance);
 

@@ -5,7 +5,7 @@ import {BaseForkSetup} from "./BaseForkSetup.t.sol";
 
 contract QueuedBalancesTest is BaseForkSetup {
     uint256 crabsToWithdraw = 40e18;
-    uint256 price = 1269e6; // 1335 bounds are 1267 and 1401
+    uint256 price = 1279e6; // 1338 bounds are 1271 and 1404
     uint256 totalUSDCRequired = (crabsToWithdraw * price) / 1e18;
 
     function setUp() public override {

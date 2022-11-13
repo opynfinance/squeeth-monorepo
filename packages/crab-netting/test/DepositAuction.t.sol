@@ -116,7 +116,7 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
-        p.usdEthFee = 500;
+        p.ethUSDFee = 500;
         p.flashDepositFee = 3000;
 
         // Find the borrow ration for toFlash
@@ -201,7 +201,7 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) /
             1e18;
 
-        p.usdEthFee = 500;
+        p.ethUSDFee = 500;
         p.flashDepositFee = 3000;
 
         // Find the borrow ration for toFlash
@@ -262,7 +262,7 @@ contract DepositAuctionTest is BaseForkSetup {
         weth.approve(address(netting), 1e30);
 
         p.clearingPrice = (sqthPriceLimit * 94) / 100;
-        p.usdEthFee = 500;
+        p.ethUSDFee = 500;
         p.flashDepositFee = 3000;
         p.ethToFlashDeposit = (p.ethToFlashDeposit * 1) / 10**7;
 
@@ -365,7 +365,7 @@ contract DepositAuctionTest is BaseForkSetup {
         console.log(mid, "borrow percentage is");
         p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         console.log("after multiplying", p.ethToFlashDeposit);
-        p.usdEthFee = 500;
+        p.ethUSDFee = 500;
         p.flashDepositFee = 3000;
         // ------------- //
         console.log(p.depositsQueued, p.minEth, p.totalDeposit, toMint);
@@ -459,7 +459,7 @@ contract DepositAuctionTest is BaseForkSetup {
         // Find the borrow ration for toFlash
         uint256 mid = _findBorrow(excessEth, debt, collateral);
         p.ethToFlashDeposit = (excessEth * mid) / 10**7;
-        p.usdEthFee = 500;
+        p.ethUSDFee = 500;
         p.flashDepositFee = 3000;
         // ------------- //
 
