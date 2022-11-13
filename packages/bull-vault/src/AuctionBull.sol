@@ -273,7 +273,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @dev hedge function to reduce delta using an array of signed orders
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
-     * @param _clearingPrice clearing price in weth
+     * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
      * @param _wethTargetInEuler target WETH collateral amount in leverage component
      * @param _wethLimitPrice limit price for weth/usdc trade
      * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
@@ -298,37 +298,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
             _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
         );
+
+        _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+
         if (_isDepositingInCrab) {
-            // loop through orders, check each order validity
-            // pull funds from orders
-            {
-                uint256 remainingAmount = wPowerPerpAmount;
-                uint256 prevPrice = _orders[0].price;
-                uint256 currentPrice;
-
-                uint256 ordersLength = _orders.length;
-                for (uint256 i; i < ordersLength; ++i) {
-                    _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
-
-                    currentPrice = _orders[i].price;
-                    // check that orders are in order
-                    if (_isDepositingInCrab) {
-                        require(currentPrice <= prevPrice, "AB8");
-                    } else {
-                        require(currentPrice >= prevPrice, "AB7");
-                    }
-                    prevPrice = currentPrice;
-
-                    _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
-
-                    if (remainingAmount > _orders[i].quantity) {
-                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
-                    } else {
-                        break;
-                    }
-                }
-            }
-
             /**
              * if auction depositing into crab:
              * - calc amount of ETH needed to deposit into crab and get crabAmount
@@ -345,63 +318,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
-            {
-                uint256 remainingAmount = wPowerPerpAmount;
-                uint256 ordersLength = _orders.length;
-                for (uint256 i; i < ordersLength; ++i) {
-                    _transferToOrder(_orders[i], remainingAmount, _clearingPrice);
-                    if (remainingAmount > _orders[i].quantity) {
-                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
-                    } else {
-                        break;
-                    }
-                }
-            }
+
+            _pushFundsFromOrder(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
         } else {
-            // loop through orders, check each order validity
-            // pull funds from orders
-            {
-                uint256 remainingAmount = wPowerPerpAmount;
-                uint256 prevPrice = _orders[0].price;
-                uint256 currentPrice;
-
-                uint256 ordersLength = _orders.length;
-                for (uint256 i; i < ordersLength; ++i) {
-                    _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
-
-                    currentPrice = _orders[i].price;
-                    // check that orders are in order
-                    if (_isDepositingInCrab) {
-                        require(currentPrice <= prevPrice, "AB8");
-                    } else {
-                        require(currentPrice >= prevPrice, "AB7");
-                    }
-                    prevPrice = currentPrice;
-
-                    _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
-
-                    if (remainingAmount > _orders[i].quantity) {
-                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
-                    } else {
-                        break;
-                    }
-                }
-            }
-
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
-            {
-                uint256 remainingAmount = wPowerPerpAmount;
-                uint256 ordersLength = _orders.length;
-                for (uint256 i; i < ordersLength; ++i) {
-                    _transferToOrder(_orders[i], remainingAmount, _clearingPrice);
-                    if (remainingAmount > _orders[i].quantity) {
-                        remainingAmount = remainingAmount.sub(_orders[i].quantity);
-                    } else {
-                        break;
-                    }
-                }
-            }
+            _pushFundsFromOrder(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
 
             _executeLeverageComponentRebalancing(
                 ExecuteLeverageComponentRebalancingParams({
@@ -474,6 +396,73 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
         return _getCurrentDeltaAndCollatRatio();
+    }
+
+    /**
+     * @notice pulls funds from trader of auction orders (weth or wPowerPerp) depending on the direction of trade
+     * @param _orders list of orders
+     * @param remainingAmount amount of wPowerPerp to trade
+     * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
+     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
+     */
+    function _pullFundsFromOrders(
+        Order[] memory _orders,
+        uint256 remainingAmount,
+        uint256 _clearingPrice,
+        bool _isDepositingInCrab
+    ) internal {
+        // loop through orders, check each order validity
+        // pull funds from orders
+
+        uint256 prevPrice = _orders[0].price;
+        uint256 currentPrice;
+
+        uint256 ordersLength = _orders.length;
+        for (uint256 i; i < ordersLength; ++i) {
+            _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
+
+            currentPrice = _orders[i].price;
+            // check that orders are in order
+            if (_isDepositingInCrab) {
+                require(currentPrice <= prevPrice, "AB8");
+            } else {
+                require(currentPrice >= prevPrice, "AB7");
+            }
+            prevPrice = currentPrice;
+
+            _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
+
+            if (remainingAmount > _orders[i].quantity) {
+                remainingAmount = remainingAmount.sub(_orders[i].quantity);
+            } else {
+                break;
+            }
+        }
+    }
+
+    /**
+     * @notice pushes funds to trader of auction orders (weth or wPowerPerp) depending on the direction of trade
+     * @param _orders list of orders
+     * @param remainingAmount amount of wPowerPerp to trade
+     * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
+     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
+     */
+
+    function _pushFundsFromOrder(
+        Order[] memory _orders,
+        uint256 remainingAmount,
+        uint256 _clearingPrice,
+        bool _isDepositingInCrab
+    ) internal {
+        uint256 ordersLength = _orders.length;
+        for (uint256 i; i < ordersLength; ++i) {
+            _transferToOrder(_orders[i], remainingAmount, _clearingPrice);
+            if (remainingAmount > _orders[i].quantity) {
+                remainingAmount = remainingAmount.sub(_orders[i].quantity);
+            } else {
+                break;
+            }
+        }
     }
 
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
