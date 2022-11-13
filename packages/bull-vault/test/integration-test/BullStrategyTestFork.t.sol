@@ -151,7 +151,7 @@ contract BullStrategyTestFork is Test {
         vm.expectRevert(bytes("LB1"));
         bullStrategy.depositAndBorrowFromLeverage(0, 0);
     }
-    
+
     function testSetCap() public {
         cap = 0;
         vm.startPrank(bullOwner);
