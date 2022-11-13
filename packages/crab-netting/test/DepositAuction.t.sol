@@ -55,6 +55,14 @@ contract DepositAuctionTest is BaseForkSetup {
         return (totalDeposit, (totalDeposit * _debt) / _collateral);
     }
 
+    function _findTotalDepositFromAuctioned(
+        uint256 _collateral,
+        uint256 _debt,
+        uint256 _auctionedSqth
+    ) internal pure returns (uint256) {
+        return (_collateral * _auctionedSqth) / _debt;
+    }
+
     function testDepositAuctionPartialFill() public {
         DepositAuctionParams memory p;
         uint256 sqthPriceLimit = (_getSqthPrice(1e18) * 988) / 1000;
@@ -462,16 +470,18 @@ contract DepositAuctionTest is BaseForkSetup {
         vm.makePersistent(address(usdc));
 
         vm.rollFork(activeFork, 15829113);
+        console.log(address(depositor).balance, "starting");
         p.minEth = _convertUSDToETH(p.depositsQueued);
         p.clearingPrice = _getSqthPrice(1e18);
         console.log("Ending ETH", p.minEth / 10**18);
-        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(
-            p.minEth,
+        (, , collateral, debt) = ICrabStrategyV2(crab).getVaultDetails();
+        p.totalDeposit = _findTotalDepositFromAuctioned(
             collateral,
             debt,
-            sqthPrice
+            toMint
         );
-        console.log("Using only", toMint / 10**18, "sqth");
+        console.log("Using only", toMint, "sqth");
+        console.log(p.totalDeposit);
 
         uint256 mm1Balance = weth.balanceOf(mm1);
         netting.depositAuction(p);
@@ -483,7 +493,7 @@ contract DepositAuctionTest is BaseForkSetup {
 
         assertApproxEqAbs(
             ICrabStrategyV2(crab).balanceOf(depositor),
-            140e18,
+            147e18,
             1e18
         );
         assertApproxEqAbs(
@@ -491,6 +501,12 @@ contract DepositAuctionTest is BaseForkSetup {
             toMint,
             0.001e18,
             "All minted not sold, check if we sold only what we took for"
+        );
+        assertApproxEqAbs(
+            address(depositor).balance,
+            23e17,
+            1e17,
+            "deposit not refunded enough eth"
         );
     }
 

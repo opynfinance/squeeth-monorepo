@@ -92,6 +92,8 @@ contract CrabNetting is Ownable, EIP712 {
     /// @dev min CRAB amounts to withdraw or deposit via netting
     uint256 public minCrabAmount;
 
+    /// @dev sqth twap period
+    uint32 public immutable sqthTwapPeriod;
     /// @dev twap period to use for auction calculations
     uint32 public auctionTwapPeriod = 420 seconds;
     // @dev OTC price must be within this distance of the uniswap twap price
@@ -226,6 +228,7 @@ contract CrabNetting is Ownable, EIP712 {
         ethSqueethPool = _ethSqueethPool;
         ethUsdcPool = _ethUsdcPool;
         sqthController = _sqthController;
+        sqthTwapPeriod = IController(sqthController).TWAP_PERIOD();
 
         // approve crab and sqth so withdraw can happen
         IERC20(sqth).approve(crab, 10e36);
@@ -567,7 +570,7 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 sqthToSell = _debtToMint(_p.totalDeposit);
         // step 1 get all the eth in
         uint256 remainingToSell = sqthToSell;
-        for (uint256 i = 0; i < _p.orders.length && remainingToSell > 0; i++) {
+        for (uint256 i = 0; i < _p.orders.length; i++) {
             require(
                 _p.orders[i].isBuying && _p.orders[i].price >= _p.clearingPrice,
                 "buy order price less than clearing"
@@ -580,6 +583,7 @@ contract CrabNetting is Ownable, EIP712 {
                     (remainingToSell * _p.clearingPrice) / 1e18
                 );
                 remainingToSell = 0;
+                break;
             } else {
                 IWETH(weth).transferFrom(
                     _p.orders[i].trader,
@@ -594,8 +598,8 @@ contract CrabNetting is Ownable, EIP712 {
         // step 2
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter
             .ExactInputSingleParams({
-                tokenIn: address(usdc),
-                tokenOut: address(weth),
+                tokenIn: usdc,
+                tokenOut: weth,
                 fee: _p.usdEthFee,
                 recipient: address(this),
                 deadline: block.timestamp,
@@ -617,11 +621,6 @@ contract CrabNetting is Ownable, EIP712 {
                 // we cant send more than the flashDeposit
                 ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
                     _p.ethToFlashDeposit,
-                    _p.flashDepositFee
-                );
-            } else {
-                ICrabStrategyV2(crab).flashDeposit{value: to_send.eth}(
-                    to_send.eth,
                     _p.flashDepositFee
                 );
             }
@@ -981,12 +980,17 @@ contract CrabNetting is Ownable, EIP712 {
             ethSqueethPool,
             sqth,
             weth,
-            auctionTwapPeriod,
+            sqthTwapPeriod,
             true
         );
         uint256 feeRate = IController(sqthController).feeRate();
         return (squeethEthPrice * feeRate) / 10000;
     }
 
-    receive() external payable {}
+    receive() external payable {
+        require(
+            msg.sender == weth || msg.sender == crab,
+            "only weth and crab can send me monies"
+        );
+    }
 }
