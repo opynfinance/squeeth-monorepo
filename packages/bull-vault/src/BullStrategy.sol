@@ -280,9 +280,7 @@ contract BullStrategy is ERC20, LeverageBull {
     /**
      * @dev calculate amount of crab token to to be minted based on amount of ETH to deposit
      */
-    function _calcCrabToBeMinted(
-        uint256 _depositedEthAmount
-    ) internal view returns (uint256) {
+    function _calcCrabToBeMinted(uint256 _depositedEthAmount) internal view returns (uint256) {
         uint256 crabToBeMinted;
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 feeRate = IController(powerTokenController).feeRate();
@@ -294,11 +292,14 @@ contract BullStrategy is ERC20, LeverageBull {
                 ethInCrab.add(squeethInCrab.wmul(feeAdjustment))
             );
             uint256 fee = wSqueethToMint.wmul(feeAdjustment);
-            uint256 crabShare = (_depositedEthAmount.sub(fee)).wdiv(ethInCrab.add(_depositedEthAmount));
-            crabToBeMinted = IERC20(crab).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
+            uint256 crabShare =
+                (_depositedEthAmount.sub(fee)).wdiv(ethInCrab.add(_depositedEthAmount));
+            crabToBeMinted =
+                IERC20(crab).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
         } else {
             uint256 crabShare = _depositedEthAmount.wdiv(ethInCrab.add(_depositedEthAmount));
-            crabToBeMinted = IERC20(crab).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
+            crabToBeMinted =
+                IERC20(crab).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
         }
 
         return crabToBeMinted;
