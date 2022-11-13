@@ -122,6 +122,36 @@ contract BullStrategyTestFork is Test {
         assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
     }
 
+    function testSetAuctionZeroAddress() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB2"));
+        bullStrategy.setAuction(address(0));
+    }
+
+    function testSetAuctionWhenCallerNotOwner() public {
+        vm.prank(user1);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.setAuction(address(1));
+    }
+
+    function testSetAuction() public {
+        vm.prank(bullOwner);
+        bullStrategy.setAuction(address(1));
+        assertEq(bullStrategy.auction(), address(1));
+    }
+
+    function testAuctionRepayAndWithdrawFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.auctionRepayAndWithdrawFromLeverage(0, 0);
+    }
+
+    function testdepositAndBorrowFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.depositAndBorrowFromLeverage(0, 0);
+    }
+
     function testSetCap() public {
         cap = 0;
         vm.startPrank(bullOwner);
