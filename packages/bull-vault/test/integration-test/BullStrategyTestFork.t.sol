@@ -233,9 +233,8 @@ contract BullStrategyTestFork is Test {
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(wethToLend)
             ) <= 1
         );
-        
-        assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
 
+        assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
     }
 
     function testWithdraw() public {
@@ -300,8 +299,6 @@ contract BullStrategyTestFork is Test {
             crabV2.balanceOf(address(bullStrategy)),
             "Bull crab balance mismatch"
         );
-
-
     }
 
     function testReceiveFromNonWethOrCrab() public {
