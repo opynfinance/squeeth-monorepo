@@ -11,6 +11,8 @@ import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
+import { SwapRouter } from "v3-periphery/SwapRouter.sol";
+import { Quoter } from "v3-periphery/lens/Quoter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
 import { BullStrategy } from "../../src/BullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
@@ -36,6 +38,8 @@ contract FlashBullTestFork is Test {
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
+    Quoter internal quoter;
+
 
     address internal weth;
     address internal usdc;
@@ -66,6 +70,9 @@ contract FlashBullTestFork is Test {
         deployer = vm.addr(deployerPk);
 
         vm.startPrank(deployer);
+
+        quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
+
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
@@ -782,10 +789,11 @@ contract FlashBullTestFork is Test {
         uint256 ethToCrab,
         uint256 usdcToBorrow,
         uint256 wSqueethToMint
-    ) internal view returns (uint256) {
-        uint256 totalEthToBull = wethToLend.add(ethToCrab).sub(usdcToBorrow.wdiv(ethPrice())).sub(
-            wSqueethToMint.wmul(squeethPrice())
-        ).add(1e16);
+    ) internal returns (uint256) {
+        uint256 minEthFromSqueeth = quoter.quoteExactInputSingle(wPowerPerp, weth, 3000, wSqueethToMint, 0);
+        uint256 minEthFromUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcToBorrow, 0);
+
+        uint256 totalEthToBull = wethToLend.add(ethToCrab).sub(minEthFromSqueeth).sub(minEthFromUsdc).add(10e16);
         return totalEthToBull;
     }
 
