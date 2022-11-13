@@ -122,6 +122,55 @@ contract BullStrategyTestFork is Test {
         assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
     }
 
+    function testSetAuctionZeroAddress() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB2"));
+        bullStrategy.setAuction(address(0));
+    }
+
+    function testSetAuctionWhenCallerNotOwner() public {
+        vm.prank(user1);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.setAuction(address(1));
+    }
+
+    function testSetAuction() public {
+        vm.prank(bullOwner);
+        bullStrategy.setAuction(address(1));
+        assertEq(bullStrategy.auction(), address(1));
+    }
+
+    function testAuctionRepayAndWithdrawFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.auctionRepayAndWithdrawFromLeverage(0, 0);
+    }
+
+    function testdepositAndBorrowFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.depositAndBorrowFromLeverage(0, 0);
+    }
+
+    function testSetCap() public {
+        cap = 0;
+        vm.startPrank(bullOwner);
+        bullStrategy.setCap(cap);
+        assertEq(bullStrategy.strategyCap(), cap);
+    }
+
+    function testRedeemCrabAndWithdrawWEthWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.redeemCrabAndWithdrawWEth(0, 0);
+    }
+
+    function testDepositEthIntoCrabWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.depositEthIntoCrab(0);
+    }
+
     function testSetCapWhenCallerNotOwner() public {
         cap = 1000000e18;
         vm.startPrank(deployer);
@@ -276,7 +325,7 @@ contract BullStrategyTestFork is Test {
         (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
         vm.stopPrank();
         assertFalse(status);
-        assertEq(_getRevertMsg(returndata), "BS0");
+        assertEq(_getRevertMsg(returndata), "BS1");
     }
 
     function testSendLessEthComparedToCrabAmount() public {
