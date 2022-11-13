@@ -476,6 +476,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         return _getCurrentDeltaAndCollatRatio();
     }
 
+    /**
+     * @notice allows an order to be cancelled by marking its nonce used for a given msg.sender
+     * @param _nonce the nonce to mark as used
+     */
+    function useNonce(uint256 _nonce) external {
+        _useNonce(msg.sender, _nonce);
+    }
+
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
