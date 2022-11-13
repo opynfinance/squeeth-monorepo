@@ -150,6 +150,24 @@ contract BullStrategyTestFork is Test {
         vm.prank(bullOwner);
         vm.expectRevert(bytes("LB1"));
         bullStrategy.depositAndBorrowFromLeverage(0, 0);
+
+    function testSetCap() public {
+        cap = 0;
+        vm.startPrank(bullOwner);
+        bullStrategy.setCap(cap);
+        assertEq(bullStrategy.strategyCap(), cap);
+    }
+
+    function testRedeemCrabAndWithdrawWEthWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.redeemCrabAndWithdrawWEth(0, 0);
+    }
+
+    function testDepositEthIntoCrabWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.depositEthIntoCrab(0);
     }
 
     function testSetCapWhenCallerNotOwner() public {
@@ -306,7 +324,7 @@ contract BullStrategyTestFork is Test {
         (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
         vm.stopPrank();
         assertFalse(status);
-        assertEq(_getRevertMsg(returndata), "BS0");
+        assertEq(_getRevertMsg(returndata), "BS1");
     }
 
     function testSendLessEthComparedToCrabAmount() public {
