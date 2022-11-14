@@ -276,8 +276,4 @@ contract LeverageBull is Ownable {
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
     }
-
-    function _getWPowerPerpPrice() internal view returns (uint256) {
-        return UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-    }
 }

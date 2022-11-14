@@ -29,7 +29,7 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract BullStrategyTest is Test {
     using StrategyMath for uint256;
 
     uint128 internal constant ONE = 1e18;
