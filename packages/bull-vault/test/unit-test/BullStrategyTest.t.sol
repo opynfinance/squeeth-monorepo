@@ -172,5 +172,4 @@ contract BullStrategyTestFork is Test {
         );
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
     }
-
 }

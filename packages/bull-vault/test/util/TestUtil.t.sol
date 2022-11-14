@@ -196,12 +196,8 @@ contract TestUtil is Test {
     ) external view returns (uint256, uint256) {
         uint256 wSqueethToMint;
         uint256 wSqueethEthPrice = UniOracle._getTwap(
-                    controller.wPowerPerpPool(),
-                    controller.wPowerPerp(),
-                    controller.weth(),
-                    TWAP,
-                    false
-                );
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
 
         uint256 feeRate = IController(bullStrategy.powerTokenController()).feeRate();
         uint256 feeAdjustment = wSqueethEthPrice.mul(feeRate).div(10000);
@@ -258,5 +254,4 @@ contract TestUtil is Test {
         ).add(1e16);
         return totalEthToBull;
     }
-
 }
