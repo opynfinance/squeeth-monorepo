@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
+import { console } from "forge-std/console.sol";
 
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
@@ -634,7 +635,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         // adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
             _order.quantity = _remainingAmount;
+            console.log("partial fill yall");
         }
+        console.log("normal fill yall");
 
         if (_order.isBuying) {
             // trader sent weth and receives oSQTH
@@ -654,8 +657,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) internal {
         // adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
+            console.log("partial fill yall fromOrder");
+
             _order.quantity = _remainingAmount;
         }
+
+        console.log("normal fill yall fromOrder");
 
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
@@ -822,7 +829,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         require(
             (_wethLimitPrice >= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance))))
-                || (_wethLimitPrice <= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance)))),
+                && (_wethLimitPrice <= ethUsdPrice.wmul((ONE.add(rebalanceWethLimitPriceTolerance)))),
             "AB15"
         );
     }
