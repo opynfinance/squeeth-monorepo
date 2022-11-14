@@ -122,6 +122,55 @@ contract BullStrategyTestFork is Test {
         assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
     }
 
+    function testSetAuctionZeroAddress() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB2"));
+        bullStrategy.setAuction(address(0));
+    }
+
+    function testSetAuctionWhenCallerNotOwner() public {
+        vm.prank(user1);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        bullStrategy.setAuction(address(1));
+    }
+
+    function testSetAuction() public {
+        vm.prank(bullOwner);
+        bullStrategy.setAuction(address(1));
+        assertEq(bullStrategy.auction(), address(1));
+    }
+
+    function testAuctionRepayAndWithdrawFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.auctionRepayAndWithdrawFromLeverage(0, 0);
+    }
+
+    function testdepositAndBorrowFromLeverageWhenCallerNotAuction() public {
+        vm.prank(bullOwner);
+        vm.expectRevert(bytes("LB1"));
+        bullStrategy.depositAndBorrowFromLeverage(0, 0);
+    }
+
+    function testSetCap() public {
+        cap = 0;
+        vm.startPrank(bullOwner);
+        bullStrategy.setCap(cap);
+        assertEq(bullStrategy.strategyCap(), cap);
+    }
+
+    function testRedeemCrabAndWithdrawWEthWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.redeemCrabAndWithdrawWEth(0, 0);
+    }
+
+    function testDepositEthIntoCrabWhenCallerNotOwner() public {
+        vm.startPrank(deployer);
+        vm.expectRevert(bytes("BS8"));
+        bullStrategy.depositEthIntoCrab(0);
+    }
+
     function testSetCapWhenCallerNotOwner() public {
         cap = 1000000e18;
         vm.startPrank(deployer);
@@ -138,6 +187,17 @@ contract BullStrategyTestFork is Test {
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS2"));
+        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        vm.stopPrank();
+    }
+
+    function testDepositWhenTotalSupplyLessThanMinimum() public {
+        uint256 crabToDeposit = 1e12;
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("BS9"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
         vm.stopPrank();
     }
@@ -205,6 +265,41 @@ contract BullStrategyTestFork is Test {
         );
 
         assertEq(IERC20(usdc).balanceOf(user1).sub(usdcToBorrowSecond), userUsdcBalanceBefore);
+    }
+
+    function testWithdrawWhenRemainingSupplyLessThanMinimum() public {
+        uint256 crabToDeposit = 15e18;
+        uint256 bullToMint = testUtil.calcBullToMint(crabToDeposit);
+
+        // crabby deposit into bull
+        vm.startPrank(user1);
+        _deposit(crabToDeposit);
+        vm.stopPrank();
+
+        uint256 bullToRedeem = crabToDeposit.sub(1e12);
+        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
+            _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
+        uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToRedeem);
+        uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToRedeem);
+        // transfer some oSQTH from some squeether
+        vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
+        IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
+
+        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
+        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
+        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
+        uint256 userEthBalanceBefore = address(user1).balance;
+
+        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
+
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
+        IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
+        vm.expectRevert(bytes("BS10"));
+        bullStrategy.withdraw(bullToRedeem);
+        vm.stopPrank();
     }
 
     function testWithdraw() public {
@@ -276,7 +371,7 @@ contract BullStrategyTestFork is Test {
         (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
         vm.stopPrank();
         assertFalse(status);
-        assertEq(_getRevertMsg(returndata), "BS0");
+        assertEq(_getRevertMsg(returndata), "BS1");
     }
 
     function testSendLessEthComparedToCrabAmount() public {
