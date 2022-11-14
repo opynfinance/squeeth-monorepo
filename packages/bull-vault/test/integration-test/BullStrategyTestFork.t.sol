@@ -194,7 +194,8 @@ contract BullStrategyTestFork is Test {
     function testDepositWhenTotalSupplyLessThanMinimum() public {
         uint256 crabToDeposit = 1e12;
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS9"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
@@ -220,7 +221,6 @@ contract BullStrategyTestFork is Test {
         assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
-
 
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;

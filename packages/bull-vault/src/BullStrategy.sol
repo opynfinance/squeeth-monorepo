@@ -132,7 +132,7 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function deposit(uint256 _crabAmount) external payable {
         require(!IController(powerTokenController).isShutDown(), "BS7");
-        
+
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
