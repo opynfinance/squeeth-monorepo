@@ -27,6 +27,7 @@ import {
   crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
+  ethPriceAtLastHedgeAtomV2,
   maxCapAtom,
   maxCapAtomV2,
   timeAtLastHedgeAtom,
@@ -43,7 +44,7 @@ import {
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
-import { StrategyPnLV2 } from '@components/Strategies/Crab/StrategyPnLV2'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -182,6 +183,7 @@ const Strategies: React.FC = () => {
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
+  const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
 
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
@@ -197,6 +199,10 @@ const Strategies: React.FC = () => {
 
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
+
+  const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
+  const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
+  const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
   useEffect(() => {
     if (displayCrabV1) setStrategyData()
@@ -347,8 +353,15 @@ const Strategies: React.FC = () => {
                     />
                   ) : (
                     <StrategyInfoItem
-                      value={(profitableMovePercentV2 * 100).toFixed(2)}
-                      label="Current Profit Threshold (%)"
+                      value={
+                        '~' +
+                        lowerPriceBandForProfitability.toFixed(2) +
+                        ' - ' +
+                        upperPriceBandForProfitability.toFixed(2)
+                      }
+                      label={
+                        'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
+                      }
                       tooltip={Tooltips.StrategyProfitThreshold}
                     />
                   )}
@@ -359,7 +372,7 @@ const Strategies: React.FC = () => {
                     tooltip={Tooltips.StrategyCollRatio}
                   />
                 </div>
-                {displayCrabV1 ? null : <StrategyPnLV2 />}
+                {displayCrabV1 ? null : <StrategyChartsV2 />}
                 {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
                 {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
               </div>

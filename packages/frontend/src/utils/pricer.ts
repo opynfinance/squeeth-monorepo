@@ -595,13 +595,22 @@ export const getLongChartData = async (days: number, collatRatio: number, volMul
   return data
 }
 
-export const getCrabPnlV2ChartData = async () => {
+export const getCrabPnlV2ChartData = async (startDateTimestamp: number, endDateTimestamp: number) => {
 
   const domain = omdbBaseUrl
-  const base_url = `${domain}/metrics/crabv2`
+  const base_url = `${domain}/metrics/crabv2?start_timestamp=${startDateTimestamp}&end_timestamp=${endDateTimestamp}`
   const url = `${base_url}`
 
   const response = await fetch(url)
   const data = await response.json()
   return data
+}
+
+export const getEthPriceAtHedge = async() => {
+
+  const url = `/api/auction/lastHedgeAuction`
+  const response = await fetch(url)
+  const data = await response.json()
+
+  return data?.auction?.ethPrice
 }

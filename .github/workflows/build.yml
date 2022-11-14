@@ -3,7 +3,7 @@ on: [push]
 name: Foundry
 
 jobs:
-  check:
+  build-bull-vault:
     name: Forge build
     runs-on: ubuntu-latest
     steps:
@@ -18,6 +18,19 @@ jobs:
 
       - name: Build bull
         run: cd packages/bull-vault && forge build
+
+  build-crab-netting:
+    name: Forge build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
       - name: Build crab netting
         run: cd packages/crab-netting && forge build

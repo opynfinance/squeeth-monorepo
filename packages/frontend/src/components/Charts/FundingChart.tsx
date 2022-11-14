@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
+import { Box, CircularProgress, createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import React, { useState } from 'react'
@@ -91,7 +91,7 @@ const FundingChart = () => {
   const [fundingType, setFundingType] = useState<SwitchItem>(fundingTypes[0])
   const [fundingDuration, setFundingDuration] = useState<SwitchItem>(fundingDurations[0])
 
-  const normFactors: NormHistory[] = useNormHistory()
+  const { normHistory: normFactors, fetchingComplete } = useNormHistory()
   const graphData = normFactors.map((item) => {
     const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
     const deltaT = secondsElapsed / (420 * 60 * 60)
@@ -136,7 +136,7 @@ const FundingChart = () => {
             <CustomSwitch items={fundingDurations} value={fundingDuration} onChange={setFundingDuration} />
           )}
         </div>
-        {graphData && graphData.length > 0 && (
+        {fetchingComplete ? (
           <>
             <Chart
               from={startTimestamp}
@@ -155,6 +155,10 @@ const FundingChart = () => {
               </div>
             </div>
           </>
+        ) : (
+          <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+            <CircularProgress size={40} color="secondary" />
+          </Box>
         )}
       </div>
     </>
