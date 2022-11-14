@@ -18,6 +18,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { useCallback } from 'react'
 import { useGetVault } from '../controller/hooks'
 import { indexAtom, normFactorAtom } from '../controller/atoms'
+import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
@@ -288,16 +289,16 @@ export const useGetTickPrices = () => {
 
 export const useGetTicksFromPriceRange = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const ethPrice = useETHPrice()
+  const oSQTHPrice = useOSQTHPrice()
 
   const getTicksFromPriceRange = useAppCallback(
-    (minOSqthPrice: BigNumber, maxOSqthPrice: BigNumber) => {
+    (minETHPrice: BigNumber, maxETHPrice: BigNumber) => {
       // $60 - oSQTH
       // $1500 - ETH
       // for 1 ETH how many oSQTH - 1500 / 60
       // "encodeSqrtRatioX96" asks for amount1, amount0
-      const lowerPriceRange = isWethToken0 ? ethPrice.div(maxOSqthPrice) : minOSqthPrice.div(ethPrice)
-      const upperPriceRange = isWethToken0 ? ethPrice.div(minOSqthPrice) : maxOSqthPrice.div(ethPrice)
+      const lowerPriceRange = isWethToken0 ? minETHPrice.div(oSQTHPrice) : oSQTHPrice.div(maxETHPrice)
+      const upperPriceRange = isWethToken0 ? maxETHPrice.div(oSQTHPrice) : oSQTHPrice.div(minETHPrice)
 
       const lowerPriceRangeInt = lowerPriceRange.integerValue()
       const upperPriceRangeInt = upperPriceRange.integerValue()
@@ -314,7 +315,7 @@ export const useGetTicksFromPriceRange = () => {
 
       return { lowerTick, upperTick }
     },
-    [isWethToken0, ethPrice],
+    [isWethToken0, oSQTHPrice],
   )
 
   return getTicksFromPriceRange
@@ -394,7 +395,7 @@ export const useGetExactOut = () => {
   return getExactOut
 }
 
-async function getPoolState(poolContract: Contract) {
+export async function getPoolState(poolContract: Contract) {
   const [slot, liquidity, tickSpacing] = await Promise.all([
     poolContract?.methods.slot0().call(),
     poolContract?.methods.liquidity().call(),
