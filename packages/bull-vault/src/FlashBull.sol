@@ -52,6 +52,8 @@ contract FlashBull is UniFlash {
     address private immutable ethUSDCPool;
     /// @dev bull stratgey address
     address public immutable bullStrategy;
+    /// @dev power perp controller address
+    address private immutable powerTokenController;
 
     /// @dev data structs from Uni v3 callback
     struct FlashDepositCrabData {
@@ -100,6 +102,7 @@ contract FlashBull is UniFlash {
     constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
         crab = IBullStrategy(_bull).crab();
+        powerTokenController = IBullStrategy(_bull).powerTokenController();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
