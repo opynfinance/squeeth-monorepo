@@ -131,7 +131,7 @@ contract FlashBull is UniFlash {
         uint256 squeethInCrab;
         {
             (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
-            
+
             uint256 ethFee;
             (wSqueethToMint, ethFee) =
                 _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab);
