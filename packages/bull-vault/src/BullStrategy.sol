@@ -187,7 +187,12 @@ contract BullStrategy is ERC20, LeverageBull {
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, _wPowerPerpToRedeem);
+
+        uint256 crabBalancebefore = IERC20(crab).balanceOf(address(this));
+
         ICrabStrategyV2(crab).withdraw(_crabToRedeem);
+
+        _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
         IWETH9(weth).deposit{value: address(this).balance}();
         IWETH9(weth).transfer(msg.sender, IERC20(weth).balanceOf(address(this)));
@@ -201,7 +206,11 @@ contract BullStrategy is ERC20, LeverageBull {
         IWETH9(weth).transferFrom(msg.sender, address(this), _ethToDeposit);
         IWETH9(weth).withdraw(_ethToDeposit);
 
+        uint256 crabBalancebefore = IERC20(crab).balanceOf(address(this));
+
         ICrabStrategyV2(crab).deposit{value: _ethToDeposit}();
+
+        _increaseCrabBalance(IERC20(crab).balanceOf(address(this)).sub(crabBalancebefore));
 
         IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
     }
