@@ -18,6 +18,7 @@ import { UniOracle } from "./UniOracle.sol";
  * Error codes
  * LB0: ETH sent is not equal to ETH to deposit in Euler
  * LB1: caller is not auction address
+ * LB2: auction can not be set to 0 address
  */
 
 /**
@@ -93,7 +94,7 @@ contract LeverageBull is Ownable {
     }
 
     function setAuction(address _auction) external onlyOwner {
-        require(_auction != address(0), "BS3");
+        require(_auction != address(0), "LB2");
 
         emit SetAuction(auction, _auction);
 
@@ -185,7 +186,7 @@ contract LeverageBull is Ownable {
 
         require(wethToLend == _ethAmount, "LB0");
 
-        _depositWethInEuler(wethToLend, true);
+        _depositWethInEuler(wethToLend);
         _borrowUsdcFromEuler(usdcToBorrow);
 
         return (wethToLend, usdcToBorrow, IEulerEToken(eToken).balanceOfUnderlying(address(this)));
@@ -194,10 +195,9 @@ contract LeverageBull is Ownable {
     /**
      * @dev deposit weth as collateral in Euler market
      * @param _ethToDeposit amount of ETH to deposit
-     * @param _wrapEth wrap ETH to WETH if true
      */
-    function _depositWethInEuler(uint256 _ethToDeposit, bool _wrapEth) internal {
-        if (_wrapEth) IWETH9(weth).deposit{value: _ethToDeposit}();
+    function _depositWethInEuler(uint256 _ethToDeposit) internal {
+        IWETH9(weth).deposit{value: _ethToDeposit}();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
         IEulerMarkets(eulerMarkets).enterMarket(0, weth);
     }
@@ -275,9 +275,5 @@ contract LeverageBull is Ownable {
      */
     function _calcUsdcToRepay(uint256 _bullShare) internal view returns (uint256) {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
-    }
-
-    function _isAuction() internal view returns (bool) {
-        return msg.sender == auction;
     }
 }
