@@ -166,7 +166,7 @@ contract BullStrategyTestFork is Test {
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
     }
 
-    function testRedeemCrabAndWithdrawWEth() public {
+    function testUnitRedeemCrabAndWithdrawWEth() public {
         uint256 crabToRedeem = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         (, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
