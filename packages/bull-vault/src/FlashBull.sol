@@ -126,13 +126,10 @@ contract FlashBull is UniFlash {
         uint256 ethInCrab;
         uint256 squeethInCrab;
         {
-            (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
-
+            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
             uint256 ethFee;
-            uint256 squeethEthPrice =
-                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(
-                _params.ethToCrab, squeethInCrab, ethInCrab, squeethEthPrice
+                _params.ethToCrab, squeethInCrab, ethInCrab
             );
             crabAmount = _calcSharesToMint(
                 _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
@@ -150,7 +147,7 @@ contract FlashBull is UniFlash {
             abi.encodePacked(_params.ethToCrab)
         );
 
-        (ethInCrab, squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
+        (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
         uint256 share;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             share = ONE;
@@ -194,9 +191,8 @@ contract FlashBull is UniFlash {
         {
             uint256 bullShare = _params.bullAmount.wdiv(IERC20(bullStrategy).totalSupply());
             crabToRedeem = bullShare.wmul(IBullStrategy(bullStrategy).getCrabBalance());
-            (, uint256 squeethInCrab) = IBullStrategy(bullStrategy).getCrabVaultDetails();
-            uint256 crabTotalSupply = IERC20(crab).totalSupply();
-            wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+            (, uint256 squeethInCrab) = _getCrabVaultDetails();
+            wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(IERC20(crab).totalSupply());
             usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(bullShare);
         }
 
