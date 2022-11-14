@@ -30,30 +30,27 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * @notice BullStrategy contract
- * @dev this is an abstracted BullStrategy in term of deposit and withdraw functionalities
  * @author opyn team
  */
 contract BullStrategy is ERC20, LeverageBull {
     using StrategyMath for uint256;
     using Address for address payable;
 
-    /// @dev the amount of crab token bull strategy own
+    /// @dev amount of crab token owned by bull strategy
     uint256 private _crabBalance;
-
-    /// @dev Crab contract address
+    /// @dev crab contract address
     address public immutable crab;
-    /// @dev PowerToken controller
+    /// @dev powerToken controller
     address public immutable powerTokenController;
     /// @dev public emergency shutdown contract
     address public shutdownContract;
-
     /// @dev the cap in ETH for the strategy, above which deposits will be rejected
     uint256 public strategyCap;
-
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event Deposit(address from, uint256 crabAmount);
     event SetCap(uint256 oldCap, uint256 newCap);
     event RedeemCrabAndWithdrawEth();
     event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
@@ -75,6 +72,7 @@ contract BullStrategy is ERC20, LeverageBull {
         address _eulerMarketsModule
     )
         ERC20("Bull Vault", "BullVault")
+        // LeverageBull handles Euler leverage trades
         LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
@@ -124,9 +122,9 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice deposit function that handle minting shares and depositing into the leverage component
-     * @dev this function assume the _from depositor already have _crabAmount
-     * @param _crabAmount amount of crab token
+     * @notice handle minting shares and rebalancing weth/usdc leverage
+     * @dev this function assumes the _from depositor already have _crabAmount
+     * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
         require(!IController(powerTokenController).isShutDown(), "BS7");
@@ -145,6 +143,7 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        // deposit eth into leverage component and borrow usdc
         (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
             msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
@@ -152,10 +151,13 @@ contract BullStrategy is ERC20, LeverageBull {
         require(_totalWethInEuler <= strategyCap, "BS2");
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
+
+        emit Deposit(msg.sender, _crabAmount);
+
     }
 
     /**
-     * @notice withdraw ETH from crab and euler by providing wPowerPerp, bull token and USDC to repay debt
+     * @notice withdraw ETH from crab and Euler by providing wPowerPerp, bull token, and USDC to repay debt
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
@@ -180,6 +182,11 @@ contract BullStrategy is ERC20, LeverageBull {
         emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
+    /**
+     * @notice auction strategy redeems some crab to withdraw eth
+     * @param _crabToRedeem amount of crab token redeemed by auction
+     * @param _wPowerPerpToRedeem amount of wPowerPerp sent back for crab redeem 
+     */
     function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
         external
     {
@@ -195,6 +202,10 @@ contract BullStrategy is ERC20, LeverageBull {
         emit RedeemCrabAndWithdrawEth();
     }
 
+    /**
+     * @notice auction strategy deposits into crab and receives some wPowerPerp
+     * @param _ethToDeposit amount of eth to deposit
+     */
     function depositEthIntoCrab(uint256 _ethToDeposit) external {
         require(msg.sender == auction, "BS8");
 
@@ -206,6 +217,11 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
     }
 
+    /**
+     * @notice close out Euler leverage position if contracts have been shut down
+     * @param wethToUniswap weth to repay to uniswap via auction contract
+     * @param shareToUnwind share of crab to redeem scaled by 1e18
+     */
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external {
         require(msg.sender == shutdownContract, "BS4");
         if (shareToUnwind == ONE) {
@@ -222,7 +238,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shutdown
+     * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shut down
      * @dev redeemShortShutdown must have been called first
      * @param _bullAmount bull amount to withdraw
      */
@@ -242,6 +258,10 @@ contract BullStrategy is ERC20, LeverageBull {
         return _crabBalance;
     }
 
+    /**
+     * @notice get crab vault debt and collateral details
+     * @return vault eth collateral, vault wPowerPerp debt
+     */
     function getCrabVaultDetails() external view returns (uint256, uint256) {
         return _getCrabVaultDetails();
     }
@@ -264,6 +284,10 @@ contract BullStrategy is ERC20, LeverageBull {
         return _crabBalance;
     }
 
+    /**
+     * @notice get crab vault debt and collateral details
+     * @return vault eth collateral, vault wPowerPerp debt
+     */
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
