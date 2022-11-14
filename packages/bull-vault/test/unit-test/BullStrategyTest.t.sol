@@ -12,6 +12,7 @@ import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
 import { SwapRouter } from "v3-periphery/SwapRouter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
@@ -133,8 +134,59 @@ contract BullStrategyTestFork is Test {
         uint256 crabToBeMinted =
             IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
 
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+
         vm.startPrank(auction);
+        IWETH9(weth).deposit{value: ethToDeposit}();
+        IWETH9(weth).approve(address(bullStrategy), ethToDeposit);
         bullStrategy.depositEthIntoCrab(ethToDeposit);
+        vm.stopPrank();
+
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+
+    }
+
+    function testDepositEthIntoCrabWhenFeeIsNotZero() public {
+        uint256 ethToDeposit = 10e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+
+        (, uint256 fee) =
+            testUtil.calcWsqueethToMintAndFee(ethToDeposit, squeethInCrab, ethInCrab);
+
+        uint256 crabShare = (ethToDeposit.sub(fee)).wdiv(ethInCrab.add(ethToDeposit));
+        uint256 crabToBeMinted =
+            IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
+
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+
+        vm.startPrank(auction);
+        IWETH9(weth).deposit{value: ethToDeposit}();
+        IWETH9(weth).approve(address(bullStrategy), ethToDeposit);
+        bullStrategy.depositEthIntoCrab(ethToDeposit);
+        vm.stopPrank();
+
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+    }
+
+
+    function testRedeemCrabAndWithdrawWEth() public {
+        uint256 crabToRedeem = IERC20(crabV2).balanceOf(address(bullStrategy));
+        
+        (, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        uint256 wPowerPerpToRedeem = squeethInCrab.wmul(crabToRedeem).wdiv(IERC20(crabV2).totalSupply());
+
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+
+        vm.prank(user1);
+        IERC20(crabV2).transfer(auction, wPowerPerpToRedeem);
+
+        vm.startPrank(auction);
+        IERC20(crabV2).approve(address(bullStrategy), wPowerPerpToRedeem);
+        bullStrategy.redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
+        vm.stopPrank();
+
+        assertEq(bullStrategy.getCrabBalance().add(crabToRedeem), bullCrabBalanceBefore);
+
     }
 
     function _initateDepositInBull(address _depositor, uint256 _ethToCrab) internal {
