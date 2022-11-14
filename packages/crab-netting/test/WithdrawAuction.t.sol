@@ -158,7 +158,7 @@ contract TestWithdrawAuction is BaseForkSetup {
 
     function testWithdrawAuctionAfterFullWithdraw() public {
         vm.startPrank(withdrawer);
-        netting.withdrawCrab(6e18);
+        netting.dequeueCrab(6e18);
         netting.queueCrabForWithdrawal(6e18);
         vm.stopPrank();
 

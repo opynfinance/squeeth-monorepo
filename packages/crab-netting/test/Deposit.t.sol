@@ -76,7 +76,7 @@ contract DepositTest is BaseForkSetup {
         netting.queueCrabForWithdrawal(2 * 1e6);
         assertEq(netting.crabBalance(withdrawer), 2e6);
 
-        netting.withdrawCrab(1 * 1e6);
+        netting.dequeueCrab(1 * 1e6);
         assertEq(netting.crabBalance(withdrawer), 1e6);
         assertEq(netting.withdrawsQueued(), 1e6);
     }
@@ -88,7 +88,7 @@ contract DepositTest is BaseForkSetup {
         netting.queueCrabForWithdrawal(2 * 1e6);
         assertEq(netting.crabBalance(withdrawer), 2e6);
 
-        netting.withdrawCrab(2 * 1e6);
+        netting.dequeueCrab(2 * 1e6);
         assertEq(netting.crabBalance(withdrawer), 0);
         assertEq(netting.withdrawsQueued(), 0);
     }
@@ -101,7 +101,7 @@ contract DepositTest is BaseForkSetup {
         netting.queueCrabForWithdrawal(2 * 1e6);
         assertEq(netting.crabBalance(withdrawer), 4e6);
 
-        netting.withdrawCrab(3 * 1e6);
+        netting.dequeueCrab(3 * 1e6);
 
         assertEq(
             netting.crabBalance(withdrawer),
@@ -123,7 +123,7 @@ contract DepositTest is BaseForkSetup {
         netting.queueCrabForWithdrawal(2 * 1e18);
 
         vm.expectRevert(bytes("auction is live"));
-        netting.withdrawCrab(2 * 1e18);
+        netting.dequeueCrab(2 * 1e18);
         vm.stopPrank();
     }
 

@@ -364,7 +364,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @notice withdraw Crab from queue
      * @param _amount Crab amount to dequeue
      */
-    function withdrawCrab(uint256 _amount) external {
+    function dequeueCrab(uint256 _amount) external {
         require(!isAuctionLive, "auction is live");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         require(

@@ -139,7 +139,7 @@ contract NettingTest is BaseForkSetup {
         vm.stopPrank();
 
         vm.prank(withdrawer);
-        netting.withdrawCrab(20e18 - (quantity * 1e18) / price);
+        netting.dequeueCrab(20e18 - (quantity * 1e18) / price);
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(
             netting.crabBalance(withdrawer),
