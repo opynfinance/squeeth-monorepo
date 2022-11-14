@@ -180,6 +180,10 @@ contract FlashBull is UniFlash {
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
     }
 
+    /**
+     * @notice flash withdraw from strategy, receiving ETH, providing wSqueeth and dollars, and providing strategy tokens
+     * @param _params FlashWithdrawParams struct
+     */
     function flashWithdraw(FlashWithdrawParams calldata _params) external {
         IERC20(bullStrategy).transferFrom(msg.sender, address(this), _params.bullAmount);
 
@@ -222,6 +226,7 @@ contract FlashBull is UniFlash {
     /**
      * @notice uniswap flash swap callback function
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
+     * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_DEPOSIT_CRAB) {
@@ -281,6 +286,11 @@ contract FlashBull is UniFlash {
 
     /**
      * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     * @param _depositedEthAmount ETH amount deposited
+     * @param _strategyDebtAmount amount of wPowerPerp debt in vault
+     * @param _strategyCollateralAmount amount of eth collateral in vault
+     * @param _squeethEthPrice current oSQTH price in ETH
+     * @return wSqueeth to mint, mint fee amount
      */
     function _calcWsqueethToMintAndFee(
         uint256 _depositedEthAmount,
