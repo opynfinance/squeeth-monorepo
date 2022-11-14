@@ -122,8 +122,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice handle minting shares and rebalancing weth/usdc leverage
-     * @dev this function assumes the _from depositor already have _crabAmount
+     * @notice handle minting shares and rebalancing WETH/USDC leverage
      * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
@@ -143,7 +142,7 @@ contract BullStrategy is ERC20, LeverageBull {
         }
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
-        // deposit eth into leverage component and borrow usdc
+        // deposit eth into leverage component and borrow USDC
         (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
             msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );

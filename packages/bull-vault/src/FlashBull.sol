@@ -116,7 +116,7 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @notice flash deposit into strategy, providing ETH, selling wSqueeth and dollars, and receiving strategy tokens
+     * @notice flash deposit into strategy, providing ETH, selling wSqueeth and USDC, and receiving strategy tokens
      * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
      * @param _params FlashDepositParams params
      */
@@ -181,7 +181,7 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @notice flash withdraw from strategy, receiving ETH, providing wSqueeth and dollars, and providing strategy tokens
+     * @notice flash withdraw from strategy, receiving ETH, providing wSqueeth and USDC, and providing strategy tokens
      * @param _params FlashWithdrawParams struct
      */
     function flashWithdraw(FlashWithdrawParams calldata _params) external {
@@ -288,7 +288,7 @@ contract FlashBull is UniFlash {
      * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
      * @param _depositedEthAmount ETH amount deposited
      * @param _strategyDebtAmount amount of wPowerPerp debt in vault
-     * @param _strategyCollateralAmount amount of eth collateral in vault
+     * @param _strategyCollateralAmount amount of ETH collateral in vault
      * @param _squeethEthPrice current oSQTH price in ETH
      * @return wSqueeth to mint, mint fee amount
      */
