@@ -405,7 +405,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function useNonce(uint256 _nonce) external {
         _useNonce(msg.sender, _nonce);
     }
-    
+
     /**
      * @notice pulls funds from trader of auction orders (weth or wPowerPerp) depending on the direction of trade
      * @param _orders list of orders
