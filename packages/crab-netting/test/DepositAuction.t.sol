@@ -123,7 +123,7 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 mid = _findBorrow(excessEth, debt, collateral);
         p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         // ------------- //
-        uint256 depositorBalance = address(depositor).balance;
+        uint256 depositorBalance = weth.balanceOf(depositor);
         netting.depositAuction(p);
 
         assertApproxEqAbs(
@@ -133,9 +133,9 @@ contract DepositAuctionTest is BaseForkSetup {
         );
         assertEq(netting.usdBalance(depositor), 200000e6);
         assertEq(sqth.balanceOf(mm1), toMint);
-        assertEq(address(netting).balance, 1);
+        assertEq(weth.balanceOf(address(netting)), 1);
         assertApproxEqAbs(
-            address(depositor).balance - depositorBalance,
+            weth.balanceOf(depositor) - depositorBalance,
             5e17,
             1e17
         );
@@ -208,7 +208,7 @@ contract DepositAuctionTest is BaseForkSetup {
         uint256 mid = _findBorrow(excessEth, debt, collateral);
         p.ethToFlashDeposit = (excessEth * mid) / 10**7;
         // ------------- //
-        uint256 depositorBalance = address(depositor).balance;
+        uint256 depositorBalance = weth.balanceOf(depositor);
         console.log(depositorBalance, "balance bfore");
         netting.depositAuction(p);
 
@@ -216,9 +216,9 @@ contract DepositAuctionTest is BaseForkSetup {
         assertGt(ICrabStrategyV2(crab).balanceOf(depositor), 221e18);
         assertEq(netting.usdBalance(depositor), 200000e6);
         assertEq(sqth.balanceOf(mm1), toMint);
-        assertLe(address(netting).balance, 1e16);
+        assertLe(weth.balanceOf(address(netting)), 1e16);
         assertGt(
-            address(depositor).balance - depositorBalance,
+            weth.balanceOf(depositor) - depositorBalance,
             5e17,
             "0.5 eth not remaining"
         );
@@ -370,7 +370,7 @@ contract DepositAuctionTest is BaseForkSetup {
         // ------------- //
         console.log(p.depositsQueued, p.minEth, p.totalDeposit, toMint);
         console.log(p.clearingPrice);
-        uint256 initEthBalance = address(depositor).balance;
+        uint256 initEthBalance = weth.balanceOf(depositor);
         netting.depositAuction(p);
 
         assertApproxEqAbs(
@@ -380,7 +380,7 @@ contract DepositAuctionTest is BaseForkSetup {
         );
         assertEq(sqth.balanceOf(mm1), toMint);
         assertApproxEqAbs(
-            address(depositor).balance - initEthBalance,
+            weth.balanceOf(depositor) - initEthBalance,
             3e17,
             1e17
         );
@@ -438,8 +438,10 @@ contract DepositAuctionTest is BaseForkSetup {
             0x00
         );
 
-        bytes32 digest = sig.getTypedDataHash(order);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(mm1Pk, digest);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            mm1Pk,
+            sig.getTypedDataHash(order)
+        );
         order.v = v;
         order.r = r;
         order.s = s;
@@ -484,6 +486,7 @@ contract DepositAuctionTest is BaseForkSetup {
         console.log(p.totalDeposit);
 
         uint256 mm1Balance = weth.balanceOf(mm1);
+        uint256 initDepositorBalance = weth.balanceOf(depositor);
         netting.depositAuction(p);
         assertLe(
             ((toMint * p.clearingPrice) / 10**18) -
@@ -503,7 +506,7 @@ contract DepositAuctionTest is BaseForkSetup {
             "All minted not sold, check if we sold only what we took for"
         );
         assertApproxEqAbs(
-            address(depositor).balance,
+            weth.balanceOf(depositor) - initDepositorBalance,
             23e17,
             1e17,
             "deposit not refunded enough eth"

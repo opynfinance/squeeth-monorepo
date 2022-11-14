@@ -678,6 +678,8 @@ contract CrabNetting is Ownable, EIP712 {
         to_send.crab = IERC20(crab).balanceOf(address(this)) - initCrabBalance;
         // get the balance between start and now
         to_send.eth = address(this).balance - initEthBalance;
+        IWETH(weth).deposit{value: to_send.eth}();
+
         while (remainingDeposits > 0) {
             uint256 queuedAmount = deposits[k].amount;
             Portion memory portion;
@@ -697,7 +699,7 @@ contract CrabNetting is Ownable, EIP712 {
                 portion.eth = ((queuedAmount * to_send.eth) /
                     _p.depositsQueued);
                 if (portion.eth > 1e12) {
-                    payable(deposits[k].sender).transfer(portion.eth);
+                    IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
                     portion.eth = 0;
                 }
@@ -721,7 +723,7 @@ contract CrabNetting is Ownable, EIP712 {
                 portion.eth = ((remainingDeposits * to_send.eth) /
                     _p.depositsQueued);
                 if (portion.eth > 1e12) {
-                    payable(deposits[k].sender).transfer(portion.eth);
+                    IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
                     portion.eth = 0;
                 }
