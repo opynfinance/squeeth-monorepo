@@ -2,17 +2,17 @@
 pragma solidity =0.7.6;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IEulerMarkets} from "./interface/IEulerMarkets.sol";
-import {IEulerEToken} from "./interface/IEulerEToken.sol";
-import {IEulerDToken} from "./interface/IEulerDToken.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IEulerMarkets } from "./interface/IEulerMarkets.sol";
+import { IEulerEToken } from "./interface/IEulerEToken.sol";
+import { IEulerDToken } from "./interface/IEulerDToken.sol";
 // contract
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 // lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {UniOracle} from "./UniOracle.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
@@ -66,10 +66,19 @@ contract LeverageBull is Ownable {
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(address _owner, address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
+    constructor(
+        address _owner,
+        address _euler,
+        address _eulerMarkets,
+        address _powerTokenController
+    ) Ownable() {
         eulerMarkets = _eulerMarkets;
-        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(IController(_powerTokenController).weth());
-        dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
+        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
+            IController(_powerTokenController).weth()
+        );
+        dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(
+            IController(_powerTokenController).quoteCurrency()
+        );
         weth = IController(_powerTokenController).weth();
         usdc = IController(_powerTokenController).quoteCurrency();
         wPowerPerp = IController(_powerTokenController).wPowerPerp();
@@ -77,7 +86,9 @@ contract LeverageBull is Ownable {
         ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
 
         IERC20(IController(_powerTokenController).weth()).approve(_euler, type(uint256).max);
-        IERC20(IController(_powerTokenController).quoteCurrency()).approve(_euler, type(uint256).max);
+        IERC20(IController(_powerTokenController).quoteCurrency()).approve(
+            _euler, type(uint256).max
+        );
 
         transferOwnership(_owner);
     }
@@ -90,7 +101,9 @@ contract LeverageBull is Ownable {
         auction = _auction;
     }
 
-    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
         if (_usdcToRepay > 0) {
@@ -125,7 +138,9 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _totalCrabSupply
     ) external view returns (uint256, uint256) {
-        return _calcLeverageWethUsdc(_crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _totalCrabSupply);
+        return _calcLeverageWethUsdc(
+            _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _totalCrabSupply
+        );
     }
 
     /**
@@ -165,8 +180,9 @@ contract LeverageBull is Ownable {
         uint256 _squeethInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 wethToLend, uint256 usdcToBorrow) =
-            _calcLeverageWethUsdc(_crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
+            _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
+        );
 
         require(wethToLend == _ethAmount, "LB0");
 
@@ -230,18 +246,25 @@ contract LeverageBull is Ownable {
         {
             if (_bullShare == ONE) {
                 uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+                uint256 squeethEthPrice =
+                    UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
                 uint256 crabUsdPrice = (
-                    _ethInCrab.wmul(ethUsdPrice).sub(_squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+                    _ethInCrab.wmul(ethUsdPrice).sub(
+                        _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
+                    )
                 ).wdiv(_totalCrabSupply);
-                uint256 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                uint256 wethToLend =
+                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                uint256 usdcToBorrow =
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 wethToLend =
-            IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        uint256 usdcToBorrow = IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
+            _bullShare
+        ).wdiv(ONE.sub(_bullShare));
+        uint256 usdcToBorrow =
+            IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
         return (wethToLend, usdcToBorrow);
     }
 

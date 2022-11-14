@@ -5,21 +5,21 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 //interface
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IEulerMarkets} from "../../src/interface/IEulerMarkets.sol";
-import {IEulerEToken} from "../../src/interface/IEulerEToken.sol";
-import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
+import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
+import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import {BullStrategy} from "../../src/BullStrategy.sol";
-import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
-import {Controller} from "squeeth-monorepo/core/Controller.sol";
-import {FlashBull} from "../../src/FlashBull.sol";
+import { BullStrategy } from "../../src/BullStrategy.sol";
+import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
+import { Controller } from "squeeth-monorepo/core/Controller.sol";
+import { FlashBull } from "../../src/FlashBull.sol";
 // lib
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {UniOracle} from "../../src/UniOracle.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { UniOracle } from "../../src/UniOracle.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 contract TestUtil is Test {
     using StrategyMath for uint256;
@@ -53,35 +53,52 @@ contract TestUtil is Test {
     }
 
     function getCrabVaultDetails() public view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(address(controller)).vaults(crabV2.vaultId());
+        VaultLib.Vault memory strategyVault =
+            IController(address(controller)).vaults(crabV2.vaultId());
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
 
-    function calcCollateralAndBorrowAmount(uint256 _crabToDeposit) external view returns (uint256, uint256) {
+    function calcCollateralAndBorrowAmount(uint256 _crabToDeposit)
+        external
+        view
+        returns (uint256, uint256)
+    {
         uint256 wethToLend;
         uint256 usdcToBorrow;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             {
                 uint256 ethUsdPrice = UniOracle._getTwap(
-                    controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+                    controller.ethQuoteCurrencyPool(),
+                    controller.weth(),
+                    controller.quoteCurrency(),
+                    TWAP,
+                    false
                 );
                 uint256 squeethEthPrice = UniOracle._getTwap(
-                    controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+                    controller.wPowerPerpPool(),
+                    controller.wPowerPerp(),
+                    controller.weth(),
+                    TWAP,
+                    false
                 );
                 (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
                 uint256 crabUsdPrice = (
-                    ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+                    ethInCrab.wmul(ethUsdPrice).sub(
+                        squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
+                    )
                 ).wdiv(crabV2.totalSupply());
-                wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(
+                    ethUsdPrice
+                );
                 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
             }
         } else {
             uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
-            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share).wdiv(
+            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share)
+                .wdiv(uint256(1e18).sub(share));
+            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );
-            usdcToBorrow =
-                IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(uint256(1e18).sub(share));
         }
 
         return (wethToLend, usdcToBorrow);
@@ -89,26 +106,40 @@ contract TestUtil is Test {
 
     function getCrabPrice() external view returns (uint256) {
         uint256 ethUsdPrice = UniOracle._getTwap(
-            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
         );
-        uint256 squeethEthPrice =
-            UniOracle._getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
         (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
-        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-            .wdiv(crabV2.totalSupply());
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+        ).wdiv(crabV2.totalSupply());
         return crabUsdPrice;
     }
 
     function calcTotalEthDelta(uint256 _crabToDeposit) external view returns (uint256) {
         uint256 ethUsdPrice = UniOracle._getTwap(
-            controller.ethQuoteCurrencyPool(), controller.weth(), controller.quoteCurrency(), TWAP, false
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
         );
-        uint256 squeethEthPrice =
-            UniOracle._getTwap(controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false);
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
         (uint256 ethInCrab, uint256 squeethInCrab) = getCrabVaultDetails();
-        uint256 crabUsdPrice = (ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)))
-            .wdiv(crabV2.totalSupply());
-        uint256 totalEthDelta = (IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)).wdiv(
+        uint256 crabUsdPrice = (
+            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+        ).wdiv(crabV2.totalSupply());
+        uint256 totalEthDelta = (
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)
+        ).wdiv(
             _crabToDeposit.wmul(crabUsdPrice).add(
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)
             ).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12))
@@ -132,21 +163,24 @@ contract TestUtil is Test {
         }
     }
 
-    function calculateCrabRedemption(uint256 crabShares, uint256 ethUsdPrice, uint256 crabCollateral, uint256 crabDebt)
-        external
-        view
-        returns (uint256)
-    {
+    function calculateCrabRedemption(
+        uint256 crabShares,
+        uint256 ethUsdPrice,
+        uint256 crabCollateral,
+        uint256 crabDebt
+    ) external view returns (uint256) {
         uint256 ethInCrabAfterShutdown;
         //this check is not strictly true, but for our tests it works. hasRedeemedInShutdown is a private variable that would be the correct one to check
         if (controller.isShutDown()) {
             ethInCrabAfterShutdown = address(crabV2).balance;
         } else {
-            ethInCrabAfterShutdown =
-                crabCollateral.sub(crabDebt.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE)));
+            ethInCrabAfterShutdown = crabCollateral.sub(
+                crabDebt.wmul(controller.normalizationFactor()).wmul(ethUsdPrice.div(INDEX_SCALE))
+            );
         }
 
-        uint256 ethFromCrabRedemption = crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
+        uint256 ethFromCrabRedemption =
+            crabShares.wdiv(crabV2.totalSupply()).wmul(ethInCrabAfterShutdown);
 
         // note the below doesnt work as it has wrong order of operations - make sure our order of operations is correct for rounding reasons
         //uint256 ethFromCrabRedemption = crabShares.wmul(ethInCrabAfterShutdown).wdiv(crabV2.totalSupply())

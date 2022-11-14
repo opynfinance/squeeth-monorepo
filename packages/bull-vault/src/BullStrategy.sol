@@ -4,17 +4,17 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
-import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
-import {LeverageBull} from "./LeverageBull.sol";
+import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
+import { LeverageBull } from "./LeverageBull.sol";
 // lib
-import {Address} from "openzeppelin/utils/Address.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * Error codes
@@ -91,8 +91,8 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function farm(address _asset, address _receiver) external onlyOwner {
         require(
-            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken) && (_asset != dToken)
-                && (_asset != wPowerPerp),
+            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
+                && (_asset != dToken) && (_asset != wPowerPerp),
             "BS5"
         );
 
@@ -143,8 +143,9 @@ contract BullStrategy is ERC20, LeverageBull {
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
-        (, uint256 usdcBorrowed, uint256 _totalWethInEuler) =
-            _leverageDeposit(msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply());
+        (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
+            msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+        );
 
         require(_totalWethInEuler <= strategyCap, "BS2");
 
@@ -184,7 +185,9 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _crabToRedeem amount of crab token redeemed by auction
      * @param _wPowerPerpToRedeem amount of wPowerPerp sent back for crab redeem
      */
-    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem) external {
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
+        external
+    {
         require(msg.sender == auction, "BS8");
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
@@ -284,7 +287,8 @@ contract BullStrategy is ERC20, LeverageBull {
      * @return vault eth collateral, vault wPowerPerp debt
      */
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
+        VaultLib.Vault memory strategyVault =
+            IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
