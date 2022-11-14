@@ -97,7 +97,7 @@ contract BullStrategyTestFork is Test {
         cap = 100000e18;
         vm.startPrank(bullOwner);
         bullStrategy.setCap(cap);
-        bullStrategy.setAuction(address(auction));
+        bullStrategy.setAuction(auction);
         bullStrategy.setShutdownContract(address(emergencyShutdown));
         vm.stopPrank();
         user1Pk = 0xA11CE;
@@ -133,8 +133,8 @@ contract BullStrategyTestFork is Test {
         uint256 crabToBeMinted =
             IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
 
-        vm.starPrank(auction);
-        // bullStrategy.depositEthIntoCrab(ethToDeposit);
+        vm.startPrank(auction);
+        bullStrategy.depositEthIntoCrab(ethToDeposit);
     }
 
     function _initateDepositInBull(address _depositor, uint256 _ethToCrab) internal {
