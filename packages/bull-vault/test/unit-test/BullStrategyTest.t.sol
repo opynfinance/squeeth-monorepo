@@ -170,7 +170,7 @@ contract BullStrategyTest is Test {
         uint256 crabToRedeem = 5e18;
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToRedeem);
         vm.startPrank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
-        IERC20(crabV2).approve(address(bullStrategy),crabToRedeem);
+        IERC20(crabV2).approve(address(bullStrategy), crabToRedeem);
         vm.deal(0x06CECFbac34101aE41C88EbC2450f8602b3d164b, wethToLend);
         bullStrategy.deposit{value: wethToLend}(crabToRedeem);
         vm.stopPrank();
