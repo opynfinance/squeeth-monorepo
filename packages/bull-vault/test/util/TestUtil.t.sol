@@ -24,6 +24,7 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 contract TestUtil is Test {
     using StrategyMath for uint256;
 
+    uint128 internal constant ONE = 1e18;
     uint32 internal constant TWAP = 420;
     uint256 internal constant INDEX_SCALE = 10000;
 
@@ -187,4 +188,75 @@ contract TestUtil is Test {
 
         return ethFromCrabRedemption;
     }
+
+    function calcWsqueethToMintAndFee(
+        uint256 _depositedAmount,
+        uint256 _strategyDebtAmount,
+        uint256 _strategyCollateralAmount
+    ) external view returns (uint256, uint256) {
+        uint256 wSqueethToMint;
+        uint256 wSqueethEthPrice = UniOracle._getTwap(
+                    controller.wPowerPerpPool(),
+                    controller.wPowerPerp(),
+                    controller.weth(),
+                    TWAP,
+                    false
+                );
+
+        uint256 feeRate = IController(bullStrategy.powerTokenController()).feeRate();
+        uint256 feeAdjustment = wSqueethEthPrice.mul(feeRate).div(10000);
+
+        wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(
+            _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
+        );
+
+        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+
+        return (wSqueethToMint, fee);
+    }
+
+    /**
+     * @dev calculate amount of strategy token to mint for depositor
+     * @param _amount amount of ETH deposited
+     * @param _strategyCollateralAmount amount of strategy collateral
+     * @param _crabTotalSupply total supply of strategy token
+     * @return amount of strategy token to mint
+     */
+    function calcSharesToMint(
+        uint256 _amount,
+        uint256 _strategyCollateralAmount,
+        uint256 _crabTotalSupply
+    ) external pure returns (uint256) {
+        uint256 depositorShare = _amount.wdiv(_strategyCollateralAmount.add(_amount));
+
+        if (_crabTotalSupply != 0) {
+            return _crabTotalSupply.wmul(depositorShare).wdiv(uint256(ONE).sub(depositorShare));
+        }
+
+        return _amount;
+    }
+
+    function calcTotalEthToBull(
+        uint256 wethToLend,
+        uint256 ethToCrab,
+        uint256 usdcToBorrow,
+        uint256 wSqueethToMint
+    ) external view returns (uint256) {
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+
+        uint256 totalEthToBull = wethToLend.add(ethToCrab).sub(usdcToBorrow.wdiv(ethUsdPrice)).sub(
+            wSqueethToMint.wmul(squeethEthPrice)
+        ).add(1e16);
+        return totalEthToBull;
+    }
+
 }
