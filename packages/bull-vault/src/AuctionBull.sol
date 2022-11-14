@@ -144,7 +144,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
 
-    event FullRebalance(crabAmount, clearingPrice);
+    event FullRebalance(uint256 crabAmount, uint256 clearingPrice);
 
     event SetFullRebalanceClearingPriceTolerance(
         uint256 _oldPriceTolerance, uint256 _newPriceTolerance
@@ -273,7 +273,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @dev hedge function to rebalance delta and collateral ratio of strategy using an array of signed orders
+     * @dev rebalance delta and collateral ratio of strategy using an array of signed orders
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
      * @param _clearingPrice clearing price in WETH per oSQTH
@@ -433,7 +433,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice changes the strategy eth delta by increasing or decreasing USDC debt
+     * @notice change the strategy eth delta by increasing or decreasing USDC debt
      * @dev can only be called by auction manager
      * @param _isSellingUsdc true if strategy is selling USDC
      * @param _usdcAmount USDC amount to trade
@@ -509,7 +509,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             uint256 wethToGet =
                 _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
             // sell USDC to buy WETH 
-
             _exactOutFlashSwap(
                 usdc,
                 weth,
