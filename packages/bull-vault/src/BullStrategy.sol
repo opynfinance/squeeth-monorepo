@@ -54,9 +54,13 @@ contract BullStrategy is ERC20, LeverageBull {
     event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
     event Deposit(address from, uint256 crabAmount);
     event SetCap(uint256 oldCap, uint256 newCap);
-    event RedeemCrabAndWithdrawEth();
+    event RedeemCrabAndWithdrawEth(
+        uint256 crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
+    );
     event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
-
+    event ShutdownRepayAndWithdraw(
+        uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem
+    );
     /**
      * @notice constructor for BullStrategy
      * @dev this will open a vault in the power token contract and store the vault ID
@@ -66,6 +70,7 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _euler euler address
      * @param _eulerMarketsModule euler markets module address
      */
+
     constructor(
         address _owner,
         address _crab,
@@ -124,7 +129,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice handle minting shares and rebalancing WETH/USDC leverage
+     * @notice deposit to crab: deposits crab and ETH, receives USDC and wPowerPerp
      * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
@@ -160,7 +165,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw ETH from crab and Euler by providing wPowerPerp, bull token, and USDC to repay debt
+     * @notice withdraw from crab: repay wPowerPerp and USDC and receive ETH
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
@@ -208,9 +213,10 @@ contract BullStrategy is ERC20, LeverageBull {
         _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
         IWETH9(weth).deposit{value: address(this).balance}();
-        IWETH9(weth).transfer(msg.sender, IERC20(weth).balanceOf(address(this)));
+        uint256 wethBalanceToReturn = IERC20(weth).balanceOf(address(this));
+        IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
-        emit RedeemCrabAndWithdrawEth();
+        emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
     }
 
     /**
@@ -250,6 +256,8 @@ contract BullStrategy is ERC20, LeverageBull {
         _repayAndWithdrawFromLeverage(shareToUnwind);
         IWETH9(weth).deposit{value: wethToUniswap}();
         IWETH9(weth).transfer(shutdownContract, wethToUniswap);
+
+        emit ShutdownRepayAndWithdraw(wethToUniswap, shareToUnwind, crabToRedeem);
     }
 
     /**

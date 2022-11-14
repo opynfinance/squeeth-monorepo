@@ -144,7 +144,13 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
 
-    event FullRebalance(uint256 crabAmount, uint256 clearingPrice);
+    event FullRebalance(
+        uint256 crabAmount,
+        uint256 clearingPrice,
+        bool isDepositingInCrab,
+        uint256 wPowerPerpAmount,
+        uint256 wethTargetInEuler
+    );
 
     event SetFullRebalanceClearingPriceTolerance(
         uint256 _oldPriceTolerance, uint256 _newPriceTolerance
@@ -153,6 +159,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+
+    event TransferToOrder(uint256 from, uint256 quanity, uint256 clearingPrice);
+
+    event TransferFromOrder(uint256 from, uint256 quanity, uint256 clearingPrice);
 
     constructor(
         address _auctionOwner,
@@ -407,6 +417,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 uint256 ordersLength = _orders.length;
                 for (uint256 i; i < ordersLength; ++i) {
                     _transferToOrder(_orders[i], remainingAmount, _clearingPrice);
+
                     if (remainingAmount > _orders[i].quantity) {
                         remainingAmount = remainingAmount.sub(_orders[i].quantity);
                     } else {
@@ -428,7 +439,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         // check that rebalance does not breach collateral ratio or delta tolerance
         _isValidRebalance();
 
-        emit FullRebalance(_crabAmount, _clearingPrice);
+        emit FullRebalance(
+            _crabAmount, _clearingPrice, _isDepositingInCrab, wPowerPerpAmount, _wethTargetInEuler
+            );
     }
 
     /**
@@ -676,6 +689,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
         }
+        emit TransferToOrder(_order.from, _order.quanity, _order.clearingPrice);
     }
 
     /**
@@ -703,6 +717,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // trader send oSQTH and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
         }
+        emit TransferFromOrder(_order.from, _order.quantity, _order.clearingPrice);
     }
 
     /**
