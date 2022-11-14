@@ -1676,7 +1676,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: type(uint256).max,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1687,7 +1687,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: type(uint256).max,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1730,14 +1730,9 @@ contract AuctionBullTestFork is Test {
         );
         vm.prank(user1);
         IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
-        console.log(
-            "weth needed, wethbalance",
-            wPowerPerpAmountToTrade.wmul(squeethEthPrice),
-            IERC20(weth).balanceOf(address(user1))
-        );
 
         vm.prank(auctionManager);
-        //vm.expectRevert(bytes("AB8"));
+        vm.expectRevert(bytes("AB8"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
@@ -2641,18 +2636,14 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log("before", deltaBeforeRebalance, crBeforeRebalance);
         }
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        console.log(currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt);
-
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("before collateral, debt", currentWethInLeverage, currentDebt);
 
         assertEq(isDepositingInCrab, false);
 
@@ -2715,11 +2706,9 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log("after", deltaBeforeRebalance, crBeforeRebalance);
 
             currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
             currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-            console.log("collateral, debt", currentWethInLeverage, currentDebt);
 
             assertEq(
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
@@ -2907,7 +2896,6 @@ contract AuctionBullTestFork is Test {
                     (debtDeltaInDollar.add(wethDeltaInDollar), true);
             }
         }
-        console.log("dollar crab", dollarToExchangeWithCrab);
         uint256 crabAmount = dollarToExchangeWithCrab.mul(1e12).wdiv(testUtil.getCrabPrice());
 
         return (crabAmount, isDepositingInCrab);
@@ -3045,8 +3033,6 @@ contract AuctionBullTestFork is Test {
         (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
             auctionBull.getCurrentDeltaAndCollatRatio();
 
-        console.log(deltaBeforeRebalance, crBeforeRebalance);
-
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
             crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
@@ -3061,8 +3047,6 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 usdcAmount = usdcAmountCorrect.mul(12);
-        console.log(usdcAmount, "traded usdc");
-        console.log(IEulerDToken(dToken).balanceOf(address(bullStrategy)), "debt");
         uint256 minEthForUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcAmount, 0);
         uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
         vm.startPrank(auctionManager);
@@ -3073,7 +3057,6 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log(deltaAfterRebalance, crAfterRebalance);
         }
     }
 
@@ -3117,7 +3100,6 @@ contract AuctionBullTestFork is Test {
             crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
-        console.log(deltaBeforeRebalance, crBeforeRebalance);
 
         assertEq(isSellingUsdc, false);
 
@@ -3138,7 +3120,6 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log(deltaAfterRebalance, crAfterRebalance);
         }
     }
 
@@ -3181,8 +3162,6 @@ contract AuctionBullTestFork is Test {
         (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
             auctionBull.getCurrentDeltaAndCollatRatio();
 
-        console.log("before", deltaBeforeRebalance, crBeforeRebalance);
-
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
             crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
@@ -3197,8 +3176,6 @@ contract AuctionBullTestFork is Test {
             ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
             : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
         uint256 usdcAmount = usdcAmountCorrect.mul(7);
-        console.log(usdcAmount, "traded usdc");
-        console.log(IEulerDToken(dToken).balanceOf(address(bullStrategy)), "debt");
         uint256 minEthForUsdc = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcAmount, 0);
         uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
         vm.startPrank(auctionManager);
@@ -3209,7 +3186,6 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log("after", deltaAfterRebalance, crAfterRebalance);
         }
     }
 
@@ -3253,7 +3229,6 @@ contract AuctionBullTestFork is Test {
             crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
-        console.log("before", deltaBeforeRebalance, crBeforeRebalance);
 
         assertEq(isSellingUsdc, false);
 
@@ -3274,7 +3249,6 @@ contract AuctionBullTestFork is Test {
         {
             (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
                 auctionBull.getCurrentDeltaAndCollatRatio();
-            console.log("after", deltaAfterRebalance, crAfterRebalance);
         }
     }
 
@@ -3583,7 +3557,6 @@ contract AuctionBullTestFork is Test {
             false
         );
 
-        console.log("ethUsd px", ethUsdPrice);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
@@ -3599,7 +3572,6 @@ contract AuctionBullTestFork is Test {
         uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);
         uint256 _targetDebt =
             targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
-        console.log("targetCollat, target debt", targetCollateral, _targetDebt);
         return (targetCollateral, _targetDebt);
     }
 }
