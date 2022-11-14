@@ -289,7 +289,6 @@ contract FlashBull is UniFlash {
      * @param _depositedEthAmount ETH amount deposited
      * @param _strategyDebtAmount amount of wPowerPerp debt in vault
      * @param _strategyCollateralAmount amount of ETH collateral in vault
-     * @param _squeethEthPrice current oSQTH price in ETH
      * @return wSqueeth to mint, mint fee amount
      */
     function _calcWsqueethToMintAndFee(
