@@ -146,7 +146,7 @@ contract AuctionBullTestFork is Test {
         vm.startPrank(owner);
         bullStrategy.setCap(cap);
         bullStrategy.setAuction(address(auctionBull));
-        auctionBull.setCrUpperAndLower(1.5e18, 3e18);
+        auctionBull.setCrUpperAndLower(1.8e18, 2.2e18);
         auctionBull.setDeltaUpperAndLower(0.9e18, 1.1e18);
         auctionBull.setFullRebalanceClearingPriceTolerance(2e17);
         auctionBull.setRebalanceWethLimitPriceTolerance(2e17);
@@ -198,8 +198,8 @@ contract AuctionBullTestFork is Test {
     function testSetup() public {
         assertEq(auctionBull.deltaUpper(), 1.1e18);
         assertEq(auctionBull.deltaLower(), 0.9e18);
-        assertEq(auctionBull.crUpper(), 3e18);
-        assertEq(auctionBull.crLower(), 1.5e18);
+        assertEq(auctionBull.crUpper(), 2.2e18);
+        assertEq(auctionBull.crLower(), 1.8e18);
         assertEq(auctionBull.owner(), owner);
         assertEq(auctionBull.auctionManager(), auctionManager);
     }
@@ -443,7 +443,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -459,7 +459,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: owner,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -470,7 +470,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: owner,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -480,12 +480,12 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
-
-        vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
+
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
 
         vm.prank(auctionManager);
         vm.expectRevert(bytes("AB11"));
@@ -551,7 +551,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -590,10 +590,11 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
+
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
 
         vm.prank(deployer);
         vm.expectRevert(bytes("AB0"));
@@ -659,7 +660,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -675,7 +676,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -686,7 +687,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -696,12 +697,12 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
-
-        vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
+
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
 
         vm.prank(user1);
         auctionBull.useNonce(0);
@@ -770,7 +771,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -827,7 +828,7 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenSellOrderAboveClearingPrice() public {
+    function testFullRebalanceWhenBuyOrderBelowClearingPrice() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -878,7 +879,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -905,7 +906,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: ethUsdPrice.wmul(13e17),
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -923,7 +924,7 @@ contract AuctionBullTestFork is Test {
         );
 
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB10"));
+        vm.expectRevert(bytes("AB9"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
@@ -986,7 +987,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1002,7 +1003,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp,
                 nonce: 0
@@ -1013,7 +1014,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp,
                 nonce: 0,
@@ -1023,12 +1024,12 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
-
-        vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
+
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
 
         vm.warp(block.timestamp + 10000);
 
@@ -1044,7 +1045,6 @@ contract AuctionBullTestFork is Test {
             isDepositingInCrab
         );
     }
-
 
     function testFullRebalanceWhenClearingPriceIsZero() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -1097,7 +1097,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1154,7 +1154,7 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenClearingPriceIsOutOfRangeAndWithdrawingCrab() public {
+    function testFullRebalanceWhenClearingPriceIsOutOfRangeAndDepositingCrab() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -1205,7 +1205,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1221,7 +1221,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1232,7 +1232,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1244,17 +1244,18 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
 
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB18"));
+        vm.expectRevert(bytes("AB17"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
-            squeethEthPrice.wmul(1.25e18),
+            squeethEthPrice.wmul(0.75e18),
             targetWethInLeverage,
             ethUsdPrice.wmul(12e17),
             3000,
@@ -1262,7 +1263,7 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenClearingPriceIsOutOfRangeAndDepositingCrab() public {
+    function testFullRebalanceWhenClearingPriceIsOutOfRangeAndWithdrawingCrab() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -1325,7 +1326,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, true);
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1341,7 +1342,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1352,7 +1353,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1364,7 +1365,7 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
@@ -1374,11 +1375,11 @@ contract AuctionBullTestFork is Test {
         );
 
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB17"));
+        vm.expectRevert(bytes("AB18"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
-            squeethEthPrice.wmul(0.75e18),
+            squeethEthPrice.wmul(1.25e18),
             targetWethInLeverage,
             ethUsdPrice.wmul(12e17),
             3000,
@@ -1437,7 +1438,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1548,7 +1549,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1608,7 +1609,7 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenRedeemingFromCrabAndInvalidOrdersArray() public {
+    function testFullRebalanceWhenDepositingInCrabAndInvalidOrdersArray() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -1628,7 +1629,7 @@ contract AuctionBullTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{value: 2000e18}();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1659,7 +1660,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1675,7 +1676,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: 2,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1686,7 +1687,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: 2,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1701,7 +1702,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 2,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 1
@@ -1712,7 +1713,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 2,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 1,
@@ -1724,14 +1725,19 @@ contract AuctionBullTestFork is Test {
             orders.push(orderData);
         }
 
-        vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), 1, false
         );
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        console.log(
+            "weth needed, wethbalance",
+            wPowerPerpAmountToTrade.wmul(squeethEthPrice),
+            IERC20(weth).balanceOf(address(user1))
+        );
 
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB7"));
+        //vm.expectRevert(bytes("AB8"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
@@ -1743,7 +1749,7 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenDepositingInCrabWithInvalidOrdersArray() public {
+    function testFullRebalanceWhenWithdrawingInCrabWithInvalidOrdersArray() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -1806,7 +1812,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, true);
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1822,7 +1828,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: (type(uint256).max).sub(2),
+                price: 2,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1833,7 +1839,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: (type(uint256).max).sub(2),
+                price: 2,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1848,7 +1854,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 2,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: (type(uint256).max).sub(1),
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 1
@@ -1859,7 +1865,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 2,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
-                price: (type(uint256).max).sub(1),
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 1,
@@ -1871,14 +1877,14 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
 
         squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
 
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB8"));
+        vm.expectRevert(bytes("AB7"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
@@ -1941,7 +1947,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -1957,7 +1963,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -1968,7 +1974,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -1978,15 +1984,15 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
-
-        vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
-        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
-        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
-        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
+
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.mul(squeethEthPrice));
+        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
+        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         vm.prank(auctionManager);
         auctionBull.fullRebalance(
@@ -2007,17 +2013,19 @@ contract AuctionBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
         assertEq(
-            userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
+            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
+            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
             IERC20(weth).balanceOf(user1)
         );
-        assertEq(
-            bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy))
+        assertApproxEqRel(
+            bullCrabBalanceBefore.add(crabAmount),
+            IERC20(crabV2).balanceOf(address(bullStrategy)),
+            1e5
         );
-        assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
+        assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
     function testFullRebalanceWhenEthUpMultipleOrders() public {
@@ -2071,7 +2079,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -2087,7 +2095,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2098,7 +2106,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2119,7 +2127,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)),
-                price: 2,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2130,7 +2138,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)),
-                price: 2,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2140,20 +2148,20 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
 
         vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         vm.prank(user2);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
         user2WPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         user2WethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
 
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
-        uint256 squeethEthPrice = UniOracle._getTwap(
-            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
-        );
 
         vm.prank(auctionManager);
         auctionBull.fullRebalance(
@@ -2174,25 +2182,31 @@ contract AuctionBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
         assertEq(
-            userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2)),
+            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2)),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
+            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
             IERC20(weth).balanceOf(user1)
         );
         assertEq(
-            user2WPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))),
+            user2WPowerPerpBalanceBeforeAuction.add(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))
+            ),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            user2WethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)),
+            user2WethBalanceBeforeAuction.sub(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)
+            ),
             IERC20(weth).balanceOf(user1)
         );
-        assertEq(
-            bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy))
+        assertApproxEqRel(
+            bullCrabBalanceBefore.add(crabAmount),
+            IERC20(crabV2).balanceOf(address(bullStrategy)),
+            1e5
         );
-        assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
+        assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
     function testFullRebalanceWhenEthUpMultipleOrdersPartialFill() public {
@@ -2246,7 +2260,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, false);
+        assertEq(isDepositingInCrab, true);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -2262,7 +2276,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: 1,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2273,7 +2287,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: 1,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2294,7 +2308,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade,
-                price: 2,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2305,7 +2319,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade,
-                price: 2,
+                price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2315,20 +2329,20 @@ contract AuctionBullTestFork is Test {
             });
             orders.push(orderData);
         }
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
 
         vm.prank(user1);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         vm.prank(user2);
-        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
         user2WPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         user2WethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
 
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
-        uint256 squeethEthPrice = UniOracle._getTwap(
-            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
-        );
 
         vm.prank(auctionManager);
         auctionBull.fullRebalance(
@@ -2349,28 +2363,34 @@ contract AuctionBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
         assertEq(
-            userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2)),
+            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2)),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
+            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
             IERC20(weth).balanceOf(user1)
         );
         assertEq(
-            user2WPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))),
+            user2WPowerPerpBalanceBeforeAuction.add(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))
+            ),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            user2WethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)),
+            user2WethBalanceBeforeAuction.sub(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)
+            ),
             IERC20(weth).balanceOf(user1)
         );
-        assertEq(
-            bullCrabBalanceBefore.sub(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy))
+        assertApproxEqRel(
+            bullCrabBalanceBefore.add(crabAmount),
+            IERC20(crabV2).balanceOf(address(bullStrategy)),
+            1e5
         );
-        assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
+        assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
-        function testFullRebalanceWhenEthDownMultipleOrdersPartialFill() public {
+    function testFullRebalanceWhenEthDownMultipleOrdersPartialFill() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -2433,12 +2453,12 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, true);
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
             _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
-        
+
         {
             // trader signature vars
             uint8 v;
@@ -2449,7 +2469,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2460,7 +2480,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.div(2),
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2481,7 +2501,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max-1,
+                price: 2,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2492,7 +2512,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user2,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max-1,
+                price: 2,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2504,11 +2524,11 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(weth).approve(address(auctionBull), type(uint256).max);
+        IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         vm.prank(user2);
-        IERC20(weth).approve(address(auctionBull), type(uint256).max);
+        IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
         user2WPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         user2WethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
 
@@ -2533,25 +2553,32 @@ contract AuctionBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
         assertEq(
-            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2)),
+            userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2)),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
+            userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.div(2).wmul(squeethEthPrice)),
             IERC20(weth).balanceOf(user1)
         );
         assertEq(
-            user2WPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))),
+            user2WPowerPerpBalanceBeforeAuction.sub(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2))
+            ),
             IERC20(wPowerPerp).balanceOf(user1)
         );
         assertEq(
-            user2WethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)),
+            user2WethBalanceBeforeAuction.add(
+                wPowerPerpAmountToTrade.sub(wPowerPerpAmountToTrade.div(2)).wmul(squeethEthPrice)
+            ),
             IERC20(weth).balanceOf(user1)
         );
         //crab amount entered in fullRebalance is only an estimate and the real value is updated when crab tokens are transferred in
         assertApproxEqRel(
-            bullCrabBalanceBefore.add(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy)), 1e5);
-        assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
+            bullCrabBalanceBefore.sub(crabAmount),
+            IERC20(crabV2).balanceOf(address(bullStrategy)),
+            1e5
+        );
+        assertEq(squeethInCrab.sub(wPowerPerpAmountToTrade), squeethInCrabAfter);
     }
 
     function testFullRebalanceWhenEthDown() public {
@@ -2611,13 +2638,23 @@ contract AuctionBullTestFork is Test {
         squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
-
+        {
+            (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log("before", deltaBeforeRebalance, crBeforeRebalance);
+        }
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, true);
+        console.log(currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt);
+
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        console.log("before collateral, debt", currentWethInLeverage, currentDebt);
+
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -2633,7 +2670,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2644,7 +2681,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: type(uint256).max,
+                price: 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2656,7 +2693,7 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
@@ -2675,26 +2712,36 @@ contract AuctionBullTestFork is Test {
             3000,
             isDepositingInCrab
         );
+        {
+            (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log("after", deltaBeforeRebalance, crBeforeRebalance);
 
-        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+            currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+            currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+            console.log("collateral, debt", currentWethInLeverage, currentDebt);
 
-        assertEq(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
-        );
-        assertEq(
-            userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
-            IERC20(wPowerPerp).balanceOf(user1)
-        );
-        assertEq(
-            userWethBalanceBeforeAuction.sub(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
-            IERC20(weth).balanceOf(user1)
-        );
-        assertApproxEqRel(
-            bullCrabBalanceBefore.add(crabAmount), IERC20(crabV2).balanceOf(address(bullStrategy)), 1e5);
+            assertEq(
+                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
+                targetWethInLeverage
+            );
+            assertEq(
+                userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
+                IERC20(wPowerPerp).balanceOf(user1)
+            );
+            assertEq(
+                userWethBalanceBeforeAuction.add(wPowerPerpAmountToTrade.wmul(squeethEthPrice)),
+                IERC20(weth).balanceOf(user1)
+            );
+            assertApproxEqRel(
+                bullCrabBalanceBefore.sub(crabAmount),
+                IERC20(crabV2).balanceOf(address(bullStrategy)),
+                1e5
+            );
+        }
     }
 
-    function testFullRebalanceWhenBuyOrderBelowClearingPrice() public {
+    function testFullRebalanceWhenSellOrderAboveClearingPrice() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -2757,7 +2804,7 @@ contract AuctionBullTestFork is Test {
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
 
-        assertEq(isDepositingInCrab, true);
+        assertEq(isDepositingInCrab, false);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -2773,7 +2820,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0
@@ -2784,7 +2831,7 @@ contract AuctionBullTestFork is Test {
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
-                price: 1,
+                price: type(uint256).max,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
                 nonce: 0,
@@ -2796,7 +2843,7 @@ contract AuctionBullTestFork is Test {
         }
 
         vm.prank(user1);
-        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.wmul(squeethEthPrice));
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
@@ -2806,7 +2853,7 @@ contract AuctionBullTestFork is Test {
         );
 
         vm.prank(auctionManager);
-        vm.expectRevert(bytes("AB9"));
+        vm.expectRevert(bytes("AB10"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
@@ -2842,25 +2889,25 @@ contract AuctionBullTestFork is Test {
                 (dollarToExchangeWithCrab, isDepositingInCrab) = (
                     debtDeltaInDollar > wethDeltaInDollar
                 )
-                    ? (debtDeltaInDollar.sub(wethDeltaInDollar), true)
-                    : (wethDeltaInDollar.sub(debtDeltaInDollar), false);
-            } else {
-                (dollarToExchangeWithCrab, isDepositingInCrab) =
-                    (debtDeltaInDollar.add(wethDeltaInDollar), true);
-            }
-        } else {
-            if (!isWethDeltaInDollarPositive) {
-                (dollarToExchangeWithCrab, isDepositingInCrab) = (
-                    debtDeltaInDollar > wethDeltaInDollar
-                )
                     ? (debtDeltaInDollar.sub(wethDeltaInDollar), false)
                     : (wethDeltaInDollar.sub(debtDeltaInDollar), true);
             } else {
                 (dollarToExchangeWithCrab, isDepositingInCrab) =
                     (debtDeltaInDollar.add(wethDeltaInDollar), false);
             }
+        } else {
+            if (!isWethDeltaInDollarPositive) {
+                (dollarToExchangeWithCrab, isDepositingInCrab) = (
+                    debtDeltaInDollar > wethDeltaInDollar
+                )
+                    ? (debtDeltaInDollar.sub(wethDeltaInDollar), true)
+                    : (wethDeltaInDollar.sub(debtDeltaInDollar), false);
+            } else {
+                (dollarToExchangeWithCrab, isDepositingInCrab) =
+                    (debtDeltaInDollar.add(wethDeltaInDollar), true);
+            }
         }
-
+        console.log("dollar crab", dollarToExchangeWithCrab);
         uint256 crabAmount = dollarToExchangeWithCrab.mul(1e12).wdiv(testUtil.getCrabPrice());
 
         return (crabAmount, isDepositingInCrab);
@@ -2959,6 +3006,278 @@ contract AuctionBullTestFork is Test {
         );
     }
 
+    function testLeverageRebalanceWhenEthUpWhenDeltaTooHighAfterTrade() public {
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
+        // move prices up
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(swapRouter), 10000000e6);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: usdc,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 10000000e6,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IWETH9(weth).deposit{value: 100e18}();
+        IERC20(weth).approve(address(swapRouter), 100e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: wPowerPerp,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 100e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+            auctionBull.getCurrentDeltaAndCollatRatio();
+
+        console.log(deltaBeforeRebalance, crBeforeRebalance);
+
+        uint256 crabPrice = testUtil.getCrabPrice();
+        uint256 usdcDebtTarget =
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+        bool isSellingUsdc =
+            (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
+
+        assertEq(isSellingUsdc, true);
+
+        uint256 usdcAmountCorrect = (
+            usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))
+        )
+            ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
+            : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
+        uint256 usdcAmount = usdcAmountCorrect.mul(12);
+        console.log(usdcAmount, "traded usdc");
+        console.log(IEulerDToken(dToken).balanceOf(address(bullStrategy)), "debt");
+        uint256 minEthForUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
+        vm.startPrank(auctionManager);
+        vm.expectRevert(bytes("AB1"));
+        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
+        vm.stopPrank();
+
+        {
+            (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log(deltaAfterRebalance, crAfterRebalance);
+        }
+    }
+
+    function testLeverageRebalanceWhenEthDownWhenDeltaTooLowAfterTrade() public {
+        // move prices down
+        vm.startPrank(user1);
+        IWETH9(weth).deposit{value: 10000e18}();
+        IERC20(weth).approve(address(swapRouter), 10000e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: usdc,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 10000e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IERC20(wPowerPerp).approve(address(swapRouter), 900e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: wPowerPerp,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 900e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+            auctionBull.getCurrentDeltaAndCollatRatio();
+        uint256 crabPrice = testUtil.getCrabPrice();
+        uint256 usdcDebtTarget =
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+        bool isSellingUsdc =
+            (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
+        console.log(deltaBeforeRebalance, crBeforeRebalance);
+
+        assertEq(isSellingUsdc, false);
+
+        uint256 usdcAmountCorrect = (
+            usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))
+        )
+            ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
+            : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
+        uint256 usdcAmount = usdcAmountCorrect.mul(10);
+        uint256 maxEthForUsdc = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(maxEthForUsdc);
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        vm.startPrank(auctionManager);
+        vm.expectRevert(bytes("AB1"));
+        auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice, 3000);
+        vm.stopPrank();
+        {
+            (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log(deltaAfterRebalance, crAfterRebalance);
+        }
+    }
+
+    function testLeverageRebalanceWhenEthUpWhenCrTooHighAfterTrade() public {
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
+        // move prices up
+        vm.startPrank(user1);
+        IERC20(usdc).approve(address(swapRouter), 10000000e6);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: usdc,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 10000000e6,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IWETH9(weth).deposit{value: 100e18}();
+        IERC20(weth).approve(address(swapRouter), 100e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: wPowerPerp,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 100e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+            auctionBull.getCurrentDeltaAndCollatRatio();
+
+        console.log("before", deltaBeforeRebalance, crBeforeRebalance);
+
+        uint256 crabPrice = testUtil.getCrabPrice();
+        uint256 usdcDebtTarget =
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+        bool isSellingUsdc =
+            (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
+
+        assertEq(isSellingUsdc, true);
+
+        uint256 usdcAmountCorrect = (
+            usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))
+        )
+            ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
+            : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
+        uint256 usdcAmount = usdcAmountCorrect.mul(7);
+        console.log(usdcAmount, "traded usdc");
+        console.log(IEulerDToken(dToken).balanceOf(address(bullStrategy)), "debt");
+        uint256 minEthForUsdc = quoter.quoteExactOutputSingle(weth, usdc, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(minEthForUsdc);
+        vm.startPrank(auctionManager);
+        vm.expectRevert(bytes("AB2"));
+        auctionBull.leverageRebalance(!isSellingUsdc, usdcAmount, limitPrice, 3000);
+        vm.stopPrank();
+
+        {
+            (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log("after", deltaAfterRebalance, crAfterRebalance);
+        }
+    }
+
+    function testLeverageRebalanceWhenEthDownWhenCrTooLowAfterTrade() public {
+        // move prices down
+        vm.startPrank(user1);
+        IWETH9(weth).deposit{value: 10000e18}();
+        IERC20(weth).approve(address(swapRouter), 10000e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: usdc,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 10000e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IERC20(wPowerPerp).approve(address(swapRouter), 900e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: wPowerPerp,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 900e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+            auctionBull.getCurrentDeltaAndCollatRatio();
+        uint256 crabPrice = testUtil.getCrabPrice();
+        uint256 usdcDebtTarget =
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+        bool isSellingUsdc =
+            (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
+        console.log("before", deltaBeforeRebalance, crBeforeRebalance);
+
+        assertEq(isSellingUsdc, false);
+
+        uint256 usdcAmountCorrect = (
+            usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))
+        )
+            ? usdcDebtTarget.sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)))
+            : IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcDebtTarget);
+        uint256 usdcAmount = usdcAmountCorrect.mul(3);
+        uint256 maxEthForUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcAmount, 0);
+        uint256 limitPrice = usdcAmount.mul(WETH_DECIMALS_DIFF).wdiv(maxEthForUsdc);
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        vm.startPrank(auctionManager);
+        vm.expectRevert(bytes("AB2"));
+        auctionBull.leverageRebalance(!isSellingUsdc, usdcAmount, limitPrice, 3000);
+        vm.stopPrank();
+        {
+            (uint256 deltaAfterRebalance, uint256 crAfterRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+            console.log("after", deltaAfterRebalance, crAfterRebalance);
+        }
+    }
+
     function testLeverageRebalanceWhenEthUpEthLimitTooHigh() public {
         uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -3017,7 +3336,6 @@ contract AuctionBullTestFork is Test {
         vm.expectRevert(bytes("AB15"));
         auctionBull.leverageRebalance(isSellingUsdc, usdcAmount, limitPrice.wmul(1.25e18), 3000);
         vm.stopPrank();
-
     }
 
     function testLeverageRebalanceWhenEthDownEthLimitTooLow() public {
@@ -3264,6 +3582,8 @@ contract AuctionBullTestFork is Test {
             1,
             false
         );
+
+        console.log("ethUsd px", ethUsdPrice);
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
@@ -3279,7 +3599,7 @@ contract AuctionBullTestFork is Test {
         uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);
         uint256 _targetDebt =
             targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
-
+        console.log("targetCollat, target debt", targetCollateral, _targetDebt);
         return (targetCollateral, _targetDebt);
     }
 }

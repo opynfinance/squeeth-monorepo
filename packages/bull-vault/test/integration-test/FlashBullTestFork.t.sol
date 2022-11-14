@@ -40,7 +40,6 @@ contract FlashBullTestFork is Test {
     Controller internal controller;
     Quoter internal quoter;
 
-
     address internal weth;
     address internal usdc;
     address internal euler;
@@ -790,10 +789,12 @@ contract FlashBullTestFork is Test {
         uint256 usdcToBorrow,
         uint256 wSqueethToMint
     ) internal returns (uint256) {
-        uint256 minEthFromSqueeth = quoter.quoteExactInputSingle(wPowerPerp, weth, 3000, wSqueethToMint, 0);
+        uint256 minEthFromSqueeth =
+            quoter.quoteExactInputSingle(wPowerPerp, weth, 3000, wSqueethToMint, 0);
         uint256 minEthFromUsdc = quoter.quoteExactInputSingle(usdc, weth, 3000, usdcToBorrow, 0);
 
-        uint256 totalEthToBull = wethToLend.add(ethToCrab).sub(minEthFromSqueeth).sub(minEthFromUsdc).add(10e16);
+        uint256 totalEthToBull =
+            wethToLend.add(ethToCrab).sub(minEthFromSqueeth).sub(minEthFromUsdc).add(10e16);
         return totalEthToBull;
     }
 

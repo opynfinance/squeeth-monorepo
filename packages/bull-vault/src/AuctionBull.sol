@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
+
 import { console } from "forge-std/console.sol";
 
 // interface
@@ -667,8 +668,13 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
             // weth clearing price for the order
+
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
+            console.log("wethamount to pull", wethAmount);
+            console.log("balanceOf", IERC20(weth).balanceOf(_order.trader));
+
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+            console.log("made it here");
         } else {
             // trader send oSQTH and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
