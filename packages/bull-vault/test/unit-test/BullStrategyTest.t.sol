@@ -167,7 +167,13 @@ contract BullStrategyTest is Test {
     }
 
     function testUnitRedeemCrabAndWithdrawWEth() public {
-        uint256 crabToRedeem = IERC20(crabV2).balanceOf(address(bullStrategy));
+        uint256 crabToRedeem = 5e18;
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToRedeem);
+        vm.startPrank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
+        IERC20(crabV2).approve(address(bullStrategy),crabToRedeem);
+        vm.deal(0x06CECFbac34101aE41C88EbC2450f8602b3d164b, wethToLend);
+        bullStrategy.deposit{value: wethToLend}(crabToRedeem);
+        vm.stopPrank();
 
         (, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
         uint256 wPowerPerpToRedeem =
@@ -175,11 +181,11 @@ contract BullStrategyTest is Test {
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
-        vm.prank(user1);
-        IERC20(crabV2).transfer(auction, wPowerPerpToRedeem);
+        vm.prank(0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C);
+        IERC20(wPowerPerp).transfer(auction, wPowerPerpToRedeem);
 
         vm.startPrank(auction);
-        IERC20(crabV2).approve(address(bullStrategy), wPowerPerpToRedeem);
+        IERC20(wPowerPerp).approve(address(bullStrategy), wPowerPerpToRedeem);
         bullStrategy.redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
         vm.stopPrank();
 
