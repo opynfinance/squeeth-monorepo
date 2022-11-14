@@ -22,7 +22,7 @@ import { UniOracle } from "./UniOracle.sol";
 
 /**
  * @notice LeverageBull contract
- * @dev contract that interact mainly with leverage component
+ * @dev contract that interacts with leverage component (borrow and collateral on Euler)
  * @author opyn team
  */
 contract LeverageBull is Ownable {
@@ -162,7 +162,7 @@ contract LeverageBull is Ownable {
 
     /**
      * @notice deposit ETH into leverage component and borrow USDC
-     * @dev this function handle only the leverage component part
+     * @dev this function handles only the leverage component part
      * @param _ethAmount amount of ETH deposited from user
      * @param _crabAmount amount of crab token deposited
      * @param _bullShare amount of bull share minted
@@ -227,6 +227,15 @@ contract LeverageBull is Ownable {
         emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
     }
 
+    /**
+     * @dev calculate target amounts of weth collateral and usdc debt based on crab and bull state
+     * @param _crabAmount amount of crab
+     * @param _bullShare share of bull contract scaled to 1e18
+     * @param _ethInCrab ETH collateral held through crab's vault
+     * @param _squeethInCrab oSQTH debt owed through crab's vault
+     * @param _totalCrabSupply total supply of crab token
+     * @return weth to lend in Euler, usdc to borrow in Euler
+     */
     function _calcLeverageWethUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
@@ -260,7 +269,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of WETH to withdraw from Euler based on amount of share of bull token
+     * @dev calculate amount of WETH to withdraw from Euler based on share of bull token
      * @param _bullShare bull share amount
      * @return WETH to withdraw
      */
@@ -269,7 +278,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
+     * @dev calculate amount of USDC debt to to repay to Euler based on share of bull token
      * @param _bullShare bull share amount
      * @return USDC to repay
      */
@@ -277,6 +286,10 @@ contract LeverageBull is Ownable {
         return _bullShare.wmul(IEulerDToken(dToken).balanceOf(address(this)));
     }
 
+    /**
+     * @dev is caller auction contract
+     * @return true if caller is auction contract
+     */
     function _isAuction() internal view returns (bool) {
         return msg.sender == auction;
     }
