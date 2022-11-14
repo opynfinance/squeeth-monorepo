@@ -63,17 +63,8 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 100e6;
         netting.netAtPrice(price, quantity); // net for 100 USD where 1 crab is 10 USD, so 10 crab
-        assertApproxEqAbs(
-            usdc.balanceOf(withdrawer),
-            quantity,
-            1,
-            "withdrawer did not get their usdc"
-        );
-        assertEq(
-            crab.balanceOf(depositor),
-            (quantity * 1e18) / price,
-            "depositor did not get their crab"
-        );
+        assertApproxEqAbs(usdc.balanceOf(withdrawer), quantity, 1, "withdrawer did not get their usdc");
+        assertEq(crab.balanceOf(depositor), (quantity * 1e18) / price, "depositor did not get their crab");
     }
 
     function testNettingWithMultipleDeposits() public {
@@ -82,17 +73,8 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 200e6;
         netting.netAtPrice(price, quantity); // net for 200 USD where 1 crab is 10 USD, so 20 crab
-        assertApproxEqAbs(
-            usdc.balanceOf(withdrawer),
-            quantity,
-            1,
-            "withdrawer did not get their usdc"
-        );
-        assertEq(
-            crab.balanceOf(depositor),
-            (quantity * 1e18) / price,
-            "depositor did not get their crab"
-        );
+        assertApproxEqAbs(usdc.balanceOf(withdrawer), quantity, 1, "withdrawer did not get their usdc");
+        assertEq(crab.balanceOf(depositor), (quantity * 1e18) / price, "depositor did not get their crab");
     }
 
     function testNettingWithPartialReceipt() public {
@@ -101,17 +83,9 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 30e6;
         netting.netAtPrice(price, quantity); // 20 from first desposit and 10 from second (partial)
-        assertEq(
-            netting.depositsQueued(),
-            170e6,
-            "receipts were not updated correctly"
-        );
+        assertEq(netting.depositsQueued(), 170e6, "receipts were not updated correctly");
         netting.netAtPrice(price, 170e6);
-        assertEq(
-            crab.balanceOf(depositor),
-            (200e6 * 1e18) / price,
-            "depositor got their crab"
-        );
+        assertEq(crab.balanceOf(depositor), (200e6 * 1e18) / price, "depositor got their crab");
     }
 
     function testNettingAfterWithdraw() public {
@@ -123,11 +97,7 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 200e6 - withdrawQuantity;
         netting.netAtPrice(price, quantity);
-        assertEq(
-            crab.balanceOf(depositor),
-            (quantity * 1e18) / price,
-            "depositor got their crab"
-        );
+        assertEq(crab.balanceOf(depositor), (quantity * 1e18) / price, "depositor got their crab");
     }
 
     function testNettingAfterARun() public {
@@ -141,11 +111,7 @@ contract NettingTest is BaseForkSetup {
         vm.prank(withdrawer);
         netting.dequeueCrab(20e18 - (quantity * 1e18) / price);
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
-        assertEq(
-            netting.crabBalance(withdrawer),
-            0,
-            "crab balance not zero after first netting"
-        );
+        assertEq(netting.crabBalance(withdrawer), 0, "crab balance not zero after first netting");
 
         // queue more
         vm.startPrank(depositor);
@@ -153,11 +119,7 @@ contract NettingTest is BaseForkSetup {
         netting.depositUSDC(20 * 1e6);
         netting.depositUSDC(100 * 1e6);
         netting.depositUSDC(80 * 1e6);
-        assertEq(
-            netting.usdBalance(depositor),
-            200e6,
-            "usd balance not reflecting correctly"
-        );
+        assertEq(netting.usdBalance(depositor), 200e6, "usd balance not reflecting correctly");
         vm.stopPrank();
 
         console.log("no issues till here 2");
@@ -166,27 +128,14 @@ contract NettingTest is BaseForkSetup {
         netting.queueCrabForWithdrawal(5 * 1e18);
         netting.queueCrabForWithdrawal(4 * 1e18);
         netting.queueCrabForWithdrawal(11 * 1e18);
-        assertEq(
-            netting.crabBalance(withdrawer),
-            20e18,
-            "crab balance not reflecting correctly"
-        );
+        assertEq(netting.crabBalance(withdrawer), 20e18, "crab balance not reflecting correctly");
         vm.stopPrank();
 
         console.log("no issues till here 3");
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         console.log("no issues till here 4");
-        assertApproxEqAbs(
-            usdc.balanceOf(withdrawer),
-            400e6,
-            2,
-            "witadrawer got their usdc"
-        );
-        assertEq(
-            crab.balanceOf(depositor),
-            (400e6 * 1e18) / price,
-            "depositor got their crab"
-        );
+        assertApproxEqAbs(usdc.balanceOf(withdrawer), 400e6, 2, "witadrawer got their usdc");
+        assertEq(crab.balanceOf(depositor), (400e6 * 1e18) / price, "depositor got their crab");
     }
 
     function testCannotWithdrawMoreThanDeposited() public {

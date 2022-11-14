@@ -20,11 +20,9 @@ contract BaseSetup is Test {
     FixedERC20 weth;
     FixedERC20 sqth;
     CrabNetting netting;
-    ISwapRouter public immutable swapRouter =
-        ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
+    ISwapRouter public immutable swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
 
-    IOracle public immutable oracle =
-        IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
+    IOracle public immutable oracle = IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
 
     uint256 internal ownerPrivateKey;
     address internal owner;
