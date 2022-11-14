@@ -319,11 +319,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 })
             );
 
-            _pushFundsFromOrder(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
         } else {
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
-            _pushFundsFromOrder(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
 
             _executeLeverageComponentRebalancing(
                 ExecuteLeverageComponentRebalancingParams({
@@ -448,7 +448,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
      */
 
-    function _pushFundsFromOrder(
+    function _pushFundsFromOrders(
         Order[] memory _orders,
         uint256 remainingAmount,
         uint256 _clearingPrice,
