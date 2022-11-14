@@ -26,6 +26,8 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS6: invalid shutdownContract address set
  * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  * BS8: Caller is not auction address
+ * BS9: deposited amount less than minimum
+ * BS10: remaining amount of bull token should be more than minimum or zero
  */
 
 /**
@@ -127,6 +129,7 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function deposit(uint256 _crabAmount) external payable {
         require(!IController(powerTokenController).isShutDown(), "BS7");
+
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
@@ -140,6 +143,8 @@ contract BullStrategy is ERC20, LeverageBull {
             bullToMint = share.wmul(totalSupply()).wdiv(ONE.sub(share));
             _mint(msg.sender, bullToMint);
         }
+
+        require(totalSupply() > 1e14, "BS9");
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
@@ -160,6 +165,7 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function withdraw(uint256 _bullAmount) external {
         require(!IController(powerTokenController).isShutDown(), "BS7");
+
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
@@ -169,6 +175,8 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
+
+        require(totalSupply() == 0 || totalSupply() > 1e14, "BS10");
 
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
