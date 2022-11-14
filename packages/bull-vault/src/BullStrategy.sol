@@ -175,7 +175,7 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
         _burn(msg.sender, _bullAmount);
 
-        require(totalSupply() = 0 || totalSupply() > 1e14, "BS10");
+        require(totalSupply() == 0 || totalSupply() > 1e14, "BS10");
 
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
