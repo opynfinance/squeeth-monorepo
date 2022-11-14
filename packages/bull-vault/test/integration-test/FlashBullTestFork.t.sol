@@ -181,6 +181,61 @@ contract FlashBullTestFork is Test {
         assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
+    function testFlashDepositWithFee() public {
+        vm.startPrank(address(controller.owner()));
+        controller.setFeeRecipient(address(controller.owner()));
+        controller.setFeeRate(100);
+        vm.stopPrank();
+        assertEq(controller.feeRecipient(), address(controller.owner()));
+        assertEq(controller.feeRate(), 100);
+
+        uint256 ethToCrab = 5e18;
+        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        (uint256 wSqueethToMint, uint256 fee) =
+            _calcWsqueethToMintAndFee(ethToCrab, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted =
+            _calcSharesToMint(ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
+            crabToBeMinted, 1e18, ethInCrab, squeethInCrab, crabV2.totalSupply()
+        );
+
+        uint256 totalEthToBull =
+            calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
+
+        uint256 minEthFromSqueeth;
+        uint256 minEthFromUsdc;
+        {
+            uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+            uint256 squeethEthPrice =
+                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+            minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
+            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+        }
+
+        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
+
+        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
+            ethToCrab: ethToCrab,
+            minEthFromSqth: minEthFromSqueeth,
+            minEthFromUsdc: minEthFromUsdc,
+            wPowerPerpPoolFee: uint24(3000),
+            usdcPoolFee: uint24(3000)
+        });
+
+        vm.startPrank(user1);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
+        vm.stopPrank();
+
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertApproxEqAbs(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
+        );
+        assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
+        assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+    }
+
     function testFlashDepositWithHugeSqthSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();

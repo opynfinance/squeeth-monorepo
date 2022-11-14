@@ -222,6 +222,18 @@ contract AuctionBullTestFork is Test {
         assertEq(auctionBull.auctionManager(), address(owner));
     }
 
+    function testSetAuctionToZeroAddress() public {
+        vm.prank(address(owner));
+        vm.expectRevert(bytes("LB2"));
+        bullStrategy.setAuction(address(0));
+    }
+
+    function testSetAuction() public {
+        vm.prank(address(owner));
+        bullStrategy.setAuction(address(usdc));
+        assertEq(bullStrategy.auction(), address(usdc));
+    }
+
     function testSetCrUpperLessThanLower() public {
         vm.prank(owner);
         vm.expectRevert(bytes("AB3"));
