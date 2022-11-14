@@ -16,6 +16,7 @@ import { UniFlash } from "./UniFlash.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { Address } from "openzeppelin/utils/Address.sol";
 import { UniOracle } from "./UniOracle.sol";
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * @notice FlashBull contract
@@ -130,6 +131,7 @@ contract FlashBull is UniFlash {
         uint256 squeethInCrab;
         {
             (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
+            
             uint256 ethFee;
             (wSqueethToMint, ethFee) =
                 _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab);
