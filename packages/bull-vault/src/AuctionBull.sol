@@ -160,9 +160,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
 
-    event TransferToOrder(uint256 from, uint256 quanity, uint256 clearingPrice);
+    event TransferToOrder(address trader, uint256 quanity, uint256 clearingPrice);
 
-    event TransferFromOrder(uint256 from, uint256 quanity, uint256 clearingPrice);
+    event TransferFromOrder(address trader, uint256 quanity, uint256 clearingPrice);
 
     constructor(
         address _auctionOwner,
@@ -689,7 +689,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
         }
-        emit TransferToOrder(_order.from, _order.quanity, _order.clearingPrice);
+        emit TransferToOrder(_order.trader, _order.quantity, _clearingPrice);
     }
 
     /**
@@ -717,7 +717,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // trader send oSQTH and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
         }
-        emit TransferFromOrder(_order.from, _order.quantity, _order.clearingPrice);
+        emit TransferFromOrder(_order.trader, _order.quantity, _clearingPrice);
     }
 
     /**
