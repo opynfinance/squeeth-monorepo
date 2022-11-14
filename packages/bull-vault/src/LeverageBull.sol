@@ -143,7 +143,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
+     * @notice calculate amount of USDC debt to to repay to Euler based on amount of share of bull token
      * @param _bullShare bull share amount
      * @return USDC to repay
      */
@@ -152,7 +152,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of ETH collateral to withdraw to Euler based on amount of share of bull token
+     * @notice calculate amount of ETH collateral to withdraw to Euler based on amount of share of bull token
      * @param _bullShare bull share amount
      * @return WETH to withdraw
      */
@@ -192,7 +192,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev deposit weth as collateral in Euler market
+     * @notice deposit weth as collateral in Euler market
      * @param _ethToDeposit amount of ETH to deposit
      * @param _wrapEth wrap ETH to WETH if true
      */
@@ -203,7 +203,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev borrow USDC from Euler against deposited collateral
+     * @notice borrow USDC from Euler against deposited collateral
      * @param _usdcToBorrow amount of USDC to borrow
      */
     function _borrowUsdcFromEuler(uint256 _usdcToBorrow) internal {
@@ -211,7 +211,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
+     * @notice repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
     function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
@@ -228,7 +228,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate target amounts of weth collateral and usdc debt based on crab and bull state
+     * @notice calculate target amounts of weth collateral and usdc debt based on crab and bull state
      * @param _crabAmount amount of crab
      * @param _bullShare share of bull contract scaled to 1e18
      * @param _ethInCrab ETH collateral held through crab's vault
@@ -269,7 +269,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of WETH to withdraw from Euler based on share of bull token
+     * @notice calculate amount of WETH to withdraw from Euler based on share of bull token
      * @param _bullShare bull share amount
      * @return WETH to withdraw
      */
@@ -278,7 +278,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev calculate amount of USDC debt to to repay to Euler based on share of bull token
+     * @notice calculate amount of USDC debt to to repay to Euler based on share of bull token
      * @param _bullShare bull share amount
      * @return USDC to repay
      */
@@ -287,7 +287,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @dev is caller auction contract
+     * @notice is caller auction contract
      * @return true if caller is auction contract
      */
     function _isAuction() internal view returns (bool) {

@@ -17,7 +17,7 @@ import { SafeMath } from "openzeppelin/math/SafeMath.sol";
 
 /**
  * @notice UniFlash contract
- * @dev contract that interact with Uniswap pool
+ * @dev contract that interacts with Uniswap pool
  * @author opyn team
  */
 abstract contract UniFlash is IUniswapV3SwapCallback {
@@ -176,7 +176,7 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      * @notice internal function for exact-in swap on uniswap (specify exact amount to pay)
      * @param _amountIn amount of token to pay
      * @param _recipient recipient for receive
-     * @param _sqrtPriceLimitX96 price limit
+     * @param _sqrtPriceLimitX96 sqrt price limit
      * @return amount of token bought (amountOut)
      */
     function _exactInputInternal(
