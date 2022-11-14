@@ -399,6 +399,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
+     * @notice allows an order to be cancelled by marking its nonce used for a given msg.sender
+     * @param _nonce the nonce to mark as used
+     */
+    function useNonce(uint256 _nonce) external {
+        _useNonce(msg.sender, _nonce);
+    }
+
+    /**
      * @notice pulls funds from trader of auction orders (weth or wPowerPerp) depending on the direction of trade
      * @param _orders list of orders
      * @param remainingAmount amount of wPowerPerp to trade
@@ -616,7 +624,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_remainingAmount < _order.quantity) {
             _order.quantity = _remainingAmount;
         }
-
         if (_order.isBuying) {
             // trader sent weth and receives oSQTH
             IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
@@ -641,6 +648,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_order.isBuying) {
             // trader sends weth and receives oSQTH
             // weth clearing price for the order
+
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
         } else {
@@ -803,7 +811,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         require(
             (_wethLimitPrice >= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance))))
-                || (_wethLimitPrice <= ethUsdPrice.wmul((ONE.sub(rebalanceWethLimitPriceTolerance)))),
+                && (_wethLimitPrice <= ethUsdPrice.wmul((ONE.add(rebalanceWethLimitPriceTolerance)))),
             "AB15"
         );
     }
