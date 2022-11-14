@@ -131,9 +131,8 @@ contract FlashBull is UniFlash {
         {
             (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
             uint256 ethFee;
-            (wSqueethToMint, ethFee) = _calcWsqueethToMintAndFee(
-                _params.ethToCrab, squeethInCrab, ethInCrab
-            );
+            (wSqueethToMint, ethFee) =
+                _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab);
             crabAmount = _calcSharesToMint(
                 _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
             );
@@ -339,5 +338,4 @@ contract FlashBull is UniFlash {
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }
-
 }
