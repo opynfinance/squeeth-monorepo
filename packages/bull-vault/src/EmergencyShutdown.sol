@@ -4,16 +4,16 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-import { IUniswapV3Pool } from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
-import { IBullStrategy } from "./interface/IBullStrategy.sol";
+import {IController} from "squeeth-monorepo/interfaces/IController.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
+import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
+import {IBullStrategy} from "./interface/IBullStrategy.sol";
 // contract
-import { UniFlash } from "./UniFlash.sol";
-import { Ownable } from "openzeppelin/access/Ownable.sol";
+import {UniFlash} from "./UniFlash.sol";
+import {Ownable} from "openzeppelin/access/Ownable.sol";
 //lib
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 
 /**
  * Error codes
@@ -34,7 +34,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     /// @dev enum to differentiate between Uniswap swap callback function source
 
-    enum FLASH_SOURCE { SHUTDOWN }
+    enum FLASH_SOURCE {SHUTDOWN}
 
     struct ShutdownParams {
         uint256 shareToUnwind;
@@ -81,13 +81,10 @@ contract EmergencyShutdown is UniFlash, Ownable {
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {
-            (uint256 usdcToRepay, uint256 shareToUnwind) =
-                abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+            (uint256 usdcToRepay, uint256 shareToUnwind) = abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
             IERC20(usdc).approve(bullStrategy, usdcToRepay);
-            IBullStrategy(bullStrategy).shutdownRepayAndWithdraw(
-                _uniFlashSwapData.amountToPay, shareToUnwind
-            );
+            IBullStrategy(bullStrategy).shutdownRepayAndWithdraw(_uniFlashSwapData.amountToPay, shareToUnwind);
 
             // repay the weth flash swap
             IWETH9(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
