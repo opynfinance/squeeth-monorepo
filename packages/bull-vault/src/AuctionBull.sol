@@ -21,10 +21,10 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
 /**
  * Error code
  * AB0: caller is not auction manager
- * AB1: Invalid delta after rebalance
- * AB2: Invalid CR after rebalance
- * AB3: Invalid CR lower and upper values
- * AB4: Invalid delta lower and upper values
+ * AB1: invalid delta after rebalance
+ * AB2: invalid CR after rebalance
+ * AB3: invalid CR lower and upper values
+ * AB4: invalid delta lower and upper values
  * AB5: invalid clearing price
  * AB6: order is not taking the other side of the trade
  * AB7: current order price smaller than previous order price
@@ -37,9 +37,9 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB14: clearning price tolerance is too high
  * AB15: ETH limit price is out of tolerance range
  * AB16: WETH limit price tolerance is too high
- * AB17: Price too low relative to Uniswap twap
- * AB18: Price too high relative to Uniswap twap
- * AB19: Auction manager can not be 0 address
+ * AB17: price too low relative to Uniswap twap
+ * AB18: price too high relative to Uniswap twap
+ * AB19: auction manager can not be 0 address
  */
 
 /**
@@ -90,7 +90,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     uint256 public crLower;
     /// @dev full rebalance clearing price must be within this distance of the oSQTH:eth uniswap twap price
     uint256 public fullRebalanceClearingPriceTolerance = 5e16; // 5%
-    /// @dev full rebalance weth limit price must be within this distance of the eth:usd uniswap twap price
+    /// @dev full rebalance WETH limit price must be within this distance of the eth:usd uniswap twap price
     uint256 public rebalanceWethLimitPriceTolerance = 5e16; // 5%
 
     /// @dev auction manager
@@ -143,6 +143,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 oldDeltaLower, uint256 oldDeltaUpper, uint256 newDeltaLower, uint256 newDeltaUpper
     );
     event LeverageRebalance(bool isSellingUsdc, uint256 usdcAmount, uint256 wethLimitAmount);
+
+    event FullRebalance(crabAmount, clearingPrice);
+
     event SetFullRebalanceClearingPriceTolerance(
         uint256 _oldPriceTolerance, uint256 _newPriceTolerance
     );
@@ -202,14 +205,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a clearing sale price to the current uniswap twap price
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum tolerance between a clearing sale price and the current uniswap twap price
      * @param _fullRebalancePriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
     function setFullRebalanceClearingPriceTolerance(uint256 _fullRebalancePriceTolerance)
         external
         onlyOwner
     {
-        // Tolerance cannot be more than 20%
+        // tolerance cannot be more than 20%
         require(_fullRebalancePriceTolerance <= MAX_FULL_REBALANCE_CLEARING_PRICE_TOLERANCE, "AB14");
 
         emit SetFullRebalanceClearingPriceTolerance(
@@ -220,14 +223,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum discount of a WETH limit price to the current uniswap twap price
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum tolerance between a WETH limit price and the current uniswap twap price
      * @param _rebalanceWethLimitPriceTolerance the WETH limit price tolerance, in percent, scaled by 1e18
      */
     function setRebalanceWethLimitPriceTolerance(uint256 _rebalanceWethLimitPriceTolerance)
         external
         onlyOwner
     {
-        // Tolerance cannot be more than 20%
+        // tolerance cannot be more than 20%
         require(
             _rebalanceWethLimitPriceTolerance <= MAX_REBALANCE_WETH_LIMIT_PRICE_TOLERANCE, "AB16"
         );
@@ -240,10 +243,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice set strategy lower and upper collat ratio
+     * @notice set strategy lower and upper collateral ratio
      * @dev should only be callable by owner
-     * @param _crLower lower CR
-     * @param _crUpper upper CR
+     * @param _crLower lower CR scaled by 1e18
+     * @param _crUpper upper CR scaled by 1e18
      */
     function setCrUpperAndLower(uint256 _crLower, uint256 _crUpper) external onlyOwner {
         require(_crUpper > _crLower, "AB3");
@@ -255,10 +258,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice set strategy lower and upper delta
+     * @notice set strategy lower and upper delta to ETH price
      * @dev should only be callable by owner
-     * @param _deltaLower lower delta
-     * @param _deltaUpper upper delta
+     * @param _deltaLower lower delta scaled by 1e18
+     * @param _deltaUpper upper delta scaled by 1e18
      */
     function setDeltaUpperAndLower(uint256 _deltaLower, uint256 _deltaUpper) external onlyOwner {
         require(_deltaUpper > _deltaLower, "AB4");
@@ -270,13 +273,13 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @dev hedge function to reduce delta using an array of signed orders
+     * @dev hedge function to rebalance delta and collateral ratio of strategy using an array of signed orders
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
-     * @param _clearingPrice clearing price in weth
+     * @param _clearingPrice clearing price in WETH per oSQTH
      * @param _wethTargetInEuler target WETH collateral amount in leverage component
-     * @param _wethLimitPrice limit price for weth/usdc trade
-     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
+     * @param _wethLimitPrice limit price for WETH/USDC trade
+     * @param _isDepositingInCrab true if the rebalance will deposit into crab, false if withdrawing funds from crab
      */
     function fullRebalance(
         Order[] memory _orders,
@@ -293,11 +296,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
+        // get current crab vault state
         (uint256 ethInCrab, uint256 squeethInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
+        // total amount of oSQTH to trade given crab amount
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
             _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
         );
+
         if (_isDepositingInCrab) {
             // loop through orders, check each order validity
             // pull funds from orders
@@ -318,7 +324,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                         require(currentPrice >= prevPrice, "AB7");
                     }
                     prevPrice = currentPrice;
-
+                    // transfer payment from trader to contract
                     _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
 
                     if (remainingAmount > _orders[i].quantity) {
@@ -330,12 +336,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             }
 
             /**
-             * if auction depositing into crab:
-             * - calc amount of ETH needed to deposit into crab and get crabAmount
-             * - if target WETH to have in euler greater than current amount in euler, borrow USDC to buy more WETH and deposit in euler
-             * - if target WETH to have in euler less than current amount in euler, remove WETH from euler
-             * - deposit into crab, and pay auction traders wPowerPerp
-             */
+            * if auction is depositing into crab:
+            * - if target WETH to have in Euler is greater than current amount in Euler, borrow USDC to buy more WETH and deposit in Euler
+            * - if target WETH to have in Euler is less than current amount in Euler, remove WETH from Euler
+            * - deposit into crab, pay auction traders wPowerPerp
+            */
             _executeCrabDeposit(
                 ExecuteCrabDepositParams({
                     crabAmount: _crabAmount,
@@ -377,7 +382,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                         require(currentPrice >= prevPrice, "AB7");
                     }
                     prevPrice = currentPrice;
-
+                    // transfer from order to contract
                     _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
 
                     if (remainingAmount > _orders[i].quantity) {
@@ -388,9 +393,16 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
 
+            /**
+            * if auction is withdrawing from crab:
+            * - redeem crab, proving wPowerPerpAmount from auction to repay debt
+            * - and pay auction traders weth
+            * - rebalance bull delta and collateral ratio
+            */
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
             {
+                // send weth to auction participants
                 uint256 remainingAmount = wPowerPerpAmount;
                 uint256 ordersLength = _orders.length;
                 for (uint256 i; i < ordersLength; ++i) {
@@ -403,6 +415,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 }
             }
 
+            // rebalance bull strategy delta 
             _executeLeverageComponentRebalancing(
                 ExecuteLeverageComponentRebalancingParams({
                     wethTargetInEuler: _wethTargetInEuler,
@@ -412,16 +425,19 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             );
         }
 
+        // check that rebalance does not breach collateral ratio or delta tolerance
         _isValidRebalance();
-        //emit event
+
+        emit FullRebalance(_crabAmount, _clearingPrice);
+
     }
 
     /**
-     * @notice changes the leverage component composition by increasing or decreasing USDC debt
-     * @dev should only be called by auction manager
-     * @param _isSellingUsdc true if startegy is selling USDC, false if not
+     * @notice changes the strategy eth delta by increasing or decreasing USDC debt
+     * @dev can only be called by auction manager
+     * @param _isSellingUsdc true if strategy is selling USDC
      * @param _usdcAmount USDC amount to trade
-     * @param _wethLimitPrice WETHUSDC limit price, scaled 1e18 units
+     * @param _wethLimitPrice WETH/USDC limit price, scaled 1e18 units
      * @param _poolFee USDC/WETH pool fee
      */
     function leverageRebalance(
@@ -469,21 +485,31 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice get current delta and bull CR ration in Euler
-     * @return delta and CR ratio
+     * @notice get current delta and bull collateral ratio 
+     * @return delta and collateral ratio
      */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
         return _getCurrentDeltaAndCollatRatio();
     }
 
+    /**
+     * @notice execute crab deposit 
+     * @param _params ExecuteCrabDepositParams struct
+     */
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
+        // total eth needed for this crab deposit
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
+        // additional eth needed 
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
+        // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > wethInCollateral) {
+            // crab deposit eth + collateral shortfall
             uint256 wethToGet =
                 _params.wethTargetInEuler.sub(wethInCollateral).add(ethNeededForCrab);
+            // sell USDC to buy WETH 
+
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -496,8 +522,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 )
             );
         } else {
+            // WETH to take out of Euler
             uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
+            // crab deposit eth - excess collateral
             uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
+            // sell USDC to buy WETH
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -590,12 +619,17 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
     }
 
+     /** 
+     * @notice rebalance bull strategy delta by borrowing or repaying USDC 
+     * @param _params ExecuteLeverageComponentRebalancingParams struct 
+     */
     function _executeLeverageComponentRebalancing(
         ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
         uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
+            // borrow more USDC to buy WETH
             uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
             _exactOutFlashSwap(
                 usdc,
@@ -608,6 +642,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             );
         } else {
             uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_params.wethTargetInEuler);
+            // repay USDC debt from WETH
             _exactInFlashSwap(
                 weth,
                 usdc,
@@ -620,6 +655,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
     }
 
+     /** 
+     * @notice transfer payment to auction participant from contract
+     * @param _order Order struct 
+     * @param _remainingAmount remaining amount to be transfered 
+     * @param _clearingPrice clearing price in WETH/oSQTH determined at auction
+     */
     function _transferToOrder(Order memory _order, uint256 _remainingAmount, uint256 _clearingPrice)
         internal
     {
@@ -629,16 +670,22 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
 
         if (_order.isBuying) {
-            // trader sent weth and receives oSQTH
+            // trader sent WETH and receives oSQTH
             IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
         } else {
             // trader sent oSQTH and receives WETH
-            // weth clearing price for the order
+            // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
         }
     }
 
+    /**
+     * @notice transfer payment from auction participant to contract
+     * @param _order Order struct 
+     * @param _remainingAmount remaining amount to be transfered 
+     * @param _clearingPrice clearing price in WETH/oSQTH determined at auction
+     */
     function _transferFromOrder(
         Order memory _order,
         uint256 _remainingAmount,
@@ -650,8 +697,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
 
         if (_order.isBuying) {
-            // trader sends weth and receives oSQTH
-            // weth clearing price for the order
+            // trader sends WETH and receives oSQTH
+            // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
         } else {
@@ -660,6 +707,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
     }
 
+    /**
+     * @notice verify that an auction order is valid
+     * @param _order Order struct 
+     * @param _clearingPrice clearing price in WETH/oSQTH 
+     * @param _isDepositingInCrab true if rebalance is depositing into crab
+     */
     function _verifyOrder(Order memory _order, uint256 _clearingPrice, bool _isDepositingInCrab)
         internal
     {
@@ -703,7 +756,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice check if startegy delta and CR ratio is within upper and lower values
+     * @notice check if strategy delta and collateral is within tolerance
      */
     function _isValidRebalance() internal view {
         (uint256 delta, uint256 cr) = _getCurrentDeltaAndCollatRatio();
@@ -712,6 +765,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         require(cr <= crUpper && cr >= crLower, "AB2");
     }
 
+    /**
+     * @dev calculate amount of wPowerPerp associated with a crab deposit or withdrawal
+     * @param _isDepositingInCrab true if depositing into crab
+     * @param _crabAmount amount of crab to deposit/withdraw
+     * @param _ethInCrab amount of eth collateral owned by crab strategy
+     * @param _squeethInCrab amount of squeeth debt owed by crab strategy
+     * @return wPowerPerpAmount
+     */
     function _calcWPowerPerpAmountFromCrab(
         bool _isDepositingInCrab,
         uint256 _crabAmount,
@@ -732,8 +793,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice get current bull startegy delta and leverage collat ratio
-     * @return delta and CR ratio
+     * @notice get current bull strategy delta and collateral ratio
+     * @return delta and collateral ratio
      */
     function _getCurrentDeltaAndCollatRatio() internal view returns (uint256, uint256) {
         (uint256 ethInCrab, uint256 squeethInCrab) =
@@ -760,6 +821,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
     /**
      * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     * @param _depositedEthAmount amount of ETH deposited 
+     * @param _strategyDebtAmount amount of wPowerperp debt in strategy vault before deposit
+     * @param _strategyCollateralAmount amount of ETH collatal in strategy vault before deposit
+     * @return amount of wSqueeth to mint and fee
      */
     function _calcWsqueethToMintAndFee(
         uint256 _depositedEthAmount,
@@ -809,7 +874,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _wethLimitPrice WETH limit price provided by manager
      */
     function _checkRebalanceLimitPrice(uint256 _wethLimitPrice) internal view {
-        // Get twap
+        // get twaps to check price within tolerance
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
 
         require(
