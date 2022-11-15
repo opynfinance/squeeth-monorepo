@@ -1,0 +1,87 @@
+on: [push]
+
+name: Bull-Vault
+
+env:
+  FORK_URL: ${{secrets.FORK_URL}}    
+
+jobs:
+  check-bull-vault:
+    name: formatting check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run fmt check
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  build-bull-vault:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build
+        run: cd packages/bull-vault && forge build
+
+  test-bull-vault:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run tests
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
+
+  fuzzing-bull-vault:
+    name: fuzz tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run fuzz testing
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
+        
+  coverage-bull-vault:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run coverage
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
