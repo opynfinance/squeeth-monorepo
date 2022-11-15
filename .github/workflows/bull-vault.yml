@@ -24,6 +24,7 @@ jobs:
 
   build-bull-vault:
     name: build
+    needs: check-bull-vault
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -40,6 +41,7 @@ jobs:
 
   test-bull-vault:
     name: tests
+    needs: build-bull-vault
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -56,6 +58,7 @@ jobs:
 
   fuzzing-bull-vault:
     name: fuzz tests
+    needs: build-bull-vault
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -72,6 +75,7 @@ jobs:
         
   coverage-bull-vault:
     name: coverage
+    needs: test-bull-vault
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
