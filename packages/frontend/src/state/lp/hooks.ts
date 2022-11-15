@@ -65,7 +65,7 @@ export const useCalculateMintAndLPDeposits = () => {
     ) => {
       const result = {
         ethInVault: new BigNumber(0),
-        effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT (if enabled)
+        effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT value (if enabled)
         ethInLP: new BigNumber(0),
         oSQTHToMint: new BigNumber(0),
       }
@@ -76,14 +76,12 @@ export const useCalculateMintAndLPDeposits = () => {
       }
 
       const { lowerTick, upperTick, tick } = ticks
-
       const collatRatio = collatRatioPercent.div(100)
+      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
       let start = new BigNumber(0)
       let end = new BigNumber(ethDeposit)
       const targetDeviation = new BigNumber(0.05)
-      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-
       let pastDeviation = new BigNumber(Number.POSITIVE_INFINITY)
 
       while (start.lte(end)) {
@@ -92,26 +90,17 @@ export const useCalculateMintAndLPDeposits = () => {
         if (!oSQTHToMint) return null
 
         const oSQTHInETH = oSQTHToMint.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
-
         const effectiveCollateralInVault = collatRatio.times(
           oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE),
         )
+
         const ethInVault = usingUniswapLPNFTAsCollat
           ? effectiveCollateralInVault.minus(ethInLP).minus(oSQTHInETH)
           : effectiveCollateralInVault
         const ethInVaultPos = BigNumber.max(ethInVault, 0)
 
-        const ethUsed = ethInVaultPos.plus(ethInLP)
-        const currentDeviation = ethDeposit.minus(ethUsed)
-
-        console.log({
-          ethInLP: ethInLP.toFixed(2),
-          ethInVault: ethInVault.toFixed(2),
-          ethInVaultPos: ethInVaultPos.toFixed(2),
-          oSQTHToMint: oSQTHToMint.toFixed(2),
-          effectiveCollateralInVault: effectiveCollateralInVault.toFixed(2),
-          currentDeviation: currentDeviation.toFixed(2),
-        })
+        const ethConsumed = ethInVaultPos.plus(ethInLP)
+        const currentDeviation = ethDeposit.minus(ethConsumed)
 
         if (pastDeviation.eq(currentDeviation)) {
           break
