@@ -8,14 +8,10 @@ import { console } from "forge-std/console.sol";
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
-import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import { TestUtil } from "../util/TestUtil.t.sol";
 import { LeverageBull } from "../../src/LeverageBull.sol";
-import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -28,8 +24,6 @@ import { UniOracle } from "../../src/UniOracle.sol";
 contract LeverageBullTestFork is Test {
     using StrategyMath for uint256;
 
-    TestUtil internal testUtil;
-    CrabStrategyV2 internal crabV2;
     Controller internal controller;
     LeverageBull internal leverageBull;
 
@@ -37,17 +31,15 @@ contract LeverageBullTestFork is Test {
     uint256 internal deployerPk;
     uint256 internal auctionPk;
 
-    address internal auction;
-    address internal deployer;
     address internal leverageOwner;
+    address internal deployer;
+    address internal auction;
 
     address internal weth;
     address internal usdc;
     address internal euler;
     address internal eulerMarketsModule;
     address internal eToken;
-    address internal dToken;
-    address internal wPowerPerp;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -65,14 +57,10 @@ contract LeverageBullTestFork is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         leverageBull =
-        new LeverageBull(leverageOwner, euler, eulerMarketsModule, address(controller));
+            new LeverageBull(leverageOwner, euler, eulerMarketsModule, address(controller));
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
-        dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
-        wPowerPerp = controller.wPowerPerp();
-        // testUtil =
-        // new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
         vm.stopPrank();
 
         vm.prank(leverageOwner);
@@ -84,12 +72,6 @@ contract LeverageBullTestFork is Test {
         vm.label(eulerMarketsModule, "EulerMarkets");
         vm.label(usdc, "USDC");
         vm.label(weth, "WETH");
-        vm.label(wPowerPerp, "oSQTH");
-        vm.label(address(crabV2), "crabV2");
-
-        // some WETH and USDC rich address
-        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(weth).transfer(auction, 10000e18);
     }
 
     function testFuzzingDepositAndWithdrawFullBalanceOfUnderlying(uint256 _wethToDeposit) public {
@@ -107,13 +89,12 @@ contract LeverageBullTestFork is Test {
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
-        uint256 balanceOfUnderlying = IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+        uint256 balanceOfUnderlying =
+            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
         uint256 wethBalanceBefore = IERC20(weth).balanceOf(auction);
 
         // balanceOfUnderlying is rounded down after deposit, 2wei delta sometimes
-        assertApproxEqAbs(
-            balanceOfUnderlying, _wethToDeposit, 2
-        );
+        assertApproxEqAbs(balanceOfUnderlying, _wethToDeposit, 2);
 
         vm.prank(auction);
         leverageBull.auctionRepayAndWithdrawFromLeverage(0, balanceOfUnderlying);
@@ -125,7 +106,10 @@ contract LeverageBullTestFork is Test {
         assertEq(wethBalanceAfter.sub(wethBalanceBefore), balanceOfUnderlying);
     }
 
-    function testFuzzingDepositAndWithdrawPartialBalanceOfUnderlying(uint256 _wethToDeposit, uint256 _percentage) public {
+    function testFuzzingDepositAndWithdrawPartialBalanceOfUnderlying(
+        uint256 _wethToDeposit,
+        uint256 _percentage
+    ) public {
         _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
         _percentage = bound(_percentage, 0, 100);
 
@@ -141,14 +125,13 @@ contract LeverageBullTestFork is Test {
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
-        uint256 balanceOfUnderlying = IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+        uint256 balanceOfUnderlying =
+            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
         uint256 wethBalanceBefore = IERC20(weth).balanceOf(auction);
         uint256 balanceOfUnderlyingToWithdraw = balanceOfUnderlying.mul(_percentage).div(100);
 
         // balanceOfUnderlying is rounded down after deposit, 2wei delta sometimes
-        assertApproxEqAbs(
-            balanceOfUnderlying, _wethToDeposit, 2
-        );
+        assertApproxEqAbs(balanceOfUnderlying, _wethToDeposit, 2);
 
         vm.prank(auction);
         leverageBull.auctionRepayAndWithdrawFromLeverage(0, balanceOfUnderlyingToWithdraw);
