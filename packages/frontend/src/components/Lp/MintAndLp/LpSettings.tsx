@@ -8,18 +8,15 @@ import { TickMath } from '@uniswap/v3-sdk'
 
 import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
-import { addressesAtom } from '@state/positions/atoms'
-import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
-import { useGetDepositAmounts, useGetTicksFromETHPriceRange, useOpenPositionDeposit } from '@state/lp/hooks'
+import { useGetTicksFromETHPriceRange, useOpenPositionDeposit, useCalculateMintAndLPDeposits } from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
-import { formatNumber } from '@utils/formatter'
 import { getErrorMessage } from '@utils/error'
-import { OSQUEETH_DECIMALS, BIG_ZERO } from '@constants/index'
+import { formatTokenAmount } from '@utils/formatter'
+import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from './InfoBox'
 import TokenPrice from './TokenPrice'
@@ -28,7 +25,6 @@ import TokenLogo from './TokenLogo'
 import Checkbox from './Checkbox'
 import CollateralRatioSlider from './CollateralRatioSlider'
 import { NumberInput } from './Input'
-import squeethLogo from 'public/images/squeeth-logo.svg'
 import ethLogo from 'public/images/eth-logo.svg'
 
 const useToggleButtonStyles = makeStyles((theme) => ({
@@ -84,44 +80,39 @@ const useModalStyles = makeStyles((theme) =>
   }),
 )
 
-const formatTokenAmount = (amount: string | number) => {
-  const withPrecision = Number(toTokenAmount(amount, 18)).toPrecision(3)
-  return Number(withPrecision).toFixed(2)
-}
-
 const LpSettings: React.FC<{
   ethToDeposit: string
   onConfirm: () => void
   onTxSuccess: () => void
   onTxFail: (message: string) => void
 }> = ({ ethToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
-  const { data: walletBalance } = useWalletBalance()
-  const ethPrice = useETHPrice()
-  const getTicksFromETHPriceRange = useGetTicksFromETHPriceRange()
-  const getDepositAmounts = useGetDepositAmounts()
-  const openLpPosition = useOpenPositionDeposit()
-  const slippageAmount = useAtomValue(slippageAmountAtom)
-
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
   const [minETHLpPrice, setMinETHLpPrice] = useState('0')
   const [maxETHLpPrice, setMaxETHLpPrice] = useState('0')
   const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
-  const [collatRatio, setCollatRatio] = useState(225)
+  const [collatRatioPercent, setCollatRatioPercent] = useState(225)
   const [lowerTick, setLowerTick] = useState(TickMath.MIN_TICK)
   const [upperTick, setUpperTick] = useState(TickMath.MAX_TICK)
+  const slippageAmountPercent = useAtomValue(slippageAmountAtom)
 
-  const [depositInTotal, setDepositInTotal] = useState(0)
-  const [depositInLp, setDepositInLp] = useState(0)
-  const [depositInVault, setDepositInVault] = useState(0)
+  const [ethInLP, setETHInLP] = useState(BIG_ZERO)
+  const [ethInVault, setETHInVault] = useState(BIG_ZERO)
+  const [effectiveCollateralInVault, setEffectiveCollateralInVault] = useState(BIG_ZERO)
+  const [oSQTHToMint, setOSQTHToMint] = useState(BIG_ZERO)
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
+
+  const { data: walletBalance } = useWalletBalance()
+  const ethPrice = useETHPrice()
+  const getTicksFromETHPriceRange = useGetTicksFromETHPriceRange()
+  const openLpPosition = useOpenPositionDeposit()
+  const calculateMintAndLPDeposits = useCalculateMintAndLPDeposits()
+
+  const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
+  const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
-
-  const collatRatioVal = new BigNumber(collatRatio).div(100).toNumber()
-  const slippageAmountVal = new BigNumber(slippageAmount).div(100).toNumber()
-  const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
 
   const handleUniswapNftAsCollatToggle = (value: any) => {
     if (value !== null) {
@@ -141,54 +132,62 @@ const LpSettings: React.FC<{
     setUpperTick(ticks.upperTick)
   }, [usingDefaultPriceRange, minETHLpPrice, maxETHLpPrice, getTicksFromETHPriceRange])
 
-  // useAppEffect(() => {
-  //   async function calcDepositAmounts() {
-  //     setLoadingDepositAmounts(true)
-  //     const deposits = await getDepositAmounts(new BigNumber(squeethToMint), lowerTick, upperTick, 0, collatRatioVal, 0)
-  //     if (deposits) {
-  //       setDepositInLp(deposits.lpAmount.toNumber())
-  //       setDepositInVault(deposits.mintAmount.toNumber())
-  //       setDepositInTotal(deposits.totalAmount.toNumber())
-  //     }
-  //     setLoadingDepositAmounts(false)
-  //   }
+  useAppEffect(() => {
+    async function getDepositAmounts() {
+      const result = await calculateMintAndLPDeposits(
+        new BigNumber(ethToDeposit),
+        new BigNumber(collatRatioPercent),
+        usingUniswapNftAsCollat,
+        lowerTick,
+        upperTick,
+      )
+      if (!result) {
+        return
+      }
 
-  //   calcDepositAmounts()
-  // }, [squeethToMint, lowerTick, upperTick, collatRatioVal, getDepositAmounts])
+      setETHInLP(result.ethInLP)
+      setETHInVault(result.ethInVault)
+      setEffectiveCollateralInVault(result.effectiveCollateralInVault)
+      setOSQTHToMint(result.oSQTHToMint)
+    }
 
-  // const openPosition = useAppCallback(async () => {
-  //   try {
-  //     await openLpPosition(
-  //       new BigNumber(squeethToMint),
-  //       lowerTick,
-  //       upperTick,
-  //       0,
-  //       collatRatioVal,
-  //       slippageAmountVal,
-  //       0,
-  //       () => {
-  //         onConfirm()
-  //       },
-  //       () => {
-  //         console.log('successfully deposited')
-  //         onTxSuccess()
-  //       },
-  //     )
-  //   } catch (error: unknown) {
-  //     console.log('deposit failed', error)
-  //     onTxFail(getErrorMessage(error))
-  //   }
-  // }, [
-  //   squeethToMint,
-  //   lowerTick,
-  //   upperTick,
-  //   collatRatioVal,
-  //   slippageAmountVal,
-  //   openLpPosition,
-  //   onConfirm,
-  //   onTxSuccess,
-  //   onTxFail,
-  // ])
+    setLoadingDepositAmounts(true)
+    getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
+  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapNftAsCollat, calculateMintAndLPDeposits])
+
+  const openPosition = useAppCallback(async () => {
+    try {
+      await openLpPosition(
+        oSQTHToMint,
+        ethInLP,
+        ethInVault,
+        lowerTick,
+        upperTick,
+        slippageAmount,
+        () => {
+          onConfirm()
+        },
+        () => {
+          console.log('successfully deposited')
+          onTxSuccess()
+        },
+      )
+    } catch (error: unknown) {
+      console.log('deposit failed', error)
+      onTxFail(getErrorMessage(error))
+    }
+  }, [
+    oSQTHToMint,
+    ethInLP,
+    ethInVault,
+    lowerTick,
+    upperTick,
+    slippageAmount,
+    openLpPosition,
+    onConfirm,
+    onTxSuccess,
+    onTxFail,
+  ])
 
   return (
     <>
@@ -208,6 +207,12 @@ const LpSettings: React.FC<{
         </Typography>
 
         <TokenAmount amount={ethToDeposit} usdPrice={ethPrice} logo={ethLogo} symbol="ETH" balance={ethBalance} />
+      </Box>
+
+      <Box marginTop="32px" display="inline-block">
+        <Typography variant="body2">
+          Effective collateral in vault is {formatTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)} ETH
+        </Typography>
       </Box>
 
       <Divider className={classes.divider} />
@@ -312,8 +317,8 @@ const LpSettings: React.FC<{
 
             <NumberInput
               id="collateral-ratio-input"
-              value={collatRatio}
-              onInputChange={(value) => setCollatRatio(Number(value))}
+              value={collatRatioPercent}
+              onInputChange={(value) => setCollatRatioPercent(Number(value))}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -328,8 +333,8 @@ const LpSettings: React.FC<{
 
         <div style={{ marginTop: '24px' }}>
           <CollateralRatioSlider
-            collateralRatio={collatRatio}
-            onCollateralRatioChange={(value) => setCollatRatio(value)}
+            collateralRatio={collatRatioPercent}
+            onCollateralRatioChange={(value) => setCollatRatioPercent(value)}
           />
         </div>
       </div>
@@ -355,14 +360,15 @@ const LpSettings: React.FC<{
 
       <div>
         <InfoBox>
-          <Box display="flex" justifyContent="center" gridGap="6px">
-            <Typography>Total Deposit</Typography>
-            <Typography className={classes.lightFontColor}>=</Typography>
+          <Box display="flex" justifyContent="space-between" gridGap="12px">
+            <Typography className={classes.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
 
-            <Typography className={classes.lightFontColor}>
-              {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInTotal)}
-            </Typography>
-            <Typography className={classes.lightFontColor}>ETH</Typography>
+            <Box display="flex" gridGap="8px">
+              <Typography>
+                {loadingDepositAmounts ? 'loading' : formatTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)}
+              </Typography>
+              <Typography className={classes.lightFontColor}>oSQTH</Typography>
+            </Box>
           </Box>
         </InfoBox>
 
@@ -372,7 +378,7 @@ const LpSettings: React.FC<{
               <Typography className={classes.lightFontColor}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography> {loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInLp)}</Typography>
+                <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}</Typography>
                 <Typography className={classes.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
@@ -382,16 +388,30 @@ const LpSettings: React.FC<{
               <Typography className={classes.lightFontColor}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(depositInVault)}</Typography>
+                <Typography>
+                  {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInVault, WETH_DECIMALS)}
+                </Typography>
                 <Typography className={classes.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
           </InfoBox>
         </Box>
+
+        <InfoBox marginTop="6px">
+          <Box display="flex" justifyContent="center" gridGap="6px">
+            <Typography>Total Deposit</Typography>
+            <Typography className={classes.lightFontColor}>=</Typography>
+
+            <Typography className={classes.lightFontColor}>
+              {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP.plus(ethInVault), WETH_DECIMALS)}
+            </Typography>
+            <Typography className={classes.lightFontColor}>ETH</Typography>
+          </Box>
+        </InfoBox>
       </div>
 
       <Box marginTop="32px">
-        <AltPrimaryButton id="confirm-deposit-btn" onClick={() => {}} fullWidth>
+        <AltPrimaryButton id="confirm-deposit-btn" onClick={openPosition} fullWidth>
           Confirm deposit
         </AltPrimaryButton>
       </Box>
