@@ -1,3 +1,6 @@
+import { toTokenAmount } from '@utils/calculations'
+import BigNumber from 'bignumber.js'
+
 export const formatCurrency: (
   number: number,
   locales?: Intl.LocalesArgument,
@@ -22,4 +25,12 @@ export const formatBalance: (number: number) => string = (number) => {
 
 export const formatNumber: (number: number, decimals?: number) => string = (number, decimals = 2) => {
   return number.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
+export const formatTokenAmount: (amount: BigNumber | number | string, tokenDecimals: number) => string = (
+  amount,
+  tokenDecimals,
+) => {
+  const precisioned = Number(toTokenAmount(amount, tokenDecimals)).toPrecision(3)
+  return Number(precisioned).toFixed(2)
 }
