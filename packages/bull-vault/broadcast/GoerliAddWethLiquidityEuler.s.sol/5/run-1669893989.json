@@ -1,0 +1,80 @@
+{
+  "transactions": [
+    {
+      "hash": "0x54a5c4bb3a110dbbd679fd6a8d59de4faecb70a5c6571181bc07fc87213f1958",
+      "transactionType": "CALL",
+      "contractName": "OpynWETH9",
+      "contractAddress": "0x083fd3D47eC8DC56b572321bc4dA8b26f7E82103",
+      "function": "approve(address,uint256):(bool)",
+      "arguments": [
+        "0x931172BB95549d0f29e10ae2D079ABA3C63318B3",
+        "7000000000000000000"
+      ],
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0x083fd3d47ec8dc56b572321bc4da8b26f7e82103",
+        "gas": "0xf87c",
+        "value": "0x0",
+        "data": "0x095ea7b3000000000000000000000000931172bb95549d0f29e10ae2d079aba3c63318b30000000000000000000000000000000000000000000000006124fee993bc0000",
+        "nonce": "0x31",
+        "accessList": []
+      },
+      "additionalContracts": []
+    },
+    {
+      "hash": "0x3d4f65979b3095d9b59f895ba08f8b37e1ba4e370c9ebb1b838d2dac5d5bccaa",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0xEf5e087D827194732Bc1843351ccA80982E154eB",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0xef5e087d827194732bc1843351cca80982e154eb",
+        "gas": "0x2c664",
+        "value": "0x0",
+        "data": "0xe2bbb15800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006124fee993bc0000",
+        "nonce": "0x32",
+        "accessList": []
+      },
+      "additionalContracts": []
+    },
+    {
+      "hash": "0x0bc23c4037f0d10b109c54f0c57be188168aac19f68c791f787d3cef5e9b576f",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0x3EbC39b84B1F856fAFE9803A9e1Eae7Da016Da36",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0x3ebc39b84b1f856fafe9803a9e1eae7da016da36",
+        "gas": "0x13ded",
+        "value": "0x0",
+        "data": "0x73f0b4370000000000000000000000000000000000000000000000000000000000000000000000000000000000000000083fd3d47ec8dc56b572321bc4da8b26f7e82103",
+        "nonce": "0x33",
+        "accessList": []
+      },
+      "additionalContracts": []
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x54a5c4bb3a110dbbd679fd6a8d59de4faecb70a5c6571181bc07fc87213f1958",
+    "0x3d4f65979b3095d9b59f895ba08f8b37e1ba4e370c9ebb1b838d2dac5d5bccaa",
+    "0x0bc23c4037f0d10b109c54f0c57be188168aac19f68c791f787d3cef5e9b576f"
+  ],
+  "path": "/Users/haythem96/Projects/DeFi/Options/Opyn/squeeth-monorepo/packages/bull-vault/broadcast/GoerliAddWethLiquidityEuler.s.sol/5/run-latest.json",
+  "returns": {},
+  "timestamp": 1669893989,
+  "chain": 5,
+  "multi": false,
+  "commit": "6ce3820c"
+}

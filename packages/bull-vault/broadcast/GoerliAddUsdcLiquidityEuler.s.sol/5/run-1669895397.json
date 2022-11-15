@@ -1,0 +1,80 @@
+{
+  "transactions": [
+    {
+      "hash": "0x7e28453cb19e54fb732ca1257a76fa85de2acff9f93f4ba523f712c90c104209",
+      "transactionType": "CALL",
+      "contractName": "MockErc20",
+      "contractAddress": "0x306bf03b689f7d7e5e9D3aAC87a068F16AFF9482",
+      "function": "approve(address,uint256):(bool)",
+      "arguments": [
+        "0x931172BB95549d0f29e10ae2D079ABA3C63318B3",
+        "100000000000000"
+      ],
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0x306bf03b689f7d7e5e9d3aac87a068f16aff9482",
+        "gas": "0xf92c",
+        "value": "0x0",
+        "data": "0x095ea7b3000000000000000000000000931172bb95549d0f29e10ae2d079aba3c63318b300000000000000000000000000000000000000000000000000005af3107a4000",
+        "nonce": "0x35",
+        "accessList": []
+      },
+      "additionalContracts": []
+    },
+    {
+      "hash": "0x750363d67428a22dfead478e29498f36f198e21569037872171f14e009602c25",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0x19EB4AC774bB84Fe725cffB9F71D79ab2fB4E12a",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0x19eb4ac774bb84fe725cffb9f71d79ab2fb4e12a",
+        "gas": "0x2d313",
+        "value": "0x0",
+        "data": "0xe2bbb158000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005af3107a4000",
+        "nonce": "0x36",
+        "accessList": []
+      },
+      "additionalContracts": []
+    },
+    {
+      "hash": "0x73914d81d37e56ccfe3b1df8b68f9c506f9cd3a80c71de7ecce11c84a547c66d",
+      "transactionType": "CALL",
+      "contractName": null,
+      "contractAddress": "0x3EbC39b84B1F856fAFE9803A9e1Eae7Da016Da36",
+      "function": null,
+      "arguments": null,
+      "rpc": "https://goerli.infura.io/v3/9a1eacc6b18f436dab839c1713616fd1",
+      "transaction": {
+        "type": "0x02",
+        "from": "0x157a8ab53cb0c122af11557b1f7649f481411be4",
+        "to": "0x3ebc39b84b1f856fafe9803a9e1eae7da016da36",
+        "gas": "0x16d5b",
+        "value": "0x0",
+        "data": "0x73f0b4370000000000000000000000000000000000000000000000000000000000000000000000000000000000000000306bf03b689f7d7e5e9d3aac87a068f16aff9482",
+        "nonce": "0x37",
+        "accessList": []
+      },
+      "additionalContracts": []
+    }
+  ],
+  "receipts": [],
+  "libraries": [],
+  "pending": [
+    "0x7e28453cb19e54fb732ca1257a76fa85de2acff9f93f4ba523f712c90c104209",
+    "0x750363d67428a22dfead478e29498f36f198e21569037872171f14e009602c25",
+    "0x73914d81d37e56ccfe3b1df8b68f9c506f9cd3a80c71de7ecce11c84a547c66d"
+  ],
+  "path": "/Users/haythem96/Projects/DeFi/Options/Opyn/squeeth-monorepo/packages/bull-vault/broadcast/GoerliAddUsdcLiquidityEuler.s.sol/5/run-latest.json",
+  "returns": {},
+  "timestamp": 1669895397,
+  "chain": 5,
+  "multi": false,
+  "commit": "6ce3820c"
+}
