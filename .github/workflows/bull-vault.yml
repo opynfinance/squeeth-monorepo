@@ -100,7 +100,7 @@ jobs:
         with:
           sortCriteria: avg,max # optionnally sort diff rows by criteria
           sortOrders: desc,asc # and directions
-          report: bull_gas_report.ansi
+          report: packages/bull-vault/bull_gas_report.ansi
         id: gas_diff
 
       - name: Add gas diff to sticky comment
