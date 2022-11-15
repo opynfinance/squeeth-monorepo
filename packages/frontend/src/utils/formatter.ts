@@ -17,9 +17,16 @@ export const formatCurrency: (
 }
 
 export const formatBalance: (number: number) => string = (number) => {
+  let maximumFractionDigits = 2
+  if (number <= 0.005) {
+    maximumFractionDigits = 4
+  } else if (number <= 0.05) {
+    maximumFractionDigits = 3
+  }
+
   return number.toLocaleString(undefined, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 4,
+    minimumFractionDigits: 2,
+    maximumFractionDigits,
   })
 }
 
@@ -31,6 +38,17 @@ export const formatTokenAmount: (amount: BigNumber | number | string, tokenDecim
   amount,
   tokenDecimals,
 ) => {
-  const precisioned = Number(toTokenAmount(amount, tokenDecimals)).toPrecision(3)
-  return Number(precisioned).toFixed(2)
+  const tokenAmount = toTokenAmount(amount, tokenDecimals)
+
+  let maximumFractionDigits = 2
+  if (tokenAmount.lte(0.005)) {
+    maximumFractionDigits = 4
+  } else if (tokenAmount.lte(0.05)) {
+    maximumFractionDigits = 3
+  }
+
+  return tokenAmount.toNumber().toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits,
+  })
 }
