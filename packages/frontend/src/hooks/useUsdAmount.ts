@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 
 import { useCallback } from 'react'
-import { useEth90daysPriceMap, useEthPriceMap, useEthWithinOneDayPriceMap } from 'src/state/ethPriceCharts/atoms'
+import { useEth90daysPriceMap, useEthPriceMap, useEthPricesSinceCrabLaunchMap, useEthWithinOneDayPriceMap } from 'src/state/ethPriceCharts/atoms'
 
 const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, timestamp: any): number => {
   if (!ethWithinOneDayPriceMap || !timestamp) return 0
@@ -23,7 +23,7 @@ const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, time
 }
 
 export const useUsdAmount = () => {
-  const ethPriceMap = useEthPriceMap()
+  const ethPriceMap = useEthPricesSinceCrabLaunchMap()
   const eth90daysPriceMap = useEth90daysPriceMap()
   const ethWithinOneDayPriceMap = useEthWithinOneDayPriceMap()
 

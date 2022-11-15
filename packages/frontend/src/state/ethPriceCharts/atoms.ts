@@ -6,6 +6,7 @@ import {
   getETH90DaysPrices,
   getCoingeckoETHPrices as getETHPrices,
   getETHWithinOneDayPrices,
+  getETHPricesForPeriod,
 } from '@utils/ethPriceCharts'
 import {
   getETHPNLCompounding,
@@ -21,9 +22,11 @@ import { useMemo } from 'react'
 
 
 const FIVE_MINUTES_IN_MILLISECONDS = 300_000
+const CRAB_LAUNCH_TIME_STAMP = 1642636810
+
 const ethPriceChartsQueryKeys = {
   ethPriceRange: (days: number) => ['ethPriceRange', { days }],
-  allEthPricesRange: (days: number) => ['allEthPricesRange', { days }],
+  ethPricesPeriod: (startTimestamp: number, endTimestamp: number) => ['ethPricesPeriod', { startTimestamp, endTimestamp }],
   allEth90daysPrices: () => ['allEth90daysPrices'],
   allEthWithinOneDayPrices: () => ['allEthWithinOneDayPrices'],
   cusdcPricesRange: (days: number) => ['cusdcPricesRange', { days }],
@@ -51,11 +54,10 @@ export const useEthPrices = () => {
   })
 }
 
-export const useAllEthPrices = () => {
-  const days = useAtomValue(daysAtom)
-
-  return useQuery(ethPriceChartsQueryKeys.allEthPricesRange(days), () => getETHPrices(days), {
-    enabled: Boolean(days),
+export const useEthPricesSinceCrabLaunch = () => {
+  const startTimestamp = CRAB_LAUNCH_TIME_STAMP
+  const endTimestamp =  (new Date().setUTCHours(0, 0, 0) )
+  return useQuery(ethPriceChartsQueryKeys.ethPricesPeriod(startTimestamp, endTimestamp), () => getETHPricesForPeriod(startTimestamp, endTimestamp), {
     staleTime: FIVE_MINUTES_IN_MILLISECONDS,
   })
 }
@@ -251,11 +253,23 @@ export const useSqueethPrices = () => {
 }
 
 export const useEthPriceMap = () => {
-  const allEthPrices = useAllEthPrices()
+  const ethPrices = useEthPrices()
 
   return (
-    allEthPrices.data &&
-    allEthPrices.data.reduce((acc, p) => {
+    ethPrices.data &&
+    ethPrices.data.reduce((acc, p) => {
+      acc[p.time] = p.value
+      return acc
+    }, {} as Record<string, number>)
+  )
+}
+
+export const useEthPricesSinceCrabLaunchMap = () => {
+  const ethPrices = useEthPricesSinceCrabLaunch()
+
+  return (
+    ethPrices.data &&
+    ethPrices.data.reduce((acc, p) => {
       acc[p.time] = p.value
       return acc
     }, {} as Record<string, number>)

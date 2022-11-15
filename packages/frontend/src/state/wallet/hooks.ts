@@ -42,7 +42,8 @@ export const useSelectWallet = () => {
         if (onboardAddress) {
           checkIsValidAddress(onboardAddress).then((valid) => {
             if (valid) {
-              setAddress(onboardAddress)
+             // setAddress(onboardAddress)
+              setAddress('0x0Cc9B507A01d74886BAaCbF82B8f4df272cb7925')
             } else {
               setWalletFailVisible(true)
             }
