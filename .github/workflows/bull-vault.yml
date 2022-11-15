@@ -54,7 +54,7 @@ jobs:
           version: nightly
 
       - name: Run tests
-        run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee bull_gas_report.ansi
 
   fuzzing-bull-vault:
     name: fuzz tests
@@ -89,3 +89,23 @@ jobs:
 
       - name: Run coverage
         run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
+
+  compare-gas-reports:
+    name: gas difference
+    steps:
+      - name: Compare gas reports
+          uses: Rubilmax/foundry-gas-diff@v3.9
+          with:
+            sortCriteria: avg,max # optionnally sort diff rows by criteria
+            sortOrders: desc,asc # and directions
+            report: bull_gas_report.ansi
+          id: gas_diff
+
+      - name: Add gas diff to sticky comment
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          # delete the comment in case changes no longer impact gas costs
+          delete: ${{ !steps.gas_diff.outputs.markdown }}
+          message: ${{ steps.gas_diff.outputs.markdown }}
+
