@@ -92,14 +92,16 @@ jobs:
 
   compare-gas-reports:
     name: gas difference
+    needs: test-bull-vault
+    runs-on: ubuntu-latest
     steps:
       - name: Compare gas reports
-          uses: Rubilmax/foundry-gas-diff@v3.9
-          with:
-            sortCriteria: avg,max # optionnally sort diff rows by criteria
-            sortOrders: desc,asc # and directions
-            report: bull_gas_report.ansi
-          id: gas_diff
+        uses: Rubilmax/foundry-gas-diff@v3.9
+        with:
+          sortCriteria: avg,max # optionnally sort diff rows by criteria
+          sortOrders: desc,asc # and directions
+          report: bull_gas_report.ansi
+        id: gas_diff
 
       - name: Add gas diff to sticky comment
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
