@@ -14,7 +14,7 @@ export const impliedVolAtom = atom((get) => {
   return Math.sqrt(currentImpliedFunding * 365)
 })
 
-export const normFactorAtom = atom(new BigNumber(1))
+export const normFactorAtom = atom(new BigNumber(Infinity))
 export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
 export const currentImpliedFundingAtom = atom(0)
 export const markAtom = atom(BIG_ZERO)

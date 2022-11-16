@@ -23,11 +23,13 @@ import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
+  crabLoadingAtomV2,
   crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
   ethPriceAtLastHedgeAtomV2,
+  loadingAtomV2,
   maxCapAtom,
   maxCapAtomV2,
   timeAtLastHedgeAtom,
@@ -184,7 +186,8 @@ const Strategies: React.FC = () => {
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
   const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
-
+  const crabLoading = useAtomValue(crabLoadingAtomV2)
+  
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
@@ -264,7 +267,7 @@ const Strategies: React.FC = () => {
             <div className={classes.header}>
               <Typography variant="h6">🦀</Typography>
               <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-                Crab Strategy - Earn USD Returns
+                Crab Strategy - Earn USD Returns 
               </Typography>
               <div className={classes.toggle}>
                 <ToggleButtonGroup size="small" color="primary" value={displayCrabV1} exclusive>
@@ -352,25 +355,54 @@ const Strategies: React.FC = () => {
                       tooltip={Tooltips.StrategyProfitThreshold}
                     />
                   ) : (
-                    <StrategyInfoItem
-                      value={
-                        '~' +
-                        lowerPriceBandForProfitability.toFixed(2) +
-                        ' - ' +
-                        upperPriceBandForProfitability.toFixed(2)
-                      }
-                      label={
-                        'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
-                      }
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
+                    
+                    crabLoading ? (
+                      <>
+                          <StrategyInfoItem
+                          value='-'
+                          label={
+                            'Approx Profitable between ETH Prices ($)'
+                          }
+                          tooltip={Tooltips.StrategyProfitThreshold}
+                          />
+
+                          <StrategyInfoItem
+                          link="https://squeeth.opyn.co/vault/286"
+                          value='-'
+                          label="Collat Ratio (%)"
+                          tooltip={Tooltips.StrategyCollRatio}
+                          />
+                      </>
+                    ) : (
+                    <>
+                      <StrategyInfoItem
+                        value={
+                          '~' +
+                          lowerPriceBandForProfitability.toFixed(2) +
+                          ' - ' +
+                          upperPriceBandForProfitability.toFixed(2)
+                        }
+                        label={
+                          'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
+                        }
+                        tooltip={Tooltips.StrategyProfitThreshold}
+                      />
+
+                      <StrategyInfoItem
+                      link="https://squeeth.opyn.co/vault/286"
+                      value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
+                      label="Collat Ratio (%)"
+                      tooltip={Tooltips.StrategyCollRatio}
+                      />
+                    </>
+                      
+                    
+                    ) 
+                   
+                    
                   )}
-                  <StrategyInfoItem
-                    link="https://squeeth.opyn.co/vault/286"
-                    value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
-                    label="Collat Ratio (%)"
-                    tooltip={Tooltips.StrategyCollRatio}
-                  />
+                 
+                  
                 </div>
                 {displayCrabV1 ? null : <StrategyChartsV2 />}
                 {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}

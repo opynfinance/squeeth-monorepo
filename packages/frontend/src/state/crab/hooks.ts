@@ -55,7 +55,7 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } fro
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
+import { currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from '../controller/atoms'
 import { crabHelperContractAtom, crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
@@ -127,9 +127,10 @@ export const useSetStrategyDataV2 = () => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const networkId = useAtomValue(networkIdAtom)
   const setEthPriceAtLastHedge = useUpdateAtom(ethPriceAtLastHedgeAtomV2)
+  const normFactor = useAtomValue(normFactorAtom)
 
   const setStrategyData = useCallback(async () => {
-    if (!contract) return
+    if (!contract || !normFactor) return
 
     getMaxCap(contract).then(setMaxCap)
     getStrategyVaultId(contract)
@@ -305,6 +306,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+  const normFactor = useAtomValue(normFactorAtom)
 
   useEffect(() => {
     setStrategyData()
@@ -324,7 +326,7 @@ export const useCurrentCrabPositionValueV2 = () => {
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral || ((collateral.isZero() || squeethDebt.isZero()) && userShares.gt(0))) {
+      if (!squeethDebt || !collateral || !normFactor || ((collateral.isZero() || squeethDebt.isZero()) && userShares.gt(0))) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         setIsCrabPositionValueLoading(true)
