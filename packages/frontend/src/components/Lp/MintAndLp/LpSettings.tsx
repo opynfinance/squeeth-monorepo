@@ -349,13 +349,6 @@ const LpSettings: React.FC<{
         </Box>
       </InfoBox>
 
-      <InfoBox marginTop="6px">
-        <Box display="flex" justifyContent="space-between" gridGap="12px">
-          <Typography className={classes.lightFontColor}>Projected APY</Typography>
-          <Typography>26.08 %</Typography>
-        </Box>
-      </InfoBox>
-
       <Divider className={classes.divider} />
 
       <div>
