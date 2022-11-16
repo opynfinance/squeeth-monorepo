@@ -90,6 +90,20 @@ const useStyles = makeStyles((theme) =>
       marginTop: '10px',
       justifyContent: 'center',
     },
+    daysInput: {
+      width: '150px',
+      marginLeft: theme.spacing(2),
+      [theme.breakpoints.down('sm')]: {
+        width: 'auto',
+        marginLeft: theme.spacing(1.5),
+      },
+    },
+    daysInputLabel: {
+      fontSize: '1rem',
+      [theme.breakpoints.down('sm')]: {
+        fontSize: '0.9rem',
+      },
+    },
   }),
 )
 
@@ -203,9 +217,10 @@ function LongChart() {
             size="small"
             value={days}
             type="number"
-            style={{ width: 150, marginLeft: '16px' }}
+            className={classes.daysInput}
             label="Historical Days"
             variant="outlined"
+            InputLabelProps={{ className: classes.daysInputLabel }}
             // InputProps={{
             //   endAdornment: (
             //     <InputAdornment position="end">
