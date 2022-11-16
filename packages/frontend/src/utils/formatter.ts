@@ -3,7 +3,7 @@ import BigNumber from 'bignumber.js'
 
 export const formatCurrency: (
   number: number,
-  locales?: Intl.LocalesArgument,
+  locales?: string | Intl.Locale | (string | Intl.Locale)[],
   formatOptions?: Intl.NumberFormatOptions,
 ) => string = (
   number,
