@@ -84,6 +84,7 @@ contract BullStrategy is ERC20, LeverageBull {
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
+        IERC20(IController(_powerTokenController).wPowerPerp()).approve(_crab, type(uint256).max);
     }
 
     receive() external payable {
@@ -178,7 +179,7 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
-        IERC20(wPowerPerp).approve(crab, wPowerPerpToRedeem);
+
         _burn(msg.sender, _bullAmount);
 
         require(totalSupply() == 0 || totalSupply() > 1e14, "BS10");
@@ -204,7 +205,6 @@ contract BullStrategy is ERC20, LeverageBull {
         require(msg.sender == auction, "BS8");
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
-        IERC20(wPowerPerp).approve(crab, _wPowerPerpToRedeem);
 
         uint256 crabBalancebefore = IERC20(crab).balanceOf(address(this));
 
