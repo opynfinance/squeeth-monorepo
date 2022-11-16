@@ -490,7 +490,8 @@ const SqueethInfo: React.FC = () => {
         {/* hard coded width layout to align with the prev line */}
 
         {showAdvanced ? (
-          <><div className={classes.squeethInfoSubGroup}>
+          <>
+            <div className={classes.squeethInfoSubGroup}>
               <div className={classes.infoItem}>
                 <div className={classes.infoLabel}>
                   <Typography color="textSecondary" variant="body2">
@@ -533,15 +534,15 @@ const SqueethInfo: React.FC = () => {
                     <InfoIcon fontSize="small" className={classes.infoIcon} />
                   </Tooltip>
                 </div>
-                <Typography>{(osqthRefVol).toFixed(2)}%
+                <Typography>
+                  {osqthRefVol.toFixed(2)}%
                   <a target="_blank" href={squeethRefVolDocLink} rel="noreferrer">
                     <OpenInNew fontSize="small" className={classes.infoIcon} />
                   </a>
                 </Typography>
-                
               </div>
-          </div>
-          <div className={classes.squeethInfoSubGroup}>
+            </div>
+            <div className={classes.squeethInfoSubGroup}>
               <div className={classes.infoItem}>
                 <div className={classes.infoLabel}>
                   <Typography color="textSecondary" variant="body2">
@@ -553,7 +554,8 @@ const SqueethInfo: React.FC = () => {
                 </div>
                 <Typography>{normFactor.toFixed(4)}</Typography>
               </div>
-          </div></>
+            </div>
+          </>
         ) : null}
         <div className={classes.squeethInfoSubGroup}>
           <button className={classes.advancedDetails} onClick={toggleAdvanced}>
@@ -617,6 +619,9 @@ function TradePage() {
       <Hidden mdUp>
         <div className={classes.mobileContainer}>
           <Header />
+          <div className={classes.positionContainer}>
+            <SqueethInfo />
+          </div>
           <div className={classes.mobileSpacer}>
             {tradeType === TradeType.LONG ? (
               <LongChart />
