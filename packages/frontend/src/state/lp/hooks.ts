@@ -22,113 +22,10 @@ import { indexAtom, normFactorAtom } from '@state/controller/atoms'
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
 const POOL_FEE = 3000
-const MAX_INT_128 = new BigNumber(2).pow(128).minus(1).toFixed(0)
 const x96 = new BigNumber(2).pow(96)
 const FLASHLOAN_BUFFER = 0.02
 
 /*** ACTIONS ***/
-
-export const useGetNearestUsableTicks = () => {
-  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
-
-  const getNearestUsableTicks = useAppCallback(
-    async (lowerTickInput: number, upperTickInput: number) => {
-      if (!squeethPoolContract) {
-        return null
-      }
-
-      const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
-      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
-      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
-      return { lowerTick, upperTick, tick }
-    },
-    [squeethPoolContract],
-  )
-
-  return getNearestUsableTicks
-}
-
-export const useCalculateMintAndLPDeposits = () => {
-  const getNearestUsableTicks = useGetNearestUsableTicks()
-  const getOSQTHInLP = useGetOSQTHInLP()
-
-  const index = useAtomValue(indexAtom)
-  const normFactor = useAtomValue(normFactorAtom)
-
-  const calculateMintAndLPDeposits = useAppCallback(
-    async (
-      ethDeposit: BigNumber,
-      collatRatioPercent: BigNumber,
-      usingUniswapLPNFTAsCollat,
-      lowerTickInput: number,
-      upperTickInput: number,
-    ) => {
-      const result = {
-        ethInVault: new BigNumber(0),
-        effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT value (if enabled)
-        ethInLP: new BigNumber(0),
-        oSQTHToMint: new BigNumber(0),
-      }
-
-      const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
-      if (!ticks) {
-        return null
-      }
-
-      const { lowerTick, upperTick, tick } = ticks
-      const collatRatio = collatRatioPercent.div(100)
-      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-
-      let start = new BigNumber(0)
-      let end = new BigNumber(ethDeposit)
-      const targetDeviation = new BigNumber(0.05)
-      let pastDeviation = new BigNumber(Number.POSITIVE_INFINITY)
-
-      while (start.lte(end)) {
-        const ethInLP = start.plus(end).div(2)
-        const oSQTHToMint = await getOSQTHInLP(ethInLP, lowerTick, upperTick, tick)
-        if (!oSQTHToMint) return null
-
-        const oSQTHInETH = oSQTHToMint.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
-        const effectiveCollateralInVault = collatRatio.times(
-          oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE),
-        )
-
-        const ethInVault = usingUniswapLPNFTAsCollat
-          ? effectiveCollateralInVault.minus(ethInLP).minus(oSQTHInETH)
-          : effectiveCollateralInVault
-        const ethInVaultPos = BigNumber.max(ethInVault, 0)
-
-        const ethConsumed = ethInVaultPos.plus(ethInLP)
-        const currentDeviation = ethDeposit.minus(ethConsumed)
-
-        if (pastDeviation.eq(currentDeviation)) {
-          break
-        }
-        pastDeviation = currentDeviation
-
-        if (currentDeviation.gt(0) && currentDeviation.lte(targetDeviation)) {
-          result.ethInVault = fromTokenAmount(ethInVaultPos, WETH_DECIMALS)
-          result.effectiveCollateralInVault = fromTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)
-          result.ethInLP = fromTokenAmount(ethInLP, WETH_DECIMALS)
-          result.oSQTHToMint = fromTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)
-          break
-        } else {
-          if (currentDeviation.gt(0)) {
-            start = ethInLP
-          } else {
-            end = ethInLP
-          }
-        }
-      }
-
-      return result
-    },
-    [index, normFactor, getNearestUsableTicks, getOSQTHInLP],
-  )
-
-  return calculateMintAndLPDeposits
-}
 
 // Opening a mint and LP position and depositing
 export const useOpenPositionDeposit = () => {
@@ -199,6 +96,109 @@ export const useOpenPositionDeposit = () => {
 }
 
 /*** GETTERS ***/
+
+export const useGetNearestUsableTicks = () => {
+  const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
+
+  const getNearestUsableTicks = useAppCallback(
+    async (lowerTickInput: number, upperTickInput: number) => {
+      if (!squeethPoolContract) {
+        return null
+      }
+
+      const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
+      const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
+      const upperTick = nearestUsableTick(upperTickInput, Number(tickSpacing))
+      return { lowerTick, upperTick, tick }
+    },
+    [squeethPoolContract],
+  )
+
+  return getNearestUsableTicks
+}
+
+// calculating ethInLP and ethInVault based on ethDeposit
+export const useCalculateMintAndLPDeposits = () => {
+  const getNearestUsableTicks = useGetNearestUsableTicks()
+  const getOSQTHInLP = useGetOSQTHInLP()
+
+  const index = useAtomValue(indexAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+
+  const calculateMintAndLPDeposits = useAppCallback(
+    async (
+      ethDeposit: BigNumber,
+      collatRatioPercent: BigNumber,
+      usingUniswapLPNFTAsCollat,
+      lowerTickInput: number,
+      upperTickInput: number,
+    ) => {
+      const deposits = {
+        ethInVault: new BigNumber(0),
+        effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT value (if enabled)
+        ethInLP: new BigNumber(0),
+        oSQTHToMint: new BigNumber(0),
+      }
+
+      const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
+      if (!ticks) {
+        return null
+      }
+
+      const { lowerTick, upperTick, tick } = ticks
+      const collatRatio = collatRatioPercent.div(100)
+      const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+
+      let start = new BigNumber(0)
+      let end = new BigNumber(ethDeposit)
+      const targetDeviation = new BigNumber(0.05)
+      let pastDeviation = new BigNumber(Number.POSITIVE_INFINITY)
+
+      while (start.lte(end)) {
+        const ethInLP = start.plus(end).div(2)
+        const oSQTHToMint = await getOSQTHInLP(ethInLP, lowerTick, upperTick, tick)
+        if (!oSQTHToMint) return null
+
+        const oSQTHInETH = oSQTHToMint.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
+        const effectiveCollateralInVault = collatRatio.times(
+          oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE),
+        )
+
+        const ethInVault = usingUniswapLPNFTAsCollat
+          ? effectiveCollateralInVault.minus(ethInLP).minus(oSQTHInETH)
+          : effectiveCollateralInVault
+        const ethInVaultPos = BigNumber.max(ethInVault, 0)
+
+        const ethConsumed = ethInVaultPos.plus(ethInLP)
+        const currentDeviation = ethDeposit.minus(ethConsumed)
+
+        if (pastDeviation.eq(currentDeviation)) {
+          break
+        }
+        pastDeviation = currentDeviation
+
+        if (currentDeviation.gt(0) && currentDeviation.lte(targetDeviation)) {
+          deposits.ethInVault = fromTokenAmount(ethInVaultPos, WETH_DECIMALS)
+          deposits.effectiveCollateralInVault = fromTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)
+          deposits.ethInLP = fromTokenAmount(ethInLP, WETH_DECIMALS)
+          deposits.oSQTHToMint = fromTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)
+          break
+        } else {
+          if (currentDeviation.gt(0)) {
+            start = ethInLP
+          } else {
+            end = ethInLP
+          }
+        }
+      }
+
+      return deposits
+    },
+    [index, normFactor, getNearestUsableTicks, getOSQTHInLP],
+  )
+
+  return calculateMintAndLPDeposits
+}
 
 export const useGetPosition = () => {
   const contract = useAtomValue(nftManagerContractAtom)
