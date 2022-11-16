@@ -165,8 +165,8 @@ const useStyles = makeStyles((theme) =>
     },
     squeethInfoSubGroup: {
       display: 'grid',
-      gap: theme.spacing(1),
-      gridTemplateColumns: 'repeat(auto-fit, minmax(5rem, 1fr))',
+      gap: theme.spacing(2),
+      gridTemplateColumns: 'repeat(auto-fit, minmax(8rem, 1fr))',
       marginBottom: theme.spacing(2),
       position: 'relative',
     },
