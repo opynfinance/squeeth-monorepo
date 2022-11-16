@@ -187,7 +187,7 @@ function LongChart() {
           scrollButtons="auto"
           variant="scrollable"
         >
-          <SqueethTab label={`Historical ${days}D PNL Simulation`} />
+          <SqueethTab label={`Historical ${days}D PNL`} />
           {/* <SqueethTab label="Price" /> */}
           {/* <SqueethTab label="Funding" /> */}
           <SqueethTab label="Payoff" />
@@ -196,30 +196,30 @@ function LongChart() {
           <SqueethTab label="Premium" />
           <SqueethTab label="Risks" />
         </SqueethTabs>
-        <Hidden smDown>
-          {mode === ChartType.PNL ? (
-            <TextField
-              onChange={(event) => setDays(parseInt(event.target.value))}
-              size="small"
-              value={days}
-              type="number"
-              style={{ width: 150, marginLeft: '16px' }}
-              label="Historical Days"
-              variant="outlined"
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <a href={Links.BacktestFAQ} target="_blank" rel="noreferrer">
-                      <Tooltip title={Tooltips.BacktestDisclaimer}>
-                        <InfoIcon fontSize="small" />
-                      </Tooltip>
-                    </a>
-                  </InputAdornment>
-                ),
-              }}
-            />
-          ) : null}
-        </Hidden>
+        {/* <Hidden smDown> */}
+        {mode === ChartType.PNL ? (
+          <TextField
+            onChange={(event) => setDays(parseInt(event.target.value))}
+            size="small"
+            value={days}
+            type="number"
+            style={{ width: 150, marginLeft: '16px' }}
+            label="Historical Days"
+            variant="outlined"
+            // InputProps={{
+            //   endAdornment: (
+            //     <InputAdornment position="end">
+            //       <a href={Links.BacktestFAQ} target="_blank" rel="noreferrer">
+            //         <Tooltip title={Tooltips.BacktestDisclaimer}>
+            //           <InfoIcon fontSize="small" />
+            //         </Tooltip>
+            //       </a>
+            //     </InputAdornment>
+            //   ),
+            // }}
+          />
+        ) : null}
+        {/* </Hidden> */}
       </div>
 
       {mode === ChartType.Payoff ? (
