@@ -90,6 +90,8 @@ contract LeverageBull is Ownable {
             _euler, type(uint256).max
         );
 
+        IEulerMarkets(_eulerMarkets).enterMarket(0, IController(_powerTokenController).weth());
+
         transferOwnership(_owner);
     }
 
@@ -199,7 +201,6 @@ contract LeverageBull is Ownable {
     function _depositWethInEuler(uint256 _ethToDeposit) internal {
         IWETH9(weth).deposit{value: _ethToDeposit}();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
-        IEulerMarkets(eulerMarkets).enterMarket(0, weth);
     }
 
     /**
