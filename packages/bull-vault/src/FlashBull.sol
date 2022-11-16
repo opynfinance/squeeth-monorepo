@@ -119,8 +119,12 @@ contract FlashBull is UniFlash {
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
 
         ICrabStrategyV2(IBullStrategy(_bull).crab()).approve(_bull, type(uint256).max);
-        IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(_bull, type(uint256).max);
-        IERC20(IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(_bull, type(uint256).max);
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
+            _bull, type(uint256).max
+        );
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(
+            _bull, type(uint256).max
+        );
     }
 
     /**

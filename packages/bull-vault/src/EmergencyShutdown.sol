@@ -53,7 +53,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        
+
         transferOwnership(_owner);
     }
 
