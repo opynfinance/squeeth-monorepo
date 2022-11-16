@@ -53,6 +53,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
+        
         transferOwnership(_owner);
     }
 
@@ -63,6 +64,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
 
     function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
         require(!IBullStrategy(bullStrategy).hasRedeemedInShutdown(), "ES1");
+
         uint256 usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(_params.shareToUnwind);
         _exactOutFlashSwap(
             weth,
