@@ -70,6 +70,10 @@ type NumberInputProps = StandardTextFieldProps & NumberInputCustomProps
 
 export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, ...props }) => {
   const handleChange = (val: string) => {
+    if (isNaN(Number(val))) {
+      return onInputChange('0')
+    }
+
     if (Number(val) < 0) {
       return onInputChange('0')
     }
@@ -93,7 +97,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, 
 
   return (
     <Input
-      value={isNaN(Number(value)) ? 0 : value}
+      value={value}
       onChange={(event) => handleChange(event.target.value)}
       placeholder="0"
       autoComplete="false"
