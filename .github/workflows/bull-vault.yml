@@ -54,7 +54,7 @@ jobs:
           version: nightly
 
       - name: Run tests
-        run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee bull_gas_report.ansi
+        run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee ../../bull_gas_report.ansi
 
   fuzzing-bull-vault:
     name: fuzz tests
