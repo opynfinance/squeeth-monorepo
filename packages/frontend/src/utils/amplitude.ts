@@ -1,6 +1,6 @@
 import { init, track, Types } from '@amplitude/analytics-browser'
 import { getCookieName, CookieStorage } from '@amplitude/analytics-client-common'
-import canStoreCookies from '@hooks/useCookies/canStoreCookies'
+import { canStoreCookies } from './cookies'
 
 const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY  && !!canStoreCookies()
 

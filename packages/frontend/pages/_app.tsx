@@ -26,11 +26,11 @@ import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import CookieConsent from "react-cookie-consent";
-import { CookieNames } from '@hooks/useCookies'
 import '@utils/amplitude'
 import { setUserId } from '@amplitude/analytics-browser'
 import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
+import { CookieNames } from '@utils/cookies'
 
 initializeAmplitude()
 
@@ -156,20 +156,22 @@ const TradeApp = ({ Component, pageProps }: any) => {
       </ThemeProvider>
       <CookieConsent
         location="bottom"
-        buttonText="I ACCEPT"
+        buttonText="Accept Cookies"
         cookieName={CookieNames.Consent}
-        style={{ background: "#2B373B" }}
-        buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"5px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
+        style={{ background: "#2B373B", textAlign:'center' }}
+        buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"10px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
         expires={365}
         enableDeclineButton
-        declineButtonText= "DECLINE"
-        declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"5px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
+        declineButtonText= "Decline Cookies"
+        declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"10px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
         flipButtons
        // overlay
       >
-        We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods, including how to disable them, view our {" "}
-       
-        <span style={{ fontSize: "11px" }}> <a href="/cookie-policy" target="_blank">Cookie Policy</a></span>
+        We use cookies to recognize visitors and analyze front end traffic and to support technical features that enhance your user experience. Read our {" "}
+        <span style={{  color:"#2CE6F9" }}> <a href="/privacy-policy" target="_blank">Privacy</a> </span>
+        and 
+        <span style={{  color:"#2CE6F9" }}> <a href="/cookie-policy" target="_blank">Cookie</a> </span>
+        Policies to learn more about how we use cookies.
       </CookieConsent>
     </React.Fragment>
   )
