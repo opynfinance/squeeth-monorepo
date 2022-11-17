@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -10,7 +10,12 @@ import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
-import { useGetTicksFromETHPriceRange, useOpenPositionDeposit, useCalculateMintAndLPDeposits } from '@state/lp/hooks'
+import {
+  useGetTicksFromETHPriceRange,
+  useOpenPositionDeposit,
+  useCalculateMintAndLPDeposits,
+  MIN_COLLATERAL_RATIO,
+} from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -100,7 +105,7 @@ const LpSettings: React.FC<{
   const [ethInVault, setETHInVault] = useState(BIG_ZERO)
   const [effectiveCollateralInVault, setEffectiveCollateralInVault] = useState(BIG_ZERO)
   const [oSQTHToMint, setOSQTHToMint] = useState(BIG_ZERO)
-  const [minCollatRatioPercent, setMinCollatRatioPercent] = useState(150)
+  const [minCollatRatioPercent, setMinCollatRatioPercent] = useState(MIN_COLLATERAL_RATIO)
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
@@ -115,11 +120,15 @@ const LpSettings: React.FC<{
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
 
-  const handleUniswapNftAsCollatToggle = (value: any) => {
+  const handleUniswapNftAsCollatToggle = useCallback((value: boolean | null) => {
     if (value !== null) {
       setUsingUniswapNftAsCollat(value)
     }
-  }
+  }, [])
+
+  const handleCollatRatioPercentChange = useCallback((inputValue: string) => {
+    setCollatRatioPercent(Number(inputValue))
+  }, [])
 
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
@@ -320,7 +329,7 @@ const LpSettings: React.FC<{
             <NumberInput
               id="collateral-ratio-input"
               value={collatRatioPercent}
-              onInputChange={(value) => setCollatRatioPercent(Number(value))}
+              onInputChange={handleCollatRatioPercentChange}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end" style={{ opacity: '0.5' }}>
