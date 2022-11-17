@@ -19,7 +19,6 @@ import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 import { useMemo } from 'react'
 
-
 const FIVE_MINUTES_IN_MILLISECONDS = 300_000
 const ethPriceChartsQueryKeys = {
   ethPriceRange: (days: number) => ['ethPriceRange', { days }],
@@ -253,36 +252,44 @@ export const useSqueethPrices = () => {
 export const useEthPriceMap = () => {
   const allEthPrices = useAllEthPrices()
 
-  return (
-    allEthPrices.data &&
-    allEthPrices.data.reduce((acc, p) => {
-      acc[p.time] = p.value
-      return acc
-    }, {} as Record<string, number>)
+  return useMemo(
+    () =>
+      allEthPrices.data &&
+      allEthPrices.data.reduce((acc, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {} as Record<string, number>),
+    [allEthPrices.data],
   )
 }
 
 export const useEth90daysPriceMap = () => {
   const allEth90daysPrices = useAllEth90daysPrices()
 
-  return (
-    allEth90daysPrices.data &&
-    allEth90daysPrices.data.reduce((acc, p) => {
-      acc[p.time] = p.value
-      return acc
-    }, {} as Record<string, number>)
+  return useMemo(
+    () =>
+      allEth90daysPrices.data &&
+      allEth90daysPrices.data.reduce((acc, p) => {
+        acc[p.time] = p.value
+        return acc
+      }, {} as Record<string, number>),
+    [allEth90daysPrices.data],
   )
 }
 
 export const useEthWithinOneDayPriceMap = () => {
   const allEthWithinOneDayPrices = useAllEthWithinOneDayPrices()
 
-  return allEthWithinOneDayPrices.data
-    ? allEthWithinOneDayPrices.data.reduce((acc: any, p) => {
-        acc[p.time] = p.value
-        return acc
-      }, {})
-    : {}
+  return useMemo(
+    () =>
+      allEthWithinOneDayPrices.data
+        ? allEthWithinOneDayPrices.data.reduce((acc: any, p) => {
+            acc[p.time] = p.value
+            return acc
+          }, {})
+        : {},
+    [allEthWithinOneDayPrices.data],
+  )
 }
 
 export const useGetVaultPNLWithRebalance = () => {
@@ -411,8 +418,3 @@ export const useLongChartData = () => {
     },
   )
 }
-
-
-
-
-
