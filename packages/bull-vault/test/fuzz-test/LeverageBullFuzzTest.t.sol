@@ -10,6 +10,8 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
 import { LeverageBull } from "../../src/LeverageBull.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
@@ -23,6 +25,10 @@ import { UniOracle } from "../../src/UniOracle.sol";
  */
 contract LeverageBullTestFork is Test {
     using StrategyMath for uint256;
+
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+    uint32 internal constant TWAP = 420;
+    uint256 public constant TARGET_CR = 2e18; // 200% collat ratio
 
     Controller internal controller;
     LeverageBull internal leverageBull;
@@ -40,6 +46,8 @@ contract LeverageBullTestFork is Test {
     address internal euler;
     address internal eulerMarketsModule;
     address internal eToken;
+    address internal ethUsdcPool;
+    address internal dToken;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -61,6 +69,8 @@ contract LeverageBullTestFork is Test {
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
+        dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
+        ethUsdcPool = controller.ethQuoteCurrencyPool();
         vm.stopPrank();
 
         vm.prank(leverageOwner);
@@ -139,5 +149,96 @@ contract LeverageBullTestFork is Test {
         uint256 wethBalanceAfter = IERC20(weth).balanceOf(auction);
 
         assertEq(wethBalanceAfter.sub(wethBalanceBefore), balanceOfUnderlyingToWithdraw);
+    }
+
+    function testFuzzingBorrowAndRepayFullBalanceOf(uint256 _wethToDeposit) public {
+        _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
+
+        vm.deal(auction, _wethToDeposit);
+
+        vm.startPrank(auction);
+        // deposit first WETH in euler
+        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
+        leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
+        vm.stopPrank();
+
+        vm.prank(address(leverageBull));
+        IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
+
+        uint256 balanceOfUnderlying =
+            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
+
+        if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;
+
+        uint256 usdcBalanceBefore = IERC20(usdc).balanceOf(auction);
+
+        vm.startPrank(auction);
+        leverageBull.depositAndBorrowFromLeverage(0, usdcToBorrow);
+        vm.stopPrank();
+        
+        uint256 usdcBalanceAfter = IERC20(usdc).balanceOf(auction);
+
+        assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
+
+        vm.startPrank(auction);
+        uint256 usdcToRepay = IEulerDToken(dToken).balanceOf(auction);
+        IERC20(usdc).approve(address(leverageBull), usdcToRepay);
+        leverageBull.auctionRepayAndWithdrawFromLeverage(usdcToRepay, 0);
+
+        assertEq(IEulerDToken(dToken).balanceOf(auction), 0);
+        assertEq(usdcBalanceAfter.sub(IERC20(usdc).balanceOf(auction)), 0);
+    }
+
+    function testFuzzingBorrowAndRepayPartialBalanceOf(
+        uint256 _wethToDeposit,
+        uint256 _percentage
+    ) public {
+        _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
+        _percentage = bound(_percentage, 0, 100);
+
+        vm.deal(auction, _wethToDeposit);
+
+        vm.startPrank(auction);
+        // deposit first WETH in euler
+        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
+        leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
+        vm.stopPrank();
+
+        vm.prank(address(leverageBull));
+        IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
+
+        uint256 balanceOfUnderlying =
+            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
+        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
+
+        if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;
+
+        uint256 usdcBalanceBefore = IERC20(usdc).balanceOf(auction);
+
+        vm.startPrank(auction);
+        leverageBull.depositAndBorrowFromLeverage(0, usdcToBorrow);
+        vm.stopPrank();
+        
+        uint256 usdcBalanceAfter = IERC20(usdc).balanceOf(auction);
+
+        assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
+
+        vm.startPrank(auction);
+        uint256 debtAmount = IEulerDToken(dToken).balanceOf(auction);
+        uint256 usdcToRepay = debtAmount.mul(_percentage).div(100);
+        IERC20(usdc).approve(address(leverageBull), usdcToRepay);
+        leverageBull.auctionRepayAndWithdrawFromLeverage(usdcToRepay, 0);
+
+        assertEq(IEulerDToken(dToken).balanceOf(auction).sub(debtAmount), usdcToRepay);
+        assertEq(usdcBalanceAfter.sub(IERC20(usdc).balanceOf(auction)), usdcToRepay);
     }
 }
