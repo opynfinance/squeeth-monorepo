@@ -158,14 +158,14 @@ const TradeApp = ({ Component, pageProps }: any) => {
         location="bottom"
         buttonText="Accept Cookies"
         cookieName={CookieNames.Consent}
-        style={{ background: "#2B373B", textAlign:'center' }}
+        style={{ height: "20%", background: "#2B373B", textAlign:'center' }}
         buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"10px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
         expires={365}
         enableDeclineButton
         declineButtonText= "Decline Cookies"
         declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"10px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
         flipButtons
-       // overlay
+        overlay
       >
         We use cookies to recognize visitors and analyze front end traffic and to support technical features that enhance your user experience. Read our {" "}
         <span style={{  color:"#2CE6F9" }}> <a href="/privacy-policy" target="_blank">Privacy</a> </span>

@@ -33,7 +33,7 @@ export const setCookie = (cookieName: string, identifier: string) => {
     const consent = (identifier == 'true') ? true : false
     // save to cookie storage
     Cookies.set(cookieName,identifier, {
-        expires: (consent) ? 365 : 10,
+        expires: 365,
         sameSite:'Strict',
         path: '/'
     });
