@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 
 import { useCallback } from 'react'
-import { useEth90daysPriceMap, useEthPriceMap, useEthWithinOneDayPriceMap } from 'src/state/ethPriceCharts/atoms'
+import { useEth90daysPriceMap, useEthPriceMap, useEthPricesSinceStrategiesLaunchMap, useEthWithinOneDayPriceMap } from 'src/state/ethPriceCharts/atoms'
 
 const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, timestamp: any): number => {
   if (!ethWithinOneDayPriceMap || !timestamp) return 0
@@ -23,7 +23,7 @@ const getClosestTime = (ethWithinOneDayPriceMap: { [key: number]: number }, time
 }
 
 export const useUsdAmount = () => {
-  const ethPriceMap = useEthPriceMap()
+  const ethPriceMap = useEthPricesSinceStrategiesLaunchMap()
   const eth90daysPriceMap = useEth90daysPriceMap()
   const ethWithinOneDayPriceMap = useEthWithinOneDayPriceMap()
 
@@ -43,7 +43,8 @@ export const useUsdAmount = () => {
         usdAmount = wethAmt.multipliedBy(ethPriceMap[closestTime])
       } else if (diffDays <= 90 && diffDays >= 1) {
         time = new Date(Number(timestamp) * 1000).setUTCMinutes(0, 0, 0)
-        usdAmount = wethAmt.multipliedBy(eth90daysPriceMap[time])
+        const closestTime = getClosestTime(eth90daysPriceMap, time)
+        usdAmount = wethAmt.multipliedBy(eth90daysPriceMap[closestTime])
       } else {
         time = new Date(Number(timestamp) * 1000).setUTCSeconds(0, 0)
         const closestTime = getClosestTime(ethWithinOneDayPriceMap, time)
