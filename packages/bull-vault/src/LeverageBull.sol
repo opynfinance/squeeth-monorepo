@@ -56,7 +56,9 @@ contract LeverageBull is Ownable {
     /// @dev auction contract address
     address public auction;
 
-    event AuctionRepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event AuctionRepayAndWithdrawFromLeverage(
+        address from, uint256 usdcToRepay, uint256 wethToWithdraw
+    );
     event SetAuction(address oldAuction, address newAuction);
 
     event DepositAndRepayFromLeverage(
@@ -236,7 +238,10 @@ contract LeverageBull is Ownable {
      * @notice repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
-    function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal returns (uint256, uint256) {
+    function _repayAndWithdrawFromLeverage(uint256 _bullShare)
+        internal
+        returns (uint256, uint256)
+    {
         uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 

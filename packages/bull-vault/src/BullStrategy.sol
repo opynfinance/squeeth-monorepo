@@ -51,7 +51,14 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
-    event Withdraw(address indexed to, uint256 bullAmount, uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event Withdraw(
+        address indexed to,
+        uint256 bullAmount,
+        uint256 crabToRedeem,
+        uint256 wPowerPerpToRedeem,
+        uint256 usdcToRepay,
+        uint256 wethToWithdraw
+    );
     event Deposit(address indexed from, uint256 crabAmount, uint256 wethLent, uint256 usdcBorrowed);
     event SetCap(uint256 oldCap, uint256 newCap);
     event RedeemCrabAndWithdrawEth(
@@ -195,7 +202,9 @@ contract BullStrategy is ERC20, LeverageBull {
 
         payable(msg.sender).sendValue(wethToWithdraw);
 
-        emit Withdraw(msg.sender, _bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, wethToWithdraw);
+        emit Withdraw(
+            msg.sender, _bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, wethToWithdraw
+            );
     }
 
     /**
