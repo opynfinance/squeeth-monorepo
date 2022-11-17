@@ -39,7 +39,8 @@ export const useUsdAmount = () => {
 
       if (diffDays > 90) {
         time = new Date(Number(timestamp) * 1000).setUTCHours(0, 0, 0) / 1000
-        usdAmount = wethAmt.multipliedBy(ethPriceMap[time])
+        const closestTime = getClosestTime(ethPriceMap, time)
+        usdAmount = wethAmt.multipliedBy(ethPriceMap[closestTime])
       } else if (diffDays <= 90 && diffDays >= 1) {
         time = new Date(Number(timestamp) * 1000).setUTCMinutes(0, 0, 0)
         usdAmount = wethAmt.multipliedBy(eth90daysPriceMap[time])
@@ -48,6 +49,7 @@ export const useUsdAmount = () => {
         const closestTime = getClosestTime(ethWithinOneDayPriceMap, time)
         usdAmount = wethAmt.multipliedBy(ethWithinOneDayPriceMap[closestTime])
       }
+
       return usdAmount
     },
     [eth90daysPriceMap, ethPriceMap, ethWithinOneDayPriceMap],
