@@ -13,9 +13,8 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Link from 'next/link'
 import { useState } from 'react'
-import canStoreCookies from '@hooks/useCookies/canStoreCookies'
-import setCookie from '@hooks/useCookies/setCookie'
-import { CookieNames } from '@hooks/useCookies'
+import { canStoreCookies, CookieNames, setCookie } from '@utils/cookies'
+
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -88,7 +87,7 @@ const SettingMenu = () => {
     setOpenCookieModal((prevState) => !prevState)
   }
 
-  const AcceptCookie = () => {
+  const acceptCookie = () => {
     setCookieConsent(true);
     setCookie(CookieNames.Consent, 'true')
   
@@ -269,7 +268,7 @@ const SettingMenu = () => {
            <Button
             variant="outlined"
             color="primary"
-            onClick={AcceptCookie}
+            onClick={acceptCookie}
           >
             I Accept Cookies
           </Button>
