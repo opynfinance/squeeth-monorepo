@@ -2,11 +2,12 @@ import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import React, { useMemo, useCallback } from 'react'
 
 import Slider from '@components/CustomSlider'
+import { MIN_COLLATERAL_RATIO, MAX_COLLATERAL_RATIO } from '@state/lp/hooks'
 
 const HEALTH_CATEGORIES = {
   DANGER: {
     label: 'DANGER',
-    value: 150,
+    value: MIN_COLLATERAL_RATIO,
     colors: {
       LIGHT: '#FA7B67',
       DARK: '#452C28',
@@ -29,8 +30,6 @@ const HEALTH_CATEGORIES = {
     },
   },
 }
-
-const MAX_COLLATERAL_RATIO = 300
 
 const MARK_VALUES = [
   HEALTH_CATEGORIES.DANGER.value,

@@ -97,6 +97,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, 
 
   return (
     <Input
+      type="number"
       value={value}
       onChange={(event) => handleChange(event.target.value)}
       placeholder="0"

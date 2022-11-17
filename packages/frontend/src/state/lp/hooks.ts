@@ -24,6 +24,8 @@ const COLLAT_RATIO_FLASHLOAN = 2
 const POOL_FEE = 3000
 const x96 = new BigNumber(2).pow(96)
 const FLASHLOAN_BUFFER = 0.02
+export const MIN_COLLATERAL_RATIO = 150
+export const MAX_COLLATERAL_RATIO = 300
 
 /*** ACTIONS ***/
 
@@ -138,7 +140,7 @@ export const useCalculateMintAndLPDeposits = () => {
         effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT value (if enabled)
         ethInLP: new BigNumber(0),
         oSQTHToMint: new BigNumber(0),
-        minCollatRatioPercent: new BigNumber(150),
+        minCollatRatioPercent: new BigNumber(MIN_COLLATERAL_RATIO),
       }
 
       const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
@@ -197,8 +199,8 @@ export const useCalculateMintAndLPDeposits = () => {
           */
           const minCollatRatioPercent = usingUniswapLPNFTAsCollat
             ? ethInLP.div(oSQTHInETH).plus(1).multipliedBy(100).integerValue(BigNumber.ROUND_CEIL)
-            : new BigNumber(150)
-          deposits.minCollatRatioPercent = BigNumber.max(minCollatRatioPercent, 150) // make sure this doesn't go below 150
+            : new BigNumber(MIN_COLLATERAL_RATIO)
+          deposits.minCollatRatioPercent = BigNumber.max(minCollatRatioPercent, MIN_COLLATERAL_RATIO) // make sure this doesn't go below MIN_COLLATERAL_RATIO
 
           break
         } else {
