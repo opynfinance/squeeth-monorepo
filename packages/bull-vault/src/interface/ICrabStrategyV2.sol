@@ -10,4 +10,5 @@ interface ICrabStrategyV2 is IERC20 {
     function wPowerPerp() external view returns (address);
     function vaultId() external view returns (uint256);
     function withdraw(uint256 _crabAmount) external;
+    function withdrawShutdown(uint256 _crabAmount) external;
 }
