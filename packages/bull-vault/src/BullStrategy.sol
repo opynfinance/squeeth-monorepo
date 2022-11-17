@@ -51,11 +51,11 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
-    event Withdraw(address indexed to, uint256 bullAmount, uint256 wPowerPerpToRedeem);
+    event Withdraw(address indexed to, uint256 bullAmount, uint256 crabToRedeem, uint256 wPowerPerpToRedeem, uint256 usdcToRepay, uint256 wethToWithdraw);
     event Deposit(address indexed from, uint256 crabAmount, uint256 wethLent, uint256 usdcBorrowed);
     event SetCap(uint256 oldCap, uint256 newCap);
     event RedeemCrabAndWithdrawEth(
-        uint256 crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
+        uint256 indexed crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
     );
     event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
     event ShutdownRepayAndWithdraw(
@@ -191,11 +191,11 @@ contract BullStrategy is ERC20, LeverageBull {
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
-        _repayAndWithdrawFromLeverage(share);
+        (uint256 usdcToRepay, uint256 wethToWithdraw) = _repayAndWithdrawFromLeverage(share);
 
-        payable(msg.sender).sendValue(address(this).balance);
+        payable(msg.sender).sendValue(wethToWithdraw);
 
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
+        emit Withdraw(msg.sender, _bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, wethToWithdraw);
     }
 
     /**
@@ -216,8 +216,8 @@ contract BullStrategy is ERC20, LeverageBull {
 
         _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
-        IWETH9(weth).deposit{value: address(this).balance}();
-        uint256 wethBalanceToReturn = IERC20(weth).balanceOf(address(this));
+        uint256 wethBalanceToReturn = address(this).balance;
+        IWETH9(weth).deposit{value: wethBalanceToReturn}();
         IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
         emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
