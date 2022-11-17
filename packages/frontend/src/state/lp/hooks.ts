@@ -138,6 +138,7 @@ export const useCalculateMintAndLPDeposits = () => {
         effectiveCollateralInVault: new BigNumber(0), // including the uniswap LP NFT value (if enabled)
         ethInLP: new BigNumber(0),
         oSQTHToMint: new BigNumber(0),
+        minCollatRatioPercent: new BigNumber(150),
       }
 
       const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
@@ -159,7 +160,7 @@ export const useCalculateMintAndLPDeposits = () => {
         const oSQTHToMint = await getOSQTHInLP(ethInLP, lowerTick, upperTick, tick)
         if (!oSQTHToMint) return null
 
-        const oSQTHInETH = oSQTHToMint.times(ethIndexPrice.div(INDEX_SCALE)).times(normFactor)
+        const oSQTHInETH = oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE)
         const effectiveCollateralInVault = collatRatio.times(
           oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE),
         )
@@ -167,7 +168,7 @@ export const useCalculateMintAndLPDeposits = () => {
         const ethInVault = usingUniswapLPNFTAsCollat
           ? effectiveCollateralInVault.minus(ethInLP).minus(oSQTHInETH)
           : effectiveCollateralInVault
-        const ethInVaultPos = BigNumber.max(ethInVault, 0)
+        const ethInVaultPos = BigNumber.max(ethInVault, 0) // ethInVault could be < 0
 
         const ethConsumed = ethInVaultPos.plus(ethInLP)
         const currentDeviation = ethDeposit.minus(ethConsumed)
@@ -177,11 +178,28 @@ export const useCalculateMintAndLPDeposits = () => {
         }
         pastDeviation = currentDeviation
 
+        console.log({
+          ethInVault: ethInVault.toFixed(3),
+          ethInLP: ethInLP.toFixed(3),
+          oSQTHToMint: oSQTHToMint.toFixed(3),
+          collatRatioPercent: collatRatioPercent.toFixed(3),
+        })
+
         if (currentDeviation.gt(0) && currentDeviation.lte(targetDeviation)) {
           deposits.ethInVault = fromTokenAmount(ethInVaultPos, WETH_DECIMALS)
           deposits.effectiveCollateralInVault = fromTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)
           deposits.ethInLP = fromTokenAmount(ethInLP, WETH_DECIMALS)
           deposits.oSQTHToMint = fromTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)
+
+          /*
+            When usingUniswapLPNFTAsCollat, there is a certain collatRatio after which ethInVault starts to go negative. 
+            To prevent that case we set up a minCollatRatioPercent.
+          */
+          const minCollatRatioPercent = usingUniswapLPNFTAsCollat
+            ? ethInLP.div(oSQTHInETH).plus(1).multipliedBy(100).integerValue(BigNumber.ROUND_CEIL)
+            : new BigNumber(150)
+          deposits.minCollatRatioPercent = BigNumber.max(minCollatRatioPercent, 150) // make sure this doesn't go below 150
+
           break
         } else {
           if (currentDeviation.gt(0)) {
