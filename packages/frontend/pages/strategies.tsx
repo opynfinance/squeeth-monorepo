@@ -216,9 +216,9 @@ const Strategies: React.FC = () => {
   }, [collatRatio, displayCrabV1, setStrategyDataV2])
 
   useMemo(() => {
-    if (selectedIdx === 0) return Vaults.ETHBull
+    if (selectedIdx === 0) return Vaults.ETHBear
     if (selectedIdx === 1) return Vaults.CrabVault
-    if (selectedIdx === 2) return Vaults.ETHBear
+    if (selectedIdx === 2) return Vaults.ETHBull
     else return Vaults.Custom
   }, [selectedIdx])
 
@@ -244,18 +244,18 @@ const Strategies: React.FC = () => {
           }}
           aria-label="disabled tabs example"
         >
-          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
-          <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
           <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBear} icon={<div>🐻</div>} />
+          <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
+          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
         </Tabs>
-        {selectedIdx === 0 ? ( //bull vault
+        {selectedIdx === 2 ? ( //bull vault
           <div className={classes.comingSoon}>
             <Image src={bull} alt="squeeth token" width={200} height={130} />
             <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
               Coming soon
             </Typography>
           </div>
-        ) : selectedIdx === 2 ? ( //bear vault
+        ) : selectedIdx === 0 ? ( //bear vault
           <div className={classes.comingSoon}>
             <Image src={bear} alt="squeeth token" width={200} height={130} />
             <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
