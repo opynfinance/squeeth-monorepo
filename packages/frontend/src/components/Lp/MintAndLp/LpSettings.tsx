@@ -23,7 +23,7 @@ import TokenPrice from './TokenPrice'
 import TokenAmount from './TokenAmount'
 import TokenLogo from './TokenLogo'
 import Checkbox from './Checkbox'
-import CollateralRatioSlider from './CollateralRatioSlider'
+import CollatRatioSlider from './CollatRatioSlider'
 import { NumberInput } from './Input'
 import ethLogo from 'public/images/eth-logo.svg'
 
@@ -100,6 +100,7 @@ const LpSettings: React.FC<{
   const [ethInVault, setETHInVault] = useState(BIG_ZERO)
   const [effectiveCollateralInVault, setEffectiveCollateralInVault] = useState(BIG_ZERO)
   const [oSQTHToMint, setOSQTHToMint] = useState(BIG_ZERO)
+  const [minCollatRatioPercent, setMinCollatRatioPercent] = useState(150)
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
@@ -149,6 +150,7 @@ const LpSettings: React.FC<{
       setETHInVault(result.ethInVault)
       setEffectiveCollateralInVault(result.effectiveCollateralInVault)
       setOSQTHToMint(result.oSQTHToMint)
+      setMinCollatRatioPercent(result.minCollatRatioPercent.toNumber())
     }
 
     setLoadingDepositAmounts(true)
@@ -332,9 +334,10 @@ const LpSettings: React.FC<{
         </Box>
 
         <div style={{ marginTop: '24px' }}>
-          <CollateralRatioSlider
-            collateralRatio={collatRatioPercent}
-            onCollateralRatioChange={(value) => setCollatRatioPercent(value)}
+          <CollatRatioSlider
+            collatRatio={collatRatioPercent}
+            onCollatRatioChange={(value) => setCollatRatioPercent(value)}
+            minCollatRatio={minCollatRatioPercent}
           />
         </div>
       </div>
