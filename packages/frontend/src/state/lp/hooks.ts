@@ -36,25 +36,31 @@ export const useOpenPositionDeposit = () => {
   const { squeethPool } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerHelperHelperContractAtom)
-  const handleTransaction = useHandleTransaction()
   const squeethPoolContract = useAtomValue(squeethPoolContractAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const normFactor = useAtomValue(normFactorAtom)
   const index = useAtomValue(indexAtom)
+
+  const getNearestUsableTicks = useGetNearestUsableTicks()
+  const handleTransaction = useHandleTransaction()
 
   const openPositionDeposit = useAppCallback(
     async (
       oSQTHToMint: BigNumber,
       ethInLP: BigNumber,
       ethInVault: BigNumber,
-      lowerTick: number,
-      upperTick: number,
+      lowerTickInput: number,
+      upperTickInput: number,
       slippage: number,
       onTxRequested?: () => void,
       onTxConfirmed?: () => void,
     ) => {
       if (!squeethPoolContract || !contract || !address) return null
 
+      const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
+      if (!ticks) return null
+
+      const { lowerTick, upperTick } = ticks
       const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
       const amount0New = isWethToken0 ? ethInLP : oSQTHToMint
@@ -93,7 +99,17 @@ export const useOpenPositionDeposit = () => {
       onTxRequested && onTxRequested()
       return txHash
     },
-    [address, squeethPool, contract, handleTransaction, squeethPoolContract, isWethToken0, index, normFactor],
+    [
+      address,
+      squeethPool,
+      contract,
+      squeethPoolContract,
+      isWethToken0,
+      index,
+      normFactor,
+      getNearestUsableTicks,
+      handleTransaction,
+    ],
   )
 
   return openPositionDeposit
@@ -106,9 +122,7 @@ export const useGetNearestUsableTicks = () => {
 
   const getNearestUsableTicks = useAppCallback(
     async (lowerTickInput: number, upperTickInput: number) => {
-      if (!squeethPoolContract) {
-        return null
-      }
+      if (!squeethPoolContract) return null
 
       const { tick, tickSpacing } = await getPoolState(squeethPoolContract)
       const lowerTick = nearestUsableTick(lowerTickInput, Number(tickSpacing))
@@ -122,14 +136,14 @@ export const useGetNearestUsableTicks = () => {
 }
 
 // calculating ethInLP and ethInVault based on ethDeposit
-export const useCalculateMintAndLPDeposits = () => {
+export const useGetMintAndLPDeposits = () => {
   const getNearestUsableTicks = useGetNearestUsableTicks()
   const getOSQTHInLP = useGetOSQTHInLP()
 
   const index = useAtomValue(indexAtom)
   const normFactor = useAtomValue(normFactorAtom)
 
-  const calculateMintAndLPDeposits = useAppCallback(
+  const getMintAndLPDeposits = useAppCallback(
     async (
       ethDeposit: BigNumber,
       collatRatioPercent: BigNumber,
@@ -146,9 +160,7 @@ export const useCalculateMintAndLPDeposits = () => {
       }
 
       const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
-      if (!ticks) {
-        return null
-      }
+      if (!ticks) return null
 
       const { lowerTick, upperTick, tick } = ticks
       const collatRatio = collatRatioPercent.div(100)
@@ -220,7 +232,7 @@ export const useCalculateMintAndLPDeposits = () => {
     [index, normFactor, getNearestUsableTicks, getOSQTHInLP],
   )
 
-  return calculateMintAndLPDeposits
+  return getMintAndLPDeposits
 }
 
 export const useGetLiquidationPrice = () => {
@@ -229,7 +241,7 @@ export const useGetLiquidationPrice = () => {
   const normFactor = useAtomValue(normFactorAtom)
   const pool = useAtomValue(poolAtom)
 
-  const getLiquidity = useGetLiquidity()
+  const getLiquidity = useGetLiquidityFromOSQTHAmount()
   const getNearestUsableTicks = useGetNearestUsableTicks()
   const getTickPrices = useGetTickPrices()
 
@@ -250,21 +262,17 @@ export const useGetLiquidationPrice = () => {
       }
 
       const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
-      if (!ticks) {
-        return null
-      }
+      if (!ticks) return null
 
-      const { sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice } = await getTickPrices(
-        ticks.lowerTick,
-        ticks.upperTick,
-        ticks.tick,
-      )
+      const { lowerTick, upperTick, tick } = ticks
+
+      const { sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice } = await getTickPrices(lowerTick, upperTick, tick)
       const liquidity = await getLiquidity(oSQTHToMint, sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice)
 
       const position = new Position({
         pool,
-        tickLower: ticks.lowerTick,
-        tickUpper: ticks.upperTick,
+        tickLower: lowerTick,
+        tickUpper: upperTick,
         liquidity: liquidity.integerValue().toNumber(),
       })
 
@@ -346,7 +354,7 @@ export const useGetLiquidityFromETHAmount = () => {
   return getLiquidity
 }
 
-export const useGetLiquidity = () => {
+export const useGetLiquidityFromOSQTHAmount = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
 
   const getLiquidity = useCallback(
@@ -372,7 +380,7 @@ export const useGetLiquidity = () => {
 
 export const useGetOSQTHInLP = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const getLiquidityFromETHAmount = useGetLiquidityFromETHAmount()
+  const getLiquidity = useGetLiquidityFromETHAmount()
   const getTickPrices = useGetTickPrices()
 
   const getOSQTHInLP = useCallback(
@@ -396,13 +404,13 @@ export const useGetOSQTHInLP = () => {
         // isWethToken0 -> y = Lx * (sqrtCurrentPrice - sqrtLowerPrice)
         // !isWethToken0  -> x = Ly * (sqrtUpperPrice - sqrtCurrentPrice)/(sqrtCurrentPrice * sqrtUpperPrice)
 
-        const liquidity = await getLiquidityFromETHAmount(ethInLP, sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice)
+        const liquidity = await getLiquidity(ethInLP, sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice)
         return isWethToken0
           ? liquidity.times(sqrtCurrentPrice.minus(sqrtLowerPrice))
           : liquidity.times(sqrtUpperPrice.minus(sqrtCurrentPrice)).div(sqrtCurrentPrice.times(sqrtUpperPrice))
       }
     },
-    [isWethToken0, getLiquidityFromETHAmount, getTickPrices],
+    [isWethToken0, getLiquidity, getTickPrices],
   )
 
   return getOSQTHInLP
@@ -410,7 +418,7 @@ export const useGetOSQTHInLP = () => {
 
 export const useGetCollateralToLP = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const getLiquidity = useGetLiquidity()
+  const getLiquidity = useGetLiquidityFromOSQTHAmount()
   const getTickPrices = useGetTickPrices()
 
   const getCollateralToLP = useCallback(
@@ -457,28 +465,25 @@ export const useGetTickPrices = () => {
   return getTickPrices
 }
 
-export const useGetTicksFromETHPriceRange = () => {
+export const useGetTicksFromETHPrice = () => {
   const isWethToken0 = useAtomValue(isWethToken0Atom)
   const oSQTHPrice = useOSQTHPrice()
 
-  const getTicksFromETHPriceRange = useAppCallback(
+  const getTicksFromETHPrice = useAppCallback(
     (minETHPrice: BigNumber, maxETHPrice: BigNumber) => {
       // encodeSqrtRatioX96 = √P * 2**96, where P = Price of token0 in terms of token1
       // if isWethToken0 then P = Price(WETH) / Price(oSQTH)
-      const lowerPriceRange = isWethToken0 ? minETHPrice.div(oSQTHPrice) : oSQTHPrice.div(maxETHPrice)
-      const upperPriceRange = isWethToken0 ? maxETHPrice.div(oSQTHPrice) : oSQTHPrice.div(minETHPrice)
-
-      const lowerPriceRangeInt = lowerPriceRange.integerValue()
-      const upperPriceRangeInt = upperPriceRange.integerValue()
+      const pa = isWethToken0 ? minETHPrice.div(oSQTHPrice).integerValue() : oSQTHPrice.div(maxETHPrice).integerValue()
+      const pb = isWethToken0 ? maxETHPrice.div(oSQTHPrice).integerValue() : oSQTHPrice.div(minETHPrice).integerValue()
 
       const lowerTick =
-        lowerPriceRangeInt.isFinite() && !lowerPriceRangeInt.isZero()
-          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(lowerPriceRangeInt.toNumber(), 1))
+        pa.isFinite() && !pa.isZero()
+          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(pa.toNumber(), 1))
           : TickMath.MIN_TICK
 
       const upperTick =
-        upperPriceRangeInt.isFinite() && !upperPriceRangeInt.isZero()
-          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(upperPriceRangeInt.toNumber(), 1))
+        pb.isFinite() && !pb.isZero()
+          ? TickMath.getTickAtSqrtRatio(encodeSqrtRatioX96(pb.toNumber(), 1))
           : TickMath.MAX_TICK
 
       return { lowerTick, upperTick }
@@ -486,7 +491,7 @@ export const useGetTicksFromETHPriceRange = () => {
     [isWethToken0, oSQTHPrice],
   )
 
-  return getTicksFromETHPriceRange
+  return getTicksFromETHPrice
 }
 
 export const useGetDecreaseLiquidity = () => {

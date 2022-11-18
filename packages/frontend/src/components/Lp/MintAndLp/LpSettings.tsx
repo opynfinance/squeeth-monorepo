@@ -11,9 +11,9 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import {
-  useGetTicksFromETHPriceRange,
+  useGetTicksFromETHPrice,
   useOpenPositionDeposit,
-  useCalculateMintAndLPDeposits,
+  useGetMintAndLPDeposits,
   MIN_COLLATERAL_RATIO,
   useGetLiquidationPrice,
 } from '@state/lp/hooks'
@@ -112,10 +112,10 @@ const LpSettings: React.FC<{
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
-  const getTicksFromETHPriceRange = useGetTicksFromETHPriceRange()
-  const openLpPosition = useOpenPositionDeposit()
-  const calculateMintAndLPDeposits = useCalculateMintAndLPDeposits()
+  const getTicksFromETHPrice = useGetTicksFromETHPrice()
+  const getMintAndLPDeposits = useGetMintAndLPDeposits()
   const getLiquidationPrice = useGetLiquidationPrice()
+  const openLPPosition = useOpenPositionDeposit()
 
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
@@ -140,14 +140,14 @@ const LpSettings: React.FC<{
       return
     }
 
-    const ticks = getTicksFromETHPriceRange(new BigNumber(minETHLPPrice), new BigNumber(maxETHLPPrice))
+    const ticks = getTicksFromETHPrice(new BigNumber(minETHLPPrice), new BigNumber(maxETHLPPrice))
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minETHLPPrice, maxETHLPPrice, getTicksFromETHPriceRange])
+  }, [usingDefaultPriceRange, minETHLPPrice, maxETHLPPrice, getTicksFromETHPrice])
 
   useAppEffect(() => {
     async function getDepositAmounts() {
-      const result = await calculateMintAndLPDeposits(
+      const result = await getMintAndLPDeposits(
         new BigNumber(ethToDeposit),
         new BigNumber(collatRatioPercent),
         usingUniswapLPNFTAsCollat,
@@ -167,7 +167,7 @@ const LpSettings: React.FC<{
 
     setLoadingDepositAmounts(true)
     getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
-  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, calculateMintAndLPDeposits])
+  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getMintAndLPDeposits])
 
   useAppEffect(() => {
     async function getLiqPrice() {
@@ -193,7 +193,7 @@ const LpSettings: React.FC<{
 
   const openPosition = useAppCallback(async () => {
     try {
-      await openLpPosition(
+      await openLPPosition(
         oSQTHToMint,
         ethInLP,
         ethInVault,
@@ -219,7 +219,7 @@ const LpSettings: React.FC<{
     lowerTick,
     upperTick,
     slippageAmount,
-    openLpPosition,
+    openLPPosition,
     onConfirm,
     onTxSuccess,
     onTxFail,
