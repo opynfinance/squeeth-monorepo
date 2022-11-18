@@ -31,27 +31,27 @@ const HEALTH_CATEGORIES = {
   },
 }
 
-const MARK_VALUES = [
-  HEALTH_CATEGORIES.DANGER.value,
-  HEALTH_CATEGORIES.RISKY.value,
-  HEALTH_CATEGORIES.SAFE.value,
-  MAX_COLLATERAL_RATIO,
-]
+const getMarkValues = (minCollatRatio: number, maxCollatRatio: number) => {
+  const absoluteMarkValues = [
+    HEALTH_CATEGORIES.DANGER.value,
+    HEALTH_CATEGORIES.RISKY.value,
+    HEALTH_CATEGORIES.SAFE.value,
+    maxCollatRatio,
+  ]
 
-const getMarkValues = (minCollatRatio: number) => {
   // finds the index where minCollatRatio belongs
-  const index = MARK_VALUES.findIndex((value) => value > minCollatRatio)
+  const index = absoluteMarkValues.findIndex((value) => value > minCollatRatio)
 
   // if "minCollatRatio" is the largest or smallest amongst all, original "markValues" is fine to continue with
   if (index === -1 || index === 0) {
-    return MARK_VALUES
+    return absoluteMarkValues
   } else {
-    return [minCollatRatio, ...MARK_VALUES.slice(index)]
+    return [minCollatRatio, ...absoluteMarkValues.slice(index)]
   }
 }
 
-const getMarks = (minCollatRatio: number) => {
-  const markValues = getMarkValues(minCollatRatio)
+const getMarks = (minCollatRatio: number, maxCollatRatio: number) => {
+  const markValues = getMarkValues(minCollatRatio, maxCollatRatio)
 
   return markValues.map((markValue, index) => {
     const isFirstIndex = index === 0
@@ -88,8 +88,11 @@ const getHealthCategory = (value: number) => {
   }
 }
 
-const getRailBackground: (minCollatRatio: number) => string = (minCollatRatio) => {
-  const markValues = getMarkValues(minCollatRatio)
+const getRailBackground: (minCollatRatio: number, maxCollatRatio: number) => string = (
+  minCollatRatio,
+  maxCollatRatio,
+) => {
+  const markValues = getMarkValues(minCollatRatio, maxCollatRatio)
   const totalScale = markValues[markValues.length - 1] - markValues[0]
 
   const gradientObjs = markValues.reduce(
@@ -150,7 +153,6 @@ const useStyles = makeStyles((theme) =>
     safe: {
       backgroundColor: HEALTH_CATEGORIES.SAFE.colors.LIGHT,
     },
-
     rail: {
       opacity: 0.9,
       background: (props: StylePropsType): string => props.railBackground,
@@ -165,6 +167,9 @@ const useStyles = makeStyles((theme) =>
       marginTop: '6px',
       '&[data-index="0"]': {
         transform: 'none',
+      },
+      '&[data-index="1"]': {
+        transform: (props: StylePropsType): string => (props.lastMarkIndex === 1 ? 'translateX(-100%)' : ''),
       },
       '&[data-index="2"]': {
         transform: (props: StylePropsType): string => (props.lastMarkIndex === 2 ? 'translateX(-100%)' : ''),
@@ -258,10 +263,14 @@ const CollatRatioSlider: React.FC<CollatRatioSliderPropsType> = ({
     },
     [minCollatRatio, onCollatRatioChange],
   )
+  const maxCollatRatio = Math.max(minCollatRatio + 150, MAX_COLLATERAL_RATIO)
 
-  const marks = useMemo(() => getMarks(minCollatRatio), [minCollatRatio])
+  const marks = useMemo(() => getMarks(minCollatRatio, maxCollatRatio), [minCollatRatio, maxCollatRatio])
   const lastMarkIndex = marks.length - 1
-  const railBackground = useMemo(() => getRailBackground(minCollatRatio), [minCollatRatio])
+  const railBackground = useMemo(
+    () => getRailBackground(minCollatRatio, maxCollatRatio),
+    [minCollatRatio, maxCollatRatio],
+  )
 
   const classes = useStyles({ railBackground, lastMarkIndex })
 
@@ -283,7 +292,7 @@ const CollatRatioSlider: React.FC<CollatRatioSliderPropsType> = ({
         className={className}
         marks={marks}
         min={minCollatRatio}
-        max={MAX_COLLATERAL_RATIO}
+        max={maxCollatRatio}
         id={id + '-slider'}
       />
     </div>
