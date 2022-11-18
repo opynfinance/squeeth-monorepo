@@ -111,6 +111,8 @@ export const useOpenPositionDeposit = () => {
         upperTick: upperTick,
       }
 
+      console.log(JSON.stringify(flashloanWMintDepositNftParams, undefined, 2))
+
       return handleTransaction(
         contract.methods.flashloanWMintLpDepositNft(flashloanWMintDepositNftParams).send({
           from: address,
@@ -196,8 +198,8 @@ export const useFlashClosePosition = () => {
       const collateralToWithdraw = fromTokenAmount(withdrawAmount, WETH_DECIMALS)
       const ethIndexPrice = toTokenAmount(index, WETH_DECIMALS).sqrt()
       const vaultShortAmt = fromTokenAmount(vaultBefore.shortAmount, OSQUEETH_DECIMALS)
-      const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)  
-      
+      const vaultCollateralAmt = fromTokenAmount(vaultBefore.collateralAmount, WETH_DECIMALS)
+
       const flashLoanAmount = new BigNumber(COLLAT_RATIO_FLASHLOAN + FLASHLOAN_BUFFER)
         .times(vaultShortAmt)
         .times(normFactor)
