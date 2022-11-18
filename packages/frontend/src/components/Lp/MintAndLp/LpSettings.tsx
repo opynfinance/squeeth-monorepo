@@ -15,12 +15,13 @@ import {
   useOpenPositionDeposit,
   useCalculateMintAndLPDeposits,
   MIN_COLLATERAL_RATIO,
+  useGetLiquidationPrice,
 } from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { getErrorMessage } from '@utils/error'
-import { formatTokenAmount } from '@utils/formatter'
+import { formatTokenAmount, formatCurrency } from '@utils/formatter'
 import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from './InfoBox'
@@ -107,12 +108,14 @@ const LpSettings: React.FC<{
   const [oSQTHToMint, setOSQTHToMint] = useState(BIG_ZERO)
   const [minCollatRatioPercent, setMinCollatRatioPercent] = useState(MIN_COLLATERAL_RATIO)
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
+  const [liquidationPrice, setLiquidationPrice] = useState(0)
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
   const getTicksFromETHPriceRange = useGetTicksFromETHPriceRange()
   const openLpPosition = useOpenPositionDeposit()
   const calculateMintAndLPDeposits = useCalculateMintAndLPDeposits()
+  const getLiquidationPrice = useGetLiquidationPrice()
 
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
@@ -165,6 +168,22 @@ const LpSettings: React.FC<{
     setLoadingDepositAmounts(true)
     getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
   }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapNftAsCollat, calculateMintAndLPDeposits])
+
+  useAppEffect(() => {
+    async function getLiqPrice() {
+      if (ethInVault.isZero() || oSQTHToMint.isZero() || ethInLP.isZero()) {
+        return
+      }
+
+      const liqPrice = await getLiquidationPrice(ethInVault, oSQTHToMint, usingUniswapNftAsCollat, lowerTick, upperTick)
+      if (!liqPrice) {
+        return
+      }
+      setLiquidationPrice(liqPrice.toNumber())
+    }
+
+    getLiqPrice()
+  }, [ethInVault, oSQTHToMint, ethInLP, lowerTick, upperTick, usingUniswapNftAsCollat, getLiquidationPrice])
 
   const openPosition = useAppCallback(async () => {
     try {
@@ -355,7 +374,7 @@ const LpSettings: React.FC<{
         <Box display="flex" justifyContent="space-between" gridGap="12px">
           <Typography className={classes.lightFontColor}>Liquidation price</Typography>
           <Box display="flex" gridGap="8px">
-            <Typography>$3,018.29</Typography>
+            <Typography>{formatCurrency(liquidationPrice)}</Typography>
             <Typography className={classes.lightFontColor}>per ETH</Typography>
           </Box>
         </Box>
