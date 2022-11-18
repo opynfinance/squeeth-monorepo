@@ -1,4 +1,4 @@
-import { nearestUsableTick, TickMath, encodeSqrtRatioX96 } from '@uniswap/v3-sdk'
+import { nearestUsableTick, TickMath, encodeSqrtRatioX96, Position } from '@uniswap/v3-sdk'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { useCallback } from 'react'
@@ -17,7 +17,9 @@ import useAppCallback from '@hooks/useAppCallback'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import { addressAtom } from '@state/wallet/atoms'
 import { useHandleTransaction } from '@state/wallet/hooks'
-import { indexAtom, normFactorAtom } from '@state/controller/atoms'
+import { indexAtom, normFactorAtom, impliedVolAtom } from '@state/controller/atoms'
+import { poolAtom } from '@state/squeethPool/atoms'
+import { calculateLiquidationPriceForLP } from '@state/controller/utils'
 
 /*** CONSTANTS ***/
 const COLLAT_RATIO_FLASHLOAN = 2
@@ -180,13 +182,6 @@ export const useCalculateMintAndLPDeposits = () => {
         }
         pastDeviation = currentDeviation
 
-        console.log({
-          ethInVault: ethInVault.toFixed(3),
-          ethInLP: ethInLP.toFixed(3),
-          oSQTHToMint: oSQTHToMint.toFixed(3),
-          collatRatioPercent: collatRatioPercent.toFixed(3),
-        })
-
         if (currentDeviation.gt(0) && currentDeviation.lte(targetDeviation)) {
           deposits.ethInVault = fromTokenAmount(ethInVaultPos, WETH_DECIMALS)
           deposits.effectiveCollateralInVault = fromTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)
@@ -200,6 +195,14 @@ export const useCalculateMintAndLPDeposits = () => {
           const minCollatRatioPercent = usingUniswapLPNFTAsCollat
             ? ethInLP.div(oSQTHInETH).plus(1).multipliedBy(100).integerValue(BigNumber.ROUND_CEIL)
             : new BigNumber(MIN_COLLATERAL_RATIO)
+
+          console.log({
+            ethInVault: ethInVault.toFixed(3),
+            ethInLP: ethInLP.toFixed(3),
+            oSQTHToMint: oSQTHToMint.toFixed(3),
+            collatRatioPercent: collatRatioPercent.toFixed(3),
+            minCollatRatioPercent: minCollatRatioPercent.toFixed(3),
+          })
           deposits.minCollatRatioPercent = BigNumber.max(minCollatRatioPercent, MIN_COLLATERAL_RATIO) // make sure this doesn't go below MIN_COLLATERAL_RATIO
 
           break
@@ -218,6 +221,68 @@ export const useCalculateMintAndLPDeposits = () => {
   )
 
   return calculateMintAndLPDeposits
+}
+
+export const useGetLiquidationPrice = () => {
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const isWethToken0 = useAtomValue(isWethToken0Atom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const pool = useAtomValue(poolAtom)
+
+  const getLiquidity = useGetLiquidity()
+  const getNearestUsableTicks = useGetNearestUsableTicks()
+  const getTickPrices = useGetTickPrices()
+
+  const getLiquidationPrice = useCallback(
+    async (
+      ethInVault: BigNumber,
+      oSQTHToMint: BigNumber,
+      usingUniswapLPNFTAsCollateral: boolean,
+      lowerTickInput: number,
+      upperTickInput: number,
+    ) => {
+      if (!pool) return null
+
+      if (!usingUniswapLPNFTAsCollateral && oSQTHToMint.gt(0)) {
+        const rSqueeth = oSQTHToMint.multipliedBy(normFactor).dividedBy(INDEX_SCALE)
+        const liquidationPrice = ethInVault.div(rSqueeth.multipliedBy(1.5))
+        return liquidationPrice
+      }
+
+      const ticks = await getNearestUsableTicks(lowerTickInput, upperTickInput)
+      if (!ticks) {
+        return null
+      }
+
+      const { sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice } = await getTickPrices(
+        ticks.lowerTick,
+        ticks.upperTick,
+        ticks.tick,
+      )
+      const liquidity = await getLiquidity(oSQTHToMint, sqrtLowerPrice, sqrtUpperPrice, sqrtCurrentPrice)
+
+      const position = new Position({
+        pool,
+        tickLower: ticks.lowerTick,
+        tickUpper: ticks.upperTick,
+        liquidity: liquidity.integerValue().toNumber(),
+      })
+
+      const liquidationPrice = calculateLiquidationPriceForLP(
+        toTokenAmount(ethInVault, 18),
+        toTokenAmount(oSQTHToMint, 18),
+        position!,
+        isWethToken0,
+        normFactor,
+        impliedVol,
+      )
+
+      return liquidationPrice
+    },
+    [getLiquidity, impliedVol, isWethToken0, normFactor, pool, getNearestUsableTicks, getTickPrices],
+  )
+
+  return getLiquidationPrice
 }
 
 export const useGetPosition = () => {
