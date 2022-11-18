@@ -67,6 +67,7 @@ import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { getEthPriceAtHedge } from '@utils/pricer'
+import { squeethInitialPriceAtom } from '../squeethPool/atoms'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -307,6 +308,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const normFactor = useAtomValue(normFactorAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
 
   useEffect(() => {
     setStrategyData()
@@ -326,7 +328,7 @@ export const useCurrentCrabPositionValueV2 = () => {
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral || !normFactor || ((collateral.isZero() || squeethDebt.isZero()) && userShares.gt(0))) {
+      if (!squeethDebt || !collateral || !normFactor || ((collateral.isZero() || squeethDebt.isZero() || squeethInitialPrice.isZero()) && userShares.gt(0))) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         setIsCrabPositionValueLoading(true)
@@ -340,6 +342,7 @@ export const useCurrentCrabPositionValueV2 = () => {
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
@@ -365,6 +368,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     ethPrice,
     vault,
     balLoading,
+    squeethInitialPrice
   ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
