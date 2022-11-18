@@ -38,11 +38,9 @@ const CookiePopUp : React.FC = () => {
         overlay
       >
         <h3>Cookie Preferences</h3>
-        We use cookies to recognize visitors and analyze front end traffic and to support technical features that enhance your user experience. Read our {" "}
-        <span style={{ color:"#2CE6F9" }}> <a href="/privacy-policy" target="_blank">Privacy</a> </span>
-        and 
-        <span style={{ color:"#2CE6F9" }}> <a href="/cookie-policy" target="_blank">Cookie</a> </span>
-        Policies to learn more about how we use cookies.
+        We use cookies to support technical features that enhance your user experience and analyze frontend traffic. 
+        To learn more about these methods, including how to disable them, view our {" "}
+        <span style={{ color:"#2CE6F9" }}> <a href="/privacy-policy" target="_blank">Privacy Policy.</a> </span>
       </CookieConsent>
     </div>
   );

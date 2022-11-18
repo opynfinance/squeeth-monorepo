@@ -252,11 +252,13 @@ const SettingMenu = () => {
           <Typography style={{ marginBottom: '1em' }} id="modal-modal-title" variant="h6" component="h2">
             Cookies Settings
           </Typography>
-          <Typography style={{marginBottom: '.75em', fontSize: '13px' }}>We use cookies to recognize visitors and analyze front end traffic. To learn more about these methods, including how to disable them, view our {" "}
-                <MatLink href={`${location.origin}/cookie-policy`} target="_blank">
-                  Cookie Policy
+          <Typography style={{marginBottom: '.75em', fontSize: '13px' }}>We use cookies to support technical features that enhance your user experience and analyze frontend traffic. 
+        To learn more about these methods, including how to disable them, view our {" "}
+                <MatLink href={`${location.origin}/privacy-policy`} target="_blank">
+                 Privacy Policy.
                 </MatLink>
           </Typography>
+
 
           {consent ? (
           <Switch
