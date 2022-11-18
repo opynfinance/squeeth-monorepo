@@ -84,6 +84,7 @@ const SettingMenu = () => {
 
   const handleCookieModal = () => {
     handleClose()
+    setCookieConsent(canStoreCookies())
     setOpenCookieModal((prevState) => !prevState)
   }
 

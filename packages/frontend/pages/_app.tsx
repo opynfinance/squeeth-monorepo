@@ -25,12 +25,11 @@ import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
-import CookieConsent from "react-cookie-consent";
 import '@utils/amplitude'
 import { setUserId } from '@amplitude/analytics-browser'
 import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
-import { CookieNames } from '@utils/cookies'
+import CookiePopUp from '@components/CookiePopUp'
 
 initializeAmplitude()
 
@@ -154,25 +153,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>
-      <CookieConsent
-        location="bottom"
-        buttonText="Accept Cookies"
-        cookieName={CookieNames.Consent}
-        style={{ height: "20%", background: "#2B373B", textAlign:'center' }}
-        buttonStyle={{ backgroundColor:"#e0f2ff", borderRadius:"10px", color: "#4e503b", fontSize: "13px", fontWeight:'bold' }}
-        expires={365}
-        enableDeclineButton
-        declineButtonText= "Decline Cookies"
-        declineButtonStyle={{ backgroundColor:"#ff4859", borderRadius:"10px", color: "#fff", fontSize: "13px", fontWeight:'bold' }}
-        flipButtons
-        overlay
-      >
-        We use cookies to recognize visitors and analyze front end traffic and to support technical features that enhance your user experience. Read our {" "}
-        <span style={{  color:"#2CE6F9" }}> <a href="/privacy-policy" target="_blank">Privacy</a> </span>
-        and 
-        <span style={{  color:"#2CE6F9" }}> <a href="/cookie-policy" target="_blank">Cookie</a> </span>
-        Policies to learn more about how we use cookies.
-      </CookieConsent>
+      <CookiePopUp/>
     </React.Fragment>
   )
 }
