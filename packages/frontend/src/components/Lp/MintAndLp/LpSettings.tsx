@@ -93,9 +93,9 @@ const LpSettings: React.FC<{
   onTxFail: (message: string) => void
 }> = ({ ethToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
-  const [minETHLpPrice, setMinETHLpPrice] = useState('0')
-  const [maxETHLpPrice, setMaxETHLpPrice] = useState('0')
-  const [usingUniswapNftAsCollat, setUsingUniswapNftAsCollat] = useState(true)
+  const [minETHLPPrice, setMinETHLPPrice] = useState('0')
+  const [maxETHLPPrice, setMaxETHLPPrice] = useState('0')
+  const [usingUniswapLPNFTAsCollat, setUsingUniswapLPNFTAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
   const [collatRatioPercent, setCollatRatioPercent] = useState(225)
   const [lowerTick, setLowerTick] = useState(TickMath.MIN_TICK)
@@ -125,7 +125,7 @@ const LpSettings: React.FC<{
 
   const handleUniswapNftAsCollatToggle = useCallback((value: boolean | null) => {
     if (value !== null) {
-      setUsingUniswapNftAsCollat(value)
+      setUsingUniswapLPNFTAsCollat(value)
     }
   }, [])
 
@@ -140,17 +140,17 @@ const LpSettings: React.FC<{
       return
     }
 
-    const ticks = getTicksFromETHPriceRange(new BigNumber(minETHLpPrice), new BigNumber(maxETHLpPrice))
+    const ticks = getTicksFromETHPriceRange(new BigNumber(minETHLPPrice), new BigNumber(maxETHLPPrice))
     setLowerTick(ticks.lowerTick)
     setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minETHLpPrice, maxETHLpPrice, getTicksFromETHPriceRange])
+  }, [usingDefaultPriceRange, minETHLPPrice, maxETHLPPrice, getTicksFromETHPriceRange])
 
   useAppEffect(() => {
     async function getDepositAmounts() {
       const result = await calculateMintAndLPDeposits(
         new BigNumber(ethToDeposit),
         new BigNumber(collatRatioPercent),
-        usingUniswapNftAsCollat,
+        usingUniswapLPNFTAsCollat,
         lowerTick,
         upperTick,
       )
@@ -167,7 +167,7 @@ const LpSettings: React.FC<{
 
     setLoadingDepositAmounts(true)
     getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
-  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapNftAsCollat, calculateMintAndLPDeposits])
+  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, calculateMintAndLPDeposits])
 
   useAppEffect(() => {
     async function getLiqPrice() {
@@ -175,7 +175,13 @@ const LpSettings: React.FC<{
         return
       }
 
-      const liqPrice = await getLiquidationPrice(ethInVault, oSQTHToMint, usingUniswapNftAsCollat, lowerTick, upperTick)
+      const liqPrice = await getLiquidationPrice(
+        ethInVault,
+        oSQTHToMint,
+        usingUniswapLPNFTAsCollat,
+        lowerTick,
+        upperTick,
+      )
       if (!liqPrice) {
         return
       }
@@ -183,7 +189,7 @@ const LpSettings: React.FC<{
     }
 
     getLiqPrice()
-  }, [ethInVault, oSQTHToMint, ethInLP, lowerTick, upperTick, usingUniswapNftAsCollat, getLiquidationPrice])
+  }, [ethInVault, oSQTHToMint, ethInLP, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getLiquidationPrice])
 
   const openPosition = useAppCallback(async () => {
     try {
@@ -273,8 +279,8 @@ const LpSettings: React.FC<{
             id="min-price"
             label="Min price"
             type="number"
-            value={minETHLpPrice}
-            onInputChange={setMinETHLpPrice}
+            value={minETHLPPrice}
+            onInputChange={setMinETHLPPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
@@ -293,8 +299,8 @@ const LpSettings: React.FC<{
             id="max-price"
             label="Max price"
             type="number"
-            value={maxETHLpPrice}
-            onInputChange={setMaxETHLpPrice}
+            value={maxETHLPPrice}
+            onInputChange={setMaxETHLPPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
@@ -316,7 +322,7 @@ const LpSettings: React.FC<{
           <ToggleButtonGroup
             size="medium"
             exclusive
-            value={usingUniswapNftAsCollat}
+            value={usingUniswapLPNFTAsCollat}
             onChange={(event, value) => handleUniswapNftAsCollatToggle(value)}
           >
             <ToggleButton classes={toggleButtonClasses} value={true}>
