@@ -48,6 +48,7 @@ When you first come to the Interface, you may receive a notification that cookie
 
 ##### **6.1 What is a Cookie**
 A cookie is a small string of text that a website (or online service) stores on a user’s browser. It saves data on your browser about your visit to our site or other sites. It often includes a unique identifier (e.g., cookie #123).
+
 - “First-party cookies” are cookies set by us (or on our behalf) on our site. 
 - “Third-party cookies” are cookies set by other companies whose functionality is embedded into a site (e.g., google.com).
 - “Session cookies” are temporary cookies stored on your device while you visit the Interface. They expire when you close your browser. 
