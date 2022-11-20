@@ -6,7 +6,7 @@ import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { AltPrimaryButton } from '@components/Button'
-import { PreviewModal, TokenInput, PageHeader } from '@components/Lp'
+import { PageHeader, PreviewModal, InputToken } from '@components/Lp'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { connectedWalletAtom } from '@state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -77,7 +77,7 @@ const LPPage: React.FC = () => {
             Deposit ETH
           </Typography>
 
-          <TokenInput
+          <InputToken
             id="eth-deposit-amount"
             value={ethToDeposit}
             onInputChange={setETHToDeposit}

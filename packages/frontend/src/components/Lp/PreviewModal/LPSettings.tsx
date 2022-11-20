@@ -6,6 +6,7 @@ import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { TickMath } from '@uniswap/v3-sdk'
 import { useDebounce } from 'use-debounce'
+import Image from 'next/image'
 
 import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -27,10 +28,10 @@ import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from '../InfoBox'
 import TokenPrice from '../TokenPrice'
-import { TokenInputDense, NumberInput } from '../Input'
-import TokenLogo from '../TokenLogo'
+import { InputNumber, InputTokenDense } from '../Input'
 import Checkbox from '../Checkbox'
 import CollatRatioSlider from '../CollatRatioSlider'
+import { useTypographyStyles } from '../styles'
 import ethLogo from 'public/images/eth-logo.svg'
 
 const useToggleButtonStyles = makeStyles((theme) => ({
@@ -80,8 +81,19 @@ const useModalStyles = makeStyles((theme) =>
       display: 'inline-block',
       width: '100%',
     },
-    lightFontColor: {
-      color: 'rgba(255, 255, 255, 0.8)',
+    logoContainer: {
+      width: '40px',
+      height: '40px',
+      marginRight: theme.spacing(1),
+      backgroundColor: theme.palette.background.lightStone,
+      borderRadius: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logo: {
+      height: '20px',
+      width: '20px',
     },
   }),
 )
@@ -124,6 +136,7 @@ const LPSettings: React.FC<{
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
+  const typographyClasses = useTypographyStyles()
 
   const handleBalanceClick = useCallback(
     () => setETHToDeposit(ethBalance.toFixed(4, BigNumber.ROUND_DOWN)),
@@ -249,7 +262,7 @@ const LPSettings: React.FC<{
           Deposit amounts
         </Typography>
 
-        <TokenInputDense
+        <InputTokenDense
           value={ethToDeposit}
           onInputChange={setETHToDeposit}
           usdPrice={ethPrice}
@@ -271,7 +284,11 @@ const LPSettings: React.FC<{
       <div>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center" gridGap="8px">
-            <TokenLogo logoSrc={ethLogo} />
+            <div className={classes.logoContainer}>
+              <div className={classes.logo}>
+                <Image src={ethLogo} alt="logo" height="100%" width="100%" />
+              </div>
+            </div>
 
             <div>
               <Typography variant="h4" className={classes.sectionTitle}>
@@ -290,7 +307,7 @@ const LPSettings: React.FC<{
         </Box>
 
         <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="center" gridGap="20px">
-          <NumberInput
+          <InputNumber
             id="min-price"
             label="Min price"
             type="number"
@@ -310,7 +327,7 @@ const LPSettings: React.FC<{
             <Divider className={classes.divider} />
           </Box>
 
-          <NumberInput
+          <InputNumber
             id="max-price"
             label="Max price"
             type="number"
@@ -366,7 +383,7 @@ const LPSettings: React.FC<{
               onChange={setUsingDefaultCollatRatio}
             />
 
-            <NumberInput
+            <InputNumber
               id="collateral-ratio-input"
               value={collatRatioPercent}
               onInputChange={handleCollatRatioPercentChange}
@@ -393,10 +410,10 @@ const LPSettings: React.FC<{
 
       <InfoBox marginTop="24px">
         <Box display="flex" justifyContent="space-between" gridGap="12px">
-          <Typography className={classes.lightFontColor}>Liquidation price</Typography>
+          <Typography className={typographyClasses.lightFontColor}>Liquidation price</Typography>
           <Box display="flex" gridGap="8px">
             <Typography>{formatCurrency(liquidationPrice)}</Typography>
-            <Typography className={classes.lightFontColor}>per ETH</Typography>
+            <Typography className={typographyClasses.lightFontColor}>per ETH</Typography>
           </Box>
         </Box>
       </InfoBox>
@@ -406,13 +423,13 @@ const LPSettings: React.FC<{
       <div>
         <InfoBox>
           <Box display="flex" justifyContent="space-between" gridGap="12px">
-            <Typography className={classes.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
+            <Typography className={typographyClasses.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
 
             <Box display="flex" gridGap="8px">
               <Typography>
                 {loadingDepositAmounts ? 'loading' : formatTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)}
               </Typography>
-              <Typography className={classes.lightFontColor}>oSQTH</Typography>
+              <Typography className={typographyClasses.lightFontColor}>oSQTH</Typography>
             </Box>
           </Box>
         </InfoBox>
@@ -420,23 +437,23 @@ const LPSettings: React.FC<{
         <Box display="flex" justifyContent="space-between" gridGap="10px" marginTop="6px">
           <InfoBox>
             <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={classes.lightFontColor}>{'To be LP’ed'}</Typography>
+              <Typography className={typographyClasses.lightFontColor}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
                 <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}</Typography>
-                <Typography className={classes.lightFontColor}>ETH</Typography>
+                <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
           </InfoBox>
           <InfoBox>
             <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={classes.lightFontColor}>{'Vault'}</Typography>
+              <Typography className={typographyClasses.lightFontColor}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
                 <Typography>
                   {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInVault, WETH_DECIMALS)}
                 </Typography>
-                <Typography className={classes.lightFontColor}>ETH</Typography>
+                <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
           </InfoBox>
@@ -445,12 +462,12 @@ const LPSettings: React.FC<{
         <InfoBox marginTop="6px">
           <Box display="flex" justifyContent="center" gridGap="6px">
             <Typography>Total Deposit</Typography>
-            <Typography className={classes.lightFontColor}>=</Typography>
+            <Typography className={typographyClasses.lightFontColor}>=</Typography>
 
-            <Typography className={classes.lightFontColor}>
+            <Typography className={typographyClasses.lightFontColor}>
               {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP.plus(ethInVault), WETH_DECIMALS)}
             </Typography>
-            <Typography className={classes.lightFontColor}>ETH</Typography>
+            <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
           </Box>
         </InfoBox>
       </div>

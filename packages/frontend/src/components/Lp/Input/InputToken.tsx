@@ -1,154 +1,14 @@
-import { TextField, StandardTextFieldProps, Typography, InputAdornment, Box, ButtonBase } from '@material-ui/core'
+import { Typography, InputAdornment, Box, ButtonBase } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import Image from 'next/image'
 import BigNumber from 'bignumber.js'
 
 import { formatBalance, formatCurrency } from '@utils/formatter'
-import TokenLogo from './TokenLogo'
+import InputNumber, { InputNumberProps } from './InputNumber'
+import { useTypographyStyles } from '../styles'
 
-const DECIMAL_REGEX = RegExp('^[0-9]*[.]{1}[0-9]*$')
-
-const useSimpleInputStyles = makeStyles((theme) =>
-  createStyles({
-    label: {
-      opacity: 0.5,
-      '& ~ $input': {
-        marginTop: '24px',
-      },
-    },
-    labelFocused: {
-      color: theme.palette.primary.main,
-      opacity: 0.8,
-    },
-    input: {
-      padding: theme.spacing(0.75, 1.5),
-      fontSize: '14px',
-    },
-    inputBorder: {
-      border: '2px solid',
-      borderColor: theme.palette.background.lightStone,
-      borderRadius: '12px',
-    },
-    inputFocused: {
-      borderColor: theme.palette.primary.main,
-    },
-  }),
-)
-
-interface InputCustomProps {
-  hasBorder?: boolean
-}
-type InputProps = StandardTextFieldProps & InputCustomProps
-
-export const Input: React.FC<InputProps> = ({ InputProps, InputLabelProps, hasBorder = true, ...props }) => {
-  const classes = useSimpleInputStyles()
-
-  return (
-    <TextField
-      InputLabelProps={{
-        classes: {
-          root: classes.label,
-          focused: classes.labelFocused,
-        },
-        ...InputLabelProps,
-      }}
-      InputProps={{
-        disableUnderline: true,
-        classes: {
-          root: clsx(classes.input, hasBorder && classes.inputBorder),
-          focused: classes.inputFocused,
-        },
-        ...InputProps,
-      }}
-      {...props}
-    />
-  )
-}
-
-interface NumberInputCustomProps extends InputCustomProps {
-  onInputChange: (value: string) => void
-}
-type NumberInputProps = StandardTextFieldProps & NumberInputCustomProps
-
-export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, ...props }) => {
-  const handleChange = (val: string) => {
-    if (isNaN(Number(val))) {
-      return onInputChange('0')
-    }
-
-    if (Number(val) < 0) {
-      return onInputChange('0')
-    }
-
-    if (Number(val) !== 0) {
-      // if it is integer, remove leading zeros
-      if (!DECIMAL_REGEX.test(val)) {
-        val = Number(val).toString()
-      }
-    } else {
-      // remain input box w single zero, but keep zero when have decimal
-      val = val.replace(/^[0]+/g, '0')
-      // if it is no value
-      if (val.length === 0) {
-        val = '0'
-      }
-    }
-
-    return onInputChange(val)
-  }
-
-  return (
-    <Input
-      type="number"
-      value={value}
-      onChange={(event) => handleChange(event.target.value)}
-      placeholder="0"
-      autoComplete="false"
-      {...props}
-    />
-  )
-}
-
-const useTokenInputAdornmentStyles = makeStyles((theme) =>
-  createStyles({
-    container: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '2px 10px',
-      backgroundColor: theme.palette.background.stone,
-      borderRadius: '6px',
-    },
-    logo: {
-      width: '20px',
-      height: '20px',
-      marginRight: theme.spacing(0.75),
-    },
-    symbol: {
-      opacity: 0.5,
-      fontWeight: 500,
-    },
-  }),
-)
-
-const TokenInputAdornment: React.FC<{ logo: string; symbol: string }> = ({ logo, symbol }) => {
-  const classes = useTokenInputAdornmentStyles()
-
-  return (
-    <InputAdornment position="end">
-      <div className={classes.container}>
-        <div className={classes.logo}>
-          <Image src={logo} alt="logo" width="100%" height="100%" />
-        </div>
-
-        <Typography className={classes.symbol}>{symbol}</Typography>
-      </div>
-    </InputAdornment>
-  )
-}
-
-const useTokenInputStyles = makeStyles((theme) =>
+const useInputTokenProps = makeStyles((theme) =>
   createStyles({
     container: {
       backgroundColor: 'inherit',
@@ -167,50 +27,49 @@ const useTokenInputStyles = makeStyles((theme) =>
       marginTop: '1em',
       backgroundColor: theme.palette.background.default,
     },
-
     input: {
       padding: 0,
       fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },
-
     subSection: {
       position: 'absolute',
       right: '0',
       left: '0',
       bottom: '-44px',
       zIndex: -10,
-
       display: 'flex',
       justifyContent: 'space-between',
       padding: '36px 16px 12px 16px',
-
       backgroundColor: theme.palette.background.stone,
       borderRadius: '10px',
     },
-    smallFont: {
-      fontSize: '15px',
+    adornmentContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '2px 10px',
+      backgroundColor: theme.palette.background.stone,
+      borderRadius: '6px',
     },
-    lightFont: {
-      opacity: 0.6,
-    },
-    lightestFont: {
-      opacity: 0.5,
+    logo: {
+      width: '20px',
+      height: '20px',
+      marginRight: theme.spacing(0.75),
     },
   }),
 )
 
-interface TokenInputCustomProps extends NumberInputCustomProps {
+interface InputTokenProps extends InputNumberProps {
   usdPrice: BigNumber
   balance: BigNumber
   logo: string
   symbol: string
   onBalanceClick: () => void
 }
-type TokenInputProps = StandardTextFieldProps & TokenInputCustomProps
 
-export const TokenInput: React.FC<TokenInputProps> = ({
+export const InputToken: React.FC<InputTokenProps> = ({
   value,
   usdPrice,
   balance,
@@ -219,18 +78,32 @@ export const TokenInput: React.FC<TokenInputProps> = ({
   onBalanceClick,
   ...props
 }) => {
-  const classes = useTokenInputStyles()
+  const classes = useInputTokenProps()
+  const typographyClasses = useTypographyStyles()
+
   const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
 
   return (
     <div className={classes.container}>
       <div className={classes.inputContainer}>
-        <NumberInput
+        <InputNumber
           value={value}
           fullWidth
           hasBorder
           InputProps={{
-            endAdornment: <TokenInputAdornment symbol={symbol} logo={logo} />,
+            endAdornment: (
+              <InputAdornment position="end">
+                <div className={classes.adornmentContainer}>
+                  <div className={classes.logo}>
+                    <Image src={logo} alt="logo" width="100%" height="100%" />
+                  </div>
+
+                  <Typography className={clsx(typographyClasses.lightestFontColor, typographyClasses.mediumBold)}>
+                    {symbol}
+                  </Typography>
+                </div>
+              </InputAdornment>
+            ),
             classes: {
               root: classes.input,
             },
@@ -238,13 +111,16 @@ export const TokenInput: React.FC<TokenInputProps> = ({
           {...props}
         />
 
-        <Typography variant="subtitle1" className={classes.lightFont}>
+        <Typography variant="subtitle1" className={typographyClasses.lighterFontColor}>
           {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
         </Typography>
       </div>
 
       <div className={classes.subSection}>
-        <Typography variant="caption" className={clsx(classes.lightestFont, classes.smallFont)}>
+        <Typography
+          variant="caption"
+          className={clsx(typographyClasses.lightestFontColor, typographyClasses.smallFont)}
+        >
           Available
         </Typography>
 
@@ -264,7 +140,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({
   )
 }
 
-const useTokenInputDenseStyles = makeStyles((theme) =>
+const useInputTokenDenseStyles = makeStyles((theme) =>
   createStyles({
     container: {
       backgroundColor: 'inherit',
@@ -292,7 +168,10 @@ const useTokenInputDenseStyles = makeStyles((theme) =>
         padding: 0,
         marginRight: '8px',
         maxWidth: '80px',
-        width: ({ inputLength }: any): string => `${Math.max(inputLength, 2)}ch`,
+        width: ({ inputLength }: any): string =>
+          inputLength > 4
+            ? `calc(${Math.max(inputLength, 2)}ch - (${4 + inputLength * 0.5}px))`
+            : `${Math.max(inputLength, 2)}ch`,
       },
     },
     logoContainer: {
@@ -306,14 +185,8 @@ const useTokenInputDenseStyles = makeStyles((theme) =>
       justifyContent: 'center',
     },
     logo: {
-      height: '24px',
-      width: '14px',
-    },
-    mediumBold: {
-      fontWeight: 500,
-    },
-    lightColor: {
-      opacity: 0.5,
+      height: '20px',
+      width: '20px',
     },
     subSection: {
       position: 'absolute',
@@ -331,7 +204,8 @@ const useTokenInputDenseStyles = makeStyles((theme) =>
   }),
 )
 
-export const TokenInputDense: React.FC<TokenInputProps> = ({
+// This the "Dense" variant of InputToken
+export const InputTokenDense: React.FC<InputTokenProps> = ({
   value,
   usdPrice,
   balance,
@@ -340,22 +214,31 @@ export const TokenInputDense: React.FC<TokenInputProps> = ({
   onBalanceClick,
   ...props
 }) => {
-  const classes = useTokenInputDenseStyles({ inputLength: (value as string).length })
+  const classes = useInputTokenDenseStyles({ inputLength: (value as string).length })
+  const typographyClasses = useTypographyStyles()
+
   const usdValue = usdPrice.multipliedBy(new BigNumber(value as string)).toNumber()
 
   return (
     <div className={classes.container}>
       <div className={classes.mainSection}>
-        <TokenLogo logoSrc={logo} />
+        <div className={classes.logoContainer}>
+          <div className={classes.logo}>
+            <Image src={logo} alt="logo" height="100%" width="100%" />
+          </div>
+        </div>
+
         <Box marginLeft="8px">
           <Box display="flex" alignItems="center" gridGap="4px">
-            <NumberInput
+            <InputNumber
               value={value}
               fullWidth={false}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="start">
-                    <Typography className={clsx(classes.mediumBold, classes.lightColor)}>{symbol}</Typography>
+                    <Typography className={clsx(typographyClasses.mediumBold, typographyClasses.lightestFontColor)}>
+                      {symbol}
+                    </Typography>
                   </InputAdornment>
                 ),
                 classes: {
@@ -366,14 +249,17 @@ export const TokenInputDense: React.FC<TokenInputProps> = ({
             />
           </Box>
 
-          <Typography variant="caption" className={clsx(classes.mediumBold, classes.lightColor)}>
+          <Typography
+            variant="caption"
+            className={clsx(typographyClasses.mediumBold, typographyClasses.lightestFontColor)}
+          >
             {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
           </Typography>
         </Box>
       </div>
 
       <div className={classes.subSection}>
-        <Typography variant="body2" className={classes.lightColor}>
+        <Typography variant="body2" className={typographyClasses.lightestFontColor}>
           Available
         </Typography>
 

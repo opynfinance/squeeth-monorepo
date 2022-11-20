@@ -4,7 +4,6 @@ import { Typography } from '@material-ui/core'
 const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
-      // backgroundColor: theme.palette.background.default,
       border: `2px solid ${theme.palette.background.lightStone}`,
       borderLeft: 0,
       borderRight: 0,
