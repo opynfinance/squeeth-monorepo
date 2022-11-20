@@ -288,9 +288,11 @@ const useTokenInputDenseStyles = makeStyles((theme) =>
       marginBottom: theme.spacing(0.5),
 
       '& > input': {
-        padding: 0,
-        width: (props: any): string => `${Math.max(props.inputValue.length, 3)}ch`,
         fontWeight: 500,
+        padding: 0,
+        marginRight: '8px',
+        maxWidth: '80px',
+        width: ({ inputLength }: any): string => `${Math.max(inputLength, 2)}ch`,
       },
     },
     logoContainer: {
@@ -338,8 +340,8 @@ export const TokenInputDense: React.FC<TokenInputProps> = ({
   onBalanceClick,
   ...props
 }) => {
-  const classes = useTokenInputDenseStyles({ inputValue: value })
-  const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
+  const classes = useTokenInputDenseStyles({ inputLength: (value as string).length })
+  const usdValue = usdPrice.multipliedBy(new BigNumber(value as string)).toNumber()
 
   return (
     <div className={classes.container}>
@@ -350,7 +352,6 @@ export const TokenInputDense: React.FC<TokenInputProps> = ({
             <NumberInput
               value={value}
               fullWidth={false}
-              hasBorder
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="start">
