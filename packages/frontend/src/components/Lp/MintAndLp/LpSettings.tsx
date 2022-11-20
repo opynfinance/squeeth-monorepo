@@ -5,6 +5,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import { TickMath } from '@uniswap/v3-sdk'
+import { useDebounce } from 'use-debounce'
 
 import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -111,6 +112,7 @@ const LpSettings: React.FC<{
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
   const [liquidationPrice, setLiquidationPrice] = useState(0)
 
+  const [ethToDepositDebounced] = useDebounce(ethToDeposit, 500)
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
   const getTicksFromETHPrice = useGetTicksFromETHPrice()
@@ -154,7 +156,7 @@ const LpSettings: React.FC<{
   useAppEffect(() => {
     async function getDepositAmounts() {
       const result = await getMintAndLPDeposits(
-        new BigNumber(ethToDeposit),
+        new BigNumber(ethToDepositDebounced),
         new BigNumber(collatRatioPercent),
         usingUniswapLPNFTAsCollat,
         lowerTick,
@@ -173,7 +175,7 @@ const LpSettings: React.FC<{
 
     setLoadingDepositAmounts(true)
     getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
-  }, [ethToDeposit, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getMintAndLPDeposits])
+  }, [ethToDepositDebounced, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getMintAndLPDeposits])
 
   useAppEffect(() => {
     async function getLiqPrice() {
