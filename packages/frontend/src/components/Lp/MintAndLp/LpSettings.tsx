@@ -26,7 +26,7 @@ import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from './InfoBox'
 import TokenPrice from './TokenPrice'
-import TokenAmount from './TokenAmount'
+import { TokenInputDense } from './Input'
 import TokenLogo from './TokenLogo'
 import Checkbox from './Checkbox'
 import CollatRatioSlider from './CollatRatioSlider'
@@ -88,10 +88,11 @@ const useModalStyles = makeStyles((theme) =>
 
 const LpSettings: React.FC<{
   ethToDeposit: string
+  setETHToDeposit: React.Dispatch<React.SetStateAction<string>>
   onConfirm: () => void
   onTxSuccess: () => void
   onTxFail: (message: string) => void
-}> = ({ ethToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
+}> = ({ ethToDeposit, setETHToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
   const [minETHLPPrice, setMinETHLPPrice] = useState('0')
   const [maxETHLPPrice, setMaxETHLPPrice] = useState('0')
@@ -122,6 +123,11 @@ const LpSettings: React.FC<{
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
+
+  const handleBalanceClick = useCallback(
+    () => setETHToDeposit(ethBalance.toFixed(4, BigNumber.ROUND_DOWN)),
+    [ethBalance, setETHToDeposit],
+  )
 
   const handleUniswapNftAsCollatToggle = useCallback((value: boolean | null) => {
     if (value !== null) {
@@ -242,7 +248,15 @@ const LpSettings: React.FC<{
           Deposit amounts
         </Typography>
 
-        <TokenAmount amount={ethToDeposit} usdPrice={ethPrice} logo={ethLogo} symbol="ETH" balance={ethBalance} />
+        <TokenInputDense
+          value={ethToDeposit}
+          onInputChange={setETHToDeposit}
+          usdPrice={ethPrice}
+          logo={ethLogo}
+          symbol="ETH"
+          balance={ethBalance}
+          onBalanceClick={handleBalanceClick}
+        />
       </Box>
 
       <Box marginTop="32px" display="inline-block">

@@ -1,8 +1,9 @@
 import Nav from '@components/Nav'
 import { createStyles, makeStyles, ThemeProvider } from '@material-ui/core/styles'
 import { Grid, Typography } from '@material-ui/core'
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useAtomValue } from 'jotai'
+import BigNumber from 'bignumber.js'
 
 import { AltPrimaryButton } from '@components/Button'
 import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
@@ -44,12 +45,17 @@ const LPPage: React.FC = () => {
   const ethPrice = useETHPrice()
   const connectedWallet = useAtomValue(connectedWalletAtom)
 
-  const [ethAmount, setEthAmount] = useState('0')
+  const [ethToDeposit, setETHToDeposit] = useState('0')
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
 
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
   const classes = useStyles()
-  const isDepositButtonDisabled = !connectedWallet || Number(ethAmount) === 0
+  const isDepositButtonDisabled = !connectedWallet || Number(ethToDeposit) === 0
+
+  const handleBalanceClick = useCallback(
+    () => setETHToDeposit(ethBalance.toFixed(4, BigNumber.ROUND_DOWN)),
+    [ethBalance],
+  )
 
   return (
     <>
@@ -68,17 +74,18 @@ const LPPage: React.FC = () => {
         </Grid>
         <Grid item xs md>
           <Typography className={classes.title} variant="subtitle1">
-            Mint Squeeth and LP
+            Deposit ETH
           </Typography>
 
           <TokenInput
             id="eth-deposit-amount"
-            value={ethAmount}
-            onInputChange={setEthAmount}
+            value={ethToDeposit}
+            onInputChange={setETHToDeposit}
             symbol="ETH"
             logo={ethLogo}
             usdPrice={ethPrice}
             balance={ethBalance}
+            onBalanceClick={handleBalanceClick}
           />
 
           <AltPrimaryButton
@@ -94,7 +101,8 @@ const LPPage: React.FC = () => {
       </Grid>
 
       <DepositPreviewModal
-        ethToDeposit={ethAmount}
+        ethToDeposit={ethToDeposit}
+        setETHToDeposit={setETHToDeposit}
         isOpen={isPreviewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
       />

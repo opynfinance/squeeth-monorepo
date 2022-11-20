@@ -9,16 +9,9 @@ export const formatCurrency: (number: number) => string = (number) => {
 }
 
 export const formatBalance: (number: number) => string = (number) => {
-  let maximumFractionDigits = 2
-  if (number <= 0.005) {
-    maximumFractionDigits = 4
-  } else if (number <= 0.05) {
-    maximumFractionDigits = 3
-  }
-
   return number.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits,
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 4,
   })
 }
 
