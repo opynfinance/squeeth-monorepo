@@ -6,7 +6,7 @@ import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { AltPrimaryButton } from '@components/Button'
-import { DepositPreviewModal, TokenInput, PageHeader } from '@components/Lp/MintAndLp'
+import { PreviewModal, TokenInput, PageHeader } from '@components/Lp'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { connectedWalletAtom } from '@state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -100,7 +100,7 @@ const LPPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      <DepositPreviewModal
+      <PreviewModal
         ethToDeposit={ethToDeposit}
         setETHToDeposit={setETHToDeposit}
         isOpen={isPreviewModalOpen}

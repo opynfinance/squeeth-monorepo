@@ -25,13 +25,12 @@ import { getErrorMessage } from '@utils/error'
 import { formatTokenAmount, formatCurrency } from '@utils/formatter'
 import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
-import InfoBox from './InfoBox'
-import TokenPrice from './TokenPrice'
-import { TokenInputDense } from './Input'
-import TokenLogo from './TokenLogo'
-import Checkbox from './Checkbox'
-import CollatRatioSlider from './CollatRatioSlider'
-import { NumberInput } from './Input'
+import InfoBox from '../InfoBox'
+import TokenPrice from '../TokenPrice'
+import { TokenInputDense, NumberInput } from '../Input'
+import TokenLogo from '../TokenLogo'
+import Checkbox from '../Checkbox'
+import CollatRatioSlider from '../CollatRatioSlider'
 import ethLogo from 'public/images/eth-logo.svg'
 
 const useToggleButtonStyles = makeStyles((theme) => ({
@@ -87,7 +86,7 @@ const useModalStyles = makeStyles((theme) =>
   }),
 )
 
-const LpSettings: React.FC<{
+const LPSettings: React.FC<{
   ethToDeposit: string
   setETHToDeposit: React.Dispatch<React.SetStateAction<string>>
   onConfirm: () => void
@@ -465,4 +464,4 @@ const LpSettings: React.FC<{
   )
 }
 
-export default LpSettings
+export default LPSettings
