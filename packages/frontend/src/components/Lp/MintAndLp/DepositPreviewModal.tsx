@@ -168,9 +168,15 @@ type DepositPreviewModalProps = {
   isOpen: boolean
   onClose: () => void
   ethToDeposit: string
+  setETHToDeposit: React.Dispatch<React.SetStateAction<string>>
 }
 
-const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClose, ethToDeposit }) => {
+const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({
+  isOpen,
+  onClose,
+  ethToDeposit,
+  setETHToDeposit,
+}) => {
   const [activeStep, setActiveStep] = React.useState(0)
   const [txError, setTxError] = React.useState('')
 
@@ -202,6 +208,7 @@ const DepositPreviewModal: React.FC<DepositPreviewModalProps> = ({ isOpen, onClo
         {activeStep === 0 && (
           <LpSettings
             ethToDeposit={ethToDeposit}
+            setETHToDeposit={setETHToDeposit}
             onConfirm={toConfirmationStep}
             onTxSuccess={toTxStatusStep}
             onTxFail={(message) => handleTxFail(message)}

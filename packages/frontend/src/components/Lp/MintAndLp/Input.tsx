@@ -1,10 +1,13 @@
-import { TextField, StandardTextFieldProps, Typography, InputAdornment } from '@material-ui/core'
+import { TextField, StandardTextFieldProps, Typography, InputAdornment, Box, ButtonBase } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import Image from 'next/image'
 import BigNumber from 'bignumber.js'
 
 import { formatBalance, formatCurrency } from '@utils/formatter'
+import TokenLogo from './TokenLogo'
+
+const DECIMAL_REGEX = RegExp('^[0-9]*[.]{1}[0-9]*$')
 
 const useSimpleInputStyles = makeStyles((theme) =>
   createStyles({
@@ -80,7 +83,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({ value, onInputChange, 
 
     if (Number(val) !== 0) {
       // if it is integer, remove leading zeros
-      if (!DecimalRegex.test(val)) {
+      if (!DECIMAL_REGEX.test(val)) {
         val = Number(val).toString()
       }
     } else {
@@ -203,12 +206,19 @@ interface TokenInputCustomProps extends NumberInputCustomProps {
   balance: BigNumber
   logo: string
   symbol: string
+  onBalanceClick: () => void
 }
 type TokenInputProps = StandardTextFieldProps & TokenInputCustomProps
 
-const DecimalRegex = RegExp('^[0-9]*[.]{1}[0-9]*$')
-
-export const TokenInput: React.FC<TokenInputProps> = ({ value, usdPrice, balance, logo, symbol, ...props }) => {
+export const TokenInput: React.FC<TokenInputProps> = ({
+  value,
+  usdPrice,
+  balance,
+  logo,
+  symbol,
+  onBalanceClick,
+  ...props
+}) => {
   const classes = useTokenInputStyles()
   const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
 
@@ -237,9 +247,146 @@ export const TokenInput: React.FC<TokenInputProps> = ({ value, usdPrice, balance
         <Typography variant="caption" className={clsx(classes.lightestFont, classes.smallFont)}>
           Available
         </Typography>
-        <Typography variant="caption" className={classes.smallFont}>
-          {formatBalance(balance.toNumber())} {symbol}
+
+        <Box display="flex" alignItems="center" gridGap="4px">
+          <Typography variant="body2">
+            {formatBalance(balance.toNumber())} {symbol}
+          </Typography>
+
+          <ButtonBase onClick={onBalanceClick}>
+            <Typography variant="subtitle2" color="primary">
+              (Max)
+            </Typography>
+          </ButtonBase>
+        </Box>
+      </div>
+    </div>
+  )
+}
+
+const useTokenInputDenseStyles = makeStyles((theme) =>
+  createStyles({
+    container: {
+      backgroundColor: 'inherit',
+      textAlign: 'left',
+      position: 'relative',
+      marginBottom: '44px',
+      width: '50%',
+      zIndex: 0,
+    },
+    mainSection: {
+      display: 'flex',
+      alignItems: 'center',
+      border: `2px solid ${theme.palette.background.lightStone}`,
+      borderRadius: '10px',
+      padding: theme.spacing(2),
+      marginTop: '1em',
+      backgroundColor: theme.palette.background.default,
+    },
+    inputRoot: {
+      padding: '0px',
+      marginBottom: theme.spacing(0.5),
+
+      '& > input': {
+        padding: 0,
+        width: (props: any): string => `${Math.max(props.inputValue.length, 3)}ch`,
+        fontWeight: 500,
+      },
+    },
+    logoContainer: {
+      width: '40px',
+      height: '40px',
+      marginRight: theme.spacing(1),
+      backgroundColor: theme.palette.background.lightStone,
+      borderRadius: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    logo: {
+      height: '24px',
+      width: '14px',
+    },
+    mediumBold: {
+      fontWeight: 500,
+    },
+    lightColor: {
+      opacity: 0.5,
+    },
+    subSection: {
+      position: 'absolute',
+      right: '0',
+      left: '0',
+      bottom: '-44px',
+      zIndex: -10,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '40px 16px 12px 16px',
+      backgroundColor: theme.palette.background.stone,
+      borderRadius: '10px',
+    },
+  }),
+)
+
+export const TokenInputDense: React.FC<TokenInputProps> = ({
+  value,
+  usdPrice,
+  balance,
+  logo,
+  symbol,
+  onBalanceClick,
+  ...props
+}) => {
+  const classes = useTokenInputDenseStyles({ inputValue: value })
+  const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
+
+  return (
+    <div className={classes.container}>
+      <div className={classes.mainSection}>
+        <TokenLogo logoSrc={logo} />
+        <Box marginLeft="8px">
+          <Box display="flex" alignItems="center" gridGap="4px">
+            <NumberInput
+              value={value}
+              fullWidth={false}
+              hasBorder
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="start">
+                    <Typography className={clsx(classes.mediumBold, classes.lightColor)}>{symbol}</Typography>
+                  </InputAdornment>
+                ),
+                classes: {
+                  root: classes.inputRoot,
+                },
+              }}
+              {...props}
+            />
+          </Box>
+
+          <Typography variant="caption" className={clsx(classes.mediumBold, classes.lightColor)}>
+            {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
+          </Typography>
+        </Box>
+      </div>
+
+      <div className={classes.subSection}>
+        <Typography variant="body2" className={classes.lightColor}>
+          Available
         </Typography>
+
+        <Box display="flex" alignItems="center" gridGap="4px">
+          <Typography variant="body2">
+            {formatBalance(balance.toNumber())} {symbol}
+          </Typography>
+
+          <ButtonBase onClick={onBalanceClick}>
+            <Typography variant="subtitle2" color="primary">
+              (Max)
+            </Typography>
+          </ButtonBase>
+        </Box>
       </div>
     </div>
   )
