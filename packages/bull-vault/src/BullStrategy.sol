@@ -24,7 +24,6 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
  * BS5: Can't farm token
  * BS6: invalid shutdownContract address set
- * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
  * BS8: Caller is not auction address
  * BS9: deposited amount less than minimum
  * BS10: remaining amount of bull token should be more than minimum or zero
@@ -147,8 +146,6 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
-        require(!IController(powerTokenController).isShutDown(), "BS7");
-
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
@@ -183,7 +180,6 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _bullAmount amount of bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
-        require(!IController(powerTokenController).isShutDown(), "BS7");
 
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
