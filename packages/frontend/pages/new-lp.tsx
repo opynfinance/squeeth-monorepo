@@ -55,7 +55,7 @@ const LPPage: React.FC = () => {
 
   useEffect(() => {
     if (ethBalance.lt(ethToDeposit)) {
-      setInputError('Insufficient balance.')
+      setInputError('Insufficient balance')
     } else {
       setInputError('')
     }

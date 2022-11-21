@@ -53,6 +53,7 @@ const useStyles = makeStyles((theme) =>
       padding: '16px 48px',
       borderTop: '1px solid',
       borderColor: theme.palette.background.lightStone,
+      backgroundColor: theme.palette.background.stone,
     },
     divider: {
       height: '32px',

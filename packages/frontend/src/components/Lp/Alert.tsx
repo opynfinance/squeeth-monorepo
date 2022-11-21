@@ -39,7 +39,9 @@ const Alert: React.FC<AlertProps> = ({ severity, children, ...props }) => {
   return (
     <Box className={classes.root} {...props}>
       <InfoIcon />
-      <Typography className={clsx(typographyClasses.mediumBold, typographyClasses.smallFont)}>{children}</Typography>
+      <Typography variant="body2" className={clsx(typographyClasses.mediumBold, typographyClasses.smallFont)}>
+        {children}
+      </Typography>
     </Box>
   )
 }
