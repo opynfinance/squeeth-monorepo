@@ -6,7 +6,7 @@ import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
 import { AltPrimaryButton } from '@components/Button'
-import { PageHeader, PreviewModal, InputToken } from '@components/Lp'
+import { PageHeader, PreviewModal, InputToken, Footer } from '@components/Lp'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { connectedWalletAtom } from '@state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -69,7 +69,6 @@ const LPPage: React.FC = () => {
   return (
     <>
       <Nav />
-
       <PageHeader />
 
       <Grid container spacing={10} justifyContent="center" className={classes.container}>
@@ -110,6 +109,8 @@ const LPPage: React.FC = () => {
           </AltPrimaryButton>
         </Grid>
       </Grid>
+
+      <Footer />
 
       <PreviewModal
         ethToDeposit={ethToDeposit}
