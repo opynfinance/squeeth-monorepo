@@ -25,13 +25,13 @@ import { useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { getErrorMessage } from '@utils/error'
 import { formatTokenAmount, formatCurrency } from '@utils/formatter'
-import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
+import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS, MIN_COLLATERAL_AMOUNT } from '@constants/index'
 
 import InfoBox from '../InfoBox'
 import { InputNumber, InputTokenDense } from '../Input'
 import Checkbox from '../Checkbox'
 import CollatRatioSlider from '../CollatRatioSlider'
-import { Warning } from '../Alert'
+import Alert from '../Alert'
 import { useTypographyStyles } from '../styles'
 import ethLogo from 'public/images/eth-logo.svg'
 
@@ -127,6 +127,7 @@ const LPSettings: React.FC<{
   const [ethInputError, setETHInputError] = useState('')
   const [lpPriceError, setLPPriceError] = useState('')
   const [showUniswapLPNFTWarning, setShowUniswapLPNFTWarning] = useState(false)
+  const [showMinCollatError, setShowMinCollatError] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -211,11 +212,20 @@ const LPSettings: React.FC<{
         return
       }
 
-      setETHInLP(result.ethInLP)
-      setETHInVault(result.ethInVault)
-      setEffectiveCollateralInVault(result.effectiveCollateralInVault)
-      setOSQTHToMint(result.oSQTHToMint)
-      setMinCollatRatioPercent(result.minCollatRatioPercent.toNumber())
+      const { ethInLP, ethInVault, effectiveCollateralInVault, oSQTHToMint, minCollatRatioPercent } = result
+      const parsedCollatInVault = toTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)
+
+      if (parsedCollatInVault.lt(MIN_COLLATERAL_AMOUNT)) {
+        setShowMinCollatError(true)
+      } else {
+        setShowMinCollatError(false)
+      }
+
+      setETHInLP(ethInLP)
+      setETHInVault(ethInVault)
+      setEffectiveCollateralInVault(effectiveCollateralInVault)
+      setOSQTHToMint(oSQTHToMint)
+      setMinCollatRatioPercent(minCollatRatioPercent.toNumber())
     }
 
     setLoadingDepositAmounts(true)
@@ -314,11 +324,12 @@ const LPSettings: React.FC<{
         />
       </Box>
 
-      <Box marginTop="32px" display="inline-block">
-        <Typography variant="body2">
-          Effective collateral in vault is {formatTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)} ETH
-        </Typography>
-      </Box>
+      <Collapse in={showMinCollatError}>
+        <Alert severity="error" marginTop="24px">
+          Effective collateral in vault is {formatTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)} ETH, which is
+          less than the minimum 6.9 ETH limit.
+        </Alert>
+      </Collapse>
 
       <Divider className={classes.divider} />
 
@@ -415,9 +426,9 @@ const LPSettings: React.FC<{
       </Box>
 
       <Collapse in={showUniswapLPNFTWarning}>
-        <Warning marginTop="24px">
-          Excluding your Uniswap NFT reduces the amount of capital that gets LP’ed and earns interest for you.
-        </Warning>
+        <Alert severity="warning" marginTop="24px">
+          Excluding your Uniswap NFT reduces the amount of capital that gets LP&apos;ed and earns interest for you.
+        </Alert>
       </Collapse>
 
       <Divider className={classes.divider} />

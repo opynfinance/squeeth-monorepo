@@ -6,15 +6,20 @@ import clsx from 'clsx'
 
 import { useTypographyStyles } from './styles'
 
+type AlertSeverity = 'warning' | 'error' | 'info' | 'success'
+
+interface StylesProps {
+  severity: AlertSeverity
+}
+
 const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
-      backgroundColor: theme.palette.warning.light,
+      backgroundColor: (props: StylesProps): string => theme.palette[props.severity].light,
       border: '1px solid',
-      borderColor: theme.palette.warning.main,
+      borderColor: (props: StylesProps): string => theme.palette[props.severity].main,
       borderRadius: '14px',
       display: 'flex',
-      justifyContent: 'space-between',
       alignItems: 'center',
       gap: '20px',
       padding: '24px',
@@ -22,8 +27,13 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export const Warning: React.FC<BoxProps> = ({ children, ...props }) => {
-  const classes = useStyles()
+interface AlertCustomProps {
+  severity: AlertSeverity
+}
+type AlertProps = BoxProps & AlertCustomProps
+
+const Alert: React.FC<AlertProps> = ({ severity, children, ...props }) => {
+  const classes = useStyles({ severity })
   const typographyClasses = useTypographyStyles()
 
   return (
@@ -33,3 +43,5 @@ export const Warning: React.FC<BoxProps> = ({ children, ...props }) => {
     </Box>
   )
 }
+
+export default Alert
