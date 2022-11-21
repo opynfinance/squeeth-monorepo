@@ -73,15 +73,16 @@ const LPPage: React.FC = () => {
 
       <Grid container spacing={10} justifyContent="center" className={classes.container}>
         <Grid item xs={12} md={8}>
-          <Typography variant="h2" className={classes.title}>
+          <Typography variant="h3" className={classes.title}>
             Pool returns
           </Typography>
           <Typography variant="subtitle1" className={classes.subtitle}>
             Total return combines fees and funding.
           </Typography>
         </Grid>
+
         <Grid item xs md>
-          <Typography className={classes.title} variant="subtitle1">
+          <Typography variant="h3" className={classes.title}>
             Deposit ETH
           </Typography>
 
