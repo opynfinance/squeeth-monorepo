@@ -131,7 +131,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice set shutdown contract that can be used to unwind the strategy if squeeth contracts are shut down
+     * @notice set shutdown contract that can be used to unwind the strategy if WPowerPerp controller contract is shut down
      * @param _shutdownContract shutdown contract address
      */
     function setShutdownContract(address _shutdownContract) external onlyOwner {
@@ -165,10 +165,10 @@ contract BullStrategy is ERC20, LeverageBull {
 
         require(totalSupply() > 1e14, "BS9");
 
-        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
         (uint256 wethLent, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
-            msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+            msg.value, bullToMint, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
         );
 
         require(_totalWethInEuler <= strategyCap, "BS2");
@@ -188,8 +188,8 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 crabToRedeem = share.wmul(_crabBalance);
         uint256 crabTotalSupply = IERC20(crab).totalSupply();
-        (, uint256 squeethInCrab) = _getCrabVaultDetails();
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(crabTotalSupply);
+        (, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
+        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(wPowerPerpInCrab).wdiv(crabTotalSupply);
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
 
@@ -283,7 +283,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice allows a user to withdraw their share of ETH if squeeth contracts have been shut down
+     * @notice allows a user to withdraw their share of ETH if WPowerPerp controller contracts have been shut down
      * @dev redeemShortShutdown must have been called first
      * @param _bullAmount bull amount to withdraw
      */
