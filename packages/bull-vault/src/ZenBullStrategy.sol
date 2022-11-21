@@ -151,8 +151,6 @@ contract ZenBullStrategy is ERC20, LeverageZen {
      * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
-        require(!IController(powerTokenController).isShutDown(), "BS7");
-
         IERC20(crab).transferFrom(msg.sender, address(this), _crabAmount);
         uint256 crabBalance = _increaseCrabBalance(_crabAmount);
 
