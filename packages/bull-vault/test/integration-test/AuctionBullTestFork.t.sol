@@ -6317,7 +6317,7 @@ contract AuctionBullTestFork is Test {
         (uint256 debtDeltaInDollar, bool isDebtDeltaInDollarPositive) = (_targetDebt > _currentDebt)
             ? (_targetDebt.sub(_currentDebt), false)
             : (_currentDebt.sub(_targetDebt), true);
-        wethDeltaInDollar = wethDeltaInDollar.div(1e12);
+        wethDeltaInDollar = wethDeltaInDollar.div(WETH_DECIMALS_DIFF);
         bool isDepositingInCrab;
         uint256 dollarToExchangeWithCrab;
 
@@ -6344,7 +6344,7 @@ contract AuctionBullTestFork is Test {
                     (debtDeltaInDollar.add(wethDeltaInDollar), true);
             }
         }
-        uint256 crabAmount = dollarToExchangeWithCrab.mul(1e12).wdiv(testUtil.getCrabPrice());
+        uint256 crabAmount = dollarToExchangeWithCrab.mul(WETH_DECIMALS_DIFF).wdiv(testUtil.getCrabPrice());
 
         return (crabAmount, isDepositingInCrab);
     }
@@ -6409,7 +6409,7 @@ contract AuctionBullTestFork is Test {
 
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6483,7 +6483,7 @@ contract AuctionBullTestFork is Test {
 
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6545,7 +6545,7 @@ contract AuctionBullTestFork is Test {
             auctionBull.getCurrentDeltaAndCollatRatio();
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6612,7 +6612,7 @@ contract AuctionBullTestFork is Test {
 
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6674,7 +6674,7 @@ contract AuctionBullTestFork is Test {
             auctionBull.getCurrentDeltaAndCollatRatio();
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6741,7 +6741,7 @@ contract AuctionBullTestFork is Test {
 
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6797,7 +6797,7 @@ contract AuctionBullTestFork is Test {
             auctionBull.getCurrentDeltaAndCollatRatio();
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -6855,7 +6855,7 @@ contract AuctionBullTestFork is Test {
             auctionBull.getCurrentDeltaAndCollatRatio();
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
-            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(1e12);
+            crabPrice.wmul(IERC20(crabV2).balanceOf(address(bullStrategy))).div(WETH_DECIMALS_DIFF);
         bool isSellingUsdc =
             (usdcDebtTarget > IEulerDToken(dToken).balanceOf(address(bullStrategy))) ? true : false;
 
@@ -7015,11 +7015,11 @@ contract AuctionBullTestFork is Test {
         uint256 equityValue = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(
             ethUsdPrice
         ).add(IERC20(crabV2).balanceOf(address(bullStrategy)).wmul(crabUsdPrice)).sub(
-            IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12)
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(WETH_DECIMALS_DIFF)
         );
         uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);
         uint256 _targetDebt =
-            targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+            targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(WETH_DECIMALS_DIFF);
         return (targetCollateral, _targetDebt);
     }
 }
