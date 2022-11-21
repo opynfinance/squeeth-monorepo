@@ -149,7 +149,7 @@ const LPSettings: React.FC<{
 
   useEffect(() => {
     if (ethBalance.lt(ethToDeposit)) {
-      setETHInputError('Insufficient balance')
+      setETHInputError('Insufficient balance.')
     } else {
       setETHInputError('')
     }
