@@ -69,6 +69,8 @@ contract BullStrategy is ERC20, LeverageBull {
         uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem
     );
     event Farm(address indexed asset, address indexed receiver);
+    event DepositEthIntoCrab(uint256 ethToDeposit);
+    event WithdrawShutdown(address indexed withdrawer, uint256 bullAmount, uint256 ethToReceive);
 
     /**
      * @notice constructor for BullStrategy
@@ -249,6 +251,8 @@ contract BullStrategy is ERC20, LeverageBull {
         _increaseCrabBalance(IERC20(crab).balanceOf(address(this)).sub(crabBalancebefore));
 
         IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
+
+        emit DepositEthIntoCrab(_ethToDeposit);
     }
 
     /**
@@ -280,10 +284,15 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function withdrawShutdown(uint256 _bullAmount) external {
         require(hasRedeemedInShutdown, "BS3");
+
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 ethToReceive = share.wmul(address(this).balance);
+
         _burn(msg.sender, _bullAmount);
+
         payable(msg.sender).sendValue(ethToReceive);
+
+        emit WithdrawShutdown(address msg.sender, _bullAmount, ethToReceive);
     }
 
     /**
