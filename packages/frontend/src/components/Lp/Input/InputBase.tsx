@@ -26,6 +26,9 @@ const useInputBaseStyles = makeStyles((theme) =>
     inputFocused: {
       borderColor: theme.palette.primary.main,
     },
+    inputError: {
+      borderColor: theme.palette.error.dark,
+    },
   }),
 )
 
@@ -52,6 +55,7 @@ const InputBase: React.FC<InputBaseProps> = ({ InputProps, InputLabelProps, hasB
         classes: {
           root: clsx(classes.inputRoot, hasBorder && classes.inputBorder),
           focused: classes.inputFocused,
+          error: classes.inputError,
         },
         ...InputProps,
       }}

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -106,8 +106,8 @@ const LPSettings: React.FC<{
   onTxFail: (message: string) => void
 }> = ({ ethToDeposit, setETHToDeposit, onConfirm, onTxSuccess, onTxFail }) => {
   const [usingDefaultPriceRange, setUsingDefaultPriceRange] = useState(true)
-  const [minETHLPPrice, setMinETHLPPrice] = useState('0')
-  const [maxETHLPPrice, setMaxETHLPPrice] = useState('0')
+  const [minLPPrice, setMinLPPrice] = useState('0')
+  const [maxLPPrice, setMaxLPPrice] = useState('0')
   const [usingUniswapLPNFTAsCollat, setUsingUniswapLPNFTAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
   const [collatRatioPercent, setCollatRatioPercent] = useState(225)
@@ -123,7 +123,9 @@ const LPSettings: React.FC<{
   const [loadingDepositAmounts, setLoadingDepositAmounts] = useState(false)
   const [liquidationPrice, setLiquidationPrice] = useState(0)
 
-  const [ethToDepositDebounced] = useDebounce(ethToDeposit, 500)
+  const [ethInputError, setETHInputError] = useState('')
+  const [ethLPPriceError, setETHLPPriceError] = useState('')
+
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
   const getTicksFromETHPrice = useGetTicksFromETHPrice()
@@ -131,12 +133,24 @@ const LPSettings: React.FC<{
   const getLiquidationPrice = useGetLiquidationPrice()
   const openLPPosition = useOpenPositionDeposit()
 
+  const [ethToDepositDebounced] = useDebounce(ethToDeposit, 500)
+  const [minLPPriceDebounced] = useDebounce(minLPPrice, 500)
+  const [maxLPPriceDebounced] = useDebounce(maxLPPrice, 500)
+
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
   const typographyClasses = useTypographyStyles()
+
+  useEffect(() => {
+    if (ethBalance.lt(ethToDeposit)) {
+      setETHInputError('Insufficient balance')
+    } else {
+      setETHInputError('')
+    }
+  }, [ethToDeposit, ethBalance])
 
   const handleBalanceClick = useCallback(
     () => setETHToDeposit(ethBalance.toFixed(4, BigNumber.ROUND_DOWN)),
@@ -160,10 +174,19 @@ const LPSettings: React.FC<{
       return
     }
 
-    const ticks = getTicksFromETHPrice(new BigNumber(minETHLPPrice), new BigNumber(maxETHLPPrice))
-    setLowerTick(ticks.lowerTick)
-    setUpperTick(ticks.upperTick)
-  }, [usingDefaultPriceRange, minETHLPPrice, maxETHLPPrice, getTicksFromETHPrice])
+    const minLPPriceBN = new BigNumber(minLPPriceDebounced)
+    const maxLPPriceBN = new BigNumber(maxLPPriceDebounced)
+
+    if (minLPPriceBN.lt(maxLPPriceBN)) {
+      setETHLPPriceError('')
+
+      const ticks = getTicksFromETHPrice(minLPPriceBN, maxLPPriceBN)
+      setLowerTick(ticks.lowerTick)
+      setUpperTick(ticks.upperTick)
+    } else {
+      setETHLPPriceError('Min price must be less than max price')
+    }
+  }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
 
   useAppEffect(() => {
     async function getDepositAmounts() {
@@ -265,6 +288,8 @@ const LPSettings: React.FC<{
         <InputTokenDense
           value={ethToDeposit}
           onInputChange={setETHToDeposit}
+          error={!!ethInputError}
+          helperText={ethInputError}
           usdPrice={ethPrice}
           logo={ethLogo}
           symbol="ETH"
@@ -306,24 +331,26 @@ const LPSettings: React.FC<{
           />
         </Box>
 
-        <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="center" gridGap="20px">
+        <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="start" gridGap="20px">
           <InputNumber
             id="min-price"
             label="Min price"
             type="number"
-            value={minETHLPPrice}
-            onInputChange={setMinETHLPPrice}
+            value={minLPPrice}
+            onInputChange={setMinLPPrice}
+            error={!!ethLPPriceError}
+            helperText={ethLPPriceError}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per ETH
+                <InputAdornment position="end">
+                  <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
                 </InputAdornment>
               ),
             }}
           />
 
-          <Box sx={{ width: '16px' }}>
+          <Box width="16px">
             <Divider className={classes.divider} />
           </Box>
 
@@ -331,13 +358,13 @@ const LPSettings: React.FC<{
             id="max-price"
             label="Max price"
             type="number"
-            value={maxETHLPPrice}
-            onInputChange={setMaxETHLPPrice}
+            value={maxLPPrice}
+            onInputChange={setMaxLPPrice}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
-                <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  Per ETH
+                <InputAdornment position="end">
+                  <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
                 </InputAdornment>
               ),
             }}

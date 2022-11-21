@@ -1,7 +1,7 @@
 import Nav from '@components/Nav'
 import { createStyles, makeStyles, ThemeProvider } from '@material-ui/core/styles'
 import { Grid, Typography } from '@material-ui/core'
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 
@@ -47,10 +47,19 @@ const LPPage: React.FC = () => {
 
   const [ethToDeposit, setETHToDeposit] = useState('0')
   const [isPreviewModalOpen, setPreviewModalOpen] = useState(false)
+  const [inputError, setInputError] = useState('')
 
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
   const classes = useStyles()
-  const isDepositButtonDisabled = !connectedWallet || Number(ethToDeposit) === 0
+  const isPreviewButtonDisabled = !connectedWallet || Number(ethToDeposit) === 0 || inputError !== ''
+
+  useEffect(() => {
+    if (ethBalance.lt(ethToDeposit)) {
+      setInputError('Insufficient balance')
+    } else {
+      setInputError('')
+    }
+  }, [ethToDeposit, ethBalance])
 
   const handleBalanceClick = useCallback(
     () => setETHToDeposit(ethBalance.toFixed(4, BigNumber.ROUND_DOWN)),
@@ -81,6 +90,8 @@ const LPPage: React.FC = () => {
             id="eth-deposit-amount"
             value={ethToDeposit}
             onInputChange={setETHToDeposit}
+            error={!!inputError}
+            helperText={inputError}
             symbol="ETH"
             logo={ethLogo}
             usdPrice={ethPrice}
@@ -92,7 +103,7 @@ const LPPage: React.FC = () => {
             className={classes.margin}
             id="preview-deposit-btn"
             onClick={() => setPreviewModalOpen(true)}
-            disabled={isDepositButtonDisabled}
+            disabled={isPreviewButtonDisabled}
             fullWidth
           >
             {connectedWallet ? 'Preview transaction' : 'Connect wallet to deposit'}
