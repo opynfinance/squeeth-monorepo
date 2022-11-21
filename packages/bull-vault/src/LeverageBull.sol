@@ -49,9 +49,9 @@ contract LeverageBull is Ownable {
     address internal immutable weth;
     /// @dev euler markets module
     address internal immutable eulerMarkets;
-    /// @dev euler eToken that represent the collateral asset
+    /// @dev euler eToken that represent the collateral asset (WETH)
     address internal immutable eToken;
-    /// @dev euler dToken that represent the borrowed asset
+    /// @dev euler dToken that represent the borrowed asset (USDC)
     address internal immutable dToken;
     /// @dev auction contract address
     address public auction;
