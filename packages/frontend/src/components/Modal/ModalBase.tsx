@@ -10,9 +10,16 @@ const useModalStyles = makeStyles((theme) =>
       maxHeight: '90%',
       background: theme.palette.background.default,
       borderRadius: 20,
-      overflow: 'auto',
+      overflowY: 'auto',
       margin: '5em auto 0px',
       padding: theme.spacing(6),
+
+      // hide scrollbar
+      '&::-webkit-scrollbar': {
+        width: '0 !important',
+      },
+      overflow: '-moz-scrollbars-none',
+      msOverflowStyle: 'none',
     },
   }),
 )
