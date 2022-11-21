@@ -129,6 +129,7 @@ const LPSettings: React.FC<{
   const [lpPriceError, setLPPriceError] = useState('')
   const [showUniswapLPNFTWarning, setShowUniswapLPNFTWarning] = useState(false)
   const [showMinCollatError, setShowMinCollatError] = useState(false)
+  const [showMinCollatRatioError, setShowMinCollatRatioError] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -144,6 +145,7 @@ const LPSettings: React.FC<{
 
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
+  const isConfirmButtonDisabled = !!ethInputError || !!lpPriceError || showMinCollatError || showMinCollatRatioError
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
@@ -210,12 +212,17 @@ const LPSettings: React.FC<{
     }
   }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
 
-  // if collatRatioPercent changes from DEFAULT value
   useEffect(() => {
     if (collatRatioPercent !== DEFAULT_COLLATERAL_RATIO) {
       setUsingDefaultCollatRatio(false)
     }
-  }, [collatRatioPercent])
+
+    if (collatRatioPercent < minCollatRatioPercent) {
+      setShowMinCollatRatioError(true)
+    } else {
+      setShowMinCollatRatioError(false)
+    }
+  }, [collatRatioPercent, minCollatRatioPercent])
 
   useEffect(() => {
     if (minCollatRatioPercent > DEFAULT_COLLATERAL_RATIO) {
@@ -272,17 +279,11 @@ const LPSettings: React.FC<{
         return
       }
 
-      const liqPrice = await getLiquidationPrice(
-        ethInVault,
-        oSQTHToMint,
-        usingUniswapLPNFTAsCollat,
-        lowerTick,
-        upperTick,
-      )
-      if (!liqPrice) {
+      const price = await getLiquidationPrice(ethInVault, oSQTHToMint, usingUniswapLPNFTAsCollat, lowerTick, upperTick)
+      if (!price) {
         return
       }
-      setLiquidationPrice(liqPrice.toNumber())
+      setLiquidationPrice(price.toNumber())
     }
 
     calculateLiquidationPrice()
@@ -367,77 +368,75 @@ const LPSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div>
-        <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Box display="flex" alignItems="center" gridGap="8px">
-            <div className={classes.logoContainer}>
-              <div className={classes.logo}>
-                <Image src={ethLogo} alt="logo" height="100%" width="100%" />
-              </div>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Box display="flex" alignItems="center" gridGap="8px">
+          <div className={classes.logoContainer}>
+            <div className={classes.logo}>
+              <Image src={ethLogo} alt="logo" height="100%" width="100%" />
             </div>
+          </div>
 
-            <div>
-              <Typography variant="h4" className={classes.sectionTitle}>
-                Price range
-              </Typography>
-              <Typography
-                className={clsx(
-                  typographyClasses.lighterFontColor,
-                  typographyClasses.smallestFont,
-                  typographyClasses.monoFont,
-                )}
-              >{`1 ETH = ${ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())}`}</Typography>
-            </div>
-          </Box>
-
-          <Checkbox
-            isChecked={usingDefaultPriceRange}
-            onInputChange={setUsingDefaultPriceRange}
-            name="priceRangeDefault"
-            label="Default"
-          />
+          <div>
+            <Typography variant="h4" className={classes.sectionTitle}>
+              Price range
+            </Typography>
+            <Typography
+              className={clsx(
+                typographyClasses.lighterFontColor,
+                typographyClasses.smallestFont,
+                typographyClasses.monoFont,
+              )}
+            >{`1 ETH = ${ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())}`}</Typography>
+          </div>
         </Box>
 
-        <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="start" gridGap="20px">
-          <InputNumber
-            id="min-price"
-            label="Min price"
-            type="number"
-            value={minLPPrice}
-            onInputChange={setMinLPPrice}
-            error={!!lpPriceError}
-            helperText={lpPriceError}
-            disabled={usingDefaultPriceRange}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
-                </InputAdornment>
-              ),
-            }}
-          />
+        <Checkbox
+          isChecked={usingDefaultPriceRange}
+          onInputChange={setUsingDefaultPriceRange}
+          name="priceRangeDefault"
+          label="Default"
+        />
+      </Box>
 
-          <Box width="16px">
-            <Divider className={classes.divider} />
-          </Box>
+      <Box marginTop="24px" display="flex" justifyContent="space-between" alignItems="start" gridGap="20px">
+        <InputNumber
+          id="min-price"
+          label="Min price"
+          type="number"
+          value={minLPPrice}
+          onInputChange={setMinLPPrice}
+          error={!!lpPriceError}
+          helperText={lpPriceError}
+          disabled={usingDefaultPriceRange}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
+              </InputAdornment>
+            ),
+          }}
+        />
 
-          <InputNumber
-            id="max-price"
-            label="Max price"
-            type="number"
-            value={maxLPPrice}
-            onInputChange={setMaxLPPrice}
-            disabled={usingDefaultPriceRange}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
-                </InputAdornment>
-              ),
-            }}
-          />
+        <Box width="16px">
+          <Divider className={classes.divider} />
         </Box>
-      </div>
+
+        <InputNumber
+          id="max-price"
+          label="Max price"
+          type="number"
+          value={maxLPPrice}
+          onInputChange={setMaxLPPrice}
+          disabled={usingDefaultPriceRange}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <Typography className={typographyClasses.lightestFontColor}>Per ETH</Typography>
+              </InputAdornment>
+            ),
+          }}
+        />
+      </Box>
 
       <Divider className={classes.divider} />
 
@@ -467,44 +466,49 @@ const LPSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h4" className={classes.sectionTitle}>
-            Collateralization ratio
-          </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h4" className={classes.sectionTitle}>
+          Collateralization ratio
+        </Typography>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
-            <Checkbox
-              name="priceRangeDefault"
-              label="Default"
-              isChecked={usingDefaultCollatRatio}
-              onInputChange={handleDefaultCollatRatioToggle}
-            />
-
-            <InputNumber
-              id="collateral-ratio-input"
-              value={collatRatioPercent}
-              onInputChange={handleCollatRatioPercentChange}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                    %
-                  </InputAdornment>
-                ),
-              }}
-              style={{ width: '80px' }}
-            />
-          </Box>
-        </Box>
-
-        <div style={{ marginTop: '24px' }}>
-          <CollatRatioSlider
-            collatRatio={collatRatioPercent}
-            onCollatRatioChange={(value) => setCollatRatioPercent(value)}
-            minCollatRatio={minCollatRatioPercent}
+        <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+          <Checkbox
+            name="priceRangeDefault"
+            label="Default"
+            isChecked={usingDefaultCollatRatio}
+            onInputChange={handleDefaultCollatRatioToggle}
           />
-        </div>
-      </div>
+
+          <InputNumber
+            id="collateral-ratio-input"
+            value={collatRatioPercent}
+            onInputChange={handleCollatRatioPercentChange}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end" style={{ opacity: '0.5' }}>
+                  %
+                </InputAdornment>
+              ),
+            }}
+            style={{ width: '80px' }}
+          />
+        </Box>
+      </Box>
+
+      <Box marginTop="24px">
+        <CollatRatioSlider
+          collatRatio={collatRatioPercent}
+          onCollatRatioChange={(value) => setCollatRatioPercent(value)}
+          minCollatRatio={minCollatRatioPercent}
+        />
+      </Box>
+
+      <Collapse in={showMinCollatRatioError}>
+        <Alert severity="error" marginTop="24px">
+          Not possible to open a position with {collatRatioPercent}% collateralization ratio, minimum allowed is{' '}
+          {minCollatRatioPercent}%.
+        </Alert>
+      </Collapse>
 
       <InfoBox marginTop="24px">
         <Box display="flex" justifyContent="space-between" gridGap="12px">
@@ -518,62 +522,60 @@ const LPSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div>
+      <InfoBox>
+        <Box display="flex" justifyContent="space-between" gridGap="12px">
+          <Typography className={typographyClasses.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
+
+          <Box display="flex" gridGap="8px">
+            <Typography className={typographyClasses.monoFont}>
+              {loadingDepositAmounts ? 'loading' : formatTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)}
+            </Typography>
+            <Typography className={typographyClasses.lightFontColor}>oSQTH</Typography>
+          </Box>
+        </Box>
+      </InfoBox>
+
+      <Box display="flex" justifyContent="space-between" gridGap="10px" marginTop="6px">
         <InfoBox>
           <Box display="flex" justifyContent="space-between" gridGap="12px">
-            <Typography className={typographyClasses.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
+            <Typography className={typographyClasses.lightFontColor}>{'To be LP’ed'}</Typography>
 
             <Box display="flex" gridGap="8px">
               <Typography className={typographyClasses.monoFont}>
-                {loadingDepositAmounts ? 'loading' : formatTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)}
+                {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}
               </Typography>
-              <Typography className={typographyClasses.lightFontColor}>oSQTH</Typography>
+              <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
             </Box>
           </Box>
         </InfoBox>
+        <InfoBox>
+          <Box display="flex" justifyContent="space-between" gridGap="12px">
+            <Typography className={typographyClasses.lightFontColor}>{'Vault'}</Typography>
 
-        <Box display="flex" justifyContent="space-between" gridGap="10px" marginTop="6px">
-          <InfoBox>
-            <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={typographyClasses.lightFontColor}>{'To be LP’ed'}</Typography>
-
-              <Box display="flex" gridGap="8px">
-                <Typography className={typographyClasses.monoFont}>
-                  {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}
-                </Typography>
-                <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
-              </Box>
+            <Box display="flex" gridGap="8px">
+              <Typography className={typographyClasses.monoFont}>
+                {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInVault, WETH_DECIMALS)}
+              </Typography>
+              <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
             </Box>
-          </InfoBox>
-          <InfoBox>
-            <Box display="flex" justifyContent="space-between" gridGap="12px">
-              <Typography className={typographyClasses.lightFontColor}>{'Vault'}</Typography>
+          </Box>
+        </InfoBox>
+      </Box>
 
-              <Box display="flex" gridGap="8px">
-                <Typography className={typographyClasses.monoFont}>
-                  {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInVault, WETH_DECIMALS)}
-                </Typography>
-                <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
-              </Box>
-            </Box>
-          </InfoBox>
+      <InfoBox marginTop="16px">
+        <Box display="flex" justifyContent="center" gridGap="6px">
+          <Typography>Total Deposit</Typography>
+          <Typography className={typographyClasses.lightFontColor}>=</Typography>
+
+          <Typography className={clsx(typographyClasses.lightFontColor, typographyClasses.monoFont)}>
+            {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP.plus(ethInVault), WETH_DECIMALS)}
+          </Typography>
+          <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
         </Box>
-
-        <InfoBox marginTop="16px">
-          <Box display="flex" justifyContent="center" gridGap="6px">
-            <Typography>Total Deposit</Typography>
-            <Typography className={typographyClasses.lightFontColor}>=</Typography>
-
-            <Typography className={clsx(typographyClasses.lightFontColor, typographyClasses.monoFont)}>
-              {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP.plus(ethInVault), WETH_DECIMALS)}
-            </Typography>
-            <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
-          </Box>
-        </InfoBox>
-      </div>
+      </InfoBox>
 
       <Box marginTop="32px">
-        <AltPrimaryButton id="confirm-deposit-btn" onClick={openPosition} fullWidth>
+        <AltPrimaryButton id="confirm-deposit-btn" onClick={openPosition} fullWidth disabled={isConfirmButtonDisabled}>
           Confirm deposit
         </AltPrimaryButton>
       </Box>

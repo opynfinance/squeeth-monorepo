@@ -208,13 +208,6 @@ export const useGetMintAndLPDeposits = () => {
             ? ethInLP.div(oSQTHInETH).plus(1).multipliedBy(100).integerValue(BigNumber.ROUND_CEIL)
             : new BigNumber(MIN_COLLATERAL_RATIO)
 
-          console.log({
-            ethInVault: ethInVault.toFixed(3),
-            ethInLP: ethInLP.toFixed(3),
-            oSQTHToMint: oSQTHToMint.toFixed(3),
-            collatRatioPercent: collatRatioPercent.toFixed(3),
-            minCollatRatioPercent: minCollatRatioPercent.toFixed(3),
-          })
           deposits.minCollatRatioPercent = BigNumber.max(minCollatRatioPercent, MIN_COLLATERAL_RATIO) // make sure this doesn't go below MIN_COLLATERAL_RATIO
 
           break
