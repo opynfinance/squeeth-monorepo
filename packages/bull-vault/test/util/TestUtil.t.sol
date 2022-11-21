@@ -27,6 +27,7 @@ contract TestUtil is Test {
     uint128 internal constant ONE = 1e18;
     uint32 internal constant TWAP = 420;
     uint256 internal constant INDEX_SCALE = 10000;
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     address internal eToken;
     address internal dToken;
@@ -91,7 +92,7 @@ contract TestUtil is Test {
                 wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(
                     ethUsdPrice
                 );
-                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
+                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(WETH_DECIMALS_DIFF);
             }
         } else {
             uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
@@ -143,7 +144,7 @@ contract TestUtil is Test {
         ).wdiv(
             _crabToDeposit.wmul(crabUsdPrice).add(
                 IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)
-            ).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12))
+            ).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(WETH_DECIMALS_DIFF))
         );
 
         return totalEthDelta;
