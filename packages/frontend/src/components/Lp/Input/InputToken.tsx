@@ -170,11 +170,10 @@ const useInputTokenDenseStyles = makeStyles((theme) =>
       '& > input': {
         fontWeight: 500,
         padding: 0,
-        marginRight: '4px',
+        marginRight: '8px',
         maxWidth: '120px',
 
-        width: ({ inputLength }: any): string =>
-          inputLength > 4 ? `${(Math.max(inputLength, 2) + 1) * 9}px` : `${(inputLength + 1) * 8}px`,
+        width: ({ inputLength }: any): string => `${inputLength}ch`,
       },
     },
     logoContainer: {
