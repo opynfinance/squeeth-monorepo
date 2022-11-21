@@ -28,6 +28,7 @@ const x96 = new BigNumber(2).pow(96)
 const FLASHLOAN_BUFFER = 0.02
 export const MIN_COLLATERAL_RATIO = 150
 export const MAX_COLLATERAL_RATIO = 300
+export const DEFAULT_COLLATERAL_RATIO = 225
 
 /*** ACTIONS ***/
 

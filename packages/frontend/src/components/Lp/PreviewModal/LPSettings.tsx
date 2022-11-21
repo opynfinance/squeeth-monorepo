@@ -18,6 +18,7 @@ import {
   useOpenPositionDeposit,
   useGetMintAndLPDeposits,
   MIN_COLLATERAL_RATIO,
+  DEFAULT_COLLATERAL_RATIO,
   useGetLiquidationPrice,
 } from '@state/lp/hooks'
 import { slippageAmountAtom } from '@state/trade/atoms'
@@ -111,7 +112,7 @@ const LPSettings: React.FC<{
   const [maxLPPrice, setMaxLPPrice] = useState('0')
   const [usingUniswapLPNFTAsCollat, setUsingUniswapLPNFTAsCollat] = useState(true)
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
-  const [collatRatioPercent, setCollatRatioPercent] = useState(225)
+  const [collatRatioPercent, setCollatRatioPercent] = useState(DEFAULT_COLLATERAL_RATIO)
   const [lowerTick, setLowerTick] = useState(TickMath.MIN_TICK)
   const [upperTick, setUpperTick] = useState(TickMath.MAX_TICK)
   const slippageAmountPercent = useAtomValue(slippageAmountAtom)
@@ -139,6 +140,7 @@ const LPSettings: React.FC<{
   const [ethToDepositDebounced] = useDebounce(ethToDeposit, 500)
   const [minLPPriceDebounced] = useDebounce(minLPPrice, 500)
   const [maxLPPriceDebounced] = useDebounce(maxLPPrice, 500)
+  const [collatRatioPercentDebounced] = useDebounce(collatRatioPercent, 500)
 
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
@@ -172,9 +174,10 @@ const LPSettings: React.FC<{
     }
   }, [])
 
-  const handleCollatRatioPercentChange = useCallback((inputValue: string) => {
-    setCollatRatioPercent(Number(inputValue))
-  }, [])
+  const handleCollatRatioPercentChange = useCallback(
+    (inputValue: string) => setCollatRatioPercent(Number(inputValue)),
+    [],
+  )
 
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
@@ -199,11 +202,25 @@ const LPSettings: React.FC<{
     }
   }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
 
+  useEffect(() => {
+    if (usingDefaultCollatRatio) {
+      setCollatRatioPercent(DEFAULT_COLLATERAL_RATIO)
+    }
+  }, [usingDefaultCollatRatio])
+
+  useEffect(() => {
+    if (collatRatioPercent === DEFAULT_COLLATERAL_RATIO) {
+      setUsingDefaultCollatRatio(true)
+    } else {
+      setUsingDefaultCollatRatio(false)
+    }
+  }, [collatRatioPercent])
+
   useAppEffect(() => {
     async function getDepositAmounts() {
       const result = await getMintAndLPDeposits(
         new BigNumber(ethToDepositDebounced),
-        new BigNumber(collatRatioPercent),
+        new BigNumber(collatRatioPercentDebounced),
         usingUniswapLPNFTAsCollat,
         lowerTick,
         upperTick,
@@ -230,7 +247,14 @@ const LPSettings: React.FC<{
 
     setLoadingDepositAmounts(true)
     getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
-  }, [ethToDepositDebounced, collatRatioPercent, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getMintAndLPDeposits])
+  }, [
+    ethToDepositDebounced,
+    collatRatioPercentDebounced,
+    lowerTick,
+    upperTick,
+    usingUniswapLPNFTAsCollat,
+    getMintAndLPDeposits,
+  ])
 
   useAppEffect(() => {
     async function getLiqPrice() {
@@ -326,8 +350,8 @@ const LPSettings: React.FC<{
 
       <Collapse in={showMinCollatError}>
         <Alert severity="error" marginTop="24px">
-          Effective collateral in vault is {formatTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)} ETH, which is
-          less than the minimum 6.9 ETH limit.
+          Effective collateral in vault will be {formatTokenAmount(effectiveCollateralInVault, WETH_DECIMALS)} ETH,
+          which is less than the minimum 6.9 ETH limit.
         </Alert>
       </Collapse>
 
