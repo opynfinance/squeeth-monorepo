@@ -42,10 +42,10 @@ const PageHeader: React.FC = () => {
     <div className={classes.root}>
       <div className={classes.container}>
         <Typography variant="h1" className={classes.title}>
-          Deposit ERC-20s, earn ETH.
+          Deposit ETH, earn fees.
         </Typography>
         <Typography variant="subtitle1" className={classes.subtitle}>
-          Provide liquidity to earn interest through fees and funding.
+          Provide liquidity to earn through fees.
         </Typography>
       </div>
     </div>
