@@ -176,7 +176,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        ethWPowerPerpPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+        ethWPowerPerpPool =
+            IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
@@ -834,9 +835,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-        uint256 wPowerPerpEthPrice = UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
         uint256 crabUsdPrice = (
-            ethInCrab.wmul(ethUsdPrice).sub(wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice))
+            ethInCrab.wmul(ethUsdPrice).sub(
+                wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
+            )
         ).wdiv(IERC20(crab).totalSupply());
 
         uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -865,7 +869,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
-        uint256 wPowerPerpEthPrice = UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
         uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
         uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
         uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
@@ -886,7 +891,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         view
     {
         // Get twap
-        uint256 wPowerPerpEthPrice = UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
 
         if (_isDepositingInCrab) {
             require(

@@ -114,7 +114,8 @@ contract FlashBull is UniFlash {
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        ethWPowerPerpPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+        ethWPowerPerpPool =
+            IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
 
@@ -213,7 +214,8 @@ contract FlashBull is UniFlash {
             uint256 bullShare = _params.bullAmount.wdiv(IERC20(bullStrategy).totalSupply());
             crabToRedeem = bullShare.wmul(IBullStrategy(bullStrategy).getCrabBalance());
             (, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
-            wPowerPerpToRedeem = crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
+            wPowerPerpToRedeem =
+                crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
             usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(bullShare);
         }
 
