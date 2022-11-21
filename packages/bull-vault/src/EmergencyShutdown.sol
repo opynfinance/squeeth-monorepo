@@ -58,8 +58,8 @@ contract EmergencyShutdown is UniFlash, Ownable {
     }
 
     /**
-     * @notice redeem the Crab shares owned by Bull if Squeeth contracts are shutdown and collapse leverage trade to hold ETH only
-     * @param _params Shutdown params
+     * @notice redeem the Crab shares owned by Bull if WPowerPerp controller contract is shutdown and collapse leverage trade to hold ETH only
+     * @param _params Shutdown params struct
      */
 
     function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
