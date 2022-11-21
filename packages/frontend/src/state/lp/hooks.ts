@@ -174,7 +174,8 @@ export const useGetMintAndLPDeposits = () => {
       while (start.lte(end)) {
         const ethInLP = start.plus(end).div(2)
         const oSQTHToMint = await getOSQTHInLP(ethInLP, lowerTick, upperTick, tick)
-        if (!oSQTHToMint) return null
+
+        if (!oSQTHToMint) break
 
         const oSQTHInETH = oSQTHToMint.times(normFactor).times(ethIndexPrice).div(INDEX_SCALE)
         const effectiveCollateralInVault = collatRatio.times(
@@ -392,7 +393,8 @@ export const useGetOSQTHInLP = () => {
         (sqrtUpperPrice.lt(sqrtCurrentPrice) && isWethToken0)
       ) {
         // All squeeth position
-        return new BigNumber(0)
+        console.log('LPing an all oSQTH position is not enabled, but you can rebalance to this position.')
+        return
       } else {
         // isWethToken0 -> y = Lx * (sqrtCurrentPrice - sqrtLowerPrice)
         // !isWethToken0  -> x = Ly * (sqrtUpperPrice - sqrtCurrentPrice)/(sqrtCurrentPrice * sqrtUpperPrice)

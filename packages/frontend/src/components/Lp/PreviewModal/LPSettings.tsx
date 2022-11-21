@@ -130,6 +130,7 @@ const LPSettings: React.FC<{
   const [showUniswapLPNFTWarning, setShowUniswapLPNFTWarning] = useState(false)
   const [showMinCollatError, setShowMinCollatError] = useState(false)
   const [showMinCollatRatioError, setShowMinCollatRatioError] = useState(false)
+  const [allAssetLPPosition, setAllAssetLPPosition] = useState<'WETH' | 'OSQTH' | ''>('')
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -145,7 +146,8 @@ const LPSettings: React.FC<{
 
   const slippageAmount = new BigNumber(slippageAmountPercent).div(100).toNumber()
   const ethBalance = toTokenAmount(walletBalance ?? BIG_ZERO, 18)
-  const isConfirmButtonDisabled = !!ethInputError || !!lpPriceError || showMinCollatError || showMinCollatRatioError
+  const isConfirmButtonDisabled =
+    !!ethInputError || !!lpPriceError || showMinCollatError || showMinCollatRatioError || !!allAssetLPPosition
 
   const classes = useModalStyles()
   const toggleButtonClasses = useToggleButtonStyles()
@@ -153,7 +155,7 @@ const LPSettings: React.FC<{
 
   useEffect(() => {
     if (ethBalance.lt(ethToDeposit)) {
-      setETHInputError('Insufficient balance.')
+      setETHInputError('Insufficient balance')
     } else {
       setETHInputError('')
     }
@@ -192,6 +194,7 @@ const LPSettings: React.FC<{
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
       setLPPriceError('')
+      setAllAssetLPPosition('')
 
       setLowerTick(TickMath.MIN_TICK)
       setUpperTick(TickMath.MAX_TICK)
@@ -201,16 +204,27 @@ const LPSettings: React.FC<{
     const minLPPriceBN = new BigNumber(minLPPriceDebounced)
     const maxLPPriceBN = new BigNumber(maxLPPriceDebounced)
 
-    if (minLPPriceBN.lt(maxLPPriceBN)) {
-      setLPPriceError('')
-
-      const ticks = getTicksFromETHPrice(minLPPriceBN, maxLPPriceBN)
-      setLowerTick(ticks.lowerTick)
-      setUpperTick(ticks.upperTick)
-    } else {
+    if (minLPPriceBN.gte(maxLPPriceBN)) {
       setLPPriceError('Min price must be less than max price')
+      return
+    } else {
+      setLPPriceError('')
     }
-  }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
+
+    if (minLPPriceBN.gt(ethPrice)) {
+      setAllAssetLPPosition('WETH')
+      return
+    } else if (maxLPPriceBN.lt(ethPrice)) {
+      setAllAssetLPPosition('OSQTH')
+      return
+    } else {
+      setAllAssetLPPosition('')
+    }
+
+    const ticks = getTicksFromETHPrice(minLPPriceBN, maxLPPriceBN)
+    setLowerTick(ticks.lowerTick)
+    setUpperTick(ticks.upperTick)
+  }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, ethPrice, getTicksFromETHPrice])
 
   useEffect(() => {
     if (collatRatioPercent !== DEFAULT_COLLATERAL_RATIO) {
@@ -437,6 +451,13 @@ const LPSettings: React.FC<{
           }}
         />
       </Box>
+
+      <Collapse in={!!allAssetLPPosition}>
+        <Alert severity="error" marginTop="24px">
+          {`LP'ing an all ${allAssetLPPosition} position is not enabled, but you can rebalance to this
+          position.`}
+        </Alert>
+      </Collapse>
 
       <Divider className={classes.divider} />
 
