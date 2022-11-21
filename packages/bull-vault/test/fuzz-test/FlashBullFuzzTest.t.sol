@@ -193,20 +193,20 @@ contract FlashBullTestFork is Test {
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
         (uint256 crabToRedeem, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
             calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
 
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
             maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullStrategy.balanceOf(user1),
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
