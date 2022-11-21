@@ -276,9 +276,13 @@ const LPSettings: React.FC<{
         </Typography>
 
         <div className={classes.priceContainer}>
-          <Typography className={clsx(typographyClasses.lightFontColor, typographyClasses.smallerFont)}>{`1 ETH = ${
-            ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())
-          }`}</Typography>
+          <Typography
+            className={clsx(
+              typographyClasses.lightFontColor,
+              typographyClasses.smallerFont,
+              typographyClasses.monoFont,
+            )}
+          >{`1 ETH = ${ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())}`}</Typography>
         </div>
       </Box>
 
@@ -322,7 +326,11 @@ const LPSettings: React.FC<{
                 Price range
               </Typography>
               <Typography
-                className={clsx(typographyClasses.lighterFontColor, typographyClasses.smallestFont)}
+                className={clsx(
+                  typographyClasses.lighterFontColor,
+                  typographyClasses.smallestFont,
+                  typographyClasses.monoFont,
+                )}
               >{`1 ETH = ${ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())}`}</Typography>
             </div>
           </Box>
@@ -443,7 +451,7 @@ const LPSettings: React.FC<{
         <Box display="flex" justifyContent="space-between" gridGap="12px">
           <Typography className={typographyClasses.lightFontColor}>Liquidation price</Typography>
           <Box display="flex" gridGap="8px">
-            <Typography>{formatCurrency(liquidationPrice)}</Typography>
+            <Typography className={typographyClasses.monoFont}>{formatCurrency(liquidationPrice)}</Typography>
             <Typography className={typographyClasses.lightFontColor}>per ETH</Typography>
           </Box>
         </Box>
@@ -457,7 +465,7 @@ const LPSettings: React.FC<{
             <Typography className={typographyClasses.lightFontColor}>{"To be Minted & LP'ed"}</Typography>
 
             <Box display="flex" gridGap="8px">
-              <Typography>
+              <Typography className={typographyClasses.monoFont}>
                 {loadingDepositAmounts ? 'loading' : formatTokenAmount(oSQTHToMint, OSQUEETH_DECIMALS)}
               </Typography>
               <Typography className={typographyClasses.lightFontColor}>oSQTH</Typography>
@@ -471,7 +479,9 @@ const LPSettings: React.FC<{
               <Typography className={typographyClasses.lightFontColor}>{'To be LP’ed'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>{loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}</Typography>
+                <Typography className={typographyClasses.monoFont}>
+                  {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP, WETH_DECIMALS)}
+                </Typography>
                 <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
               </Box>
             </Box>
@@ -481,7 +491,7 @@ const LPSettings: React.FC<{
               <Typography className={typographyClasses.lightFontColor}>{'Vault'}</Typography>
 
               <Box display="flex" gridGap="8px">
-                <Typography>
+                <Typography className={typographyClasses.monoFont}>
                   {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInVault, WETH_DECIMALS)}
                 </Typography>
                 <Typography className={typographyClasses.lightFontColor}>ETH</Typography>
@@ -490,12 +500,12 @@ const LPSettings: React.FC<{
           </InfoBox>
         </Box>
 
-        <InfoBox marginTop="6px">
+        <InfoBox marginTop="16px">
           <Box display="flex" justifyContent="center" gridGap="6px">
             <Typography>Total Deposit</Typography>
             <Typography className={typographyClasses.lightFontColor}>=</Typography>
 
-            <Typography className={typographyClasses.lightFontColor}>
+            <Typography className={clsx(typographyClasses.lightFontColor, typographyClasses.monoFont)}>
               {loadingDepositAmounts ? 'loading' : formatTokenAmount(ethInLP.plus(ethInVault), WETH_DECIMALS)}
             </Typography>
             <Typography className={typographyClasses.lightFontColor}>ETH</Typography>

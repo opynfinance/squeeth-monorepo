@@ -27,10 +27,10 @@ const useInputTokenProps = makeStyles((theme) =>
       marginTop: '1em',
       backgroundColor: theme.palette.background.default,
     },
-    input: {
+    inputRoot: {
       padding: 0,
       fontSize: '22px',
-      fontWeight: 700,
+      fontWeight: 500,
       letterSpacing: '-0.01em',
     },
     subSection: {
@@ -105,13 +105,16 @@ export const InputToken: React.FC<InputTokenProps> = ({
               </InputAdornment>
             ),
             classes: {
-              root: classes.input,
+              root: clsx(classes.inputRoot, typographyClasses.monoFont),
             },
           }}
           {...props}
         />
 
-        <Typography variant="subtitle1" className={typographyClasses.lighterFontColor}>
+        <Typography
+          variant="subtitle1"
+          className={clsx(typographyClasses.lighterFontColor, typographyClasses.smallFont, typographyClasses.monoFont)}
+        >
           {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
         </Typography>
       </div>
@@ -162,6 +165,7 @@ const useInputTokenDenseStyles = makeStyles((theme) =>
     inputRoot: {
       padding: '0px',
       marginBottom: theme.spacing(0.5),
+      fontFamily: 'DM Mono',
 
       '& > input': {
         fontWeight: 500,
@@ -250,7 +254,11 @@ export const InputTokenDense: React.FC<InputTokenProps> = ({
 
           <Typography
             variant="caption"
-            className={clsx(typographyClasses.mediumBold, typographyClasses.lightestFontColor)}
+            className={clsx(
+              typographyClasses.mediumBold,
+              typographyClasses.lightestFontColor,
+              typographyClasses.monoFont,
+            )}
           >
             {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
           </Typography>

@@ -13,7 +13,7 @@ export default class MyDocument extends Document {
           />
           {/* new font introduced with the new lp page */}
           <link
-            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap"
             rel="stylesheet"
           />
         </Head>

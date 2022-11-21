@@ -17,6 +17,7 @@ const useInputBaseStyles = makeStyles((theme) =>
     inputRoot: {
       padding: theme.spacing(0.75, 1.5),
       fontSize: '14px',
+      fontFamily: 'DM Mono',
     },
     inputBorder: {
       border: '2px solid',

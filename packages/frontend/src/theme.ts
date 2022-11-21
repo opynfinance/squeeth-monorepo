@@ -71,6 +71,7 @@ const getTypography = (mode: Mode) => {
         'Open Sans',
         'Mulish',
         'Inter',
+        'DM Mono',
         'Roboto Mono',
         '-apple-system',
         'BlinkMacSystemFont',

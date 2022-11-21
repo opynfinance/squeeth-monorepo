@@ -27,4 +27,9 @@ export const useTypographyStyles = makeStyles({
   smallestFont: {
     fontSize: '12px',
   },
+
+  // font family
+  monoFont: {
+    fontFamily: 'DM Mono',
+  },
 })
