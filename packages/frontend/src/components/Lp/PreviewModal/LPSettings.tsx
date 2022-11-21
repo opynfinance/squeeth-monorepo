@@ -131,6 +131,7 @@ const LPSettings: React.FC<{
   const [showMinCollatError, setShowMinCollatError] = useState(false)
   const [showMinCollatRatioError, setShowMinCollatRatioError] = useState(false)
   const [allAssetLPPosition, setAllAssetLPPosition] = useState<'WETH' | 'OSQTH' | ''>('')
+  const [showLiquidationPriceError, setShowLiquidationPriceError] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -293,15 +294,35 @@ const LPSettings: React.FC<{
         return
       }
 
-      const price = await getLiquidationPrice(ethInVault, oSQTHToMint, usingUniswapLPNFTAsCollat, lowerTick, upperTick)
-      if (!price) {
-        return
+      try {
+        const price = await getLiquidationPrice(
+          ethInVault,
+          oSQTHToMint,
+          usingUniswapLPNFTAsCollat,
+          lowerTick,
+          upperTick,
+        )
+        if (!price) {
+          return
+        }
+        setLiquidationPrice(price.toNumber())
+        setShowLiquidationPriceError(false)
+      } catch (error) {
+        setShowLiquidationPriceError(true)
       }
-      setLiquidationPrice(price.toNumber())
     }
 
     calculateLiquidationPrice()
-  }, [ethInVault, oSQTHToMint, ethInLP, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getLiquidationPrice])
+  }, [
+    ethInVault,
+    oSQTHToMint,
+    ethInLP,
+    lowerTick,
+    upperTick,
+    usingUniswapLPNFTAsCollat,
+    getLiquidationPrice,
+    ethToDeposit,
+  ])
 
   const openPosition = useAppCallback(async () => {
     try {
@@ -535,11 +556,19 @@ const LPSettings: React.FC<{
         <Box display="flex" justifyContent="space-between" gridGap="12px">
           <Typography className={typographyClasses.lightFontColor}>Liquidation price</Typography>
           <Box display="flex" gridGap="8px">
-            <Typography className={typographyClasses.monoFont}>{formatCurrency(liquidationPrice)}</Typography>
+            <Typography className={typographyClasses.monoFont}>
+              {showLiquidationPriceError ? '???' : formatCurrency(liquidationPrice)}
+            </Typography>
             <Typography className={typographyClasses.lightFontColor}>per ETH</Typography>
           </Box>
         </Box>
       </InfoBox>
+
+      <Collapse in={showLiquidationPriceError}>
+        <Alert severity="warning" marginTop="24px">
+          Couldn&apos;t figure out the liquidation price.
+        </Alert>
+      </Collapse>
 
       <Divider className={classes.divider} />
 
