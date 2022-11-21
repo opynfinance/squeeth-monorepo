@@ -185,8 +185,8 @@ const newDarkPalette: ThemeOptions = {
       main: '#f5475c',
     },
     warning: {
-      light: '#F5B07326',
-      main: '#F5B073',
+      light: '#F3FF6C1A',
+      main: '#F3FF6C',
     },
     success: {
       main: '#49D273',

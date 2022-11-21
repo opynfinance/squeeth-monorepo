@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react'
-import { Box, Typography, Divider, InputAdornment } from '@material-ui/core'
+import { Box, Typography, Divider, InputAdornment, Collapse } from '@material-ui/core'
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
@@ -31,6 +31,7 @@ import InfoBox from '../InfoBox'
 import { InputNumber, InputTokenDense } from '../Input'
 import Checkbox from '../Checkbox'
 import CollatRatioSlider from '../CollatRatioSlider'
+import { Warning } from '../Alert'
 import { useTypographyStyles } from '../styles'
 import ethLogo from 'public/images/eth-logo.svg'
 
@@ -125,6 +126,7 @@ const LPSettings: React.FC<{
 
   const [ethInputError, setETHInputError] = useState('')
   const [lpPriceError, setLPPriceError] = useState('')
+  const [showUniswapLPNFTWarning, setShowUniswapLPNFTWarning] = useState(false)
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -159,6 +161,12 @@ const LPSettings: React.FC<{
 
   const handleUniswapNftAsCollatToggle = useCallback((value: boolean | null) => {
     if (value !== null) {
+      if (!value) {
+        setShowUniswapLPNFTWarning(true)
+      } else {
+        setShowUniswapLPNFTWarning(false)
+      }
+
       setUsingUniswapLPNFTAsCollat(value)
     }
   }, [])
@@ -388,25 +396,29 @@ const LPSettings: React.FC<{
 
       <Divider className={classes.divider} />
 
-      <div>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography style={{ fontWeight: 500 }}>Use Uniswap LP NFT as collateral</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center">
+        <Typography className={typographyClasses.mediumBold}>Use Uniswap LP NFT as collateral</Typography>
 
-          <ToggleButtonGroup
-            size="medium"
-            exclusive
-            value={usingUniswapLPNFTAsCollat}
-            onChange={(event, value) => handleUniswapNftAsCollatToggle(value)}
-          >
-            <ToggleButton classes={toggleButtonClasses} value={true}>
-              Yes
-            </ToggleButton>
-            <ToggleButton classes={toggleButtonClasses} value={false}>
-              No
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </div>
+        <ToggleButtonGroup
+          size="medium"
+          exclusive
+          value={usingUniswapLPNFTAsCollat}
+          onChange={(_, value) => handleUniswapNftAsCollatToggle(value)}
+        >
+          <ToggleButton classes={toggleButtonClasses} value={true}>
+            Yes
+          </ToggleButton>
+          <ToggleButton classes={toggleButtonClasses} value={false}>
+            No
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
+      <Collapse in={showUniswapLPNFTWarning}>
+        <Warning marginTop="24px">
+          Excluding your Uniswap NFT reduces the amount of capital that gets LP’ed and earns interest for you.
+        </Warning>
+      </Collapse>
 
       <Divider className={classes.divider} />
 
