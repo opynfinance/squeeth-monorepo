@@ -124,7 +124,7 @@ const LPSettings: React.FC<{
   const [liquidationPrice, setLiquidationPrice] = useState(0)
 
   const [ethInputError, setETHInputError] = useState('')
-  const [ethLPPriceError, setETHLPPriceError] = useState('')
+  const [lpPriceError, setLPPriceError] = useState('')
 
   const { data: walletBalance } = useWalletBalance()
   const ethPrice = useETHPrice()
@@ -169,6 +169,8 @@ const LPSettings: React.FC<{
 
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
+      setLPPriceError('')
+
       setLowerTick(TickMath.MIN_TICK)
       setUpperTick(TickMath.MAX_TICK)
       return
@@ -178,13 +180,13 @@ const LPSettings: React.FC<{
     const maxLPPriceBN = new BigNumber(maxLPPriceDebounced)
 
     if (minLPPriceBN.lt(maxLPPriceBN)) {
-      setETHLPPriceError('')
+      setLPPriceError('')
 
       const ticks = getTicksFromETHPrice(minLPPriceBN, maxLPPriceBN)
       setLowerTick(ticks.lowerTick)
       setUpperTick(ticks.upperTick)
     } else {
-      setETHLPPriceError('Min price must be less than max price')
+      setLPPriceError('Min price must be less than max price')
     }
   }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
 
@@ -350,8 +352,8 @@ const LPSettings: React.FC<{
             type="number"
             value={minLPPrice}
             onInputChange={setMinLPPrice}
-            error={!!ethLPPriceError}
-            helperText={ethLPPriceError}
+            error={!!lpPriceError}
+            helperText={lpPriceError}
             disabled={usingDefaultPriceRange}
             InputProps={{
               endAdornment: (
