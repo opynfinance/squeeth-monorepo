@@ -23,14 +23,14 @@ interface CheckboxCustomProps {
   name: string
   label: string
   isChecked: boolean
-  onChange: (value: boolean) => void
+  onInputChange: (value: boolean) => void
 }
 
 const CustomCheckbox: React.FC<CheckboxCustomProps & CheckboxProps> = ({
   name,
   label,
   isChecked,
-  onChange,
+  onInputChange,
   ...props
 }) => {
   const formControlLabelClasses = useFormControlLabelStyles()
@@ -43,7 +43,7 @@ const CustomCheckbox: React.FC<CheckboxCustomProps & CheckboxProps> = ({
         <Checkbox
           className={checkboxClasses.root}
           checked={isChecked}
-          onChange={(event) => onChange(event.target.checked)}
+          onChange={(event) => onInputChange(event.target.checked)}
           name={name}
           {...props}
         />

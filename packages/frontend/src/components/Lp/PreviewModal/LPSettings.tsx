@@ -174,11 +174,19 @@ const LPSettings: React.FC<{
     }
   }, [])
 
+  const handleDefaultCollatRatioToggle = useCallback((value: boolean) => {
+    if (value) {
+      setCollatRatioPercent(DEFAULT_COLLATERAL_RATIO)
+    }
+    setUsingDefaultCollatRatio(value)
+  }, [])
+
   const handleCollatRatioPercentChange = useCallback(
     (inputValue: string) => setCollatRatioPercent(Number(inputValue)),
     [],
   )
 
+  // calculate ticks
   useAppEffect(() => {
     if (usingDefaultPriceRange) {
       setLPPriceError('')
@@ -202,22 +210,24 @@ const LPSettings: React.FC<{
     }
   }, [usingDefaultPriceRange, minLPPriceDebounced, maxLPPriceDebounced, getTicksFromETHPrice])
 
+  // if collatRatioPercent changes from DEFAULT value
   useEffect(() => {
-    if (usingDefaultCollatRatio) {
-      setCollatRatioPercent(DEFAULT_COLLATERAL_RATIO)
-    }
-  }, [usingDefaultCollatRatio])
-
-  useEffect(() => {
-    if (collatRatioPercent === DEFAULT_COLLATERAL_RATIO) {
-      setUsingDefaultCollatRatio(true)
-    } else {
+    if (collatRatioPercent !== DEFAULT_COLLATERAL_RATIO) {
       setUsingDefaultCollatRatio(false)
     }
   }, [collatRatioPercent])
 
+  useEffect(() => {
+    if (minCollatRatioPercent > DEFAULT_COLLATERAL_RATIO) {
+      setCollatRatioPercent(minCollatRatioPercent)
+    } else {
+      setCollatRatioPercent(DEFAULT_COLLATERAL_RATIO)
+    }
+  }, [minCollatRatioPercent])
+
+  // split ethDeposit into mint & LP deposits
   useAppEffect(() => {
-    async function getDepositAmounts() {
+    async function splitDeposits() {
       const result = await getMintAndLPDeposits(
         new BigNumber(ethToDepositDebounced),
         new BigNumber(collatRatioPercentDebounced),
@@ -246,7 +256,7 @@ const LPSettings: React.FC<{
     }
 
     setLoadingDepositAmounts(true)
-    getDepositAmounts().finally(() => setLoadingDepositAmounts(false))
+    splitDeposits().finally(() => setLoadingDepositAmounts(false))
   }, [
     ethToDepositDebounced,
     collatRatioPercentDebounced,
@@ -257,7 +267,7 @@ const LPSettings: React.FC<{
   ])
 
   useAppEffect(() => {
-    async function getLiqPrice() {
+    async function calculateLiquidationPrice() {
       if (ethInVault.isZero() || oSQTHToMint.isZero() || ethInLP.isZero()) {
         return
       }
@@ -275,7 +285,7 @@ const LPSettings: React.FC<{
       setLiquidationPrice(liqPrice.toNumber())
     }
 
-    getLiqPrice()
+    calculateLiquidationPrice()
   }, [ethInVault, oSQTHToMint, ethInLP, lowerTick, upperTick, usingUniswapLPNFTAsCollat, getLiquidationPrice])
 
   const openPosition = useAppCallback(async () => {
@@ -382,7 +392,7 @@ const LPSettings: React.FC<{
 
           <Checkbox
             isChecked={usingDefaultPriceRange}
-            onChange={setUsingDefaultPriceRange}
+            onInputChange={setUsingDefaultPriceRange}
             name="priceRangeDefault"
             label="Default"
           />
@@ -468,7 +478,7 @@ const LPSettings: React.FC<{
               name="priceRangeDefault"
               label="Default"
               isChecked={usingDefaultCollatRatio}
-              onChange={setUsingDefaultCollatRatio}
+              onInputChange={handleDefaultCollatRatioToggle}
             />
 
             <InputNumber

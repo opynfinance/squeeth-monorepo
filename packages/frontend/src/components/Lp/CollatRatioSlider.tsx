@@ -2,7 +2,9 @@ import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import React, { useMemo, useCallback } from 'react'
 
 import Slider from '@components/CustomSlider'
-import { MIN_COLLATERAL_RATIO, MAX_COLLATERAL_RATIO } from '@state/lp/hooks'
+import { MIN_COLLATERAL_RATIO } from '@state/lp/hooks'
+
+export const SLIDER_RANGE = 150
 
 const HEALTH_CATEGORIES = {
   DANGER: {
@@ -263,7 +265,7 @@ const CollatRatioSlider: React.FC<CollatRatioSliderPropsType> = ({
     },
     [minCollatRatio, onCollatRatioChange],
   )
-  const maxCollatRatio = Math.max(minCollatRatio + 150, MAX_COLLATERAL_RATIO)
+  const maxCollatRatio = minCollatRatio + SLIDER_RANGE
 
   const marks = useMemo(() => getMarks(minCollatRatio, maxCollatRatio), [minCollatRatio, maxCollatRatio])
   const lastMarkIndex = marks.length - 1
