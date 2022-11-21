@@ -66,7 +66,6 @@ export const crabV2graphOptions = {
     lineWidth: 0,
     showFirstLabel: true,
     showLastLabel: true,
-    startOnTick: true,
     crosshair: {
         color: '#999'
     },
