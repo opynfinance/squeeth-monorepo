@@ -7,6 +7,7 @@ import BigNumber from 'bignumber.js'
 import { TickMath } from '@uniswap/v3-sdk'
 import { useDebounce } from 'use-debounce'
 import Image from 'next/image'
+import clsx from 'clsx'
 
 import { AltPrimaryButton } from '@components/Button'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -27,7 +28,6 @@ import { formatTokenAmount, formatCurrency } from '@utils/formatter'
 import { BIG_ZERO, WETH_DECIMALS, OSQUEETH_DECIMALS } from '@constants/index'
 
 import InfoBox from '../InfoBox'
-import TokenPrice from '../TokenPrice'
 import { InputNumber, InputTokenDense } from '../Input'
 import Checkbox from '../Checkbox'
 import CollatRatioSlider from '../CollatRatioSlider'
@@ -276,7 +276,9 @@ const LPSettings: React.FC<{
         </Typography>
 
         <div className={classes.priceContainer}>
-          <TokenPrice symbol="ETH" usdPrice={ethPrice} />
+          <Typography className={clsx(typographyClasses.lightFontColor, typographyClasses.smallerFont)}>{`1 ETH = ${
+            ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())
+          }`}</Typography>
         </div>
       </Box>
 
@@ -319,7 +321,9 @@ const LPSettings: React.FC<{
               <Typography variant="h4" className={classes.sectionTitle}>
                 Price range
               </Typography>
-              <TokenPrice symbol="ETH" usdPrice={ethPrice} isSmall />
+              <Typography
+                className={clsx(typographyClasses.lighterFontColor, typographyClasses.smallestFont)}
+              >{`1 ETH = ${ethPrice.isZero() ? 'loading...' : formatCurrency(ethPrice.toNumber())}`}</Typography>
             </div>
           </Box>
 

@@ -21,4 +21,10 @@ export const useTypographyStyles = makeStyles({
   smallFont: {
     fontSize: '15px',
   },
+  smallerFont: {
+    fontSize: '14px',
+  },
+  smallestFont: {
+    fontSize: '12px',
+  },
 })
