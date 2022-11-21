@@ -292,7 +292,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         payable(msg.sender).sendValue(ethToReceive);
 
-        emit WithdrawShutdown(address msg.sender, _bullAmount, ethToReceive);
+        emit WithdrawShutdown(msg.sender, _bullAmount, ethToReceive);
     }
 
     /**
