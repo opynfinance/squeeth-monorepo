@@ -6344,7 +6344,8 @@ contract AuctionBullTestFork is Test {
                     (debtDeltaInDollar.add(wethDeltaInDollar), true);
             }
         }
-        uint256 crabAmount = dollarToExchangeWithCrab.mul(WETH_DECIMALS_DIFF).wdiv(testUtil.getCrabPrice());
+        uint256 crabAmount =
+            dollarToExchangeWithCrab.mul(WETH_DECIMALS_DIFF).wdiv(testUtil.getCrabPrice());
 
         return (crabAmount, isDepositingInCrab);
     }
@@ -7018,8 +7019,9 @@ contract AuctionBullTestFork is Test {
             IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(WETH_DECIMALS_DIFF)
         );
         uint256 targetCollateral = equityValue.wdiv(ethUsdPrice);
-        uint256 _targetDebt =
-            targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(WETH_DECIMALS_DIFF);
+        uint256 _targetDebt = targetCollateral.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(
+            WETH_DECIMALS_DIFF
+        );
         return (targetCollateral, _targetDebt);
     }
 }

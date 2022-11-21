@@ -92,7 +92,9 @@ contract TestUtil is Test {
                 wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(
                     ethUsdPrice
                 );
-                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(WETH_DECIMALS_DIFF);
+                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(
+                    WETH_DECIMALS_DIFF
+                );
             }
         } else {
             uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));

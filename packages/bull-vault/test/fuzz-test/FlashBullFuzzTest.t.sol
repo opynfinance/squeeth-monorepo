@@ -202,7 +202,8 @@ contract FlashBullTestFork is Test {
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
 
             maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(105e16));
-            maxEthForUsdc = usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
