@@ -106,7 +106,7 @@ const LPPage: React.FC = () => {
             disabled={isPreviewButtonDisabled}
             fullWidth
           >
-            {connectedWallet ? 'Preview transaction' : 'Connect wallet to deposit'}
+            {connectedWallet ? 'Preview deposit' : 'Connect wallet to deposit'}
           </AltPrimaryButton>
         </Grid>
       </Grid>
