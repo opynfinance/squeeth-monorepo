@@ -238,7 +238,7 @@ contract LeverageBullTestFork is Test {
         IERC20(usdc).approve(address(leverageBull), usdcToRepay);
         leverageBull.auctionRepayAndWithdrawFromLeverage(usdcToRepay, 0);
 
-        assertEq(IEulerDToken(dToken).balanceOf(auction).sub(debtAmount), usdcToRepay);
+        assertEq(debtAmount.sub(usdcToRepay), IEulerDToken(dToken).balanceOf(address(leverageBull)));
         assertEq(usdcBalanceAfter.sub(IERC20(usdc).balanceOf(auction)), usdcToRepay);
     }
 }
