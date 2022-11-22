@@ -107,7 +107,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         FULL_REBALANCE_BORROW_USDC_BUY_WETH,
         FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH,
         FULL_REBALANCE_DEPOSIT_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB,
-        FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB
+        FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB,
+        FULL_REBALANCE_SELL_WETH_REPAY_USDC_DEPOSIT_INTO_CRAB
     }
 
     struct Order {
@@ -528,19 +529,34 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
             console.log('wethFromEuler', wethFromEuler);
             console.log('wethNeededForCrab', ethNeededForCrab);
-            // crab deposit eth - excess collateral
-            uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
-            console.log('wethToGet', wethToGet);
-            // sell USDC to buy WETH
-            _exactOutFlashSwap(
-                usdc,
-                weth,
-                _params.ethUsdcPoolFee,
-                wethToGet,
-                wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
-                uint8(FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
-                abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
-            );
+            if (ethNeededForCrab >= wethFromEuler) {
+                // crab deposit eth - excess collateral
+                uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
+                console.log('wethToGet', wethToGet);
+                // sell USDC to buy WETH
+                _exactOutFlashSwap(
+                    usdc,
+                    weth,
+                    _params.ethUsdcPoolFee,
+                    wethToGet,
+                    wethToGet.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                    uint8(FLASH_SOURCE.FULL_REBALANCE_WITHDRAW_WETH_BORROW_USDC_DEPOSIT_INTO_CRAB),
+                    abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
+                );
+            } else {
+                uint256 wethToSell = wethFromEuler.sub(ethNeededForCrab);
+                // sell WETH for USDC
+                _exactInFlashSwap(
+                    weth,
+                    usdc,
+                    _params.ethUsdcPoolFee,
+                    wethToSell,
+                    wethToSell.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
+                    uint8(FLASH_SOURCE.FULL_REBALANCE_SELL_WETH_REPAY_USDC_DEPOSIT_INTO_CRAB),
+                    abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
+                );
+
+            }
         }
     }
 
@@ -621,6 +637,18 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        } else if (
+            FLASH_SOURCE(_uniFlashSwapData.callSource)
+                == FLASH_SOURCE.FULL_REBALANCE_SELL_WETH_REPAY_USDC_DEPOSIT_INTO_CRAB
+        ) {
+            (uint256 wethToWithdraw, uint256 ethToCrab) =
+                abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+
+            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(IERC20(usdc).balanceOf(address(this)), wethToWithdraw);
+
+            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
+
+            IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }
 
