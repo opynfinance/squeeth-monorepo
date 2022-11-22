@@ -33,7 +33,6 @@ import CookiePopUp from '@components/CookiePopUp'
 
 initializeAmplitude()
 
-
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
 
@@ -145,7 +144,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
       </Head>
 
       <MemoizedInit />
-      <ThemeProvider theme={getTheme(Mode.DARK)}>
+      <ThemeProvider theme={getTheme(Mode.NEW_DARK)}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <ComputeSwapsProvider>
@@ -153,7 +152,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>
-      <CookiePopUp/>
+      <CookiePopUp />
     </React.Fragment>
   )
 }

@@ -25,7 +25,8 @@
       "@styles/*": ["src/styles/*"],
       "@types/*": ["src/types/*"],
       "@utils/*": ["src/utils/*"],
-      "@queries/*": ["src/queries/*"]
+      "@queries/*": ["src/queries/*"],
+      "@state/*": ["src/state/*"]
     }
   },
 
