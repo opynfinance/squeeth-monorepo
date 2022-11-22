@@ -170,7 +170,8 @@ contract LeverageBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
 
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 usdcToBorrow =
+            _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
         uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
 
         if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;
@@ -180,7 +181,7 @@ contract LeverageBullTestFork is Test {
         vm.startPrank(auction);
         leverageBull.depositAndBorrowFromLeverage(0, usdcToBorrow);
         vm.stopPrank();
-        
+
         uint256 usdcBalanceAfter = IERC20(usdc).balanceOf(auction);
 
         assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
@@ -194,10 +195,9 @@ contract LeverageBullTestFork is Test {
         assertEq(usdcBalanceAfter.sub(usdcToRepay), 0);
     }
 
-    function testFuzzingBorrowAndRepayPartialBalanceOf(
-        uint256 _wethToDeposit,
-        uint256 _percentage
-    ) public {
+    function testFuzzingBorrowAndRepayPartialBalanceOf(uint256 _wethToDeposit, uint256 _percentage)
+        public
+    {
         _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
         _percentage = bound(_percentage, 0, 100);
 
@@ -217,7 +217,8 @@ contract LeverageBullTestFork is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
 
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 usdcToBorrow =
+            _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
         uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
 
         if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;
@@ -227,7 +228,7 @@ contract LeverageBullTestFork is Test {
         vm.startPrank(auction);
         leverageBull.depositAndBorrowFromLeverage(0, usdcToBorrow);
         vm.stopPrank();
-        
+
         uint256 usdcBalanceAfter = IERC20(usdc).balanceOf(auction);
 
         assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
