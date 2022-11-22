@@ -2,6 +2,7 @@
 pragma solidity =0.7.6;
 
 pragma abicoder v2;
+
 import { console } from "forge-std/console.sol";
 
 // interface
@@ -304,7 +305,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
-        console.log('reached fullRebalance');
+        console.log("reached fullRebalance");
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
@@ -317,7 +318,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         );
 
         _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
-        console.log('reached fullRebalance 2');
+        console.log("reached fullRebalance 2");
 
         if (_isDepositingInCrab) {
             /**
@@ -507,7 +508,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
         // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log('reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl', _params.wethTargetInEuler, wethInCollateral);
+        console.log(
+            "reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl",
+            _params.wethTargetInEuler,
+            wethInCollateral
+        );
         if (_params.wethTargetInEuler > wethInCollateral) {
             // crab deposit eth + collateral shortfall
             uint256 wethToGet =
@@ -527,12 +532,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         } else {
             // WETH to take out of Euler
             uint256 wethFromEuler = wethInCollateral.sub(_params.wethTargetInEuler);
-            console.log('wethFromEuler', wethFromEuler);
-            console.log('wethNeededForCrab', ethNeededForCrab);
+            console.log("wethFromEuler", wethFromEuler);
+            console.log("wethNeededForCrab", ethNeededForCrab);
             if (ethNeededForCrab >= wethFromEuler) {
                 // crab deposit eth - excess collateral
                 uint256 wethToGet = ethNeededForCrab.sub(wethFromEuler);
-                console.log('wethToGet', wethToGet);
+                console.log("wethToGet", wethToGet);
                 // sell USDC to buy WETH
                 _exactOutFlashSwap(
                     usdc,
@@ -555,7 +560,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     uint8(FLASH_SOURCE.FULL_REBALANCE_SELL_WETH_REPAY_USDC_DEPOSIT_INTO_CRAB),
                     abi.encodePacked(wethFromEuler, totalEthNeededForCrab)
                 );
-
             }
         }
     }
@@ -644,7 +648,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             (uint256 wethToWithdraw, uint256 ethToCrab) =
                 abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(IERC20(usdc).balanceOf(address(this)), wethToWithdraw);
+            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
+                IERC20(usdc).balanceOf(address(this)), wethToWithdraw
+            );
 
             IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
