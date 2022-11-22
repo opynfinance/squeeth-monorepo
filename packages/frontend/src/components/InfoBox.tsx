@@ -8,7 +8,6 @@ const useStyles = makeStyles((theme) =>
       backgroundColor: theme.palette.background.stone,
       borderRadius: '12px',
       padding: theme.spacing(2, 2.5),
-      width: '100%',
     },
   }),
 )
