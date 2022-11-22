@@ -1,6 +1,5 @@
 import React from 'react'
-import { Typography, Box, BoxProps } from '@material-ui/core'
-import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { Box, BoxProps } from '@material-ui/core'
 import { useAtomValue } from 'jotai'
 
 import {
@@ -15,42 +14,9 @@ import {
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
+import Metric from './Metric'
 
-const useMetricStyles = makeStyles((theme) =>
-  createStyles({
-    container: {
-      padding: '20px 24px',
-      backgroundColor: theme.palette.background.stone,
-      borderRadius: '12px',
-    },
-    label: {
-      color: 'rgba(255, 255, 255, 0.5)',
-      fontSize: '15px',
-      fontWeight: 500,
-      width: 'max-content',
-    },
-    value: {
-      color: 'rgba(255, 255, 255)',
-      fontSize: '18px',
-      fontWeight: 500,
-      width: 'max-content',
-      fontFamily: 'DM Mono',
-    },
-  }),
-)
-
-const Metric: React.FC<{ label: string; value: string }> = ({ label, value }) => {
-  const classes = useMetricStyles()
-
-  return (
-    <Box className={classes.container}>
-      <Typography className={classes.label}>{label}</Typography>
-      <Typography className={classes.value}>{value}</Typography>
-    </Box>
-  )
-}
-
-const Metrics: React.FC<BoxProps> = (props) => {
+const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const index = useAtomValue(indexAtom)
   const mark = useAtomValue(markAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
@@ -95,4 +61,4 @@ const Metrics: React.FC<BoxProps> = (props) => {
   )
 }
 
-export default Metrics
+export default SqueethMetrics
