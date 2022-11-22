@@ -1,4 +1,4 @@
-import { Typography, InputAdornment, Box, ButtonBase } from '@material-ui/core'
+import { Typography, InputAdornment, Box, ButtonBase, CircularProgress } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -66,7 +66,10 @@ interface InputTokenProps extends InputNumberProps {
   balance: BigNumber
   logo: string
   symbol: string
-  onBalanceClick: () => void
+  onBalanceClick?: () => void
+  showMaxAction?: boolean
+  isLoading?: boolean
+  loadingMessage?: string
 }
 
 export const InputToken: React.FC<InputTokenProps> = ({
@@ -75,7 +78,10 @@ export const InputToken: React.FC<InputTokenProps> = ({
   balance,
   logo,
   symbol,
-  onBalanceClick,
+  onBalanceClick = () => {},
+  showMaxAction = true,
+  isLoading = false,
+  loadingMessage = 'loading...',
   ...props
 }) => {
   const classes = useInputTokenProps()
@@ -111,12 +117,18 @@ export const InputToken: React.FC<InputTokenProps> = ({
           {...props}
         />
 
-        <Typography
-          variant="subtitle1"
-          className={clsx(textClasses.lighterFontColor, textClasses.smallFont, textClasses.monoFont)}
-        >
-          {usdPrice.isZero() ? 'loading...' : formatCurrency(usdValue)}
-        </Typography>
+        {usdPrice.isZero() || isLoading ? (
+          <Box display="flex" alignItems="center" gridGap="8px">
+            <CircularProgress color="primary" size="1rem" />
+            <Typography className={clsx(textClasses.lighterFontColor, textClasses.smallFont, textClasses.monoFont)}>
+              {loadingMessage}
+            </Typography>
+          </Box>
+        ) : (
+          <Typography className={clsx(textClasses.lighterFontColor, textClasses.smallFont, textClasses.monoFont)}>
+            {formatCurrency(usdValue)}
+          </Typography>
+        )}
       </div>
 
       <div className={classes.subSection}>
@@ -129,11 +141,13 @@ export const InputToken: React.FC<InputTokenProps> = ({
             {formatBalance(balance.toNumber())} {symbol}
           </Typography>
 
-          <ButtonBase onClick={onBalanceClick}>
-            <Typography variant="subtitle2" color="primary">
-              (Max)
-            </Typography>
-          </ButtonBase>
+          {showMaxAction && (
+            <ButtonBase onClick={onBalanceClick}>
+              <Typography variant="subtitle2" color="primary">
+                (Max)
+              </Typography>
+            </ButtonBase>
+          )}
         </Box>
       </div>
     </div>
