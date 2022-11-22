@@ -303,6 +303,250 @@ contract AuctionBullTestFork is Test {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         auctionBull.setRebalanceWethLimitPriceTolerance(5e16);
     }
+    
+    function testFullRebalanceWhenEthUpAndCrTooHigh() public {
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
+        {
+            // move prices up
+            vm.startPrank(user1);
+            IERC20(usdc).approve(address(swapRouter), 30000000e6);
+            swapRouter.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: usdc,
+                    tokenOut: weth,
+                    fee: uint24(3000),
+                    recipient: msg.sender,
+                    deadline: block.timestamp,
+                    amountIn: 30000000e6,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            );
+            IWETH9(weth).deposit{value: 200e18}();
+            IERC20(weth).approve(address(swapRouter), 200e18);
+            swapRouter.exactInputSingle(
+                ISwapRouter.ExactInputSingleParams({
+                    tokenIn: weth,
+                    tokenOut: wPowerPerp,
+                    fee: uint24(3000),
+                    recipient: msg.sender,
+                    deadline: block.timestamp,
+                    amountIn: 200e18,
+                    amountOutMinimum: 0,
+                    sqrtPriceLimitX96: 0
+                })
+            );
+            vm.stopPrank();
+            vm.warp(block.timestamp + 1000);
+        }
+
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+
+        (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
+        (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
+            currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
+        );
+        crabAmount = crabAmount.mul(3);
+
+        assertEq(isDepositingInCrab, true);
+
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 wPowerPerpAmountToTrade =
+            _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
+
+        {
+            // trader signature vars
+            uint8 v;
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: type(uint256).max,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(user1Pk, bidDigest);
+            AuctionBull.Order memory orderData = AuctionBull.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: type(uint256).max,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders.push(orderData);
+        }
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+
+        vm.prank(user1);
+        IERC20(weth).approve(address(auctionBull), wPowerPerpAmountToTrade.mul(squeethEthPrice));
+        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
+        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+        vm.prank(auctionManager);
+        vm.expectRevert(bytes("AB2"));
+        auctionBull.fullRebalance(
+            orders,
+            crabAmount,
+            squeethEthPrice,
+            targetWethInLeverage,
+            ethUsdPrice.wmul(12e17),
+            3000,
+            isDepositingInCrab
+        );
+    }
+
+    function testFullRebalanceWhenEthDownAndCrTooLow() public {
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
+        uint256 ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+
+        // move prices down
+        vm.startPrank(user1);
+        IWETH9(weth).deposit{value: 10000e18}();
+        IERC20(weth).approve(address(swapRouter), 10000e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: weth,
+                tokenOut: usdc,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 10000e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        IERC20(wPowerPerp).approve(address(swapRouter), 6000e18);
+        swapRouter.exactInputSingle(
+            ISwapRouter.ExactInputSingleParams({
+                tokenIn: wPowerPerp,
+                tokenOut: weth,
+                fee: uint24(3000),
+                recipient: msg.sender,
+                deadline: block.timestamp,
+                amountIn: 6000e18,
+                amountOutMinimum: 0,
+                sqrtPriceLimitX96: 0
+            })
+        );
+        vm.stopPrank();
+        vm.warp(block.timestamp + 1000);
+
+        ethUsdPrice = UniOracle._getTwap(
+            controller.ethQuoteCurrencyPool(),
+            controller.weth(),
+            controller.quoteCurrency(),
+            TWAP,
+            false
+        );
+        squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+        {
+            (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+                auctionBull.getCurrentDeltaAndCollatRatio();
+        }
+        (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
+        (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
+            currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
+        );
+
+        crabAmount = crabAmount.mul(2);
+
+        currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
+        assertEq(isDepositingInCrab, false);
+
+        (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
+        uint256 wPowerPerpAmountToTrade =
+            _calcWPowerPerpAmountFromCrab(isDepositingInCrab, crabAmount, ethInCrab, squeethInCrab);
+
+        {
+            // trader signature vars
+            uint8 v;
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: 1,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(user1Pk, bidDigest);
+            AuctionBull.Order memory orderData = AuctionBull.Order({
+                bidId: 1,
+                trader: user1,
+                quantity: wPowerPerpAmountToTrade,
+                price: 1,
+                isBuying: isDepositingInCrab,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders.push(orderData);
+        }
+
+        vm.prank(user1);
+        IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
+        userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
+
+        squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
+
+        vm.prank(auctionManager);
+        vm.expectRevert();
+        auctionBull.fullRebalance(
+            orders,
+            crabAmount,
+            squeethEthPrice,
+            targetWethInLeverage,
+            ethUsdPrice.wmul(12e17),
+            3000,
+            isDepositingInCrab
+        );
+    }
 
     function testLeverageRebalanceWhereCrIsInvalid() public {
         vm.startPrank(user1);
