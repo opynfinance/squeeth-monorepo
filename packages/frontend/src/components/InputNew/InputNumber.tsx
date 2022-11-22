@@ -3,11 +3,11 @@ import InputBase, { InputBaseProps } from './InputBase'
 const DECIMAL_REGEX = RegExp('^[0-9]*[.]{1}[0-9]*$')
 
 interface InputNumberCustomProps extends InputBaseProps {
-  onInputChange: (value: string) => void
+  onInputChange?: (value: string) => void
 }
 export type InputNumberProps = InputNumberCustomProps
 
-const InputNumber: React.FC<InputNumberProps> = ({ value, onInputChange, ...props }) => {
+const InputNumber: React.FC<InputNumberProps> = ({ value, onInputChange = () => {}, ...props }) => {
   const handleChange = (val: string) => {
     if (isNaN(Number(val))) {
       return onInputChange('0')
