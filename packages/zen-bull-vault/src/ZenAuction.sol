@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity =0.7.6;
 pragma abicoder v2;
+
 import { console } from "forge-std/console.sol";
 
 // interface
@@ -346,7 +347,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
-        console.log('reached fullRebalance');
+        console.log("reached fullRebalance");
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
@@ -563,7 +564,11 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(_params.wethBoughtFromAuction);
         // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log('reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl', _params.wethTargetInEuler, wethInCollateral);
+        console.log(
+            "reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl",
+            _params.wethTargetInEuler,
+            wethInCollateral
+        );
         if (_params.wethTargetInEuler > wethInCollateral) {
             // crab deposit eth + collateral shortfall
             uint256 wethToGet =
