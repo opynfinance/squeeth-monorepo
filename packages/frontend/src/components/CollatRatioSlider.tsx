@@ -168,7 +168,7 @@ const useStyles = makeStyles((theme) =>
     markLabel: {
       marginTop: '6px',
       '&[data-index="0"]': {
-        transform: 'none',
+        transform: 'translateX(-42%)',
       },
       '&[data-index="1"]': {
         transform: (props: StylePropsType): string => (props.lastMarkIndex === 1 ? 'translateX(-100%)' : ''),

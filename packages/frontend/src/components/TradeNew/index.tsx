@@ -7,7 +7,7 @@ import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom
 import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from '@state/trade/atoms'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import Long from './Long'
-// import Short from './Short'
+import Short from './Short'
 import { TradeType } from '../../types'
 
 const Trade: React.FC<BoxProps> = (props) => {
@@ -42,8 +42,7 @@ const Trade: React.FC<BoxProps> = (props) => {
         </SqueethTabsNew>
       }
       <div>
-        {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : null}
-        {/* <Short open={openPosition === 0} /> */}
+        {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
       </div>
     </Box>
   )

@@ -35,10 +35,17 @@ const useInputBaseStyles = makeStyles((theme) =>
 
 interface InputBaseCustomProps {
   hasBorder?: boolean
+  readOnly?: boolean
 }
 export type InputBaseProps = StandardTextFieldProps & InputBaseCustomProps
 
-const InputBase: React.FC<InputBaseProps> = ({ InputProps, InputLabelProps, hasBorder = true, ...props }) => {
+const InputBase: React.FC<InputBaseProps> = ({
+  InputProps,
+  InputLabelProps,
+  hasBorder = true,
+  readOnly = false,
+  ...props
+}) => {
   const classes = useInputBaseStyles()
   const textClasses = useTextStyles()
 
@@ -53,6 +60,7 @@ const InputBase: React.FC<InputBaseProps> = ({ InputProps, InputLabelProps, hasB
       }}
       InputProps={{
         disableUnderline: true,
+        readOnly,
         classes: {
           root: clsx(classes.inputRoot, hasBorder && classes.inputBorder),
           focused: classes.inputFocused,
