@@ -89,7 +89,7 @@ function CrabStrategyV2PnLChart() {
             enabled: true,
             useHTML: true,
             formatter: function() {
-                return '<div style="color:#BABBBB"> 🦀 '+  lastCrabUsdItem[1].toFixed(2) + '%' +'</div>';
+                return '<div style="color:#BABBBB"> Crab/USD 🦀 '+  lastCrabUsdItem[1].toFixed(2) + '%' +'</div>';
             }
         }
      }
