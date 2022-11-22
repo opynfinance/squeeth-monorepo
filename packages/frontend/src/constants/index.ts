@@ -13,6 +13,8 @@ export const DEFAULT_SLIPPAGE = 0.25
 
 export const MIN_COLLATERAL_AMOUNT = 6.9
 
+export const MIN_COLLATERAL_RATIO = 150
+
 export const YEAR = 365
 
 export const VOL_PERCENT_FIXED = 0.1
