@@ -186,12 +186,12 @@ contract LeverageBullTestFork is Test {
         assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
 
         vm.startPrank(auction);
-        uint256 usdcToRepay = IEulerDToken(dToken).balanceOf(auction);
+        uint256 usdcToRepay = IEulerDToken(dToken).balanceOf(address(leverageBull));
         IERC20(usdc).approve(address(leverageBull), usdcToRepay);
         leverageBull.auctionRepayAndWithdrawFromLeverage(usdcToRepay, 0);
 
         assertEq(IEulerDToken(dToken).balanceOf(auction), 0);
-        assertEq(usdcBalanceAfter.sub(IERC20(usdc).balanceOf(auction)), 0);
+        assertEq(usdcBalanceAfter.sub(usdcToRepay), 0);
     }
 
     function testFuzzingBorrowAndRepayPartialBalanceOf(
@@ -233,7 +233,7 @@ contract LeverageBullTestFork is Test {
         assertEq(usdcBalanceAfter.sub(usdcBalanceBefore), usdcToBorrow);
 
         vm.startPrank(auction);
-        uint256 debtAmount = IEulerDToken(dToken).balanceOf(auction);
+        uint256 debtAmount = IEulerDToken(dToken).balanceOf(address(leverageBull));
         uint256 usdcToRepay = debtAmount.mul(_percentage).div(100);
         IERC20(usdc).approve(address(leverageBull), usdcToRepay);
         leverageBull.auctionRepayAndWithdrawFromLeverage(usdcToRepay, 0);
