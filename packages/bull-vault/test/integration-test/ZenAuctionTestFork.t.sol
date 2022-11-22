@@ -3845,14 +3845,15 @@ contract ZenAuctionTestFork is Test {
 
 
     function testFullRebalance__() public {
+
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));  
         console.log('currentDebt', currentDebt);
         console.log('currentWethInLeverage', currentWethInLeverage);
         uint256 sellUsdcBuyWethAmount = 1;
-        uint256 sellWethBuyWPowerPerpAmount =  200e18;
-        uint256 sellWethBuyUsdcAmount = 1;
-        uint256 sellWPowerPerpAmountBuyWethAmount =  1;
+        uint256 sellWethBuyWPowerPerpAmount = 1;
+        uint256 sellWethBuyUsdcAmount = 200e18;
+        uint256 sellWPowerPerpAmountBuyWethAmount = 1;
         {
             // All possible price moves
             vm.startPrank(user1);
@@ -3861,6 +3862,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);           
             IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
             IWETH9(weth).deposit{value: 0}();
+            IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max); 
+
 
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -3982,7 +3985,7 @@ contract ZenAuctionTestFork is Test {
             crabAmount,
             squeethEthPrice,
             targetWethInLeverage,
-            isDepositingInCrab ? ethUsdPrice.wmul(8e17): ethUsdPrice.wmul(12e17),
+            (targetDebt<currentDebt) ? ethUsdPrice.wmul(8e17): ethUsdPrice.wmul(12e17),
             3000,
             isDepositingInCrab
         );
