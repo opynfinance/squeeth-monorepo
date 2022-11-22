@@ -3824,7 +3824,7 @@ contract ZenAuctionTestFork is Test {
             crabAmount,
             squeethEthPrice,
             targetWethInLeverage,
-            ethUsdPrice.wmul(12e17),
+            ethUsdPrice.wmul(8e17),
             3000,
             isDepositingInCrab
         );
