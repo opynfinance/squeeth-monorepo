@@ -11109,7 +11109,7 @@ contract AuctionBullTestFork is Test {
         }
     }
 
-    function testRebalanceWithdrawCrabDecreaseEthRepayUsdc() public {
+    function testFullRebalanceWithdrawCrabDecreaseEthRepayUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         console.log("currentDebt", currentDebt);
@@ -11294,7 +11294,7 @@ contract AuctionBullTestFork is Test {
         }
     }
 
-    function testRebalanceDepositCrabDecreaseEthBorrowUsdc() public {
+    function testFullRebalanceDepositCrabDecreaseEthBorrowUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));  
         console.log('currentDebt', currentDebt);
@@ -11479,7 +11479,7 @@ contract AuctionBullTestFork is Test {
         }
     }
 
-    function testRebalanceDepositCrabIncreaseEthBorrowUsdc() public {
+    function testFullRebalanceDepositCrabIncreaseEthBorrowUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         console.log("currentDebt", currentDebt);
@@ -11664,15 +11664,15 @@ contract AuctionBullTestFork is Test {
         }
     }
 
-    function testFullRebalanceWithdrawCrabIncreaseEthRepayUsdc() public {
+    function testFullFullRebalanceWithdrawCrabIncreaseEthRepayUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         console.log("currentDebt", currentDebt);
         console.log("currentWethInLeverage", currentWethInLeverage);
         uint256 sellUsdcBuyWethAmount = 1;
-        uint256 sellWethBuyWPowerPerpAmount = 200e18;
-        uint256 sellWethBuyUsdcAmount = 1;
-        uint256 sellWPowerPerpAmountBuyWethAmount = 1;
+        uint256 sellWethBuyWPowerPerpAmount = 1;
+        uint256 sellWethBuyUsdcAmount = 200e18;
+        uint256 sellWPowerPerpAmountBuyWethAmount = 200e18;
         {
             // All possible price moves
             vm.startPrank(user1);
@@ -11812,8 +11812,8 @@ contract AuctionBullTestFork is Test {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        assertEq(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
+        assertApproxEqRel(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage, 1
         );
         if (isDepositingInCrab) {
             assertEq(
