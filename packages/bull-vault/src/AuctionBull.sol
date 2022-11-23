@@ -339,9 +339,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
         } else {
+            console.log('reached withdraw');
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            console.log('redeem and withdraw done');
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            console.log('push funds from orders done');
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
@@ -351,6 +354,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
+            console.log('lev rebal done');
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
@@ -604,12 +608,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-
+            console.log('mark 6');
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
                 _uniFlashSwapData.amountToPay.sub(remainingWeth)
             );
-
+            console.log('mark 7');
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
             FLASH_SOURCE(_uniFlashSwapData.callSource)
@@ -668,8 +672,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
+            console.log('mark 1');
             // borrow more USDC to buy WETH
             uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+            console.log('mark 2 ');
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -680,7 +686,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 abi.encodePacked(wethToBuy.add(remainingWeth))
             );
         } else {
+            console.log('mark 3');
             uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_params.wethTargetInEuler);
+            console.log('mark 4');
             // repay USDC debt from WETH
             _exactInFlashSwap(
                 weth,
