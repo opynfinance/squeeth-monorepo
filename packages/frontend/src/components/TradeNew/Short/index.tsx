@@ -189,6 +189,7 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       bottom: '0',
       paddingBottom: theme.spacing(3),
+      backgroundColor: theme.palette.background.default,
     },
     hint: {
       display: 'flex',
@@ -568,7 +569,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   minCollatRatio={150}
                 />
 
-                <Box marginTop="16px">
+                <Box marginTop="12px">
                   <Collapse in={collatPercent === 150}>
                     <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
                       You will get liquidated.
@@ -600,6 +601,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               <Box marginTop="24px">
                 <InputToken
                   id="open-short-trade-details"
+                  label="Sell"
                   value={!amount.isNaN() ? amount.toFixed(4) : Number(0).toLocaleString()}
                   readOnly
                   symbol="oSQTH"
@@ -703,6 +705,12 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 )}
               </PrimaryButtonNew>
             )}
+            <Typography variant="caption" className={classes.caption} component="div">
+              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                {' '}
+                Trades on Uniswap V3 🦄{' '}
+              </a>
+            </Typography>
           </Box>
         </div>
       )}
@@ -749,6 +757,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const [sellCloseQuote, setSellCloseQuote] = useAtom(sellCloseQuoteAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
@@ -763,6 +772,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { existingCollatPercent } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
+  const osqthPrice = useOSQTHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
@@ -813,6 +823,22 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
       setBuyLoading(false)
     }
   }, [transactionInProgress])
+
+  const handleDefaultCollatRatioToggle = useAppCallback(
+    (value: boolean) => {
+      if (value) {
+        setCollatPercent(DEFAULT_COLLATERAL_RATIO)
+      }
+      setUsingDefaultCollatRatio(value)
+    },
+    [setCollatPercent],
+  )
+
+  useEffect(() => {
+    if (collatPercent !== DEFAULT_COLLATERAL_RATIO) {
+      setUsingDefaultCollatRatio(false)
+    }
+  }, [collatPercent])
 
   const buyBackAndClose = useAppCallback(async () => {
     setBuyLoading(true)
@@ -938,6 +964,19 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
     setSqthTradeAmount(v)
   }
 
+  const error = closeError
+    ? closeError
+    : existingLongError
+    ? existingLongError
+    : priceImpactWarning
+    ? priceImpactWarning
+    : insufficientETHBalance
+    ? insufficientETHBalance
+    : ''
+
+  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
+  const priceImpact = isNaN(Number(sellCloseQuote.priceImpact)) ? 0 : Number(sellCloseQuote.priceImpact)
+
   return (
     <div id="close-short-card">
       {confirmed && !isTxFirstStep ? (
@@ -979,244 +1018,229 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           </div>
         </div>
       ) : (
-        <div>
-          <div className={classes.settingsContainer}>
-            <Typography variant="caption" className={classes.explainer} component="div" id="close-short-header-box">
-              Buy back oSQTH & close position
-            </Typography>
-            <span className={classes.settingsButton}>
-              <TradeSettings />
-            </span>
-          </div>
-          <div className={classes.thirdHeading}>
-            <PrimaryInput
-              isFullClose={closeType === CloseType.FULL}
-              value={sqthTradeAmount}
-              onChange={(v) => handleAmountInput(v)}
-              label="Amount"
-              tooltip={Tooltips.SellCloseAmount}
-              actionTxt="Max"
-              onActionClicked={setShortCloseMax}
-              unit="oSQTH"
-              error={!!existingLongError || !!priceImpactWarning || !!closeError || !!insufficientETHBalance}
-              isLoading={isPositionFinishedCalc}
-              convertedValue={
-                !amount.isNaN()
-                  ? getWSqueethPositionValue(amount).toFixed(2).toLocaleString()
-                  : Number(0).toLocaleString()
-              }
-              hint={
-                closeError ? (
-                  closeError
-                ) : existingLongError ? (
-                  existingLongError
-                ) : priceImpactWarning ? (
-                  priceImpactWarning
-                ) : insufficientETHBalance ? (
-                  insufficientETHBalance
-                ) : (
-                  <div className={classes.hint}>
-                    <span className={classes.hintTextContainer}>
-                      <span className={classes.hintTitleText}>Position</span>{' '}
-                      <span id="close-short-osqth-before-trade-balance">{finalShortAmount.toFixed(6)}</span>{' '}
-                    </span>
-                    {amount.toNumber() ? (
-                      <>
-                        <ArrowRightAltIcon className={classes.arrowIcon} />
-                        <span id="close-short-osqth-post-trade-balance">
-                          {finalShortAmount?.minus(amount).toFixed(6)}
-                        </span>
-                      </>
-                    ) : null}{' '}
-                    <span style={{ marginLeft: '4px' }}>oSQTH</span>
-                  </div>
-                )
-              }
+        <Box marginTop="32px">
+          <Typography variant="h4" className={classes.subtitle}>
+            Buy back oSQTH & close position
+          </Typography>
+
+          <Box display="flex" flexDirection="column" marginTop="8px">
+            <InputToken
               id="close-short-osqth-input"
+              value={sqthTradeAmount}
+              onInputChange={(v) => handleAmountInput(v)}
+              symbol="oSQTH"
+              logo={osqthLogo}
+              balance={finalShortAmount}
+              usdPrice={osqthPrice}
+              onBalanceClick={() => handleAmountInput(finalShortAmount.toString())}
+              error={!!closeError}
+              helperText={closeError}
+              readOnly={closeType === CloseType.FULL}
+              readOnlyTooltip={closeType === CloseType.FULL ? Tooltips.FullcloseInput : ''}
             />
-          </div>
-          <div style={{ width: '100%', padding: '0 25px 5px 25px' }} id="close-short-type-select">
-            <Select
-              label="Type of Close"
-              value={closeType}
-              onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
-                if (event.target.value === CloseType.FULL) {
-                  setShortCloseMax()
-                } else {
-                  setSqthTradeAmount('0')
-                }
-                setCollatPercent(200)
-                return setCloseType(event.target.value as CloseType)
-              }}
-              displayEmpty
-              inputProps={{ 'aria-label': 'Without label' }}
-              style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
-              id="close-short-type-select"
-            >
-              <MenuItem value={CloseType.FULL} id="close-short-full-close">
-                Full Close
-              </MenuItem>
-              <MenuItem value={CloseType.PARTIAL} id="close-short-partial-close">
-                Partial Close
-              </MenuItem>
-            </Select>
-          </div>
-          {closeType === CloseType.PARTIAL && (
-            <div className={classes.thirdHeading}>
-              <TextField
-                size="small"
-                value={collatPercent}
-                type="number"
-                style={{ width: 300 }}
-                onChange={(event) => setCollatPercent(Number(event.target.value))}
-                id="filled-basic"
-                label="Collateral Ratio"
-                variant="outlined"
-                error={collatPercent < 150}
-                helperText="At risk of liquidation at 150%."
-                FormHelperTextProps={{ classes: { root: classes.formHelperText } }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Typography variant="caption">%</Typography>
-                    </InputAdornment>
-                  ),
+
+            <Box marginTop="24px">
+              <Select
+                label="Type of Close"
+                value={closeType}
+                onChange={(event: React.ChangeEvent<{ value: unknown }>) => {
+                  if (event.target.value === CloseType.FULL) {
+                    setShortCloseMax()
+                  } else {
+                    setSqthTradeAmount('0')
+                  }
+                  setCollatPercent(200)
+                  return setCloseType(event.target.value as CloseType)
                 }}
-                inputProps={{
-                  min: '0',
-                }}
-                className="close-short-collat-ratio-input-box"
-              />
-              <CollatRange
-                className={classes.thirdHeading}
-                onCollatValueChange={(val) => setCollatPercent(val)}
-                collatValue={collatPercent}
-                id="close-short-collat-ratio"
-              />
-            </div>
-          )}
-          <TradeDetails
-            actionTitle="Spend"
-            amount={sellCloseQuote.amountIn.toFixed(6)}
-            unit="ETH"
-            value={Number(ethPrice.times(sellCloseQuote.amountIn).toFixed(2)).toLocaleString()}
-            hint={
-              connected && vault && vault.shortAmount.gt(0) ? (
-                existingLongError
-              ) : priceImpactWarning ? (
-                priceImpactWarning
-              ) : insufficientETHBalance ? (
-                insufficientETHBalance
-              ) : (
-                <div className={classes.hint}>
-                  <span>
-                    Balance <span id="close-short-eth-before-trade-balance">{balance}</span>{' '}
-                  </span>
-                  {amount.toNumber() ? (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrowIcon} />
-                      <span id="close-short-eth-post-trade-balance">
-                        {new BigNumber(balance).minus(sellCloseQuote.amountIn).toFixed(6)}
-                      </span>
-                    </>
-                  ) : existingLongError ? (
-                    existingLongError
-                  ) : null}{' '}
-                  <span style={{ marginLeft: '4px' }}>ETH</span>
-                </div>
-              )
-            }
-            id="close-short-trade-details"
-          />
-          <div className={classes.divider}>
-            <TradeInfoItem
-              label="Collateral you redeem"
-              value={withdrawCollat.isPositive() ? withdrawCollat.toFixed(4) : 0}
-              unit="ETH"
-              id="close-short-collateral-to-redeem"
-            />
-            <TradeInfoItem
-              label="Current Collateral ratio"
-              value={existingCollatPercent}
-              unit="%"
-              tooltip={Tooltips.CurrentCollRatio}
-              id="close-short-collateral-ratio"
-            />
-            <div style={{ marginTop: '10px' }}>
-              <UniswapData
-                slippage={isNaN(Number(slippageAmount)) ? '0' : slippageAmount.toString()}
-                priceImpact={sellCloseQuote.priceImpact}
-                minReceived={sellCloseQuote.maximumAmountIn.toFixed(4)}
-                minReceivedUnit="ETH"
-                isMaxSent={true}
-              />
-            </div>
-          </div>
-          <div className={classes.buttonDiv}>
-            {!connected ? (
-              <PrimaryButtonNew
-                fullWidth
-                variant="contained"
-                onClick={selectWallet}
-                className={classes.amountInput}
-                disabled={!!buyLoading}
-                id="close-short-connect-wallet-btn"
+                displayEmpty
+                inputProps={{ 'aria-label': 'Without label' }}
+                style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
+                id="close-short-type-select"
               >
-                {'Connect Wallet'}
-              </PrimaryButtonNew>
-            ) : (
-              <PrimaryButtonNew
-                fullWidth
-                onClick={buyBackAndClose}
-                className={classes.amountInput}
-                disabled={
-                  !supportedNetwork ||
-                  sqthTradeAmount === '0' ||
-                  buyLoading ||
-                  transactionInProgress ||
-                  collatPercent < 150 ||
-                  !!closeError ||
-                  !!existingLongError ||
-                  (vault && vault.shortAmount.isZero()) ||
-                  !!vaultIdDontLoadedError ||
-                  !!insufficientETHBalance
-                }
-                variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
-                style={
-                  shortClosePriceImpactErrorState
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
-                    : {}
-                }
-                id="close-short-submit-tx-btn"
-              >
-                {!supportedNetwork ? (
-                  'Unsupported Network'
-                ) : buyLoading || transactionInProgress ? (
-                  <CircularProgress color="primary" size="1.5rem" />
-                ) : (
-                  <>
-                    {isVaultApproved
-                      ? 'Buy back and close'
-                      : shortClosePriceImpactErrorState && isVaultApproved
-                      ? 'Buy back and close anyway'
-                      : 'Allow wrapper to manage vault (1/2)'}
-                    {!isVaultApproved ? (
-                      <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
-                        <InfoOutlinedIcon fontSize="small" />
-                      </Tooltip>
-                    ) : null}
-                  </>
-                )}
-              </PrimaryButtonNew>
+                <MenuItem value={CloseType.FULL} id="close-short-full-close">
+                  Full Close
+                </MenuItem>
+                <MenuItem value={CloseType.PARTIAL} id="close-short-partial-close">
+                  Partial Close
+                </MenuItem>
+              </Select>
+            </Box>
+
+            {closeType === CloseType.PARTIAL && (
+              <>
+                <Box display="flex" justifyContent="space-between" alignItems="center" marginTop="24px">
+                  <Typography variant="h4" className={classes.label}>
+                    Collateralization ratio
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+                    <Checkbox
+                      name="priceRangeDefault"
+                      label="Default"
+                      isChecked={usingDefaultCollatRatio}
+                      onInputChange={handleDefaultCollatRatioToggle}
+                    />
+
+                    <InputNumber
+                      id="collateral-ratio-input"
+                      value={collatPercent}
+                      onInputChange={(value) => setCollatPercent(Number(value))}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end" style={{ opacity: '0.5' }}>
+                            %
+                          </InputAdornment>
+                        ),
+                      }}
+                      style={{ width: '80px' }}
+                    />
+                  </Box>
+                </Box>
+
+                <Box marginTop="24px">
+                  <CollatRatioSlider
+                    collatRatio={collatPercent}
+                    onCollatRatioChange={(value) => setCollatPercent(value)}
+                    minCollatRatio={150}
+                  />
+
+                  <Box marginTop="12px">
+                    <Collapse in={collatPercent === 150}>
+                      <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
+                        You will get liquidated.
+                      </Alert>
+                    </Collapse>
+                    <Collapse in={collatPercent > 150 && collatPercent < 200}>
+                      <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
+                        Collateral ratio is too low. You will get liquidated at 150%.
+                      </Alert>
+                    </Collapse>
+
+                    <Collapse in={collatPercent >= 200 && collatPercent < 225}>
+                      <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
+                        Collateral ratio is risky.
+                      </Alert>
+                    </Collapse>
+                  </Box>
+                </Box>
+              </>
             )}
-            <Typography variant="caption" className={classes.caption} component="div">
-              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-                {' '}
-                Trades on Uniswap V3 🦄{' '}
-              </a>
-            </Typography>
-          </div>
-        </div>
+
+            <Box marginTop="24px">
+              <InputToken
+                id="close-short-trade-details"
+                label="Spend"
+                value={sellCloseQuote.amountIn.toFixed(6)}
+                symbol="ETH"
+                logo={ethLogo}
+                balance={new BigNumber(balance)}
+                usdPrice={ethPrice}
+                showMaxAction={false}
+                readOnly
+              />
+            </Box>
+
+            <Collapse in={!!error}>
+              <Alert severity="error" marginTop="24px">
+                {error}
+              </Alert>
+            </Collapse>
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" gridGap="12px" marginTop="24px">
+              <Metric
+                label="Collateral you redeem"
+                value={formatNumber(withdrawCollat.isPositive() ? withdrawCollat.toNumber() : 0)}
+                isSmall
+              />
+              <Metric label="Current collateral ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
+            </Box>
+
+            <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
+              <Box display="flex" alignItems="center" gridGap="12px">
+                <Metric
+                  label="Slippage"
+                  value={formatNumber(slippageAmountValue) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  gridGap="12px"
+                />
+                <Metric
+                  label="Price Impact"
+                  value={formatNumber(priceImpact) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  gridGap="12px"
+                />
+              </Box>
+              <TradeSettings />
+            </Box>
+
+            <Box marginTop="24px" className={classes.buttonDiv}>
+              {!connected ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  className={classes.amountInput}
+                  disabled={!!buyLoading}
+                  id="close-short-connect-wallet-btn"
+                >
+                  {'Connect Wallet'}
+                </PrimaryButtonNew>
+              ) : (
+                <PrimaryButtonNew
+                  fullWidth
+                  onClick={buyBackAndClose}
+                  className={classes.amountInput}
+                  disabled={
+                    !supportedNetwork ||
+                    sqthTradeAmount === '0' ||
+                    buyLoading ||
+                    transactionInProgress ||
+                    collatPercent < 150 ||
+                    !!closeError ||
+                    !!existingLongError ||
+                    (vault && vault.shortAmount.isZero()) ||
+                    !!vaultIdDontLoadedError ||
+                    !!insufficientETHBalance
+                  }
+                  variant={shortClosePriceImpactErrorState ? 'outlined' : 'contained'}
+                  style={
+                    shortClosePriceImpactErrorState
+                      ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
+                      : {}
+                  }
+                  id="close-short-submit-tx-btn"
+                >
+                  {!supportedNetwork ? (
+                    'Unsupported Network'
+                  ) : buyLoading || transactionInProgress ? (
+                    <CircularProgress color="primary" size="1.5rem" />
+                  ) : (
+                    <>
+                      {isVaultApproved
+                        ? 'Buy back and close'
+                        : shortClosePriceImpactErrorState && isVaultApproved
+                        ? 'Buy back and close anyway'
+                        : 'Allow wrapper to manage vault (1/2)'}
+                      {!isVaultApproved ? (
+                        <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      ) : null}
+                    </>
+                  )}
+                </PrimaryButtonNew>
+              )}
+              <Typography variant="caption" className={classes.caption} component="div">
+                <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                  {' '}
+                  Trades on Uniswap V3 🦄{' '}
+                </a>
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       )}
     </div>
   )

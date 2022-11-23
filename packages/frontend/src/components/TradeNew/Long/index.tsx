@@ -42,6 +42,7 @@ import {
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
 import { BIG_ZERO } from '@constants/index'
+import { Links } from '@constants/enums'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { TradeType } from 'src/types'
 import ethLogo from 'public/images/eth-logo.svg'
@@ -207,8 +208,8 @@ const useStyles = makeStyles((theme) =>
     buttonDiv: {
       position: 'sticky',
       bottom: '0',
-
       paddingBottom: theme.spacing(3),
+      backgroundColor: theme.palette.background.default,
     },
     hint: {
       display: 'flex',
@@ -569,6 +570,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   </PrimaryButtonNew>
                 )}
               </Box>
+              <Typography variant="caption" className={classes.caption} component="div">
+                <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                  {' '}
+                  Trades on Uniswap V3 🦄{' '}
+                </a>
+              </Typography>
             </Box>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
@@ -895,6 +902,12 @@ const CloseLong: React.FC<BuyProps> = () => {
                 )}
               </PrimaryButtonNew>
             )}
+            <Typography variant="caption" className={classes.caption} component="div">
+              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
+                {' '}
+                Trades on Uniswap V3 🦄{' '}
+              </a>
+            </Typography>
           </Box>
         </Box>
       )}
