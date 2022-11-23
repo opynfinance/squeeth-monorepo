@@ -21,8 +21,7 @@ contract GoerliDeploy is DeployScript {
     uint256 public constant deltaUpper = 1.1e18;
     uint256 public constant deltaLower = 0.9e18;
 
-    constructor()
-    { 
+    constructor() {
         setAddressParamsAtConstructor(
             systemOwnerAddress,
             auctionManagerAddress,
@@ -44,6 +43,5 @@ contract GoerliDeploy is DeployScript {
             deltaUpper,
             deltaLower
         );
-
     }
 }
