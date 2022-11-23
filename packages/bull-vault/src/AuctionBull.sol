@@ -565,7 +565,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
+            console.log('reached withdraw');
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            console.log('redeem and withdraw done');
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
@@ -577,6 +579,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
+            console.log('lev rebal done');
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
@@ -908,6 +911,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
             uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+            console.log('mark 2 ');
             _exactOutFlashSwap(
                 usdc,
                 weth,
