@@ -49,7 +49,7 @@ import ethLogo from 'public/images/eth-logo.svg'
 import osqthLogo from 'public/images/osqth-logo.svg'
 import Cancelled from '../Cancelled'
 import Confirmed, { ConfirmType } from '../Confirmed'
-import Metric from '../Metric'
+import Metric from '@components/Metric'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -494,20 +494,24 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
               </Collapse>
 
               <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="24px">
-                <Box display="flex" alignItems="center" gridGap="12px">
+                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                   <Metric
                     label="Slippage"
                     value={formatNumber(slippageAmountValue) + '%'}
                     isSmall
                     flexDirection="row"
+                    justifyContent="space-between"
                     gridGap="12px"
+                    flex="1"
                   />
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
                     isSmall
                     flexDirection="row"
+                    justifyContent="space-between"
                     gridGap="12px"
+                    flex="1"
                   />
                 </Box>
                 <TradeSettings />
@@ -522,8 +526,14 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     label="Value if ETH down 50%"
                     value={formatCurrency(Number(squeethExposure * 0.25))}
                     isSmall
+                    flex="1"
                   />
-                  <Metric label="Value if ETH up 2x" value={formatCurrency(Number(squeethExposure * 4))} isSmall />
+                  <Metric
+                    label="Value if ETH up 2x"
+                    value={formatCurrency(Number(squeethExposure * 4))}
+                    isSmall
+                    flex="1"
+                  />
                 </Box>
               </Box>
 
@@ -570,12 +580,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   </PrimaryButtonNew>
                 )}
               </Box>
-              <Typography variant="caption" className={classes.caption} component="div">
-                <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-                  {' '}
-                  Trades on Uniswap V3 🦄{' '}
-                </a>
-              </Typography>
             </Box>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
@@ -836,13 +840,14 @@ const CloseLong: React.FC<BuyProps> = () => {
           </Collapse>
 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="24px">
-            <Box display="flex" alignItems="center" gridGap="12px">
+            <Box display="flex" alignItems="center" gridGap="12px" flex="1">
               <Metric
                 label="Slippage"
                 value={formatNumber(slippageAmountValue) + '%'}
                 isSmall
                 flexDirection="row"
                 gridGap="12px"
+                flex="1"
               />
               <Metric
                 label="Price Impact"
@@ -850,6 +855,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                 isSmall
                 flexDirection="row"
                 gridGap="12px"
+                flex="1"
               />
             </Box>
             <TradeSettings />
@@ -902,12 +908,6 @@ const CloseLong: React.FC<BuyProps> = () => {
                 )}
               </PrimaryButtonNew>
             )}
-            <Typography variant="caption" className={classes.caption} component="div">
-              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-                {' '}
-                Trades on Uniswap V3 🦄{' '}
-              </a>
-            </Typography>
           </Box>
         </Box>
       )}
