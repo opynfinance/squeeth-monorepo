@@ -13,6 +13,7 @@ import ShortFundingChart from '@components/Charts/ShortFundingChart'
 import SqueethMetrics from '@components/TradeNew/SqueethMetrics'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import Trade from '@components/TradeNew'
+import PositionCard from '@components/PositionCardNew'
 import { TradeType } from '../src/types'
 
 const Header: React.FC = () => {
@@ -130,10 +131,15 @@ function TradePage() {
             <Box marginTop="32px">{tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}</Box>
 
             <Box marginTop="76px">
+              <PositionCard />
+            </Box>
+
+            <Box marginTop="40px">
               <Typography variant="h4" className={classes.subtitle}>
                 Details
               </Typography>
-              <SqueethMetrics marginTop="24px" />
+
+              <SqueethMetrics marginTop="16px" />
             </Box>
           </Grid>
 
