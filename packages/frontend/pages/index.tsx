@@ -100,7 +100,7 @@ const useStyles = makeStyles((theme) =>
       letterSpacing: '-0.02em',
     },
     subtitle: {
-      fontSize: '20px',
+      fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },

@@ -9,7 +9,6 @@ export const HidePnLText: React.FC = () => {
 
   return (
     <Typography variant="caption" color="textSecondary">
-      <br />
       To calculate your PnL because you have{' '}
       {positionType === PositionType.LONG ? (
         <span>LPed, participated in crab auctions, or wallet transferred oSQTH</span>
