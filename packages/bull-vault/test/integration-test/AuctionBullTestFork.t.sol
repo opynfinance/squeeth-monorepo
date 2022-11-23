@@ -303,7 +303,7 @@ contract AuctionBullTestFork is Test {
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         auctionBull.setRebalanceWethLimitPriceTolerance(5e16);
     }
-    
+
     function testFullRebalanceWhenEthUpAndCrTooHigh() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -3216,12 +3216,9 @@ contract AuctionBullTestFork is Test {
         );
 
         {
-            (uint256 delta, uint256 cr) =
-                auctionBull.getCurrentDeltaAndCollatRatio();
+            (uint256 delta, uint256 cr) = auctionBull.getCurrentDeltaAndCollatRatio();
             console.log("delta and cr before", delta, cr);
         }
-
-
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
         console.log("targetDebt", targetDebt);
