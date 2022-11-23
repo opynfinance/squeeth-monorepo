@@ -4647,8 +4647,8 @@ contract ZenAuctionTestFork is Test {
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         console.log("currentDebt", currentDebt);
         console.log("currentWethInLeverage", currentWethInLeverage);
-        uint256 sellUsdcBuyWethAmount = 30000000e6;
-        uint256 sellWethBuyWPowerPerpAmount = 1;
+        uint256 sellUsdcBuyWethAmount = 5000000e6;
+        uint256 sellWethBuyWPowerPerpAmount = 200e18;
         uint256 sellWethBuyUsdcAmount = 1;
         uint256 sellWPowerPerpAmountBuyWethAmount = 1;
         {
