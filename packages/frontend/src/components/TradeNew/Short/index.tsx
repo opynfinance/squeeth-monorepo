@@ -589,12 +589,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 </Box>
               </Box>
 
-              <Box display="flex" justifyContent="space-between" alignItems="center" gridGap="12px" marginTop="24px">
-                <Metric
-                  label="Current Collateralization Ratio"
-                  value={formatNumber(existingCollatPercent) + '%'}
-                  isSmall
-                />
+              <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
+                <Metric label="Current Collateral Ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
                 <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall />
               </Box>
 
