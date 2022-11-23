@@ -538,7 +538,7 @@ contract ZenAuctionTestFork is Test {
         );
 
         vm.prank(auctionManager);
-        vm.expectRevert();
+        vm.expectRevert(bytes("AB2"));
         auctionBull.fullRebalance(
             orders,
             crabAmount,
