@@ -645,7 +645,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
-            console.log('lev rebal done');
+            console.log("lev rebal done");
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
