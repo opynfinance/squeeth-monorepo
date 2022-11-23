@@ -14,7 +14,7 @@ import {
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import Metric from './Metric'
+import Metric from '@components/Metric'
 
 const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const index = useAtomValue(indexAtom)
@@ -38,25 +38,25 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" {...props}>
-      <Metric label="ETH Price" value={formatCurrency(ethPrice.toNumber())} />
+      <Metric label="ETH Price" value={formatCurrency(ethPrice.toNumber())} flex="1" />
 
-      <Metric label="Current Implied Premium" value={currentImpliedPremium} />
+      <Metric label="Current Implied Premium" value={currentImpliedPremium} flex="1" />
 
-      <Metric label="Historical Daily Premium" value={historicalDailyPremium} />
+      <Metric label="Historical Daily Premium" value={historicalDailyPremium} flex="1" />
 
-      <Metric label="ETH&sup2; Price" value={formatCurrency(eth2Price.toNumber())} />
+      <Metric label="ETH&sup2; Price" value={formatCurrency(eth2Price.toNumber())} flex="1" />
 
-      <Metric label="Mark Price" value={formatCurrency(markPrice.toNumber())} />
+      <Metric label="Mark Price" value={formatCurrency(markPrice.toNumber())} flex="1" />
 
-      <Metric label="Implied Volatility" value={`${formatNumber(impliedVolPercent)}%`} />
+      <Metric label="Implied Volatility" value={`${formatNumber(impliedVolPercent)}%`} flex="1" />
 
-      <Metric label="Reference Vol." value={`${formatNumber(osqthRefVol)}%`} />
+      <Metric label="Reference Volatility" value={`${formatNumber(osqthRefVol)}%`} flex="1" />
 
-      <Metric label="oSQTH Price (ETH)" value={`${formatNumber(osqthPriceInETH.toNumber(), 4)} Ξ`} />
+      <Metric label="oSQTH Price (ETH)" value={`${formatNumber(osqthPriceInETH.toNumber(), 4)} Ξ`} flex="1" />
 
-      <Metric label="oSQTH Price (USD)" value={formatCurrency(osqthPrice.toNumber())} />
+      <Metric label="oSQTH Price (USD)" value={formatCurrency(osqthPrice.toNumber())} flex="1" />
 
-      <Metric label="Norm Factor" value={formatNumber(normFactor.toNumber(), 4)} />
+      <Metric label="Norm Factor" value={formatNumber(normFactor.toNumber(), 4)} flex="1" />
     </Box>
   )
 }

@@ -64,7 +64,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import { useVaultHistoryQuery } from '@hooks/useVaultHistory'
 import useAppMemo from '@hooks/useAppMemo'
-import Metric from '../Metric'
+import Metric from '@components/Metric'
 import ethLogo from 'public/images/eth-logo.svg'
 import osqthLogo from 'public/images/osqth-logo.svg'
 import Checkbox from '@components/Checkbox'
@@ -570,7 +570,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 />
 
                 <Box marginTop="12px">
-                  <Collapse in={collatPercent === 150}>
+                  <Collapse in={collatPercent <= 150}>
                     <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
                       You will get liquidated.
                     </Alert>
@@ -590,8 +590,13 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               </Box>
 
               <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
-                <Metric label="Current Collateral Ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
-                <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall />
+                <Metric
+                  label="Current Collateral Ratio"
+                  value={formatNumber(existingCollatPercent) + '%'}
+                  isSmall
+                  flex="1"
+                />
+                <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall flex="1" />
               </Box>
 
               <Box marginTop="24px">
@@ -621,24 +626,29 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"
+                  flex="1"
                 />
               </Box>
 
               <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
-                <Box display="flex" alignItems="center" gridGap="12px">
+                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                   <Metric
                     label="Slippage"
                     value={formatNumber(slippageAmountValue) + '%'}
                     isSmall
                     flexDirection="row"
+                    justifyContent="space-between"
                     gridGap="12px"
+                    flex="1"
                   />
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
                     isSmall
                     flexDirection="row"
+                    justifyContent="space-between"
                     gridGap="12px"
+                    flex="1"
                   />
                 </Box>
                 <TradeSettings />
@@ -701,12 +711,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 )}
               </PrimaryButtonNew>
             )}
-            <Typography variant="caption" className={classes.caption} component="div">
-              <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-                {' '}
-                Trades on Uniswap V3 🦄{' '}
-              </a>
-            </Typography>
           </Box>
         </div>
       )}
@@ -1101,7 +1105,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   />
 
                   <Box marginTop="12px">
-                    <Collapse in={collatPercent === 150}>
+                    <Collapse in={collatPercent <= 150}>
                       <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
                         You will get liquidated.
                       </Alert>
@@ -1147,18 +1151,25 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 label="Collateral you redeem"
                 value={formatNumber(withdrawCollat.isPositive() ? withdrawCollat.toNumber() : 0)}
                 isSmall
+                flex="1"
               />
-              <Metric label="Current collateral ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
+              <Metric
+                label="Current collateral ratio"
+                value={formatNumber(existingCollatPercent) + '%'}
+                isSmall
+                flex="1"
+              />
             </Box>
 
             <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
-              <Box display="flex" alignItems="center" gridGap="12px">
+              <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                 <Metric
                   label="Slippage"
                   value={formatNumber(slippageAmountValue) + '%'}
                   isSmall
                   flexDirection="row"
                   gridGap="12px"
+                  flex="1"
                 />
                 <Metric
                   label="Price Impact"
@@ -1166,6 +1177,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   isSmall
                   flexDirection="row"
                   gridGap="12px"
+                  flex="1"
                 />
               </Box>
               <TradeSettings />
@@ -1228,12 +1240,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   )}
                 </PrimaryButtonNew>
               )}
-              <Typography variant="caption" className={classes.caption} component="div">
-                <a href={Links.UniswapSwap} target="_blank" rel="noreferrer">
-                  {' '}
-                  Trades on Uniswap V3 🦄{' '}
-                </a>
-              </Typography>
             </Box>
           </Box>
         </Box>

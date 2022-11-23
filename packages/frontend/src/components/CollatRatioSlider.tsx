@@ -1,15 +1,12 @@
 import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
-import React, { useMemo, useCallback } from 'react'
+import React, { useCallback } from 'react'
 
 import Slider from '@components/CustomSlider'
-import { MIN_COLLATERAL_RATIO } from '@constants/index'
-
-export const SLIDER_RANGE = 150
 
 const HEALTH_CATEGORIES = {
   DANGER: {
     label: 'DANGER',
-    value: MIN_COLLATERAL_RATIO,
+    value: 150,
     colors: {
       LIGHT: '#FA7B67',
       DARK: '#452C28',
@@ -33,111 +30,24 @@ const HEALTH_CATEGORIES = {
   },
 }
 
-const getMarkValues = (minCollatRatio: number, maxCollatRatio: number) => {
-  const absoluteMarkValues = [
-    HEALTH_CATEGORIES.DANGER.value,
-    HEALTH_CATEGORIES.RISKY.value,
-    HEALTH_CATEGORIES.SAFE.value,
-    maxCollatRatio,
-  ]
-
-  // finds the index where minCollatRatio belongs
-  const index = absoluteMarkValues.findIndex((value) => value > minCollatRatio)
-
-  // if "minCollatRatio" is the largest or smallest amongst all, original "markValues" is fine to continue with
-  if (index === -1 || index === 0) {
-    return absoluteMarkValues
-  } else {
-    return [minCollatRatio, ...absoluteMarkValues.slice(index)]
-  }
-}
-
-const getMarks = (minCollatRatio: number, maxCollatRatio: number) => {
-  const markValues = getMarkValues(minCollatRatio, maxCollatRatio)
-
-  return markValues.map((markValue, index) => {
-    const isFirstIndex = index === 0
-    const isLastIndex = index === markValues.length - 1
-
-    if (isFirstIndex) {
-      return {
-        value: markValue,
-        label: `Min ${markValue}%`,
-      }
-    } else if (isLastIndex) {
-      return {
-        value: markValue,
-        label: `Max ${markValue}%`,
-      }
-    } else {
-      return {
-        value: markValue,
-        label: `${markValue}%`,
-      }
-    }
-  })
-}
-
-const getHealthCategory = (value: number) => {
-  if (value < HEALTH_CATEGORIES.DANGER.value) {
-    return HEALTH_CATEGORIES.DANGER
-  } else if (value >= HEALTH_CATEGORIES.DANGER.value && value < HEALTH_CATEGORIES.RISKY.value) {
-    return HEALTH_CATEGORIES.DANGER
-  } else if (value >= HEALTH_CATEGORIES.RISKY.value && value < HEALTH_CATEGORIES.SAFE.value) {
-    return HEALTH_CATEGORIES.RISKY
-  } else {
-    return HEALTH_CATEGORIES.SAFE
-  }
-}
-
-const getRailBackground: (minCollatRatio: number, maxCollatRatio: number) => string = (
-  minCollatRatio,
-  maxCollatRatio,
-) => {
-  const markValues = getMarkValues(minCollatRatio, maxCollatRatio)
-  const totalScale = markValues[markValues.length - 1] - markValues[0]
-
-  const gradientObjs = markValues.reduce(
-    (accGradientObjs, markValue, index) => {
-      const isLastIndex = index === markValues.length - 1
-      if (isLastIndex) {
-        return accGradientObjs
-      }
-
-      const diffInMarkValues = markValues[index + 1] - markValue
-      const diffInPercent = (diffInMarkValues * 100) / totalScale
-
-      const lastPositionInPercent =
-        accGradientObjs.length > 0 ? accGradientObjs[accGradientObjs.length - 1].position : 0
-      const accumulatedPosition = diffInPercent + lastPositionInPercent
-
-      const healthCategory = getHealthCategory(markValue)
-      return [...accGradientObjs, { color: healthCategory.colors.LIGHT, position: accumulatedPosition }]
-    },
-    [] as Array<{
-      color: string
-      position: number
-    }>,
-  )
-
-  const allGradients = gradientObjs.reduce((accGradients, current, index) => {
-    const isFirstIndex = index === 0
-    const isLastIndex = index === gradientObjs.length - 1
-
-    const start = isFirstIndex ? current.color : `${current.color} ${gradientObjs[index - 1].position.toFixed(1)}%`
-    const end = isLastIndex ? current.color : `${current.color} ${current.position.toFixed(1)}%`
-
-    const gradients = `${accGradients}, ${start}, ${end}`
-    return gradients.replace(/(^,)|(,$)/g, '') // trim leading and trailing commas
-  }, '')
-
-  return `linear-gradient(to right, ${allGradients})`
-}
-
-interface StylePropsType {
-  railBackground: string
-  lastMarkIndex: number
-}
+const MARKS = [
+  {
+    value: 150,
+    label: 'Min 150%',
+  },
+  {
+    value: 200,
+    label: '200%',
+  },
+  {
+    value: 225,
+    label: '225%',
+  },
+  {
+    value: 300,
+    label: 'Max 300%',
+  },
+]
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -146,18 +56,9 @@ const useStyles = makeStyles((theme) =>
       marginLeft: 'auto',
       marginRight: 'auto',
     },
-    danger: {
-      backgroundColor: HEALTH_CATEGORIES.DANGER.colors.LIGHT,
-    },
-    warning: {
-      backgroundColor: HEALTH_CATEGORIES.RISKY.colors.LIGHT,
-    },
-    safe: {
-      backgroundColor: HEALTH_CATEGORIES.SAFE.colors.LIGHT,
-    },
     rail: {
       opacity: 0.9,
-      background: (props: StylePropsType): string => props.railBackground,
+      background: `linear-gradient(to right, ${HEALTH_CATEGORIES.DANGER.colors.LIGHT}, ${HEALTH_CATEGORIES.DANGER.colors.LIGHT} 33.4%, ${HEALTH_CATEGORIES.RISKY.colors.LIGHT} 33.4%, ${HEALTH_CATEGORIES.RISKY.colors.LIGHT} 50%,  ${HEALTH_CATEGORIES.SAFE.colors.LIGHT} 50%, ${HEALTH_CATEGORIES.SAFE.colors.LIGHT}  )`,
     },
     track: {
       background: 'transparent',
@@ -166,18 +67,15 @@ const useStyles = makeStyles((theme) =>
       background: theme.palette.background.lightStone,
     },
     markLabel: {
+      fontFamily: 'DM Mono',
+      color: '#fff !important',
       marginTop: '6px',
       '&[data-index="0"]': {
-        transform: 'translateX(-42%)',
-      },
-      '&[data-index="1"]': {
-        transform: (props: StylePropsType): string => (props.lastMarkIndex === 1 ? 'translateX(-100%)' : ''),
-      },
-      '&[data-index="2"]': {
-        transform: (props: StylePropsType): string => (props.lastMarkIndex === 2 ? 'translateX(-100%)' : ''),
+        transform: 'none',
+        marginLeft: '0 !important',
       },
       '&[data-index="3"]': {
-        transform: (props: StylePropsType): string => (props.lastMarkIndex === 3 ? 'translateX(-100%)' : ''),
+        transform: 'translateX(-100%)',
       },
     },
     thumb: {
@@ -265,16 +163,8 @@ const CollatRatioSlider: React.FC<CollatRatioSliderPropsType> = ({
     },
     [minCollatRatio, onCollatRatioChange],
   )
-  const maxCollatRatio = minCollatRatio + SLIDER_RANGE
 
-  const marks = useMemo(() => getMarks(minCollatRatio, maxCollatRatio), [minCollatRatio, maxCollatRatio])
-  const lastMarkIndex = marks.length - 1
-  const railBackground = useMemo(
-    () => getRailBackground(minCollatRatio, maxCollatRatio),
-    [minCollatRatio, maxCollatRatio],
-  )
-
-  const classes = useStyles({ railBackground, lastMarkIndex })
+  const classes = useStyles()
 
   return (
     <div className={classes.container} id={id}>
@@ -292,9 +182,9 @@ const CollatRatioSlider: React.FC<CollatRatioSliderPropsType> = ({
           thumb: classes.thumb,
         }}
         className={className}
-        marks={marks}
-        min={minCollatRatio}
-        max={maxCollatRatio}
+        marks={MARKS}
+        min={150}
+        max={300}
         id={id + '-slider'}
       />
     </div>
