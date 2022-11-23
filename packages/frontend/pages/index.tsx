@@ -68,9 +68,10 @@ const TabComponent: React.FC = () => {
         }}
         aria-label="Sub nav tabs"
         centered
+        variant="fullWidth"
       >
-        <SqueethTabNew fullWidth label="Long" id="long-card-btn" />
-        <SqueethTabNew fullWidth label="Short" id="short-card-btn" />
+        <SqueethTabNew label="Long" id="long-card-btn" />
+        <SqueethTabNew label="Short" id="short-card-btn" />
       </SqueethTabsNew>
     </div>
   )
@@ -79,20 +80,43 @@ const TabComponent: React.FC = () => {
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(6, 10),
-      maxWidth: '1600px',
-      width: '95%',
-      marginLeft: 'auto',
-      marginRight: 'auto',
+      maxWidth: '100%',
+      [theme.breakpoints.up('lg')]: {
+        maxWidth: '1280px',
+      },
+
+      display: 'flex',
+      justifyContent: 'center',
       gap: '72px',
-      justifyContent: 'space-between',
+      [theme.breakpoints.up('md')]: {
+        gap: '40px',
+      },
+      [theme.breakpoints.up('lg')]: {
+        gap: '72px',
+      },
+
+      flexWrap: 'wrap',
+      padding: theme.spacing(6, 5),
+      margin: '0 auto',
     },
     leftColumn: {
-      maxWidth: '800px',
-      width: '100%',
+      flex: '1',
+      [theme.breakpoints.up('md')]: {
+        maxWidth: '720px',
+      },
+      [theme.breakpoints.up('lg')]: {
+        maxWidth: '860px',
+      },
     },
     rightColumn: {
-      width: '420px',
+      flex: 1,
+      [theme.breakpoints.up('md')]: {
+        flex: 0,
+        flexBasis: '390px',
+      },
+      [theme.breakpoints.up('lg')]: {
+        flexBasis: '420px',
+      },
     },
     title: {
       fontSize: '28px',
@@ -124,8 +148,8 @@ function TradePage() {
       <div>
         <Nav />
 
-        <Grid container className={classes.container}>
-          <Grid item className={classes.leftColumn}>
+        <Box className={classes.container}>
+          <Box className={classes.leftColumn}>
             <Header />
 
             <Box marginTop="32px">{tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}</Box>
@@ -141,9 +165,9 @@ function TradePage() {
 
               <SqueethMetrics marginTop="16px" />
             </Box>
-          </Grid>
+          </Box>
 
-          <Grid item className={classes.rightColumn}>
+          <Box className={classes.rightColumn}>
             <TabComponent />
 
             <Box marginTop="32px">
@@ -153,8 +177,8 @@ function TradePage() {
 
               <Trade marginTop="16px" />
             </Box>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </div>
 
       <WelcomeModal open={isWelcomeModalOpen} handleClose={handleClose} />
