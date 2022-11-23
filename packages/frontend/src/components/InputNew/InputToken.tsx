@@ -1,4 +1,4 @@
-import { Typography, InputAdornment, Box, ButtonBase, CircularProgress } from '@material-ui/core'
+import { Typography, InputAdornment, Box, ButtonBase, CircularProgress, Tooltip } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
 import Image from 'next/image'
@@ -70,6 +70,7 @@ interface InputTokenProps extends InputNumberProps {
   showMaxAction?: boolean
   isLoading?: boolean
   loadingMessage?: string
+  readOnlyTooltip?: string
 }
 
 export const InputToken: React.FC<InputTokenProps> = ({
@@ -82,6 +83,8 @@ export const InputToken: React.FC<InputTokenProps> = ({
   showMaxAction = true,
   isLoading = false,
   loadingMessage = 'loading...',
+  readOnly = false,
+  readOnlyTooltip = '',
   ...props
 }) => {
   const classes = useInputTokenProps()
@@ -92,30 +95,33 @@ export const InputToken: React.FC<InputTokenProps> = ({
   return (
     <div className={classes.container}>
       <div className={classes.inputContainer}>
-        <InputNumber
-          value={value}
-          fullWidth
-          hasBorder
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <div className={classes.adornmentContainer}>
-                  <div className={classes.logo}>
-                    <Image src={logo} alt="logo" width="100%" height="100%" />
-                  </div>
+        <Tooltip title={readOnlyTooltip} placement="bottom">
+          <InputNumber
+            value={value}
+            fullWidth
+            hasBorder
+            readOnly={readOnly}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <div className={classes.adornmentContainer}>
+                    <div className={classes.logo}>
+                      <Image src={logo} alt="logo" width="100%" height="100%" />
+                    </div>
 
-                  <Typography className={clsx(textClasses.lightestFontColor, textClasses.mediumBold)}>
-                    {symbol}
-                  </Typography>
-                </div>
-              </InputAdornment>
-            ),
-            classes: {
-              root: clsx(classes.inputRoot, textClasses.monoFont),
-            },
-          }}
-          {...props}
-        />
+                    <Typography className={clsx(textClasses.lightestFontColor, textClasses.mediumBold)}>
+                      {symbol}
+                    </Typography>
+                  </div>
+                </InputAdornment>
+              ),
+              classes: {
+                root: clsx(classes.inputRoot, textClasses.monoFont),
+              },
+            }}
+            {...props}
+          />
+        </Tooltip>
 
         {usdPrice.isZero() || isLoading ? (
           <Box display="flex" alignItems="center" gridGap="8px">
