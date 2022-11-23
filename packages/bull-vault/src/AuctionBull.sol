@@ -721,7 +721,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
         uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
+        console.log(remainingWeth, "remaining weth");
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        console.log("weth in collateral", wethInCollateral);
+        console.log("wethTarget", _params.wethTargetInEuler);
         if (_params.wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
