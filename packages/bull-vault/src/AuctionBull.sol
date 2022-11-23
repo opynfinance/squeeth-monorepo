@@ -195,7 +195,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
 
     constructor(
-        address _auctionOwner,
         address _auctionManager,
         address _bull,
         address _factory,
@@ -225,8 +224,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
             _bull, type(uint256).max
         );
-
-        transferOwnership(_auctionOwner);
     }
 
     receive() external payable {

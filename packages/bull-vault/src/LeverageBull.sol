@@ -67,17 +67,11 @@ contract LeverageBull is Ownable {
 
     /**
      * @dev constructor
-     * @param _owner owner address
      * @param _euler euler address
      * @param _eulerMarkets euler markets module address
      * @param _powerTokenController wPowerPerp controller address
      */
-    constructor(
-        address _owner,
-        address _euler,
-        address _eulerMarkets,
-        address _powerTokenController
-    ) Ownable() {
+    constructor(address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
         eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
             IController(_powerTokenController).weth()
@@ -97,8 +91,6 @@ contract LeverageBull is Ownable {
         );
 
         IEulerMarkets(_eulerMarkets).enterMarket(0, IController(_powerTokenController).weth());
-
-        transferOwnership(_owner);
     }
 
     function setAuction(address _auction) external onlyOwner {
