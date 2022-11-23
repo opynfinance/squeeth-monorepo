@@ -74,8 +74,6 @@ contract BullStrategy is ERC20, LeverageBull {
 
     /**
      * @notice constructor for BullStrategy
-     * @dev this will open a vault in the power token contract and store the vault ID
-     * @param _owner bull strategy owner
      * @param _crab crab address
      * @param _powerTokenController wPowerPerp Controller address
      * @param _euler euler address
@@ -83,7 +81,6 @@ contract BullStrategy is ERC20, LeverageBull {
      */
 
     constructor(
-        address _owner,
         address _crab,
         address _powerTokenController,
         address _euler,
@@ -91,7 +88,7 @@ contract BullStrategy is ERC20, LeverageBull {
     )
         ERC20("Bull Vault", "BullVault")
         // LeverageBull handles Euler leverage trades
-        LeverageBull(_owner, _euler, _eulerMarketsModule, _powerTokenController)
+        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;

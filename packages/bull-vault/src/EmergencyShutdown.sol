@@ -27,8 +27,8 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
  */
 contract EmergencyShutdown is UniFlash, Ownable {
     using StrategyMath for uint256;
-    /// @dev 1e18
 
+    /// @dev 1e18
     uint256 private constant ONE = 1e18;
     /// @dev difference in decimals between WETH and USDC
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
@@ -49,12 +49,10 @@ contract EmergencyShutdown is UniFlash, Ownable {
     /// @dev bull stratgey address
     address public immutable bullStrategy;
 
-    constructor(address _bull, address _factory, address _owner) UniFlash(_factory) {
+    constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-
-        transferOwnership(_owner);
     }
 
     /**

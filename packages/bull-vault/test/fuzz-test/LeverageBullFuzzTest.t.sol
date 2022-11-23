@@ -56,8 +56,8 @@ contract LeverageBullTestFork is Test {
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
-        leverageBull =
-            new LeverageBull(leverageOwner, euler, eulerMarketsModule, address(controller));
+        leverageBull = new LeverageBull(euler, eulerMarketsModule, address(controller));
+        leverageBull.transferOwnership(leverageOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);

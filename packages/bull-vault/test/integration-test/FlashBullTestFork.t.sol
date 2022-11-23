@@ -82,12 +82,12 @@ contract FlashBullTestFork is Test {
         bullOwner = vm.addr(bullOwnerPk);
 
         bullStrategy = new BullStrategy(
-            bullOwner,
             address(crabV2),
             address(controller),
             euler,
             eulerMarketsModule
         );
+        bullStrategy.transferOwnership(bullOwner);
         flashBull = new FlashBull(
             address(bullStrategy),
             0x1F98431c8aD98523631AE4a59f267346ea31F984
