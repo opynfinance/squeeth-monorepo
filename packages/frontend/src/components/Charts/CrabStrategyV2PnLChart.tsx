@@ -89,7 +89,7 @@ function CrabStrategyV2PnLChart() {
             enabled: true,
             useHTML: true,
             formatter: function() {
-                return '<div style="color:#BABBBB"> Crab/USD 🦀</div>';
+                return '<div style="color:#BABBBB"> Crab/USD 🦀 '+  lastCrabUsdItem[1].toFixed(2) + '%' +'</div>';
             }
         }
      }
@@ -105,7 +105,7 @@ function CrabStrategyV2PnLChart() {
             enabled: true,
             useHTML: true,
             formatter: function() {
-                return '<div style="color:#BABBBB"> Crab/ETH </div>';
+                return '<div style="color:#BABBBB"> Crab/ETH: '+  lastCrabEthItem[1].toFixed(2) + '%' +' </div>';
             }
         }
      }
@@ -121,7 +121,7 @@ function CrabStrategyV2PnLChart() {
            enabled: true,
            useHTML: true,
            formatter: function() {
-               return '<div style="color:#BABBBB"> ETH/USD </div>';
+               return '<div style="color:#BABBBB"> ETH/USD: '+  lastEthUsdItem[1].toFixed(2) + '%' +' </div>';
            }
        }
     }
@@ -140,7 +140,7 @@ function CrabStrategyV2PnLChart() {
      }, []);
 
     const series = [{
-      name: 'Crab/USD % Return',
+      name: 'Crab/USD 🦀  % Return',
       yAxis: 0,
       data: crabUsdPnlSeries,
       tooltip: {
@@ -185,21 +185,22 @@ function CrabStrategyV2PnLChart() {
       },
       gridLineColor: 'rgba(221,221,221,0.1)',
   
-   },{
-      title: {
-        text: ''
-      },
-      opposite:true,
-      linkedTo:0,
-      tickPositions:lastMarkerPoints,
-      gridLineWidth:0,
-      labels: {
-        style: {
-          color: '#e6e6e6'
-        },
-      format: '{value:.2f}' + '%'
-      }
-    }
+   },
+  //  {
+  //     title: {
+  //       text: ''
+  //     },
+  //     opposite:true,
+  //     linkedTo:0,
+  //    // tickPositions:lastMarkerPoints,
+  //     gridLineWidth:0,
+  //     labels: {
+  //       style: {
+  //         color: '#e6e6e6'
+  //       },
+  //     format: '{value:.2f}' + '%'
+  //     }
+  //   }
 
       ],
 
