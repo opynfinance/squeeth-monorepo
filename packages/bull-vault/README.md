@@ -5,6 +5,7 @@
 - [BULL VAULT](#bull-vault)
   - [Table of Contents](#table-of-contents)
   - [Local Development](#local-development)
+  - [How To Deploy](#how-to-deploy)
   - [Audits](#audits)
   - [License](#license)
 
@@ -58,6 +59,15 @@ FOUNDRY_PROFILE=test forge test forge test  -vvvv
 ```
 
 For more information on foundry testing and use, see [Foundry Book installation instructions](https://book.getfoundry.sh/getting-started/installation.html).
+
+## How To Deploy
+
+Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables.
+
+The deployment script for [Mainnet](/packages/bull-vault/script/MainnetDeploy.s.sol) and [Goerli](/packages/bull-vault/script/GoerliDeploy.s.sol) can be executed using the below command:
+```
+forge script script/MainnetDeploy.s.sol:MainnetDeploy --broadcast --verify -vvvv
+```
 
 ## Audits
 
