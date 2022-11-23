@@ -21,7 +21,7 @@ const useStyles = makeStyles((theme) =>
     },
     value: {
       color: 'rgba(255, 255, 255)',
-      fontSize: (props: StyleProps): string => (props.isSmall ? '14px' : '18px'),
+      fontSize: (props: StyleProps): string => (props.isSmall ? '15px' : '18px'),
       fontWeight: 500,
       width: 'max-content',
       fontFamily: 'DM Mono',
@@ -30,8 +30,8 @@ const useStyles = makeStyles((theme) =>
 )
 
 interface MetricProps {
-  label: string
-  value: string
+  label: string | React.ReactNode
+  value: string | React.ReactNode
   isSmall?: boolean
 }
 
@@ -39,9 +39,9 @@ const Metric: React.FC<MetricProps & BoxProps> = ({ label, value, isSmall = fals
   const classes = useStyles({ isSmall })
 
   return (
-    <Box display="flex" flexDirection="column" justifyContent="center" className={classes.container} {...props}>
+    <Box className={classes.container} display="flex" flexDirection="column" justifyContent="center" {...props}>
       <Typography className={classes.label}>{label}</Typography>
-      <Typography className={classes.value}>{value}</Typography>
+      {typeof value === 'string' ? <Typography className={classes.value}>{value}</Typography> : value}
     </Box>
   )
 }

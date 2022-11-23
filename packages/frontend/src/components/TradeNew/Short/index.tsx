@@ -76,7 +76,7 @@ const DEFAULT_COLLATERAL_RATIO = 225
 const useStyles = makeStyles((theme) =>
   createStyles({
     subtitle: {
-      fontSize: '20px',
+      fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },

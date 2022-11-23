@@ -7,7 +7,7 @@ import Link from 'next/link'
 import React, { memo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 
-import { PnLType, PositionType, TradeType } from '../types'
+import { PositionType, TradeType } from '../types'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { usePrevious } from 'react-use'
 import {
@@ -41,7 +41,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { HidePnLText } from './HidePnLText'
-import { PnLTooltip } from '@components/PnLTooltip'
+import Metric from '@components/Metric'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -50,7 +50,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: '16px',
       width: '420px',
       alignSelf: 'flex-start',
-      // background: theme.palette.background.lightStone,
+      background: theme.palette.background.stone,
       borderRadius: theme.spacing(1),
       display: 'flex',
       flexDirection: 'column',
@@ -68,22 +68,21 @@ const useStyles = makeStyles((theme) =>
     posTypeChange: {
       display: 'flex',
       alignItems: 'center',
-      gap: '10px',
+      gap: '6px',
     },
     title: {
-      padding: theme.spacing(0.4, 1),
-      fontSize: '.7rem',
-      borderRadius: theme.spacing(0.5),
+      padding: theme.spacing(0.8, 1.5),
+      fontSize: '15px',
+      fontWeight: 500,
+      borderRadius: theme.spacing(1),
       // marginLeft: theme.spacing(2),
     },
     subtitle: {
-      fontSize: '20px',
+      fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },
     positionTitle: {
-      fontSize: '12px',
-      padding: '6px 22px',
       color: (props: any): any =>
         props.positionType === PositionType.LONG
           ? theme.palette.success.main
@@ -97,9 +96,8 @@ const useStyles = makeStyles((theme) =>
           ? `${theme.palette.error.main}20`
           : '#DCDAE920',
     },
+
     postpositionTitle: {
-      fontSize: '12px',
-      padding: '6px 22px',
       color: (props: any): any =>
         props.postPosition === PositionType.LONG
           ? theme.palette.success.main
@@ -111,6 +109,10 @@ const useStyles = makeStyles((theme) =>
           ? `${theme.palette.error.main}20`
           : '#DCDAE920',
     },
+    redPosition: {
+      color: theme.palette.error.main,
+      backgroundColor: `${theme.palette.error.main}20`,
+    },
     posBg: {
       background: (props: any): any => {
         const positionColor =
@@ -118,13 +120,13 @@ const useStyles = makeStyles((theme) =>
             ? '#375F4290'
             : props.positionType === PositionType.SHORT
             ? '#68373D40'
-            : 'rgba(255, 255, 255, 0.08)'
+            : theme.palette.background.stone
         const postColor =
           props.postPosition === PositionType.LONG
             ? '#375F42'
             : props.postPosition === PositionType.SHORT
             ? '#68373D90'
-            : 'rgba(255, 255, 255, 0.08)'
+            : theme.palette.background.stone
         return `linear-gradient(to right, ${positionColor} 0%,${postColor} 75%)`
       },
     },
@@ -165,7 +167,7 @@ const useStyles = makeStyles((theme) =>
     postAmount: {
       display: 'flex',
       alignItems: 'center',
-      gap: '5px',
+      gap: '6px',
     },
     arrow: {
       color: theme.palette.grey[600],
@@ -175,11 +177,24 @@ const useStyles = makeStyles((theme) =>
       textDecoration: 'underline',
       fontWeight: 600,
       fontSize: 14,
-      width: '100%',
+      marginTop: '12px',
     },
     pnlTitle: {
       display: 'flex',
       alignItems: 'center',
+    },
+    amountText: {
+      fontFamily: 'DM Mono',
+      fontSize: '22px',
+      fontWeight: 500,
+      lineHeight: '1em',
+    },
+    amountUnit: {
+      fontSize: '20px',
+    },
+    positionUsdValue: {
+      color: 'rgba(255, 255, 255, 0.6)',
+      marginLeft: '12px',
     },
   }),
 )
@@ -188,7 +203,7 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
   if (positionType === PositionType.LONG) return Number(long?.toFixed(2)) > 0 ? classes.green : classes.red
   if (positionType === PositionType.SHORT) return Number(short?.toFixed(2)) > 0 ? classes.green : classes.red
 
-  return classes.grey
+  return ''
 }
 
 const PositionCard: React.FC = () => {
@@ -316,73 +331,60 @@ const PositionCard: React.FC = () => {
 
   return (
     <div>
-      <Box display="flex" alignItems="center" gridGap="32px">
+      <Box display="flex" alignItems="center" gridGap="24px">
         <Typography variant="h4" className={classes.subtitle}>
           My Position
         </Typography>
+
+        {fullyLiquidated ? (
+          <span className={clsx(classes.title, classes.redPosition)}>Fully Liquidated</span>
+        ) : (
+          <div className={classes.posTypeChange}>
+            <span className={clsx(classes.title, classes.positionTitle)}>{positionType}</span>
+
+            {postPosition === positionType ||
+            (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
+            (tradeType === TradeType.SHORT && positionType === PositionType.LONG) ? null : (
+              <>
+                <ArrowRightAltIcon className={classes.arrow} />
+                <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition}</span>
+              </>
+            )}
+          </div>
+        )}
       </Box>
-
-      <div className={clsx(classes.container, classes.posBg)}>
-        {!fullyLiquidated ? (
-          <div>
-            <div className={classes.header}>
-              <div className={classes.posTypeChange}>
-                <span className={clsx(classes.title, classes.positionTitle)}>{positionType.toUpperCase()}</span>
-
-                {postPosition === positionType ||
-                (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
-                (tradeType === TradeType.SHORT && positionType === PositionType.LONG) ? null : (
-                  <>
-                    <ArrowRightAltIcon className={classes.arrow} />
-                    <span className={clsx(classes.title, classes.postpositionTitle)}>{postPosition.toUpperCase()}</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className={classes.assetDiv}>
-              <div>
+      <div>
+        {fullyLiquidated ? (
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
+            <Metric
+              label="Position value"
+              flex="1"
+              gridGap="4px"
+              value={
                 <div className={classes.postAmount}>
-                  <Typography component="span" style={{ fontWeight: 600 }} id="position-card-before-trade-balance">
-                    {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
+                  <Typography component="span" className={classes.amountText} id="position-card-positive-value">
+                    0 oSQTH
                   </Typography>
-
-                  {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
-                  (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
-                  tradeAmount.isLessThanOrEqualTo(0) ||
-                  tradeAmount.isNaN() ||
-                  tradeCompleted ? null : (
-                    <>
-                      <ArrowRightAltIcon className={classes.arrow} />
-                      <Typography
-                        component="span"
-                        style={{
-                          fontWeight: 600,
-                          color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
-                            ? '#49D273'
-                            : '#f5475c',
-                        }}
-                        id="position-card-post-trade-balance"
-                      >
-                        {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
-                      </Typography>
-                    </>
-                  )}
-                  <Typography color="textSecondary" component="span" variant="body2">
-                    oSQTH &nbsp;
+                  <Typography component="span" className={clsx(classes.amountText, classes.positionUsdValue)}>
+                    {Number(0).toFixed(2)}%
                   </Typography>
                 </div>
-                {isDollarValueLoading ? (
-                  <Typography variant="caption" color="textSecondary">
-                    Loading
-                  </Typography>
-                ) : (
-                  <Typography variant="caption" color="textSecondary" style={{ marginTop: '.5em' }}>
-                    ≈ $ {getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
-                  </Typography>
-                )}
-              </div>
-
+              }
+            />
+            <Metric
+              flex="1"
+              gridGap="4px"
+              label="Redeemable collateral"
+              value={
+                <Typography variant="body1" className={classes.amountText}>
+                  {isPositionLoading && existingCollat.isEqualTo(0) ? 'loading' : existingCollat.toFixed(4)} ETH
+                </Typography>
+              }
+            />
+          </Box>
+        ) : (
+          <>
+            <Box display="flex" alignItems="center" gridGap="16px">
               {positionType === PositionType.SHORT ? (
                 <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
                   <Link href={`vault/${vaultId}`}>Manage Vault</Link>
@@ -394,92 +396,141 @@ const PositionCard: React.FC = () => {
                   <Link href="h1">Manage LP</Link>
                 </Typography>
               ) : null}
+            </Box>
+
+            <Box display="flex" alignItems="flex-start" gridGap="12px" marginTop="16px">
+              <Metric
+                flex="1"
+                gridGap="4px"
+                label="Position value"
+                value={
+                  <div className={classes.postAmount}>
+                    <Box display="flex" alignItems="center" gridGap="4px">
+                      <Typography
+                        component="span"
+                        className={classes.amountText}
+                        id="position-card-before-trade-balance"
+                      >
+                        {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
+                      </Typography>
+
+                      {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
+                      (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
+                      tradeAmount.isLessThanOrEqualTo(0) ||
+                      tradeAmount.isNaN() ||
+                      tradeCompleted ? null : (
+                        <>
+                          <ArrowRightAltIcon className={classes.arrow} />
+                          <Typography
+                            component="span"
+                            className={classes.amountText}
+                            id="position-card-post-trade-balance"
+                            style={{
+                              color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
+                                ? '#49D273'
+                                : '#f5475c',
+                            }}
+                          >
+                            {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                    <Typography
+                      component="span"
+                      className={clsx(classes.amountText, classes.amountUnit)}
+                      variant="body2"
+                    >
+                      oSQTH
+                    </Typography>
+
+                    {!isDollarValueLoading && (
+                      <Typography component="span" className={clsx(classes.amountText, classes.positionUsdValue)}>
+                        ${getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
+                      </Typography>
+                    )}
+                  </div>
+                }
+              />
 
               {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
-                <HidePnLText />
+                <Metric label="PnL" value={<HidePnLText />} flex="1" gridGap="4px" />
               ) : (
-                <div>
-                  <div>
-                    <div>
-                      <div>
-                        <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-                          Unrealized P&L
-                        </Typography>
-                        <PnLTooltip pnlType={PnLType.Unrealized} />
-                      </div>
+                <>
+                  <Metric
+                    flex="1"
+                    gridGap="4px"
+                    label="Unrealized PnL"
+                    value={
                       <div className={classes.pnl} id="unrealized-pnl-value">
                         {!pnlLoading ? (
-                          <>
+                          <Box display="flex" alignItems="center" gridGap="12px">
                             <Typography
-                              className={pnlClass(positionType, longGain, shortGain, classes)}
-                              style={{ fontWeight: 600 }}
+                              className={clsx(pnlClass(positionType, longGain, shortGain, classes), classes.amountText)}
                               id="unrealized-pnl-usd-value"
                             >
                               {getPositionBasedValue(
                                 `$${longUnrealizedPNL.usd.toFixed(2)}`,
                                 `$${shortUnrealizedPNL.usd.toFixed(2)}`,
-                                '--',
-                                'Loading',
+                                '$0',
+                                'loading',
                               )}
                             </Typography>
                             <Typography
                               variant="caption"
-                              className={pnlClass(positionType, longGain, shortGain, classes)}
-                              style={{ marginLeft: '4px' }}
+                              className={clsx(
+                                pnlClass(positionType, longGain, shortGain, classes),
+                                classes.amountText,
+                                classes.positionUsdValue,
+                              )}
                               id="unrealized-pnl-perct-value"
                             >
                               {getPositionBasedValue(
                                 `(${longGain.toFixed(2)}%)`,
                                 `(${shortGain.toFixed(2)}%)`,
-                                null,
+                                '',
                                 ' ',
                               )}
                             </Typography>
-                          </>
+                          </Box>
                         ) : (
-                          'Loading'
+                          'loading'
                         )}
                       </div>
-                    </div>
-                    <div className={classes.pnlTitle}>
-                      <Typography variant="caption" color="textSecondary" style={{ fontWeight: 500 }}>
-                        Realized P&L
-                      </Typography>
-                      <PnLTooltip pnlType={PnLType.Realized} />
-                    </div>
-                    <div className={classes.pnl} id="realized-pnl-value">
-                      <Typography
-                        className={pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes)}
-                        style={{ fontWeight: 600 }}
-                      >
-                        {getRealizedPNLBasedValue(
-                          `$${longRealizedPNL.toFixed(2)}`,
-                          `$${shortRealizedPNL.toFixed(2)}`,
-                          '--',
-                          'Loading',
-                        )}
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
+                    }
+                  />
+                  <Metric
+                    flex="1"
+                    gridGap="4px"
+                    label="Realized PnL"
+                    value={
+                      <div className={classes.pnl} id="realized-pnl-value">
+                        <Typography
+                          className={clsx(
+                            classes.amountText,
+                            pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes),
+                          )}
+                        >
+                          {getRealizedPNLBasedValue(
+                            `$${longRealizedPNL.toFixed(2)}`,
+                            `$${shortRealizedPNL.toFixed(2)}`,
+                            '$0',
+                            'loading',
+                          )}
+                        </Typography>
+                      </div>
+                    }
+                  />
+                </>
               )}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <Typography style={{ fontWeight: 600 }}>FULLY LIQUIDATED</Typography>
-            <Typography variant="caption" component="span" style={{ fontWeight: 500 }} color="textSecondary">
-              REDEEMABLE COLLATERAL
-            </Typography>
-            <Typography variant="body1">
-              {isPositionLoading && existingCollat.isEqualTo(0) ? 'Loading' : existingCollat.toFixed(4)} ETH
-            </Typography>
-          </div>
+            </Box>
+          </>
         )}
-        <Typography variant="caption" color="textSecondary">
-          {fetchingNew ? 'Fetching latest position' : ' '}
-        </Typography>
       </div>
+
+      <Typography variant="caption" color="textSecondary">
+        {fetchingNew ? 'Fetching latest position...' : ' '}
+      </Typography>
     </div>
   )
 }
