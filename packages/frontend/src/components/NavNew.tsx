@@ -56,13 +56,14 @@ const useStyles = makeStyles((theme) =>
       },
     },
     navLink: {
-      margin: theme.spacing(0, 3),
+      margin: theme.spacing(0, 2),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
       fontWeight: 400,
+      letterSpacing: '-0.02em',
       [theme.breakpoints.down('md')]: {
-        margin: theme.spacing(1, 2, 1),
+        margin: theme.spacing(1, 1.5, 1),
       },
       [theme.breakpoints.down(1042)]: {
         margin: theme.spacing(1, 1, 1),
