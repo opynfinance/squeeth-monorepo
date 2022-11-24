@@ -191,8 +191,8 @@ const newDarkPalette: ThemeOptions = {
       light: '#F3FF6C1A',
     },
     success: {
-      light: '#49D2731A',
-      main: '#49D273',
+      main: '#67fabf',
+      light: '#67fabf1A',
     },
     background: {
       stone: '#242728',

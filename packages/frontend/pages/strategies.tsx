@@ -1,10 +1,10 @@
 import { LinkButton } from '@components/Button'
 import Nav from '@components/NavNew'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2New'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2New'
+import StrategyInfo from '@components/Strategies/Crab/StrategyInfoNew'
 import StrategyInfoV1 from '@components/Strategies/Crab/StrategyInfoV1'
 import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
 import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
@@ -44,17 +44,16 @@ import {
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2New'
 import Metric from '@components/Metric'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2New'
+import { formatNumber, formatCurrency } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       maxWidth: '1280px',
       width: '80%',
-
-      padding: theme.spacing(2, 5),
       margin: '0 auto',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
@@ -68,6 +67,37 @@ const useStyles = makeStyles((theme) =>
       },
       [theme.breakpoints.down('xs')]: {
         padding: theme.spacing(2, 5),
+      },
+    },
+    columnContainer: {
+      marginTop: '32px',
+      display: 'flex',
+      justifyContent: 'center',
+      gridGap: '96px',
+      flexWrap: 'wrap',
+      [theme.breakpoints.down('lg')]: {
+        gridGap: '96px',
+      },
+      [theme.breakpoints.down('md')]: {
+        gridGap: '40px',
+      },
+    },
+    leftColumn: {
+      flex: 1,
+      [theme.breakpoints.down('md')]: {
+        minWidth: '440px',
+      },
+    },
+    rightColumn: {
+      flexBasis: '420px',
+      [theme.breakpoints.down('lg')]: {
+        flexBasis: '390px',
+      },
+      [theme.breakpoints.down('md')]: {
+        flexBasis: 'auto',
+      },
+      [theme.breakpoints.down('sm')]: {
+        flex: '1',
       },
     },
     header: {
@@ -215,6 +245,7 @@ const Strategies: React.FC = () => {
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
   const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
+
   const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
   const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
@@ -275,9 +306,110 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
-            <Box marginTop="40px">
-              <CrabPositionV2 />
-            </Box>
+            <Box marginTop="40px">{/* <CrabPositionV2 /> */}</Box>
+
+            <div className={classes.columnContainer}>
+              <div className={classes.leftColumn}>
+                <Box>
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Details
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <CapDetailsComponent
+                      maxCap={maxCap}
+                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
+                    />
+                  </Box>
+                </Box>
+
+                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
+                  <Metric
+                    flex="1"
+                    label="ETH Price"
+                    value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
+                  />
+                  <Metric
+                    flex="1"
+                    label="Current Implied Premium"
+                    value={formatNumber(currentImpliedFunding * 100) + '%'}
+                  />
+                  <Metric
+                    flex="1"
+                    label="Historical Daily Premium"
+                    value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
+                  />
+                  <Metric
+                    flex="1"
+                    label="Last hedged at"
+                    value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                      day: 'numeric',
+                      month: 'numeric',
+                      hour: 'numeric',
+                      minute: 'numeric',
+                    })}
+                  />
+                  <Metric
+                    flex="1"
+                    label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
+                    value={
+                      formatCurrency(lowerPriceBandForProfitability) +
+                      ' - ' +
+                      formatCurrency(upperPriceBandForProfitability)
+                    }
+                  />
+                  <Metric
+                    flex="1"
+                    label="Collateralization Ratio"
+                    value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
+                  />
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Crab PnL
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <StrategyChartsV2 />
+                  </Box>
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Profitability conditions
+                  </Typography>
+                  <StrategyInfo />
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Hedges
+                  </Typography>
+                  <Box marginTop="24px">
+                    <CrabStrategyV2History />
+                  </Box>
+                </Box>
+              </div>
+              <div className={classes.rightColumn}>
+                {supportedNetwork && (
+                  <div className={classes.tradeForm}>
+                    {!!address ? (
+                      <CrabTradeComponent
+                        maxCap={maxCap}
+                        depositedAmount={vault?.collateralAmount || new BigNumber(0)}
+                      />
+                    ) : (
+                      <div className={classes.connectWalletDiv}>
+                        <LinkButton className={classes.strategiesConnectWalletBtn} onClick={() => selectWallet()}>
+                          Connect Wallet
+                        </LinkButton>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
 
             <div className={classes.header}>
               <Typography variant="h6">🦀</Typography>
