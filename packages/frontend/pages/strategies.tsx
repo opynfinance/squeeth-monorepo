@@ -14,7 +14,7 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
-import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2New'
 import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
@@ -380,7 +380,7 @@ const Strategies: React.FC = () => {
               </div>
               <div className={classes.rightColumn}>
                 {supportedNetwork && (
-                  <div className={classes.tradeForm}>
+                  <div>
                     {!!address ? (
                       <CrabTradeComponent
                         maxCap={maxCap}
