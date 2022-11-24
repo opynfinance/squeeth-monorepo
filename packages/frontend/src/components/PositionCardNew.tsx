@@ -40,7 +40,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import useAppEffect from '@hooks/useAppEffect'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
-import { HidePnLText } from './HidePnLText'
+import { HidePnLText } from './HidePnLTextNew'
 import Metric from '@components/Metric'
 
 const useStyles = makeStyles((theme) =>
