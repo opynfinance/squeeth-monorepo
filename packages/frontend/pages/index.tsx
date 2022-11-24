@@ -80,42 +80,42 @@ const TabComponent: React.FC = () => {
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      maxWidth: '100%',
-      [theme.breakpoints.up('lg')]: {
-        maxWidth: '1280px',
-      },
-
+      maxWidth: '1280px',
       display: 'flex',
       justifyContent: 'center',
-      gap: '72px',
-      [theme.breakpoints.up('md')]: {
-        gap: '40px',
-      },
-      [theme.breakpoints.up('lg')]: {
-        gap: '72px',
-      },
-
+      gridGap: '96px',
       flexWrap: 'wrap',
       padding: theme.spacing(6, 5),
       margin: '0 auto',
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+        gridGap: '80px',
+      },
+      [theme.breakpoints.down('md')]: {
+        gridGap: '40px',
+      },
     },
     leftColumn: {
-      flex: '1',
-      [theme.breakpoints.up('md')]: {
-        maxWidth: '720px',
+      maxWidth: '840px',
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: '740px',
       },
-      [theme.breakpoints.up('lg')]: {
-        maxWidth: '860px',
+      [theme.breakpoints.down('md')]: {
+        maxWidth: '620px',
+      },
+      [theme.breakpoints.down('sm')]: {
+        maxWidth: 'none',
+        flex: '1',
       },
     },
     rightColumn: {
-      flex: 1,
-      [theme.breakpoints.up('md')]: {
+      flexBasis: '420px',
+      [theme.breakpoints.down('lg')]: {
         flex: 0,
         flexBasis: '390px',
       },
-      [theme.breakpoints.up('lg')]: {
-        flexBasis: '420px',
+      [theme.breakpoints.down('sm')]: {
+        flex: 1,
       },
     },
     title: {
