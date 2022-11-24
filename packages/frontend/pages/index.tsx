@@ -108,9 +108,6 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('lg')]: {
         flexBasis: '390px',
       },
-      [theme.breakpoints.down('md')]: {
-        flexBasis: 'auto',
-      },
       [theme.breakpoints.down('sm')]: {
         flex: '1',
       },
