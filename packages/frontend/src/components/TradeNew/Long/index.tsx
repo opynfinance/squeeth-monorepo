@@ -210,6 +210,7 @@ const useStyles = makeStyles((theme) =>
       bottom: '0',
       paddingBottom: theme.spacing(3),
       backgroundColor: theme.palette.background.default,
+      zIndex: 2000,
     },
     hint: {
       display: 'flex',
