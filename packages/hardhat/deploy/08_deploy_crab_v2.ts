@@ -87,8 +87,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       weth.address,
       uniswapFactory.address,
       squeethPoolAddr,
-      "0x59a9303907038A2be0e8837343E1A93Bd69004A3",
-      "0x59a9303907038A2be0e8837343E1A93Bd69004A3",
+      deployer,
+      deployer,
       3600,
       '200000000000000000'
     ]
