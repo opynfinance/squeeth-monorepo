@@ -22,7 +22,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     nav: {
       maxWidth: '1280px',
-      width: '90%',
+      width: '80%',
       padding: theme.spacing(0, 2.5),
       margin: '0 auto',
       height: '64px',
@@ -36,9 +36,11 @@ const useStyles = makeStyles((theme) =>
       backdropFilter: 'blur(30px)',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
+        gridGap: '96px',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
+        gridGap: '40px',
       },
     },
     logo: {
