@@ -270,7 +270,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const tradeType = useAtomValue(tradeTypeAtom)
 
@@ -438,7 +438,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   Pay ETH to buy squeeth ERC20
                 </Typography>
                 <span className={classes.settingsButton}>
-                  <TradeSettings />
+                  <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
                 </span>
               </div>
               <div className={classes.thirdHeading} />
@@ -643,7 +643,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const altTradeAmount = new BigNumber(ethTradeAmount)
@@ -829,7 +829,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               Sell squeeth ERC20 to get ETH
             </Typography>
             <span className={classes.settingsButton}>
-              <TradeSettings />
+              <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
             </span>
           </div>
 

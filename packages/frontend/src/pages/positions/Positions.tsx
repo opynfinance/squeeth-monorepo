@@ -44,6 +44,9 @@ import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import useAppEffect from '@hooks/useAppEffect'
 import { crabQueuedInEthAtom, crabQueuedInUsdAtom } from '@state/crab/atoms'
+import { useBullPosition } from '@hooks/useBullPosition'
+import BullPosition from './BullPosition'
+import { useInitBullStrategy } from '@state/bull/hooks'
 
 export default function Positions() {
   const classes = useStyles()
@@ -61,6 +64,8 @@ export default function Positions() {
   const setStrategyDataV2 = useSetStrategyDataV2()
   const setStrategyData = useSetStrategyData()
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
+  useInitBullStrategy()
+  useBullPosition(address ?? '')
 
   useAppEffect(() => {
     setStrategyDataV2()
@@ -137,11 +142,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-        depositedEth.isZero() &&
-        depositedEthV2.isZero() &&
-        squeethAmount.isZero() &&
-        mintedDebt.isZero() &&
-        lpedSqueeth.isZero() ? (
+          depositedEth.isZero() &&
+          depositedEthV2.isZero() &&
+          squeethAmount.isZero() &&
+          mintedDebt.isZero() &&
+          lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -182,6 +187,8 @@ export default function Positions() {
             version="Crab Strategy V2"
           />
         )}
+
+        {!!address ? <BullPosition /> : null}
 
         {activePositions?.length > 0 && (
           <>

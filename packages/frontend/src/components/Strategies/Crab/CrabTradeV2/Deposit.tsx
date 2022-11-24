@@ -359,8 +359,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     depositPriceImpactNumber > 3
       ? classes.btnDanger
       : depositFundingWarning || depositPriceImpactWarning
-      ? classes.btnWarning
-      : ''
+        ? classes.btnWarning
+        : ''
 
   return (
     <>
@@ -495,8 +495,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
                     tooltipTitle={
                       useQueue
                         ? `For standard deposit, the average price impact is ${formatNumber(
-                            depositPriceImpactNumber,
-                          )}% based on historical auctions`
+                          depositPriceImpactNumber,
+                        )}% based on historical auctions`
                         : undefined
                     }
                   />
@@ -510,11 +510,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
               />
 
               {!useQueue && (
-                <TradeSettings
-                  isCrab={true}
-                  setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                  crabSlippage={new BigNumber(slippage)}
-                />
+                <TradeSettings setSlippage={(amt) => setSlippage(amt.toNumber())} slippage={new BigNumber(slippage)} />
               )}
             </Box>
           </Box>
@@ -556,7 +552,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
-                onClick={() => {}}
+                onClick={() => { }}
                 disabled={true}
                 id="crab-unsupported-network-btn"
               >

@@ -308,7 +308,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const { loading: loadingOSQTHPrice, data: osqthPrice } = useOSQTHPrice()
   const { isRestricted } = useRestrictUser()
@@ -567,7 +567,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                     gridGap="12px"
                   />
 
-                  <TradeSettings />
+                  <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
                 </Box>
               </Box>
 
@@ -684,7 +684,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const { data: osqthPrice } = useOSQTHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
@@ -943,7 +943,7 @@ const CloseLong: React.FC<BuyProps> = () => {
                 gridGap="12px"
               />
 
-              <TradeSettings />
+              <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
             </Box>
           </Box>
 

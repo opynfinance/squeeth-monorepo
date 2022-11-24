@@ -66,12 +66,19 @@ const History: React.FC = () => {
             </Typography>
           </div>
           {tx.transactionType === TransactionType.CRAB_FLASH_DEPOSIT ||
-          tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? (
+          tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ||
+          tx.transactionType === TransactionType.BULL_FLASH_DEPOSIT ||
+          tx.transactionType === TransactionType.BULL_FLASH_WITHDRAW ? (
             <>
               <div className={classes.txItemVal}>
                 <Typography
                   variant="body2"
-                  className={tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ? classes.red : classes.green}
+                  className={
+                    tx.transactionType === TransactionType.CRAB_FLASH_WITHDRAW ||
+                    tx.transactionType === TransactionType.BULL_FLASH_WITHDRAW
+                      ? classes.red
+                      : classes.green
+                  }
                 >
                   {tx.ethAmount.toFixed(4)}&nbsp; WETH
                 </Typography>

@@ -281,7 +281,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const normalizationFactor = useAtomValue(normFactorAtom)
 
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const collateral = useAppMemo(() => new BigNumber(ethTradeAmount), [ethTradeAmount])
@@ -646,7 +646,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     justifyContent="space-between"
                     gridGap="12px"
                   />
-                  <TradeSettings />
+                  <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
                 </Box>
               </Box>
             </Box>
@@ -767,7 +767,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const [usingDefaultCollatRatio, setUsingDefaultCollatRatio] = useState(true)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
-  const slippageAmount = useAtomValue(slippageAmountAtom)
+  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { data } = useWalletBalance()
@@ -1199,7 +1199,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   justifyContent="space-between"
                   gridGap="12px"
                 />
-                <TradeSettings />
+                <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
               </Box>
             </Box>
 
