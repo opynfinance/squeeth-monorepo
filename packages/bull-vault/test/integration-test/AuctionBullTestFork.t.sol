@@ -14176,8 +14176,9 @@ contract AuctionBullTestFork is Test {
     function testFullRebalanceDepositCrabDecreaseEthRepayUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentDebt", currentDebt);
-        console.log("currentWethInLeverage", currentWethInLeverage);
+        initialDebt = currentDebt;
+        initialWethInLeverage = currentWethInLeverage;
+
         uint256 sellUsdcBuyWethAmount = 1;
         uint256 sellWethBuyWPowerPerpAmount = 200e18;
         uint256 sellWethBuyUsdcAmount = 1;
@@ -14253,15 +14254,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -14324,6 +14320,9 @@ contract AuctionBullTestFork is Test {
         assertEq(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
+        assertTrue(isDepositingInCrab);
+        assertLt(targetWethInLeverage, initialWethInLeverage);
+        assertLt(targetDebt, initialDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -14340,8 +14339,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
@@ -14361,8 +14358,8 @@ contract AuctionBullTestFork is Test {
     function testFullRebalanceWithdrawCrabIncreaseEthBorrrowUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentDebt", currentDebt);
-        console.log("currentWethInLeverage", currentWethInLeverage);
+        initialDebt = currentDebt;
+        initialWethInLeverage = currentWethInLeverage;
         uint256 sellUsdcBuyWethAmount = 1;
         uint256 sellWethBuyWPowerPerpAmount = 1;
         uint256 sellWethBuyUsdcAmount = 1;
@@ -14438,15 +14435,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -14509,6 +14501,9 @@ contract AuctionBullTestFork is Test {
         assertEq(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
+        assertTrue(!isDepositingInCrab);
+        assertLt(initialWethInLeverage, currentWethInLeverage);
+        assertLt(initialDebt, currentDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -14525,8 +14520,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
@@ -14546,8 +14539,8 @@ contract AuctionBullTestFork is Test {
     function testFullRebalanceWithdrawCrabDecreaseEthRepayUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentDebt", currentDebt);
-        console.log("currentWethInLeverage", currentWethInLeverage);
+        initialDebt = currentDebt;
+        initialWethInLeverage = currentWethInLeverage;
         uint256 sellUsdcBuyWethAmount = 1;
         uint256 sellWethBuyWPowerPerpAmount = 1;
         uint256 sellWethBuyUsdcAmount = 200e18;
@@ -14623,15 +14616,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -14691,9 +14679,12 @@ contract AuctionBullTestFork is Test {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
-        assertEq(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
-        );
+        // assertEq(
+        //     IEulerDToken(dToken).balanceOf(address(bullStrategy)), targetDebt
+        // );
+        assertTrue(!isDepositingInCrab);
+        assertLt(currentWethInLeverage, initialWethInLeverage);
+        assertLt(currentDebt, initialDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -14710,8 +14701,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
@@ -14808,15 +14797,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -14879,6 +14863,9 @@ contract AuctionBullTestFork is Test {
         assertEq(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
+        assertTrue(isDepositingInCrab);
+        assertLt(currentWethInLeverage, initialWethInLeverage);
+        assertLt(initialDebt, currentDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -14895,8 +14882,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
@@ -14916,8 +14901,8 @@ contract AuctionBullTestFork is Test {
     function testFullRebalanceDepositCrabIncreaseEthBorrowUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentDebt", currentDebt);
-        console.log("currentWethInLeverage", currentWethInLeverage);
+        initialDebt = currentDebt;
+        initialWethInLeverage = currentWethInLeverage;
         uint256 sellUsdcBuyWethAmount = 30000000e6;
         uint256 sellWethBuyWPowerPerpAmount = 1;
         uint256 sellWethBuyUsdcAmount = 200e18;
@@ -14993,15 +14978,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -15064,6 +15044,9 @@ contract AuctionBullTestFork is Test {
         assertEq(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage
         );
+        assertTrue(isDepositingInCrab);
+        assertLt(initialWethInLeverage, currentWethInLeverage);
+        assertLt(initialDebt, currentDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -15080,8 +15063,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
@@ -15101,8 +15082,8 @@ contract AuctionBullTestFork is Test {
     function testFullFullRebalanceWithdrawCrabIncreaseEthRepayUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log("currentDebt", currentDebt);
-        console.log("currentWethInLeverage", currentWethInLeverage);
+        initialDebt = currentDebt;
+        initialWethInLeverage = currentWethInLeverage;
         uint256 sellUsdcBuyWethAmount = 1;
         uint256 sellWethBuyWPowerPerpAmount = 1;
         uint256 sellWethBuyUsdcAmount = 200e18;
@@ -15178,15 +15159,10 @@ contract AuctionBullTestFork is Test {
         );
 
         (targetWethInLeverage, targetDebt) = _calcTargetCollateralAndDebtInLeverage();
-        console.log("targetDebt", targetDebt);
-        console.log("targetWethInLeverage", targetWethInLeverage);
 
         (uint256 crabAmount, bool isDepositingInCrab) = _calcCrabAmountToTrade(
             currentWethInLeverage, currentDebt, targetWethInLeverage, targetDebt, ethUsdPrice
         );
-
-        // assertEq(isDepositingInCrab, true);
-        console.log("isDepositingInCrab", isDepositingInCrab);
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         uint256 wPowerPerpAmountToTrade =
@@ -15249,6 +15225,9 @@ contract AuctionBullTestFork is Test {
         assertApproxEqRel(
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), targetWethInLeverage, 1
         );
+        assertTrue(!isDepositingInCrab);
+        assertLt(initialWethInLeverage, currentWethInLeverage);
+        assertLt(currentDebt, initialDebt);
         if (isDepositingInCrab) {
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.add(wPowerPerpAmountToTrade),
@@ -15265,8 +15244,6 @@ contract AuctionBullTestFork is Test {
             );
             assertEq(squeethInCrab.add(wPowerPerpAmountToTrade), squeethInCrabAfter);
         } else {
-            console.log("withdraw case");
-
             assertEq(
                 userWPowerPerpBalanceBeforeAuction.sub(wPowerPerpAmountToTrade),
                 IERC20(wPowerPerp).balanceOf(user1)
