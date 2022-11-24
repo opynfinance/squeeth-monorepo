@@ -123,7 +123,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
           />
         </Tooltip>
 
-        {usdPrice.isZero() || isLoading ? (
+        {isLoading ? (
           <Box display="flex" alignItems="center" gridGap="8px">
             <CircularProgress color="primary" size="1rem" />
             <Typography className={clsx(textClasses.lighterFontColor, textClasses.smallFont, textClasses.monoFont)}>
