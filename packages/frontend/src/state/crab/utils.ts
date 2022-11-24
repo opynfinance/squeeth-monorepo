@@ -36,6 +36,10 @@ export const getCollateralFromCrabAmount = async (
   return vault.collateralAmount.times(crabAmount).div(totalSupply)
 }
 
+export const getTotalCrabSupply = async (contract: Contract) => {
+  return toTokenAmount(await contract.methods.totalSupply().call(), 18)
+}
+
 export const getCurrentProfitableMovePercentV2 = (currentImpliedVol: number) => {
   // Approximating a hedge every 2 days, take the vol divided by the sqrt of # of periods
   // In this case 365 / 2 = 182.5
@@ -69,7 +73,7 @@ export const getTimeAtLastHedge = async (contract: Contract | null) => {
 
 export const getWsqueethFromCrabAmount = async (crabAmount: BigNumber, contract: Contract | null) => {
   if (!contract || crabAmount.isNaN()) return null
-  
+
   const result = await contract.methods.getWsqueethFromCrabAmount(fromTokenAmount(crabAmount, 18).toFixed(0)).call()
   return toTokenAmount(result.toString(), 18)
 }

@@ -41,6 +41,7 @@ import {
   crabQueuedInUsdAtom,
   minUSDCAmountAtom,
   minCrabAmountAtom,
+  crabTotalSupplyV2Atom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -54,6 +55,7 @@ import {
   getWsqueethFromCrabAmount,
   getCurrentProfitableMovePercent,
   getCurrentProfitableMovePercentV2,
+  getTotalCrabSupply,
 } from './utils'
 import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
@@ -145,6 +147,7 @@ export const useSetStrategyDataV2 = () => {
   const networkId = useAtomValue(networkIdAtom)
   const setEthPriceAtLastHedge = useUpdateAtom(ethPriceAtLastHedgeAtomV2)
   const normFactor = useAtomValue(normFactorAtom)
+  const setCrabTotalSupply = useUpdateAtom(crabTotalSupplyV2Atom)
 
   const setStrategyData = useCallback(async () => {
     if (!contract || !normFactor) return
@@ -168,6 +171,7 @@ export const useSetStrategyDataV2 = () => {
         }
       })
     getTimeAtLastHedge(contract).then(setTimeAtLastHedge)
+    getTotalCrabSupply(contract).then(setCrabTotalSupply)
     if (networkId !== Networks.ROPSTEN) {
       checkTimeHedge(contract).then((h) => {
         setIsTimeHedgeAvailable(h)

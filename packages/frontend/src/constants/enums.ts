@@ -8,7 +8,7 @@ export enum TradeMode {
 export enum Vaults {
   ETHBear = 'Bear Strategy', // long 1 eth + short squeeth
   CrabVault = 'Crab Strategy', // long 2 eth + short squeeth
-  ETHBull = 'Bull Strategy', // long 3 eth + short squeeth
+  ETHBull = 'Zen Bull', // long 3 eth + short squeeth
   Custom = 'Custom Strategy', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
 }
@@ -33,6 +33,8 @@ export enum TransactionType {
   CRAB_V2_USDC_FLASH_WITHDRAW = 'Withdraw USDC from crab V2',
   OTC_DEPOSIT = 'Deposit USDC to crab v2',
   OTC_WITHDRAW = 'Withdraw USDC from crab V2',
+  BULL_FLASH_DEPOSIT = 'Flash deposit in bull',
+  BULL_FLASH_WITHDRAW = 'Flash withdraw from bull',
 }
 
 export enum CloseType {
@@ -83,6 +85,7 @@ export enum Tooltips {
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
   StrategyEarnFunding = 'You earn premiums by depositing into the strategy',
   StrategyProfitThreshold = 'Based on current premiums, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge. This profitable price range is based on the current premium and will change continuously as the premium changes',
+  BullStrategyProfitThreshold = 'Based on current premiums, zen bull strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge. This profitable price range is based on the current premium and will change continuously as the premium changes',
   FullcloseInput = 'Select partial close to edit input',
   FundingVol = 'VOL is calculated as "sqrt(Daily Premium * 365)"',
   FundingDaily = 'Daily premium is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',

@@ -98,6 +98,11 @@ export enum CrabStrategyV2TxType {
   OTC_WITHDRAW = 'OTC_WITHDRAW',
 }
 
+export enum BullStrategyTxType {
+  FLASH_DEPOSIT = 'FLASH_DEPOSIT',
+  FLASH_WITHDRAW = 'FLASH_WITHDRAW',
+}
+
 export default class ChartDataInfo {
   time!: number
   value!: number
