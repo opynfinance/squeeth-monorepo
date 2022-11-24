@@ -21,26 +21,25 @@ const Trade: React.FC<BoxProps> = (props) => {
 
   return (
     <Box id="trade-card" {...props}>
-      {
-        <SqueethTabsNew
-          value={openPosition}
-          onChange={(evt, val) => {
-            setOpenPosition(val)
+      <SqueethTabsNew
+        value={openPosition}
+        onChange={(evt, val) => {
+          setOpenPosition(val)
 
-            if (!transactionInProgress || !isTxFirstStep) {
-              resetEthTradeAmount()
-              resetSqthTradeAmount()
-              resetTransactionData()
-            }
-          }}
-          aria-label="simple tabs example"
-          centered
-          variant="fullWidth"
-        >
-          <SqueethTabNew label="Open" id="open-btn" />
-          <SqueethTabNew label="Close" id="close-btn" />
-        </SqueethTabsNew>
-      }
+          if (!transactionInProgress || !isTxFirstStep) {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            resetTransactionData()
+          }
+        }}
+        aria-label="simple tabs example"
+        centered
+        variant="fullWidth"
+      >
+        <SqueethTabNew label="Open" id="open-btn" />
+        <SqueethTabNew label="Close" id="close-btn" />
+      </SqueethTabsNew>
+
       <div>
         {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
       </div>
