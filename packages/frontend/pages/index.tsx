@@ -4,7 +4,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
 
-import Nav from '@components/Nav'
+import Nav from '@components/NavNew'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
 import { ethTradeAmountAtom, sqthTradeAmountAtom, tradeTypeAtom } from '@state/trade/atoms'
 import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from '@state/wallet/atoms'
@@ -81,6 +81,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       maxWidth: '1280px',
+      width: '90%',
       display: 'flex',
       justifyContent: 'center',
       gridGap: '96px',
@@ -89,33 +90,25 @@ const useStyles = makeStyles((theme) =>
       margin: '0 auto',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
-        gridGap: '80px',
       },
       [theme.breakpoints.down('md')]: {
         gridGap: '40px',
+        width: '100%',
       },
     },
     leftColumn: {
-      maxWidth: '840px',
-      [theme.breakpoints.down('lg')]: {
-        maxWidth: '740px',
-      },
-      [theme.breakpoints.down('md')]: {
-        maxWidth: '620px',
-      },
-      [theme.breakpoints.down('sm')]: {
-        maxWidth: 'none',
-        flex: '1',
-      },
+      flex: 1,
     },
     rightColumn: {
-      width: '420px',
+      flexBasis: '420px',
       [theme.breakpoints.down('lg')]: {
-        width: '390px',
+        flexBasis: '390px',
+      },
+      [theme.breakpoints.down('md')]: {
+        flexBasis: 'auto',
       },
       [theme.breakpoints.down('sm')]: {
-        width: 'auto',
-        flex: 1,
+        flex: '1',
       },
     },
     title: {
