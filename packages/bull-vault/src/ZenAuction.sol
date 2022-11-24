@@ -3,10 +3,6 @@ pragma solidity =0.7.6;
 
 pragma abicoder v2;
 
-import { console } from "forge-std/console.sol";
-
-import { console } from "forge-std/console.sol";
-
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
