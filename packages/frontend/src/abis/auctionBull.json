@@ -39,25 +39,6 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": true,
-        "internalType": "address",
-        "name": "asset",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "receiver",
-        "type": "address"
-      }
-    ],
-    "name": "Farm",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
         "indexed": false,
         "internalType": "uint256",
         "name": "crabAmount",
@@ -141,13 +122,13 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "oldAuctionManager",
+        "name": "newAuctionManager",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "address",
-        "name": "newAuctionManager",
+        "name": "oldAuctionManager",
         "type": "address"
       }
     ],
@@ -222,13 +203,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "oldPriceTolerance",
+        "name": "_oldPriceTolerance",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newPriceTolerance",
+        "name": "_newPriceTolerance",
         "type": "uint256"
       }
     ],
@@ -241,13 +222,13 @@
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "oldWethLimitPriceTolerance",
+        "name": "_oldWethLimitPriceTolerance",
         "type": "uint256"
       },
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "newWethLimitPriceTolerance",
+        "name": "_newWethLimitPriceTolerance",
         "type": "uint256"
       }
     ],
@@ -361,24 +342,6 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_asset",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_receiver",
-        "type": "address"
-      }
-    ],
-    "name": "farm",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "components": [
           {
             "internalType": "uint256",
@@ -431,7 +394,7 @@
             "type": "bytes32"
           }
         ],
-        "internalType": "struct ZenAuction.Order[]",
+        "internalType": "struct AuctionBull.Order[]",
         "name": "_orders",
         "type": "tuple[]"
       },

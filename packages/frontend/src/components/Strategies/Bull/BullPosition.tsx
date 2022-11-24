@@ -12,7 +12,7 @@ import {
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
-  isBullPositionRefetchingAtom,
+  isBullReadyAtom,
 } from '@state/bull/atoms'
 import { addressAtom } from '@state/wallet/atoms'
 import { indexAtom } from '@state/controller/atoms'
@@ -106,9 +106,7 @@ const BullPosition: React.FC = () => {
                   <Typography className={clsx(classes.metricValue, classes.white)}>
                     {bullEthPnL.toFixed(6)} ETH
                   </Typography>
-                  <Typography
-                    className={clsx(classes.metricSubValue, bullEthPnlPerct.isPositive() ? classes.green : classes.red)}
-                  >
+                  <Typography className={clsx(classes.metricSubValue, classes.green)}>
                     {bullEthPnlPerct.toFixed(2)}%
                   </Typography>
                 </Box>

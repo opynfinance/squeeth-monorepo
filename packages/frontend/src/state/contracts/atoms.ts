@@ -18,7 +18,6 @@ import flashBullAbi from '../../abis/flashBullStrategy.json'
 import bullStrategyAbi from '../../abis/bullStrategy.json'
 import eTokenAbi from '../../abis/eulerEToken.json'
 import auctionBullAbi from '../../abis/auctionBull.json'
-import eulerSimpleLensAbi from '../../abis/eulerSimpleLens.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -139,11 +138,4 @@ export const auctionBullContractAtom = atom<Contract | null>((get) => {
   const { auctionBull } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, auctionBull, auctionBullAbi)
-})
-
-export const eulerLensContractAtom = atom<Contract | null>((get) => {
-  const web3 = get(web3Atom)
-  const { eulerSimpleLens } = get(addressesAtom)
-  if (!web3) return null
-  return getContract(web3, eulerSimpleLens, eulerSimpleLensAbi)
 })

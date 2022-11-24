@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Typography, Box } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
@@ -11,11 +11,6 @@ import BullStrategyInfo from './BullStrategyInfo'
 import BullStrategyRebalances from './BullStrategyRebalances'
 import BullStrategyCharts from './BullStrategyCharts'
 import { useInitBullStrategy } from '@state/bull/hooks'
-import { useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from '@state/crab/hooks'
-import { bullThresholdAtom } from '@state/bull/atoms'
-import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
-import { toTokenAmount } from '@utils/calculations'
-import { useAtomValue } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -58,20 +53,7 @@ const useStyles = makeStyles((theme) =>
 
 function BullStrategy() {
   const classes = useStyles()
-  useCurrentCrabPositionValueV2()
   useInitBullStrategy()
-  const setStrategyDataV2 = useSetStrategyDataV2()
-
-  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
-  const bullProfitThreshold = useAtomValue(bullThresholdAtom)
-
-  const lowerPriceBandForProfitability = ethPriceAtLastHedge - bullProfitThreshold * ethPriceAtLastHedge
-  const upperPriceBandForProfitability = ethPriceAtLastHedge + bullProfitThreshold * ethPriceAtLastHedge
-
-  useEffect(() => {
-    setStrategyDataV2()
-  }, [setStrategyDataV2])
 
   return (
     <div>

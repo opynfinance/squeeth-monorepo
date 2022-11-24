@@ -6,11 +6,10 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
-import { bullCRAtom, bullCurrentFundingAtom, bullTimeAtLastHedgeAtom } from '@state/bull/atoms'
-import { dailyHistoricalFundingAtom } from '@state/controller/atoms'
-import { formatCurrency, formatNumber } from '@utils/formatter'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { bullCRAtom } from '@state/bull/atoms'
 import { crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
+import { formatNumber } from '@utils/formatter'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -57,8 +56,7 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
   const bullCr = useAtomValue(bullCRAtom).times(100)
   const crabCr = useAtomValue(crabStrategyCollatRatioAtomV2)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(bullCurrentFundingAtom)
-  const timeAtLastHedge = useAtomValue(bullTimeAtLastHedgeAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px">
@@ -100,7 +98,7 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
             label="Last rebalance"
             tooltipTitle={
               'Last rebalanced at ' +
-              new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+              new Date().toLocaleString(undefined, {
                 day: 'numeric',
                 month: 'long',
                 hour: 'numeric',
@@ -111,25 +109,12 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
             }
           />
         }
-        value={
-          timeAtLastHedge
-            ? new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                day: 'numeric',
-                month: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-              })
-            : '--'
-        }
+        value={`11/18, 8:44 AM`}
       />
       <Metric
         flexBasis="250px"
         label={<Label label="Stack ETH if between" tooltipTitle={Tooltips.BullStrategyProfitThreshold} />}
-        value={
-          lowerPriceBandForProfitability && lowerPriceBandForProfitability != Infinity
-            ? formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)
-            : '-'
-        }
+        value={`~$1,128 - $1,293`}
       />
       <Metric
         flexBasis="250px"
