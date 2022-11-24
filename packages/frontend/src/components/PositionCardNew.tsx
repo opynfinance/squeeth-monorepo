@@ -355,7 +355,7 @@ const PositionCard: React.FC = () => {
       </Box>
       <div>
         {fullyLiquidated ? (
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px" flexWrap="wrap">
             <Metric
               label="Position value"
               flex="1"
@@ -384,7 +384,7 @@ const PositionCard: React.FC = () => {
           </Box>
         ) : (
           <>
-            <Box display="flex" alignItems="center" gridGap="16px">
+            <Box display="flex" alignItems="center" gridGap="16px" flexWrap="wrap">
               {positionType === PositionType.SHORT ? (
                 <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
                   <Link href={`vault/${vaultId}`}>Manage Vault</Link>
@@ -398,7 +398,7 @@ const PositionCard: React.FC = () => {
               ) : null}
             </Box>
 
-            <Box display="flex" alignItems="flex-start" gridGap="12px" marginTop="16px">
+            <Box display="flex" alignItems="flex-start" gridGap="12px" marginTop="16px" flexWrap="wrap">
               <Metric
                 flex="1"
                 gridGap="4px"
