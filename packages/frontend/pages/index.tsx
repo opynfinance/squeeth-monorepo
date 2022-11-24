@@ -109,12 +109,12 @@ const useStyles = makeStyles((theme) =>
       },
     },
     rightColumn: {
-      flexBasis: '420px',
+      width: '420px',
       [theme.breakpoints.down('lg')]: {
-        flex: 0,
-        flexBasis: '390px',
+        width: '390px',
       },
       [theme.breakpoints.down('sm')]: {
+        width: 'auto',
         flex: 1,
       },
     },
@@ -124,7 +124,7 @@ const useStyles = makeStyles((theme) =>
       letterSpacing: '-0.02em',
     },
     subtitle: {
-      fontSize: '22px',
+      fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },
