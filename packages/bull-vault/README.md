@@ -6,7 +6,7 @@
   - [Table of Contents](#table-of-contents)
   - [Local Development](#local-development)
   - [How To Deploy](#how-to-deploy)
-  - [Contracts Architecture](#contract-architecture)
+  - [Contracts Architecture](#contracts-architecture)
   - [Audits](#audits)
   - [License](#license)
 
