@@ -13,9 +13,23 @@ contract OpynWETH9 {
     event Transfer(address indexed src, address indexed dst, uint256 wad);
     event Deposit(address indexed dst, uint256 wad);
     event Withdrawal(address indexed src, uint256 wad);
+    event MinterWhitelisted(address indexed account);
+    event MinterBlacklisted(address indexed account);
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
+    mapping(address => bool) internal whitelistedMinters;
+   
+   /**
+     * @notice check if the sender is whitelistd
+     */
+    modifier onlyWhitelisted() {
+        require(
+            whitelistedMinters[msg.sender] || msg.sender == owner,
+            "Address not a whitelisted minter"
+        );
+        _;
+    }
 
     constructor() {
         owner = msg.sender;
@@ -25,15 +39,13 @@ contract OpynWETH9 {
         deposit();
     }
 
-    function mint(address _to, uint256 _amount) public {
-        require(msg.sender == owner);
+    function mint(address _to, uint256 _amount) public onlyWhitelisted {
 
         balanceOf[_to] += _amount;
         emit Deposit(_to, _amount);
     }
 
-    function burn(address _from, uint256 _amount) public {
-        require(msg.sender == owner);
+    function burn(address _from, uint256 _amount) public onlyWhitelisted {
 
         balanceOf[_from] -= _amount;
         emit Withdrawal(_from, _amount);
@@ -83,5 +95,34 @@ contract OpynWETH9 {
         emit Transfer(src, dst, wad);
 
         return true;
+    }
+
+    /**
+     * @notice check if a minter is whitelisted
+     * @param _account address of minter
+     * @return boolean, True if address is a whitelisted minter
+     */
+    function isWhitelistedMinter(address _account) external view returns (bool) {
+        return whitelistedMinters[_account];
+    }
+
+    /**
+     * @notice allows the minter to whitelist other minters
+     * @param _account address of minter to be whitelisted
+     */
+    function whitelistMinter(address _account) external onlyWhitelisted {
+        whitelistedMinters[_account] = true;
+
+        emit MinterWhitelisted(_account);
+    }
+
+    /**
+     * @notice allow the minter to blacklist other minters
+     * @param _account address of minter to be blacklisted
+     */
+    function blacklistMinter(address _account) external onlyWhitelisted {
+        whitelistedMinters[_account] = false;
+
+        emit MinterBlacklisted(_account);
     }
 }
