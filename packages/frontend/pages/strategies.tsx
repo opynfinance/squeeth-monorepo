@@ -1,5 +1,5 @@
 import { LinkButton } from '@components/Button'
-import Nav from '@components/Nav'
+import Nav from '@components/NavNew'
 import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
@@ -45,25 +45,39 @@ import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
 import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
 import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+import Metric from '@components/Metric'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2New'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
+      maxWidth: '1280px',
+      width: '80%',
+
+      padding: theme.spacing(2, 5),
+      margin: '0 auto',
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+      },
       [theme.breakpoints.down('md')]: {
+        width: '100%',
         padding: theme.spacing(5, 5),
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(4, 4),
+        padding: theme.spacing(4, 5),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(2, 2),
+        padding: theme.spacing(2, 5),
       },
-      margin: '0 auto',
-      maxWidth: '1080px',
     },
     header: {
       display: 'flex',
       marginTop: theme.spacing(4),
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
     },
     boldFont: {
       fontWeight: 'bold',
@@ -261,6 +275,10 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
+            <Box marginTop="40px">
+              <CrabPositionV2 />
+            </Box>
+
             <div className={classes.header}>
               <Typography variant="h6">🦀</Typography>
               <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
