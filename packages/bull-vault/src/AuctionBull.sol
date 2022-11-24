@@ -809,11 +809,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(_params.wethBoughtFromAuction);
         // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log(
-            "reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl",
-            _params.wethTargetInEuler,
-            wethInCollateral
-        );
         if (_params.wethTargetInEuler > wethInCollateral) {
             // crab deposit eth + collateral shortfall
             uint256 wethToGet =
