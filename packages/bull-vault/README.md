@@ -69,6 +69,18 @@ The deployment script for [Mainnet](/packages/bull-vault/script/MainnetDeploy.s.
 forge script script/MainnetDeploy.s.sol:MainnetDeploy --broadcast --verify -vvvv
 ```
 
+## Contracts Architecture
+
+### Contracts Calls Graph
+
+![BullStartegyCalls](/packages/bull-vault/doc/graph/BullStrategyCalls.png)
+
+More functions calls graphs can be found [here](/packages/bull-vault/doc/graph).
+
+### Contracts functions report
+
+Function report can be found [here](/packages/bull-vault/doc/report).
+
 ## Audits
 
 ## License
