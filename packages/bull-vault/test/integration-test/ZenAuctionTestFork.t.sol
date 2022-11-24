@@ -306,7 +306,7 @@ contract ZenAuctionTestFork is Test {
         auctionBull.setRebalanceWethLimitPriceTolerance(5e16);
     }
 
-    function testFullRebalanceWhenEthUpAndCrTooHigh() public {
+    function testFullRebalanceWhenEthUpAndCrTooLow() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
@@ -418,7 +418,7 @@ contract ZenAuctionTestFork is Test {
         );
     }
 
-    function testFullRebalanceWhenEthDownAndCrTooLow() public {
+    function testFullRebalanceWhenEthDownAndCrTooHigh() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
