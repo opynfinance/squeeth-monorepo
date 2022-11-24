@@ -81,7 +81,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       maxWidth: '1280px',
-      width: '90%',
+      width: '80%',
       display: 'flex',
       justifyContent: 'center',
       gridGap: '96px',
@@ -90,14 +90,18 @@ const useStyles = makeStyles((theme) =>
       margin: '0 auto',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
+        gridGap: '96px',
       },
       [theme.breakpoints.down('md')]: {
-        gridGap: '40px',
         width: '100%',
+        gridGap: '40px',
       },
     },
     leftColumn: {
       flex: 1,
+      [theme.breakpoints.down('md')]: {
+        minWidth: '440px',
+      },
     },
     rightColumn: {
       flexBasis: '420px',
