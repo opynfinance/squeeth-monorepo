@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Typography, Tab, Tabs, Box } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
 
@@ -15,6 +15,7 @@ import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import CrabMetricsV2 from '@components/Strategies/Crab/CrabMetricsV2'
+import BullStrategy from '@components/Strategies/Bull'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
@@ -31,8 +32,40 @@ import {
 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { Vaults, VaultSubtitle } from '@constants/enums'
-import bull from 'public/images/bull.gif'
 import bear from 'public/images/bear.gif'
+
+const useTabLabelStyles = makeStyles((theme) =>
+  createStyles({
+    title: {
+      fontSize: '24px',
+      fontWeight: 700,
+      fontFamily: 'DM Sans',
+      lineHeight: '2rem',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '20px',
+        lineHeight: '1.5rem',
+      },
+    },
+    subtitle: {
+      fontSize: '16px',
+      fontWeight: 400,
+      fontFamily: 'DM Sans',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '13px',
+      },
+    },
+  }),
+)
+
+const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
+  const classes = useTabLabelStyles()
+  return (
+    <div>
+      <Typography className={classes.title}>{title}</Typography>
+      <Typography className={classes.subtitle}>{subtitle}</Typography>
+    </div>
+  )
+}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -98,37 +131,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const useTabLabelStyles = makeStyles((theme) =>
-  createStyles({
-    title: {
-      fontSize: '24px',
-      fontWeight: 700,
-      lineHeight: '2rem',
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '20px',
-        lineHeight: '1.5rem',
-      },
-    },
-    subtitle: {
-      fontSize: '16px',
-      fontWeight: 400,
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '13px',
-      },
-    },
-  }),
-)
-
-const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
-  const classes = useTabLabelStyles()
-  return (
-    <>
-      <Typography className={classes.title}>{title}</Typography>
-      <Typography className={classes.subtitle}>{subtitle}</Typography>
-    </>
-  )
-}
-
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
@@ -185,15 +187,14 @@ const Strategies: React.FC = () => {
             label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
             icon={<div>🦀</div>}
           />
-          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBull} />} icon={<div>🐂</div>} />
+          <Tab
+            style={{ textTransform: 'none' }}
+            label={<TabLabel title={Vaults.ETHBull} subtitle={VaultSubtitle.ETHBull} />}
+            icon={<div>🧘🐂</div>}
+          />
         </Tabs>
         {selectedIdx === 2 ? ( //bull vault
-          <div className={classes.comingSoon}>
-            <Image src={bull} alt="squeeth token" width={200} height={130} />
-            <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-              Coming soon
-            </Typography>
-          </div>
+          <BullStrategy />
         ) : selectedIdx === 0 ? ( //bear vault
           <div className={classes.comingSoon}>
             <Image src={bear} alt="squeeth token" width={200} height={130} />
