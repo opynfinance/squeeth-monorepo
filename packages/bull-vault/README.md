@@ -72,6 +72,10 @@ forge script script/MainnetDeploy.s.sol:MainnetDeploy --broadcast --verify -vvvv
 
 ## Contracts Architecture
 
+### UML Diagrams
+
+![BullSystemUml](/packages/bull-vault/doc/uml/BullSystem.png)
+
 ### Contracts Calls Graph
 
 ![BullStartegyCalls](/packages/bull-vault/doc/graph/BullStrategyCalls.png)
