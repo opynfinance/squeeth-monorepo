@@ -1,6 +1,6 @@
-import { PrimaryButton } from '@components/Button'
+import { PrimaryButton, PrimaryButtonNew } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
-import { SecondaryTabs, SecondaryTab } from '@components/Tabs'
+import { SecondaryTabs, SecondaryTab, SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
@@ -28,6 +28,7 @@ import {
 } from '../../../constants'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import InfoIcon from '@material-ui/icons/Info'
+import { InputToken } from '@components/InputNew'
 
 import {
   crabStrategySlippageAtomV2,
@@ -65,6 +66,10 @@ import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { Networks } from '../../../types'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppEffect from '@hooks/useAppEffect'
+import ethLogo from 'public/images/eth-logo.svg'
+import usdcLogo from 'public/images/usdc-logo.svg'
+import Metric from '@components/Metric'
+import { formatNumber } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -91,7 +96,6 @@ const useStyles = makeStyles((theme) =>
     tradeContainer: {
       display: 'flex',
       flexDirection: 'column',
-      padding: theme.spacing(1, 3),
       paddingBottom: theme.spacing(3),
     },
     tabBackGround: {
@@ -101,8 +105,7 @@ const useStyles = makeStyles((theme) =>
       // background: '#2A2D2E',
     },
     notice: {
-      marginTop: theme.spacing(1.5),
-      marginBottom: theme.spacing(2),
+      marginTop: theme.spacing(1),
       padding: theme.spacing(2),
       border: `1px solid #F3FF6C`,
       borderRadius: theme.spacing(1),
@@ -131,6 +134,15 @@ const useStyles = makeStyles((theme) =>
     tokenSelectBox: {
       display: 'flex',
       alignItems: 'center',
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    infoText: {
+      fontWeight: 500,
+      fontSize: '13px',
     },
   }),
 )
@@ -485,7 +497,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.CRAB}
           />
-          <PrimaryButton
+          <PrimaryButtonNew
+            fullWidth
             id="crab-close-btn"
             variant="contained"
             style={{ marginTop: '16px' }}
@@ -496,11 +509,11 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             }}
           >
             Close
-          </PrimaryButton>
+          </PrimaryButtonNew>
         </div>
       ) : (
         <>
-          <SecondaryTabs
+          <SqueethTabsNew
             value={depositOption}
             onChange={(evt, val) => setDepositOption(val)}
             aria-label="simple tabs example"
@@ -508,23 +521,24 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             variant="fullWidth"
             className={classes.tabBackGround}
           >
-            <SecondaryTab id="crab-deposit-tab" label="Deposit" />
-            <SecondaryTab id="crab-withdraw-tab" label="Withdraw" />
-          </SecondaryTabs>
-          <div className={classes.settingsButton}>
+            <SqueethTabNew id="crab-deposit-tab" label="Deposit" />
+            <SqueethTabNew id="crab-withdraw-tab" label="Withdraw" />
+          </SqueethTabsNew>
+
+          <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
+            <Typography variant="h4" className={classes.subtitle}>
+              Strategy Deposit
+            </Typography>
+
             <Box className={classes.tokenSelectBox}>
               <Typography variant="caption">ETH</Typography>
               <Switch checked={useUsdc} onChange={(e) => setUseUsdc(e.target.checked)} color="primary" name="useUSDC" />
               <Typography variant="caption">USDC</Typography>
             </Box>
-            <TradeSettings
-              isCrab={true}
-              setCrabSlippage={(s) => setSlippage(s.toNumber())}
-              crabSlippage={new BigNumber(slippage)}
-            />
-          </div>
+          </Box>
+
           <div className={classes.tradeContainer}>
-            <div style={{ marginBottom: '8px' }}>
+            <div>
               {depositOption !== 0 && isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
                 <>
                   <Typography variant="caption" component="div">
@@ -537,62 +551,40 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               ) : null}
             </div>
             {depositOption === 0 ? (
-              <PrimaryInput
+              <InputToken
                 id="crab-deposit-eth-input"
                 value={depositAmount.toString()}
-                onChange={(v) => setDepositAmount(new BigNumber(v))}
-                label="Amount"
-                tooltip={`${depositToken} Amount to deposit`}
-                actionTxt="Max"
-                unit={depositToken}
-                hint={
-                  depositError
-                    ? depositError
-                    : warning
-                    ? warning
-                    : `Balance ${
-                        useUsdc ? usdcBalance.toFixed(2) : toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)
-                      } ${depositToken}`
-                }
-                convertedValue={useUsdc ? depositAmount.toFixed(2) : ethIndexPrice.times(depositAmount).toFixed(2)}
-                onActionClicked={setDepositMax}
+                onInputChange={(v) => setDepositAmount(new BigNumber(v))}
+                balance={useUsdc ? usdcBalance : toTokenAmount(balance ?? BIG_ZERO, 18)}
+                logo={useUsdc ? usdcLogo : ethLogo}
+                symbol={useUsdc ? 'USDC' : 'ETH'}
+                usdPrice={useUsdc ? new BigNumber(1) : ethIndexPrice}
+                onBalanceClick={setDepositMax}
                 error={!!depositError}
+                helperText={depositError}
               />
             ) : (
-              <PrimaryInput
+              <InputToken
                 id="crab-withdraw-eth-input"
                 value={withdrawAmount.toString()}
-                onChange={(v) => {
+                onInputChange={(v) => {
                   setMaxClicked(false)
                   setWithdrawAmount(new BigNumber(v))
                 }}
-                label="Amount"
-                tooltip={`Amount of ${depositToken} to withdraw`}
-                actionTxt="Max"
-                unit={depositToken}
-                convertedValue={useUsdc ? withdrawAmount.toFixed(2) : ethIndexPrice.times(withdrawAmount).toFixed(2)}
-                hint={
-                  withdrawError ? (
-                    withdrawError
-                  ) : (
-                    <span>
-                      Position{' '}
-                      <span id="current-crab-eth-bal-input">
-                        {useUsdc ? currentUsdcValue.toFixed(2) : currentEthValue.toFixed(6)}
-                      </span>{' '}
-                      {depositToken}
-                    </span>
-                  )
-                }
-                onActionClicked={setWithdrawMax}
+                balance={useUsdc ? currentUsdcValue : currentEthValue}
+                logo={useUsdc ? usdcLogo : ethLogo}
+                symbol={depositToken}
+                usdPrice={useUsdc ? new BigNumber(1) : ethIndexPrice}
+                onBalanceClick={setWithdrawMax}
                 error={!!withdrawError}
+                helperText={withdrawError}
               />
             )}
             <div className={classes.noticeGray}>
               <div className={classes.infoIconGray}>
                 <InfoIcon fontSize="medium" />
               </div>
-              <Typography variant="caption" color="textSecondary">
+              <Typography variant="caption" color="textSecondary" className={classes.infoText}>
                 Crab aims to earn yield in dollar terms. A crab position reduces ETH holdings when the price of ETH
                 increases. It increases ETH holdings when the price of ETH decreases.{' '}
                 <a
@@ -617,7 +609,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">
+                <Typography variant="caption" className={classes.infoText}>
                   Crab yield is currently lower than usual. Consider depositing later.
                 </Typography>
               </div>
@@ -633,7 +625,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">
+                <Typography variant="caption" className={classes.infoText}>
                   It is currently costly to withdraw. Consider withdrawing later.
                 </Typography>
               </div>
@@ -649,7 +641,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">
+                <Typography variant="caption" className={classes.infoText}>
                   High price impact. Try smaller amount or contact us through{' '}
                   <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
                 </Typography>
@@ -666,99 +658,128 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     <InfoIcon fontSize="medium" />
                   </Tooltip>
                 </div>
-                <Typography variant="caption">
+                <Typography variant="caption" className={classes.infoText}>
                   High price impact. Try smaller amount or contact us through{' '}
                   <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
                 </Typography>
               </div>
             ) : null}
-            <TradeInfoItem
-              label="Slippage"
-              value={slippage.toString()}
-              tooltip={`${
-                depositOption === 0
-                  ? 'The strategy uses a uniswap flashswap to make a deposit'
-                  : 'The strategy uses a uniswap to make a withdrawal'
-              }. You can adjust slippage for this swap by clicking the gear icon`}
-              unit="%"
-            />
-            {depositOption === 0 ? (
-              <TradeInfoItem
-                label="Price Impact"
-                value={depositPriceImpact}
-                unit="%"
-                color={Number(depositPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
-              />
-            ) : (
-              <TradeInfoItem
-                label="Price Impact"
-                value={withdrawPriceImpact}
-                unit="%"
-                color={Number(withdrawPriceImpact) > 3 ? 'red' : Number(depositPriceImpact) < 1 ? 'green' : undefined}
-              />
-            )}
-            {useUsdc && depositOption !== 0 ? (
-              <TradeInfoItem label="Min USDC to receive" value={usdcAmountOutFromWithdraw.toFixed(2)} unit="USDC" />
-            ) : null}
 
-            {depositOption === 0 ? (
-              <PrimaryButton
-                id="crab-deposit-btn"
-                variant={
-                  Number(depositPriceImpact) > 3 || !!warning || depositFundingWarning || depositPriceImpactWarning
-                    ? 'outlined'
-                    : 'contained'
-                }
-                onClick={() => depositTX()}
-                disabled={txLoading || !!depositError}
-                style={
-                  Number(depositPriceImpact) > 3 || !!warning
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : depositFundingWarning || depositPriceImpactWarning
-                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                    : { marginTop: '8px' }
-                }
-              >
-                {!txLoading &&
-                (depositFundingWarning || depositPriceImpactWarning) &&
-                depositStep === DepositSteps.DEPOSIT ? (
-                  'Deposit anyway'
-                ) : !txLoading ? (
-                  depositStep
-                ) : (
-                  <CircularProgress color="primary" size="1.5rem" />
-                )}
-              </PrimaryButton>
-            ) : (
-              <PrimaryButton
-                id="crab-withdraw-btn"
-                variant={
-                  Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning
-                    ? 'outlined'
-                    : 'contained'
-                }
-                style={
-                  Number(withdrawPriceImpact) > 3
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                    : withdrawFundingWarning || withdrawPriceImpactWarning
-                    ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                    : { marginTop: '8px' }
-                }
-                onClick={() => withdraw()}
-                disabled={txLoading || !!withdrawError}
-              >
-                {!txLoading &&
-                (withdrawFundingWarning || withdrawPriceImpactWarning) &&
-                withdrawStep === WithdrawSteps.WITHDRAW ? (
-                  'Withdraw anyway'
-                ) : !txLoading ? (
-                  withdrawStep
-                ) : (
-                  <CircularProgress color="primary" size="1.5rem" />
-                )}
-              </PrimaryButton>
-            )}
-            <CrabPositionV2 />
+            <Box marginTop="24px">
+              {useUsdc && depositOption !== 0 ? (
+                <Metric
+                  label="Min USDC to receive"
+                  value={formatNumber(usdcAmountOutFromWithdraw.toNumber()) + ' USDC'}
+                  isSmall
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  gridGap="12px"
+                  flex="1"
+                />
+              ) : null}
+
+              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
+                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+                  <Metric
+                    label="Slippage"
+                    value={formatNumber(slippage) + '%'}
+                    isSmall
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    gridGap="12px"
+                    flex="1"
+                  />
+                  {depositOption === 0 ? (
+                    <Metric
+                      label="Price Impact"
+                      value={formatNumber(Number(depositPriceImpact)) + '%'}
+                      isSmall
+                      flexDirection="row"
+                      justifyContent="space-between"
+                      gridGap="12px"
+                      flex="1"
+                    />
+                  ) : (
+                    <Metric
+                      label="Price Impact"
+                      value={formatNumber(Number(withdrawPriceImpact)) + '%'}
+                      isSmall
+                      flexDirection="row"
+                      justifyContent="space-between"
+                      gridGap="12px"
+                      flex="1"
+                    />
+                  )}
+                </Box>
+                <TradeSettings
+                  isCrab={true}
+                  setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                  crabSlippage={new BigNumber(slippage)}
+                />
+              </Box>
+            </Box>
+
+            <Box marginTop="24px">
+              {depositOption === 0 ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  id="crab-deposit-btn"
+                  variant={
+                    Number(depositPriceImpact) > 3 || !!warning || depositFundingWarning || depositPriceImpactWarning
+                      ? 'outlined'
+                      : 'contained'
+                  }
+                  onClick={() => depositTX()}
+                  disabled={txLoading || !!depositError}
+                  style={
+                    Number(depositPriceImpact) > 3 || !!warning
+                      ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                      : depositFundingWarning || depositPriceImpactWarning
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
+                  }
+                >
+                  {!txLoading &&
+                  (depositFundingWarning || depositPriceImpactWarning) &&
+                  depositStep === DepositSteps.DEPOSIT ? (
+                    'Deposit anyway'
+                  ) : !txLoading ? (
+                    depositStep
+                  ) : (
+                    <CircularProgress color="primary" size="1.5rem" />
+                  )}
+                </PrimaryButtonNew>
+              ) : (
+                <PrimaryButtonNew
+                  fullWidth
+                  id="crab-withdraw-btn"
+                  variant={
+                    Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning
+                      ? 'outlined'
+                      : 'contained'
+                  }
+                  style={
+                    Number(withdrawPriceImpact) > 3
+                      ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
+                      : withdrawFundingWarning || withdrawPriceImpactWarning
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
+                  }
+                  onClick={() => withdraw()}
+                  disabled={txLoading || !!withdrawError}
+                >
+                  {!txLoading &&
+                  (withdrawFundingWarning || withdrawPriceImpactWarning) &&
+                  withdrawStep === WithdrawSteps.WITHDRAW ? (
+                    'Withdraw anyway'
+                  ) : !txLoading ? (
+                    withdrawStep
+                  ) : (
+                    <CircularProgress color="primary" size="1.5rem" />
+                  )}
+                </PrimaryButtonNew>
+              )}
+            </Box>
           </div>
         </>
       )}
