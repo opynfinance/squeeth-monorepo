@@ -78,7 +78,7 @@ const useStyles = makeStyles((theme) =>
       // marginLeft: theme.spacing(2),
     },
     subtitle: {
-      fontSize: '22px',
+      fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },

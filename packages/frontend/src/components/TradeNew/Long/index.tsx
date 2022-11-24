@@ -57,7 +57,7 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
     },
     subtitle: {
-      fontSize: '22px',
+      fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
     },
