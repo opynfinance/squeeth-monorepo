@@ -70,6 +70,7 @@ interface InputTokenProps extends InputNumberProps {
   isLoading?: boolean
   loadingMessage?: string
   readOnlyTooltip?: string
+  balanceLabel?: string
 }
 
 export const InputToken: React.FC<InputTokenProps> = ({
@@ -84,6 +85,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
   loadingMessage = 'loading...',
   readOnly = false,
   readOnlyTooltip = '',
+  balanceLabel,
   ...props
 }) => {
   const classes = useInputTokenProps()
@@ -138,7 +140,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
 
       <div className={classes.subSection}>
         <Typography variant="caption" className={clsx(textClasses.lightestFontColor, textClasses.smallFont)}>
-          Available
+          {balanceLabel ?? `Available`}
         </Typography>
 
         <Box display="flex" alignItems="center" gridGap="4px">

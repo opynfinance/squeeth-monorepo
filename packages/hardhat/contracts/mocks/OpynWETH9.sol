@@ -25,6 +25,7 @@ contract OpynWETH9 {
      */
     modifier onlyWhitelisted() {
         require(whitelistedMinters[msg.sender] || msg.sender == owner, "Address not a whitelisted minter");
+
         _;
     }
 
