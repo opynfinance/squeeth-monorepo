@@ -13,14 +13,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // if goerli, deploy custom WETH and USDC
   if (network.name === 'goerli') {
+    // Deploy USD
     const opynUsdcArgs = ["OpynUSDC", "OpynUSDC", 6]
-    const usdc = await deploy("MockErc20", { from: deployer, args: opynUsdcArgs, skipIfAlreadyDeployed: true });
+    const usdc = await deploy("MockErc20", { from: deployer, args: opynUsdcArgs, skipIfAlreadyDeployed: true});
     createArgumentFile('OpynUsdc', network.name, opynUsdcArgs)
     console.log(`OpynUSDC Deployed at ${usdc.address} 🍇`)
 
-    const opynWethArgs = ["OpynWETH", "OpynWETH", 18]
-    const weth = await deploy("MockErc20", { from: deployer, args: opynWethArgs, skipIfAlreadyDeployed: true }); 
-    createArgumentFile('OpynWeth', network.name, opynWethArgs)
+    // const opynWethArgs = ["OpynWETH", "OpynWETH", 18]
+    // const weth = await deploy("MockErc20", { from: deployer, args: opynWethArgs, skipIfAlreadyDeployed: true }); 
+    // createArgumentFile('OpynWeth', network.name, opynWethArgs)
+    // console.log(`OpynWeth Deployed at ${weth.address} 🍇`)
+    
+    // Deploy WETH9 
+    const weth = await deploy("OpynWETH9", { from: deployer,  skipIfAlreadyDeployed: true  }); 
     console.log(`OpynWeth Deployed at ${weth.address} 🍇`)
   }
   else {
