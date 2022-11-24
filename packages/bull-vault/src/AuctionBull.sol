@@ -589,7 +589,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
-        console.log("reached fullRebalance");
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
@@ -637,7 +636,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
-            console.log("lev rebal done");
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
@@ -806,11 +804,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 ethNeededForCrab = totalEthNeededForCrab.sub(_params.wethBoughtFromAuction);
         // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        console.log(
-            "reached _executeCrabDeposit with %s wethTargetInEuler and %s wethIncollatearl",
-            _params.wethTargetInEuler,
-            wethInCollateral
-        );
         if (_params.wethTargetInEuler > wethInCollateral) {
             // crab deposit eth + collateral shortfall
             uint256 wethToGet =
@@ -911,9 +904,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-            console.log("mark 6");
-            console.log(_uniFlashSwapData.amountToPay, "amt to pay");
-            console.log("remainingWeth", remainingWeth);
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
                 _uniFlashSwapData.amountToPay.sub(remainingWeth)
