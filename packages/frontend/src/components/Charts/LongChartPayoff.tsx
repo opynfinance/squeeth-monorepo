@@ -140,7 +140,7 @@ function LongChartPayoff() {
 
           <div className={classes.legendBox}>
             {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#018FFB" text="ETH PNL" />}
-            {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth LIVE PNL" />}
+            {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth PNL" />}
           </div>
         </div>
       </div>
