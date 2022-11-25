@@ -50,12 +50,13 @@ const useStyles = makeStyles((theme) =>
       maxWidth: '1280px',
       width: '80%',
       margin: '0 auto',
+      padding: theme.spacing(2, 5),
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
+        width: '90%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
-        padding: theme.spacing(5, 5),
       },
       [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(4, 5),
@@ -70,18 +71,13 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'center',
       gridGap: '96px',
       flexWrap: 'wrap',
-      [theme.breakpoints.down('lg')]: {
-        gridGap: '96px',
-      },
       [theme.breakpoints.down('md')]: {
         gridGap: '40px',
       },
     },
     leftColumn: {
       flex: 1,
-      [theme.breakpoints.down('md')]: {
-        minWidth: '440px',
-      },
+      minWidth: '440px',
     },
     rightColumn: {
       flexBasis: '420px',

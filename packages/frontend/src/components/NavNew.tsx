@@ -36,11 +36,10 @@ const useStyles = makeStyles((theme) =>
       backdropFilter: 'blur(30px)',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
-        gridGap: '96px',
+        width: '90%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
-        gridGap: '40px',
       },
     },
     logo: {

@@ -90,7 +90,7 @@ const useStyles = makeStyles((theme) =>
       margin: '0 auto',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
-        gridGap: '96px',
+        width: '90%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
@@ -99,9 +99,7 @@ const useStyles = makeStyles((theme) =>
     },
     leftColumn: {
       flex: 1,
-      [theme.breakpoints.down('md')]: {
-        minWidth: '440px',
-      },
+      minWidth: '440px',
     },
     rightColumn: {
       flexBasis: '420px',
