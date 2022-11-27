@@ -1,24 +1,20 @@
 import { LinkButton } from '@components/Button'
-import Nav from '@components/Nav'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import Nav from '@components/NavNew'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2New'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
-import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
-import StrategyInfoV1 from '@components/Strategies/Crab/StrategyInfoV1'
-import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2New'
+import StrategyInfo from '@components/Strategies/Crab/StrategyInfoNew'
+import { Typography, Tab, Tabs, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Tooltips } from '@constants/index'
-import { Links, Vaults } from '@constants/enums'
+import { Vaults } from '@constants/enums'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
-import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2New'
 import { useAtomValue } from 'jotai'
 import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useSelectWallet } from 'src/state/wallet/hooks'
@@ -43,27 +39,63 @@ import {
 } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2New'
+import Metric from '@components/Metric'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2New'
+import { formatNumber, formatCurrency } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
+      maxWidth: '1280px',
+      width: '80%',
+      margin: '0 auto',
+      padding: theme.spacing(2, 5),
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+        width: '90%',
+      },
       [theme.breakpoints.down('md')]: {
-        padding: theme.spacing(5, 5),
+        width: '100%',
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(4, 4),
+        padding: theme.spacing(4, 5),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(2, 2),
+        padding: theme.spacing(2, 5),
       },
-      margin: '0 auto',
-      maxWidth: '1080px',
+    },
+    columnContainer: {
+      marginTop: '32px',
+      display: 'flex',
+      justifyContent: 'center',
+      gridGap: '96px',
+      flexWrap: 'wrap',
+      [theme.breakpoints.down('md')]: {
+        gridGap: '40px',
+      },
+    },
+    leftColumn: {
+      flex: 1,
+      minWidth: '440px',
+    },
+    rightColumn: {
+      flexBasis: '420px',
+      [theme.breakpoints.down('lg')]: {
+        flexBasis: '390px',
+      },
+      [theme.breakpoints.down('sm')]: {
+        flex: '1',
+      },
     },
     header: {
       display: 'flex',
       marginTop: theme.spacing(4),
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
     },
     boldFont: {
       fontWeight: 'bold',
@@ -201,6 +233,7 @@ const Strategies: React.FC = () => {
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
   const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
+
   const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
   const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
@@ -218,13 +251,6 @@ const Strategies: React.FC = () => {
     if (selectedIdx === 2) return Vaults.ETHBull
     else return Vaults.Custom
   }, [selectedIdx])
-
-  const switchToV1 = () => {
-    setDisplayCrabV1(true)
-  }
-  const switchToV2 = () => {
-    setDisplayCrabV1(false)
-  }
 
   return (
     <div>
@@ -261,124 +287,96 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
-            <div className={classes.header}>
-              <Typography variant="h6">🦀</Typography>
-              <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-                Crab Strategy - Earn USD Returns
-              </Typography>
-              <div className={classes.toggle}>
-                <ToggleButtonGroup size="small" color="primary" value={displayCrabV1} exclusive>
-                  <ToggleButton value={false} onClick={switchToV2}>
-                    V2
-                  </ToggleButton>
-                  <ToggleButton value={true} onClick={switchToV1}>
-                    V1
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </div>
-            </div>
-            {displayCrabV1 ? (
-              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
-                be profitable if ETH moves less than approximately{' '}
-                <b className={classes.boldFont}>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each
-                day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in USD terms, stacking
-                ETH if price drops and selling ETH if price increases.
-                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            ) : (
-              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
-                be profitable if ETH moves less than approximately{' '}
-                <b className={classes.boldFont}>{(profitableMovePercentV2 * 100).toFixed(2)}%</b> in either direction
-                between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab aims to be profitable
-                in USD terms, stacking ETH if price drops and selling ETH price increases.
-                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            )}
-            <div className={classes.body}>
-              <div className={classes.details}>
-                <CapDetailsComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                <div className={classes.overview}>
-                  <StrategyInfoItem
-                    value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
-                    label="ETH Price ($)"
-                    tooltip={Tooltips.SpotPrice}
-                    priceType="spot"
+            <Box marginTop="40px">
+              <CrabPositionV2 />
+            </Box>
+
+            <div className={classes.columnContainer}>
+              <div className={classes.leftColumn}>
+                <Box>
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Details
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <CapDetailsComponent
+                      maxCap={maxCap}
+                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
+                    />
+                  </Box>
+                </Box>
+
+                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
+                  <Metric
+                    flex="1"
+                    label="ETH Price"
+                    value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
                   />
-                  <StrategyInfoItem
-                    value={(currentImpliedFunding * 100).toFixed(2)}
-                    label="Current Implied Premium (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
+                  <Metric
+                    flex="1"
+                    label="Current Implied Premium"
+                    value={formatNumber(currentImpliedFunding * 100) + '%'}
                   />
-                  <StrategyInfoItem
-                    value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
-                    label="Historical Daily Premium (%)"
-                    tooltip={`${
-                      Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                  <Metric
+                    flex="1"
+                    label="Historical Daily Premium"
+                    value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
                   />
-                  <StrategyInfoItem
-                    link="https://www.squeethportal.xyz/auctionHistory"
+                  <Metric
+                    flex="1"
+                    label="Last hedged at"
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                       day: 'numeric',
                       month: 'numeric',
                       hour: 'numeric',
                       minute: 'numeric',
                     })}
-                    label="Last hedged at"
-                    tooltip={
-                      'Last hedged at ' +
-                      new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                        day: 'numeric',
-                        month: 'long',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        timeZoneName: 'long',
-                      }) +
-                      '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
+                  />
+                  <Metric
+                    flex="1"
+                    label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
+                    value={
+                      formatCurrency(lowerPriceBandForProfitability) +
+                      ' - ' +
+                      formatCurrency(upperPriceBandForProfitability)
                     }
                   />
-                  {displayCrabV1 ? (
-                    <StrategyInfoItem
-                      value={(profitableMovePercent * 100).toFixed(2)}
-                      label="Current Profit Threshold (%)"
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  ) : (
-                    <StrategyInfoItem
-                      value={
-                        '~' +
-                        lowerPriceBandForProfitability.toFixed(2) +
-                        ' - ' +
-                        upperPriceBandForProfitability.toFixed(2)
-                      }
-                      label={
-                        'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
-                      }
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  )}
-                  <StrategyInfoItem
-                    link="https://squeeth.opyn.co/vault/286"
-                    value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
-                    label="Collat Ratio (%)"
-                    tooltip={Tooltips.StrategyCollRatio}
+                  <Metric
+                    flex="1"
+                    label="Collateralization Ratio"
+                    value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
                   />
-                </div>
-                {displayCrabV1 ? null : <StrategyChartsV2 />}
-                {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
-                {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Crab PnL
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <StrategyChartsV2 />
+                  </Box>
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Profitability conditions
+                  </Typography>
+                  <StrategyInfo />
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Hedges
+                  </Typography>
+                  <Box marginTop="24px">
+                    <CrabStrategyV2History />
+                  </Box>
+                </Box>
               </div>
-              <div className={classes.tradeCard}>
+              <div className={classes.rightColumn}>
                 {supportedNetwork && (
-                  <div className={classes.tradeForm}>
+                  <div>
                     {!!address ? (
                       <CrabTradeComponent
                         maxCap={maxCap}
