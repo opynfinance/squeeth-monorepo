@@ -102,8 +102,7 @@ const Init = () => {
 
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
-        setAddress('0x0879749D42d1fc1b5d83e9081EF56fd1F5316A03')
-       // setAddress(onboardAddress)
+        setAddress(onboardAddress)
         setUserId(onboardAddress)
         track(EVENT_NAME.WALLET_CONNECTED)
       } else {
