@@ -40,9 +40,9 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" {...props}>
       <Metric label="ETH Price" value={formatCurrency(ethPrice.toNumber())} flex="1" />
 
-      <Metric label="Current Implied Premium" value={currentImpliedPremium} flex="1" />
+      <Metric label="Curr Impl Premium" value={currentImpliedPremium} flex="1" />
 
-      <Metric label="Historical Daily Premium" value={historicalDailyPremium} flex="1" />
+      <Metric label="Hist Daily Premium" value={historicalDailyPremium} flex="1" />
 
       <Metric label="ETH&sup2; Price" value={formatCurrency(eth2Price.toNumber())} flex="1" />
 
