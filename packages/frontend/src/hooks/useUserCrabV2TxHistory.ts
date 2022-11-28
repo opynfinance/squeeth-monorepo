@@ -52,7 +52,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
   useEffect(() => {
 
     let timestampsArr : any[] = []
-      data?.crabUserTxes.map(tx => { 
+      data?.crabUserTxes.forEach(tx => { 
         timestampsArr.push(tx.timestamp *1000)
       })
       if(timestampsArr.length > 0){
