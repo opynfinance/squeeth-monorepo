@@ -69,7 +69,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
     () =>
       data?.crabUserTxes.map((tx) => {
         let ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
-        let ethUsdValue = ethUsdPriceMap ? ethAmount.multipliedBy(ethUsdPriceMap[Number(tx.timestamp) * 1000 ] ) : 0
+        let ethUsdValue = ethUsdPriceMap ? ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000 ] ) : 0
 
         if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
           const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
@@ -89,7 +89,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
           usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
         ) {
           ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-            ethUsdPriceMap ? toTokenAmount(tx.excessEth, 18).multipliedBy(ethUsdPriceMap[Number(tx.timestamp) *1000]) : 0
+            ethUsdPriceMap ? toTokenAmount(tx.excessEth, 18).multipliedBy(ethUsdPriceMap![Number(tx.timestamp) *1000]) : 0
           )
         }
         const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
