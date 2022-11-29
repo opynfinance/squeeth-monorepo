@@ -631,17 +631,24 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 />
               </Box>
 
-              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gridGap="12px"
+                marginTop="12px"
+                flexWrap="wrap"
+              >
+                <Metric
+                  label="Slippage"
+                  value={formatNumber(slippageAmountValue) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  gridGap="12px"
+                  flex="1"
+                />
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-                  <Metric
-                    label="Slippage"
-                    value={formatNumber(slippageAmountValue) + '%'}
-                    isSmall
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    gridGap="12px"
-                    flex="1"
-                  />
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
@@ -651,8 +658,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     gridGap="12px"
                     flex="1"
                   />
+                  <TradeSettings />
                 </Box>
-                <TradeSettings />
               </Box>
             </Box>
           </Box>
@@ -1162,16 +1169,23 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               />
             </Box>
 
-            <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gridGap="12px"
+              marginTop="12px"
+              flexWrap="wrap"
+            >
+              <Metric
+                label="Slippage"
+                value={formatNumber(slippageAmountValue) + '%'}
+                isSmall
+                flexDirection="row"
+                gridGap="12px"
+                flex="1"
+              />
               <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-                <Metric
-                  label="Slippage"
-                  value={formatNumber(slippageAmountValue) + '%'}
-                  isSmall
-                  flexDirection="row"
-                  gridGap="12px"
-                  flex="1"
-                />
                 <Metric
                   label="Price Impact"
                   value={formatNumber(priceImpact) + '%'}
@@ -1180,8 +1194,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   gridGap="12px"
                   flex="1"
                 />
+                <TradeSettings />
               </Box>
-              <TradeSettings />
             </Box>
 
             <Box marginTop="24px" className={classes.buttonDiv}>

@@ -494,17 +494,25 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 </Alert>
               </Collapse>
 
-              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="24px">
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                flexWrap="wrap"
+                gridGap="12px"
+                marginTop="24px"
+              >
+                <Metric
+                  label="Slippage"
+                  value={formatNumber(slippageAmountValue) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  gridGap="12px"
+                  flex="1"
+                />
+
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-                  <Metric
-                    label="Slippage"
-                    value={formatNumber(slippageAmountValue) + '%'}
-                    isSmall
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    gridGap="12px"
-                    flex="1"
-                  />
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
@@ -514,15 +522,16 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     gridGap="12px"
                     flex="1"
                   />
+
+                  <TradeSettings />
                 </Box>
-                <TradeSettings />
               </Box>
               <Box marginTop="24px">
                 <Typography variant="h4" className={classes.subtitle}>
                   Projection
                 </Typography>
 
-                <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
+                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="16px">
                   <Metric
                     label="Value if ETH down 50%"
                     value={formatCurrency(Number(squeethExposure * 0.25))}
