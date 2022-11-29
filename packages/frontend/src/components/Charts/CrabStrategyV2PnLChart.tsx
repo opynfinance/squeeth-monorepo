@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) =>
     },
     chartContainer: {
       borderRadius: theme.spacing(1),
-      padding: theme.spacing(1, 2),
+      padding: theme.spacing(1, 0),
       display: 'flex',
       marginTop: theme.spacing(2),
       [theme.breakpoints.up('sm')]: {
@@ -50,7 +50,10 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
     },
     grid: {
-      width: '60%',
+      rowGap: '24px',
+      columnGap: '24px',
+      marginRight: 'auto',
+      padding: theme.spacing(2),
     },
   }),
 )
@@ -209,7 +212,7 @@ function CrabStrategyV2PnLChart() {
   return (
     <>
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <Grid container className={classes.grid} justifyContent="space-around">
+        <Grid container className={classes.grid}>
           <DatePicker
             label="Start Date"
             placeholder="MM/DD/YYYY"

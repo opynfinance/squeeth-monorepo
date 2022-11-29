@@ -135,6 +135,9 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
+    tokenChoice: {
+      fontWeight: 500,
+    },
     subtitle: {
       fontSize: '20px',
       fontWeight: 700,
@@ -531,9 +534,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             </Typography>
 
             <Box className={classes.tokenSelectBox}>
-              <Typography variant="caption">ETH</Typography>
+              <Typography variant="caption" className={classes.tokenChoice}>
+                ETH
+              </Typography>
               <Switch checked={useUsdc} onChange={(e) => setUseUsdc(e.target.checked)} color="primary" name="useUSDC" />
-              <Typography variant="caption">USDC</Typography>
+              <Typography variant="caption" className={classes.tokenChoice}>
+                USDC
+              </Typography>
             </Box>
           </Box>
 
@@ -678,17 +685,25 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 />
               ) : null}
 
-              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="12px">
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gridGap="12px"
+                marginTop="12px"
+                flexWrap="wrap"
+              >
+                <Metric
+                  label="Slippage"
+                  value={formatNumber(slippage) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  gridGap="12px"
+                  flex="1"
+                />
+
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-                  <Metric
-                    label="Slippage"
-                    value={formatNumber(slippage) + '%'}
-                    isSmall
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    gridGap="12px"
-                    flex="1"
-                  />
                   {depositOption === 0 ? (
                     <Metric
                       label="Price Impact"
@@ -710,12 +725,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                       flex="1"
                     />
                   )}
+
+                  <TradeSettings
+                    isCrab={true}
+                    setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                    crabSlippage={new BigNumber(slippage)}
+                  />
                 </Box>
-                <TradeSettings
-                  isCrab={true}
-                  setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                  crabSlippage={new BigNumber(slippage)}
-                />
               </Box>
             </Box>
 
