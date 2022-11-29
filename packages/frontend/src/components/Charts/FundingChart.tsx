@@ -143,14 +143,14 @@ const FundingChart = () => {
               to={endTimestamp}
               legend=""
               options={chartOptions}
-              lineSeries={[{ data: graphData, legend: `${legendText} (%) ` }]}
+              lineSeries={[{ data: graphData, legend: `${legendText} (%) `, options: { color: '#70E3F6' } }]}
               autoWidth
               height={300}
               darkTheme
             />
             <div className={classes.legendBox}>
               <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
+                <div style={{ width: '20px', height: '20px', backgroundColor: '#70E3F6' }}></div>
                 <div>{legendText}</div>
               </div>
             </div>
