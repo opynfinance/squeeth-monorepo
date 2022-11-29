@@ -17,12 +17,8 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 500,
     },
     payoffContainer: {
-      display: 'flex',
       [theme.breakpoints.up('sm')]: {
         maxHeight: '310px',
-      },
-      [theme.breakpoints.down('sm')]: {
-        flexDirection: 'column',
       },
     },
     legendBox: {
@@ -110,7 +106,7 @@ function LongChartPayoff() {
   )
 
   return (
-    <div>
+    <>
       <Box display="flex" justifyContent="flex-end" marginBottom="16px">
         <Box display="flex" alignItems="center" gridGap="16px">
           <Typography className={classes.label}>Historical days</Typography>
@@ -132,7 +128,7 @@ function LongChartPayoff() {
       </Box>
 
       <div className={classes.payoffContainer}>
-        <div style={{ flex: '1 1 0', marginTop: '8px' }}>
+        <div style={{ marginTop: '8px' }}>
           {lineSeries ? (
             <Chart
               from={startTimestamp}
@@ -163,7 +159,7 @@ function LongChartPayoff() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
