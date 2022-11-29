@@ -4,15 +4,15 @@ pragma solidity =0.7.6;
 import { DeployScript } from "./Deploy.s.sol";
 
 contract GoerliDeploy is DeployScript {
-    address public constant systemOwnerAddress = address(0);
-    address public constant auctionManagerAddress = address(0);
-    address public constant crabAddress = 0x3B960E47784150F5a63777201ee2B15253D713e8;
-    address public constant powerTokenControllerAddress = 0x3B960E47784150F5a63777201ee2B15253D713e8;
-    address public constant eulerAddress = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
-    address public constant eulerMarketsModuleAddress = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
+    address public constant systemOwnerAddress = 0xE3Dc747E5A8D8B664Dd701EE6A72AE63e740Ebc6;
+    address public constant auctionManagerAddress = 0xE3Dc747E5A8D8B664Dd701EE6A72AE63e740Ebc6;
+    address public constant crabAddress = 0x3fF39f6BF8156bdA997D93E3EFF6904c2bc4481f;
+    address public constant powerTokenControllerAddress = 0x6FC3f76f8a2D256Cc091bD58baB8c2Bc3F51d508;
+    address public constant eulerAddress = 0x931172BB95549d0f29e10ae2D079ABA3C63318B3;
+    address public constant eulerMarketsModuleAddress = 0x3EbC39b84B1F856fAFE9803A9e1Eae7Da016Da36;
     address public constant uniFactoryAddress = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    address public constant eTokenAddress = 0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D;
-    address public constant dTokenAddress = 0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42;
+    address public constant eTokenAddress = 0xEf5e087D827194732Bc1843351ccA80982E154eB;
+    address public constant dTokenAddress = 0x356079240635B276A63065478471d89340443C49;
     uint256 public constant bullStrategyCap = 500e18;
     uint256 public constant fullRebalancePriceTolerance = 2e17;
     uint256 public constant rebalanceWethLimitPriceTolerance = 2e17;

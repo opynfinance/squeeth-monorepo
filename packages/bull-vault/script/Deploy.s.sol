@@ -37,7 +37,7 @@ contract DeployScript is Script {
     function run() public {
         uint256 deployerKey = vm.envUint("DEPLOYER_PK");
 
-        address deployerAddress = vm.addr(deployerKey);
+        address deployerAddress = vm.rememberKey(deployerKey);
 
         vm.startBroadcast(deployerAddress);
 
