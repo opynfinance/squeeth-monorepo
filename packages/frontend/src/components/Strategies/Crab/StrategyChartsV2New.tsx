@@ -57,8 +57,8 @@ function StrategyChartsV2() {
             scrollButtons="auto"
             variant="scrollable"
           >
-            <SqueethTabNew label="PnL" />
-            <SqueethTabNew label="Premium" />
+            <SqueethTabNew label="PnL" style={{ width: '140px' }} />
+            <SqueethTabNew label="Premium" style={{ width: '140px' }} />
           </SqueethTabsNew>
         </div>
 
