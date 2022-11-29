@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Grid, Typography, Box } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
@@ -14,68 +14,7 @@ import SqueethMetrics from '@components/TradeNew/SqueethMetrics'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import Trade from '@components/TradeNew'
 import PositionCard from '@components/PositionCardNew'
-import { TradeType } from '../src/types'
-
-const Header: React.FC = () => {
-  const classes = useStyles()
-  const tradeType = useAtomValue(tradeTypeAtom)
-
-  if (tradeType === TradeType.LONG) {
-    return (
-      <>
-        <Typography variant="h3" className={classes.title}>
-          Long Squeeth - ETH&sup2; Position
-        </Typography>
-        <Typography variant="subtitle1" className={classes.description}>
-          Perpetual leverage without liquidations
-        </Typography>
-      </>
-    )
-  } else {
-    return (
-      <>
-        <Typography variant="h3" className={classes.title}>
-          Covered Short Squeeth - Short ETH&sup2; Position
-        </Typography>
-        <Typography variant="subtitle1" className={classes.description}>
-          Earn premiums for selling ETH collateralized squeeth
-        </Typography>
-      </>
-    )
-  }
-}
-
-const TabComponent: React.FC = () => {
-  const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
-  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
-  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-  const resetTransactionData = useResetAtom(transactionDataAtom)
-  const transactionInProgress = useAtomValue(transactionLoadingAtom)
-  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
-
-  return (
-    <div>
-      <SqueethTabsNew
-        value={tradeType}
-        onChange={(evt, val) => {
-          setTradeType(val)
-
-          if (!transactionInProgress || !isTxFirstStep) {
-            resetEthTradeAmount()
-            resetSqthTradeAmount()
-            resetTransactionData()
-          }
-        }}
-        aria-label="Sub nav tabs"
-        centered
-        variant="fullWidth"
-      >
-        <SqueethTabNew label="Long" id="long-card-btn" />
-        <SqueethTabNew label="Short" id="short-card-btn" />
-      </SqueethTabsNew>
-    </div>
-  )
-}
+import { TradeType } from 'src/types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -125,8 +64,88 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 400,
       color: theme.palette.grey[400],
     },
+    longIndicator: {
+      background: theme.palette.success.main,
+      borderRadius: theme.spacing(0.7),
+      opacity: '.3',
+    },
+    shortIndicator: {
+      background: theme.palette.error.main,
+      borderRadius: theme.spacing(0.7),
+      opacity: '.3',
+    },
+    longTab: {
+      color: theme.palette.success.main,
+    },
+    shortTab: {
+      color: theme.palette.error.main,
+    },
   }),
 )
+
+const Header: React.FC = () => {
+  const classes = useStyles()
+  const tradeType = useAtomValue(tradeTypeAtom)
+
+  if (tradeType === TradeType.LONG) {
+    return (
+      <>
+        <Typography variant="h3" className={classes.title}>
+          Long Squeeth - ETH&sup2; Position
+        </Typography>
+        <Typography variant="subtitle1" className={classes.description}>
+          Perpetual leverage without liquidations
+        </Typography>
+      </>
+    )
+  } else {
+    return (
+      <>
+        <Typography variant="h3" className={classes.title}>
+          Covered Short Squeeth - Short ETH&sup2; Position
+        </Typography>
+        <Typography variant="subtitle1" className={classes.description}>
+          Earn premiums for selling ETH collateralized squeeth
+        </Typography>
+      </>
+    )
+  }
+}
+
+const TabComponent: React.FC = () => {
+  const [tradeType, setTradeType] = useAtom(tradeTypeAtom)
+  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
+  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const resetTransactionData = useResetAtom(transactionDataAtom)
+  const transactionInProgress = useAtomValue(transactionLoadingAtom)
+  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
+
+  const classes = useStyles()
+
+  return (
+    <div>
+      <SqueethTabsNew
+        value={tradeType}
+        onChange={(evt, val) => {
+          setTradeType(val)
+
+          if (!transactionInProgress || !isTxFirstStep) {
+            resetEthTradeAmount()
+            resetSqthTradeAmount()
+            resetTransactionData()
+          }
+        }}
+        aria-label="Sub nav tabs"
+        centered
+        variant="fullWidth"
+        classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
+      >
+        <SqueethTabNew label="Long" id="long-card-btn" classes={{ root: classes.longTab }} />
+        <SqueethTabNew label="Short" id="short-card-btn" classes={{ root: classes.shortTab }} />
+      </SqueethTabsNew>
+    </div>
+  )
+}
 
 function TradePage() {
   const classes = useStyles()
