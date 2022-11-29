@@ -62,7 +62,7 @@ export const networkNameToController = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x64187ae08781B09368e6253F9E94951243A493D5'
     case 'ropsten': return '0x59F0c781a6eC387F09C40FAA22b7477a2950d209'
-    case 'goerli': return '0x0e70Ced70FBc90B9aBE68F5DD256499c80a9B486'
+    case 'goerli': return '0x6FC3f76f8a2D256Cc091bD58baB8c2Bc3F51d508'
     default: return undefined
   }
 }
@@ -89,7 +89,7 @@ export const networkNameToDweth = (name: string) => {
   switch (name) {
     case 'mainnet': return '0x62e28f054efc24b26A794F5C1249B6349454352C'
     case 'ropsten': return '0x682b4c36a6D4749Ced8C3abF47AefDFC57A17754'
-    case 'goerli': return '0x3CbBCf7411F5090E7A33A42d4aeC66d108d96430'
+    case 'goerli': return '0x356079240635B276A63065478471d89340443C49'
     default: return undefined
   }
 }
@@ -98,7 +98,7 @@ export const networkNameToCrab = (name: string) => {
   switch (name) {
     case 'mainnet': return '0xf205ad80BB86ac92247638914265887A8BAa437D'
     case 'ropsten': return '0xbffBD99cFD9d77c49595dFe8eB531715906ca4Cf'
-    case 'goerli': return '0x74b9e08b801b0df247A14c0f91E7143ea95C946B'
+    case 'goerli': return '0x9a23a941F5e70F6960a0E39B8a3964ef83DCbe91'
     default: return undefined
   }
 }
