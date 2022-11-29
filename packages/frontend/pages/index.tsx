@@ -3,6 +3,7 @@ import { Typography, Box } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
+import clsx from 'clsx'
 
 import Nav from '@components/NavNew'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
@@ -38,14 +39,11 @@ const useStyles = makeStyles((theme) =>
     },
     leftColumn: {
       flex: 1,
-      minWidth: '440px',
+      minWidth: '480px',
     },
     rightColumn: {
-      flexBasis: '420px',
-      [theme.breakpoints.down('lg')]: {
-        flexBasis: '390px',
-      },
-      [theme.breakpoints.down('sm')]: {
+      flexBasis: '440px',
+      [theme.breakpoints.down('xs')]: {
         flex: '1',
       },
     },
@@ -79,6 +77,15 @@ const useStyles = makeStyles((theme) =>
     },
     shortTab: {
       color: theme.palette.error.main,
+    },
+    sectionMargin: {
+      marginTop: theme.spacing(4),
+    },
+    tradeSection: {
+      border: '1px solid #242728',
+      boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
+      borderRadius: theme.spacing(0.7),
+      padding: '24px',
     },
   }),
 )
@@ -163,7 +170,9 @@ function TradePage() {
           <Box className={classes.leftColumn}>
             <Header />
 
-            <Box marginTop="32px">{tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}</Box>
+            <div className={classes.sectionMargin}>
+              {tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}
+            </div>
 
             <Box marginTop="76px">
               <PositionCard />
@@ -181,13 +190,13 @@ function TradePage() {
           <Box className={classes.rightColumn}>
             <TabComponent />
 
-            <Box marginTop="32px">
+            <div className={clsx(classes.sectionMargin, classes.tradeSection)}>
               <Typography variant="h4" className={classes.subtitle}>
                 Position
               </Typography>
 
               <Trade marginTop="16px" />
-            </Box>
+            </div>
           </Box>
         </Box>
       </div>
