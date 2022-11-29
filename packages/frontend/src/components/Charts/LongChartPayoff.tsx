@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic'
 import { useAtom } from 'jotai'
 import React, { memo } from 'react'
 
-import { graphOptions } from '../../constants/diagram'
+import { graphOptions } from '@constants/diagram'
 import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
 import useAppMemo from '@hooks/useAppMemo'
@@ -67,14 +67,26 @@ function LongChartPayoff() {
     ) // return 0 when there is no live data
 
     return [
-      { data: longEthPNL, legend: 'Long ETH PNL (%)' },
+      {
+        data: longEthPNL,
+        legend: 'Long ETH PNL (%)',
+        options: {
+          color: '#CDAEFB',
+        },
+      },
       {
         data: longSeries.slice(0, liveIndex),
         legend: `Long Squeeth PNL (%) Simulated incl. premiums`,
+        options: {
+          color: '#00E396',
+        },
       },
       {
         data: longSeries.slice(liveIndex),
         legend: `Long Squeeth PNL (%) LIVE (incl. premiums)`,
+        options: {
+          color: '#70E3F6',
+        },
       },
     ]
 
@@ -139,8 +151,15 @@ function LongChartPayoff() {
           )}
 
           <div className={classes.legendBox}>
-            {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#018FFB" text="ETH PNL" />}
-            {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#FEB01B" text="Squeeth PNL" />}
+            {lineSeries && lineSeries[0].data.length > 0 && <LegendBox bgColor="#CDAEFB" text="ETH PNL" />}
+            {lineSeries && lineSeries[1].data.length > 0 && (
+              <LegendBox
+                bgColor="#00E396"
+                text="Squeeth Simulated PnL"
+                tooltip="The Squeeth Simulated PnL comes from using at the money implied vol from Deribit"
+              />
+            )}
+            {lineSeries && lineSeries[2].data.length > 0 && <LegendBox bgColor="#70E3F6" text="Squeeth PNL" />}
           </div>
         </div>
       </div>
