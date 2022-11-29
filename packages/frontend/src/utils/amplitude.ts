@@ -31,7 +31,7 @@ export const initializeAmplitude = () => {
   })
 }
 
-export const trackEvent = (eventName: EVENT_NAME, eventProps?: Record<string, unknown>) => {
+export const trackEvent = (eventName: EVENT_NAME | string, eventProps?: Record<string, unknown>) => {
   if (!analyticsEnabled) {
     //console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return

@@ -8,7 +8,7 @@ const useAmplitude = () => {
   const networkId = useAtomValue(networkIdAtom)
 
   const track = useCallback(
-    (eventName: EVENT_NAME, eventProps?: Record<string, unknown>) => {
+    (eventName: EVENT_NAME | string, eventProps?: Record<string, unknown>) => {
       if (networkId === Networks.MAINNET) {
         return trackEvent(eventName, eventProps)
       }

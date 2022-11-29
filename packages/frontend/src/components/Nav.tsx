@@ -6,8 +6,9 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAtomValue } from 'jotai'
+import useAmplitude from '@hooks/useAmplitude';
 
 import logo from '../../public/images/SqueethLogo.svg'
 import useCopyClipboard from '@hooks/useCopyClipboard'
@@ -104,6 +105,15 @@ const Nav: React.FC = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()
+
+  const router = useRouter()
+  const {track} = useAmplitude();
+  useEffect(()=>{
+    router.events.on('routeChangeComplete', (url)=> {
+      let e:string = (url.split('?')[0].substring(1)).toUpperCase();
+      track(("NAV_" + e));
+    })
+  }, [router])
 
   return (
     <div className={classes.nav}>
