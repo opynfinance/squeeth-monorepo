@@ -77,14 +77,11 @@ const useStyles = makeStyles((theme) =>
     },
     leftColumn: {
       flex: 1,
-      minWidth: '440px',
+      minWidth: '480px',
     },
     rightColumn: {
-      flexBasis: '420px',
-      [theme.breakpoints.down('lg')]: {
-        flexBasis: '390px',
-      },
-      [theme.breakpoints.down('sm')]: {
+      flexBasis: '440px',
+      [theme.breakpoints.down('xs')]: {
         flex: '1',
       },
     },
@@ -196,6 +193,12 @@ const useStyles = makeStyles((theme) =>
     toggle: {
       justifyContent: 'right',
       marginLeft: theme.spacing(2),
+    },
+    tradeSection: {
+      border: '1px solid #242728',
+      boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
+      borderRadius: theme.spacing(0.7),
+      padding: '24px',
     },
   }),
 )
@@ -376,7 +379,7 @@ const Strategies: React.FC = () => {
               </div>
               <div className={classes.rightColumn}>
                 {supportedNetwork && (
-                  <div>
+                  <div className={classes.tradeSection}>
                     {!!address ? (
                       <CrabTradeComponent
                         maxCap={maxCap}
