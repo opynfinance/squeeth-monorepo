@@ -71,3 +71,22 @@ export const GreyButton = withStyles((theme) => ({
     },
   },
 }))(Button)
+
+export const AltPrimaryButton = withStyles((theme) => ({
+  root: {
+    color: '#000',
+    backgroundColor: theme.palette.primary.main,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.dark,
+    },
+    '&:disabled': {
+      color: 'rgba(255, 255, 255, 0.4)',
+      backgroundColor: theme.palette.background.lightStone,
+    },
+    minHeight: '2rem',
+    minWidth: '300px',
+    fontSize: '16px',
+    fontWeight: 700,
+    textTransform: 'initial',
+  },
+}))(Button)
