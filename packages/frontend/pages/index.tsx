@@ -63,14 +63,12 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.grey[400],
     },
     longIndicator: {
-      background: theme.palette.success.main,
+      background: theme.palette.success.light,
       borderRadius: theme.spacing(0.7),
-      opacity: '.3',
     },
     shortIndicator: {
-      background: theme.palette.error.main,
+      background: theme.palette.error.light,
       borderRadius: theme.spacing(0.7),
-      opacity: '.3',
     },
     longTab: {
       color: theme.palette.success.main,
