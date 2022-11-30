@@ -83,19 +83,13 @@ const useStyles = makeStyles((theme) =>
       maxWidth: '1280px',
       width: '80%',
       margin: '0 auto',
-      padding: theme.spacing(2, 5),
+      padding: theme.spacing(1, 5),
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
         width: '90%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
-      },
-      [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(4, 5),
-      },
-      [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(2, 5),
       },
     },
     columnContainer: {
