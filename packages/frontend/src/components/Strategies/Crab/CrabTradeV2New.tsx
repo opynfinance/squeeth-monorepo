@@ -12,8 +12,8 @@ import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculati
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressAtom, connectedWalletAtom, networkIdAtom } from 'src/state/wallet/atoms'
-import { useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
+import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { useTransactionStatus, useWalletBalance, useSelectWallet } from 'src/state/wallet/hooks'
 import {
   BIG_ZERO,
   ETH_USDC_POOL_FEES,
@@ -189,6 +189,8 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
   const network = useAtomValue(networkIdAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const selectWallet = useSelectWallet()
 
   const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
   const isClaimAndWithdraw = migratedCurrentEthValue.gt(0)
@@ -725,7 +727,27 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             </Box>
 
             <Box marginTop="24px">
-              {depositOption === 0 ? (
+              {!connected ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  disabled={!!txLoading}
+                  id="crab-select-wallet-btn"
+                >
+                  {'Connect Wallet'}
+                </PrimaryButtonNew>
+              ) : !supportedNetwork ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={() => {}}
+                  disabled={true}
+                  id="crab-unsupported-network-btn"
+                >
+                  {'Unsupported Network'}
+                </PrimaryButtonNew>
+              ) : depositOption === 0 ? (
                 <PrimaryButtonNew
                   fullWidth
                   id="crab-deposit-btn"

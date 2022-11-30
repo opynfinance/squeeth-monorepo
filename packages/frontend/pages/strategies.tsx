@@ -1,4 +1,3 @@
-import { LinkButton } from '@components/Button'
 import Nav from '@components/NavNew'
 import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2New'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
@@ -17,8 +16,6 @@ import bear from '../public/images/bear.gif'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2New'
 import { useAtomValue } from 'jotai'
-import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet } from 'src/state/wallet/hooks'
 import {
   crabLoadingAtomV2,
   crabStrategyCollatRatioAtom,
@@ -265,10 +262,6 @@ const Strategies: React.FC = () => {
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
-  const address = useAtomValue(addressAtom)
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
-  const selectWallet = useSelectWallet()
-
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
@@ -441,22 +434,9 @@ const Strategies: React.FC = () => {
                 </Box>
               </div>
               <div className={classes.rightColumn}>
-                {supportedNetwork && (
-                  <div className={classes.tradeSection}>
-                    {!!address ? (
-                      <CrabTradeComponent
-                        maxCap={maxCap}
-                        depositedAmount={vault?.collateralAmount || new BigNumber(0)}
-                      />
-                    ) : (
-                      <div className={classes.connectWalletDiv}>
-                        <LinkButton className={classes.strategiesConnectWalletBtn} onClick={() => selectWallet()}>
-                          Connect Wallet
-                        </LinkButton>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className={classes.tradeSection}>
+                  <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                </div>
               </div>
             </div>
           </div>
