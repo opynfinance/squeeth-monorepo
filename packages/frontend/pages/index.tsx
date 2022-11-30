@@ -96,7 +96,7 @@ const Header: React.FC = () => {
     return (
       <>
         <Typography variant="h3" className={classes.title}>
-          Long Squeeth - ETH&sup2; Position
+          Long Squeeth - ETH&sup2; Leverage
         </Typography>
         <Typography variant="subtitle1" className={classes.description}>
           Perpetual leverage without liquidations
