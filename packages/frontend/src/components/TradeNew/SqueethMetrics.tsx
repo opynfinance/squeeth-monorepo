@@ -13,7 +13,6 @@ import {
 } from '@state/controller/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import Metric from '@components/Metric'
 
 const SqueethMetrics: React.FC<BoxProps> = (props) => {
@@ -21,7 +20,6 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const mark = useAtomValue(markAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
-  const osqthPrice = useOSQTHPrice()
   const normFactor = useAtomValue(normFactorAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
@@ -30,7 +28,6 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const ethPrice = eth2Price.sqrt()
   const markPrice = toTokenAmount(mark, 18)
   const impliedVolPercent = impliedVol * 100
-  const osqthPriceInETH = osqthPrice.div(ethPrice)
   const currentImpliedPremium =
     currentImpliedFunding === 0 ? 'loading' : formatNumber(currentImpliedFunding * 100) + '%'
   const historicalDailyPremium =
@@ -47,10 +44,6 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
       <Metric label="Implied Volatility" value={`${formatNumber(impliedVolPercent)}%`} flex="1" />
 
       <Metric label="Reference Volatility" value={`${formatNumber(osqthRefVol)}%`} flex="1" />
-
-      {/* <Metric label="oSQTH Price (ETH)" value={`${formatNumber(osqthPriceInETH.toNumber(), 4)} Ξ`} flex="1" />
-
-      <Metric label="oSQTH Price (USD)" value={formatCurrency(osqthPrice.toNumber())} flex="1" /> */}
 
       <Metric label="Norm Factor" value={formatNumber(normFactor.toNumber(), 4)} flex="1" />
 
