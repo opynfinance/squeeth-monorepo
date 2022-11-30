@@ -188,7 +188,6 @@ const useStyles = makeStyles((theme) =>
     buttonDiv: {
       position: 'sticky',
       bottom: '0',
-      paddingBottom: theme.spacing(3),
       backgroundColor: theme.palette.background.default,
       zIndex: 2000,
     },

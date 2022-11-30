@@ -85,7 +85,7 @@ const useStyles = makeStyles((theme) =>
       border: '1px solid #242728',
       boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
       borderRadius: theme.spacing(0.7),
-      padding: '24px',
+      padding: '32px 24px',
     },
   }),
 )

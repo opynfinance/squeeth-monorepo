@@ -96,7 +96,6 @@ const useStyles = makeStyles((theme) =>
     tradeContainer: {
       display: 'flex',
       flexDirection: 'column',
-      paddingBottom: theme.spacing(3),
     },
     tabBackGround: {
       position: 'sticky',
