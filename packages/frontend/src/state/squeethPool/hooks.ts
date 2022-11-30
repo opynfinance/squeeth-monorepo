@@ -109,8 +109,8 @@ export const useUpdateSqueethPoolData = () => {
         ticks || [],
       )
 
-      console.log("Pools is set with tick length", ticks?.length)
       if (isMounted && ticks?.length) {
+        console.log("Pools is set with tick length", ticks?.length)
         setPool(pool)
       }
       
@@ -200,7 +200,7 @@ export const useGetBuyQuoteForETH = () => {
       }
       return emptyState
     },
-    [pool, wethToken?.address, squeethToken?.address],
+    [pool, wethToken?.address, squeethToken?.address, web3, networkId, address],
   )
 
   return getBuyQuoteForETH
