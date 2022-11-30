@@ -124,7 +124,7 @@ const useStyles = makeStyles((theme) =>
       width: '350px',
       [theme.breakpoints.up('lg')]: {
         width: '350px',
-        maxHeight: '440px',
+        maxHeight: '452px',
         minHeight: '350px',
         height: 'fit-content',
         position: 'sticky',

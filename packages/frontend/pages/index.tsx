@@ -42,7 +42,7 @@ const useStyles = makeStyles((theme) =>
       minWidth: '480px',
     },
     rightColumn: {
-      flexBasis: '440px',
+      flexBasis: '452px',
       [theme.breakpoints.down('xs')]: {
         flex: '1',
       },
