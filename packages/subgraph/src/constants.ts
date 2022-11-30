@@ -51,6 +51,15 @@ export const GOERLI_CRAB_MIGRATION_ADDR = Address.fromString(
 export const GOERLI_CRAB_V1_ADDR = Address.fromString(
   "0x5632367328327189A4858ac413A6424fe12F6C8f"
 );
+export const GOERLI_BULL_STRATEGY_ADDR = Address.fromString(
+  "0x312416A95237d49A42d63fc3f734608A57e77eaB"
+);
+export const GOERLI_AUCTION_BULL_ADDR = Address.fromString(
+  "0x893E0b9c34f40908cA13468ED8A0bb0a44bc7676"
+);
+export const GOERLI_FLASH_BULL_ADDR = Address.fromString(
+  "0x48924A1bdc23f7C08e1fE70b9Bbd96375218a487"
+);
 
 export const SHORT_HELPER_ADDR = getShortHelperAddr(dataSource.network());
 export const CRAB_V2_ADDR = getCrabV2Addr(dataSource.network());

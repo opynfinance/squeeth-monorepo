@@ -257,15 +257,6 @@ dataSources:
         - Deposit
         - Withdraw
         - WithdrawShutdown
-        # - FlashDeposit
-        # - FlashWithdraw
-        # - Transfer
-        # - HedgeOnUniswap
-        # - Hedge
-        # - FlashDepositCallback
-        # - FlashWithdrawCallback
-        # - ExecuteSellAuction
-        # - ExecuteBuyAuction
         - Strategy
       abis:
         - name: BullStrategy
