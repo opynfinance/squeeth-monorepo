@@ -51,7 +51,7 @@ const useStyles = makeStyles((theme) =>
 
 const CrabPosition: React.FC = () => {
   const address = useAtomValue(addressAtom)
-  const { loading: isCrabPositonLoading, depositedUsd } = useCrabPositionV2(address || '')
+  const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
   const classes = useStyles()
@@ -60,18 +60,9 @@ const CrabPosition: React.FC = () => {
   }, [currentCrabPositionValue, depositedUsd])
 
   const loading = useAppMemo(() => {
-    console.log('Crab position loading : ', isCrabPositonLoading, isCrabPositionValueLoading)
-    return isCrabPositonLoading || isCrabPositionValueLoading
-  }, [isCrabPositonLoading, isCrabPositionValueLoading])
-
-  if (loading) {
-    return (
-      <Box mt={2} display="flex" alignItems="center" gridGap="20px">
-        <CircularProgress color="primary" size="1rem" />
-        <Typography>Fetching current position...</Typography>
-      </Box>
-    )
-  }
+    console.log('Crab position loading : ', isCrabPositionLoading, isCrabPositionValueLoading)
+    return isCrabPositionLoading || isCrabPositionValueLoading
+  }, [isCrabPositionLoading, isCrabPositionValueLoading])
 
   if (currentCrabPositionValue.isZero()) {
     return null
@@ -82,42 +73,41 @@ const CrabPosition: React.FC = () => {
       <Typography variant="h4" className={classes.subtitle}>
         My Position
       </Typography>
-      <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px">
-        <Metric
-          flex="1"
-          label="Deposited value"
-          value={
-            <Typography className={clsx(classes.metricValue, classes.white)}>
-              {formatCurrency(depositedUsd.toNumber())}
-            </Typography>
-          }
-        />
-        <Metric
-          flex="1"
-          label="Position value"
-          value={
-            <Typography className={clsx(classes.metricValue, classes.white)}>
-              {formatCurrency(currentCrabPositionValue.toNumber())}
-            </Typography>
-          }
-        />
-        {pnl.isFinite() && (
+
+      {loading ? (
+        <Box mt={2} display="flex" alignItems="flex-start" gridGap="20px" height="94px">
+          <CircularProgress color="primary" size="1rem" />
+          <Typography>Fetching current position...</Typography>
+        </Box>
+      ) : (
+        <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px">
           <Metric
             flex="1"
-            label="Earnings"
+            label="Position value"
             value={
-              <Box display="flex" alignItems="center" gridGap="12px">
-                <Typography className={clsx(classes.metricValue, classes.white)}>
-                  {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())}
-                </Typography>
-                <Typography className={clsx(classes.metricSubValue, pnl.isNegative() ? classes.red : classes.green)}>
-                  {formatNumber(pnl.toNumber()) + '%'}
-                </Typography>
-              </Box>
+              <Typography className={clsx(classes.metricValue, classes.white)}>
+                {formatCurrency(currentCrabPositionValue.toNumber())}
+              </Typography>
             }
           />
-        )}
-      </Box>
+          {pnl.isFinite() && (
+            <Metric
+              flex="1"
+              label="PnL"
+              value={
+                <Box display="flex" alignItems="center" gridGap="12px">
+                  <Typography className={clsx(classes.metricValue, classes.white)}>
+                    {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())}
+                  </Typography>
+                  <Typography className={clsx(classes.metricSubValue, pnl.isNegative() ? classes.red : classes.green)}>
+                    {formatNumber(pnl.toNumber()) + '%'}
+                  </Typography>
+                </Box>
+              }
+            />
+          )}
+        </Box>
+      )}
     </Box>
   )
 }
