@@ -259,7 +259,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
         collateralPercent: 0,
         liquidationPrice: new BigNumber(0),
       }
-      if (!contract) return emptyState
+      if (!contract || !normFactor) return emptyState
 
       let effectiveCollat = collateralAmount
       let liquidationPrice = new BigNumber(0)
