@@ -94,7 +94,6 @@ const useStyles = makeStyles((theme) =>
       paddingBottom: theme.spacing(0),
     },
     amountInput: {
-      marginTop: theme.spacing(1),
       backgroundColor: `${theme.palette.error.main}aa`,
       '&:hover': {
         backgroundColor: theme.palette.error.dark,
@@ -182,7 +181,7 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       bottom: '0',
       backgroundColor: theme.palette.background.default,
-      zIndex: 2000,
+      zIndex: 1500,
     },
     hint: {
       display: 'flex',

@@ -93,6 +93,9 @@ interface ValueLabelStylePropsType {
 
 const useValueLabelStyles = makeStyles(() =>
   createStyles({
+    popper: {
+      zIndex: 1000,
+    },
     tooltip: {
       padding: '4px 8px',
       fontSize: '12px',

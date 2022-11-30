@@ -123,7 +123,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     amountInput: {
-      marginTop: theme.spacing(1),
       backgroundColor: theme.palette.success.main,
       '&:hover': {
         backgroundColor: theme.palette.success.dark,
@@ -209,7 +208,7 @@ const useStyles = makeStyles((theme) =>
       position: 'sticky',
       bottom: '0',
       backgroundColor: theme.palette.background.default,
-      zIndex: 2000,
+      zIndex: 1500,
     },
     hint: {
       display: 'flex',
