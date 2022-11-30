@@ -55,7 +55,7 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } fro
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom, impliedVolAtom } from '../controller/atoms'
+import { currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from '../controller/atoms'
 import { crabHelperContractAtom, crabMigrationContractAtom, crabStrategyContractAtom, crabStrategyContractAtomV2 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
 import { BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
@@ -67,6 +67,7 @@ import * as Fathom from 'fathom-client'
 import { Networks } from '../../types/index'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { getEthPriceAtHedge } from '@utils/pricer'
+import { squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { EVENT_NAME } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 
@@ -129,9 +130,10 @@ export const useSetStrategyDataV2 = () => {
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const networkId = useAtomValue(networkIdAtom)
   const setEthPriceAtLastHedge = useUpdateAtom(ethPriceAtLastHedgeAtomV2)
+  const normFactor = useAtomValue(normFactorAtom)
 
   const setStrategyData = useCallback(async () => {
-    if (!contract) return
+    if (!contract || !normFactor) return
 
     getMaxCap(contract).then(setMaxCap)
     getStrategyVaultId(contract)
@@ -307,6 +309,8 @@ export const useCurrentCrabPositionValueV2 = () => {
   const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+  const normFactor = useAtomValue(normFactorAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
 
   useEffect(() => {
     setStrategyData()
@@ -326,7 +330,7 @@ export const useCurrentCrabPositionValueV2 = () => {
         getWsqueethFromCrabAmount(userShares, contract),
       ])
 
-      if (!squeethDebt || !collateral || ((collateral.isZero() || squeethDebt.isZero()) && userShares.gt(0))) {
+      if (!squeethDebt || !collateral || !normFactor || ((collateral.isZero() || squeethDebt.isZero() || squeethInitialPrice.isZero()) && userShares.gt(0))) {
         setCurrentCrabPositionValue(BIG_ZERO)
         setCurrentCrabPositionValueInETH(BIG_ZERO)
         setIsCrabPositionValueLoading(true)
@@ -340,6 +344,7 @@ export const useCurrentCrabPositionValueV2 = () => {
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
@@ -365,6 +370,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     ethPrice,
     vault,
     balLoading,
+    squeethInitialPrice
   ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
