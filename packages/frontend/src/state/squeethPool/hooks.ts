@@ -110,7 +110,7 @@ export const useUpdateSqueethPoolData = () => {
       )
 
       console.log("Pools is set with tick length", ticks?.length)
-      if (isMounted) {
+      if (isMounted && ticks?.length) {
         setPool(pool)
       }
       
@@ -482,7 +482,7 @@ export const useAutoRoutedBuyAndRefund = () => {
       )
       return result
     },
-    [address, slippageAmount],
+    [address, slippageAmount, web3, wethToken, squeethToken],
   )
 
   return autoRoutedBuyAndRefund
