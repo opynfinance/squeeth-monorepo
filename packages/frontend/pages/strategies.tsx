@@ -355,34 +355,15 @@ const Strategies: React.FC = () => {
                       tooltip={Tooltips.StrategyProfitThreshold}
                     />
                   ) : (
-                    
-                    crabLoading ? (
-                      <>
-                          <StrategyInfoItem
-                          value='-'
-                          label={
-                            'Approx Profitable between ETH Prices ($)'
-                          }
-                          tooltip={Tooltips.StrategyProfitThreshold}
-                          />
-
-                          <StrategyInfoItem
-                          link="https://squeeth.opyn.co/vault/286"
-                          value='-'
-                          label="Collat Ratio (%)"
-                          tooltip={Tooltips.StrategyCollRatio}
-                          />
-                      </>
-                    ) : (
-                    <>
-                      <StrategyInfoItem
-                        value={
+                  <>
+                    <StrategyInfoItem
+                        value={ crabLoading ? '-' :
                           '~' +
                           lowerPriceBandForProfitability.toFixed(2) +
                           ' - ' +
                           upperPriceBandForProfitability.toFixed(2)
                         }
-                        label={
+                        label={ crabLoading ? 'Approx Profitable between ETH Prices ($)' :
                           'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
                         }
                         tooltip={Tooltips.StrategyProfitThreshold}
@@ -390,16 +371,12 @@ const Strategies: React.FC = () => {
 
                       <StrategyInfoItem
                       link="https://squeeth.opyn.co/vault/286"
-                      value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
+                      value={crabLoading || collatRatio === Infinity ? '-' : collatRatio.toString()}
                       label="Collat Ratio (%)"
                       tooltip={Tooltips.StrategyCollRatio}
                       />
                     </>
-                      
-                    
-                    ) 
                    
-                    
                   )}
                  
                   
