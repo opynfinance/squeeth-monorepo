@@ -4,8 +4,9 @@ import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2New'
 import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2New'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfoNew'
-import { Typography, Tab, Tabs, Box } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -45,6 +46,39 @@ import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2Ne
 import Metric from '@components/Metric'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2New'
 import { formatNumber, formatCurrency } from '@utils/formatter'
+import { Tooltips } from '@constants/enums'
+
+const useLabelStyles = makeStyles((theme) =>
+  createStyles({
+    labelContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      color: 'rgba(255, 255, 255, 0.5)',
+    },
+    label: {
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+    },
+    infoIcon: {
+      fontSize: '15px',
+      marginLeft: theme.spacing(0.5),
+    },
+  }),
+)
+
+const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
+  const classes = useLabelStyles()
+
+  return (
+    <div className={classes.labelContainer}>
+      <Typography className={classes.label}>{label}</Typography>
+      <Tooltip title={tooltipTitle}>
+        <InfoIcon fontSize="small" className={classes.infoIcon} />
+      </Tooltip>
+    </div>
+  )
+}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -209,7 +243,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   // which crab strategy to display. V1 or V2.
-  const [displayCrabV1, setDisplayCrabV1] = useState(false)
+  const [displayCrabV1] = useState(false)
 
   const classes = useStyles()
   const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
@@ -315,22 +349,49 @@ const Strategies: React.FC = () => {
                 <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
                   <Metric
                     flex="1"
-                    label="ETH Price"
+                    label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
                     value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
                   />
                   <Metric
                     flex="1"
-                    label="Current Implied Premium"
+                    label={
+                      <Label
+                        label="Current Implied Premium"
+                        tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
+                      />
+                    }
                     value={formatNumber(currentImpliedFunding * 100) + '%'}
                   />
                   <Metric
                     flex="1"
-                    label="Historical Daily Premium"
+                    label={
+                      <Label
+                        label="Historical Daily Premium"
+                        tooltipTitle={`${
+                          Tooltips.StrategyEarnFunding
+                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                      />
+                    }
                     value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
                   />
                   <Metric
                     flex="1"
-                    label="Last hedged at"
+                    label={
+                      <Label
+                        label="Last hedged at"
+                        tooltipTitle={
+                          'Last hedged at ' +
+                          new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                            day: 'numeric',
+                            month: 'long',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            timeZoneName: 'long',
+                          }) +
+                          '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
+                        }
+                      />
+                    }
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                       day: 'numeric',
                       month: 'numeric',
@@ -340,7 +401,12 @@ const Strategies: React.FC = () => {
                   />
                   <Metric
                     flex="1"
-                    label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
+                    label={
+                      <Label
+                        label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
+                        tooltipTitle={Tooltips.StrategyProfitThreshold}
+                      />
+                    }
                     value={
                       formatCurrency(lowerPriceBandForProfitability) +
                       ' - ' +
@@ -349,7 +415,7 @@ const Strategies: React.FC = () => {
                   />
                   <Metric
                     flex="1"
-                    label="Collateralization Ratio"
+                    label={<Label label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
                     value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
                   />
                 </Box>

@@ -40,7 +40,7 @@ const Metric: React.FC<MetricProps & BoxProps> = ({ label, value, isSmall = fals
 
   return (
     <Box className={classes.container} display="flex" flexDirection="column" justifyContent="center" {...props}>
-      <Typography className={classes.label}>{label}</Typography>
+      {typeof label === 'string' ? <Typography className={classes.label}>{label}</Typography> : label}
       {typeof value === 'string' ? <Typography className={classes.value}>{value}</Typography> : value}
     </Box>
   )
