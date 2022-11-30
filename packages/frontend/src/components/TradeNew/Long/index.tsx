@@ -255,6 +255,9 @@ const useStyles = makeStyles((theme) =>
     lightStoneBackground: {
       backgroundColor: theme.palette.background.lightStone,
     },
+    txStatus: {
+      marginTop: theme.spacing(4),
+    },
   }),
 )
 
@@ -422,7 +425,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   return (
     <div id="open-long-card">
       {confirmed ? (
-        <div>
+        <div className={classes.txStatus}>
           <Confirmed
             confirmationMessage={`Bought ${confirmedAmount} Squeeth`}
             txnHash={transactionData?.hash ?? ''}
@@ -442,7 +445,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
           </div>
         </div>
       ) : cancelled ? (
-        <div>
+        <div className={classes.txStatus}>
           <Cancelled txnHash={transactionData?.hash ?? ''} />
           <div className={classes.buttonDiv}>
             <PrimaryButtonNew
@@ -782,7 +785,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   return (
     <div id="close-long-card">
       {confirmed && !isTxFirstStep ? (
-        <div>
+        <>
           <Confirmed
             confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
             txnHash={transactionData?.hash ?? ''}
@@ -800,9 +803,9 @@ const CloseLong: React.FC<BuyProps> = () => {
               {'Close'}
             </PrimaryButtonNew>
           </div>
-        </div>
+        </>
       ) : cancelled ? (
-        <div>
+        <>
           <Cancelled txnHash={transactionData?.hash ?? ''} />
           <div className={classes.buttonDiv}>
             <PrimaryButtonNew
@@ -816,7 +819,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               {'Close'}
             </PrimaryButtonNew>
           </div>
-        </div>
+        </>
       ) : (
         <Box marginTop="32px">
           <Typography variant="h4" className={classes.subtitle}>

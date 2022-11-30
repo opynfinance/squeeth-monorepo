@@ -1,7 +1,7 @@
 import { PrimaryButton, PrimaryButtonNew } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { SecondaryTabs, SecondaryTab, SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
-import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
+import Confirmed, { ConfirmType } from '@components/TradeNew/Confirmed'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
@@ -104,7 +104,7 @@ const useStyles = makeStyles((theme) =>
       // background: '#2A2D2E',
     },
     notice: {
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(2.5),
       padding: theme.spacing(2),
       border: `1px solid #F3FF6C`,
       borderRadius: theme.spacing(1),
@@ -117,8 +117,7 @@ const useStyles = makeStyles((theme) =>
       color: '#F3FF6C',
     },
     noticeGray: {
-      marginTop: theme.spacing(1.5),
-      marginBottom: theme.spacing(2),
+      marginTop: theme.spacing(2.5),
       padding: theme.spacing(2.5),
       border: `1px solid ${theme.palette.background.stone}`,
       borderRadius: theme.spacing(1),
@@ -492,7 +491,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   return (
     <>
       {confirmed ? (
-        <div className={classes.confirmedBox}>
+        <>
           <Confirmed
             confirmationMessage={
               depositOption === 0
@@ -506,7 +505,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             fullWidth
             id="crab-close-btn"
             variant="contained"
-            style={{ marginTop: '16px' }}
             onClick={() => {
               resetTransactionData()
               setWithdrawAmount('0')
@@ -515,7 +513,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
           >
             Close
           </PrimaryButtonNew>
-        </div>
+        </>
       ) : (
         <>
           <SqueethTabsNew
@@ -674,7 +672,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               </div>
             ) : null}
 
-            <Box marginTop="24px">
+            <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
               {useUsdc && depositOption !== 0 ? (
                 <Metric
                   label="Min USDC to receive"
@@ -687,14 +685,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 />
               ) : null}
 
-              <Box
-                display="flex"
-                alignItems="center"
-                justifyContent="space-between"
-                gridGap="12px"
-                marginTop="12px"
-                flexWrap="wrap"
-              >
+              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
                 <Metric
                   label="Slippage"
                   value={formatNumber(slippage) + '%'}
