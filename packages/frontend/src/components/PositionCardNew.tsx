@@ -174,10 +174,8 @@ const useStyles = makeStyles((theme) =>
     },
     link: {
       color: theme.palette.primary.main,
-      textDecoration: 'underline',
-      fontWeight: 600,
+      fontWeight: 500,
       fontSize: 14,
-      marginTop: '12px',
     },
     pnlTitle: {
       display: 'flex',
@@ -195,6 +193,16 @@ const useStyles = makeStyles((theme) =>
     positionUsdValue: {
       color: 'rgba(255, 255, 255, 0.6)',
       marginLeft: '12px',
+    },
+    labelContainer: {
+      display: 'flex',
+      justifyContent: 'space-between',
+    },
+    label: {
+      color: 'rgba(255, 255, 255, 0.5)',
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
     },
   }),
 )
@@ -381,145 +389,125 @@ const PositionCard: React.FC = () => {
             />
           </Box>
         ) : (
-          <>
-            <Box display="flex" alignItems="center" gridGap="16px" flexWrap="wrap">
-              {positionType === PositionType.SHORT ? (
-                <Typography variant="caption" className={classes.link} id="pos-card-manage-vault-link">
-                  <Link href={`vault/${vaultId}`}>Manage Vault</Link>
-                </Typography>
-              ) : null}
-
-              {isLP ? (
-                <Typography className={classes.link}>
-                  <Link href="h1">Manage LP</Link>
-                </Typography>
-              ) : null}
-            </Box>
-
-            <Box display="flex" gridGap="12px" marginTop="16px" flexWrap="wrap">
-              <Metric
-                gridGap="4px"
-                label="Position value"
-                value={
-                  <div className={classes.postAmount}>
-                    <Box display="flex" alignItems="center" gridGap="4px">
-                      <Typography
-                        component="span"
-                        className={classes.amountText}
-                        id="position-card-before-trade-balance"
-                      >
-                        {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
-                      </Typography>
-
-                      {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
-                      (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
-                      tradeAmount.isLessThanOrEqualTo(0) ||
-                      tradeAmount.isNaN() ||
-                      tradeCompleted ? null : (
-                        <>
-                          <ArrowRightAltIcon className={classes.arrow} />
-                          <Typography
-                            component="span"
-                            className={classes.amountText}
-                            id="position-card-post-trade-balance"
-                            style={{
-                              color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
-                                ? '#49D273'
-                                : '#f5475c',
-                            }}
-                          >
-                            {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                    <Typography
-                      component="span"
-                      className={clsx(classes.amountText, classes.amountUnit)}
-                      variant="body2"
-                    >
-                      oSQTH
+          <Box display="flex" gridGap="12px" marginTop="16px" flexWrap="wrap">
+            <Metric
+              gridGap="6px"
+              label={
+                <div className={classes.labelContainer}>
+                  <Typography className={classes.label}>Position value</Typography>
+                  {positionType === PositionType.SHORT ? (
+                    <Typography className={classes.link} id="pos-card-manage-vault-link">
+                      <Link href={`vault/${vaultId}`}>Manage</Link>
+                    </Typography>
+                  ) : null}
+                </div>
+              }
+              value={
+                <div className={classes.postAmount}>
+                  <Box display="flex" alignItems="center" gridGap="4px">
+                    <Typography component="span" className={classes.amountText} id="position-card-before-trade-balance">
+                      {getPositionBasedValue(squeethAmount.toFixed(6), squeethAmount.toFixed(6), '0', '0')}
                     </Typography>
 
-                    {!isDollarValueLoading && (
-                      <Typography component="span" className={clsx(classes.amountText, classes.positionUsdValue)}>
-                        ${getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
-                      </Typography>
-                    )}
-                  </div>
-                }
-              />
-
-              {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
-                <Metric label="PnL" value={<HidePnLText />} gridGap="4px" />
-              ) : (
-                <>
-                  <Metric
-                    gridGap="4px"
-                    label="Unrealized PnL"
-                    value={
-                      <div className={classes.pnl} id="unrealized-pnl-value">
-                        {!pnlLoading ? (
-                          <Box display="flex" alignItems="center" gridGap="12px">
-                            <Typography
-                              className={clsx(pnlClass(positionType, longGain, shortGain, classes), classes.amountText)}
-                              id="unrealized-pnl-usd-value"
-                            >
-                              {getPositionBasedValue(
-                                `$${longUnrealizedPNL.usd.toFixed(2)}`,
-                                `$${shortUnrealizedPNL.usd.toFixed(2)}`,
-                                '$0',
-                                'loading',
-                              )}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              className={clsx(
-                                pnlClass(positionType, longGain, shortGain, classes),
-                                classes.amountText,
-                                classes.positionUsdValue,
-                              )}
-                              id="unrealized-pnl-perct-value"
-                            >
-                              {getPositionBasedValue(
-                                `(${longGain.toFixed(2)}%)`,
-                                `(${shortGain.toFixed(2)}%)`,
-                                '',
-                                ' ',
-                              )}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          'loading'
-                        )}
-                      </div>
-                    }
-                  />
-                  <Metric
-                    gridGap="4px"
-                    label="Realized PnL"
-                    value={
-                      <div className={classes.pnl} id="realized-pnl-value">
+                    {(tradeType === TradeType.SHORT && positionType === PositionType.LONG) ||
+                    (tradeType === TradeType.LONG && positionType === PositionType.SHORT) ||
+                    tradeAmount.isLessThanOrEqualTo(0) ||
+                    tradeAmount.isNaN() ||
+                    tradeCompleted ? null : (
+                      <>
+                        <ArrowRightAltIcon className={classes.arrow} />
                         <Typography
-                          className={clsx(
-                            classes.amountText,
-                            pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes),
-                          )}
+                          component="span"
+                          className={classes.amountText}
+                          id="position-card-post-trade-balance"
+                          style={{
+                            color: postTradeAmt.gte(getPositionBasedValue(squeethAmount, squeethAmount, 0))
+                              ? '#49D273'
+                              : '#f5475c',
+                          }}
                         >
-                          {getRealizedPNLBasedValue(
-                            `$${longRealizedPNL.toFixed(2)}`,
-                            `$${shortRealizedPNL.toFixed(2)}`,
-                            '$0',
-                            'loading',
-                          )}
+                          {postTradeAmt.lte(0) ? 0 : postTradeAmt.toFixed(6)}
                         </Typography>
-                      </div>
-                    }
-                  />
-                </>
-              )}
-            </Box>
-          </>
+                      </>
+                    )}
+                  </Box>
+                  <Typography component="span" className={clsx(classes.amountText, classes.amountUnit)} variant="body2">
+                    oSQTH
+                  </Typography>
+
+                  {!isDollarValueLoading && (
+                    <Typography component="span" className={clsx(classes.amountText, classes.positionUsdValue)}>
+                      ${getPositionBasedValue(longPositionValue, shortPositionValue, new BigNumber(0)).toFixed(2)}
+                    </Typography>
+                  )}
+                </div>
+              }
+            />
+
+            {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
+              <Metric label="PnL" value={<HidePnLText />} gridGap="6px" />
+            ) : (
+              <>
+                <Metric
+                  gridGap="6px"
+                  label="Unrealized PnL"
+                  value={
+                    <div className={classes.pnl} id="unrealized-pnl-value">
+                      {!pnlLoading ? (
+                        <Box display="flex" alignItems="center" gridGap="12px">
+                          <Typography
+                            className={clsx(pnlClass(positionType, longGain, shortGain, classes), classes.amountText)}
+                            id="unrealized-pnl-usd-value"
+                          >
+                            {getPositionBasedValue(
+                              `$${longUnrealizedPNL.usd.toFixed(2)}`,
+                              `$${shortUnrealizedPNL.usd.toFixed(2)}`,
+                              '$0',
+                              'loading',
+                            )}
+                          </Typography>
+                          <Typography
+                            variant="caption"
+                            className={clsx(
+                              pnlClass(positionType, longGain, shortGain, classes),
+                              classes.amountText,
+                              classes.positionUsdValue,
+                            )}
+                            id="unrealized-pnl-perct-value"
+                          >
+                            {getPositionBasedValue(`(${longGain.toFixed(2)}%)`, `(${shortGain.toFixed(2)}%)`, '', ' ')}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        'loading'
+                      )}
+                    </div>
+                  }
+                />
+                <Metric
+                  gridGap="6px"
+                  label="Realized PnL"
+                  value={
+                    <div className={classes.pnl} id="realized-pnl-value">
+                      <Typography
+                        className={clsx(
+                          classes.amountText,
+                          pnlClass(positionType, longRealizedPNL, shortRealizedPNL, classes),
+                        )}
+                      >
+                        {getRealizedPNLBasedValue(
+                          `$${longRealizedPNL.toFixed(2)}`,
+                          `$${shortRealizedPNL.toFixed(2)}`,
+                          '$0',
+                          'loading',
+                        )}
+                      </Typography>
+                    </div>
+                  }
+                />
+              </>
+            )}
+          </Box>
         )}
       </div>
 
