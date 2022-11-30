@@ -2,7 +2,6 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import {
   InputAdornment,
   Box,
-  TextField,
   Tooltip,
   Typography,
   Select,
@@ -10,41 +9,35 @@ import {
   CircularProgress,
   Collapse,
 } from '@material-ui/core'
-import ArrowRightAltIcon from '@material-ui/icons/ArrowRightAlt'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
-import React, { memo, useState, useCallback, useEffect } from 'react'
+import React, { memo, useState, useEffect } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
+import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
 
-import { CloseType, Tooltips, Links } from '@constants/enums'
+import { CloseType, Tooltips } from '@constants/enums'
 import useShortHelper from '@hooks/contracts/useShortHelper'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken, InputNumber } from '@components/InputNew'
 import Alert from '@components/Alert'
-import CollatRange from '@components/CollatRange'
-import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { TradeSettings } from '@components/TradeSettings'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import TradeDetails from '@components/Trade/TradeDetails'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
-import UniswapData from '@components/Trade/UniswapData'
-import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../../constants'
-import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet, useTransactionStatus, useWalletBalance } from 'src/state/wallet/hooks'
-import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from 'src/state/positions/atoms'
-import { useAtom, useAtomValue } from 'jotai'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
+import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
+import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
+import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from '@state/positions/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import { collatRatioAtom } from 'src/state/ethPriceCharts/atoms'
-import { atomFamily, atomWithStorage, useResetAtom, useUpdateAtom } from 'jotai/utils'
-import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
+import { collatRatioAtom } from '@state/ethPriceCharts/atoms'
+import { useGetBuyQuote, useGetSellQuote } from '@state/squeethPool/hooks'
 import {
   useGetCollatRatioAndLiqPrice,
   useGetDebtAmount,
   useGetShortAmountFromDebt,
   useUpdateOperator,
-} from 'src/state/controller/hooks'
-import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery } from 'src/state/positions/hooks'
+} from '@state/controller/hooks'
+import { useComputeSwaps, useFirstValidVault } from '@state/positions/hooks'
 import {
   ethTradeAmountAtom,
   quoteAtom,
@@ -54,9 +47,9 @@ import {
   tradeCompletedAtom,
   tradeSuccessAtom,
   tradeTypeAtom,
-} from 'src/state/trade/atoms'
+} from '@state/trade/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, normFactorAtom } from 'src/state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, normFactorAtom } from '@state/controller/atoms'
 import { TradeType } from 'src/types'
 import Cancelled from '../Cancelled'
 import { useVaultData } from '@hooks/useVaultData'
@@ -398,7 +391,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   }, [amount, collatPercent, shortVaults, open, tradeType, getDebtAmount, vault])
 
   const ethPrice = useETHPrice()
-  const osqthPrice = useOSQTHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
 
   let openError: string | undefined
@@ -589,7 +582,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 </Box>
               </Box>
 
-              <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
+              <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px" flexWrap="wrap">
                 <Metric
                   label="Current Collateral Ratio"
                   value={formatNumber(existingCollatPercent) + '%'}
@@ -748,7 +741,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   } = useTransactionStatus()
 
   const { closeShort } = useShortHelper()
-  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const { shortHelper } = useAtomValue(addressesAtom)
   const isLong = useAtomValue(isLongAtom)
   const connected = useAtomValue(connectedWalletAtom)
@@ -773,13 +765,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { data } = useWalletBalance()
   const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
 
-  const { loading: isPositionFinishedCalc } = useLPPositionsQuery()
   const { updateVault } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const { existingCollatPercent } = useVaultData(vault)
   const setCollatRatio = useUpdateAtom(collatRatioAtom)
   const ethPrice = useETHPrice()
-  const osqthPrice = useOSQTHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
@@ -1153,7 +1144,14 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               </Alert>
             </Collapse>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" gridGap="12px" marginTop="24px">
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              gridGap="12px"
+              marginTop="24px"
+              flexWrap="wrap"
+            >
               <Metric
                 label="Collateral you redeem"
                 value={formatNumber(withdrawCollat.isPositive() ? withdrawCollat.toNumber() : 0)}
@@ -1181,6 +1179,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 value={formatNumber(slippageAmountValue) + '%'}
                 isSmall
                 flexDirection="row"
+                justifyContent="space-between"
                 gridGap="12px"
                 flex="1"
               />
@@ -1190,6 +1189,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   value={formatNumber(priceImpact) + '%'}
                   isSmall
                   flexDirection="row"
+                  justifyContent="space-between"
                   gridGap="12px"
                   flex="1"
                 />

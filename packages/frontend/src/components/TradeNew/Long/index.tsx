@@ -208,7 +208,6 @@ const useStyles = makeStyles((theme) =>
     buttonDiv: {
       position: 'sticky',
       bottom: '0',
-      paddingBottom: theme.spacing(3),
       backgroundColor: theme.palette.background.default,
       zIndex: 2000,
     },
@@ -280,13 +279,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   } = useTransactionStatus()
   // const buyAndRefund = useBuyAndRefund()
   const buyAndRefund = useAutoRoutedBuyAndRefund()
-  const getWSqueethPositionValue = useGetWSqueethPositionValue()
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const osqthPrice = useOSQTHPrice()
+  const { loading: osqthPriceLoading, data: osqthPrice } = useOSQTHPrice()
   const tradeType = useAtomValue(tradeTypeAtom)
 
   const { squeethAmount } = useComputeSwaps()
@@ -327,14 +325,14 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
         if (val) {
           setSqthTradeAmount(val.amountOut.toString())
           setConfirmedAmount(val.amountOut.toFixed(6).toString())
-          setSqueethExposure(Number(getWSqueethPositionValue(val.amountOut)))
+          setSqueethExposure(val.amountOut.times(osqthPrice).toNumber())
           setInputQuoteLoading(false)
         }
       })
     },
     [
       getBuyQuoteForETH,
-      getWSqueethPositionValue,
+      osqthPrice,
       slippageAmount,
       setConfirmedAmount,
       setEthTradeAmount,
@@ -350,7 +348,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
       getBuyQuote(new BigNumber(value), slippageAmount).then((val) => {
         setEthTradeAmount(val.amountIn.toString())
-
         setInputQuoteLoading(false)
       })
     },
@@ -415,6 +412,13 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
   }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
+  const onETHBalanceClick = useAppCallback(() => {
+    if (osqthPriceLoading) {
+      return
+    }
+    return handleEthChange(balance.toString())
+  }, [osqthPriceLoading, balance, handleEthChange])
+
   return (
     <div id="open-long-card">
       {confirmed ? (
@@ -470,8 +474,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   logo={ethLogo}
                   symbol="ETH"
                   usdPrice={ethPrice}
-                  onBalanceClick={() => handleEthChange(balance.toString())}
-                  isLoading={inputQuoteLoading}
+                  onBalanceClick={onETHBalanceClick}
+                  disabled={osqthPriceLoading}
+                  isLoading={osqthPriceLoading || inputQuoteLoading}
+                  loadingMessage={osqthPriceLoading ? 'loading price...' : 'loading...'}
                   error={!!openError}
                   helperText={openError}
                 />
@@ -484,7 +490,9 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   symbol="oSQTH"
                   usdPrice={osqthPrice}
                   showMaxAction={false}
-                  isLoading={inputQuoteLoading}
+                  disabled={osqthPriceLoading}
+                  isLoading={osqthPriceLoading || inputQuoteLoading}
+                  loadingMessage={osqthPriceLoading ? 'loading price...' : 'loading...'}
                 />
               </Box>
 
@@ -631,7 +639,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const osqthPrice = useOSQTHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
@@ -650,7 +658,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
 
   useAppEffect(() => {
-    //if it's insufficient amount them set it to it's maximum
+    // if it's insufficient amount then set it to it's maximum
     if (squeethAmount.lt(amount)) {
       setSqthTradeAmount(squeethAmount.toString())
       getSellQuote(squeethAmount).then((val) => {
@@ -838,8 +846,8 @@ const CloseLong: React.FC<BuyProps> = () => {
               logo={ethLogo}
               symbol="ETH"
               usdPrice={ethPrice}
-              isLoading={inputQuoteLoading}
               showMaxAction={false}
+              isLoading={inputQuoteLoading}
             />
           </Box>
 
@@ -849,26 +857,36 @@ const CloseLong: React.FC<BuyProps> = () => {
             </Alert>
           </Collapse>
 
-          <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" marginTop="24px">
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            gridGap="12px"
+            marginTop="24px"
+            flexWrap="wrap"
+          >
+            <Metric
+              label="Slippage"
+              value={formatNumber(slippageAmountValue) + '%'}
+              isSmall
+              flexDirection="row"
+              justifyContent="space-between"
+              gridGap="12px"
+              flex="1"
+            />
             <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-              <Metric
-                label="Slippage"
-                value={formatNumber(slippageAmountValue) + '%'}
-                isSmall
-                flexDirection="row"
-                gridGap="12px"
-                flex="1"
-              />
               <Metric
                 label="Price Impact"
                 value={formatNumber(priceImpact) + '%'}
                 isSmall
                 flexDirection="row"
+                justifyContent="space-between"
                 gridGap="12px"
                 flex="1"
               />
+
+              <TradeSettings />
             </Box>
-            <TradeSettings />
           </Box>
 
           <Box marginTop="28px" className={classes.buttonDiv}>
