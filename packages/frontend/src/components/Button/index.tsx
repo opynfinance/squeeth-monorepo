@@ -74,7 +74,7 @@ export const GreyButton = withStyles((theme) => ({
 
 export const PrimaryButtonNew = withStyles((theme) => ({
   root: {
-    color: '#000',
+    color: theme.palette.background.default,
     backgroundColor: theme.palette.primary.main,
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
@@ -85,7 +85,8 @@ export const PrimaryButtonNew = withStyles((theme) => ({
     },
     minHeight: '2rem',
     minWidth: '300px',
-    fontSize: '16px',
+    padding: '8px',
+    fontSize: '18px',
     fontWeight: 700,
     textTransform: 'initial',
   },
