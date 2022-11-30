@@ -242,3 +242,109 @@ dataSources:
         - event: FlashWithdrawERC20(indexed address,address,uint256,uint256,uint256)
           handler: handleFlashWithdrawERC20
       file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: BullStrategy
+    network: {{network}}
+    source:
+      address: "{{BullStrategy}}"
+      abi: BullStrategy
+      startBlock: {{BullStrategy-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+        - Withdraw
+        - WithdrawShutdown
+        # - FlashDeposit
+        # - FlashWithdraw
+        # - Transfer
+        # - HedgeOnUniswap
+        # - Hedge
+        # - FlashDepositCallback
+        # - FlashWithdrawCallback
+        # - ExecuteSellAuction
+        # - ExecuteBuyAuction
+        - Strategy
+      abis:
+        - name: BullStrategy
+          file: ./abis/BullStrategy.json
+      eventHandlers:
+        - event: BullStrategyWithdraw(indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: BullStrategyDeposit(indexed address,uint256,uint256,uint256)
+          handler: handleDeposit
+        - event: SetCap(uint256,uint256)
+          handler: handleSetCap
+        - event: RedeemCrabAndWithdrawEth(indexed uint256,uint256,uint256)
+          handler: handleRedeemCrabAndWithdrawEth
+        - event: SetShutdownContract(address,address)
+          handler: handleSetShutdownContract
+        - event: ShutdownRepayAndWithdraw(uint256,uint256,uint256)
+          handler: handleShutdownRepayAndWithdraw
+        - event: Farm(indexed address,indexed address)
+          handler: handleFarm
+        - event: DepositEthIntoCrab(uint256)
+          handler: handleDepositEthIntoCrab
+        - event: BullStrategyWithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdrawShutdown
+        - event: AuctionRepayAndWithdrawFromLeverage(address,uint256,uint256)
+          handler: handleAuctionRepayAndWithdrawFromLeverage
+        - event: SetAuction(address,address)
+          handler: handleSetAuction
+      file: ./src/bullStrategy.ts
+  - kind: ethereum/contract
+    name: AuctionBull
+    network: {{network}}
+    source:
+      address: "{{AuctionBull}}"
+      abi: AuctionBull
+      startBlock: {{AuctionBull-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: AuctionBull
+          file: ./abis/AuctionBull.json
+      eventHandlers:
+        - event: SetCrUpperAndLower(uint256,uint256,uint256,uint256)
+          handler: handleSetCrUpperAndLower
+        - event: SetDeltaUpperAndLower(uint256,uint256,uint256,uint256)
+          handler: handleSetDeltaUpperAndLower
+        - event: LeverageRebalance(bool,uint256,uint256)
+          handler: handleLeverageRebalance
+        - event: FullRebalance(uint256,uint256,bool,uint256,uint256)
+          handler: handleFullRebalance
+        - event: SetFullRebalanceClearingPriceTolerance(uint256,uint256)
+          handler: handleSetFullRebalanceClearingPriceTolerance
+        - event: SetRebalanceWethLimitPriceTolerance(uint256,uint256)
+          handler: handleSetRebalanceWethLimitPriceTolerance
+        - event: SetAuctionManager(address,address)
+          handler: handleSetAuctionManager
+      file: ./src/bullStrategy.ts
+  - kind: ethereum/contract
+    name: FlashBull
+    network: {{network}}
+    source:
+      address: "{{FlashBull}}"
+      abi: FlashBull
+      startBlock: {{FlashBull-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: FlashBull
+          file: ./abis/FlashBull.json
+      eventHandlers:
+        - event: FlashWithdraw(uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: FlashDeposit(uint256,uint256,uint256,uint256,uint256)
+          handler: handleFlashDeposit
+      file: ./src/bullStrategy.ts

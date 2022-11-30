@@ -44,8 +44,6 @@
   "BullStrategy-start-block": 8043283,
   "AuctionBull": "0x893E0b9c34f40908cA13468ED8A0bb0a44bc7676",
   "AuctionBull-start-block": 8043283,
-  "EmergencyShutdown": "0x79Ac0DE0d3Da88fF837B5F95f6cAc9489fD60604",
-  "EmergencyShutdown-start-block": 8043283,
   "FlashBull": "0x48924A1bdc23f7C08e1fE70b9Bbd96375218a487",
-  "FlashBull-start-block": 8043283 
+  "FlashBull-start-block": 8043283
 }
