@@ -520,7 +520,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
-                  flex="1"
                 />
 
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
@@ -531,7 +530,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     flexDirection="row"
                     justifyContent="space-between"
                     gridGap="12px"
-                    flex="1"
                   />
 
                   <TradeSettings />
@@ -547,14 +545,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                     label="Value if ETH down 50%"
                     value={formatCurrency(Number(squeethExposure * 0.25))}
                     isSmall
-                    flex="1"
                   />
-                  <Metric
-                    label="Value if ETH up 2x"
-                    value={formatCurrency(Number(squeethExposure * 4))}
-                    isSmall
-                    flex="1"
-                  />
+                  <Metric label="Value if ETH up 2x" value={formatCurrency(Number(squeethExposure * 4))} isSmall />
                 </Box>
               </Box>
 
@@ -875,7 +867,6 @@ const CloseLong: React.FC<BuyProps> = () => {
               flexDirection="row"
               justifyContent="space-between"
               gridGap="12px"
-              flex="1"
             />
             <Box display="flex" alignItems="center" gridGap="12px" flex="1">
               <Metric
@@ -885,7 +876,6 @@ const CloseLong: React.FC<BuyProps> = () => {
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="12px"
-                flex="1"
               />
 
               <TradeSettings />

@@ -583,13 +583,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               </Box>
 
               <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px" flexWrap="wrap">
-                <Metric
-                  label="Current Collateral Ratio"
-                  value={formatNumber(existingCollatPercent) + '%'}
-                  isSmall
-                  flex="1"
-                />
-                <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall flex="1" />
+                <Metric label="Current Collateral Ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
+                <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall />
               </Box>
 
               <Box marginTop="24px">
@@ -619,7 +614,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"
-                  flex="1"
                 />
               </Box>
 
@@ -638,7 +632,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
-                  flex="1"
                 />
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                   <Metric
@@ -648,7 +641,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     flexDirection="row"
                     justifyContent="space-between"
                     gridGap="12px"
-                    flex="1"
                   />
                   <TradeSettings />
                 </Box>
@@ -1156,14 +1148,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 label="Collateral you redeem"
                 value={formatNumber(withdrawCollat.isPositive() ? withdrawCollat.toNumber() : 0)}
                 isSmall
-                flex="1"
               />
-              <Metric
-                label="Current collateral ratio"
-                value={formatNumber(existingCollatPercent) + '%'}
-                isSmall
-                flex="1"
-              />
+              <Metric label="Current collateral ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
             </Box>
 
             <Box
@@ -1181,7 +1167,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="12px"
-                flex="1"
               />
               <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                 <Metric
@@ -1191,7 +1176,6 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
-                  flex="1"
                 />
                 <TradeSettings />
               </Box>

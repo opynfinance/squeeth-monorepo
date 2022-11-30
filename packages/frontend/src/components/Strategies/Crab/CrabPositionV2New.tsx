@@ -82,7 +82,6 @@ const CrabPosition: React.FC = () => {
       ) : (
         <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px">
           <Metric
-            flex="1"
             label="Position value"
             value={
               <Typography className={clsx(classes.metricValue, classes.white)}>
@@ -92,7 +91,6 @@ const CrabPosition: React.FC = () => {
           />
           {pnl.isFinite() && (
             <Metric
-              flex="1"
               label="PnL"
               value={
                 <Box display="flex" alignItems="center" gridGap="12px">

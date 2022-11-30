@@ -681,7 +681,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
-                  flex="1"
                 />
               ) : null}
 
@@ -693,7 +692,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
-                  flex="1"
                 />
 
                 <Box display="flex" alignItems="center" gridGap="12px" flex="1">
@@ -705,7 +703,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                       flexDirection="row"
                       justifyContent="space-between"
                       gridGap="12px"
-                      flex="1"
                     />
                   ) : (
                     <Metric
@@ -715,7 +712,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                       flexDirection="row"
                       justifyContent="space-between"
                       gridGap="12px"
-                      flex="1"
                     />
                   )}
 

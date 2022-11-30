@@ -348,12 +348,10 @@ const Strategies: React.FC = () => {
 
                 <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
                   <Metric
-                    flex="1"
                     label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
                     value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
                   />
                   <Metric
-                    flex="1"
                     label={
                       <Label
                         label="Current Implied Premium"
@@ -363,7 +361,6 @@ const Strategies: React.FC = () => {
                     value={formatNumber(currentImpliedFunding * 100) + '%'}
                   />
                   <Metric
-                    flex="1"
                     label={
                       <Label
                         label="Historical Daily Premium"
@@ -375,7 +372,6 @@ const Strategies: React.FC = () => {
                     value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
                   />
                   <Metric
-                    flex="1"
                     label={
                       <Label
                         label="Last hedged at"
@@ -400,7 +396,6 @@ const Strategies: React.FC = () => {
                     })}
                   />
                   <Metric
-                    flex="1"
                     label={
                       <Label
                         label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
@@ -414,7 +409,6 @@ const Strategies: React.FC = () => {
                     }
                   />
                   <Metric
-                    flex="1"
                     label={<Label label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
                     value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
                   />

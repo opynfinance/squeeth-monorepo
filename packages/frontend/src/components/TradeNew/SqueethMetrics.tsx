@@ -73,17 +73,14 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
       <Metric
         label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
         value={formatCurrency(ethPrice.toNumber())}
-        flex="1"
       />
 
       <Metric
-        flex="1"
         label={<Label label="ETH&sup2; Price" tooltipTitle={Tooltips.SpotPrice} />}
         value={formatCurrency(eth2Price.toNumber())}
       />
 
       <Metric
-        flex="1"
         label={<Label label="Mark Price" tooltipTitle={Tooltips.Mark} />}
         value={formatCurrency(markPrice.toNumber())}
       />
@@ -91,25 +88,21 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
       <Metric
         label={<Label label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
         value={`${formatNumber(impliedVolPercent)}%`}
-        flex="1"
       />
 
       <Metric
         label={<Label label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
         value={`${formatNumber(osqthRefVol)}%`}
-        flex="1"
       />
 
       <Metric
         label={<Label label="Norm Factor" tooltipTitle={Tooltips.NormFactor} />}
         value={formatNumber(normFactor.toNumber(), 4)}
-        flex="1"
       />
 
       <Metric
         label={<Label label="Current Implied Premium" tooltipTitle={Tooltips.CurrentImplFunding} />}
         value={currentImpliedPremium}
-        flex="1"
       />
 
       <Metric
@@ -120,7 +113,6 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
           />
         }
         value={historicalDailyPremium}
-        flex="1"
       />
     </Box>
   )

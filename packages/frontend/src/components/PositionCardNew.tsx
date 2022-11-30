@@ -358,7 +358,6 @@ const PositionCard: React.FC = () => {
           <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px" flexWrap="wrap">
             <Metric
               label="Position value"
-              flex="1"
               gridGap="4px"
               value={
                 <div className={classes.postAmount}>
@@ -372,7 +371,6 @@ const PositionCard: React.FC = () => {
               }
             />
             <Metric
-              flex="1"
               gridGap="4px"
               label="Redeemable collateral"
               value={
@@ -400,7 +398,6 @@ const PositionCard: React.FC = () => {
 
             <Box display="flex" alignItems="flex-start" gridGap="12px" marginTop="16px" flexWrap="wrap">
               <Metric
-                flex="1"
                 gridGap="4px"
                 label="Position value"
                 value={
@@ -454,11 +451,10 @@ const PositionCard: React.FC = () => {
               />
 
               {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
-                <Metric label="PnL" value={<HidePnLText />} flex="1" gridGap="4px" />
+                <Metric label="PnL" value={<HidePnLText />} gridGap="4px" />
               ) : (
                 <>
                   <Metric
-                    flex="1"
                     gridGap="4px"
                     label="Unrealized PnL"
                     value={
@@ -500,7 +496,6 @@ const PositionCard: React.FC = () => {
                     }
                   />
                   <Metric
-                    flex="1"
                     gridGap="4px"
                     label="Realized PnL"
                     value={
