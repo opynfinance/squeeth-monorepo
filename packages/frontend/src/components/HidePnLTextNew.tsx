@@ -1,5 +1,5 @@
 import { Typography } from '@material-ui/core'
-import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
 
 import { positionTypeAtom } from '@state/positions/atoms'

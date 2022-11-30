@@ -39,14 +39,7 @@ const Metric: React.FC<MetricProps & BoxProps> = ({ label, value, isSmall = fals
   const classes = useStyles({ isSmall })
 
   return (
-    <Box
-      className={classes.container}
-      flex="1"
-      display="flex"
-      flexDirection="column"
-      justifyContent="center"
-      {...props}
-    >
+    <Box className={classes.container} flex="1" display="flex" flexDirection="column" {...props}>
       {typeof label === 'string' ? <Typography className={classes.label}>{label}</Typography> : label}
       {typeof value === 'string' ? <Typography className={classes.value}>{value}</Typography> : value}
     </Box>

@@ -396,7 +396,7 @@ const PositionCard: React.FC = () => {
               ) : null}
             </Box>
 
-            <Box display="flex" alignItems="flex-start" gridGap="12px" marginTop="16px" flexWrap="wrap">
+            <Box display="flex" gridGap="12px" marginTop="16px" flexWrap="wrap">
               <Metric
                 gridGap="4px"
                 label="Position value"
