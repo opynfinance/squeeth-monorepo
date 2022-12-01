@@ -1,9 +1,10 @@
-import { CustomLinearProgressNew } from '@components/CustomProgress'
 import { Typography, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React from 'react'
 import clsx from 'clsx'
+
+import { CustomLinearProgressNew } from '@components/CustomProgress'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

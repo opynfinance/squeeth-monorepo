@@ -3,8 +3,8 @@ import Image from 'next/image'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 
-import { EtherscanPrefix } from '../../constants'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { EtherscanPrefix } from '@constants/index'
+import { networkIdAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
