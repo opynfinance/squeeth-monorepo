@@ -36,6 +36,12 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
         gridGap: '40px',
       },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(3, 4),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(3, 3),
+      },
     },
     leftColumn: {
       flex: 1,

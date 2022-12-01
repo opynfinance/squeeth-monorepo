@@ -42,6 +42,12 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('md')]: {
         width: '100%',
       },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(0, 2),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(0, 1),
+      },
     },
     logo: {
       marginRight: 'auto',

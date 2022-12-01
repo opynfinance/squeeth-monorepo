@@ -90,6 +90,12 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('md')]: {
         width: '100%',
       },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(1, 4),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(1, 3),
+      },
     },
     columnContainer: {
       marginTop: '32px',
