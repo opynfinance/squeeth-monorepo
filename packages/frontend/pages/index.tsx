@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Typography, Box } from '@material-ui/core'
+import { Typography, Box, Tooltip } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
 
 import Nav from '@components/Nav'
@@ -16,6 +17,7 @@ import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import Trade from '@components/Trade'
 import PositionCard from '@components/PositionCard'
 import { TradeType } from 'src/types'
+import { LinkWrapper } from '@components/LinkWrapper'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -60,6 +62,12 @@ const useStyles = makeStyles((theme) =>
       fontSize: '28px',
       fontWeight: 700,
       letterSpacing: '-0.02em',
+    },
+    tooltip: {
+      marginLeft: theme.spacing(0.5),
+    },
+    infoIcon: {
+      fontSize: '15px',
     },
     subtitle: {
       fontSize: '20px',
@@ -106,6 +114,25 @@ const Header: React.FC = () => {
       <>
         <Typography variant="h3" className={classes.title}>
           Long Squeeth - ETH&sup2; Leverage
+          <a
+            href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Tooltip
+              className={classes.tooltip}
+              title={
+                <>
+                  {'Learn more about long squeeth '}
+                  <LinkWrapper href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684">
+                    here
+                  </LinkWrapper>
+                </>
+              }
+            >
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </a>
         </Typography>
         <Typography variant="subtitle1" className={classes.description}>
           Perpetual leverage without liquidations
@@ -117,6 +144,25 @@ const Header: React.FC = () => {
       <>
         <Typography variant="h3" className={classes.title}>
           Covered Short Squeeth - Short ETH&sup2; Position
+          <a
+            href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Tooltip
+              className={classes.tooltip}
+              title={
+                <>
+                  {'Learn more about short squeeth '}
+                  <LinkWrapper href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684">
+                    here
+                  </LinkWrapper>
+                </>
+              }
+            >
+              <InfoIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </a>
         </Typography>
         <Typography variant="subtitle1" className={classes.description}>
           Earn premiums for selling ETH collateralized squeeth
