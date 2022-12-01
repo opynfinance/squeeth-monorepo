@@ -11,7 +11,7 @@ import LPMintChart from '@components/Charts/LPMintChart'
 import Nav from '@components/Nav'
 import { LPProvider } from '@context/lp'
 import { useRestrictUser } from '@context/restrict-user'
-import { SqueethTab, SqueethTabs } from '@components/Tabs'
+import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
@@ -104,7 +104,7 @@ export function LPCalculator() {
           <SqueethInfo />
           <div className={classes.details}>
             <div style={{ display: 'flex' }}>
-              <SqueethTabs
+              <SqueethTabsNew
                 style={{ background: 'transparent' }}
                 className={classes.chartNav}
                 value={lpType}
@@ -113,9 +113,9 @@ export function LPCalculator() {
                 scrollButtons="auto"
                 variant="scrollable"
               >
-                <SqueethTab label={'Buy and LP'} />
-                <SqueethTab label="Mint and LP" />
-              </SqueethTabs>
+                <SqueethTabNew label="Buy and LP" style={{ width: '140px' }} />
+                <SqueethTabNew label="Mint and LP" style={{ width: '140px' }} />
+              </SqueethTabsNew>
             </div>
             {lpType === 0 ? (
               <div style={{ marginTop: '16px' }}>
