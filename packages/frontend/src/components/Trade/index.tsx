@@ -6,9 +6,9 @@ import { useResetAtom } from 'jotai/utils'
 import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from '@state/wallet/atoms'
 import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from '@state/trade/atoms'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
+import { TradeType } from 'src/types'
 import Long from './Long'
 import Short from './Short'
-import { TradeType } from '../../types'
 
 const Trade: React.FC<BoxProps> = (props) => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)

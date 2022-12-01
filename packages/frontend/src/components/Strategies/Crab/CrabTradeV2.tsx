@@ -1,39 +1,26 @@
-import { PrimaryButton, PrimaryButtonNew } from '@components/Button'
-import { PrimaryInput } from '@components/Input/PrimaryInput'
-import { SecondaryTabs, SecondaryTab, SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
-import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import { TradeSettings } from '@components/TradeSettings'
-import { useRestrictUser } from '@context/restrict-user'
-import RestrictionInfo from '@components/RestrictionInfo'
 import { Box, CircularProgress, Switch, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useTransactionStatus, useWalletBalance, useSelectWallet } from 'src/state/wallet/hooks'
-import {
-  BIG_ZERO,
-  ETH_USDC_POOL_FEES,
-  FUNDING_PERIOD,
-  INDEX_SCALE,
-  UNI_POOL_FEES,
-  USDC_DECIMALS,
-  VOL_PERCENT_FIXED,
-  VOL_PERCENT_SCALAR,
-  WETH_DECIMALS,
-  YEAR,
-} from '@constants/index'
-import { readyAtom } from 'src/state/squeethPool/atoms'
 import InfoIcon from '@material-ui/icons/Info'
-import { InputToken } from '@components/InputNew'
+import { usePrevious } from 'react-use'
 
+import { PrimaryButtonNew } from '@components/Button'
+import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
+import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
+import { TradeSettings } from '@components/TradeSettings'
+import RestrictionInfo from '@components/RestrictionInfo'
+import { InputToken } from '@components/InputNew'
+import { LinkWrapper } from '@components/LinkWrapper'
+import Metric from '@components/Metric'
+import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
+import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
 import {
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
   currentCrabPositionValueAtomV2,
-} from 'src/state/crab/atoms'
+} from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
   useFlashDepositV2,
@@ -44,31 +31,39 @@ import {
   useFlashDepositUSDC,
   useETHtoCrab,
   useFlashWithdrawV2USDC,
-} from 'src/state/crab/hooks'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { usePrevious } from 'react-use'
+} from '@state/crab/hooks'
+import { readyAtom } from '@state/squeethPool/atoms'
 import {
   currentImpliedFundingAtom,
   dailyHistoricalFundingAtom,
   impliedVolAtom,
   indexAtom,
   normFactorAtom,
-} from 'src/state/controller/atoms'
-import CrabPositionV2 from './CrabPositionV2'
-import { userMigratedSharesETHAtom } from 'src/state/crabMigration/atom'
-import { useUpdateSharesData } from 'src/state/crabMigration/hooks'
+} from '@state/controller/atoms'
+import { addressesAtom } from '@state/positions/atoms'
+import { userMigratedSharesETHAtom } from '@state/crabMigration/atom'
+import { useUpdateSharesData } from '@state/crabMigration/hooks'
+import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import useAppMemo from '@hooks/useAppMemo'
-import { LinkWrapper } from '@components/LinkWrapper'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
-import { addressesAtom } from 'src/state/positions/atoms'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
-import { Networks } from 'src/types'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppEffect from '@hooks/useAppEffect'
+import {
+  BIG_ZERO,
+  FUNDING_PERIOD,
+  INDEX_SCALE,
+  USDC_DECIMALS,
+  VOL_PERCENT_FIXED,
+  VOL_PERCENT_SCALAR,
+  WETH_DECIMALS,
+  YEAR,
+} from '@constants/index'
+import { useRestrictUser } from '@context/restrict-user'
+import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
+import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import usdcLogo from 'public/images/usdc-logo.svg'
-import Metric from '@components/Metric'
-import { formatNumber } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

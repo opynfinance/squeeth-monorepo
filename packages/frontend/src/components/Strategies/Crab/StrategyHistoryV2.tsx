@@ -1,13 +1,14 @@
-import { useCrabStrategyV2TxHistory } from '@hooks/useCrabV2AuctionHistory'
 import { IconButton, Typography, Link } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React from 'react'
-import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import { useAtomValue } from 'jotai'
-import { networkIdAtom } from 'src/state/wallet/atoms'
-import { formatNumber } from '@utils/formatter'
+import React from 'react'
 import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
+
+import { EtherscanPrefix } from '@constants/index'
+import { useCrabStrategyV2TxHistory } from '@hooks/useCrabV2AuctionHistory'
+import { networkIdAtom } from '@state/wallet/atoms'
+import { formatNumber } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

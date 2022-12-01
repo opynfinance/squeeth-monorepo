@@ -1,15 +1,16 @@
+import { Typography, Box, CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
-import { Typography, Box, CircularProgress } from '@material-ui/core'
-import { addressAtom } from 'src/state/wallet/atoms'
-import { useCurrentCrabPositionValueV2 } from 'src/state/crab/hooks'
-import { pnlInPerctv2 } from 'src/lib/pnl'
+import clsx from 'clsx'
+
+import { addressAtom } from '@state/wallet/atoms'
+import { useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import Metric from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import clsx from 'clsx'
+import { pnlInPerctv2 } from 'src/lib/pnl'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

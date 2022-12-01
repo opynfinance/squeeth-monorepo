@@ -1,6 +1,7 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo } from 'react'
 import { atom, useAtom, useAtomValue } from 'jotai'
+
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import FundingChart from '@components/Charts/FundingChart'
 import { CrabStrategyV2PnLChart } from '@components/Charts/CrabStrategyV2PnLChart'
