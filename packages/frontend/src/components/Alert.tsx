@@ -30,18 +30,23 @@ const useStyles = makeStyles((theme) =>
 
 interface AlertCustomProps {
   severity: AlertSeverity
+  showIcon?: boolean
 }
 type AlertProps = BoxProps & AlertCustomProps
 
-const Alert: React.FC<AlertProps> = ({ severity, children, ...props }) => {
+const Alert: React.FC<AlertProps> = ({ severity, showIcon = true, children, ...props }) => {
   const classes = useStyles({ severity })
 
   return (
     <Box className={classes.root} {...props}>
-      <InfoIcon />
-      <Typography variant="body2" className={classes.text}>
-        {children}
-      </Typography>
+      {showIcon && <InfoIcon />}
+      {typeof children === 'string' ? (
+        <Typography variant="body2" className={classes.text}>
+          {children}
+        </Typography>
+      ) : (
+        children
+      )}
     </Box>
   )
 }

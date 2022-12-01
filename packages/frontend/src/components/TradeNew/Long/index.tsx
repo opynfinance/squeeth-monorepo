@@ -26,7 +26,6 @@ import {
   useGetBuyQuote,
   useGetBuyQuoteForETH,
   useGetSellQuoteForETH,
-  useGetWSqueethPositionValue,
 } from '@state/squeethPool/hooks'
 import {
   confirmedAmountAtom,
@@ -42,7 +41,6 @@ import {
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
 import { BIG_ZERO } from '@constants/index'
-import { Links } from '@constants/enums'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { TradeType } from 'src/types'
 import ethLogo from 'public/images/eth-logo.svg'
@@ -50,6 +48,8 @@ import osqthLogo from 'public/images/osqth-logo.svg'
 import Cancelled from '../Cancelled'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import Metric from '@components/Metric'
+import RestrictionInfo from '@components/RestrictionInfoNew'
+import { useRestrictUser } from '@context/restrict-user'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -288,6 +288,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const ethPrice = useETHPrice()
   const { loading: osqthPriceLoading, data: osqthPrice } = useOSQTHPrice()
   const tradeType = useAtomValue(tradeTypeAtom)
+  const { isRestricted } = useRestrictUser()
 
   const { squeethAmount } = useComputeSwaps()
 
@@ -549,8 +550,20 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 </Box>
               </Box>
 
+              {isRestricted && <RestrictionInfo marginTop="28px" />}
+
               <Box marginTop="28px" className={classes.buttonDiv}>
-                {!connected ? (
+                {isRestricted ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={selectWallet}
+                    disabled={true}
+                    id="open-long-restricted-btn"
+                  >
+                    {'Unavailable'}
+                  </PrimaryButtonNew>
+                ) : !connected ? (
                   <PrimaryButtonNew
                     fullWidth
                     variant="contained"
@@ -637,6 +650,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
+  const { isRestricted } = useRestrictUser()
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
@@ -881,8 +895,20 @@ const CloseLong: React.FC<BuyProps> = () => {
             </Box>
           </Box>
 
+          {isRestricted && <RestrictionInfo marginTop="28px" />}
+
           <Box marginTop="28px" className={classes.buttonDiv}>
-            {!connected ? (
+            {isRestricted ? (
+              <PrimaryButtonNew
+                fullWidth
+                variant="contained"
+                onClick={selectWallet}
+                disabled={true}
+                id="open-long-restricted-btn"
+              >
+                {'Unavailable'}
+              </PrimaryButtonNew>
+            ) : !connected ? (
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"

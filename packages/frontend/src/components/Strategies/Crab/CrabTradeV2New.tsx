@@ -5,7 +5,7 @@ import Confirmed, { ConfirmType } from '@components/TradeNew/Confirmed'
 import TradeInfoItem from '@components/Trade/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
-import RestrictionInfo from '@components/RestrictionInfo'
+import RestrictionInfo from '@components/RestrictionInfoNew'
 import { Box, CircularProgress, Switch, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -25,7 +25,7 @@ import {
   VOL_PERCENT_SCALAR,
   WETH_DECIMALS,
   YEAR,
-} from '../../../constants'
+} from '@constants/index'
 import { readyAtom } from 'src/state/squeethPool/atoms'
 import InfoIcon from '@material-ui/icons/Info'
 import { InputToken } from '@components/InputNew'
@@ -63,7 +63,7 @@ import { LinkWrapper } from '@components/LinkWrapper'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
-import { Networks } from '../../../types'
+import { Networks } from 'src/types'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppEffect from '@hooks/useAppEffect'
 import ethLogo from 'public/images/eth-logo.svg'
@@ -486,10 +486,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }, [useUsdc, crabAllowance, withdrawCrabAmount])
 
-  if (isRestricted) {
-    return <RestrictionInfo />
-  }
-
   return (
     <>
       {confirmed ? (
@@ -726,8 +722,20 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               </Box>
             </Box>
 
-            <Box marginTop="24px">
-              {!connected ? (
+            {isRestricted && <RestrictionInfo marginTop="28px" />}
+
+            <Box marginTop="28px">
+              {isRestricted ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  disabled={true}
+                  id="open-long-restricted-btn"
+                >
+                  {'Unavailable'}
+                </PrimaryButtonNew>
+              ) : !connected ? (
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"

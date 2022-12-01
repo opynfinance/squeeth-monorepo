@@ -63,6 +63,8 @@ import osqthLogo from 'public/images/osqth-logo.svg'
 import Checkbox from '@components/Checkbox'
 import CollatRatioSlider from '@components/CollatRatioSlider'
 import { formatNumber, formatCurrency } from '@utils/formatter'
+import RestrictionInfo from '@components/RestrictionInfoNew'
+import { useRestrictUser } from '@context/restrict-user'
 
 const DEFAULT_COLLATERAL_RATIO = 225
 
@@ -259,6 +261,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
+  const { isRestricted } = useRestrictUser()
 
   const { shortHelper } = useAtomValue(addressesAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
@@ -647,8 +650,20 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
             </Box>
           </Box>
 
+          {isRestricted && <RestrictionInfo marginTop="28px" />}
+
           <Box marginTop="28px" className={classes.buttonDiv}>
-            {!connected ? (
+            {isRestricted ? (
+              <PrimaryButtonNew
+                fullWidth
+                variant="contained"
+                onClick={selectWallet}
+                disabled={true}
+                id="open-long-restricted-btn"
+              >
+                {'Unavailable'}
+              </PrimaryButtonNew>
+            ) : !connected ? (
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
@@ -764,6 +779,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { data: osqthPrice } = useOSQTHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
+  const { isRestricted } = useRestrictUser()
 
   useAppEffect(() => {
     if (vault) {
@@ -1180,8 +1196,20 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               </Box>
             </Box>
 
-            <Box marginTop="24px" className={classes.buttonDiv}>
-              {!connected ? (
+            {isRestricted && <RestrictionInfo marginTop="28px" />}
+
+            <Box marginTop="28px" className={classes.buttonDiv}>
+              {isRestricted ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  disabled={true}
+                  id="open-long-restricted-btn"
+                >
+                  {'Unavailable'}
+                </PrimaryButtonNew>
+              ) : !connected ? (
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"
