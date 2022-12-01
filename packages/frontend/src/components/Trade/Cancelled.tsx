@@ -7,10 +7,13 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
+    container: {
+      textAlign: 'center',
+      marginBottom: theme.spacing(4),
+    },
     etherscan: {
       color: theme.palette.primary.main,
       marginTop: theme.spacing(1),
-      marginBotton: theme.spacing(3),
     },
     thirdHeading: {
       marginTop: theme.spacing(3),
@@ -55,7 +58,7 @@ const Cancelled: React.FC<ConfirmedProps> = ({ txnHash }) => {
   const networkId = useAtomValue(networkIdAtom)
 
   return (
-    <div>
+    <div className={classes.container}>
       <div>
         <Typography variant="body1" className={classes.confMsg}>
           You cancelled the transaction

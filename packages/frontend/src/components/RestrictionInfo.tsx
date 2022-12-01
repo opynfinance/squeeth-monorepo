@@ -1,23 +1,15 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import Box from '@material-ui/core/Box'
-import NorthEastOutlinedIcon from '@material-ui/icons/CallMade'
+import { Typography, BoxProps } from '@material-ui/core'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import clsx from 'clsx'
+
+import Alert from './Alert'
 
 const useStyles = makeStyles(() =>
   createStyles({
-    restrictedInfo: {
-      margin: '1em auto 1em',
-      width: '90%',
-      maxWidth: '350px',
-      background: '#181B1C',
-      padding: '1em',
-      borderRadius: 15,
-      boxShadow: '5px 3px 32px -6px rgba(14,103,112,0.56)',
-    },
-    icon: {
-      fontSize: '10px',
-    },
+    text: { fontWeight: 500, fontSize: '15px', color: '#fff' },
+    link: { textDecoration: 'underline' },
   }),
 )
 
@@ -35,27 +27,22 @@ const restrictedCountries: Record<string, string> = {
   ZW: 'Zimbabwe',
 }
 
-const RestrictionInfo = () => {
+const RestrictionInfo: React.FC<BoxProps> = (props) => {
   const classes = useStyles()
   const router = useRouter()
   const userLocation = router.query?.ct
   return (
-    <Box className={classes.restrictedInfo}>
-      <p>
-        <span>
-          This app is not available in {userLocation ? restrictedCountries[String(userLocation)] : 'your country'}. More
-          details can be found in our
-        </span>
-        <Link href="/terms-of-service">
-          <a target="_blank"> Terms of service. </a>
-        </Link>
-        <Link href="/terms-of-service">
-          <a target="_blank">
-            <NorthEastOutlinedIcon className={classes.icon} />
-          </a>
-        </Link>
-      </p>
-    </Box>
+    <Alert severity="warning" showIcon={false} {...props}>
+      <Typography className={classes.text}>
+        This app is not available in {userLocation ? restrictedCountries[String(userLocation)] : 'your country'}. More
+        details can be found in our{' '}
+        <Typography className={clsx(classes.text, classes.link)} component="span">
+          <Link href="/terms-of-service">
+            <a target="_blank"> Terms of service. </a>
+          </Link>
+        </Typography>
+      </Typography>
+    </Alert>
   )
 }
 
