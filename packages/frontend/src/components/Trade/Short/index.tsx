@@ -650,9 +650,9 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
             </Box>
           </Box>
 
-          {isRestricted && <RestrictionInfo marginTop="28px" />}
+          {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-          <Box marginTop="28px" className={classes.buttonDiv}>
+          <Box marginTop="24px" className={classes.buttonDiv}>
             {isRestricted ? (
               <PrimaryButtonNew
                 fullWidth
@@ -1196,9 +1196,9 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="28px" />}
+            {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-            <Box marginTop="28px" className={classes.buttonDiv}>
+            <Box marginTop="24px" className={classes.buttonDiv}>
               {isRestricted ? (
                 <PrimaryButtonNew
                   fullWidth

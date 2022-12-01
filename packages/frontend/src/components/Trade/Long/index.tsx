@@ -535,6 +535,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                   <TradeSettings />
                 </Box>
               </Box>
+
               <Box marginTop="24px">
                 <Typography variant="h4" className={classes.subtitle}>
                   Projection
@@ -550,9 +551,9 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
                 </Box>
               </Box>
 
-              {isRestricted && <RestrictionInfo marginTop="28px" />}
+              {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-              <Box marginTop="28px" className={classes.buttonDiv}>
+              <Box marginTop="24px" className={classes.buttonDiv}>
                 {isRestricted ? (
                   <PrimaryButtonNew
                     fullWidth
@@ -895,9 +896,9 @@ const CloseLong: React.FC<BuyProps> = () => {
             </Box>
           </Box>
 
-          {isRestricted && <RestrictionInfo marginTop="28px" />}
+          {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-          <Box marginTop="28px" className={classes.buttonDiv}>
+          <Box marginTop="24px" className={classes.buttonDiv}>
             {isRestricted ? (
               <PrimaryButtonNew
                 fullWidth
