@@ -83,7 +83,7 @@ export function handleSetCap(event: BullStrategyDeposit): void {
   userTx.wethLentAmount = event.params.wethLent
   userTx.usdcBorrowedAmount = event.params.usdcBorrowed
   userTx.owner = event.transaction.from
-  userTx.type = 'WITHDRAW'
+  userTx.type = 'SET_CAP'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
@@ -246,4 +246,28 @@ export function handleFullRebalance(event: FullRebalance): void {
   rebalance.isDepositingInCrab = event.params.isDepositingInCrab
   rebalance.timestamp = event.block.timestamp
   rebalance.save()
+}
+
+export function handleFlashDeposit(event: FlashDeposit): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.ethAmount = event.transaction.value
+  userTx.crabAmount = event.params.crabAmount
+  userTx.user = event.transaction.from
+  userTx.wethLentAmount = event.params.wethToLend
+  userTx.usdcBorrowedAmount = event.params.usdcToBorrow
+  userTx.owner = event.transaction.from
+  userTx.type = 'FLASH_DEPOSIT'
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+}
+
+export function handleFlashWithdraw(event: FlashWithdraw): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.bullAmount = event.params.bullAmount
+  userTx.ethAmount = event.params.ethReturned
+  userTx.user = event.transaction.from
+  userTx.owner = event.transaction.from
+  userTx.type = 'FLASH_WITHDRAW'
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
 }
