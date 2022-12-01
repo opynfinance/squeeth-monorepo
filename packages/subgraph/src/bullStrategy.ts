@@ -24,26 +24,19 @@ import {
     FlashWithdraw,
     FlashDeposit,
 } from "../generated/FlashBull/FlashBull"
-import { BigInt, Bytes, ethereum, json, log } from "@graphprotocol/graph-ts"
 import {
-    CrabHedgeTimeThreshold,
-    ExecuteTimeLockTx,
-    HedgeOTC as HedgeOTCSchema,
-    HedgeOTCSingle as HedgeOTCSingleSchema,
-    SetHedgingTwapPeriod as SetHedgingTwapPeriodSchema,
     SetAddress as SetAddressSchema,
+    SetUpperLower as SetUpperLowerSchema,
+    LeverageRebalance as LeverageRebalanceSchema,
     SetStrategyCap as SetStrategyCapSchema,
-    SetHedgePriceThreshold as SetHedgePriceThresholdSchema,
-    TimeLockTx,
-    SetOTCPriceTolerance as SetOTCPriceToleranceSchema,
-    VaultTransferred as VaultTransferredSchema,
+    SetParams as SetParamsSchema,
     BullUserTx as BullUserTxSchema,
     BullUserTx,
     Strategy,
-    Vault,
+    FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import { GOERLI_BULL_STRATEGY_ADDR, GOERLI_AUCTION_BULL_ADDR, GOERLI_FLASH_BULL_ADDR } from "./constants";
-  
+import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+
 function loadOrCreateTx(id: string): BullUserTxSchema {
   let userTx = BullUserTx.load(id)
   if (userTx) return userTx
@@ -115,6 +108,14 @@ export function handleSetStrategyCap(event: SetCap): void {
   cap.save();
 }
 
+export function handleSetAuction(event: SetAuction): void {
+  const shutdownContract = new SetAddressSchema(event.transaction.hash.toHex());
+  shutdownContract.oldAddress = event.params.oldAuction;
+  shutdownContract.newAddress = event.params.newAuction;
+  shutdownContract.timestamp = event.block.timestamp;
+  shutdownContract.save();
+}
+
 export function handleRedeemCrabAndWithdrawEth(event: RedeemCrabAndWithdrawEth): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.params.wethBalanceReturned
@@ -173,4 +174,76 @@ export function handleWithdrawShutdown(event: BullStrategyWithdrawShutdown): voi
   userTx.type = 'WITHDRAW_SHUTDOWN'
   userTx.timestamp = event.block.timestamp
   userTx.save()
+}
+
+export function handleAuctionRepayAndWithdrawFromLeverage(event: AuctionRepayAndWithdrawFromLeverage): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.ethAmount = event.params.wethToWithdraw
+  userTx.usdcBorrowedAmount = event.params.usdcToRepay
+  userTx.user = event.transaction.from
+  userTx.owner = event.transaction.from
+  userTx.type = 'AUCTION_REPAY_AND_WITHDRAW_FROM_LEVERAGE'
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
+
+}
+
+export function handleSetCrUpperAndLower(event: SetCrUpperAndLower): void {
+  const params = new SetUpperLowerSchema(event.transaction.hash.toHex());
+  params.oldLower = event.params.oldCrLower
+  params.oldUpper = event.params.oldCrUpper
+  params.newLower = event.params.newCrLower
+  params.newUpper = event.params.newCrUpper
+  params.save()
+}
+
+export function handleSetDeltaUpperAndLower(event: SetDeltaUpperAndLower): void {
+  const params = new SetUpperLowerSchema(event.transaction.hash.toHex());
+  params.oldLower = event.params.oldDeltaLower
+  params.oldUpper = event.params.oldDeltaUpper
+  params.newLower = event.params.newDeltaLower
+  params.newUpper = event.params.newDeltaUpper
+  params.save()
+}
+
+export function handleLeverageRebalance(event: LeverageRebalance): void { 
+  const rebalance = new LeverageRebalanceSchema(event.transaction.hash.toHex());
+  rebalance.isSellingUsdc = event.params.isSellingUsdc
+  rebalance.usdcAmount = event.params.usdcAmount
+  rebalance.wethLimitAmount = event.params.wethLimitAmount
+  rebalance.timestamp = event.block.timestamp
+  rebalance.save()
+}
+
+export function handleSetFullRebalanceClearingPriceTolerance(event: SetFullRebalanceClearingPriceTolerance): void {
+  const params = new SetParamsSchema(event.transaction.hash.toHex());
+  params.oldValue = event.params._oldPriceTolerance
+  params.newValue = event.params._newPriceTolerance
+  params.save()
+}
+
+export function handleSetRebalanceWethLimitPriceTolerance(event: SetRebalanceWethLimitPriceTolerance): void {
+  const params = new SetParamsSchema(event.transaction.hash.toHex());
+  params.oldValue = event.params._oldWethLimitPriceTolerance
+  params.newValue = event.params._newWethLimitPriceTolerance
+  params.save()
+}
+
+export function handleSetAuctionManager(event: SetAuctionManager): void {
+  const shutdownContract = new SetAddressSchema(event.transaction.hash.toHex());
+  shutdownContract.oldAddress = event.params.oldAuctionManager;
+  shutdownContract.newAddress = event.params.newAuctionManager;
+  shutdownContract.timestamp = event.block.timestamp;
+  shutdownContract.save();
+}
+
+export function handleFullRebalance(event: FullRebalance): void { 
+  const rebalance = new FullRebalanceSchema(event.transaction.hash.toHex());
+  rebalance.crabAmount = event.params.crabAmount
+  rebalance.clearingPrice = event.params.clearingPrice
+  rebalance.wPowerPerpAmount = event.params.wPowerPerpAmount
+  rebalance.wethTargetInEuler = event.params.wethTargetInEuler
+  rebalance.isDepositingInCrab = event.params.isDepositingInCrab
+  rebalance.timestamp = event.block.timestamp
+  rebalance.save()
 }
