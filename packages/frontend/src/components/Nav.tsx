@@ -6,17 +6,18 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAtomValue } from 'jotai'
+import useAmplitude from '@hooks/useAmplitude'
 
-import logo from '../../public/images/SqueethLogo.svg'
 import useCopyClipboard from '@hooks/useCopyClipboard'
+import { useWalletBalance } from '@state/wallet/hooks'
+import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { BIG_ZERO } from '@constants/index'
+import logo from 'public/images/SqueethLogo.svg'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
-import { useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO } from '../constants/'
-import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -116,6 +117,19 @@ const Nav: React.FC = () => {
   const { oSqueeth } = useAtomValue(addressesAtom)
   const [navOpen, setNavOpen] = useState(false)
   const [isCopied, setCopied] = useCopyClipboard()
+
+  const router = useRouter()
+  const { track } = useAmplitude()
+  useEffect(() => {
+    router.events.on('routeChangeComplete', (url) => {
+      const e: string = url.split('?')[0].substring(1).toUpperCase()
+      track('NAV_' + e)
+    })
+
+    return () => {
+      router.events.off('routeChangeComplete', () => console.log('Unsubscribed'))
+    }
+  }, [router, track])
 
   return (
     <div className={classes.nav}>
