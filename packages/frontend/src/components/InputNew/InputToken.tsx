@@ -47,16 +47,15 @@ const useInputTokenProps = makeStyles((theme) =>
     },
     adornmentContainer: {
       display: 'flex',
-      alignItems: 'center',
       justifyContent: 'center',
       padding: '2px 10px',
       backgroundColor: theme.palette.background.stone,
       borderRadius: '6px',
     },
     logo: {
-      width: '20px',
-      height: '20px',
-      marginRight: theme.spacing(0.75),
+      width: '18px',
+      height: '18px',
+      marginRight: theme.spacing(1),
     },
   }),
 )
