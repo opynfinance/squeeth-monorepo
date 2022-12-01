@@ -10,7 +10,7 @@ const useStyles = makeStyles((theme) =>
     etherscan: {
       color: theme.palette.primary.main,
       marginTop: theme.spacing(1),
-      marginBotton: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
     thirdHeading: {
       marginTop: theme.spacing(3),
