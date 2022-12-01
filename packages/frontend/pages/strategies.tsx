@@ -1,8 +1,7 @@
-import Nav from '@components/NavNew'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2New'
-import CapDetails from '@components/Strategies/Crab/CapDetails'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2New'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfoNew'
+import Nav from '@components/Nav'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
+import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
 import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
@@ -13,19 +12,14 @@ import { Vaults } from '@constants/enums'
 import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
-import CrabTrade from '@components/Strategies/Crab/CrabTrade'
-import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2New'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { useAtomValue } from 'jotai'
 import {
   crabLoadingAtomV2,
-  crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
-  crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
   ethPriceAtLastHedgeAtomV2,
-  maxCapAtom,
   maxCapAtomV2,
-  timeAtLastHedgeAtom,
   timeAtLastHedgeAtomV2,
 } from 'src/state/crab/atoms'
 import {
@@ -34,13 +28,12 @@ import {
   useSetProfitableMovePercentV2,
   useSetStrategyDataV2,
   useCurrentCrabPositionValue,
-  useSetStrategyData,
 } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
 import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2New'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
 import Metric from '@components/Metric'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2New'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import { formatNumber, formatCurrency } from '@utils/formatter'
 import { Tooltips } from '@constants/enums'
 
@@ -235,17 +228,13 @@ const useStyles = makeStyles((theme) =>
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
-  // which crab strategy to display. V1 or V2.
-  const [displayCrabV1] = useState(false)
-
   const classes = useStyles()
-  const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
-  const vault = useAtomValue(displayCrabV1 ? crabStrategyVaultAtom : crabStrategyVaultAtomV2)
-  const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
-  const timeAtLastHedge = useAtomValue(displayCrabV1 ? timeAtLastHedgeAtom : timeAtLastHedgeAtomV2)
+  const maxCap = useAtomValue(maxCapAtomV2)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
+  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
-  const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
   const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const crabLoading = useAtomValue(crabLoadingAtomV2)
@@ -258,21 +247,14 @@ const Strategies: React.FC = () => {
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
-  const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
-  const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
-
   const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
 
   const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
   const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
   useEffect(() => {
-    if (displayCrabV1) setStrategyData()
-  }, [collatRatio, displayCrabV1, setStrategyData])
-
-  useEffect(() => {
-    if (!displayCrabV1) setStrategyDataV2()
-  }, [collatRatio, displayCrabV1, setStrategyDataV2])
+    setStrategyDataV2()
+  }, [collatRatio, setStrategyDataV2])
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBear
@@ -328,10 +310,7 @@ const Strategies: React.FC = () => {
                   </Typography>
 
                   <Box marginTop="12px">
-                    <CapDetailsComponent
-                      maxCap={maxCap}
-                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
-                    />
+                    <CapDetailsV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                   </Box>
                 </Box>
 
@@ -437,7 +416,7 @@ const Strategies: React.FC = () => {
               </div>
               <div className={classes.rightColumn}>
                 <div className={classes.tradeSection}>
-                  <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                  <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 </div>
               </div>
             </div>
