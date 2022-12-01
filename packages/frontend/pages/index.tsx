@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) =>
     leftColumn: {
       flex: 1,
       minWidth: '480px',
+      [theme.breakpoints.down('xs')]: {
+        minWidth: '320px',
+      },
     },
     rightColumn: {
       flexBasis: '452px',

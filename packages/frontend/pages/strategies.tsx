@@ -23,7 +23,6 @@ import {
   crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
   ethPriceAtLastHedgeAtomV2,
-  loadingAtomV2,
   maxCapAtom,
   maxCapAtomV2,
   timeAtLastHedgeAtom,
@@ -105,6 +104,9 @@ const useStyles = makeStyles((theme) =>
     leftColumn: {
       flex: 1,
       minWidth: '480px',
+      [theme.breakpoints.down('xs')]: {
+        minWidth: '320px',
+      },
     },
     rightColumn: {
       flexBasis: '440px',

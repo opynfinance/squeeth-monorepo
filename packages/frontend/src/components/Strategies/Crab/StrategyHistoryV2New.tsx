@@ -20,6 +20,10 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       gap: '24px',
       flexWrap: 'wrap',
+      flexDirection: 'row',
+      [theme.breakpoints.down('xs')]: {
+        flexDirection: 'column',
+      },
     },
     statHeader: {
       flexBasis: '25%',

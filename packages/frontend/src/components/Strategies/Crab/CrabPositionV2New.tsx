@@ -80,7 +80,7 @@ const CrabPosition: React.FC = () => {
           <Typography>Fetching current position...</Typography>
         </Box>
       ) : (
-        <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px">
+        <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px" flexWrap="wrap">
           <Metric
             label="Position value"
             value={
