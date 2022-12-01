@@ -129,7 +129,7 @@ const Nav: React.FC = () => {
     return () => {
       router.events.off('routeChangeComplete', () => console.log('Unsubscribed'))
     }
-  }, [router, track])
+  }, [router])
 
   return (
     <div className={classes.nav}>
