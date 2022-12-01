@@ -1,5 +1,6 @@
 import Nav from '@components/Nav'
 import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CapDetails from '@components/Strategies/Crab/CapDetails'
 import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
 import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
 import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
@@ -13,20 +14,25 @@ import Image from 'next/image'
 import bull from '../public/images/bull.gif'
 import bear from '../public/images/bear.gif'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
+import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtomValue } from 'jotai'
 import {
-  crabLoadingAtomV2,
   crabStrategyCollatRatioAtomV2,
+  crabStrategyCollatRatioAtom,
   crabStrategyVaultAtomV2,
+  crabStrategyVaultAtom,
   ethPriceAtLastHedgeAtomV2,
   maxCapAtomV2,
+  maxCapAtom,
   timeAtLastHedgeAtomV2,
+  timeAtLastHedgeAtom,
 } from 'src/state/crab/atoms'
 import {
   useCurrentCrabPositionValueV2,
   useSetProfitableMovePercent,
   useSetProfitableMovePercentV2,
   useSetStrategyDataV2,
+  useSetStrategyData,
   useCurrentCrabPositionValue,
 } from 'src/state/crab/hooks'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
@@ -228,16 +234,19 @@ const useStyles = makeStyles((theme) =>
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
+  // which crab strategy to display. V1 or V2.
+  const [displayCrabV1] = useState(false)
+
   const classes = useStyles()
-  const maxCap = useAtomValue(maxCapAtomV2)
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
+  const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
+  const vault = useAtomValue(displayCrabV1 ? crabStrategyVaultAtom : crabStrategyVaultAtomV2)
+  const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
+  const timeAtLastHedge = useAtomValue(displayCrabV1 ? timeAtLastHedgeAtom : timeAtLastHedgeAtomV2)
   const profitableMovePercent = useSetProfitableMovePercent()
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
+  const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
   const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const crabLoading = useAtomValue(crabLoadingAtomV2)
 
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
@@ -247,14 +256,21 @@ const Strategies: React.FC = () => {
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
+  const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
+  const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
+
   const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
 
   const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
   const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
   useEffect(() => {
-    setStrategyDataV2()
-  }, [collatRatio, setStrategyDataV2])
+    if (displayCrabV1) setStrategyData()
+  }, [collatRatio, displayCrabV1, setStrategyData])
+
+  useEffect(() => {
+    if (!displayCrabV1) setStrategyDataV2()
+  }, [collatRatio, displayCrabV1, setStrategyDataV2])
 
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBear
@@ -310,7 +326,10 @@ const Strategies: React.FC = () => {
                   </Typography>
 
                   <Box marginTop="12px">
-                    <CapDetailsV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                    <CapDetailsComponent
+                      maxCap={maxCap}
+                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
+                    />
                   </Box>
                 </Box>
 
@@ -416,7 +435,7 @@ const Strategies: React.FC = () => {
               </div>
               <div className={classes.rightColumn}>
                 <div className={classes.tradeSection}>
-                  <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                  <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
                 </div>
               </div>
             </div>
