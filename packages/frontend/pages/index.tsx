@@ -113,7 +113,7 @@ const Header: React.FC = () => {
     return (
       <>
         <Typography variant="h3" className={classes.title}>
-          Long Squeeth - ETH&sup2; Leverage
+          Long Squeeth: ETH&sup2; Leverage
           <a
             href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684"
             target="_blank"
@@ -143,7 +143,7 @@ const Header: React.FC = () => {
     return (
       <>
         <Typography variant="h3" className={classes.title}>
-          Covered Short Squeeth - Short ETH&sup2; Position
+          Covered Short Squeeth: Short ETH&sup2; Position
           <a
             href="https://medium.com/opyn/squeeth-primer-a-guide-to-understanding-opyns-implementation-of-squeeth-a0f5e8b95684"
             target="_blank"
