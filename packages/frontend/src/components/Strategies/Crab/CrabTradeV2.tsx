@@ -527,7 +527,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
 
           <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
             <Typography variant="h4" className={classes.subtitle}>
-              Strategy Deposit
+              Strategy {depositOption === 0 ? 'Deposit' : 'Withdraw'}
             </Typography>
 
             <Box className={classes.tokenSelectBox}>
