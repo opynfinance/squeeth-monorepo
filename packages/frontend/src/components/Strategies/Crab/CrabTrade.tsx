@@ -1,8 +1,8 @@
 import { PrimaryButton } from '@components/Button'
 import { PrimaryInput } from '@components/Input/PrimaryInput'
 import { SecondaryTabs, SecondaryTab } from '@components/Tabs'
-import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
+import Confirmed, { ConfirmType } from '@components/TradeOld/Confirmed'
+import TradeInfoItem from '@components/TradeOld/TradeInfoItem'
 import { TradeSettings } from '@components/TradeSettings'
 import { useRestrictUser } from '@context/restrict-user'
 import RestrictionInfo from '@components/RestrictionInfo'
@@ -299,8 +299,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                       depositError
                         ? depositError
                         : warning
-                          ? warning
-                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                        ? warning
+                        : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                     }
                     convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                     onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}
