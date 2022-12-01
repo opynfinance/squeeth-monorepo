@@ -716,9 +716,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="28px" />}
+            {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-            <Box marginTop="28px">
+            <Box marginTop="24px">
               {isRestricted ? (
                 <PrimaryButtonNew
                   fullWidth
