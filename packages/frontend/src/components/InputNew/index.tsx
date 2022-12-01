@@ -1,5 +1,5 @@
 import InputBase from './InputBase'
 import InputNumber from './InputNumber'
-import { InputToken, InputTokenDense } from './InputToken'
+import { InputToken } from './InputToken'
 
-export { InputBase, InputNumber, InputToken, InputTokenDense }
+export { InputBase, InputNumber, InputToken }
