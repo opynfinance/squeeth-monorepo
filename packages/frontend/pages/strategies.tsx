@@ -1,47 +1,48 @@
-import Nav from '@components/Nav'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
-import CapDetails from '@components/Strategies/Crab/CapDetails'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
+import BigNumber from 'bignumber.js'
+import React, { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import { toTokenAmount } from '@utils/calculations'
-import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
-import { Vaults } from '@constants/enums'
-import Image from 'next/image'
-import bull from '../public/images/bull.gif'
-import bear from '../public/images/bear.gif'
-import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
-import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import { useAtomValue } from 'jotai'
+
+import Nav from '@components/Nav'
+import CapDetails from '@components/Strategies/Crab/CapDetails'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
+import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
+import CrabTrade from '@components/Strategies/Crab/CrabTrade'
+import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+import Metric from '@components/Metric'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import {
-  crabStrategyCollatRatioAtomV2,
   crabStrategyCollatRatioAtom,
-  crabStrategyVaultAtomV2,
+  crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
+  crabStrategyVaultAtomV2,
   ethPriceAtLastHedgeAtomV2,
-  maxCapAtomV2,
   maxCapAtom,
-  timeAtLastHedgeAtomV2,
+  maxCapAtomV2,
   timeAtLastHedgeAtom,
-} from 'src/state/crab/atoms'
+  timeAtLastHedgeAtomV2,
+} from '@state/crab/atoms'
 import {
   useCurrentCrabPositionValueV2,
   useSetProfitableMovePercent,
   useSetProfitableMovePercentV2,
-  useSetStrategyDataV2,
   useSetStrategyData,
+  useSetStrategyDataV2,
   useCurrentCrabPositionValue,
-} from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
-import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
-import Metric from '@components/Metric'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
+} from '@state/crab/hooks'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from '@state/controller/atoms'
+import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { formatNumber, formatCurrency } from '@utils/formatter'
+import { toTokenAmount } from '@utils/calculations'
 import { Tooltips } from '@constants/enums'
+import { Vaults } from '@constants/enums'
+import bull from 'public/images/bull.gif'
+import bear from 'public/images/bear.gif'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
