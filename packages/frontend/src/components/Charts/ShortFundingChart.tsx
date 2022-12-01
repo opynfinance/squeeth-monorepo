@@ -6,7 +6,6 @@ import React, { useState } from 'react'
 import CustomSwitch, { SwitchItem } from '@components/CustomSwitch'
 import { useNormHistory } from '@hooks/useNormHistory'
 import { Tooltips } from '@constants/enums'
-import { NormHistory } from '../../types/index'
 import { graphOptions } from '../../constants/diagram'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
@@ -18,11 +17,12 @@ const useStyles = makeStyles(() =>
       justifyContent: 'space-between',
       alignItems: 'center',
       flexWrap: 'wrap',
+      marginBottom: '16px',
     },
     legendBox: {
       display: 'flex',
-      gap: '10px',
-      marginTop: '10px',
+      gap: '16px',
+      marginTop: '24px',
       justifyContent: 'center',
     },
     legendContainer: {
@@ -141,7 +141,7 @@ const FundingChart = () => {
             <Chart
               from={startTimestamp}
               to={endTimestamp}
-              legend=""
+              legend="Funding"
               options={chartOptions}
               lineSeries={[{ data: graphData, legend: `${legendText} (%) `, options: { color: '#70E3F6' } }]}
               autoWidth

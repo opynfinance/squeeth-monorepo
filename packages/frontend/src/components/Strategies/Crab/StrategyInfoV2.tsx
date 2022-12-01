@@ -1,23 +1,19 @@
-import ShortSqueethPayoff from '@components/Charts/ShortSqueethPayoff'
 import { Typography, Radio, RadioGroup, FormControl, FormControlLabel, FormLabel } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
-import { Links, Vaults } from '@constants/enums'
-import CrabProfit_Flat from '../../../../public/images/CrabProfit_Flat_v2.svg'
-import CrabProfit_Increase from '../../../../public/images/CrabProfit_Increase_v2.svg'
-import CrabProfit_Decrease from '../../../../public/images/CrabProfit_Decrease_v2.svg'
-import CrabSteps from '../../../../public/images/CrabSteps.svg'
 import Image from 'next/image'
-import { MemoizedCrabStrategyChart as CrabStrategyChart } from '@components/Charts/CrabStrategyChart'
-import { useETHPrice } from '@hooks/useETHPrice'
-import { useSetProfitableMovePercentV2 } from 'src/state/crab/hooks'
+import clsx from 'clsx'
+
+import { Links } from '@constants/enums'
+import CrabProfit_Flat from 'public/images/CrabProfit_Flat_v2.svg'
+import CrabProfit_Increase from 'public/images/CrabProfit_Increase_v2.svg'
+import CrabProfit_Decrease from 'public/images/CrabProfit_Decrease_v2.svg'
+import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
       padding: theme.spacing(0),
-      margin: '40px auto 0',
-      marginTop: theme.spacing(4),
       maxWidth: '840px',
     },
     content: {
@@ -48,25 +44,25 @@ const useStyles = makeStyles((theme) =>
     radioTitle: {
       marginTop: theme.spacing(2),
     },
+    fontColor: {
+      color: '#bdbdbd',
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
   }),
 )
 
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
-  const ethPrice = useETHPrice()
   const profitableMovePercent = useSetProfitableMovePercentV2()
 
   const [profitToggle, setProfitToggle] = React.useState('flat')
 
   return (
     <div className={classes.container}>
-      {/* <Typography variant="h5" color="primary" className={classes.chartTitle}>
-        Historical PnL Simulation
-      </Typography> */}
-      {/* <CrabStrategyChart vault={Vaults.Short} longAmount={0} /> */}
-      <Typography variant="h5" color="primary" className={classes.title}>
-        Profitability between hedges
-      </Typography>
       <FormControl className={classes.radioTitle}>
         <FormLabel>Before the next hedge, if ETH approximately</FormLabel>
         <RadioGroup
@@ -101,25 +97,16 @@ export const StrategyInfo: React.FC = () => {
           <Image src={CrabProfit_Decrease} alt="Profitability Decrease" />
         )}
       </div>
-      <Typography color="textSecondary" variant="subtitle1" className={classes.caption}>
+      <Typography variant="subtitle1" className={clsx(classes.caption, classes.fontColor)}>
         Based on current premiums, crab strategy would be unprofitable if ETH moves more than the profit threshold of
         approximately <b>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction between 2 day hedges. Crab
         hedges approximately three times a week (on MWF). Crab aims to be profitable in USD terms.
       </Typography>
-      {/* <Typography variant="h5" color="primary" className={classes.title}>
-        Payoff
-      </Typography>
-      <ShortSqueethPayoff ethPrice={ethPrice.toNumber()} collatRatio={2} /> */}
-      {/* <Typography variant="h5" color="primary" className={classes.title}>
-        Steps
-      </Typography>
-      <div className={classes.stepsImage}>
-        <Image src={CrabSteps} alt="Steps" />
-      </div> */}
-      <Typography variant="h5" color="primary" className={classes.title}>
+
+      <Typography variant="h4" className={classes.subtitle}>
         Risk
       </Typography>
-      <Typography color="textSecondary" variant="subtitle1" className={classes.content}>
+      <Typography variant="subtitle1" className={clsx(classes.content, classes.fontColor)}>
         If the Crab Strategy falls below the safe collateralization threshold (150%), the strategy is at risk of
         liquidation. Rebalancing based on large ETH price changes helps prevent a liquidation from occurring.
         <br /> <br />

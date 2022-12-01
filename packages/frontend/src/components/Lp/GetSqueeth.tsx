@@ -11,9 +11,9 @@ import { toTokenAmount } from '@utils/calculations'
 import { PrimaryButton } from '../Button'
 import CollatRange from '../CollatRange'
 import { PrimaryInput } from '../Input/PrimaryInput'
-import Long from '../Trade/Long'
-import TradeDetails from '../Trade/TradeDetails'
-import TradeInfoItem from '../Trade/TradeInfoItem'
+import Long from '@components/TradeOld/Long'
+import TradeDetails from '@components/TradeOld/TradeDetails'
+import TradeInfoItem from '@components/TradeOld/TradeInfoItem'
 import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import { useWalletBalance } from 'src/state/wallet/hooks'
 import { connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
@@ -87,7 +87,7 @@ const useStyles = makeStyles((theme) =>
       marginBottom: theme.spacing(1),
       margin: 'auto',
       width: '300px',
-      textDecoration: 'underline'
+      textDecoration: 'underline',
     },
   }),
 )
@@ -296,7 +296,7 @@ const GetSqueeth: React.FC = () => {
             isLPage
             // balance={Number(toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4))}
             open={true}
-          // closeTitle="Sell squeeth ERC20"
+            // closeTitle="Sell squeeth ERC20"
           />
         ) : (
           <MintSqueeth onMint={onMint} />

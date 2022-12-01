@@ -6,22 +6,26 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAtomValue } from 'jotai'
 import useAmplitude from '@hooks/useAmplitude'
 
-import logo from '../../public/images/SqueethLogo.svg'
 import useCopyClipboard from '@hooks/useCopyClipboard'
+import { useWalletBalance } from '@state/wallet/hooks'
+import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { BIG_ZERO } from '@constants/index'
+import logo from 'public/images/SqueethLogo.svg'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
-import { useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO } from '../constants/'
-import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     nav: {
+      maxWidth: '1280px',
+      width: '80%',
+      padding: theme.spacing(0, 2.5),
+      margin: '0 auto',
       height: '64px',
       display: 'flex',
       alignItems: 'center',
@@ -31,6 +35,19 @@ const useStyles = makeStyles((theme) =>
       //background: theme.palette.background.default,
       borderBottom: `1px solid ${theme.palette.background.stone}`,
       backdropFilter: 'blur(30px)',
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+        width: '90%',
+      },
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(0, 2),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(0, 1),
+      },
     },
     logo: {
       marginRight: 'auto',
@@ -47,13 +64,14 @@ const useStyles = makeStyles((theme) =>
       },
     },
     navLink: {
-      margin: theme.spacing(0, 3),
+      margin: theme.spacing(0, 2),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
       fontWeight: 400,
+      letterSpacing: '-0.02em',
       [theme.breakpoints.down('md')]: {
-        margin: theme.spacing(1, 2, 1),
+        margin: theme.spacing(1, 1.5, 1),
       },
       [theme.breakpoints.down(1042)]: {
         margin: theme.spacing(1, 1, 1),

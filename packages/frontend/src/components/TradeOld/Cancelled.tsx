@@ -2,18 +2,15 @@ import { createStyles, makeStyles, Typography } from '@material-ui/core'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 
-import { EtherscanPrefix } from '@constants/index'
-import { networkIdAtom } from '@state/wallet/atoms'
+import { EtherscanPrefix } from '../../constants'
+import { networkIdAtom } from 'src/state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {
-      textAlign: 'center',
-      marginBottom: theme.spacing(4),
-    },
     etherscan: {
       color: theme.palette.primary.main,
       marginTop: theme.spacing(1),
+      marginBottom: theme.spacing(3),
     },
     thirdHeading: {
       marginTop: theme.spacing(3),
@@ -58,7 +55,7 @@ const Cancelled: React.FC<ConfirmedProps> = ({ txnHash }) => {
   const networkId = useAtomValue(networkIdAtom)
 
   return (
-    <div className={classes.container}>
+    <div>
       <div>
         <Typography variant="body1" className={classes.confMsg}>
           You cancelled the transaction

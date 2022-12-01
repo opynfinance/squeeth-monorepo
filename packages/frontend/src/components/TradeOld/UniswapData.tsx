@@ -45,7 +45,14 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minReceived, minReceivedUnit, isMaxSent, pools }) => {
+const UniswapData: React.FC<UniswapDataType> = ({
+  slippage,
+  priceImpact,
+  minReceived,
+  minReceivedUnit,
+  isMaxSent,
+  pools,
+}) => {
   const classes = useStyles()
   const theme = useTheme()
   const [expanded, setExpanded] = React.useState(false)
@@ -57,15 +64,31 @@ const UniswapData: React.FC<UniswapDataType> = ({ slippage, priceImpact, minRece
     return theme.palette.warning.main
   }, [priceImpact, theme.palette.error.main, theme.palette.success.main, theme.palette.warning.main])
 
-  const poolData = useMemo(() => 
-    (pools && pools?.length > 1) ?
-      pools.map((poolInfo, index) => 
-      <TradeInfoItem label={poolInfo[2] + "% in " + poolInfo[0] + " Pool " + (index + 1)} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
-      pools ?    
-      pools.map((poolInfo, index) => <TradeInfoItem label={"LP Fee (" + poolInfo[0] +")"} value={poolInfo[1] / 10000} unit="%" tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas" />) : 
-    null, [pools])
+  const poolData = useMemo(
+    () =>
+      pools && pools?.length > 1
+        ? pools.map((poolInfo, index) => (
+            <TradeInfoItem
+              label={poolInfo[2] + '% in ' + poolInfo[0] + ' Pool ' + (index + 1)}
+              value={poolInfo[1] / 10000}
+              unit="%"
+              tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas"
+            />
+          ))
+        : pools
+        ? pools.map((poolInfo, index) => (
+            <TradeInfoItem
+              label={'LP Fee (' + poolInfo[0] + ')'}
+              value={poolInfo[1] / 10000}
+              unit="%"
+              tooltip="Pool selected by Uniswap Auto Router by optimizing swap price via split routes, multiple hops, and gas"
+            />
+          ))
+        : null,
+    [pools],
+  )
 
-   return (
+  return (
     <div className={classes.container}>
       <Accordion
         classes={{ root: classes.accordionRoot, expanded: classes.accordionExpanded }}
