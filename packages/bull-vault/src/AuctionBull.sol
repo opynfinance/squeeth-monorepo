@@ -1145,14 +1145,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         if (_isDepositingInCrab) {
             require(
-                _price
-                    >= wPowerPerpEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
+                _price >= wPowerPerpEthPrice.wmul((ONE.sub(fullRebalanceClearingPriceTolerance))),
                 "AB17"
             );
         } else {
             require(
-                _price
-                    <= wPowerPerpEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
+                _price <= wPowerPerpEthPrice.wmul((ONE.add(fullRebalanceClearingPriceTolerance))),
                 "AB18"
             );
         }
