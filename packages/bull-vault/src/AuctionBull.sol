@@ -267,6 +267,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     ///@dev _executeCrabDeposit params struct
+
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
