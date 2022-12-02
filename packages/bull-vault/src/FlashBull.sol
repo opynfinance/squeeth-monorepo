@@ -21,7 +21,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 /**
  * Error code
  * FB0: can only receive eth from weth contract or bull strategy
-*/
+ */
 
 /**
  * @notice FlashBull contract
