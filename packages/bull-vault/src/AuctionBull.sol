@@ -122,10 +122,15 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     address private immutable usdc;
     /// @dev WETH address
     address private immutable weth;
+    /// @dev bull strategy address
     address private immutable bullStrategy;
+    /// @dev wPowerPerp/eth uniswap pool address
     address private immutable ethWPowerPerpPool;
+    /// @dev eth/usdc uniswap pool address
     address private immutable ethUSDCPool;
+    /// @dev wPowerPerp address
     address private immutable wPowerPerp;
+    /// @dev crab strategy address
     address private immutable crab;
     /// @dev euler eToken for WETH
     address private immutable eToken;
@@ -162,7 +167,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         FULL_REBALANCE_SELL_WETH_REPAY_USDC_DEPOSIT_INTO_CRAB,
         FULL_REBALANCE_REPAY_USDC_DEPOSIT_WETH
     }
-
+    ///@dev fullRebalance order struct
     struct Order {
         uint256 bidId;
         address trader;
@@ -175,7 +180,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bytes32 r;
         bytes32 s;
     }
-
+    ///@dev _executeCrabDeposit params struct
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
@@ -184,6 +189,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint24 ethUsdcPoolFee;
     }
 
+    ///@dev _executeLeverageComponentRebalancing params struct
     struct ExecuteLeverageComponentRebalancingParams {
         uint256 wethTargetInEuler;
         uint256 wethLimitPrice;
@@ -213,6 +219,16 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+    
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
 
     constructor(
         address _auctionManager,
@@ -246,6 +262,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         );
     }
 
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
     receive() external payable {
         require(msg.sender == address(bullStrategy));
     }
@@ -317,7 +336,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
     /**
      * @notice set strategy lower and upper delta to ETH price
-     * @dev should only be callable by owner
+     * @dev can only be callable by owner
      * @param _deltaLower lower delta scaled by 1e18
      * @param _deltaUpper upper delta scaled by 1e18
      */
@@ -331,7 +350,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @dev rebalance delta and collateral ratio of strategy using an array of signed orders
+     * @notice rebalance delta and collateral ratio of strategy using an array of signed orders
+     * @dev can only be called by the auction manager
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
      * @param _clearingPrice clearing price in WETH per wPowerPerp, in 1e18 units
@@ -458,14 +478,17 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function useNonce(uint256 _nonce) external {
         _useNonce(msg.sender, _nonce);
     }
-
+    /**
+     * @notice returns the domain separator
+     * @return the domain separator
+     */
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
 
     /**
-     * @notice get current delta and bull collateral ratio
+     * @notice get current bull strategy delta and collateral ratio
      * @return delta and collateral ratio
      */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
@@ -477,7 +500,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _orders list of orders
      * @param remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
-     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
+     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from Crab
      */
     function _pullFundsFromOrders(
         Order[] memory _orders,
@@ -519,7 +542,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _orders list of orders
      * @param remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
-     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from crab
+     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from Crab
      */
 
     function _pushFundsFromOrders(
@@ -540,7 +563,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice execute crab deposit
+     * @notice execute crab deposit as well as changes to euler collateral and debt as part of a full rebalance
      * @param _params ExecuteCrabDepositParams struct
      */
     function _executeCrabDeposit(ExecuteCrabDepositParams memory _params) internal {
@@ -601,7 +624,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @dev Uniswap V3 internal callback
+     * @notice uniswap flash swap callback function to handle different types of flashswaps
+     * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
@@ -710,7 +734,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice rebalance bull strategy delta by borrowing or repaying USDC
+     * @notice rebalance bull strategy delta by borrowing or repaying USDC and changing eth collateral as part of a full rebalance when withdrawing from crab
      * @param _params ExecuteLeverageComponentRebalancingParams struct
      */
     function _executeLeverageComponentRebalancing(
@@ -955,7 +979,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @notice check that the proposed auction price is within a tolerance of the current Uniswap twap
      * @param _price clearing price provided by manager
      * @param _isDepositingInCrab is bull depositing in Crab
      */
@@ -983,7 +1007,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @notice check that the proposed auction price is within a tolerance of the current Uniswap twap
      * @param _wethLimitPrice WETH limit price provided by manager
      */
     function _checkRebalanceLimitPrice(uint256 _wethLimitPrice) internal view {

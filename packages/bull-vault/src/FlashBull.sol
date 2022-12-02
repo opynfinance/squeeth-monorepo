@@ -27,7 +27,9 @@ contract FlashBull is UniFlash {
     using StrategyMath for uint256;
     using Address for address payable;
 
+    /// @dev 1e18
     uint256 private constant ONE = 1e18;
+    /// @dev TWAP period
     uint32 private constant TWAP = 420;
 
     /// @dev enum to differentiate between Uniswap swap callback function source
@@ -137,7 +139,8 @@ contract FlashBull is UniFlash {
 
     /**
      * @notice flash deposit into strategy, providing ETH, selling wPowerPerp and USDC, and receiving strategy tokens
-     * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wPowerPerp and USDC
+     * @dev this function will execute a flash swap where it receives ETH from selling wPowerPerp and deposits into crab, 
+     * @dev and buys ETH for USDC and repays the flashswap by depositing ETH into Euler and borrowing USDC and by minted wPowerPerp from depositing
      * @param _params FlashDepositParams params
      */
     function flashDeposit(FlashDepositParams calldata _params) external payable {
@@ -200,7 +203,9 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @notice flash withdraw from strategy, receiving ETH, providing wPowerPerp and USDC, and providing strategy tokens
+     * @notice flash withdraw from strategy, receiving ETH and providing strategy tokens
+     * @dev buys wPowerPerp via flashswap for ETH to withdraw from crab and sells ETH for USDC to repay Euler debt and withdraw Euler collateral
+     * @dev proceeds from crab withdrawal and euler collateral are used to repay the flashswaps
      * @param _params FlashWithdrawParams struct
      */
     function flashWithdraw(FlashWithdrawParams calldata _params) external {
@@ -244,7 +249,7 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @notice uniswap flash swap callback function
+     * @notice uniswap flash swap callback function to handle different types of flashswaps
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
      * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
@@ -348,6 +353,11 @@ contract FlashBull is UniFlash {
 
         return _amount;
     }
+
+    /**
+     * @notice get crab vault debt and collateral details
+     * @return vault eth collateral, vault wPowerPerp debt
+     */
 
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
