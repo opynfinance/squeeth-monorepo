@@ -121,7 +121,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice set strategy cap which is checked on deposits and compared against the collateral in Euler  
+     * @notice set strategy cap which is checked on deposits and compared against the collateral in Euler
      * @param _cap strategy cap
      */
     function setCap(uint256 _cap) external onlyOwner {

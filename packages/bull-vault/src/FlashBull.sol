@@ -139,7 +139,7 @@ contract FlashBull is UniFlash {
 
     /**
      * @notice flash deposit into strategy, providing ETH, selling wPowerPerp and USDC, and receiving strategy tokens
-     * @dev this function will execute a flash swap where it receives ETH from selling wPowerPerp and deposits into crab, 
+     * @dev this function will execute a flash swap where it receives ETH from selling wPowerPerp and deposits into crab,
      * @dev and buys ETH for USDC and repays the flashswap by depositing ETH into Euler and borrowing USDC and by minted wPowerPerp from depositing
      * @param _params FlashDepositParams params
      */

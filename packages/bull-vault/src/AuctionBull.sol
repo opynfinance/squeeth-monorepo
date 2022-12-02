@@ -168,6 +168,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         FULL_REBALANCE_REPAY_USDC_DEPOSIT_WETH
     }
     ///@dev fullRebalance order struct
+
     struct Order {
         uint256 bidId;
         address trader;
@@ -181,6 +182,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bytes32 s;
     }
     ///@dev _executeCrabDeposit params struct
+
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
@@ -219,7 +221,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
-    
+
     /**
      * @notice constructor for AuctionBull
      * @param _auctionManager the address that can run auctions
@@ -483,6 +485,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @return the domain separator
      */
     // solhint-disable-next-line func-name-mixedcase
+
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }
