@@ -8,6 +8,7 @@ import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
 import useAppMemo from '@hooks/useAppMemo'
 import { InputNumber } from '@components/InputNew'
+import Alert from '@components/Alert'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -44,18 +45,18 @@ const useStyles = makeStyles((theme) =>
 
 function LongChartPayoff() {
   const [days, setDays] = useAtom(daysAtom)
-  const query = useLongChartData()
+  const { isLoading, data } = useLongChartData()
 
-  const longEthPNL = query.data?.longEthPNL
-  const longSeries = query.data?.longSeries
-  const positionSizeSeries = query.data?.positionSizeSeries
-  const squeethIsLive = query.data?.squeethIsLive
+  const longEthPNL = data?.longEthPNL
+  const longSeries = data?.longSeries
+  const squeethIsLive = data?.squeethIsLive
 
   const classes = useStyles()
+  const inputError = days === 0 ? 'Nothing to show for 0 days' : ''
 
   // plot line data
   const lineSeries = useAppMemo(() => {
-    if (!longEthPNL || !longSeries || longSeries.length === 0 || !positionSizeSeries || !squeethIsLive) return
+    if (isLoading || !!inputError) return
 
     const liveIndex = Math.max(
       0,
@@ -85,9 +86,7 @@ function LongChartPayoff() {
         },
       },
     ]
-
-    return []
-  }, [longEthPNL, longSeries, positionSizeSeries, squeethIsLive])
+  }, [longEthPNL, longSeries, squeethIsLive, isLoading, inputError])
 
   const chartOptions = useAppMemo(() => {
     return {
@@ -115,6 +114,7 @@ function LongChartPayoff() {
             id="collateral-ratio-input"
             value={days}
             onInputChange={(value) => setDays(parseInt(value))}
+            error={!!inputError}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -129,7 +129,15 @@ function LongChartPayoff() {
 
       <div className={classes.payoffContainer}>
         <div style={{ marginTop: '8px' }}>
-          {lineSeries ? (
+          {isLoading ? (
+            <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+              <CircularProgress size={40} color="secondary" />
+            </Box>
+          ) : inputError ? (
+            <Box display="flex" height="300px" alignItems="center" justifyContent="center">
+              <Alert severity="error">{inputError}</Alert>
+            </Box>
+          ) : (
             <Chart
               from={startTimestamp}
               to={endTimestamp}
@@ -140,10 +148,6 @@ function LongChartPayoff() {
               height={300}
               darkTheme
             />
-          ) : (
-            <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
-              <CircularProgress size={40} color="secondary" />
-            </Box>
           )}
 
           <div className={classes.legendBox}>
