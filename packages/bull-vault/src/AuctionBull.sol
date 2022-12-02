@@ -102,6 +102,7 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB17: price too low relative to Uniswap twap
  * AB18: price too high relative to Uniswap twap
  * AB19: auction manager can not be 0 address
+ * AB20: can only receive eth from bull strategy
  */
 
 /**
@@ -298,7 +299,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == address(bullStrategy));
+        require(msg.sender == address(bullStrategy), "AB20");
     }
 
     /**
