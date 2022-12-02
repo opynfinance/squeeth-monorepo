@@ -166,10 +166,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    infoIcon: {
-      marginLeft: theme.spacing(0.5),
-      color: theme.palette.text.secondary,
-    },
     squeethExp: {
       display: 'flex',
       justifyContent: 'space-between',
