@@ -1,4 +1,4 @@
-import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse } from '@material-ui/core'
+import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse, Tooltip } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
@@ -50,6 +50,8 @@ import Confirmed, { ConfirmType } from '../Confirmed'
 import Metric from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { useRestrictUser } from '@context/restrict-user'
+import { Tooltips } from '@constants/enums'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -164,10 +166,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
-    infoIcon: {
-      marginLeft: theme.spacing(0.5),
-      color: theme.palette.text.secondary,
-    },
     squeethExp: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -257,8 +255,35 @@ const useStyles = makeStyles((theme) =>
     txStatus: {
       marginTop: theme.spacing(4),
     },
+    labelContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      color: 'rgba(255, 255, 255, 0.5)',
+    },
+    label: {
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+    },
+    infoIcon: {
+      fontSize: '15px',
+      marginLeft: theme.spacing(0.5),
+    },
   }),
 )
+
+const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
+  const classes = useStyles()
+
+  return (
+    <div className={classes.labelContainer}>
+      <Typography className={classes.label}>{label}</Typography>
+      <Tooltip title={tooltipTitle}>
+        <InfoIcon fontSize="small" className={classes.infoIcon} />
+      </Tooltip>
+    </div>
+  )
+}
 
 const FUNDING_MOVE_THRESHOLD = 1.3
 
@@ -543,11 +568,15 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
 
                 <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="16px">
                   <Metric
-                    label="Value if ETH down 50%"
+                    label={<Label label="Value if ETH -50%" tooltipTitle={Tooltips.ETHDown50} />}
                     value={formatCurrency(Number(squeethExposure * 0.25))}
                     isSmall
                   />
-                  <Metric label="Value if ETH up 2x" value={formatCurrency(Number(squeethExposure * 4))} isSmall />
+                  <Metric
+                    label={<Label label="Value if ETH 2x" tooltipTitle={Tooltips.ETHUp2x} />}
+                    value={formatCurrency(Number(squeethExposure * 4))}
+                    isSmall
+                  />
                 </Box>
               </Box>
 

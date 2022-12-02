@@ -83,7 +83,8 @@ export enum Tooltips {
   FundingAnnual = 'Annual Premium is calculated as (Daily Premium * 365.25)',
   VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
   osqthRefVol = 'Squeeth reference volatility based on deribit options and squeeth replicating portfolio. Squeeth ref vol is calculated/refreshed every 5 minutes.',
- 
+  ETHUp2x = 'The value of your position if ETH goes up 2x, not including premiums',
+  ETHDown50 = 'The value of your position if ETH goes down 50%, not including premiums',
 }
 
 export enum Links {
