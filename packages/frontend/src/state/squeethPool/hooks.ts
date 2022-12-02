@@ -3,10 +3,10 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
 import useUniswapTicks from '@hooks/useUniswapTicks'
-import { CurrencyAmount, Ether, Percent, Token, TradeType } from '@uniswap/sdk-core'
+import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
+import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { useAtomValue } from 'jotai'
@@ -20,19 +20,18 @@ import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
 import { Pair } from '@uniswap/v2-sdk'
+import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 
 import {
   poolAtom,
   readyAtom,
   squeethInitialPriceAtom,
   squeethInitialPriceErrorAtom,
-  squeethPriceeAtom,
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
 import { computeRealizedLPFeePercent } from './price'
 import { slippageAmountAtom } from '../trade/atoms'
-import { useState } from 'react'
 import { getErrorMessage } from '@utils/error'
 // import { BaseProvider } from '@ethersproject/providers'
 // import {BaseProvider} from '@ethers
@@ -199,32 +198,24 @@ export const useGetBuyQuoteForETH = () => {
 }
 
 export const useUpdateSqueethPrices = () => {
+  const { getExactIn } = useUniswapQuoter()
+
   const setSqueethInitialPrice = useUpdateAtom(squeethInitialPriceAtom)
   const setSqueethInitialPriceError = useUpdateAtom(squeethInitialPriceErrorAtom)
-  const setSqueethPrice = useUpdateAtom(squeethPriceeAtom)
   const setReady = useUpdateAtom(readyAtom)
+  const { oSqueeth, weth } = useAtomValue(addressesAtom)
 
-  const squeethToken = useAtomValue(squeethTokenAtom)
-  const pool = useAtomValue(poolAtom)
-  const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const getBuyQuoteForETH = useGetBuyQuoteForETH()
   useAppEffect(() => {
-    if (!squeethToken?.address || !pool) return
-    getBuyQuoteForETH(new BigNumber(1))
-      .then((val) => {
-        if (val) setSqueethPrice(val.amountOut)
-        setSqueethInitialPrice(
-          new BigNumber(
-            !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
-          ),
-        )
-        setReady(true)
-      })
+    getExactIn(oSqueeth, weth, fromTokenAmount(1, OSQUEETH_DECIMALS), UNI_POOL_FEES, DEFAULT_SLIPPAGE)
+      .then((quote) => setSqueethInitialPrice(toTokenAmount(quote.minAmountOut, WETH_DECIMALS)))
       .catch((error) => {
         console.error(error)
         setSqueethInitialPriceError(getErrorMessage(error))
       })
-  }, [squeethToken?.address, pool?.token1Price.toFixed(18), isWethToken0])
+      .finally(() => {
+        setReady(true)
+      })
+  }, [getExactIn, oSqueeth, weth, setReady, setSqueethInitialPrice, setSqueethInitialPriceError])
 }
 
 export const useGetWSqueethPositionValue = () => {
