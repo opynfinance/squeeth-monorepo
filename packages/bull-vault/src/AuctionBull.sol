@@ -231,7 +231,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
-    
+
     /**
      * @notice constructor for AuctionBull
      * @param _auctionManager the address that can run auctions
