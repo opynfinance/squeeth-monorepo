@@ -672,8 +672,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function _pushFundsFromOrders(
         Order[] memory _orders,
         uint256 remainingAmount,
-        uint256 _clearingPrice,
-        bool _isDepositingInCrab
+        uint256 _clearingPrice
     ) internal {
         uint256 ordersLength = _orders.length;
         for (uint256 i; i < ordersLength; ++i) {
