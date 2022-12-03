@@ -206,6 +206,50 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
     }
 
+    function testInitialDepositWithInsufficient() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        vm.expectRevert(bytes("LB0"));
+        // Deposit 1 ETH less than needed
+        bullStrategy.deposit{value: wethToLend.sub(1e18)}(crabToDeposit);
+        vm.stopPrank();
+
+    }
+
+
+    function testInitialDepositWithRefund() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
+
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
+        // Deposit 1 ETH more than needed (will refund)
+        bullStrategy.deposit{value: wethToLend.add(1e18)}(crabToDeposit);
+        vm.stopPrank();
+        uint256 userEthBalanceAfter = address(user1).balance;
+        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
+        
+        assertEq(userEthBalanceBefore.sub(userEthBalanceAfter), wethToLend);
+        assertEq(bullCrabBalanceAfter.sub(crabToDeposit), bullCrabBalanceBefore);
+        assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertTrue(
+            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
+        );
+        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+    }
+
+
+
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();

@@ -174,7 +174,11 @@ contract BullStrategy is ERC20, LeverageBull {
 
         require(_totalWethInEuler <= strategyCap, "BS2");
 
+        // transfer borrowed USDC to depositor
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
+
+        // refund unused ETH
+        payable(msg.sender).sendValue(address(this).balance);
 
         emit Deposit(msg.sender, _crabAmount, wethLent, usdcBorrowed);
     }
