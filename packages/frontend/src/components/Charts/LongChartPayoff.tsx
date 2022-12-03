@@ -1,14 +1,13 @@
 import { Box, createStyles, makeStyles, CircularProgress, Typography, InputAdornment } from '@material-ui/core'
 import dynamic from 'next/dynamic'
 import { useAtom } from 'jotai'
-import React, { memo } from 'react'
+import React, { memo, useCallback } from 'react'
 
 import { graphOptions } from '@constants/diagram'
 import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
 import useAppMemo from '@hooks/useAppMemo'
 import { InputNumber } from '@components/InputNew'
-import Alert from '@components/Alert'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -52,11 +51,10 @@ function LongChartPayoff() {
   const squeethIsLive = data?.squeethIsLive
 
   const classes = useStyles()
-  const inputError = days === 0 ? 'Nothing to show for 0 days' : ''
 
   // plot line data
   const lineSeries = useAppMemo(() => {
-    if (isLoading || !!inputError) return
+    if (isLoading) return
 
     const liveIndex = Math.max(
       0,
@@ -86,7 +84,7 @@ function LongChartPayoff() {
         },
       },
     ]
-  }, [longEthPNL, longSeries, squeethIsLive, isLoading, inputError])
+  }, [longEthPNL, longSeries, squeethIsLive, isLoading])
 
   const chartOptions = useAppMemo(() => {
     return {
@@ -104,6 +102,18 @@ function LongChartPayoff() {
     [longSeries],
   )
 
+  const handleDaysChange = useCallback(
+    (value: string) => {
+      const intValue = parseInt(value)
+      if (intValue < 1) {
+        setDays(1)
+      } else {
+        setDays(intValue)
+      }
+    },
+    [setDays],
+  )
+
   return (
     <>
       <Box display="flex" justifyContent="flex-end" marginBottom="16px">
@@ -113,8 +123,7 @@ function LongChartPayoff() {
           <InputNumber
             id="collateral-ratio-input"
             value={days}
-            onInputChange={(value) => setDays(parseInt(value))}
-            error={!!inputError}
+            onInputChange={handleDaysChange}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end" style={{ opacity: '0.5' }}>
@@ -132,10 +141,6 @@ function LongChartPayoff() {
           {isLoading ? (
             <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
               <CircularProgress size={40} color="secondary" />
-            </Box>
-          ) : inputError ? (
-            <Box display="flex" height="300px" alignItems="center" justifyContent="center">
-              <Alert severity="error">{inputError}</Alert>
             </Box>
           ) : (
             <Chart
