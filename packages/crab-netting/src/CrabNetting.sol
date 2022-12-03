@@ -480,7 +480,7 @@ contract CrabNetting is Ownable, EIP712 {
     function _debtToMint(uint256 _amount) internal view returns (uint256) {
         uint256 feeAdjustment = _calcFeeAdjustment();
         (,, uint256 collateral, uint256 debt) = ICrabStrategyV2(crab).getVaultDetails();
-        uint256 wSqueethToMint = (_amount * debt) / (collateral + (debt * feeAdjustment));
+        uint256 wSqueethToMint = (_amount * debt) / (collateral + (debt * feeAdjustment) / 1e18);
         return wSqueethToMint;
     }
 
