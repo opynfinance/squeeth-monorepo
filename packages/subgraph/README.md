@@ -6,7 +6,8 @@ Make sure to create a subgraph project and have an access token. If you want to 
 
 To store the access token in your computer, run `graph auth --product hosted-service <ACCESS_TOKEN>`
 
-- To copy the config and ABIs run `node scripts/publish.js` under hadhat folder of our repo. This will copy all your ABIs and create config files under the subgraph folder
+- To copy the config and ABIs from `hardhat` package, run `node scripts/publish.js` under hadhat folder of our repo. This will copy all your ABIs and create config files under the subgraph folder
+- Make sure to manually copy ABIs from `bull-vault` package, add addresses and starting block in `config` folder for the related network json file
 - Prepare the subgraph for a particular environment using `yarn prepare:ropsten` or `yarn prepare:mainnet`
 - Generate types using `yarn codegen`
 - Write compiled subgraph to /build, using `yarn build`
