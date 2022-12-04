@@ -150,7 +150,7 @@ export function handleShutdownRepayAndWithdraw(event: ShutdownRepayAndWithdraw):
 
 export function handleFarm(event: Farm): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
-  userTx.erc20Token = String(event.params.asset)
+  userTx.erc20Token = event.params.asset.toHex()
   userTx.user = event.params.receiver
   userTx.owner = event.transaction.from
 }
