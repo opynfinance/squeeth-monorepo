@@ -1,7 +1,8 @@
-import CookieConsent from 'react-cookie-consent'
-import { CookieNames } from '@utils/cookies'
-import { createStyles, makeStyles } from '@material-ui/core'
-import Link from 'next/link'
+import CookieConsent, { Cookies } from "react-cookie-consent";
+import { CookieNames } from "@utils/cookies";
+import { createStyles, makeStyles } from "@material-ui/core";
+import { track } from "@amplitude/analytics-browser";
+import { EVENT_NAME } from "@utils/amplitude";
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -28,6 +29,9 @@ const CookiePopUp: React.FC = () => {
       <CookieConsent
         location="none"
         buttonText="Accept"
+        onAccept={() => {
+          track(EVENT_NAME.COOKIE_ACCEPTED)
+        }}
         cookieName={CookieNames.Consent}
         style={{ background: '#3F4243', borderRadius: '10px', textAlign: 'left' }}
         buttonStyle={{
