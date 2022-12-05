@@ -10,7 +10,7 @@ contract GoerliDeploy is DeployScript {
     address public constant powerTokenControllerAddress = 0x6FC3f76f8a2D256Cc091bD58baB8c2Bc3F51d508;
     address public constant eulerAddress = 0x931172BB95549d0f29e10ae2D079ABA3C63318B3;
     address public constant eulerMarketsModuleAddress = 0x3EbC39b84B1F856fAFE9803A9e1Eae7Da016Da36;
-    address public constant uniFactoryAddress = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public constant uniFactoryAddress = 0x55C0ceF3cc64F511C34b18c720bCf38feC6C6fFa;
     address public constant eTokenAddress = 0xEf5e087D827194732Bc1843351ccA80982E154eB;
     address public constant dTokenAddress = 0x356079240635B276A63065478471d89340443C49;
     uint256 public constant bullStrategyCap = 500e18;
