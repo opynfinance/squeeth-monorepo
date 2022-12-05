@@ -814,7 +814,7 @@ const CloseLong: React.FC<BuyProps> = () => {
     (ethAmount, slippage) => {
       setInputQuoteLoading(true)
 
-      getSellQuoteForETH(new BigNumber(ethAmount), slippage).then((quoteVal) => {
+      return getSellQuoteForETH(new BigNumber(ethAmount), slippage).then((quoteVal) => {
         setSqthTradeAmount(quoteVal.amountIn.toString())
         setInputQuoteLoading(false)
       })
@@ -822,12 +822,17 @@ const CloseLong: React.FC<BuyProps> = () => {
     [setInputQuoteLoading, getSellQuoteForETH, setSqthTradeAmount],
   )
 
+  const debouncedSellQuoteForETHHandler = useAppMemo(
+    () => debounce(sellQuoteForETHHandler, 500),
+    [sellQuoteForETHHandler],
+  )
+
   const handleEthChange = useAppCallback(
     (value: string) => {
       setEthTradeAmount(value)
-      sellQuoteForETHHandler(value, slippageAmount)
+      debouncedSellQuoteForETHHandler(value, slippageAmount)
     },
-    [setEthTradeAmount, slippageAmount, sellQuoteForETHHandler],
+    [setEthTradeAmount, slippageAmount, debouncedSellQuoteForETHHandler],
   )
 
   return (
