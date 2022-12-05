@@ -281,7 +281,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     event SetRebalanceWethLimitPriceTolerance(
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
-    event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+    event SetAuctionManager(address oldAuctionManager, address newAuctionManager);
 
     /**
      * @notice constructor for AuctionBull
@@ -459,7 +459,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function setAuctionManager(address _auctionManager) external onlyOwner {
         require(_auctionManager != address(0), "AB19");
 
-        emit SetAuctionManager(_auctionManager, auctionManager);
+        emit SetAuctionManager(auctionManager, _auctionManager);
 
         auctionManager = _auctionManager;
     }

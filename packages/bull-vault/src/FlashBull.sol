@@ -104,8 +104,9 @@ contract FlashBull is UniFlash {
         uint24 usdcPoolFee;
     }
 
-    event FlashWithdraw(uint256 bullAmount, uint256 ethReturned);
+    event FlashWithdraw(address indexed to, uint256 bullAmount, uint256 ethReturned);
     event FlashDeposit(
+        address indexed from,
         uint256 crabAmount,
         uint256 ethDeposited,
         uint256 wPowerPerpToMint,
@@ -203,7 +204,7 @@ contract FlashBull is UniFlash {
 
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
 
-        emit FlashDeposit(crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend);
+        emit FlashDeposit(msg.sender, crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend);
     }
 
     /**
@@ -249,7 +250,7 @@ contract FlashBull is UniFlash {
         uint256 ethToReturn = address(this).balance;
         payable(msg.sender).sendValue(ethToReturn);
 
-        emit FlashWithdraw(_params.bullAmount, ethToReturn);
+        emit FlashWithdraw(msg.sender, _params.bullAmount, ethToReturn);
     }
 
     /**
