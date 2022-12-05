@@ -91,10 +91,12 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         }
         if (tx.type === CrabStrategyV2TxType.OTC_DEPOSIT || tx.type === CrabStrategyV2TxType.OTC_WITHDRAW) {
           ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-            getUsdAmt(toTokenAmount(tx.ethAmount, 18), tx.timestamp),
+            toTokenAmount(tx.ethAmount, 18).multipliedBy(
+              ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0,
+            ),
           )
           ethAmount = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(
-            getUsdAmt(toTokenAmount(BIG_ONE, 18), tx.timestamp),
+            toTokenAmount(BIG_ONE, 18).multipliedBy(ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0),
           )
         }
         const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)

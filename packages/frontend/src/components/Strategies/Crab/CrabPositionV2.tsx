@@ -1,18 +1,20 @@
-import { Typography, Box, CircularProgress } from '@material-ui/core'
+import { Typography, Box, CircularProgress, Button } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { memo } from 'react'
-import { useAtomValue } from 'jotai'
+import React, { memo, useState } from 'react'
+import { useAtom, useAtomValue } from 'jotai'
 import clsx from 'clsx'
 
 import { addressAtom } from '@state/wallet/atoms'
-import { useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
+import { useCurrentCrabPositionValueV2, useDeQueueDepositUSDC, useDeQueueWithdrawCrab } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlInPerctv2 } from 'src/lib/pnl'
-import CrabQueuedPosition from './CrabQueuedPosition'
-import { crabQueuedAtom, usdcQueuedAtom } from 'src/state/crab/atoms'
+import { crabQueuedAtom, crabUSDValueAtom, usdcQueuedAtom } from 'src/state/crab/atoms'
+import { toTokenAmount } from '@utils/calculations'
+import { BIG_ZERO, USDC_DECIMALS } from '@constants/index'
+import { useTransactionStatus } from '@state/wallet/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,6 +51,10 @@ const useStyles = makeStyles((theme) =>
       width: 'max-content',
       fontFamily: 'DM Mono',
     },
+    queuedPosition: {
+      display: 'flex',
+      alignItems: 'center',
+    },
   }),
 )
 
@@ -57,8 +63,8 @@ const CrabPosition: React.FC = () => {
   const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
-  const usdcQueued = useAtomValue(usdcQueuedAtom)
-  const crabQueued = useAtomValue(crabQueuedAtom)
+  const [usdcQueued, setUsdcQueued] = useAtom(usdcQueuedAtom)
+  const [crabQueued, setCrabQueued] = useAtom(crabQueuedAtom)
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
@@ -69,6 +75,38 @@ const CrabPosition: React.FC = () => {
     console.log('Crab position loading : ', isCrabPositionLoading, isCrabPositionValueLoading)
     return isCrabPositionLoading || isCrabPositionValueLoading
   }, [isCrabPositionLoading, isCrabPositionValueLoading])
+
+  const crabUsdValue = useAtomValue(crabUSDValueAtom)
+
+  const [usdcLoading, setUSDCLoading] = useState(false)
+  const [crabLoading, setCrabLoading] = useState(false)
+
+  const dequeueUSDC = useDeQueueDepositUSDC()
+  const dequeueCRAB = useDeQueueWithdrawCrab()
+
+  const { resetTransactionData } = useTransactionStatus()
+
+  const onDeQueueUSDC = async () => {
+    setUSDCLoading(true)
+    try {
+      await dequeueUSDC(usdcQueued, resetTransactionData)
+      setUsdcQueued(BIG_ZERO)
+    } catch (e) {
+      console.log(e)
+    }
+    setUSDCLoading(false)
+  }
+
+  const onDeQueueCrab = async () => {
+    setCrabLoading(true)
+    try {
+      await dequeueCRAB(crabQueued, resetTransactionData)
+      setCrabQueued(BIG_ZERO)
+    } catch (e) {
+      console.log(e)
+    }
+    setCrabLoading(false)
+  }
 
   if (currentCrabPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) return null
 
@@ -85,6 +123,46 @@ const CrabPosition: React.FC = () => {
         </Box>
       ) : (
         <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px" flexWrap="wrap">
+          {usdcQueued.isGreaterThan(0) ? (
+            <Metric
+              label={
+                <MetricLabel
+                  label="Initiated Deposit"
+                  tooltipTitle="Your deposit has been initiated and will submitted via  auction to avoid price impact. This may take up until Tuesday"
+                />
+              }
+              value={
+                <Box className={classes.queuedPosition}>
+                  <Typography className={clsx(classes.metricValue, classes.white)}>
+                    {formatCurrency(Number(toTokenAmount(usdcQueued, USDC_DECIMALS)))}
+                  </Typography>
+                  <Button style={{ marginLeft: '8px' }} color="primary" disabled={usdcLoading} onClick={onDeQueueUSDC}>
+                    {!usdcLoading ? 'Cancel' : <CircularProgress color="primary" size="1rem" />}
+                  </Button>
+                </Box>
+              }
+            />
+          ) : null}
+          {crabQueued.isGreaterThan(0) ? (
+            <Metric
+              label={
+                <MetricLabel
+                  label="Initiated withdrawal"
+                  tooltipTitle="Your withdrawal has been initiated and will submitted via  auction to avoid price impact. This may take up until Tuesday"
+                />
+              }
+              value={
+                <Box className={classes.queuedPosition}>
+                  <Typography className={clsx(classes.metricValue, classes.white)}>
+                    {formatCurrency(Number(toTokenAmount(crabQueued, 18).times(toTokenAmount(crabUsdValue, 18))))}
+                  </Typography>
+                  <Button style={{ marginLeft: '8px' }} color="primary" disabled={crabLoading} onClick={onDeQueueCrab}>
+                    {!crabLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
+                  </Button>
+                </Box>
+              }
+            />
+          ) : null}
           <Metric
             label="Position value"
             value={
