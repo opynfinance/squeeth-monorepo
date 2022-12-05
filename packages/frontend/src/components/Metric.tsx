@@ -1,6 +1,7 @@
 import React from 'react'
-import { Typography, Box, BoxProps } from '@material-ui/core'
+import { Typography, Box, BoxProps, Tooltip } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 
 interface StyleProps {
   isSmall: boolean
@@ -47,3 +48,38 @@ const Metric: React.FC<MetricProps & BoxProps> = ({ label, value, isSmall = fals
 }
 
 export default Metric
+
+const useLabelStyles = makeStyles((theme) =>
+  createStyles({
+    labelContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      color: 'rgba(255, 255, 255, 0.5)',
+    },
+    label: {
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+    },
+    infoIcon: {
+      fontSize: '15px',
+      marginLeft: theme.spacing(0.5),
+    },
+  }),
+)
+
+export const MetricLabel: React.FC<{ label: string | React.ReactNode; tooltipTitle: string | React.ReactNode }> = ({
+  label,
+  tooltipTitle,
+}) => {
+  const classes = useLabelStyles()
+
+  return (
+    <div className={classes.labelContainer}>
+      <Typography className={classes.label}>{label}</Typography>
+      <Tooltip title={tooltipTitle || ''}>
+        <InfoIcon fontSize="small" className={classes.infoIcon} />
+      </Tooltip>
+    </div>
+  )
+}
