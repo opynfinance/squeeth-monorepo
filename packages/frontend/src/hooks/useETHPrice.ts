@@ -33,23 +33,12 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
 
 /**
  * Get's the onchain ETH price
- * @param token token address
- * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} price denominated in USD
  */
-export const useOnChainETHPrice = (refetchIntervalSec = 30) => {
-  const queryClient = useQueryClient()
+export const useOnChainETHPrice = () => {
   const index = useAtomValue(indexAtom)
 
-  const ethPrice = useQuery(ethPriceQueryKeys.onChainEthPrice(), () => toTokenAmount(index, 18).sqrt(), {
-    onError() {
-      queryClient.setQueryData(ethPriceQueryKeys.onChainEthPrice(), getETHPriceCoingecko())
-    },
-    refetchInterval: refetchIntervalSec * 1000,
-    refetchOnWindowFocus: true,
-  })
-
-  return ethPrice.data ?? new BigNumber(0)
+  return toTokenAmount(index, 18).sqrt()
 }
 
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {

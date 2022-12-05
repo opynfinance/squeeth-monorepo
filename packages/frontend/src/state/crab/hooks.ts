@@ -59,7 +59,7 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } fro
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from '../controller/atoms'
+import { currentImpliedFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '../controller/atoms'
 import {
   crabHelperContractAtom,
   crabMigrationContractAtom,
@@ -256,7 +256,6 @@ export const useCurrentCrabPositionValue = () => {
   const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
-  const fetchQueuedData = useQueuedCrabPositionAndStatus()
 
   useEffect(() => {
     setStrategyData()
@@ -269,7 +268,6 @@ export const useCurrentCrabPositionValue = () => {
   useAppEffect(() => {
     ;(async () => {
       setIsCrabPositionValueLoading(true)
-      fetchQueuedData()
       const [collateral, squeethDebt] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
@@ -324,6 +322,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const normFactor = useAtomValue(normFactorAtom)
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
   const setCrabUsdValue = useSetAtom(crabUSDValueAtom)
+  const fetchQueuedData = useQueuedCrabPositionAndStatus()
 
   useEffect(() => {
     setStrategyData()
@@ -338,12 +337,10 @@ export const useCurrentCrabPositionValueV2 = () => {
       if (balLoading) {
         setIsCrabPositionValueLoading(true)
       }
-      const [collateral, squeethDebt] = await Promise.all([
+      fetchQueuedData()
+      const [collateral, squeethDebt, collateralOne, squeethDebtOne] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
-      ])
-
-      const [collateralOne, squeethDebtOne] = await Promise.all([
         getCollateralFromCrabAmount(BIG_ONE, contract, vault),
         getWsqueethFromCrabAmount(BIG_ONE, contract),
       ])
@@ -363,7 +360,6 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
-        console.log('Crab usdc value', collateralOne.minus(ethDebtOne).times(ethPrice).toString())
         setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
       }
 
