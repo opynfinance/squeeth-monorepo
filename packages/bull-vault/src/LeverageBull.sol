@@ -57,7 +57,7 @@ contract LeverageBull is Ownable {
     address public auction;
 
     event AuctionRepayAndWithdrawFromLeverage(
-        address from, uint256 usdcToRepay, uint256 wethToWithdraw
+        indexed address from, uint256 usdcToRepay, uint256 wethToWithdraw
     );
     event SetAuction(address oldAuction, address newAuction);
 
