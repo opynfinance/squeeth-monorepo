@@ -64,7 +64,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
     event Deposit(address indexed from, uint256 crabAmount, uint256 wethLent, uint256 usdcBorrowed);
     event SetCap(uint256 oldCap, uint256 newCap);
     event RedeemCrabAndWithdrawEth(
-        uint256 indexed crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
+        uint256 crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
     );
     event SetShutdownContract(address oldShutdownContract, address newShutdownContract);
     event ShutdownRepayAndWithdraw(
