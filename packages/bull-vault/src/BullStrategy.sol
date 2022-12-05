@@ -200,10 +200,15 @@ contract BullStrategy is ERC20, LeverageBull {
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
-        (uint256 usdcToRepay, ) = _repayAndWithdrawFromLeverage(share);
+        (uint256 usdcToRepay,) = _repayAndWithdrawFromLeverage(share);
 
         emit Withdraw(
-            msg.sender, _bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, address(this).balance
+            msg.sender,
+            _bullAmount,
+            crabToRedeem,
+            wPowerPerpToRedeem,
+            usdcToRepay,
+            address(this).balance
             );
 
         payable(msg.sender).sendValue(address(this).balance);
