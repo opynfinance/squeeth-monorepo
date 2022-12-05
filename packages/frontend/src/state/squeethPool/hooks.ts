@@ -205,35 +205,11 @@ export const useUpdateSqueethPrices = () => {
   const setSqueethInitialPrice = useUpdateAtom(squeethInitialPriceAtom)
   const setSqueethInitialPriceError = useUpdateAtom(squeethInitialPriceErrorAtom)
   const setReady = useUpdateAtom(readyAtom)
-<<<<<<< HEAD
   const { oSqueeth, weth } = useAtomValue(addressesAtom)
 
   useAppEffect(() => {
     getExactIn(oSqueeth, weth, fromTokenAmount(1, OSQUEETH_DECIMALS), UNI_POOL_FEES, DEFAULT_SLIPPAGE)
       .then((quote) => setSqueethInitialPrice(toTokenAmount(quote.minAmountOut, WETH_DECIMALS)))
-=======
-  const addresses = useAtomValue(addressesAtom)
-
-  const squeethToken = useAtomValue(squeethTokenAtom)
-  const pool = useAtomValue(poolAtom)
-  const isWethToken0 = useAtomValue(isWethToken0Atom)
-  const getBuyQuoteForETH = useGetBuyQuoteForETH()
-  const { getTwapSafe } = useOracle()
-  const { squeethPool, oSqueeth, weth } = addresses
-
-  useAppEffect(() => {
-    if (!squeethToken?.address || !pool) return
-    getTwapSafe(squeethPool, oSqueeth, weth, 420)
-      .then((val) => {
-        if (val) setSqueethPrice(val)
-        setSqueethInitialPrice(
-          new BigNumber(
-            !isWethToken0 ? pool?.token0Price.toSignificant(18) || 0 : pool?.token1Price.toSignificant(18) || 0,
-          ),
-        )
-        setReady(true)
-      })
->>>>>>> 7a9b3971 (Add deposit and withdraw netting UI)
       .catch((error) => {
         console.error(error)
         setSqueethInitialPriceError(getErrorMessage(error))
