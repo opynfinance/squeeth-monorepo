@@ -8,7 +8,6 @@ import { IEulerEToken } from "../src/interface/IEulerEToken.sol";
 import { IEulerMarkets } from "../src/interface/IEulerMarkets.sol";
 
 contract AddLiquidityEuler is Script {
-
     address private immutable euler;
     address private immutable eulerMarkets;
     address private immutable eToken;
