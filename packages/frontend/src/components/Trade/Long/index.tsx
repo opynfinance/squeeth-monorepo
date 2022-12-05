@@ -310,7 +310,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
-  const { loading: osqthPriceLoading, data: osqthPrice } = useOSQTHPrice()
+  const { loading: loadingOSQTHPrice, data: osqthPrice } = useOSQTHPrice()
   const { isRestricted } = useRestrictUser()
 
   const { squeethAmount } = useComputeSwaps()
@@ -458,13 +458,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
     }
   }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
-  const onETHBalanceClick = useAppCallback(() => {
-    if (osqthPriceLoading) {
-      return
-    }
-    return handleEthChange(balance.toString())
-  }, [osqthPriceLoading, balance, handleEthChange])
-
   const squeethExposure = useAppMemo(() => osqthPrice.times(sqthTradeAmount).toNumber(), [sqthTradeAmount, osqthPrice])
 
   return (
@@ -522,10 +515,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   logo={ethLogo}
                   symbol="ETH"
                   usdPrice={ethPrice}
-                  onBalanceClick={onETHBalanceClick}
-                  disabled={osqthPriceLoading}
-                  isLoading={osqthPriceLoading || inputQuoteLoading}
-                  loadingMessage={osqthPriceLoading ? 'loading price...' : 'loading...'}
+                  onBalanceClick={() => handleEthChange(balance.toString())}
+                  isLoading={inputQuoteLoading}
                   error={!!openError}
                   helperText={openError}
                 />
@@ -538,9 +529,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   symbol="oSQTH"
                   usdPrice={osqthPrice}
                   showMaxAction={false}
-                  disabled={osqthPriceLoading}
-                  isLoading={osqthPriceLoading || inputQuoteLoading}
-                  loadingMessage={osqthPriceLoading ? 'loading price...' : 'loading...'}
+                  isLoading={inputQuoteLoading}
                 />
               </Box>
 
@@ -589,12 +578,12 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                 <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="16px">
                   <Metric
                     label={<Label label="Value if ETH -50%" tooltipTitle={Tooltips.ETHDown50} />}
-                    value={formatCurrency(Number(squeethExposure * 0.25))}
+                    value={loadingOSQTHPrice ? 'loading...' : formatCurrency(Number(squeethExposure * 0.25))}
                     isSmall
                   />
                   <Metric
                     label={<Label label="Value if ETH 2x" tooltipTitle={Tooltips.ETHUp2x} />}
-                    value={formatCurrency(Number(squeethExposure * 4))}
+                    value={loadingOSQTHPrice ? 'loading...' : formatCurrency(Number(squeethExposure * 4))}
                     isSmall
                   />
                 </Box>
