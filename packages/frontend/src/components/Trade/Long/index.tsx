@@ -704,19 +704,6 @@ const CloseLong: React.FC<BuyProps> = () => {
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
 
-  useAppEffect(() => {
-    // if it's insufficient amount then set it to it's maximum
-    if (squeethAmount.lt(amount)) {
-      setSqthTradeAmount(squeethAmount.toString())
-      getSellQuote(squeethAmount).then((val) => {
-        if (val) {
-          setEthTradeAmount(val.amountOut.toString())
-          setConfirmedAmount(squeethAmount.toFixed(6))
-        }
-      })
-    }
-  }, [squeethAmount, amount, getSellQuote, setConfirmedAmount, setEthTradeAmount, setSqthTradeAmount])
-
   // let openError: string | undefined
   let closeError: string | undefined
   let existingShortError: string | undefined
