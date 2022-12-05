@@ -141,7 +141,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
     function setShutdownContract(address _shutdownContract) external onlyOwner {
         require(_shutdownContract != address(0), "BS6");
 
-        emit SetShutdownContract(shutdownContract, _shutdownContract);
+        emit SetShutdownContract(_shutdownContract, shutdownContract);
 
         shutdownContract = _shutdownContract;
     }
