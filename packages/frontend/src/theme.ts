@@ -46,6 +46,7 @@ const getTheme = (mode: Mode) => {
         root: {
           borderRadius: '10px',
           color: '#000',
+          textTransform: 'initial',
         },
         text: {
           color: '#000',
