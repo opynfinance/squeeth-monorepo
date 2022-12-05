@@ -8,7 +8,7 @@ env:
 jobs:
   check-bull-vault:
     name: formatting check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     steps:
       - uses: actions/checkout@v2
@@ -25,7 +25,7 @@ jobs:
   build-bull-vault:
     name: build
     needs: check-bull-vault
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,7 +42,7 @@ jobs:
   test-bull-vault:
     name: tests
     needs: build-bull-vault
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -59,7 +59,7 @@ jobs:
   fuzzing-bull-vault:
     name: fuzz tests
     needs: build-bull-vault
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -76,7 +76,7 @@ jobs:
   coverage-bull-vault:
     name: coverage
     needs: test-bull-vault
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
         with:
@@ -93,7 +93,7 @@ jobs:
   compare-gas-reports:
     name: gas difference
     needs: test-bull-vault
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Compare gas reports
         uses: Rubilmax/foundry-gas-diff@v3.9
