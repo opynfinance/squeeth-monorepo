@@ -163,14 +163,16 @@ const CrabPosition: React.FC = () => {
               }
             />
           ) : null}
-          <Metric
-            label="Position value"
-            value={
-              <Typography className={clsx(classes.metricValue, classes.white)}>
-                {formatCurrency(currentCrabPositionValue.toNumber())}
-              </Typography>
-            }
-          />
+          {currentCrabPositionValue.isGreaterThan(0) ? (
+            <Metric
+              label="Position value"
+              value={
+                <Typography className={clsx(classes.metricValue, classes.white)}>
+                  {formatCurrency(currentCrabPositionValue.toNumber())}
+                </Typography>
+              }
+            />
+          ) : null}
           {pnl.isFinite() && (
             <Metric
               label="PnL"
