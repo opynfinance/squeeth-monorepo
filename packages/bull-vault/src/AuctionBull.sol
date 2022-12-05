@@ -666,7 +666,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _orders list of orders
      * @param remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
-     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from Crab
      */
 
     function _pushFundsFromOrders(
