@@ -523,11 +523,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 })
             );
 
-            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
-            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
