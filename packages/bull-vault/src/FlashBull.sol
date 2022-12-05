@@ -204,7 +204,9 @@ contract FlashBull is UniFlash {
 
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
 
-        emit FlashDeposit(msg.sender, crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend);
+        emit FlashDeposit(
+            msg.sender, crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend
+            );
     }
 
     /**
