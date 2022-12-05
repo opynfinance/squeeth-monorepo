@@ -3,6 +3,7 @@ import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import React, { useState } from 'react'
+import debounce from 'lodash/debounce'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
@@ -36,13 +37,11 @@ import {
   sqthTradeAmountAtom,
   tradeCompletedAtom,
   tradeSuccessAtom,
-  tradeTypeAtom,
 } from '@state/trade/atoms'
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
 import { BIG_ZERO } from '@constants/index'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import { TradeType } from 'src/types'
 import ethLogo from 'public/images/eth-logo.svg'
 import osqthLogo from 'public/images/osqth-logo.svg'
 import Cancelled from '../Cancelled'
@@ -287,7 +286,7 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
 
 const FUNDING_MOVE_THRESHOLD = 1.3
 
-const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
+const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
   const [buyLoading, setBuyLoading] = useState(false)
 
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
@@ -312,7 +311,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const slippageAmount = useAtomValue(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const { loading: osqthPriceLoading, data: osqthPrice } = useOSQTHPrice()
-  const tradeType = useAtomValue(tradeTypeAtom)
   const { isRestricted } = useRestrictUser()
 
   const { squeethAmount } = useComputeSwaps()
@@ -327,59 +325,79 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
   const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
   const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
 
-  const [squeethExposure, setSqueethExposure] = useState(0)
   const [quote, setQuote] = useAtom(quoteAtom)
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+  const resetQuote = useResetAtom(quoteAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
+
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
 
-  useAppEffect(() => {
-    if (open && tradeType === TradeType.LONG) {
-      getBuyQuoteForETH(new BigNumber(ethTradeAmount), slippageAmount).then((val) => {
-        if (val) setQuote(val)
-      })
-    }
-  }, [slippageAmount, ethTradeAmount, getBuyQuoteForETH, open, setQuote, tradeType])
-
-  const handleEthChange = useAppCallback(
-    (value: string) => {
-      setEthTradeAmount(value)
+  const buyQuoteForETHHandler = useAppCallback(
+    (ethAmount, slippage) => {
+      if (parseFloat(ethAmount) === 0) {
+        resetQuote()
+        resetSqthTradeAmount()
+        return
+      }
       setInputQuoteLoading(true)
 
-      getBuyQuoteForETH(new BigNumber(value), slippageAmount).then((val) => {
-        if (val) {
-          setSqthTradeAmount(val.amountOut.toString())
-          setConfirmedAmount(val.amountOut.toFixed(6).toString())
-          setSqueethExposure(val.amountOut.times(osqthPrice).toNumber())
+      return getBuyQuoteForETH(new BigNumber(ethAmount), slippage).then((quoteVal) => {
+        if (quoteVal) {
+          setQuote(quoteVal)
+
+          setSqthTradeAmount(quoteVal.amountOut.toString())
+          setConfirmedAmount(quoteVal.amountOut.toFixed(6).toString())
           setInputQuoteLoading(false)
         }
       })
     },
     [
       getBuyQuoteForETH,
-      osqthPrice,
-      slippageAmount,
-      setConfirmedAmount,
-      setEthTradeAmount,
+      resetQuote,
+      resetSqthTradeAmount,
       setInputQuoteLoading,
+      setQuote,
       setSqthTradeAmount,
+      setConfirmedAmount,
     ],
   )
+
+  const debouncedBuyQuoteForETHHandler = useAppMemo(() => debounce(buyQuoteForETHHandler, 500), [buyQuoteForETHHandler])
+
+  useAppEffect(() => {
+    debouncedBuyQuoteForETHHandler(ethTradeAmount, slippageAmount)
+  }, [ethTradeAmount, slippageAmount, debouncedBuyQuoteForETHHandler])
+
+  const handleEthChange = useAppCallback(
+    (value: string) => {
+      setEthTradeAmount(value)
+    },
+    [setEthTradeAmount],
+  )
+
+  const buyQuoteHandler = useAppCallback(
+    (sqthAmount, slippage) => {
+      setInputQuoteLoading(true)
+
+      return getBuyQuote(new BigNumber(sqthAmount), slippage).then((quoteVal) => {
+        setEthTradeAmount(quoteVal.amountIn.toString())
+        setInputQuoteLoading(false)
+      })
+    },
+    [setInputQuoteLoading, getBuyQuote, setEthTradeAmount],
+  )
+
+  const debouncedBuyQuoteHandler = useAppMemo(() => debounce(buyQuoteHandler, 500), [buyQuoteHandler])
 
   const handleSqthChange = useAppCallback(
     (value: string) => {
       setSqthTradeAmount(value)
-      setInputQuoteLoading(true)
-
-      getBuyQuote(new BigNumber(value), slippageAmount).then((val) => {
-        setEthTradeAmount(val.amountIn.toString())
-        setInputQuoteLoading(false)
-      })
+      debouncedBuyQuoteHandler(value, slippageAmount)
     },
-    [getBuyQuote, slippageAmount, setEthTradeAmount, setInputQuoteLoading, setSqthTradeAmount],
+    [slippageAmount, setSqthTradeAmount, debouncedBuyQuoteHandler],
   )
 
   let openError: string | undefined
@@ -446,6 +464,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, open }) => {
     }
     return handleEthChange(balance.toString())
   }, [osqthPriceLoading, balance, handleEthChange])
+
+  const squeethExposure = useAppMemo(() => osqthPrice.times(sqthTradeAmount).toNumber(), [sqthTradeAmount, osqthPrice])
 
   return (
     <div id="open-long-card">
