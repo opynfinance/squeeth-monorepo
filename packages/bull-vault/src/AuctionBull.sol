@@ -268,6 +268,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
     ///@dev _executeCrabDeposit params struct
 
+    ///@dev _executeCrabDeposit params struct
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
@@ -598,6 +599,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
+
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
@@ -913,10 +915,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
-                IERC20(usdc).balanceOf(address(this)),
-                _uniFlashSwapData.amountToPay.sub(remainingWeth)
-            );
 
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
