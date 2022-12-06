@@ -210,7 +210,7 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
 
         vm.startPrank(user1);
-        vm.expectRevert(bytes("BS7"));
+        vm.expectRevert();
         bullStrategy.withdraw(0);
         vm.stopPrank();
     }

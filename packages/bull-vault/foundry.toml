@@ -9,6 +9,7 @@ optimizer_runs = 1500
 
 [profile.test]
 no_match_test = "Fuzzing"
+no_match_contract = "Fuzz"
 gas_reports = ["BullStrategy", "FlashBull"]
 
 [profile.fuzz]
@@ -20,6 +21,7 @@ dictionary_weight = 40
 include_storage = true
 include_push_bytes = true
 match_test = "Fuzzing"
+match_contract = "Fuzz"
 
 [profile.invariant]
 runs = 256

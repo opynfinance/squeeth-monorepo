@@ -24,7 +24,7 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract FlashBullTestFork is Test {
+contract FlashBullFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;

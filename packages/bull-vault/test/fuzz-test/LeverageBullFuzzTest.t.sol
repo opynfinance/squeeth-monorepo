@@ -23,7 +23,7 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract LeverageBullTestFork is Test {
+contract LeverageBullFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;

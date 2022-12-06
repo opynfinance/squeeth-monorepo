@@ -24,7 +24,7 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract BullStrategyFuzzTest is Test {
     using StrategyMath for uint256;
 
     TestUtil internal testUtil;
