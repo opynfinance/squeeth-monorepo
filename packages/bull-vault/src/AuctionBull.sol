@@ -269,7 +269,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     struct ExecuteLeverageComponentRebalancingParams {
         uint256 wethTargetInEuler;
         uint256 wethLimitPrice;
-        uint256 wethSoldInAuction;
+        uint256 netWethReceived;
         uint24 ethUsdcPoolFee;
     }
 
@@ -628,7 +628,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 ExecuteLeverageComponentRebalancingParams({
                     wethTargetInEuler: _wethTargetInEuler,
                     wethLimitPrice: _wethLimitPrice,
-                    wethSoldInAuction: wethFromCrab.sub(pushedFunds),
+                    netWethReceived: wethFromCrab.sub(pushedFunds),
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
@@ -963,11 +963,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_params.wethTargetInEuler > _params.wethSoldInAuction.add(wethInCollateral)) {
+        if (_params.wethTargetInEuler > _params.netWethReceived.add(wethInCollateral)) {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
             uint256 wethToBuy =
-                _params.wethTargetInEuler.sub(_params.wethSoldInAuction.add(wethInCollateral));
+                _params.wethTargetInEuler.sub(_params.netWethReceived.add(wethInCollateral));
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -975,14 +975,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 wethToBuy,
                 wethToBuy.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                 uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
-                abi.encodePacked(wethToBuy.add(_params.wethSoldInAuction))
+                abi.encodePacked(wethToBuy.add(_params.netWethReceived))
             );
         } else {
             // have more ETH than we need in either Euler or from withdrawing from crab
             //we need to sell ETH and either deposit or withdraw from euler
             uint256 wethToSell =
-                _params.wethSoldInAuction.add(wethInCollateral).sub(_params.wethTargetInEuler);
-            // wethToSell + wEthTargetInEuler = _params.wethSoldInAuction+wethInCollateral
+                _params.netWethReceived.add(wethInCollateral).sub(_params.wethTargetInEuler);
+            // wethToSell + wEthTargetInEuler = _params.netWethReceived+wethInCollateral
 
             // repay USDC debt from WETH
             if (_params.wethTargetInEuler < wethInCollateral) {
@@ -994,7 +994,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     wethToSell,
                     wethToSell.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                     uint8(FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH),
-                    abi.encodePacked(_params.wethSoldInAuction)
+                    abi.encodePacked(_params.netWethReceived)
                 );
             } else {
                 // if we need to deposit to euler do that
