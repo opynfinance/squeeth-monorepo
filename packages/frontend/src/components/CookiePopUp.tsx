@@ -1,6 +1,7 @@
 import CookieConsent, { Cookies } from "react-cookie-consent";
 import { CookieNames, trackCookieChoice } from "@utils/cookies";
 import { createStyles, makeStyles } from "@material-ui/core";
+import Link from "next/link";
 
 
 
