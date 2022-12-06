@@ -1,4 +1,3 @@
-import { track } from "@amplitude/analytics-browser"
 import Cookies from "js-cookie"
 import { initializeAmplitude } from "./amplitude"
 import * as Fathom from 'fathom-client'
