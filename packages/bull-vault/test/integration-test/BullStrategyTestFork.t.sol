@@ -219,9 +219,7 @@ contract BullStrategyTestFork is Test {
         // Deposit 1 ETH less than needed
         bullStrategy.deposit{value: wethToLend.sub(1e18)}(crabToDeposit);
         vm.stopPrank();
-
     }
-
 
     function testInitialDepositWithRefund() public {
         uint256 crabToDeposit = 10e18;
@@ -237,7 +235,7 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
         uint256 userEthBalanceAfter = address(user1).balance;
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
-        
+
         assertEq(userEthBalanceBefore.sub(userEthBalanceAfter), wethToLend);
         assertEq(bullCrabBalanceAfter.sub(crabToDeposit), bullCrabBalanceBefore);
         assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
@@ -247,8 +245,6 @@ contract BullStrategyTestFork is Test {
         );
         assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
     }
-
-
 
     function testInitialDeposit() public {
         uint256 crabToDeposit = 10e18;
