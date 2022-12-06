@@ -1,13 +1,19 @@
-import { Box, createStyles, makeStyles, CircularProgress, Typography, InputAdornment } from '@material-ui/core'
+import { Box, createStyles, makeStyles, CircularProgress } from '@material-ui/core'
 import dynamic from 'next/dynamic'
 import { useAtom } from 'jotai'
 import React, { memo } from 'react'
+import Grid from '@material-ui/core/Grid'
+import DateFnsUtils from '@date-io/date-fns'
+import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 
 import { graphOptions } from '@constants/diagram'
-import { daysAtom, useLongChartData } from 'src/state/ethPriceCharts/atoms'
+import {
+  longPayoffFilterEndDateAtom,
+  longPayoffFilterStartDateAtom,
+  useLongChartData,
+} from 'src/state/ethPriceCharts/atoms'
 import LegendBox from '@components/LegendBox'
 import useAppMemo from '@hooks/useAppMemo'
-import { InputNumber } from '@components/InputNew'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
 
@@ -39,11 +45,19 @@ const useStyles = makeStyles((theme) =>
         fontSize: '0.9rem',
       },
     },
+    grid: {
+      rowGap: '24px',
+      columnGap: '24px',
+      marginRight: 'auto',
+      padding: theme.spacing(1),
+    },
   }),
 )
 
 function LongChartPayoff() {
-  const [days, setDays] = useAtom(daysAtom)
+  const [startDate, setStartDate] = useAtom(longPayoffFilterStartDateAtom)
+  const [endDate, setEndDate] = useAtom(longPayoffFilterEndDateAtom)
+
   const query = useLongChartData()
 
   const longEthPNL = query.data?.longEthPNL
@@ -107,25 +121,33 @@ function LongChartPayoff() {
 
   return (
     <>
-      <Box display="flex" justifyContent="flex-end" marginBottom="16px">
-        <Box display="flex" alignItems="center" gridGap="16px">
-          <Typography className={classes.label}>Historical days</Typography>
-
-          <InputNumber
-            id="collateral-ratio-input"
-            value={days}
-            onInputChange={(value) => setDays(parseInt(value))}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                  days
-                </InputAdornment>
-              ),
-            }}
-            style={{ width: '100px' }}
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <Grid container className={classes.grid}>
+          <DatePicker
+            label="Start Date"
+            placeholder="MM/DD/YYYY"
+            format={'MM/dd/yyyy'}
+            value={startDate}
+            maxDate={new Date()}
+            onChange={(d) => setStartDate(d || new Date())}
+            animateYearScrolling={false}
+            autoOk={true}
+            clearable
           />
-        </Box>
-      </Box>
+
+          <DatePicker
+            label="End Date"
+            placeholder="MM/DD/YYYY"
+            format={'MM/dd/yyyy'}
+            value={endDate}
+            maxDate={new Date()}
+            onChange={(d) => setEndDate(d || new Date())}
+            animateYearScrolling={false}
+            autoOk={true}
+            clearable
+          />
+        </Grid>
+      </MuiPickersUtilsProvider>
 
       <div className={classes.payoffContainer}>
         <div style={{ marginTop: '8px' }}>

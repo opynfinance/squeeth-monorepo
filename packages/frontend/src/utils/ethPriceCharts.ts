@@ -21,6 +21,25 @@ export async function getCoingeckoETHPrices(day = 1): Promise<{ time: number; va
   }
 }
 
+export async function getCoingeckoETHPricesBetweenTimestamps(
+  fromTs: number,
+  toTs: number,
+): Promise<{ time: number; value: number }[]> {
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/ethereum/market_chart/range?vs_currency=usd&from=${fromTs}&to=${toTs}`
+    const response = await fetch(url)
+    const prices = (await response.json()).prices
+    return prices.map(([timestamp, price]: number[]) => {
+      return {
+        time: timestamp / 1000,
+        value: price,
+      }
+    })
+  } catch (error) {
+    return emptyPriceList
+  }
+}
+
 export async function getCUSDCPrices(day = 1): Promise<{ time: number; value: number }[]> {
   try {
     const secondsInDay = 24 * 60 * 60
