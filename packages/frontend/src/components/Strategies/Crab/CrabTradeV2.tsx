@@ -139,6 +139,11 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 500,
       fontSize: '13px',
     },
+    slippageContainer: {
+      [theme.breakpoints.down('xs')]: {
+        flexWrap: 'wrap',
+      },
+    },
   }),
 )
 
@@ -676,7 +681,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 />
               ) : null}
 
-              <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
+              <Box
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                gridGap="12px"
+                className={classes.slippageContainer}
+              >
                 <Metric
                   label="Slippage"
                   value={formatNumber(slippage) + '%'}

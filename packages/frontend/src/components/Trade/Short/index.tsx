@@ -224,6 +224,11 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       pointerEvents: 'auto',
     },
+    slippageContainer: {
+      [theme.breakpoints.down('xs')]: {
+        flexWrap: 'wrap',
+      },
+    },
   }),
 )
 
@@ -625,7 +630,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 justifyContent="space-between"
                 gridGap="12px"
                 marginTop="12px"
-                flexWrap="wrap"
+                className={classes.slippageContainer}
               >
                 <Metric
                   label="Slippage"
@@ -1176,7 +1181,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               justifyContent="space-between"
               gridGap="12px"
               marginTop="12px"
-              flexWrap="wrap"
+              className={classes.slippageContainer}
             >
               <Metric
                 label="Slippage"
