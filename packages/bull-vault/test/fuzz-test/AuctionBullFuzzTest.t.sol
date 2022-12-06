@@ -31,7 +31,7 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract AuctionBullTestFork is Test {
+contract AuctionBullFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
@@ -109,12 +109,12 @@ contract AuctionBullTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy = new BullStrategy(
-            owner,
             address(crabV2),
             address(controller),
             euler,
             eulerMarketsModule
         );
+        bullStrategy.transferOwnership(owner);
         flashBull = new FlashBull(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
@@ -124,7 +124,6 @@ contract AuctionBullTestFork is Test {
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
         auctionBull = new AuctionBull(
-            owner,
             auctionManager,
             address(bullStrategy),
             factory,
@@ -132,6 +131,7 @@ contract AuctionBullTestFork is Test {
             eToken,
             dToken
         );
+        auctionBull.transferOwnership(owner);
         testUtil = new TestUtil(
             address(bullStrategy),
             address(controller),
