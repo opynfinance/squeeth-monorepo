@@ -169,7 +169,7 @@ contract BullStrategy is ERC20, LeverageBull {
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
         (uint256 wethLent, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
-            msg.value, _crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
+            _crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
         );
 
         require(_totalWethInEuler <= strategyCap, "BS2");
