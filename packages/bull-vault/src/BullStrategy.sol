@@ -109,10 +109,7 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
-        require(
-            (_asset != crab) && (_asset != eToken) && (_asset != dToken),
-            "BS5"
-        );
+        require((_asset != crab) && (_asset != eToken) && (_asset != dToken), "BS5");
 
         IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
 
@@ -216,7 +213,8 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _wPowerPerpToRedeem amount of wPowerPerp sent back for crab redeem
      */
     function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
-        external returns (uint256)
+        external
+        returns (uint256)
     {
         require(msg.sender == auction, "BS8");
 

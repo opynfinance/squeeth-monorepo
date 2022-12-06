@@ -590,7 +590,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _isDepositingInCrab, _crabAmount, ethInCrab, wPowerPerpInCrab
         );
 
-        uint256 pulledFunds = _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+        uint256 pulledFunds =
+            _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
 
         if (_isDepositingInCrab) {
             /**
@@ -612,7 +613,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
-            uint256 wethFromCrab = IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            uint256 wethFromCrab =
+                IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
             uint256 pushedFunds = _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
@@ -739,7 +741,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             }
             prevPrice = currentPrice;
 
-            amountTransfered = amountTransfered.add(_transferFromOrder(_orders[i], remainingAmount, _clearingPrice));
+            amountTransfered = amountTransfered.add(
+                _transferFromOrder(_orders[i], remainingAmount, _clearingPrice)
+            );
 
             if (remainingAmount > _orders[i].quantity) {
                 remainingAmount = remainingAmount.sub(_orders[i].quantity);
@@ -766,7 +770,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 pushedFunds;
         uint256 ordersLength = _orders.length;
         for (uint256 i; i < ordersLength; ++i) {
-            pushedFunds = pushedFunds.add(_transferToOrder(_orders[i], remainingAmount, _clearingPrice));
+            pushedFunds =
+                pushedFunds.add(_transferToOrder(_orders[i], remainingAmount, _clearingPrice));
             if (remainingAmount > _orders[i].quantity) {
                 remainingAmount = remainingAmount.sub(_orders[i].quantity);
             } else {
@@ -956,7 +961,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_params.wethTargetInEuler > _params.wethSoldInAuction.add(wethInCollateral)) {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
-            uint256 wethToBuy = _params.wethTargetInEuler.sub(_params.wethSoldInAuction.add(wethInCollateral));
+            uint256 wethToBuy =
+                _params.wethTargetInEuler.sub(_params.wethSoldInAuction.add(wethInCollateral));
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -969,7 +975,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         } else {
             // have more ETH than we need in either Euler or from withdrawing from crab
             //we need to sell ETH and either deposit or withdraw from euler
-            uint256 wethToSell = _params.wethSoldInAuction.add(wethInCollateral).sub(_params.wethTargetInEuler);
+            uint256 wethToSell =
+                _params.wethSoldInAuction.add(wethInCollateral).sub(_params.wethTargetInEuler);
             // wethToSell + wEthTargetInEuler = _params.wethSoldInAuction+wethInCollateral
 
             // repay USDC debt from WETH
@@ -1006,7 +1013,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _clearingPrice clearing price in WETH/wPowerPerp determined at auction
      */
     function _transferToOrder(Order memory _order, uint256 _remainingAmount, uint256 _clearingPrice)
-        internal returns (uint256)
+        internal
+        returns (uint256)
     {
         // adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
