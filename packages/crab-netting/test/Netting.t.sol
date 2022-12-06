@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {BaseForkSetup} from "./BaseForkSetup.t.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract NettingTest is BaseForkSetup {
     function setUp() public override {
         BaseForkSetup.setUp(); // gives you netting, depositor, withdrawer, usdc, crab
@@ -143,5 +145,34 @@ contract NettingTest is BaseForkSetup {
         vm.expectRevert(stdError.arithmeticError);
         netting.withdrawUSDC(210e6);
         vm.stopPrank();
+    }
+    
+    function testSkipsUSDCBannedAddress() public {
+        // remove the withdrawers crab so that we dont net them
+        vm.prank(withdrawer);
+        netting.dequeueCrab(20e18);
+
+        // get bob the blacklisted address some crab
+        address bob = address(0xAa05F7C7eb9AF63D6cC03C36c4f4Ef6c37431EE0);
+        vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
+        crab.transfer(bob, 10e18);
+
+        // bob now deposits
+        vm.startPrank(bob);
+        crab.approve(address(netting), 10e18);
+        netting.queueCrabForWithdrawal(10e18);
+        vm.stopPrank();
+
+        vm.expectRevert(bytes("Blacklistable: account is blacklisted"));
+        netting.netAtPrice(1330e6, 200e6);
+
+
+        netting.rejectWithdraw(3);
+        vm.prank(withdrawer);
+        netting.queueCrabForWithdrawal(20e18);
+        netting.netAtPrice(1330e6, 200e6);
+
+        assertEq(crab.balanceOf(bob), 10e18);
+        assertEq(netting.crabBalance(bob), 0);
     }
 }

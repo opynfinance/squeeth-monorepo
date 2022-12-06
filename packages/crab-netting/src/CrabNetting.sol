@@ -177,6 +177,8 @@ contract CrabNetting is Ownable, EIP712 {
         address indexed withdrawer, uint256 crabAmount, uint256 usdcAmount, uint256 indexed receiptIndex
     );
 
+    event WithdrawRejected(address indexed withdrawer, uint256 crabAmount, uint256 index);
+
     event BidTraded(uint256 indexed bidId, address indexed trader, uint256 quantity, uint256 price, bool isBuying);
 
     event SetAuctionTwapPeriod(uint32 previousTwap, uint32 newTwap);
@@ -719,6 +721,19 @@ contract CrabNetting is Ownable, EIP712 {
         }
         withdrawsIndex = j;
         isAuctionLive = false;
+    }
+
+    /**
+     * @dev owner rejects the withdraw at index i thereby sending the withdrawer their crab back
+     * @param i index of the Withdraw receipt to reject
+     */
+    function rejectWithdraw(uint256 i) external onlyOwner {
+        Receipt memory withdraw = withdraws[i];
+        crabBalance[withdraw.sender] -= withdraw.amount;
+        ICrabStrategyV2(crab).transfer(withdraw.sender, withdraw.amount);
+        delete withdraws[i];
+
+        emit WithdrawRejected(withdraw.sender, withdraw.amount, i);
     }
 
     /**
