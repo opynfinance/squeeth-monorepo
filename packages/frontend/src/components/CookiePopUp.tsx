@@ -1,6 +1,8 @@
 import CookieConsent, { Cookies } from "react-cookie-consent";
 import { CookieNames, trackCookieChoice } from "@utils/cookies";
 import { createStyles, makeStyles } from "@material-ui/core";
+import { track } from "@amplitude/analytics-browser";
+import { EVENT_NAME } from "@utils/amplitude";
 
 
 const useStyles = makeStyles((theme) =>
@@ -29,7 +31,7 @@ const CookiePopUp: React.FC = () => {
         location="none"
         buttonText="Accept"
         onAccept={() => {
-          trackCookieChoice(true)
+          track(EVENT_NAME.COOKIE_ACCEPTED)
         }}
         cookieName={CookieNames.Consent}
         style={{ background: '#3F4243', borderRadius: '10px', textAlign: 'left' }}
