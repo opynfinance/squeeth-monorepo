@@ -1,5 +1,7 @@
 import { track } from "@amplitude/analytics-browser"
+import { track } from "@amplitude/analytics-browser"
 import Cookies from "js-cookie"
+import { EVENT_NAME, initializeAmplitude } from "./amplitude"
 import { initializeAmplitude } from "./amplitude"
 import * as Fathom from 'fathom-client'
 
@@ -45,11 +47,16 @@ export const setCookie = (cookieName: string, identifier: string) => {
 
     if(consent){
         initializeAmplitude()
+        track(EVENT_NAME.COOKIE_ACCEPTED)
     }else {
         removeCookies()
+        track(EVENT_NAME.COOKIE_REJECTED)
     }
     trackCookieChoice(consent)
 };
+
+
+
 
 export const trackCookieChoice = (cookieChoice: boolean) => {
 
