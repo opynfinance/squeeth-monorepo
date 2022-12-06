@@ -1,10 +1,14 @@
 import { track } from "@amplitude/analytics-browser"
 import Cookies from "js-cookie"
-import { EVENT_NAME, initializeAmplitude } from "./amplitude"
+import { initializeAmplitude } from "./amplitude"
+import * as Fathom from 'fathom-client'
+
+const ACCEPT_COOKIE_FATHOM_EVENT_CODE = 'A4YYBAUT'
+const REJECT_COOKIE_FATHOM_EVENT_CODE = '6WRWR0XB'
 
 export enum CookieNames {
     Consent = 'SqCookieControl',
-  }
+}
 
 export const canStoreCookies = () => {
     return getCookie(CookieNames.Consent) == 'true' ? true : false 
@@ -41,11 +45,20 @@ export const setCookie = (cookieName: string, identifier: string) => {
 
     if(consent){
         initializeAmplitude()
-        track(EVENT_NAME.COOKIE_ACCEPTED)
     }else {
         removeCookies()
-        track(EVENT_NAME.COOKIE_REJECTED)
     }
+    trackCookieChoice(consent)
 };
+
+export const trackCookieChoice = (cookieChoice: boolean) => {
+
+    if(cookieChoice){
+        Fathom.trackGoal(ACCEPT_COOKIE_FATHOM_EVENT_CODE, 0)
+    }else {
+        Fathom.trackGoal(REJECT_COOKIE_FATHOM_EVENT_CODE, 0)
+    }
+    
+}
 
 
