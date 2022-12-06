@@ -27,5 +27,5 @@ interface IBullStrategy {
     function TARGET_CR() external view returns (uint256);
     function depositEthIntoCrab(uint256 _ethToDeposit) external;
     function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
-        external;
+        external returns (uint256);
 }
