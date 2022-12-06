@@ -43,7 +43,15 @@ const CookiePopUp: React.FC = () => {
         expires={365}
         enableDeclineButton
         declineButtonText= "Decline"
-        declineButtonStyle={{ backgroundColor:"transparent", border:'2px solid #D9D9D9', padding:'10px 20px', borderRadius:"10px", color: "#fff", fontSize: "14px", fontWeight:'bold' }}
+        declineButtonStyle={{
+          backgroundColor: 'transparent',
+          border: '2px solid #D9D9D9',
+          padding: '10px 20px',
+          borderRadius: '10px',
+          color: '#fff',
+          fontSize: '14px',
+          fontWeight: 'bold',
+        }}
         onDecline={() => {
           trackCookieChoice(false)
         }}
