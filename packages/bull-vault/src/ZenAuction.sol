@@ -138,6 +138,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
 
     ///@dev _executeCrabDeposit params struct
 
+    ///@dev _executeCrabDeposit params struct
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
@@ -347,6 +348,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
+
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
