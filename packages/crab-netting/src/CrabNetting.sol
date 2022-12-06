@@ -296,6 +296,7 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 toRemove -= r.amount;
                 delete deposits[userDepositsIndex[msg.sender][i - 1]];
+                userDepositsIndex[msg.sender].pop();
             }
         }
         IERC20(usdc).transfer(msg.sender, _amount);

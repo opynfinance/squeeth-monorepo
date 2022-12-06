@@ -130,4 +130,16 @@ contract DepositTest is BaseForkSetup {
         netting.withdrawUSDC(2 * 1e6);
         vm.stopPrank();
     }
+
+    function testDepositAndWithdrawFail_POC() public {
+        netting.setMinUSDC(10e6);
+        vm.startPrank(depositor);
+        usdc.approve(address(netting), 10e9);
+        netting.depositUSDC(10e6);
+
+        for (uint256 i = 0; i < 100; i++) {
+            netting.depositUSDC(10e6);
+            netting.withdrawUSDC{gas: 200_000}(10e6);
+        }
+    }
 }
