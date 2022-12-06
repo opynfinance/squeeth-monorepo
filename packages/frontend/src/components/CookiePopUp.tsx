@@ -1,8 +1,7 @@
 import CookieConsent, { Cookies } from "react-cookie-consent";
 import { CookieNames, trackCookieChoice } from "@utils/cookies";
 import { createStyles, makeStyles } from "@material-ui/core";
-import { track } from "@amplitude/analytics-browser";
-import { EVENT_NAME } from "@utils/amplitude";
+
 
 
 const useStyles = makeStyles((theme) =>
@@ -31,7 +30,7 @@ const CookiePopUp: React.FC = () => {
         location="none"
         buttonText="Accept"
         onAccept={() => {
-          track(EVENT_NAME.COOKIE_ACCEPTED)
+          trackCookieChoice(true)
         }}
         cookieName={CookieNames.Consent}
         style={{ background: '#3F4243', borderRadius: '10px', textAlign: 'left' }}
@@ -47,9 +46,6 @@ const CookiePopUp: React.FC = () => {
         enableDeclineButton
         declineButtonText= "Decline"
         declineButtonStyle={{ backgroundColor:"transparent", border:'2px solid #D9D9D9', padding:'10px 20px', borderRadius:"10px", color: "#fff", fontSize: "14px", fontWeight:'bold' }}
-        onDecline={() => {
-          trackCookieChoice(false)
-        }}
         onDecline={() => {
           trackCookieChoice(false)
         }}
