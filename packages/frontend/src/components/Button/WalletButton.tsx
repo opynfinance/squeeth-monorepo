@@ -92,7 +92,7 @@ const WalletButton: React.FC = () => {
   const { ensName } = useENS(address)
 
   const shortAddress = useMemo(
-    () => (address ? address.slice(0, 8) + '...' + address.slice(address.length - 8, address.length) : ''),
+    () => (address ? address.slice(0, 6) + '...' + address.slice(address.length - 4, address.length) : ''),
     [address],
   )
 
