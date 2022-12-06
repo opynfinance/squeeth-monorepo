@@ -164,6 +164,7 @@ import { Address } from "openzeppelin/utils/Address.sol";
  * AB18: price too high relative to Uniswap twap
  * AB19: auction manager can not be 0 address
  * AB20: can only receive eth from bull strategy
+ * AB21: invalid receiver address
  */
 
 /**
@@ -554,6 +555,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
+        require(_receiver != address(0), "AB21");
+
         if (_asset == address(0)) {
             payable(_receiver).sendValue(address(this).balance);
         } else {
