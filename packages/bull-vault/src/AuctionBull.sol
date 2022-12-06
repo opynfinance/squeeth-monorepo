@@ -139,6 +139,7 @@ import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
 
 /**
  * Error code
@@ -171,6 +172,7 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  */
 contract AuctionBull is UniFlash, Ownable, EIP712 {
     using StrategyMath for uint256;
+    using Address for address payable;
 
     /// @dev typehash for signed orders
     bytes32 private constant _FULL_REBALANCE_TYPEHASH = keccak256(
@@ -552,7 +554,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
-        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        if (_asset == address(0)) {
+            payable(_receiver).sendValue(address(this).balance);
+        } else {
+            IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        }
 
         emit Farm(_asset, _receiver);
     }
@@ -956,7 +962,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function _executeLeverageComponentRebalancing(
         ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
-        // uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > _params.wethSoldInAuction.add(wethInCollateral)) {
             // have less ETH than we need in Euler, we have to buy and deposit it
