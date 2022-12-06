@@ -15,16 +15,16 @@ workflows:
             - compile
       - unit-test-contracts:
           requires:
-            - lint
+            - compile
       - integration-test-contracts:
           requires:
-            - lint
+            - compile
       - contract-size:
           requires:
             - compile
       - e2e-test:
           requires:
-            - lint
+            - compile
   frontend_build_and_tes:
     jobs:
       - checkout-and-install-frontend
