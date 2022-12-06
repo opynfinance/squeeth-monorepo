@@ -294,6 +294,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address oldAuctionManager, address newAuctionManager);
+    event Farm(address indexed asset, address indexed receiver);
 
     /**
      * @notice constructor for AuctionBull
@@ -542,6 +543,18 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         deltaLower = _deltaLower;
         deltaUpper = _deltaUpper;
+    }
+
+    /**
+     * @notice withdraw assets transfered directly to this contract
+     * @dev can only be called by owner
+     * @param _asset asset address
+     * @param _receiver receiver address
+     */
+    function farm(address _asset, address _receiver) external onlyOwner {
+        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+
+        emit Farm(_asset, _receiver);
     }
 
     /**
