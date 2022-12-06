@@ -820,6 +820,9 @@ export const useETHtoCrab = () => {
 
   const getUserCrabForEthAmount = useAppCallback(
     (ethAmount: BigNumber) => {
+      if (currentEthValue.isZero()) {
+        return BIG_ZERO
+      }
       return ethAmount.div(currentEthValue).times(userCrabBalance)
     },
     [currentEthValue, userCrabBalance],
