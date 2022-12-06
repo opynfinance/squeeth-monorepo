@@ -4,7 +4,7 @@ orbs:
   node: circleci/node@1.1.6
 
 workflows:
-  build-test-report:
+  hardhat_build_and_test:
     jobs:
       - checkout-and-install
       - compile:
@@ -15,16 +15,18 @@ workflows:
             - compile
       - unit-test-contracts:
           requires:
-            - compile
+            - lint
       - integration-test-contracts:
           requires:
-            - compile
+            - lint
       - contract-size:
           requires:
             - compile
       - e2e-test:
           requires:
-            - compile
+            - lint
+  frontend_build_and_tes:
+    jobs:
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
