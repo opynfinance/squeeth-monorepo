@@ -204,6 +204,24 @@ contract BullStrategyTestFork is Test {
     }
 
     function testWithdrawalShutdown() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
+        vm.stopPrank();
+
+        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
+
+        assertEq(bullCrabBalanceAfter.sub(crabToDeposit), bullCrabBalanceBefore);
+        assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertTrue(
+            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
+        );
+        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
+        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+
         vm.startPrank(controllerOwner);
         controller.shutDown();
         assertEq(controller.isShutDown(), true);
