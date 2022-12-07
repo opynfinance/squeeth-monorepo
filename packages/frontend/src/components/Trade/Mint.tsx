@@ -41,9 +41,7 @@ const useStyles = makeStyles((theme) =>
   createStyles({
     link: {
       color: theme.palette.primary.main,
-      marginBottom: theme.spacing(1),
-      margin: 'auto',
-      width: '300px',
+      marginBottom: theme.spacing(2),
       textDecoration: 'underline',
     },
     label: {
@@ -158,7 +156,7 @@ const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
   return (
     <div>
       {vaultId && showManageLink ? (
-        <Typography className={classes.link} style={{ margin: 'auto' }}>
+        <Typography className={classes.link}>
           <Link href={`vault/${vaultId}`}>Manage Vault</Link>
         </Typography>
       ) : null}

@@ -1,27 +1,23 @@
-import { MintSqueeth } from '@components/Lp/GetSqueeth'
-import Nav from '@components/Nav'
+import React from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import Link from 'next/link'
-import React from 'react'
-import { useFirstValidVault } from 'src/state/positions/hooks'
+
+import MintSqueeth from '@components/Trade/Mint'
+import Nav from '@components/Nav'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(2),
+      padding: theme.spacing(4, 0),
     },
     title: {
-      marginTop: theme.spacing(2),
-      color: theme.palette.primary.main,
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
     },
     getSqueethCard: {
-      width: '400px',
-      background: theme.palette.background.lightStone,
-      borderRadius: theme.spacing(1),
-      overflow: 'auto',
+      width: '440px',
       margin: 'auto',
-      marginTop: theme.spacing(4),
       padding: theme.spacing(2, 0),
     },
   }),
@@ -29,19 +25,21 @@ const useStyles = makeStyles((theme) =>
 
 const MintPage: React.FC = () => {
   const classes = useStyles()
-  const { vaultId } = useFirstValidVault()
 
   return (
-    <div>
+    <>
       <Nav />
-      <Typography align="center" variant="h6" className={classes.title}>
-        Mint Squeeth
-      </Typography>
 
-      <Box className={classes.getSqueethCard}>
-        <MintSqueeth onMint={() => console.log('Minted')} showManageLink />
-      </Box>
-    </div>
+      <div className={classes.container}>
+        <Typography align="center" variant="h6" className={classes.title}>
+          Mint Squeeth
+        </Typography>
+
+        <Box className={classes.getSqueethCard}>
+          <MintSqueeth onMint={() => console.log('Minted')} showManageLink />
+        </Box>
+      </div>
+    </>
   )
 }
 

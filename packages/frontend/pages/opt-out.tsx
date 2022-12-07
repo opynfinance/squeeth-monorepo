@@ -1,12 +1,11 @@
-import { setOptOut } from '@amplitude/analytics-browser'
-import { PrimaryButton } from '@components/Button'
-import { MintSqueeth } from '@components/Lp/GetSqueeth'
-import Nav from '@components/Nav'
+import React, { useEffect, useState } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { setOptOut } from '@amplitude/analytics-browser'
+
+import { PrimaryButton } from '@components/Button'
+import Nav from '@components/Nav'
 import { isOptedOut } from '@utils/amplitude'
-import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
