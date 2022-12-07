@@ -1,8 +1,6 @@
 import React from 'react'
-import { Box, BoxProps, Typography, Tooltip } from '@material-ui/core'
-import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { Box, BoxProps } from '@material-ui/core'
 import { useAtomValue } from 'jotai'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
 
 import {
   normFactorAtom,
@@ -14,41 +12,9 @@ import {
 } from '@state/controller/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import { Tooltips } from '@constants/enums'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    labelContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      color: 'rgba(255, 255, 255, 0.5)',
-    },
-    label: {
-      fontSize: '15px',
-      fontWeight: 500,
-      width: 'max-content',
-    },
-    infoIcon: {
-      fontSize: '15px',
-      marginLeft: theme.spacing(0.5),
-    },
-  }),
-)
-
-const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
-  const classes = useStyles()
-
-  return (
-    <div className={classes.labelContainer}>
-      <Typography className={classes.label}>{label}</Typography>
-      <Tooltip title={tooltipTitle}>
-        <InfoIcon fontSize="small" className={classes.infoIcon} />
-      </Tooltip>
-    </div>
-  )
-}
 
 const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const mark = useAtomValue(markAtom)
@@ -70,43 +36,43 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" {...props}>
       <Metric
-        label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
+        label={<MetricLabel label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
         value={formatCurrency(ethPrice.toNumber())}
       />
 
       <Metric
-        label={<Label label="ETH&sup2; Price" tooltipTitle={Tooltips.SpotPrice} />}
+        label={<MetricLabel label="ETH&sup2; Price" tooltipTitle={Tooltips.SpotPrice} />}
         value={formatCurrency(eth2Price.toNumber())}
       />
 
       <Metric
-        label={<Label label="Mark Price" tooltipTitle={Tooltips.Mark} />}
+        label={<MetricLabel label="Mark Price" tooltipTitle={Tooltips.Mark} />}
         value={formatCurrency(markPrice.toNumber())}
       />
 
       <Metric
-        label={<Label label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
+        label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
         value={`${formatNumber(impliedVolPercent)}%`}
       />
 
       <Metric
-        label={<Label label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
+        label={<MetricLabel label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
         value={`${formatNumber(osqthRefVol)}%`}
       />
 
       <Metric
-        label={<Label label="Norm Factor" tooltipTitle={Tooltips.NormFactor} />}
+        label={<MetricLabel label="Norm Factor" tooltipTitle={Tooltips.NormFactor} />}
         value={formatNumber(normFactor.toNumber(), 4)}
       />
 
       <Metric
-        label={<Label label="Current Implied Premium" tooltipTitle={Tooltips.CurrentImplFunding} />}
+        label={<MetricLabel label="Current Implied Premium" tooltipTitle={Tooltips.CurrentImplFunding} />}
         value={currentImpliedPremium}
       />
 
       <Metric
         label={
-          <Label
+          <MetricLabel
             label="Historical Daily Premium"
             tooltipTitle={`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
           />
