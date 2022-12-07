@@ -597,11 +597,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }, [depositPriceImpact, depositOption, withdrawPriceImpact, useUsdc, isNettingAuctionLive])
 
-
-  if (isRestricted) {
-    return <RestrictionInfo />
-  }
-
   const confirmationMessage = useAppMemo(() => {
     if (depositOption === 0) {
       if (useQueue && !overrideQueueOption) {
@@ -615,6 +610,11 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       return `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
     }
   }, [depositAmountBN, depositOption, depositToken, useQueue, withdrawAmountBN, overrideQueueOption])
+
+
+  if (isRestricted) {
+    return <RestrictionInfo />
+  }
 
 
   const setOverrideOption = (option: boolean) => {
