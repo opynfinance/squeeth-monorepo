@@ -738,10 +738,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
-                IERC20(usdc).balanceOf(address(this)),
-                _uniFlashSwapData.amountToPay.sub(remainingWeth)
-            );
 
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
