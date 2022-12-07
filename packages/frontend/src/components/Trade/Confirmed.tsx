@@ -52,6 +52,7 @@ const useStyles = makeStyles((theme) =>
 export enum ConfirmType {
   TRADE,
   CRAB,
+  BULL,
 }
 
 type ConfirmedProps = {

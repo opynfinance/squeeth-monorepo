@@ -49,11 +49,21 @@ const useStyles = makeStyles((theme) =>
 
 type TradeSettingsProps = {
   isCrab?: boolean
+  isBull?: boolean
   setCrabSlippage?: (amt: BigNumber) => void
+  setBullSlippage?: (amt: BigNumber) => void
   crabSlippage?: BigNumber
+  bullSlippage?: BigNumber
 }
 
-export const TradeSettings: React.FC<TradeSettingsProps> = ({ isCrab, setCrabSlippage, crabSlippage }) => {
+export const TradeSettings: React.FC<TradeSettingsProps> = ({
+  isCrab,
+  isBull,
+  setCrabSlippage,
+  setBullSlippage,
+  crabSlippage,
+  bullSlippage,
+}) => {
   const classes = useStyles()
 
   const [slippageAmount, setSlippageAmount] = useAtom(slippageAmountAtom)
@@ -93,13 +103,15 @@ export const TradeSettings: React.FC<TradeSettingsProps> = ({ isCrab, setCrabSli
         <DialogContent className={classes.dialogContent}>
           <TextField
             size="small"
-            value={isCrab ? crabSlippage : slippageAmount}
+            value={isCrab ? crabSlippage : isBull ? bullSlippage : slippageAmount}
             type="number"
             className={classes.slippageInput}
             margin="dense"
             onChange={
               isCrab
                 ? (event) => (setCrabSlippage ? setCrabSlippage(new BigNumber(event.target.value)) : null)
+                : isBull
+                ? (event) => (setBullSlippage ? setBullSlippage(new BigNumber(event.target.value)) : null)
                 : (event) => setSlippageAmount(new BigNumber(event.target.value))
             }
             id="filled-basic"
