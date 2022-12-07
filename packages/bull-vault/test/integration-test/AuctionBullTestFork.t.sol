@@ -8898,7 +8898,7 @@ contract AuctionBullTestFork is Test {
             orders,
             crabAmount,
             squeethEthPrice,
-            targetWethInLeverage.mul(9).div(10),
+            targetWethInLeverage.mul(9).div(20),
             ethUsdPrice.wmul(8e17),
             3000,
             isDepositingInCrab
