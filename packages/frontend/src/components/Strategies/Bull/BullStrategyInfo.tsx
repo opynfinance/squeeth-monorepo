@@ -59,7 +59,7 @@ export const BullStrategyInfo: React.FC = () => {
       <div className={classes.container}>
         <Typography variant="subtitle1" className={clsx(classes.caption, classes.fontColorCaption)}>
           Calm bull likes calm bull markets. It makes money when ETH goes up, slow and steady. It stacks ETH when ETH
-          stays within around {ethPriceDown}-${ethPriceUp} before the next rebalance.
+          stays within around {ethPriceDown}-{ethPriceUp} before the next rebalance.
         </Typography>
 
         <div className={classes.profitImage}>
