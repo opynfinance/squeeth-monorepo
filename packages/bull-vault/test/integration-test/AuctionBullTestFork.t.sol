@@ -15095,9 +15095,9 @@ contract AuctionBullTestFork is Test {
 
     function testFullRebalanceDepositCrabDecreaseEthBorrowUsdc() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));  
-        console.log('currentDebt', currentDebt);
-        console.log('currentWethInLeverage', currentWethInLeverage);
+        currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+        console.log("currentDebt", currentDebt);
+        console.log("currentWethInLeverage", currentWethInLeverage);
         uint256 sellUsdcBuyWethAmount = 5000000e6;
         uint256 sellWethBuyWPowerPerpAmount = 200e18;
         uint256 sellWethBuyUsdcAmount = 1;
