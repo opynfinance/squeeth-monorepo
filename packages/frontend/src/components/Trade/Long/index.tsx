@@ -57,10 +57,17 @@ const useStyles = makeStyles((theme) =>
     header: {
       color: theme.palette.primary.main,
     },
-    subtitle: {
+    title: {
       fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
+      marginBottom: '24px',
+    },
+    sectionTitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+      marginBottom: '16px',
     },
     body: {
       padding: theme.spacing(2, 12),
@@ -286,7 +293,7 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
 
 const FUNDING_MOVE_THRESHOLD = 1.3
 
-const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
+const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, showTitle }) => {
   const [buyLoading, setBuyLoading] = useState(false)
 
   const getBuyQuoteForETH = useGetBuyQuoteForETH()
@@ -501,12 +508,14 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
       ) : (
         <div>
           {activeStep === 0 ? (
-            <Box marginTop="32px">
-              <Typography variant="h4" className={classes.subtitle}>
-                Pay ETH to buy oSQTH
-              </Typography>
+            <>
+              {showTitle && (
+                <Typography variant="h4" className={classes.title}>
+                  Pay ETH to buy oSQTH
+                </Typography>
+              )}
 
-              <Box display="flex" flexDirection="column" marginTop="8px">
+              <Box display="flex" flexDirection="column" gridGap="16px">
                 <InputToken
                   id="open-long-eth-input"
                   value={ethTradeAmount}
@@ -570,11 +579,11 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
               </Box>
 
               <Box marginTop="24px">
-                <Typography variant="h4" className={classes.subtitle}>
+                <Typography variant="h4" className={classes.sectionTitle}>
                   Projection
                 </Typography>
 
-                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="16px">
+                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px">
                   <Metric
                     label={<Label label="Value if ETH -50%" tooltipTitle={Tooltips.ETHDown50} />}
                     value={loadingOSQTHPrice ? 'loading...' : formatCurrency(Number(squeethExposure * 0.25))}
@@ -644,7 +653,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   </PrimaryButtonNew>
                 )}
               </Box>
-            </Box>
+            </>
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
               <UniswapIframe />
@@ -876,12 +885,12 @@ const CloseLong: React.FC<BuyProps> = () => {
           </div>
         </>
       ) : (
-        <Box marginTop="32px">
-          <Typography variant="h4" className={classes.subtitle}>
+        <>
+          <Typography variant="h4" className={classes.title}>
             Sell oSQTH to get ETH back
           </Typography>
 
-          <Box display="flex" flexDirection="column" marginTop="8px">
+          <Box display="flex" flexDirection="column" gridGap="16px">
             <InputToken
               id="close-long-osqth-input"
               value={sqthTradeAmount}
@@ -1005,7 +1014,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               </PrimaryButtonNew>
             )}
           </Box>
-        </Box>
+        </>
       )}
     </div>
   )
@@ -1015,13 +1024,14 @@ type BuyProps = {
   open?: boolean
   isLPage?: boolean
   activeStep?: number
+  showTitle?: boolean
 }
 
-const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0 }) => {
+const Long: React.FC<BuyProps> = ({ open, isLPage = false, activeStep = 0, showTitle = true }) => {
   return open ? (
-    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} />
+    <OpenLong open={open} isLPage={isLPage} activeStep={activeStep} showTitle={showTitle} />
   ) : (
-    <CloseLong isLPage={isLPage} activeStep={activeStep} />
+    <CloseLong isLPage={isLPage} activeStep={activeStep} showTitle={showTitle} />
   )
 }
 

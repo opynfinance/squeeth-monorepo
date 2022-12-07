@@ -197,7 +197,9 @@ export function LPCalculator() {
           </div>
         </div>
         <div>
-          {supportedNetwork && <div className={classes.tradeForm}>{!isRestricted ? <ObtainSqueeth /> : null}</div>}
+          <div className={classes.tradeForm}>
+            <ObtainSqueeth />
+          </div>
         </div>
       </div>
     </div>

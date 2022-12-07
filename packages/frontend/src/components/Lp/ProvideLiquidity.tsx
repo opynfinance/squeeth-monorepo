@@ -12,13 +12,18 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      width: '400px',
+      width: '100%',
       height: '496px',
-      background: theme.palette.background.lightStone,
-      margin: theme.spacing(1, 0),
+      background: theme.palette.background.stone,
       borderRadius: theme.spacing(1),
       overflow: 'auto',
       padding: theme.spacing(1),
+    },
+    title: {
+      textAlign: 'center',
+      fontSize: '18px',
+      fontWeight: 500,
+      marginBottom: theme.spacing(2),
     },
     iframeBox: {
       width: '100%',
@@ -36,8 +41,7 @@ const useStyles = makeStyles((theme) =>
     },
     headerDiv: {
       display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
+      flexDirection: 'column',
       padding: theme.spacing(0, 1),
     },
     uniOpenBtn: {
@@ -54,9 +58,7 @@ const ProvideLiquidity: React.FC = () => {
 
   return (
     <>
-      <Typography component="span" color="primary">
-        Provide Liquidity
-      </Typography>
+      <Typography className={classes.title}>Provide Liquidity</Typography>
       <motion.div initial={{ x: '-5%', opacity: 0.8 }} animate={{ x: 0, opacity: 1 }} className={classes.container}>
         <div className={classes.headerDiv}>
           <Typography variant="caption" className={classes.warning}>

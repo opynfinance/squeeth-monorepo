@@ -24,7 +24,6 @@ const useInputTokenProps = makeStyles((theme) =>
       border: `2px solid ${theme.palette.background.lightStone}`,
       borderRadius: '10px',
       padding: theme.spacing(2),
-      marginTop: '1em',
       backgroundColor: theme.palette.background.default,
     },
     inputRoot: {

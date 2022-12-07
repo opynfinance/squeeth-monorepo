@@ -11,10 +11,12 @@ const useStyles = makeStyles((theme) =>
     container: {
       display: 'flex',
       alignItems: 'center',
-      marginTop: theme.spacing(0.5),
+      justifyContent: 'center',
+      marginTop: theme.spacing(2),
     },
     stepData: {
       marginLeft: theme.spacing(1),
+      fontFamily: 'DM Mono',
     },
     stepButton: {
       margin: theme.spacing(0, 0.5),
@@ -32,10 +34,10 @@ const useStyles = makeStyles((theme) =>
 
 const StepperIconButton = withStyles((theme) => ({
   root: {
-    background: theme.palette.background.lightStone,
+    background: theme.palette.background.stone,
   },
   disabled: {
-    background: theme.palette.background.lightStone,
+    background: theme.palette.background.stone,
     opacity: '1',
   },
 }))(IconButton)

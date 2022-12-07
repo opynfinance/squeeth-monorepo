@@ -23,7 +23,7 @@ import { InputToken, InputNumber } from '@components/InputNew'
 import Alert from '@components/Alert'
 import { TradeSettings } from '@components/TradeSettings'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import { BIG_ZERO, MIN_COLLATERAL_AMOUNT } from '@constants/index'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, DEFAULT_COLLATERAL_RATIO } from '@constants/index'
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
 import { addressesAtom, isLongAtom, vaultHistoryUpdatingAtom } from '@state/positions/atoms'
@@ -66,14 +66,13 @@ import { formatNumber, formatCurrency } from '@utils/formatter'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { useRestrictUser } from '@context/restrict-user'
 
-const DEFAULT_COLLATERAL_RATIO = 225
-
 const useStyles = makeStyles((theme) =>
   createStyles({
-    subtitle: {
+    title: {
       fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
+      marginBottom: '24px',
     },
     label: {
       fontSize: '18px',
@@ -509,145 +508,144 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
           </div>
         </div>
       ) : (
-        <div>
-          <Box marginTop="32px">
-            <Typography variant="h4" className={classes.subtitle}>
-              Use ETH collateral to mint & sell oSQTH
-            </Typography>
+        <>
+          <Typography variant="h4" className={classes.title}>
+            Use ETH collateral to mint & sell oSQTH
+          </Typography>
 
-            <Box display="flex" flexDirection="column" marginTop="8px">
-              <InputToken
-                id="open-short-eth-input"
-                value={ethTradeAmount}
-                onInputChange={(v) => setEthTradeAmount(v)}
-                symbol="ETH"
-                logo={ethLogo}
-                balance={new BigNumber(balance)}
-                usdPrice={ethPrice}
-                onBalanceClick={() => setEthTradeAmount(balance.toString())}
-                error={!!openError}
-                helperText={openError}
+          <Box display="flex" flexDirection="column">
+            <InputToken
+              id="open-short-eth-input"
+              value={ethTradeAmount}
+              onInputChange={(v) => setEthTradeAmount(v)}
+              symbol="ETH"
+              logo={ethLogo}
+              balance={new BigNumber(balance)}
+              usdPrice={ethPrice}
+              onBalanceClick={() => setEthTradeAmount(balance.toString())}
+              error={!!openError}
+              helperText={openError}
+            />
+
+            <Box display="flex" justifyContent="space-between" alignItems="center" marginTop="24px">
+              <Typography variant="h4" className={classes.label}>
+                Collateral ratio
+              </Typography>
+
+              <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+                <Checkbox
+                  name="priceRangeDefault"
+                  label="Default"
+                  isChecked={usingDefaultCollatRatio}
+                  onInputChange={handleDefaultCollatRatioToggle}
+                />
+
+                <InputNumber
+                  id="collateral-ratio-input"
+                  value={collatPercent}
+                  onInputChange={(value) => setCollatPercent(Number(value))}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end" style={{ opacity: '0.5' }}>
+                        %
+                      </InputAdornment>
+                    ),
+                  }}
+                  style={{ width: '80px' }}
+                />
+              </Box>
+            </Box>
+
+            <Box marginTop="24px">
+              <CollatRatioSlider
+                collatRatio={collatPercent}
+                onCollatRatioChange={(value) => setCollatPercent(value)}
+                minCollatRatio={150}
               />
 
-              <Box display="flex" justifyContent="space-between" alignItems="center" marginTop="24px">
-                <Typography variant="h4" className={classes.label}>
-                  Collateralization ratio
-                </Typography>
+              <Box marginTop="12px">
+                <Collapse in={collatPercent <= 150}>
+                  <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
+                    You will get liquidated.
+                  </Alert>
+                </Collapse>
+                <Collapse in={collatPercent > 150 && collatPercent < 200}>
+                  <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
+                    Collateral ratio is too low. You will get liquidated at 150%.
+                  </Alert>
+                </Collapse>
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
-                  <Checkbox
-                    name="priceRangeDefault"
-                    label="Default"
-                    isChecked={usingDefaultCollatRatio}
-                    onInputChange={handleDefaultCollatRatioToggle}
-                  />
-
-                  <InputNumber
-                    id="collateral-ratio-input"
-                    value={collatPercent}
-                    onInputChange={(value) => setCollatPercent(Number(value))}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end" style={{ opacity: '0.5' }}>
-                          %
-                        </InputAdornment>
-                      ),
-                    }}
-                    style={{ width: '80px' }}
-                  />
-                </Box>
+                <Collapse in={collatPercent >= 200 && collatPercent < 225}>
+                  <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
+                    Collateral ratio is risky.
+                  </Alert>
+                </Collapse>
               </Box>
+            </Box>
 
-              <Box marginTop="24px">
-                <CollatRatioSlider
-                  collatRatio={collatPercent}
-                  onCollatRatioChange={(value) => setCollatPercent(value)}
-                  minCollatRatio={150}
-                />
+            <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px" flexWrap="wrap">
+              <Metric label="Current Collateral Ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
+              <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall />
+            </Box>
 
-                <Box marginTop="12px">
-                  <Collapse in={collatPercent <= 150}>
-                    <Alert severity="error" id={'collat-ratio-slider-alert-text'}>
-                      You will get liquidated.
-                    </Alert>
-                  </Collapse>
-                  <Collapse in={collatPercent > 150 && collatPercent < 200}>
-                    <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
-                      Collateral ratio is too low. You will get liquidated at 150%.
-                    </Alert>
-                  </Collapse>
+            <Box marginTop="24px">
+              <InputToken
+                id="open-short-trade-details"
+                label="Sell"
+                value={!amount.isNaN() ? amount.toFixed(4) : Number(0).toLocaleString()}
+                readOnly
+                symbol="oSQTH"
+                logo={osqthLogo}
+                balance={shortSqueethAmount}
+                usdPrice={osqthPrice}
+                showMaxAction={false}
+              />
+            </Box>
 
-                  <Collapse in={collatPercent >= 200 && collatPercent < 225}>
-                    <Alert severity="warning" id={'collat-ratio-slider-alert-text'}>
-                      Collateral ratio is risky.
-                    </Alert>
-                  </Collapse>
-                </Box>
-              </Box>
+            <Collapse in={!!error}>
+              <Alert severity="error" marginTop="24px">
+                {error}
+              </Alert>
+            </Collapse>
 
-              <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px" flexWrap="wrap">
-                <Metric label="Current Collateral Ratio" value={formatNumber(existingCollatPercent) + '%'} isSmall />
-                <Metric label="Liquidation Price" value={formatCurrency(liqPrice.toNumber())} isSmall />
-              </Box>
+            <Box marginTop="24px">
+              <Metric
+                label="Initial Premium"
+                value={formatNumber(quote.amountOut.toNumber()) + ' ETH'}
+                isSmall
+                flexDirection="row"
+                justifyContent="space-between"
+              />
+            </Box>
 
-              <Box marginTop="24px">
-                <InputToken
-                  id="open-short-trade-details"
-                  label="Sell"
-                  value={!amount.isNaN() ? amount.toFixed(4) : Number(0).toLocaleString()}
-                  readOnly
-                  symbol="oSQTH"
-                  logo={osqthLogo}
-                  balance={shortSqueethAmount}
-                  usdPrice={osqthPrice}
-                  showMaxAction={false}
-                />
-              </Box>
-
-              <Collapse in={!!error}>
-                <Alert severity="error" marginTop="24px">
-                  {error}
-                </Alert>
-              </Collapse>
-
-              <Box marginTop="24px">
-                <Metric
-                  label="Initial Premium"
-                  value={formatNumber(quote.amountOut.toNumber()) + ' ETH'}
-                  isSmall
-                  flexDirection="row"
-                  justifyContent="space-between"
-                />
-              </Box>
-
-              <Box
-                display="flex"
-                alignItems="center"
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              gridGap="12px"
+              marginTop="12px"
+              flexWrap="wrap"
+            >
+              <Metric
+                label="Slippage"
+                value={formatNumber(slippageAmountValue) + '%'}
+                isSmall
+                flexDirection="row"
                 justifyContent="space-between"
                 gridGap="12px"
-                marginTop="12px"
-                flexWrap="wrap"
-              >
+              />
+
+              <Box display="flex" alignItems="center" gridGap="12px" flex="1">
                 <Metric
-                  label="Slippage"
-                  value={formatNumber(slippageAmountValue) + '%'}
+                  label="Price Impact"
+                  value={formatNumber(priceImpact) + '%'}
+                  textColor={priceImpactColor}
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"
                   gridGap="12px"
                 />
-                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-                  <Metric
-                    label="Price Impact"
-                    value={formatNumber(priceImpact) + '%'}
-                    textColor={priceImpactColor}
-                    isSmall
-                    flexDirection="row"
-                    justifyContent="space-between"
-                    gridGap="12px"
-                  />
-                  <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
-                </Box>
+                <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
               </Box>
             </Box>
           </Box>
@@ -720,7 +718,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
               </PrimaryButtonNew>
             )}
           </Box>
-        </div>
+        </>
       )}
     </div>
   )
@@ -1026,12 +1024,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
           </div>
         </div>
       ) : (
-        <Box marginTop="32px">
-          <Typography variant="h4" className={classes.subtitle}>
+        <>
+          <Typography variant="h4" className={classes.title}>
             Buy back oSQTH & close position
           </Typography>
 
-          <Box display="flex" flexDirection="column" marginTop="8px">
+          <Box display="flex" flexDirection="column">
             <InputToken
               id="close-short-osqth-input"
               value={sqthTradeAmount}
@@ -1081,7 +1079,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               <>
                 <Box display="flex" justifyContent="space-between" alignItems="center" marginTop="24px">
                   <Typography variant="h4" className={classes.label}>
-                    Collateralization ratio
+                    Collateral ratio
                   </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
@@ -1274,7 +1272,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               )}
             </Box>
           </Box>
-        </Box>
+        </>
       )}
     </div>
   )
