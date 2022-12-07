@@ -65,6 +65,7 @@ const useStyles = makeStyles((theme) =>
     moreButtonContainer: {
       display: 'flex',
       justifyContent: 'center',
+      marginBottom:'24px',
     },
     moreButton: {
       textTransform: 'none',
@@ -126,7 +127,7 @@ export const CrabStrategyV2History: React.FC = () => {
       <div ref={bottomRef} />
       {showMore && (
         <div className={classes.moreButtonContainer}>
-          <Button className={classes.moreButton} onClick={onClickLoadMore} color="primary" variant="outlined">
+          <Button size="large" className={classes.moreButton} onClick={onClickLoadMore} color="primary" variant="outlined">
             Load More
           </Button>
         </div>
