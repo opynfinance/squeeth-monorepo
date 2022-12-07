@@ -183,6 +183,8 @@ contract CrabNetting is Ownable, EIP712 {
     event SetOTCPriceTolerance(uint256 previousTolerance, uint256 newOtcPriceTolerance);
     event SetMinCrab(uint256 amount);
     event SetMinUSDC(uint256 amount);
+    event SetDepositsIndex(uint256 newDepositsIndex);
+    event SetWithdrawsIndex(uint256 newWithdrawsIndex);
     event NonceTrue(address sender, uint256 nonce);
     event ToggledAuctionLive(bool isAuctionLive);
 
@@ -252,6 +254,24 @@ contract CrabNetting is Ownable, EIP712 {
     function setMinCrab(uint256 _amount) external onlyOwner {
         minCrabAmount = _amount;
         emit SetMinCrab(_amount);
+    }
+
+    /**
+     * @notice set the depositIndex so that we want to skip processing some deposits
+     * @param _newDepositsIndex the new deposits index
+     */
+    function setDepositsIndex(uint256 _newDepositsIndex) external onlyOwner {
+        depositsIndex = _newDepositsIndex;
+        emit SetDepositsIndex(_newDepositsIndex);
+    }
+
+    /**
+     * @notice set the withdraw index so that we want to skip processing some withdraws
+     * @param _newWithdrawsIndex the new withdraw index
+     */
+    function setWithdrawsIndex(uint256 _newWithdrawsIndex) external onlyOwner {
+        withdrawsIndex = _newWithdrawsIndex;
+        emit SetWithdrawsIndex(_newWithdrawsIndex);
     }
 
     /**
