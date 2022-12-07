@@ -1,18 +1,25 @@
+import React from 'react'
+import { Typography, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
-import React from 'react'
-import { Typography } from '@material-ui/core'
 import Link from 'next/link'
 
-import { squeethLiquidityAtom, wethLiquidityAtom } from 'src/state/positions/atoms'
-import { useLPPositionsQuery } from 'src/state/positions/hooks'
+import { squeethLiquidityAtom, wethLiquidityAtom } from '@state/positions/atoms'
+import { useLPPositionsQuery } from '@state/positions/hooks'
+import Metric from '@components/Metric'
+import { formatNumber } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {},
     link: {
-      marginTop: theme.spacing(2),
       color: theme.palette.primary.main,
+      fontWeight: 500,
+      fontSize: '14px',
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
     },
   }),
 )
@@ -23,29 +30,30 @@ const LPPosition: React.FC = () => {
   const wethLiquidity = useAtomValue(wethLiquidityAtom)
   const { loading } = useLPPositionsQuery()
 
-  if (loading) return <div className={classes.container}>Loading...</div>
+  if (loading) {
+    return <div>{'Fetching LP position...'}</div>
+  }
 
-  if (squeethLiquidity.isZero() && wethLiquidity.isZero())
-    return <div className={classes.container}>No LP Positions</div>
+  if (squeethLiquidity.isZero() && wethLiquidity.isZero()) {
+    return null
+  }
 
   return (
-    <div className={classes.container}>
-      <Typography variant="body1" style={{ fontWeight: 600 }}>
-        Position
-      </Typography>
-      <div style={{ display: 'flex', marginTop: '8px' }}>
-        <Typography>Liquidity: &nbsp;</Typography>
-        <Typography>
-          <span style={{ fontWeight: 600 }}>{' ' + squeethLiquidity.toFixed(4)}</span> oSQTH,&nbsp;
+    <>
+      <Box display="flex" alignItems="center" gridGap="32px">
+        <Typography variant="h4" className={classes.subtitle}>
+          My Position
         </Typography>
-        <Typography>
-          <span style={{ fontWeight: 600 }}>{' ' + wethLiquidity.toFixed(4)}</span> WETH
+        <Typography className={classes.link} id="pos-card-manage-vault-link">
+          <Link href={`/positions`}>Sell full position</Link>
         </Typography>
-      </div>
-      <Typography className={classes.link}>
-        <Link href={`positions/`}>See full position</Link>
-      </Typography>
-    </div>
+      </Box>
+
+      <Box display="flex" gridGap="12px" marginTop="16px" flexWrap="wrap">
+        <Metric gridGap="6px" label="oSQTH Liquidity" value={formatNumber(squeethLiquidity.toNumber(), 4) + ' oSQTH'} />
+        <Metric gridGap="6px" label="WETH Liquidity" value={formatNumber(wethLiquidity.toNumber(), 4) + ' WETH'} />
+      </Box>
+    </>
   )
 }
 
