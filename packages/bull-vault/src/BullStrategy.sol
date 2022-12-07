@@ -28,6 +28,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS8: Caller is not auction address
  * BS9: deposited amount less than minimum
  * BS10: remaining amount of bull token should be more than minimum or zero
+ * BS11: invalid receiver address
  */
 
 /**
@@ -103,15 +104,20 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw airdropped asset
+     * @notice withdraw assets transfered directly to this contract
      * @dev can only be called by owner
      * @param _asset asset address
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
         require((_asset != crab) && (_asset != eToken) && (_asset != dToken), "BS5");
+        require(_receiver != address(0), "BS21");
 
-        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        if (_asset == address(0)) {
+            payable(_receiver).sendValue(address(this).balance);
+        } else {
+            IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        }
 
         emit Farm(_asset, _receiver);
     }
@@ -133,7 +139,7 @@ contract BullStrategy is ERC20, LeverageBull {
     function setShutdownContract(address _shutdownContract) external onlyOwner {
         require(_shutdownContract != address(0), "BS6");
 
-        emit SetShutdownContract(_shutdownContract, shutdownContract);
+        emit SetShutdownContract(shutdownContract, _shutdownContract);
 
         shutdownContract = _shutdownContract;
     }
