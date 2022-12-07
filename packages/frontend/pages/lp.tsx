@@ -10,21 +10,47 @@ import LPBuyChart from '@components/Charts/LPBuyChart'
 import LPMintChart from '@components/Charts/LPMintChart'
 import Nav from '@components/Nav'
 import { LPProvider } from '@context/lp'
-import { useRestrictUser } from '@context/restrict-user'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useAtomValue } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(4, 10),
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      maxWidth: '1500px',
+      maxWidth: '1280px',
+      width: '80%',
       display: 'flex',
-      justifyContent: 'space-between',
+      justifyContent: 'center',
+      gridGap: '96px',
+      flexWrap: 'wrap',
+      padding: theme.spacing(6, 5),
+      margin: '0 auto',
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+        width: '90%',
+      },
+      [theme.breakpoints.down('md')]: {
+        width: '100%',
+        gridGap: '40px',
+      },
+      [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(3, 4),
+      },
+      [theme.breakpoints.down('xs')]: {
+        padding: theme.spacing(3, 3),
+      },
+    },
+    leftColumn: {
+      flex: 1,
+      minWidth: '480px',
+      [theme.breakpoints.down('xs')]: {
+        minWidth: '320px',
+      },
+    },
+    rightColumn: {
+      flexBasis: '452px',
+      [theme.breakpoints.down('xs')]: {
+        flex: '1',
+      },
     },
     logoContainer: {
       display: 'flex',
@@ -69,6 +95,10 @@ const useStyles = makeStyles((theme) =>
     tradeForm: {
       position: 'sticky',
       top: '100px',
+      border: '1px solid #242728',
+      boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
+      borderRadius: theme.spacing(0.7),
+      padding: '32px 24px 24px 24px',
     },
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
@@ -78,16 +108,15 @@ const useStyles = makeStyles((theme) =>
 
 export function LPCalculator() {
   const classes = useStyles()
-  const { isRestricted } = useRestrictUser()
   const ethPrice = useETHPrice()
   const [lpType, setLpType] = useState(0)
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   return (
     <div>
       <Nav />
+
       <div className={classes.container}>
-        <div style={{ width: '800px', paddingRight: '16px' }}>
+        <div className={classes.leftColumn}>
           <div style={{ display: 'flex' }}>
             <div className={classes.logo}>
               <Image src={squeethTokenSymbol} alt="squeeth token" width={37} height={37} />
@@ -196,7 +225,7 @@ export function LPCalculator() {
             )}
           </div>
         </div>
-        <div>
+        <div className={classes.rightColumn}>
           <div className={classes.tradeForm}>
             <ObtainSqueeth />
           </div>
@@ -208,11 +237,9 @@ export function LPCalculator() {
 
 export function LPage() {
   return (
-    // <TradeProvider>
     <LPProvider>
       <LPCalculator />
     </LPProvider>
-    // </TradeProvider>
   )
 }
 

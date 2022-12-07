@@ -14,10 +14,7 @@ const useStyles = makeStyles((theme) =>
     container: {
       width: '100%',
       height: '496px',
-      background: theme.palette.background.stone,
-      borderRadius: theme.spacing(1),
       overflow: 'auto',
-      padding: theme.spacing(1),
     },
     title: {
       textAlign: 'center',

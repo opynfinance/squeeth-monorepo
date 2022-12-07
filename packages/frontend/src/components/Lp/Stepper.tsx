@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(3),
     },
     stepData: {
       marginLeft: theme.spacing(1),

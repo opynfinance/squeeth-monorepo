@@ -10,7 +10,6 @@ import Stepper from './Stepper'
 const useStyles = makeStyles(() =>
   createStyles({
     container: {
-      width: '400px',
       display: 'flex',
       justifyContent: 'center',
       flexDirection: 'column',
