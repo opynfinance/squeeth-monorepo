@@ -585,11 +585,11 @@ contract CrabNetting is Ownable, EIP712 {
                 remainingDeposits = remainingDeposits - queuedAmount;
                 usdBalance[deposits[k].sender] -= queuedAmount;
 
-                portion.crab = (((queuedAmount * 1e18) / _p.depositsQueued) * to_send.crab) / 1e18;
+                portion.crab = queuedAmount * to_send.crab / _p.depositsQueued;
 
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = (((queuedAmount * 1e18) / _p.depositsQueued) * to_send.eth) / 1e18;
+                portion.eth = queuedAmount * to_send.eth / _p.depositsQueued;
                 if (portion.eth > 1e12) {
                     IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
@@ -602,10 +602,10 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 usdBalance[deposits[k].sender] -= remainingDeposits;
 
-                portion.crab = (((remainingDeposits * 1e18) / _p.depositsQueued) * to_send.crab) / 1e18;
+                portion.crab = remainingDeposits * to_send.crab / _p.depositsQueued;
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = (((remainingDeposits * 1e18) / _p.depositsQueued) * to_send.eth) / 1e18;
+                portion.eth = remainingDeposits * to_send.eth / _p.depositsQueued;
                 if (portion.eth > 1e12) {
                     IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
@@ -700,7 +700,7 @@ contract CrabNetting is Ownable, EIP712 {
                 crabBalance[withdraw.sender] -= withdraw.amount;
 
                 // send proportional usdc
-                usdcAmount = (((withdraw.amount * 1e18) / _p.crabToWithdraw) * usdcReceived) / 1e18;
+                usdcAmount = withdraw.amount * usdcReceived / _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
                 emit CrabWithdrawn(withdraw.sender, withdraw.amount, usdcAmount, j);
                 delete withdraws[j];
@@ -710,7 +710,7 @@ contract CrabNetting is Ownable, EIP712 {
                 crabBalance[withdraw.sender] -= remainingWithdraws;
 
                 // send proportional usdc
-                usdcAmount = (((remainingWithdraws * 1e18) / _p.crabToWithdraw) * usdcReceived) / 1e18;
+                usdcAmount = remainingWithdraws * usdcReceived / _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
                 emit CrabWithdrawn(withdraw.sender, remainingWithdraws, usdcAmount, j);
 
