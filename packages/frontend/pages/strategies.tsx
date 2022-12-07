@@ -16,6 +16,7 @@ import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
 import Metric from '@components/Metric'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
+import BullStrategy from '@components/Strategies/Bull'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
@@ -40,8 +41,7 @@ import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { formatNumber, formatCurrency } from '@utils/formatter'
 import { toTokenAmount } from '@utils/calculations'
 import { Tooltips } from '@constants/enums'
-import { Vaults } from '@constants/enums'
-import bull from 'public/images/bull.gif'
+import { Vaults, VaultSubtitle } from '@constants/enums'
 import bear from 'public/images/bear.gif'
 
 const useLabelStyles = makeStyles((theme) =>
@@ -62,6 +62,39 @@ const useLabelStyles = makeStyles((theme) =>
     },
   }),
 )
+
+const useTabLabelStyles = makeStyles((theme) =>
+  createStyles({
+    title: {
+      fontSize: '24px',
+      fontWeight: 700,
+      fontFamily: 'DM Sans',
+      lineHeight: '2rem',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '20px',
+        lineHeight: '1.5rem',
+      },
+    },
+    subtitle: {
+      fontSize: '16px',
+      fontWeight: 400,
+      fontFamily: 'DM Sans',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '13px',
+      },
+    },
+  }),
+)
+
+const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
+  const classes = useTabLabelStyles()
+  return (
+    <div>
+      <Typography className={classes.title}>{title}</Typography>
+      <Typography className={classes.subtitle}>{subtitle}</Typography>
+    </div>
+  )
+}
 
 const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
   const classes = useLabelStyles()
@@ -301,17 +334,20 @@ const Strategies: React.FC = () => {
           }}
           aria-label="disabled tabs example"
         >
-          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBear} icon={<div>🐻</div>} />
-          <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
-          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
+          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBear} />} icon={<div>🐻</div>} />
+          <Tab
+            style={{ textTransform: 'none' }}
+            label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
+            icon={<div>🦀</div>}
+          />
+          <Tab
+            style={{ textTransform: 'none' }}
+            label={<TabLabel title={Vaults.ETHBull} subtitle={VaultSubtitle.ETHBull} />}
+            icon={<div>🧘🐂</div>}
+          />
         </Tabs>
         {selectedIdx === 2 ? ( //bull vault
-          <div className={classes.comingSoon}>
-            <Image src={bull} alt="squeeth token" width={200} height={130} />
-            <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-              Coming soon
-            </Typography>
-          </div>
+          <BullStrategy />
         ) : selectedIdx === 0 ? ( //bear vault
           <div className={classes.comingSoon}>
             <Image src={bear} alt="squeeth token" width={200} height={130} />
