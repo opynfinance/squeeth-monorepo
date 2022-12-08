@@ -114,7 +114,6 @@ export const useGetFlashBulldepositParams = () => {
       prevState = { ...emptyState, ethToCrab, minEthFromSqth, minEthFromUsdc }
 
       const totalToBull = ethToCrab.plus(wethToLend).minus(minEthFromSqth).minus(minEthFromUsdc)
-      console.log('Bull', middle.toNumber(), ethToCrab.toString(), totalEthDeposit.div(totalToBull).toString())
       // Total to bull should almost equal to totalEthDeposit
       if (totalToBull.gt(totalEthDeposit)) {
         end = middle
@@ -127,6 +126,12 @@ export const useGetFlashBulldepositParams = () => {
       }
     }
 
+    console.log(
+      'Bull flash: ',
+      prevState.ethToCrab.toString(),
+      prevState.minEthFromSqth.toString(),
+      prevState.minEthFromUsdc.toString(),
+    )
     return prevState
   }
 
@@ -138,8 +143,6 @@ export const useGetFlashBulldepositParams = () => {
 
   const getCachedDepositParams = async (totalEthDeposit: BigNumber) => {
     try {
-      console.log('Here in query', `${queryKey}-${totalEthDeposit.toString()}`)
-      console.log(queryClient.getQueryCache().get(`${queryKey}-${totalEthDeposit.toString()}`))
       const data = await queryClient.fetchQuery({
         queryKey: `${queryKey}-${totalEthDeposit.toString()}`,
         queryFn: () => getFlashBullDepositParams(totalEthDeposit),

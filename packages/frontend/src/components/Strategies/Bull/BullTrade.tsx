@@ -1,7 +1,7 @@
 import { Box, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
 
@@ -78,7 +78,8 @@ enum BullTradeType {
 
 const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
-  const [depositAmount, setDepositAmount] = useState('0')
+  const depositAmountRef = useRef('0')
+
   const [withdrawAmount, setWithdrawAmount] = useState('0')
   const [slippage, setSlippage] = useState(0.25)
   const isDeposit = tradeType === BullTradeType.Deposit
@@ -114,13 +115,18 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
 
   const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
     setQuoteLoading(true)
-    const _quote = await getFlashBullDepositParams(new BigNumber(ethToDeposit))
-    setQuote(_quote)
-    setQuoteLoading(false)
+    getFlashBullDepositParams(new BigNumber(ethToDeposit))
+      .then((_quote) => {
+        console.log('', ethToDeposit.toString(), depositAmountRef.current)
+        if (ethToDeposit === depositAmountRef.current) setQuote(_quote)
+      })
+      .finally(() => {
+        if (ethToDeposit === depositAmountRef.current) setQuoteLoading(false)
+      })
   }, 500)
 
   const onInputChange = (ethToDeposit: string) => {
-    setDepositAmount(ethToDeposit)
+    depositAmountRef.current = ethToDeposit
     debouncedDepositQuote(ethToDeposit)
   }
 
@@ -131,7 +137,7 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
       quote.minEthFromUsdc,
       quote.wPowerPerpPoolFee,
       quote.usdcPoolFee,
-      new BigNumber(depositAmount),
+      new BigNumber(depositAmountRef.current),
     )
   }
 
@@ -168,7 +174,7 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
             {isDeposit && (
               <InputToken
                 id="bull-deposit-eth-input"
-                value={depositAmount}
+                value={depositAmountRef.current}
                 onInputChange={onInputChange}
                 balance={toTokenAmount(0 ?? BIG_ZERO, 18)}
                 logo={ethLogo}
