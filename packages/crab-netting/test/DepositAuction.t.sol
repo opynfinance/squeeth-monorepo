@@ -113,7 +113,7 @@ contract DepositAuctionTest is BaseForkSetup {
     function testDepositAuctionAfterFullWithdrawal() public {
         vm.startPrank(depositor);
         console.log(netting.usdBalance(depositor), "depositor balance");
-        netting.withdrawUSDC(netting.usdBalance(depositor));
+        netting.withdrawUSDC(netting.usdBalance(depositor), false);
         assertEq(netting.usdBalance(depositor), 0, "depositor balancez ero");
         netting.depositUSDC(200000e6);
         vm.stopPrank();

@@ -93,7 +93,7 @@ contract NettingTest is BaseForkSetup {
         assertEq(crab.balanceOf(depositor), 0, "depositor starting balance");
         vm.prank(depositor);
         uint256 withdrawQuantity = 50e6;
-        netting.withdrawUSDC(withdrawQuantity);
+        netting.withdrawUSDC(withdrawQuantity, false);
         uint256 price = 1330e6;
         uint256 quantity = 200e6 - withdrawQuantity;
         netting.netAtPrice(price, quantity);
@@ -104,12 +104,12 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 200e6;
         vm.startPrank(depositor);
-        netting.withdrawUSDC(80e6);
+        netting.withdrawUSDC(80e6, false);
         netting.depositUSDC(80e6);
         vm.stopPrank();
 
         vm.prank(withdrawer);
-        netting.dequeueCrab(20e18 - (quantity * 1e18) / price);
+        netting.dequeueCrab(20e18 - (quantity * 1e18) / price, false);
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(netting.crabBalance(withdrawer), 0, "crab balance not zero after first netting");
 
@@ -141,7 +141,7 @@ contract NettingTest is BaseForkSetup {
     function testCannotWithdrawMoreThanDeposited() public {
         vm.startPrank(depositor);
         vm.expectRevert(stdError.arithmeticError);
-        netting.withdrawUSDC(210e6);
+        netting.withdrawUSDC(210e6, false);
         vm.stopPrank();
     }
 }

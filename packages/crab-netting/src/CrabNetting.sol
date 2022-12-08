@@ -75,6 +75,8 @@ struct Receipt {
     address sender;
     /// @dev usdc amount to queue for deposit or crab amount to queue for withdrawal
     uint256 amount;
+    /// @dev time of deposit
+    uint256 timestamp;
 }
 
 /**
@@ -265,7 +267,7 @@ contract CrabNetting is Ownable, EIP712 {
 
         // update usd balance of user, add their receipt, and receipt index to user deposits index
         usdBalance[msg.sender] = usdBalance[msg.sender] + _amount;
-        deposits.push(Receipt(msg.sender, _amount));
+        deposits.push(Receipt(msg.sender, _amount, block.timestamp));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
 
         emit USDCQueued(msg.sender, _amount, usdBalance[msg.sender], deposits.length - 1);
@@ -274,9 +276,10 @@ contract CrabNetting is Ownable, EIP712 {
     /**
      * @notice withdraw USDC from queue
      * @param _amount USDC amount to dequeue
+     * @param _force forceWithdraw if deposited more than a week ago
      */
-    function withdrawUSDC(uint256 _amount) external {
-        require(!isAuctionLive, "auction is live");
+    function withdrawUSDC(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "auction is live");
 
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
         require(
@@ -289,6 +292,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 lastIndexP1 = userDepositsIndex[msg.sender].length;
         for (uint256 i = lastIndexP1; i > 0; i--) {
             Receipt storage r = deposits[userDepositsIndex[msg.sender][i - 1]];
+            if (_force) {
+                require(block.timestamp > r.timestamp + 1 weeks, "force withdraw after 1 week from deposit");
+            }
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
@@ -311,7 +317,7 @@ contract CrabNetting is Ownable, EIP712 {
         require(_amount >= minCrabAmount, "withdraw amount smaller than minimum OTC amount");
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] + _amount;
-        withdraws.push(Receipt(msg.sender, _amount));
+        withdraws.push(Receipt(msg.sender, _amount, block.timestamp));
         userWithdrawsIndex[msg.sender].push(withdraws.length - 1);
         emit CrabQueued(msg.sender, _amount, crabBalance[msg.sender], withdraws.length - 1);
     }
@@ -319,9 +325,10 @@ contract CrabNetting is Ownable, EIP712 {
     /**
      * @notice withdraw Crab from queue
      * @param _amount Crab amount to dequeue
+     * @param _force forceWithdraw if deposited more than a week ago
      */
-    function dequeueCrab(uint256 _amount) external {
-        require(!isAuctionLive, "auction is live");
+    function dequeueCrab(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "auction is live");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
         require(
             crabBalance[msg.sender] >= minCrabAmount || crabBalance[msg.sender] == 0,
@@ -332,6 +339,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 lastIndexP1 = userWithdrawsIndex[msg.sender].length;
         for (uint256 i = lastIndexP1; i > 0; i--) {
             Receipt storage r = withdraws[userWithdrawsIndex[msg.sender][i - 1]];
+            if (_force) {
+                require(block.timestamp > r.timestamp + 1 weeks, "force withdraw after 1 week from deposit");
+            }
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
