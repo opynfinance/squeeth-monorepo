@@ -13,7 +13,7 @@ export const crabStrategyCollatRatioAtom = atom(0)
 export const crabStrategyLiquidationPriceAtom = atom(BIG_ZERO)
 export const timeAtLastHedgeAtom = atom(0)
 export const loadingAtom = atom(true)
-export const visibleStrategyHedgesAtom = atom<number>(10)
+export const visibleStrategyHedgesAtom = atom<number>(3)
 
 export const maxCapAtomV2 = atom(BIG_ZERO)
 export const crabStrategyVaultAtomV2 = atom<Vault | null>(null)

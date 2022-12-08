@@ -65,7 +65,7 @@ const useStyles = makeStyles((theme) =>
     moreButtonContainer: {
       display: 'flex',
       justifyContent: 'center',
-      marginBottom:'24px',
+      marginBottom: '24px',
     },
     moreButton: {
       textTransform: 'none',
@@ -81,7 +81,7 @@ export const CrabStrategyV2History: React.FC = () => {
   const networkId = useAtomValue(networkIdAtom)
 
   const onClickLoadMore = useCallback(() => {
-    setVisibleHedges(visibleHedges + 10)
+    setVisibleHedges(visibleHedges + 3)
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 200)
@@ -127,7 +127,13 @@ export const CrabStrategyV2History: React.FC = () => {
       <div ref={bottomRef} />
       {showMore && (
         <div className={classes.moreButtonContainer}>
-          <Button size="large" className={classes.moreButton} onClick={onClickLoadMore} color="primary" variant="outlined">
+          <Button
+            size="large"
+            className={classes.moreButton}
+            onClick={onClickLoadMore}
+            color="primary"
+            variant="outlined"
+          >
             Load More
           </Button>
         </div>
