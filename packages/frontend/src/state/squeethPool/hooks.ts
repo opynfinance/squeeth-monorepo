@@ -1,4 +1,4 @@
-import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS } from '@constants/index'
+import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS, ZERO_ADDRESS } from '@constants/index'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
@@ -159,6 +159,7 @@ export const useGetBuyQuoteForETH = () => {
         priceImpact: '0',
         pools: [],
       }
+
       try {
         const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
         const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
@@ -166,7 +167,7 @@ export const useGetBuyQuoteForETH = () => {
         const router = new AlphaRouter({ chainId: chainId, provider: provider as any })
         const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
         const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT, {
-          recipient: address!,
+          recipient: address ?? ZERO_ADDRESS,
           slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
           deadline: Math.floor(Date.now() / 1000 + 1800),
         })
@@ -505,7 +506,7 @@ export const useAutoRoutedGetSellQuote = () => {
         fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0),
       )
       const route = await router.route(rawAmount, wethToken!, TradeType.EXACT_INPUT, {
-        recipient: address!,
+        recipient: address ?? ZERO_ADDRESS,
         slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
         deadline: Math.floor(Date.now() / 1000 + 1800),
       })
