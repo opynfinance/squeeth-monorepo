@@ -77,13 +77,13 @@ const useStyles = makeStyles((theme) =>
     details: {
       marginTop: theme.spacing(4),
     },
-    tradeForm: {
+    tradeSection: {
       position: 'sticky',
       top: '100px',
       border: '1px solid #242728',
       boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
       borderRadius: theme.spacing(0.7),
-      padding: '32px 24px 24px 24px',
+      padding: '32px 24px',
     },
     chartNav: {
       border: `1px solid ${theme.palette.primary.main}30`,
@@ -232,7 +232,7 @@ export function LPCalculator() {
         </div>
 
         <div className={classes.rightColumn}>
-          <div className={classes.tradeForm}>
+          <div className={classes.tradeSection}>
             <ObtainSqueeth />
           </div>
         </div>
