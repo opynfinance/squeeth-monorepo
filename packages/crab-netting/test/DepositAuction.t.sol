@@ -272,6 +272,62 @@ contract DepositAuctionTest is BaseForkSetup {
         assertApproxEqAbs(weth.balanceOf(depositor) - initEthBalance, 3e17, 1e17);
     }
 
+    function testFirstDepositAuctionWithFee() public {
+        vm.startPrank(0x609FFF64429e2A275a879e5C50e415cec842c629);
+        sqthController.setFeeRecipient(depositor);
+        sqthController.setFeeRate(10);
+        vm.stopPrank();
+
+        DepositAuctionParams memory p;
+        p.depositsQueued = netting.depositsQueued();
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
+
+        uint256 sqthPrice = (_getSqthPrice(1e18) * 988) / 1000;
+        (,, uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        uint256 toMint;
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(p.minEth, collateral, debt, sqthPrice);
+        bool trade_works = _isEnough(p.minEth, toMint, sqthPrice, p.totalDeposit);
+        require(trade_works, "depositing more than we have from sellling");
+        Order memory order =
+            Order(0, mm1, toMint - 1e18, (sqthPrice * 1005) / 1000, true, block.timestamp, 0, 1, 0x00, 0x00);
+
+        Sign memory s;
+        (s.v, s.r, s.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order));
+        order.v = s.v;
+        order.r = s.r;
+        order.s = s.s;
+
+        Order memory order0 = Order(0, mm1, 1e18, (sqthPrice * 1005) / 1000, true, block.timestamp, 1, 1, 0x00, 0x00);
+
+        Sign memory s0;
+        (s0.v, s0.r, s0.s) = vm.sign(mm1Pk, sig.getTypedDataHash(order0));
+        order0.v = s0.v;
+        order0.r = s0.r;
+        order0.s = s0.s;
+
+        orders.push(order0);
+        orders.push(order);
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        p.orders = orders;
+        p.clearingPrice = (sqthPrice * 1005) / 1000;
+        uint256 excessEth = (toMint * (p.clearingPrice - sqthPrice)) / 1e18;
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        p.ethToFlashDeposit = (excessEth * mid) / 10 ** 7;
+        p.ethUSDFee = 500;
+        p.flashDepositFee = 3000;
+        // ------------- //
+        uint256 initEthBalance = weth.balanceOf(depositor);
+        netting.depositAuction(p);
+
+        assertApproxEqAbs(ICrabStrategyV2(crab).balanceOf(depositor), 147e18, 1e18);
+        assertApproxEqAbs(sqth.balanceOf(mm1), toMint, 2e18);
+        assertApproxEqAbs(weth.balanceOf(depositor) - initEthBalance, 3e17, 1e17);
+    }
+
     // TODO find a way to make this reusable and test easily
     // for multiple ETH movements and external events like partial fills
     // eth going down

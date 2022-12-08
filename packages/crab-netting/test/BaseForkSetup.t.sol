@@ -10,6 +10,7 @@ import {ICrabStrategyV2} from "../src/interfaces/ICrabStrategyV2.sol";
 import {CrabNetting, Order} from "../src/CrabNetting.sol";
 import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import {IQuoter} from "@uniswap/v3-periphery/contracts/interfaces/IQuoter.sol";
+import {IController} from "../src/interfaces/IController.sol";
 
 contract BaseForkSetup is Test {
     ICrabStrategyV2 crab;
@@ -18,6 +19,7 @@ contract BaseForkSetup is Test {
     ERC20 sqth;
     CrabNetting netting;
     ISwapRouter swapRouter;
+    IController sqthController;
     IQuoter quoter;
     IOracle oracle;
     uint256 activeFork;
@@ -48,6 +50,7 @@ contract BaseForkSetup is Test {
         swapRouter = ISwapRouter(0xE592427A0AEce92De3Edee1F18E0157C05861564);
         quoter = IQuoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         oracle = IOracle(0x65D66c76447ccB45dAf1e8044e918fA786A483A1);
+        sqthController = IController(0x64187ae08781B09368e6253F9E94951243A493D5);
 
         netting = new CrabNetting(address(crab), address(swapRouter));
         vm.prank(address(netting));
