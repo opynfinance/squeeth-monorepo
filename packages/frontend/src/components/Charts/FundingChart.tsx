@@ -108,8 +108,9 @@ const FundingChart = () => {
         : fundingDuration.id === 'month'
         ? monthFunding
         : yearFunding) * 100
-    return { time: Number(item.timestamp), value }
+    return { time: Number(item.timestamp), value: parseFloat(value.toFixed(4)) }
   })
+
   const chartOptions = {
     ...graphOptions,
     localization: {

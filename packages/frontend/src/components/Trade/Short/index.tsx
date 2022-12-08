@@ -1061,6 +1061,9 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 inputProps={{ 'aria-label': 'Without label' }}
                 style={{ padding: '5px 0px', width: '100%', textAlign: 'left' }}
                 id="close-short-type-select"
+                MenuProps={{
+                  disableScrollLock: true,
+                }}
               >
                 <MenuItem value={CloseType.FULL} id="close-short-full-close">
                   Full Close
