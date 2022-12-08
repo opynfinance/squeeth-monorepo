@@ -1,14 +1,15 @@
-import { IconButton, Typography, Link } from '@material-ui/core'
+import { IconButton, Typography, Link, Button } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import React from 'react'
+import React, { useRef, useCallback } from 'react'
 import clsx from 'clsx'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 
 import { EtherscanPrefix } from '@constants/index'
 import { useCrabStrategyV2TxHistory } from '@hooks/useCrabV2AuctionHistory'
 import { networkIdAtom } from '@state/wallet/atoms'
 import { formatNumber } from '@utils/formatter'
+import { visibleStrategyHedgesAtom } from '@state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,14 +62,30 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       flexBasis: 'max-content',
     },
+    moreButtonContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom:'24px',
+    },
+    moreButton: {
+      textTransform: 'none',
+    },
   }),
 )
 
 export const CrabStrategyV2History: React.FC = () => {
   const classes = useStyles()
-  const { data } = useCrabStrategyV2TxHistory()
-
+  const [visibleHedges, setVisibleHedges] = useAtom(visibleStrategyHedgesAtom)
+  const { data, showMore } = useCrabStrategyV2TxHistory()
+  const bottomRef = useRef<HTMLDivElement>(null)
   const networkId = useAtomValue(networkIdAtom)
+
+  const onClickLoadMore = useCallback(() => {
+    setVisibleHedges(visibleHedges + 10)
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 200)
+  }, [visibleHedges, setVisibleHedges])
 
   return (
     <div className={classes.container}>
@@ -107,6 +124,14 @@ export const CrabStrategyV2History: React.FC = () => {
           </div>
         )
       })}
+      <div ref={bottomRef} />
+      {showMore && (
+        <div className={classes.moreButtonContainer}>
+          <Button size="large" className={classes.moreButton} onClick={onClickLoadMore} color="primary" variant="outlined">
+            Load More
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
