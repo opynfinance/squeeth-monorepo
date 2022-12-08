@@ -109,7 +109,7 @@ const LPInfo: React.FC<{ lpType: number }> = ({ lpType }) => {
           Earn a payoff similar to ETH<sup>1.5</sup>
         </Typography>
         <Typography variant="subtitle1" className={classes.sectionTitle}>
-          Details
+          Strategy Overview
         </Typography>
         <Typography variant="body1" className={classes.content}>
           Buying and LPing gives you a leverage position with a payoff similar to ETH<sup>1.5</sup>. You give up some of
@@ -149,7 +149,7 @@ const LPInfo: React.FC<{ lpType: number }> = ({ lpType }) => {
         Earn yield from trading fees while being long ETH
       </Typography>
       <Typography variant="subtitle1" className={classes.sectionTitle}>
-        Details
+        Strategy Overview
       </Typography>
       <Typography variant="body1" className={classes.content}>
         Minting and LPing is similar to a covered call. You start off with a position similar to 1x long ETH that gets
@@ -225,7 +225,7 @@ export function LPCalculator() {
 
           <Box marginTop="32px">
             <Typography variant="h4" className={classes.subtitle}>
-              Metrics
+              Details
             </Typography>
             <SqueethInfo marginTop="16px" />
           </Box>
