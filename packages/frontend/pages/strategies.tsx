@@ -397,7 +397,7 @@ const Strategies: React.FC = () => {
                     flexBasis="250px"
                     label={
                       <Label
-                        label={`Approx Profitable (${formatNumber(profitableMovePercent * 100)}%)`}
+                        label={`Approx Profitable (${formatNumber(profitableMovePercentV2 * 100)}%)`}
                         tooltipTitle={Tooltips.StrategyProfitThreshold}
                       />
                     }

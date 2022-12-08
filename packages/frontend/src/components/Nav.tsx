@@ -93,12 +93,6 @@ const useStyles = makeStyles((theme) =>
         marginBottom: theme.spacing(1),
       },
     },
-    contractAddress: {
-      width: '200px',
-      [theme.breakpoints.down('md')]: {
-        width: '50px',
-      },
-    },
   }),
 )
 
@@ -181,7 +175,6 @@ const Nav: React.FC = () => {
             onClick={() => {
               setCopied(oSqueeth)
             }}
-            className={classes.contractAddress}
           >
             {isCopied ? (
               <>Copied</>
