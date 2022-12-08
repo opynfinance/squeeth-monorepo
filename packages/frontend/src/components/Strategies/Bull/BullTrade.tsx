@@ -20,6 +20,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import { useBullFlashDeposit, useGetFlashBulldepositParams } from '@state/bull/hooks'
+import debounce from 'lodash/debounce'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -111,12 +112,16 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
 
-  const onInputChange = async (ethToDeposit: string) => {
+  const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
     setQuoteLoading(true)
-    setDepositAmount(ethToDeposit)
     const _quote = await getFlashBullDepositParams(new BigNumber(ethToDeposit))
     setQuote(_quote)
     setQuoteLoading(false)
+  }, 500)
+
+  const onInputChange = (ethToDeposit: string) => {
+    setDepositAmount(ethToDeposit)
+    debouncedDepositQuote(ethToDeposit)
   }
 
   const onDepositClick = async () => {
