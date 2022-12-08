@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Switch, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
 import { usePrevious } from 'react-use'
@@ -440,6 +440,16 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }
 
+  const handleTokenChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setUseUsdc(event.target.checked)
+
+    if (depositOption === 0) {
+      setDepositAmount('0')
+    } else {
+      setWithdrawAmount('0')
+    }
+  }, [])
+
   const setDepositMax = () => {
     if (!useUsdc) setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
     else setDepositAmount(usdcBalance.toString())
@@ -532,7 +542,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               <Typography variant="caption" className={classes.tokenChoice}>
                 ETH
               </Typography>
-              <Switch checked={useUsdc} onChange={(e) => setUseUsdc(e.target.checked)} color="primary" name="useUSDC" />
+              <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" />
               <Typography variant="caption" className={classes.tokenChoice}>
                 USDC
               </Typography>
