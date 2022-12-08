@@ -532,7 +532,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                 Collateral ratio
               </Typography>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+              <Box display="flex" alignItems="center" gridGap="16px">
                 <Checkbox
                   name="priceRangeDefault"
                   label="Default"
@@ -1082,7 +1082,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                     Collateral ratio
                   </Typography>
 
-                  <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+                  <Box display="flex" alignItems="center" gridGap="16px">
                     <Checkbox
                       name="priceRangeDefault"
                       label="Default"

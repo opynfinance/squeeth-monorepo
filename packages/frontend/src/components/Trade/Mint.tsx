@@ -181,7 +181,7 @@ const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
           Collateral ratio
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gridGap: '16px' }}>
+        <Box display="flex" alignItems="center" gridGap="16px">
           <Checkbox
             name="priceRangeDefault"
             label="Default"

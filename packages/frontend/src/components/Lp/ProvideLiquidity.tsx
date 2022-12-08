@@ -7,7 +7,7 @@ import React from 'react'
 import { useAtomValue } from 'jotai'
 
 import { UniswapIFrameOpen } from '@constants/enums'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { networkIdAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -56,6 +56,7 @@ const ProvideLiquidity: React.FC = () => {
   return (
     <>
       <Typography className={classes.title}>Provide Liquidity</Typography>
+
       <motion.div initial={{ x: '-5%', opacity: 0.8 }} animate={{ x: 0, opacity: 1 }} className={classes.container}>
         <div className={classes.headerDiv}>
           <Typography variant="caption" className={classes.warning}>
