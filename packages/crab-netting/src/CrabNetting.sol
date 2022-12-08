@@ -468,7 +468,7 @@ contract CrabNetting is Ownable, EIP712 {
         return sum;
     }
 
-    function checkOrder(Order memory _order) external {
+    function checkOrder(Order memory _order) external view {
         return _checkOrder(_order);
     }
 
@@ -476,8 +476,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @dev checks the expiry nonce and signer of an order
      * @param _order is the Order struct
      */
-    function _checkOrder(Order memory _order) internal {
-        _useNonce(_order.trader, _order.nonce);
+    function _checkOrder(Order memory _order) internal view {
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_NETTING_TYPEHASH,
@@ -532,6 +531,7 @@ contract CrabNetting is Ownable, EIP712 {
             require(_p.orders[i].isBuying, "auction order not buying sqth");
             require(_p.orders[i].price >= _p.clearingPrice, "buy order price less than clearing");
             _checkOrder(_p.orders[i]);
+            _useNonce(_p.orders[i].trader, _p.orders[i].nonce);
             if (_p.orders[i].quantity >= remainingToSell) {
                 IWETH(weth).transferFrom(
                     _p.orders[i].trader, address(this), (remainingToSell * _p.clearingPrice) / 1e18
@@ -666,6 +666,7 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 toPull = sqthRequired;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             _checkOrder(_p.orders[i]);
+            _useNonce(_p.orders[i].trader, _p.orders[i].nonce);
             require(!_p.orders[i].isBuying, "auction order is not selling");
             require(_p.orders[i].price <= _p.clearingPrice, "sell order price greater than clearing");
             if (_p.orders[i].quantity < toPull) {
