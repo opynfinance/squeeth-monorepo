@@ -49,6 +49,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppEffect from '@hooks/useAppEffect'
+import useStateWithReset from '@hooks/useStateWithReset'
 import {
   BIG_ZERO,
   FUNDING_PERIOD,
@@ -159,18 +160,26 @@ enum WithdrawSteps {
 
 const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
-  const [depositAmount, setDepositAmount] = useState('0')
-  const [withdrawAmount, setWithdrawAmount] = useState('0')
+  const [depositAmount, setDepositAmount, resetDepositAmount] = useStateWithReset('0')
+  const [withdrawAmount, setWithdrawAmount, resetWithdrawAmount] = useStateWithReset('0')
   const [depositOption, setDepositOption] = useState(0)
   const [txLoading, setTxLoading] = useState(false)
-  const [depositPriceImpact, setDepositPriceImpact] = useState('0')
-  const [withdrawPriceImpact, setWithdrawPriceImpact] = useState('0')
-  const [borrowEth, setBorrowEth] = useState(new BigNumber(0))
-  const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit] = useState(new BigNumber(0))
-  const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit] = useState(new BigNumber(0))
-  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw] = useState(new BigNumber(0))
-  const [usdcAmountOutFromWithdraw, setUSDCAmountOutFromWithdraw] = useState(new BigNumber(0))
-  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw] = useState(new BigNumber(0))
+  const [depositPriceImpact, setDepositPriceImpact, resetDepositPriceImpact] = useStateWithReset('0')
+  const [withdrawPriceImpact, setWithdrawPriceImpact, resetWithdrawPriceImpact] = useStateWithReset('0')
+  const [borrowEth, setBorrowEth, resetBorrowEth] = useStateWithReset(new BigNumber(0))
+  const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit, resetSqueethAmountInFromDeposit] =
+    useStateWithReset(new BigNumber(0))
+  const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit, resetEthAmountOutFromDeposit] = useStateWithReset(
+    new BigNumber(0),
+  )
+  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
+    new BigNumber(0),
+  )
+  const [usdcAmountOutFromWithdraw, setUSDCAmountOutFromWithdraw, resetUSDCAmountOutFromWithdraw] = useStateWithReset(
+    new BigNumber(0),
+  )
+  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw, resetSqueethAmountOutFromWithdraw] =
+    useStateWithReset(new BigNumber(0))
   const [depositEthAmount, setDepositEthAmount] = useState(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
@@ -345,7 +354,17 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [withdrawEthAmount])
 
   useEffect(() => {
-    if (!ready || depositOption !== 0 || depositAmountBN.isZero()) return
+    if (!ready || depositOption !== 0) {
+      return
+    }
+
+    if (depositAmountBN.isZero()) {
+      resetDepositPriceImpact()
+      resetBorrowEth()
+      resetEthAmountOutFromDeposit()
+      resetSqueethAmountInFromDeposit()
+      return
+    }
 
     if (!useUsdc) {
       setDepositEthAmount(depositAmountBN)
@@ -370,7 +389,17 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }, [ready, depositAmountBN.toString(), slippage, useUsdc])
 
   useEffect(() => {
-    if (!ready || depositOption === 0 || withdrawCrabAmount.isZero()) return
+    if (!ready || depositOption === 0) {
+      return
+    }
+
+    if (withdrawCrabAmount.isZero()) {
+      resetWithdrawPriceImpact()
+      resetEthAmountInFromWithdraw()
+      resetSqueethAmountOutFromWithdraw()
+      resetUSDCAmountOutFromWithdraw()
+      return
+    }
 
     if (!useUsdc) {
       calculateEthWillingToPay(withdrawCrabAmount, slippage).then((q) => {
@@ -444,9 +473,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     setUseUsdc(event.target.checked)
 
     if (depositOption === 0) {
-      setDepositAmount('0')
+      resetDepositAmount()
     } else {
-      setWithdrawAmount('0')
+      resetWithdrawAmount()
     }
   }, [])
 
