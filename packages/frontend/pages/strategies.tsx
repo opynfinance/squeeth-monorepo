@@ -43,6 +43,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { Tooltips } from '@constants/enums'
 import { Vaults, VaultSubtitle } from '@constants/enums'
 import bear from 'public/images/bear.gif'
+import { useInitBullStrategy } from '@state/bull/hooks'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -291,6 +292,7 @@ const Strategies: React.FC = () => {
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
+  useInitBullStrategy()
 
   const index = useAtomValue(indexAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
@@ -397,9 +399,8 @@ const Strategies: React.FC = () => {
                     label={
                       <Label
                         label="Historical Daily Premium"
-                        tooltipTitle={`${
-                          Tooltips.StrategyEarnFunding
-                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                        tooltipTitle={`${Tooltips.StrategyEarnFunding
+                          }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                       />
                     }
                     value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
