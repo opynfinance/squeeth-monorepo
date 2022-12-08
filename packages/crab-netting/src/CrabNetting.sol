@@ -95,6 +95,9 @@ contract CrabNetting is Ownable, EIP712 {
     /// @dev twap period to use for auction calculations
     uint32 public auctionTwapPeriod = 420 seconds;
 
+    /// @dev time of last auctionLive toggle
+    uint256 public lastAuctionLive;
+
     /// @dev min USDC amounts to withdraw or deposit via netting
     uint256 public minUSDCAmount;
 
@@ -228,7 +231,18 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function toggleAuctionLive() external onlyOwner {
         isAuctionLive = !isAuctionLive;
+        lastAuctionLive = block.timestamp;
         emit ToggledAuctionLive(isAuctionLive);
+    }
+
+    /**
+     * @dev allows anyone to turn off the auction; after a week of auction gone live
+     */
+    function turnOffAuctionLive() external {
+        if (block.timestamp > lastAuctionLive + 1 weeks) {
+            isAuctionLive = false;
+        }
+        emit ToggledAuctionLive(false);
     }
 
     /**
