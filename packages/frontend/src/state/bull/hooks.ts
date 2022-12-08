@@ -1,4 +1,5 @@
 import { BIG_ZERO, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
+import useAppMemo from '@hooks/useAppMemo'
 import { bullStrategyContractAtom, flashBullContractAtom, quoterContractAtom } from '@state/contracts/atoms'
 import { crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
 import { addressesAtom } from '@state/positions/atoms'
@@ -11,6 +12,7 @@ import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect } from 'react'
+import { useQueryClient } from 'react-query'
 import { bullCrabBalanceAtom, bullSupplyAtom } from './atoms'
 import { getWethToLendFromCrabEth } from './utils'
 
@@ -51,6 +53,7 @@ export const useGetFlashBulldepositParams = () => {
   const { weth, oSqueeth, usdc } = useAtomValue(addressesAtom)
   const slippage = useAtomValue(slippageAmountAtom)
   const network = useAtomValue(networkIdAtom)
+  const queryClient = useQueryClient()
 
   const emptyState = {
     ethToCrab: BIG_ZERO,
@@ -127,7 +130,29 @@ export const useGetFlashBulldepositParams = () => {
     return prevState
   }
 
-  return getFlashBullDepositParams
+  const queryKey = useAppMemo(
+    () =>
+      `getFlashBullDepositParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}`,
+    [network, crabTotalSupply, bullCrabBalance, bullSupply, crabV2Vault],
+  )
+
+  const getCachedDepositParams = async (totalEthDeposit: BigNumber) => {
+    try {
+      console.log('Here in query', `${queryKey}-${totalEthDeposit.toString()}`)
+      console.log(queryClient.getQueryCache().get(`${queryKey}-${totalEthDeposit.toString()}`))
+      const data = await queryClient.fetchQuery({
+        queryKey: `${queryKey}-${totalEthDeposit.toString()}`,
+        queryFn: () => getFlashBullDepositParams(totalEthDeposit),
+        staleTime: 300_000,
+      })
+      return data
+    } catch (error) {
+      console.log(error)
+      return emptyState
+    }
+  }
+
+  return getCachedDepositParams
 }
 
 export const useBullFlashDeposit = () => {
