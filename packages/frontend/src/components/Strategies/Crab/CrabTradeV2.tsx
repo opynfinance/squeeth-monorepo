@@ -333,6 +333,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const withdrawEthAmount = useAppMemo(() => {
     if (!useUsdc) return withdrawAmountBN
     else {
+      if (currentUsdcValue.isZero()) {
+        return BIG_ZERO
+      }
       return withdrawAmountBN.div(currentUsdcValue).times(currentEthValue)
     }
   }, [withdrawAmountBN, useUsdc, currentUsdcValue, currentEthValue])
