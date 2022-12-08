@@ -146,7 +146,7 @@ contract NettingTest is BaseForkSetup {
         netting.withdrawUSDC(210e6);
         vm.stopPrank();
     }
-    
+
     function testSkipsUSDCBannedAddress() public {
         // remove the withdrawers crab so that we dont net them
         vm.prank(withdrawer);
@@ -165,7 +165,6 @@ contract NettingTest is BaseForkSetup {
 
         vm.expectRevert(bytes("Blacklistable: account is blacklisted"));
         netting.netAtPrice(1330e6, 200e6);
-
 
         netting.rejectWithdraw(3);
         vm.prank(withdrawer);
