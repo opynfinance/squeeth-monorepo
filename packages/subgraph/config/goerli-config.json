@@ -40,12 +40,12 @@
   "SwapRouter-start-block": 8007328,
   "UniswapV3Factory": "0x55C0ceF3cc64F511C34b18c720bCf38feC6C6fFa",
   "UniswapV3Factory-start-block": 8007327,
-  "BullStrategy": "0x312416A95237d49A42d63fc3f734608A57e77eaB",
-  "BullStrategy-start-block": 8043283,
-  "AuctionBull": "0x893E0b9c34f40908cA13468ED8A0bb0a44bc7676",
-  "AuctionBull-start-block": 8043283,
-  "FlashBull": "0x48924A1bdc23f7C08e1fE70b9Bbd96375218a487",
-  "FlashBull-start-block": 8043283,
+  "BullStrategy": "0x36F59dF22A942a8c7D96b13b79c5b45C41f683d9",
+  "BullStrategy-start-block": 8106591,
+  "AuctionBull": "0x2b8A9986da413d1E1a1A02e5a257D96E46992B21",
+  "AuctionBull-start-block": 8106591,
+  "FlashBull": "0x5B71AaC5625e25B7244db9C13f3164F9e910547B",
+  "FlashBull-start-block": 8106591,
   "OpynWETH9": "0x083fd3D47eC8DC56b572321bc4dA8b26f7E82103",
   "OpynWETH9-start-block": 8006276
 }
