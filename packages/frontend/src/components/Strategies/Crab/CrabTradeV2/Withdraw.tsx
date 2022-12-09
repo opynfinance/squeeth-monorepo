@@ -313,7 +313,7 @@ const CrabWithdraw: React.FC = () => {
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue && !overrideQueueOption) {
-      return `Queued ${withdrawAmountBN.toFixed(4)} ${depositToken} for withdrawal`
+      return `Initiated ${withdrawAmountBN.toFixed(4)} ${depositToken} for withdrawal`
     }
     return `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
   }, [useQueue, withdrawAmountBN, overrideQueueOption, depositToken])
@@ -570,7 +570,7 @@ const CrabWithdraw: React.FC = () => {
                 >
                   {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW && !overrideQueueOption ? (
                     <>
-                      Queue to avoid price impact
+                      Standard withdraw
                       <Tooltip
                         title={
                           <div>

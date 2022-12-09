@@ -301,7 +301,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue && !overrideQueueOption) {
-      return `Queued ${depositAmountBN.toFixed(4)} ${depositToken} for deposit`
+      return `Initiated ${depositAmountBN.toFixed(4)} ${depositToken} for deposit`
     }
     return `Deposited ${depositAmountBN.toFixed(4)} ${depositToken}`
   }, [depositAmountBN, depositToken, useQueue, overrideQueueOption])
@@ -534,7 +534,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                 >
                   {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT && !overrideQueueOption ? (
                     <>
-                      Queue to avoid price impact
+                      Standard deposit
                       <Tooltip
                         title={
                           <div>
