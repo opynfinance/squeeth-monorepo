@@ -14,3 +14,12 @@ To store the access token in your computer, run `graph auth --product hosted-ser
 - Deploy subgraph based on environment using `yarn deploy:ropsten —deploy-key *******` or `yarn deploy —deploy-key *******`
 
 ## HOW TO INDEX NEW CONTRACT IN SUBGRAPH
+
+- Manually copy contract ABI into `abis` folder
+- Add data source in `subgraph.template.yaml`
+- Create entities in `schema.graphql`
+- Add handles in `src/` folder
+- Run `yarn prepare:mainnet` or equivalent depend on the network
+- Run `yarn codegen`
+- Run `yarn build`
+- Run `yarn deploy:...` similar to the one above depend on network

@@ -1,13 +1,13 @@
 import {
-    BullStrategyWithdraw,
-    BullStrategyDeposit,
+    Withdraw,
+    Deposit,
     SetCap,
     RedeemCrabAndWithdrawEth,
     SetShutdownContract,
     ShutdownRepayAndWithdraw,
     Farm,
     DepositEthIntoCrab,
-    BullStrategyWithdrawShutdown,
+    WithdrawShutdown,
     AuctionRepayAndWithdrawFromLeverage,
     SetAuction
 } from "../generated/BullStrategy/BullStrategy"
@@ -60,7 +60,7 @@ function loadOrCreateStrategy(id: string): Strategy {
   return strategy
 }
 
-export function handleWithdraw(event: BullStrategyWithdraw): void {
+export function handleWithdraw(event: Withdraw): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.wPowerPerpToRedeem
   userTx.bullAmount = event.params.bullAmount
@@ -75,20 +75,15 @@ export function handleWithdraw(event: BullStrategyWithdraw): void {
   userTx.save()
 }
 
-export function handleSetCap(event: BullStrategyDeposit): void {
+export function handleSetCap(event: SetCap): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
-  userTx.ethAmount = event.transaction.value
-  userTx.crabAmount = event.params.crabAmount
-  userTx.user = event.params.from
-  userTx.wethLentAmount = event.params.wethLent
-  userTx.usdcBorrowedAmount = event.params.usdcBorrowed
-  userTx.owner = event.transaction.from
+  userTx.ethAmount = event.params.newCap
   userTx.type = 'SET_CAP'
   userTx.timestamp = event.block.timestamp
   userTx.save()
 }
 
-export function handleDeposit(event: BullStrategyDeposit): void {
+export function handleDeposit(event: Deposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.transaction.value
   userTx.crabAmount = event.params.crabAmount
@@ -165,7 +160,7 @@ export function handleDepositEthIntoCrab(event: DepositEthIntoCrab): void {
   userTx.save()
 }
 
-export function handleWithdrawShutdown(event: BullStrategyWithdrawShutdown): void {
+export function handleWithdrawShutdown(event: WithdrawShutdown): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.params.ethToReceive
   userTx.user = event.params.withdrawer

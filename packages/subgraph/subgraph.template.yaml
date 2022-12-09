@@ -262,9 +262,9 @@ dataSources:
         - name: BullStrategy
           file: ./abis/BullStrategy.json
       eventHandlers:
-        - event: BullStrategyWithdraw(indexed address,uint256,uint256,uint256,uint256,uint256)
+        - event: Withdraw(indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleWithdraw
-        - event: BullStrategyDeposit(indexed address,uint256,uint256,uint256)
+        - event: Deposit(indexed address,uint256,uint256,uint256)
           handler: handleDeposit
         - event: SetCap(uint256,uint256)
           handler: handleSetCap
@@ -278,9 +278,9 @@ dataSources:
           handler: handleFarm
         - event: DepositEthIntoCrab(uint256)
           handler: handleDepositEthIntoCrab
-        - event: BullStrategyWithdrawShutdown(indexed address,uint256,uint256)
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
           handler: handleWithdrawShutdown
-        - event: AuctionRepayAndWithdrawFromLeverage(address,uint256,uint256)
+        - event: AuctionRepayAndWithdrawFromLeverage(indexed address,uint256,uint256)
           handler: handleAuctionRepayAndWithdrawFromLeverage
         - event: SetAuction(address,address)
           handler: handleSetAuction
