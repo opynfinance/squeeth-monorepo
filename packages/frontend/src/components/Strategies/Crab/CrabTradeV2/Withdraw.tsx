@@ -116,6 +116,16 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
       marginTop: theme.spacing(2),
     },
+    dangerBtn: {
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+      backgroundColor: 'transparent',
+    },
+    warningBtn: {
+      color: theme.palette.warning.main,
+      borderColor: theme.palette.warning.main,
+      backgroundColor: 'transparent',
+    },
   }),
 )
 
@@ -385,6 +395,15 @@ const CrabWithdraw: React.FC = () => {
 
   const withdrawPriceImpactNumber = Number(withdrawPriceImpact)
 
+  const withdrawBtnVariant =
+    Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'
+  const withdrawBtnClassName =
+    Number(withdrawPriceImpact) > 3
+      ? classes.dangerBtn
+      : withdrawFundingWarning || withdrawPriceImpactWarning
+      ? classes.warningBtn
+      : ''
+
   return (
     <>
       {confirmed ? (
@@ -615,18 +634,8 @@ const CrabWithdraw: React.FC = () => {
                 <PrimaryButtonNew
                   fullWidth
                   id="crab-withdraw-btn"
-                  variant={
-                    Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning
-                      ? 'outlined'
-                      : 'contained'
-                  }
-                  style={
-                    Number(withdrawPriceImpact) > 3
-                      ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                      : withdrawFundingWarning || withdrawPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
-                  }
+                  variant={withdrawBtnVariant}
+                  className={withdrawBtnClassName}
                   onClick={() => withdraw(overrideQueueOption)}
                   disabled={txLoading || !!withdrawError}
                 >

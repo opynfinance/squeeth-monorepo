@@ -107,6 +107,16 @@ const useStyles = makeStyles((theme) =>
       color: theme.palette.primary.main,
       marginTop: theme.spacing(2),
     },
+    dangerBtn: {
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+      backgroundColor: 'transparent',
+    },
+    warningBtn: {
+      color: theme.palette.warning.main,
+      borderColor: theme.palette.warning.main,
+      backgroundColor: 'transparent',
+    },
   }),
 )
 
@@ -373,6 +383,15 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
 
   const depositPriceImpactNumber = Number(depositPriceImpact)
 
+  const depositBtnVariant =
+    Number(depositPriceImpact) > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
+  const depositBtnClassName =
+    Number(depositPriceImpact) > 3
+      ? classes.dangerBtn
+      : depositFundingWarning || depositPriceImpactWarning
+      ? classes.warningBtn
+      : ''
+
   return (
     <>
       {confirmed ? (
@@ -579,20 +598,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                 <PrimaryButtonNew
                   fullWidth
                   id="crab-deposit-btn"
-                  variant={
-                    Number(depositPriceImpact) > 3 || depositFundingWarning || depositPriceImpactWarning
-                      ? 'outlined'
-                      : 'contained'
-                  }
+                  variant={depositBtnVariant}
+                  className={depositBtnClassName}
                   onClick={() => depositTX(overrideQueueOption)}
                   disabled={txLoading || !!depositError}
-                  style={
-                    Number(depositPriceImpact) > 3
-                      ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
-                      : depositFundingWarning || depositPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
-                  }
                 >
                   {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT && !overrideQueueOption ? (
                     <>
