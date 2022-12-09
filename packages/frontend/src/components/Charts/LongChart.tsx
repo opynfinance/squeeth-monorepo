@@ -151,7 +151,7 @@ function LongChart() {
         },
         {
           data: longSeries.slice(liveIndex),
-          legend: `Long Squeeth PNL (%) LIVE (incl. premiums)`,
+          legend: `Long Squeeth PNL (%) (incl. premiums)`,
         },
       ]
     if (mode === ChartType.PositionSize) return [{ data: positionSizeSeries, legend: 'Position Size' }]

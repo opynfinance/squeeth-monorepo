@@ -7,7 +7,6 @@ import { useAtomValue } from 'jotai'
 import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
-import Davatar from '@davatar/react'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
 import { useDiscconectWallet, useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../constants'
@@ -34,6 +33,12 @@ const useStyles = makeStyles((theme) =>
     },
     walletBtn: {
       background: theme.palette.background.default,
+    },
+    connectWalletBtn: {
+      fontSize: '16px',
+      fontWeight: 700,
+      textTransform: 'initial',
+      color: theme.palette.background.default,
     },
     account: {
       display: 'flex',
@@ -87,7 +92,7 @@ const WalletButton: React.FC = () => {
   const { ensName } = useENS(address)
 
   const shortAddress = useMemo(
-    () => (address ? address.slice(0, 8) + '...' + address.slice(address.length - 8, address.length) : ''),
+    () => (address ? address.slice(0, 6) + '...' + address.slice(address.length - 4, address.length) : ''),
     [address],
   )
 
@@ -115,7 +120,13 @@ const WalletButton: React.FC = () => {
   return (
     <div className={classes.walletBox}>
       {!connected ? (
-        <Button variant="contained" color="primary" onClick={selectWallet} id="connect-wallet">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={selectWallet}
+          id="connect-wallet"
+          className={classes.connectWalletBtn}
+        >
           Connect wallet
         </Button>
       ) : !supportedNetwork ? (

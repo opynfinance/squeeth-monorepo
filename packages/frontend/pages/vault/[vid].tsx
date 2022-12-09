@@ -28,7 +28,7 @@ import { AddButton, PrimaryButton, RemoveButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
+import TradeInfoItem from '@components/TradeOld/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
 import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
 import { PositionType } from '../../src/types'
@@ -346,7 +346,7 @@ const Component: React.FC = () => {
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
-    ; (async () => {
+    ;(async () => {
       if (vault) {
         let collateralAmount = vault.collateralAmount
         if (currentLpNftId) {
@@ -959,8 +959,8 @@ const Component: React.FC = () => {
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
                             : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                              ? updateShort(oSqueethBal.negated().toString())
-                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
+                            ? updateShort(oSqueethBal.negated().toString())
+                            : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
                         variant="text"
                       >
@@ -983,8 +983,8 @@ const Component: React.FC = () => {
                             Balance{' '}
                             <span id="vault-debt-input-osqth-balance">
                               {oSqueethBal?.isGreaterThan(0) &&
-                                positionType === PositionType.LONG &&
-                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                              positionType === PositionType.LONG &&
+                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(6)
                                 : oSqueethBal.toFixed(6)}
                             </span>{' '}

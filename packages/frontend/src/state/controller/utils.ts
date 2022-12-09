@@ -145,13 +145,11 @@ export async function getCurrentImpliedFunding(contract: Contract | null) {
 }
 
 export async function getOsqthRefVol() {
-  const response = await fetch(
-    `/api/currentsqueethvol`,
-  ).then((res) => res.json())
+  const response = await fetch(`/api/currentsqueethvol`).then((res) => res.json())
 
   if (response.status === 'error') {
-    throw new Error(response.status)
+    console.log('Error fetching squeeth vol', response.status)
   }
 
-  return response*100
+  return response * 100
 }

@@ -7,9 +7,11 @@ import { toTokenAmount } from '@utils/calculations'
 import { WETH_DECIMALS, OSQUEETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { networkIdAtom } from 'src/state/wallet/atoms'
+import { visibleStrategyHedgesAtom } from '@state/crab/atoms'
 
 export const useCrabStrategyV2TxHistory = () => {
   const networkId = useAtomValue(networkIdAtom)
+  const visibleHedges = useAtomValue(visibleStrategyHedgesAtom)
   const { data, loading } = useQuery<crabV2Auctions>(CRAB_V2_AUCTION_QUERY, {
     fetchPolicy: 'cache-and-network',
     client: squeethClient[networkId],
@@ -29,6 +31,7 @@ export const useCrabStrategyV2TxHistory = () => {
 
   return {
     loading,
-    data: uiData,
+    data: uiData?.slice(0, visibleHedges),
+    showMore: (uiData ?? []).length > visibleHedges,
   }
 }

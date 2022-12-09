@@ -17,4 +17,20 @@ const CustomLinearProgress = withStyles((theme) =>
   }),
 )(LinearProgress)
 
+export const CustomLinearProgressNew = withStyles((theme) =>
+  createStyles({
+    root: {
+      height: 10,
+      borderRadius: 5,
+    },
+    colorPrimary: {
+      backgroundColor: `${theme.palette.success.main}10`,
+    },
+    bar: {
+      borderRadius: 5,
+      backgroundColor: `${theme.palette.success.main}`,
+    },
+  }),
+)(LinearProgress)
+
 export default CustomLinearProgress

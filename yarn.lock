@@ -2,6 +2,52 @@
 # yarn lockfile v1
 
 
+"@amplitude/analytics-browser@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/analytics-browser/-/analytics-browser-1.3.0.tgz#085cfa58e8398e22d0a07d33d70e0f4b0374fa3a"
+  integrity sha512-0fEnrAoBHCMqYzPR/bvVpdW31F2x2rdl4T4aUg4bdgC5s4BaNEcc3HmFqIDJEpmoa1UhlsSAWzwLaLnu7T1xzg==
+  dependencies:
+    "@amplitude/analytics-client-common" "^0.0.1"
+    "@amplitude/analytics-connector" "^1.4.5"
+    "@amplitude/analytics-core" "^0.9.0"
+    "@amplitude/analytics-types" "^0.9.0"
+    "@amplitude/ua-parser-js" "^0.7.31"
+    tslib "^2.3.1"
+
+"@amplitude/analytics-client-common@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@amplitude/analytics-client-common/-/analytics-client-common-0.0.1.tgz#4307527d80a1d44b29f4e40f2b76336c439afc57"
+  integrity sha512-Dmxmid4CFIu7dR7H4cZh79YKURW+ogfSa+wMK+s2detZWhbKMG0CH69fFTK35iS3m6/PKrlIHygbfsyhV5H/BQ==
+  dependencies:
+    "@amplitude/analytics-core" "^0.9.0"
+    "@amplitude/analytics-types" "^0.9.0"
+    tslib "^2.3.1"
+
+"@amplitude/analytics-connector@^1.4.5":
+  version "1.4.5"
+  resolved "https://registry.yarnpkg.com/@amplitude/analytics-connector/-/analytics-connector-1.4.5.tgz#07e9375101332bd8b6f15e39e70f31f287e87ad0"
+  integrity sha512-ELAP6ivg+13uSk+TOirGZE/92M+tTbeiQ/i7eXgDO4Hiy00Abf/UxO/rp9WovtxCyeFYTILrujEYxPv5cRQmFw==
+  dependencies:
+    "@amplitude/ua-parser-js" "0.7.31"
+
+"@amplitude/analytics-core@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/analytics-core/-/analytics-core-0.9.0.tgz#477e36be0c9dda2496ff30ecbcf0e246fd91256c"
+  integrity sha512-N73LX1h0VyMQrfdcY7JPASM3EHB/WDSzYEMEIgtxopwWAUCwcGjB2ii91B4802kfzgLysMT3SYg9Z0IvwfYOIA==
+  dependencies:
+    "@amplitude/analytics-types" "^0.9.0"
+    tslib "^2.3.1"
+
+"@amplitude/analytics-types@^0.9.0":
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/analytics-types/-/analytics-types-0.9.0.tgz#99ee5d69e13146a3daef5ed0cdab2b621c737a7f"
+  integrity sha512-76dWTTQbkibkbcDnH8fbMLhEzmDBZGykpSVMrpe/DeEjPLlmlFvH6cyph8LGklfVSXidnK069kA4kI76pm49uQ==
+
+"@amplitude/ua-parser-js@0.7.31", "@amplitude/ua-parser-js@^0.7.31":
+  version "0.7.31"
+  resolved "https://registry.yarnpkg.com/@amplitude/ua-parser-js/-/ua-parser-js-0.7.31.tgz#749bf7cb633cfcc7ff3c10805bad7c5f6fbdbc61"
+  integrity sha512-+z8UGRaj13Pt5NDzOnkTBy49HE2CX64jeL0ArB86HAtilpnfkPB7oqkigN7Lf2LxscMg4QhFD7mmCfedh3rqTg==
+
 "@ampproject/remapping@^2.1.0":
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/@ampproject/remapping/-/remapping-2.1.2.tgz#4edca94973ded9630d20101cd8559cedb8d8bd34"
@@ -21080,6 +21126,13 @@ react-chartjs-2@^2.11.1:
   dependencies:
     lodash "^4.17.19"
     prop-types "^15.7.2"
+
+react-cookie-consent@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/react-cookie-consent/-/react-cookie-consent-8.0.1.tgz#83526a39c19be82872e9374c6fef98d05e12e5ba"
+  integrity sha512-4A2jzPQDFfBhtxIz4hYX+vJ0QnOknGdOXpEoetXzgwUrMtxVJVow8YgBsGerNt5rJI7WhKkHwr8LmxekxgVejg==
+  dependencies:
+    js-cookie "^2.2.1"
 
 react-dom@17.0.2, react-dom@^17.0.1:
   version "17.0.2"

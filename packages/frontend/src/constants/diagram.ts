@@ -38,10 +38,9 @@ export const graphOptions = {
   layout: {
     fontSize: 12,
     backgroundColor: '#181B1C00',
-    fontFamily: 'Open Sans',
+    lineColor: '#2B2B43',
   },
 }
-
 
 export const crabV2graphOptions = {
   chart: {
@@ -49,16 +48,15 @@ export const crabV2graphOptions = {
     zoomType: 'xy',
   },
   title: {
-    text: ''
+    text: '',
   },
   legend: {
     enabled: true,
-    itemMarginTop: 10,
     backgroundColor: '#343738',
     borderRadius: 10,
     itemStyle: {
-      "color": "#BABBBB"
-    }
+      color: '#BABBBB',
+    },
   },
   xAxis: {
     type: 'datetime',
@@ -66,23 +64,22 @@ export const crabV2graphOptions = {
     lineWidth: 0,
     showFirstLabel: true,
     showLastLabel: true,
-    startOnTick: true,
     crosshair: {
-        color: '#999'
+      color: '#999',
     },
     labels: {
       style: {
-        color: '#BABBBB'
-      }
-    }
+        color: '#BABBBB',
+      },
+    },
   },
   tooltip: {
     shared: true,
   },
   credits: {
-    enabled: false
+    enabled: false,
   },
   exporting: {
-    enabled: true
+    enabled: true,
   },
 }

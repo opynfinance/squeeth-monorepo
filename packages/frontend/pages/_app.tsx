@@ -10,7 +10,6 @@ import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { useAtomValue } from 'jotai'
-
 import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
@@ -26,6 +25,13 @@ import WalletFailModal from '@components/WalletFailModal'
 import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
+import '@utils/amplitude'
+import { setUserId } from '@amplitude/analytics-browser'
+import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
+import CookiePopUp from '@components/CookiePopUp'
+
+initializeAmplitude()
 
 TimeAgo.addDefaultLocale(en)
 const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false } } })
@@ -86,6 +92,7 @@ const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const firstAddressCheck = useRef(true)
+  const { track } = useAmplitude()
 
   useAppEffect(() => {
     if (!onboardAddress) {
@@ -95,6 +102,8 @@ const Init = () => {
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
         setAddress(onboardAddress)
+        setUserId(onboardAddress)
+        track(EVENT_NAME.WALLET_CONNECTED)
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
@@ -103,7 +112,7 @@ const Init = () => {
         }
       }
     })
-  }, [onboardAddress, setAddress, setWalletFailVisible])
+  }, [onboardAddress, setAddress, setWalletFailVisible, track])
 
   useOnboard()
   useUpdateSqueethPrices()
@@ -135,7 +144,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
       </Head>
 
       <MemoizedInit />
-      <ThemeProvider theme={getTheme(Mode.DARK)}>
+      <ThemeProvider theme={getTheme(Mode.NEW_DARK)}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <ComputeSwapsProvider>
@@ -143,6 +152,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           <Component {...pageProps} />
         </ComputeSwapsProvider>
       </ThemeProvider>
+      <CookiePopUp />
     </React.Fragment>
   )
 }

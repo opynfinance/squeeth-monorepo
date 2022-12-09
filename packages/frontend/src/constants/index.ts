@@ -13,6 +13,8 @@ export const DEFAULT_SLIPPAGE = 0.25
 
 export const MIN_COLLATERAL_AMOUNT = 6.9
 
+export const MIN_COLLATERAL_RATIO = 150
+
 export const YEAR = 365
 
 export const VOL_PERCENT_FIXED = 0.1
@@ -49,3 +51,5 @@ export const V2_MIGRATION_SUPPLY = 519.994374902152348633
 
 export const squeethRefVolDocLink = 'https://colab.research.google.com/drive/1HTM_2j0jmda9tzN_uskBPz9Rpma8Lp3C'
 export const CRABV2_START_DATE = '2022-07-28'
+
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
