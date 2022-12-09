@@ -3,6 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { useDebounce } from 'use-debounce'
 import InfoIcon from '@material-ui/icons/Info'
 import { PrimaryButtonNew, RoundedButton } from '@components/Button'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
@@ -124,6 +125,9 @@ const OTC_PRICE_IMPACT_THRESHOLD = process.env.OTC_PRICE_IMPACT_THRESHOLD || 1
 const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
   const [depositAmount, setDepositAmount, resetDepositAmount] = useStateWithReset('0')
+  const [debouncedDepositAmount] = useDebounce(depositAmount, 500)
+  const depositAmountBN = useMemo(() => new BigNumber(debouncedDepositAmount), [debouncedDepositAmount])
+
   const [txLoading, setTxLoading] = useState(false)
   const [depositPriceImpact, setDepositPriceImpact, resetDepositPriceImpact] = useStateWithReset('0')
   const [borrowEth, setBorrowEth, resetBorrowEth] = useStateWithReset(new BigNumber(0))
@@ -147,8 +151,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const network = useAtomValue(networkIdAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
-
-  const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
 
   const { usdc, weth, crabHelper, crabNetting } = useAtomValue(addressesAtom)
   const { data: balance } = useWalletBalance()

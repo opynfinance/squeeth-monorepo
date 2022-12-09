@@ -3,6 +3,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { useDebounce } from 'use-debounce'
 import InfoIcon from '@material-ui/icons/Info'
 import { PrimaryButtonNew, RoundedButton } from '@components/Button'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
@@ -128,6 +129,9 @@ const OTC_PRICE_IMPACT_THRESHOLD = process.env.OTC_PRICE_IMPACT_THRESHOLD || 1
 const CrabWithdraw: React.FC = () => {
   const classes = useStyles()
   const [withdrawAmount, setWithdrawAmount, resetWithdrawAmount] = useStateWithReset('0')
+  const [debouncedWithdrawAmount] = useDebounce(withdrawAmount, 500)
+  const withdrawAmountBN = useMemo(() => new BigNumber(debouncedWithdrawAmount), [debouncedWithdrawAmount])
+
   const [txLoading, setTxLoading] = useState(false)
   const [withdrawPriceImpact, setWithdrawPriceImpact, resetWithdrawPriceImpact] = useStateWithReset('0')
   const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
@@ -158,8 +162,6 @@ const CrabWithdraw: React.FC = () => {
 
   const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
   const isClaimAndWithdraw = migratedCurrentEthValue.gt(0)
-
-  const withdrawAmountBN = useMemo(() => new BigNumber(withdrawAmount), [withdrawAmount])
 
   const { usdc, weth, crabHelper, crabStrategy2, crabNetting } = useAtomValue(addressesAtom)
   const { getExactIn } = useUniswapQuoter()
