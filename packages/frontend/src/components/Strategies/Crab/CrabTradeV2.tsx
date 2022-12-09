@@ -69,8 +69,7 @@ import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import usdcLogo from 'public/images/usdc-logo.svg'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
-
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -152,7 +151,7 @@ const useStyles = makeStyles((theme) =>
       padding: theme.spacing(2),
       color: theme.palette.primary.main,
       marginTop: theme.spacing(2),
-    }
+    },
   }),
 )
 
@@ -253,7 +252,11 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
-  const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(usdc, crabNetting, USDC_DECIMALS)
+  const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(
+    usdc,
+    crabNetting,
+    USDC_DECIMALS,
+  )
   const { allowance: crabQueueAllowance, approve: approveQueueCrab } = useUserAllowance(crabStrategy2, crabNetting)
   const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
 
@@ -537,7 +540,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     if (maxClicked) setWithdrawAmount(currentUsdcValue.toString())
   }, [maxClicked, currentUsdcValue])
 
-  const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : "ETH"), [useUsdc, useQueue])
+  const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : 'ETH'), [useUsdc, useQueue])
 
   const queueOrUSDC = useQueue || useUsdc
 
@@ -559,8 +562,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       setDepositStep(DepositSteps.DEPOSIT)
     }
   }, [useUsdc, usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
-
-
 
   // Update withdraw step
   useEffect(() => {
@@ -587,8 +588,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
       return
     }
 
-    if (depositOption === 0 && Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD ||
-      depositOption === 1 && Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+    if (
+      (depositOption === 0 && Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) ||
+      (depositOption === 1 && Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD)
+    ) {
       setUseQueue(true)
       setOverrideQueueOption(false)
     } else {
@@ -611,11 +614,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }, [depositAmountBN, depositOption, depositToken, useQueue, withdrawAmountBN, overrideQueueOption])
 
-
   if (isRestricted) {
     return <RestrictionInfo />
   }
-
 
   const setOverrideOption = (option: boolean) => {
     setOverrideQueueOption(option)
@@ -675,15 +676,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
 
           <Box display="flex" alignItems="center" gridGap="12px" marginTop="8px">
             <RoundedButton
-              style={{ borderRadius: '20px', }}
+              style={{ borderRadius: '20px' }}
               variant="outlined"
               color={overrideQueueOption || !useQueue ? 'primary' : 'default'}
               size="small"
               onClick={() => setOverrideOption(true)}
             >
-              <Typography color={overrideQueueOption || !useQueue ? 'primary' : 'textSecondary'} >
-                Instant
-              </Typography>
+              <Typography color={overrideQueueOption || !useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
             </RoundedButton>
             <RoundedButton
               disabled={!useQueue}
@@ -693,15 +692,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               size="small"
               onClick={() => setOverrideOption(false)}
             >
-              <Typography color={!overrideQueueOption ? 'primary' : 'textSecondary'} >
-                Standard
-              </Typography>
+              <Typography color={!overrideQueueOption ? 'primary' : 'textSecondary'}>Standard</Typography>
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
-                title={
-                  `Your ${depositOption === 0 ? 'deposit' : 'withdraw'} will be submitted via  auction to avoid price impact. This may take up until Tuesday.`
-                }
+                title={`Your ${
+                  depositOption === 0 ? 'deposit' : 'withdraw'
+                } will be submitted via  auction to avoid price impact. This may take up until Tuesday.`}
               >
                 <HelpOutlineIcon fontSize="medium" />
               </Tooltip>
@@ -813,28 +810,28 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   </Tooltip>
                 </div>
                 <Typography variant="caption">
-                  High price impact. Try smaller amount or {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue deposit'}
+                  High price impact. Try smaller amount or{' '}
+                  {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue deposit'}
                 </Typography>
               </div>
             ) : null}
-            {
-              withdrawPriceImpactWarning && depositOption !== 0 ? (
-                <div className={classes.notice}>
-                  <div className={classes.infoIcon}>
-                    <Tooltip
-                      title={
-                        'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
-                      }
-                    >
-                      <InfoIcon fontSize="medium" />
-                    </Tooltip>
-                  </div>
-                  <Typography variant="caption">
-                    High price impact. Try smaller amount or {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue withdrawal'}
-                  </Typography>
+            {withdrawPriceImpactWarning && depositOption !== 0 ? (
+              <div className={classes.notice}>
+                <div className={classes.infoIcon}>
+                  <Tooltip
+                    title={
+                      'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
+                    }
+                  >
+                    <InfoIcon fontSize="medium" />
+                  </Tooltip>
                 </div>
-              ) : null
-            }
+                <Typography variant="caption">
+                  High price impact. Try smaller amount or{' '}
+                  {isNettingAuctionLive ? 'wait for auction to be over' : 'use USDC to queue withdrawal'}
+                </Typography>
+              </div>
+            ) : null}
 
             <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
               {useUsdc && depositOption !== 0 ? (
@@ -915,7 +912,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"
-                  onClick={() => { }}
+                  onClick={() => {}}
                   disabled={true}
                   id="crab-unsupported-network-btn"
                 >
@@ -936,17 +933,22 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(depositPriceImpact) > 3 || !!warning
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : depositFundingWarning || depositPriceImpactWarning
-                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                        : { marginTop: '8px' }
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
                   }
                 >
-                  {(!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT && !overrideQueueOption) ? (
+                  {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT && !overrideQueueOption ? (
                     <>
                       Queue to avoid price impact
-                      <Tooltip title={
-                        <div>
-                          Your deposit will be submitted via  auction to avoid price impact. This may take until Tuesday.
-                        </div>} style={{ marginLeft: '8' }}>
+                      <Tooltip
+                        title={
+                          <div>
+                            Your deposit will be submitted via auction to avoid price impact. This may take until
+                            Tuesday.
+                          </div>
+                        }
+                        style={{ marginLeft: '8' }}
+                      >
                         <InfoOutlinedIcon fontSize="small" />
                       </Tooltip>
                     </>
@@ -973,19 +975,24 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(withdrawPriceImpact) > 3
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : withdrawFundingWarning || withdrawPriceImpactWarning
-                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                        : { marginTop: '8px' }
+                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                      : { marginTop: '8px' }
                   }
                   onClick={() => withdraw(overrideQueueOption)}
                   disabled={txLoading || !!withdrawError}
                 >
-                  {(!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW && !overrideQueueOption) ? (
+                  {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW && !overrideQueueOption ? (
                     <>
                       Queue to avoid price impact
-                      <Tooltip title={
-                        <div>
-                          Your withdrawal will be submitted via  auction to avoid price impact. This may take until Tuesday.
-                        </div>} style={{ marginLeft: '8' }}>
+                      <Tooltip
+                        title={
+                          <div>
+                            Your withdrawal will be submitted via auction to avoid price impact. This may take until
+                            Tuesday.
+                          </div>
+                        }
+                        style={{ marginLeft: '8' }}
+                      >
                         <InfoOutlinedIcon fontSize="small" />
                       </Tooltip>
                     </>
@@ -1001,17 +1008,16 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 </PrimaryButtonNew>
               )}
             </Box>
-          </div >
-          {
-            crabQueued.isGreaterThan(0) || usdcQueued.isGreaterThan(0) ? (
-              <div className={classes.queueNotice}>
-                {usdcQueued.isGreaterThan(0) ? "Your deposit will fully enter the strategy by Tuesday" : "Your withdrawal will fully exit the strategy by Tuesday"}
-              </div>
-            ) : null
-          }
+          </div>
+          {crabQueued.isGreaterThan(0) || usdcQueued.isGreaterThan(0) ? (
+            <div className={classes.queueNotice}>
+              {usdcQueued.isGreaterThan(0)
+                ? 'Your deposit will fully enter the strategy by Tuesday'
+                : 'Your withdrawal will fully exit the strategy by Tuesday'}
+            </div>
+          ) : null}
         </>
-      )
-      }
+      )}
     </>
   )
 }
