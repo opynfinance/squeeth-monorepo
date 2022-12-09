@@ -1,9 +1,8 @@
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
+import { Typography, Tab, Tabs, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useAtomValue } from 'jotai'
 
 import Nav from '@components/Nav'
@@ -14,7 +13,7 @@ import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import {
   crabStrategyCollatRatioAtom,
@@ -29,7 +28,6 @@ import {
 } from '@state/crab/atoms'
 import {
   useCurrentCrabPositionValueV2,
-  useSetProfitableMovePercent,
   useSetProfitableMovePercentV2,
   useSetStrategyData,
   useSetStrategyDataV2,
@@ -43,38 +41,6 @@ import { Tooltips } from '@constants/enums'
 import { Vaults } from '@constants/enums'
 import bull from 'public/images/bull.gif'
 import bear from 'public/images/bear.gif'
-
-const useLabelStyles = makeStyles((theme) =>
-  createStyles({
-    labelContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      color: 'rgba(255, 255, 255, 0.5)',
-    },
-    label: {
-      fontSize: '15px',
-      fontWeight: 500,
-      width: 'max-content',
-    },
-    infoIcon: {
-      fontSize: '15px',
-      marginLeft: theme.spacing(0.5),
-    },
-  }),
-)
-
-const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
-  const classes = useLabelStyles()
-
-  return (
-    <div className={classes.labelContainer}>
-      <Typography className={classes.label}>{label}</Typography>
-      <Tooltip title={tooltipTitle}>
-        <InfoIcon fontSize="small" className={classes.infoIcon} />
-      </Tooltip>
-    </div>
-  )
-}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -120,83 +86,10 @@ const useStyles = makeStyles((theme) =>
         flex: '1',
       },
     },
-    header: {
-      display: 'flex',
-      marginTop: theme.spacing(4),
-    },
     subtitle: {
       fontSize: '20px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
-    },
-    boldFont: {
-      fontWeight: 'bold',
-    },
-    description: {
-      marginTop: theme.spacing(4),
-      [theme.breakpoints.up('md')]: {
-        margin: '20px 0',
-        width: '685px',
-      },
-      [theme.breakpoints.down('md')]: {
-        width: '100%',
-      },
-    },
-    body: {
-      marginTop: theme.spacing(3),
-      width: '100%',
-      margin: '0',
-      padding: '0',
-      display: 'flex',
-      [theme.breakpoints.down('md')]: {
-        flexDirection: 'column-reverse',
-      },
-    },
-    tradeCard: {
-      margin: theme.spacing('0', 'auto', '20px'),
-      width: '350px',
-      [theme.breakpoints.up('lg')]: {
-        width: '350px',
-        maxHeight: '452px',
-        minHeight: '350px',
-        height: 'fit-content',
-        margin: theme.spacing('-160px', '50px'),
-      },
-    },
-    tradeForm: {
-      background: theme.palette.background.stone,
-      borderRadius: theme.spacing(2),
-    },
-    tradeCardDesktop: {
-      [theme.breakpoints.down('md')]: {
-        display: 'none',
-      },
-
-      margin: theme.spacing('-120px', '50px'),
-    },
-    details: {},
-    overview: {
-      display: 'grid',
-      [theme.breakpoints.up('md')]: {
-        gridTemplateColumns: '1fr 1fr 1fr',
-      },
-      [theme.breakpoints.down('sm')]: {
-        gridTemplateColumns: '1fr 1fr',
-      },
-      [theme.breakpoints.down('xs')]: {
-        gridTemplateColumns: '1fr',
-      },
-      gridGap: theme.spacing(2),
-      columnGap: '20px',
-      marginTop: theme.spacing(3),
-    },
-    chartContainer: {
-      padding: theme.spacing(0),
-      marginTop: theme.spacing(4),
-      maxWidth: '640px',
-    },
-    link: {
-      color: theme.palette.primary.main,
     },
     comingSoon: {
       height: '50vh',
@@ -204,30 +97,9 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       marginTop: theme.spacing(4),
     },
-    connectWalletDiv: {
-      display: 'flex',
-      flexDirection: 'column',
-    },
-    strategiesConnectWalletBtn: {
-      padding: theme.spacing(1),
-    },
-    tabBackGround: {
-      position: 'sticky',
-      top: '0',
-      zIndex: 20,
-      // background: '#2A2D2E',
-    },
-    settingsButton: {
-      marginTop: theme.spacing(2),
-      marginLeft: theme.spacing(37),
-      justifyContent: 'right',
-      alignSelf: 'center',
-    },
-    toggle: {
-      justifyContent: 'right',
-      marginLeft: theme.spacing(2),
-    },
     tradeSection: {
+      position: 'sticky',
+      top: '100px',
       border: '1px solid #242728',
       boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
       borderRadius: theme.spacing(0.7),
@@ -247,7 +119,6 @@ const Strategies: React.FC = () => {
   const vault = useAtomValue(displayCrabV1 ? crabStrategyVaultAtom : crabStrategyVaultAtomV2)
   const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
   const timeAtLastHedge = useAtomValue(displayCrabV1 ? timeAtLastHedgeAtom : timeAtLastHedgeAtomV2)
-  const profitableMovePercent = useSetProfitableMovePercent()
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
@@ -341,13 +212,13 @@ const Strategies: React.FC = () => {
                 <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
                   <Metric
                     flexBasis="250px"
-                    label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
+                    label={<MetricLabel label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
                     value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
                   />
                   <Metric
                     flexBasis="250px"
                     label={
-                      <Label
+                      <MetricLabel
                         label="Current Implied Premium"
                         tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                       />
@@ -357,10 +228,11 @@ const Strategies: React.FC = () => {
                   <Metric
                     flexBasis="250px"
                     label={
-                      <Label
+                      <MetricLabel
                         label="Historical Daily Premium"
-                        tooltipTitle={`${Tooltips.StrategyEarnFunding
-                          }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                        tooltipTitle={`${
+                          Tooltips.StrategyEarnFunding
+                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
                       />
                     }
                     value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
@@ -368,7 +240,7 @@ const Strategies: React.FC = () => {
                   <Metric
                     flexBasis="250px"
                     label={
-                      <Label
+                      <MetricLabel
                         label="Last hedged at"
                         tooltipTitle={
                           'Last hedged at ' +
@@ -393,7 +265,7 @@ const Strategies: React.FC = () => {
                   <Metric
                     flexBasis="250px"
                     label={
-                      <Label
+                      <MetricLabel
                         label={`Approx Profitable (${formatNumber(profitableMovePercentV2 * 100)}%)`}
                         tooltipTitle={Tooltips.StrategyProfitThreshold}
                       />
@@ -406,7 +278,7 @@ const Strategies: React.FC = () => {
                   />
                   <Metric
                     flexBasis="250px"
-                    label={<Label label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
+                    label={<MetricLabel label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
                     value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
                   />
                 </Box>
