@@ -696,9 +696,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
-                title={`Your ${
+                title={`With standard, the ${
                   depositOption === 0 ? 'deposit' : 'withdraw'
-                } will be submitted via  auction to avoid price impact. This may take up until Tuesday.`}
+                } gets initiated and is submitted via auction to avoid price impact. This may take up until Tuesday.`}
               >
                 <HelpOutlineIcon fontSize="medium" />
               </Tooltip>
