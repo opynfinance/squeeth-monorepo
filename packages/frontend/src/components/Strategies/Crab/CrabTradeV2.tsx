@@ -622,6 +622,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     setOverrideQueueOption(option)
   }
 
+  const depositPriceImpactNumber = Number(depositPriceImpact)
+  const withdrawPriceImpactNumber = Number(withdrawPriceImpact)
+
   return (
     <>
       {confirmed ? (
@@ -859,7 +862,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   {depositOption === 0 ? (
                     <Metric
                       label="Price Impact"
-                      value={formatNumber(Number(depositPriceImpact)) + '%'}
+                      value={formatNumber(depositPriceImpactNumber) + '%'}
+                      textColor={
+                        depositPriceImpactNumber > 3 ? 'error' : depositPriceImpactNumber < 1 ? 'success' : undefined
+                      }
                       isSmall
                       flexDirection="row"
                       justifyContent="space-between"
@@ -868,7 +874,10 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                   ) : (
                     <Metric
                       label="Price Impact"
-                      value={formatNumber(Number(withdrawPriceImpact)) + '%'}
+                      value={formatNumber(withdrawPriceImpactNumber) + '%'}
+                      textColor={
+                        withdrawPriceImpactNumber > 3 ? 'error' : withdrawPriceImpactNumber < 1 ? 'success' : undefined
+                      }
                       isSmall
                       flexDirection="row"
                       justifyContent="space-between"

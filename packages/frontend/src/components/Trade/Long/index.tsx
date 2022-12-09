@@ -332,9 +332,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
   const resetQuote = useResetAtom(quoteAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
-  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-
   const buyQuoteForETHHandler = useAppCallback(
     (ethAmount, slippage) => {
       if (parseFloat(ethAmount) === 0) {
@@ -458,7 +455,10 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
     }
   }, [buyAndRefund, ethTradeAmount, resetEthTradeAmount, resetSqthTradeAmount, setTradeCompleted, setTradeSuccess])
 
-  const squeethExposure = useAppMemo(() => osqthPrice.times(sqthTradeAmount).toNumber(), [sqthTradeAmount, osqthPrice])
+  const squeethExposure = osqthPrice.times(sqthTradeAmount).toNumber()
+  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
+  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
+  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
 
   return (
     <div id="open-long-card">
@@ -560,6 +560,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
+                    textColor={priceImpactColor}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"
@@ -702,8 +703,6 @@ const CloseLong: React.FC<BuyProps> = () => {
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const resetQuote = useResetAtom(quoteAtom)
-  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
-  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
 
   // let openError: string | undefined
   let closeError: string | undefined
@@ -835,6 +834,10 @@ const CloseLong: React.FC<BuyProps> = () => {
     [setEthTradeAmount, slippageAmount, debouncedSellQuoteForETHHandler],
   )
 
+  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
+  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
+  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
+
   return (
     <div id="close-long-card">
       {confirmed && !isTxFirstStep ? (
@@ -933,6 +936,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               <Metric
                 label="Price Impact"
                 value={formatNumber(priceImpact) + '%'}
+                textColor={priceImpactColor}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"
