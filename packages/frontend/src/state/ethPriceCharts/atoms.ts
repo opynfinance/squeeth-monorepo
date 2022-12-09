@@ -435,8 +435,8 @@ export const useLongChartData = () => {
   const volMultiplier = useAtomValue(volMultiplierAtom)
   const collatRatio = useAtomValue(collatRatioAtom)
 
-  const fromTs = Math.floor(startDate.getTime() / 1000)
-  const toTs = Math.floor(endDate.getTime() / 1000)
+  const fromTs = startDate.getTime()
+  const toTs = endDate.getTime()
 
   return useQuery(
     ['longChart', { fromTs, toTs, collatRatio, volMultiplier }],
