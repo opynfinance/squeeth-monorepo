@@ -62,11 +62,23 @@ export const useStyles = makeStyles((theme) =>
       color: theme.palette.error.main,
       borderColor: theme.palette.error.main,
       backgroundColor: 'transparent',
+
+      '&:hover': {
+        color: theme.palette.error.main,
+        borderColor: theme.palette.error.main,
+        backgroundColor: 'transparent',
+      },
     },
     warningBtn: {
       color: theme.palette.warning.main,
       borderColor: theme.palette.warning.main,
       backgroundColor: 'transparent',
+
+      '&:hover': {
+        color: theme.palette.warning.main,
+        borderColor: theme.palette.warning.main,
+        backgroundColor: 'transparent',
+      },
     },
   }),
 )
