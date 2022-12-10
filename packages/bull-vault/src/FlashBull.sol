@@ -117,6 +117,14 @@ contract FlashBull is UniFlash {
         ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+
+        ICrabStrategyV2(IBullStrategy(_bull).crab()).approve(_bull, type(uint256).max);
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
+            _bull, type(uint256).max
+        );
+        IERC20(IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(
+            _bull, type(uint256).max
+        );
     }
 
     /**
@@ -257,7 +265,6 @@ contract FlashBull is UniFlash {
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            ICrabStrategyV2(crab).approve(bullStrategy, data.crabToDeposit);
             IBullStrategy(bullStrategy).deposit{value: data.wethToLend}(data.crabToDeposit);
 
             // repay the dollars flash swap
@@ -266,8 +273,6 @@ contract FlashBull is UniFlash {
         {
             FlashSwapWPowerPerpData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashSwapWPowerPerpData));
-
-            IERC20(wPowerPerp).approve(bullStrategy, data.wPowerPerpToRedeem);
 
             // ETH-USDC swap
             _exactOutFlashSwap(
@@ -286,7 +291,6 @@ contract FlashBull is UniFlash {
             FlashWithdrawBullData memory data =
                 abi.decode(_uniFlashSwapData.callData, (FlashWithdrawBullData));
 
-            IERC20(usdc).approve(bullStrategy, data.usdcToRepay);
             IBullStrategy(bullStrategy).withdraw(data.bullToRedeem);
 
             IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
