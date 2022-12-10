@@ -1,0 +1,59 @@
+name: Crab-Netting
+
+on: [push]
+
+env:
+  FORK_URL: ${{secrets.FORK_URL}}    
+
+jobs:
+  check-crab-netting:
+    name: formatting check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+
+      - name: Install Foundry
+        uses: onbjerg/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run fmt check
+        run: cd packages/crab-netting && forge fmt --check
+
+  build-crab-netting:
+    name: build
+    runs-on: ubuntu-latest
+    needs: check-crab-netting
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build
+        run: cd packages/crab-netting && forge build
+
+  test-crab-netting:
+    name: tests
+    runs-on: ubuntu-latest
+    needs: build-crab-netting
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run crab netting tests
+        run: cd packages/crab-netting && forge test -vvv
+
+    
