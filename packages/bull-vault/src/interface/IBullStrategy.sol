@@ -21,6 +21,8 @@ interface IBullStrategy {
     function getCrabBalance() external view returns (uint256);
     function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
         external;
+    function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
+        external;
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external;
     function hasRedeemedInShutdown() external view returns (bool);
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external;

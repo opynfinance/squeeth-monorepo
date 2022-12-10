@@ -59,6 +59,10 @@ contract LeverageBull is Ownable {
     event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
     event SetAuction(address oldAuction, address newAuction);
 
+    event DepositAndRepayFromLeverage(
+        address indexed from, uint256 wethDeposited, uint256 usdcRepaid
+    );
+
     /**
      * @dev constructor
      * @param _owner owner address
@@ -129,6 +133,23 @@ contract LeverageBull is Ownable {
             IEulerDToken(dToken).borrow(0, _usdcToBorrow);
             IERC20(usdc).transfer(msg.sender, _usdcToBorrow);
         }
+    }
+
+    function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
+        external
+    {
+        require(msg.sender == auction, "LB1");
+
+        if (_wethToDeposit > 0) {
+            IERC20(weth).transferFrom(msg.sender, address(this), _wethToDeposit);
+            IEulerEToken(eToken).deposit(0, _wethToDeposit);
+        }
+        if (_usdcToRepay > 0) {
+            IERC20(usdc).transferFrom(msg.sender, address(this), _usdcToRepay);
+            IEulerDToken(dToken).repay(0, _usdcToRepay);
+        }
+
+        emit DepositAndRepayFromLeverage(msg.sender, _wethToDeposit, _usdcToRepay);
     }
 
     function calcLeverageEthUsdc(
