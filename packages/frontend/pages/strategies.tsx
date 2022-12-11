@@ -13,31 +13,23 @@ import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
-import Metric, { MetricLabel } from '@components/Metric'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
+import CrabMetricsV2 from '@components/Strategies/Crab/CrabMetricsV2'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
   crabStrategyVaultAtom,
   crabStrategyVaultAtomV2,
-  ethPriceAtLastHedgeAtomV2,
   maxCapAtom,
   maxCapAtomV2,
-  timeAtLastHedgeAtom,
-  timeAtLastHedgeAtomV2,
 } from '@state/crab/atoms'
 import {
   useCurrentCrabPositionValueV2,
-  useSetProfitableMovePercentV2,
   useSetStrategyData,
   useSetStrategyDataV2,
   useCurrentCrabPositionValue,
 } from '@state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from '@state/controller/atoms'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
-import { formatNumber, formatCurrency } from '@utils/formatter'
-import { toTokenAmount } from '@utils/calculations'
-import { Tooltips } from '@constants/enums'
 import { Vaults } from '@constants/enums'
 import bull from 'public/images/bull.gif'
 import bear from 'public/images/bear.gif'
@@ -116,27 +108,15 @@ const Strategies: React.FC = () => {
   const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
   const vault = useAtomValue(displayCrabV1 ? crabStrategyVaultAtom : crabStrategyVaultAtomV2)
   const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
-  const timeAtLastHedge = useAtomValue(displayCrabV1 ? timeAtLastHedgeAtom : timeAtLastHedgeAtomV2)
-  const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
-  const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
 
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
 
-  const index = useAtomValue(indexAtom)
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
-
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
-
-  const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
-
-  const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
-  const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
   useEffect(() => {
     if (displayCrabV1) setStrategyData()
@@ -207,79 +187,7 @@ const Strategies: React.FC = () => {
                   </Box>
                 </Box>
 
-                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
-                  <Metric
-                    flexBasis="250px"
-                    label={<MetricLabel label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
-                    value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
-                  />
-                  <Metric
-                    flexBasis="250px"
-                    label={
-                      <MetricLabel
-                        label="Current Implied Premium"
-                        tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
-                      />
-                    }
-                    value={formatNumber(currentImpliedFunding * 100) + '%'}
-                  />
-                  <Metric
-                    flexBasis="250px"
-                    label={
-                      <MetricLabel
-                        label="Historical Daily Premium"
-                        tooltipTitle={`${
-                          Tooltips.StrategyEarnFunding
-                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
-                      />
-                    }
-                    value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
-                  />
-                  <Metric
-                    flexBasis="250px"
-                    label={
-                      <MetricLabel
-                        label="Last hedged at"
-                        tooltipTitle={
-                          'Last hedged at ' +
-                          new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                            day: 'numeric',
-                            month: 'long',
-                            hour: 'numeric',
-                            minute: 'numeric',
-                            timeZoneName: 'long',
-                          }) +
-                          '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
-                        }
-                      />
-                    }
-                    value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                      day: 'numeric',
-                      month: 'numeric',
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    })}
-                  />
-                  <Metric
-                    flexBasis="250px"
-                    label={
-                      <MetricLabel
-                        label={`Approx Profitable (${formatNumber(profitableMovePercentV2 * 100)}%)`}
-                        tooltipTitle={Tooltips.StrategyProfitThreshold}
-                      />
-                    }
-                    value={
-                      formatCurrency(lowerPriceBandForProfitability) +
-                      ' - ' +
-                      formatCurrency(upperPriceBandForProfitability)
-                    }
-                  />
-                  <Metric
-                    flexBasis="250px"
-                    label={<MetricLabel label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
-                    value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
-                  />
-                </Box>
+                <CrabMetricsV2 />
 
                 <Box marginTop="32px">
                   <Typography variant="h4" className={classes.subtitle}>
