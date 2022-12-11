@@ -15,6 +15,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -83,7 +93,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     /// @dev WETH address
     address private immutable weth;
     address private immutable bullStrategy;
-    address private immutable ethWSqueethPool;
+    address private immutable ethWPowerPerpPool;
     address private immutable ethUSDCPool;
     address private immutable wPowerPerp;
     address private immutable crab;
@@ -100,7 +110,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     uint256 public crUpper;
     /// @dev lowest CR the auction manager can rebalance to
     uint256 public crLower;
-    /// @dev full rebalance clearing price must be within this distance of the oSQTH:eth uniswap twap price
+    /// @dev full rebalance clearing price must be within this distance of the wPowerPerp:eth uniswap twap price
     uint256 public fullRebalanceClearingPriceTolerance = 5e16; // 5%
     /// @dev full rebalance WETH limit price must be within this distance of the eth:usd uniswap twap price
     uint256 public rebalanceWethLimitPriceTolerance = 5e16; // 5%
@@ -187,7 +197,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+        ethWPowerPerpPool =
+            IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
@@ -296,7 +307,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @dev rebalance delta and collateral ratio of strategy using an array of signed orders
      * @param _orders list of orders
      * @param _crabAmount amount of crab to withdraw or deposit
-     * @param _clearingPrice clearing price in WETH per oSQTH, in 1e18 units
+     * @param _clearingPrice clearing price in WETH per wPowerPerp, in 1e18 units
      * @param _wethTargetInEuler target WETH collateral amount in leverage component
      * @param _wethLimitPrice limit price for WETH/USDC trade
      * @param _isDepositingInCrab true if the rebalance will deposit into crab, false if withdrawing funds from crab
@@ -316,11 +327,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
         // get current crab vault state
-        (uint256 ethInCrab, uint256 squeethInCrab) =
+        (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
-        // total amount of oSQTH to trade given crab amount
+        // total amount of wPowerPerp to trade given crab amount
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
-            _isDepositingInCrab, _crabAmount, ethInCrab, squeethInCrab
+            _isDepositingInCrab, _crabAmount, ethInCrab, wPowerPerpInCrab
         );
 
         _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
@@ -344,12 +355,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
         } else {
-            console.log("reached withdraw");
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
-            console.log("redeem and withdraw done");
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
-            console.log("push funds from orders done");
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
@@ -359,7 +367,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
-            console.log("lev rebal done");
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
@@ -688,7 +695,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
             uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
-            console.log("mark 2 ");
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -735,7 +741,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @notice transfer payment to auction participant from contract
      * @param _order Order struct
      * @param _remainingAmount remaining amount to be transfered
-     * @param _clearingPrice clearing price in WETH/oSQTH determined at auction
+     * @param _clearingPrice clearing price in WETH/wPowerPerp determined at auction
      */
     function _transferToOrder(Order memory _order, uint256 _remainingAmount, uint256 _clearingPrice)
         internal
@@ -745,10 +751,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _order.quantity = _remainingAmount;
         }
         if (_order.isBuying) {
-            // trader sent WETH and receives oSQTH
+            // trader sent WETH and receives wPowerPerp
             IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
         } else {
-            // trader sent oSQTH and receives WETH
+            // trader sent wPowerPerp and receives WETH
             // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
@@ -759,7 +765,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @notice transfer payment from auction participant to contract
      * @param _order Order struct
      * @param _remainingAmount remaining amount to be transfered
-     * @param _clearingPrice clearing price in WETH/oSQTH determined at auction
+     * @param _clearingPrice clearing price in WETH/wPowerPerp determined at auction
      */
     function _transferFromOrder(
         Order memory _order,
@@ -772,12 +778,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         }
 
         if (_order.isBuying) {
-            // trader sends WETH and receives oSQTH
+            // trader sends WETH and receives wPowerPerp
             // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
         } else {
-            // trader send oSQTH and receives WETH
+            // trader send wPowerPerp and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
         }
     }
@@ -785,7 +791,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     /**
      * @notice verify that an auction order is valid
      * @param _order Order struct
-     * @param _clearingPrice clearing price in WETH/oSQTH
+     * @param _clearingPrice clearing price in WETH/wPowerPerp
      * @param _isDepositingInCrab true if rebalance is depositing into crab
      */
     function _verifyOrder(Order memory _order, uint256 _clearingPrice, bool _isDepositingInCrab)
@@ -845,23 +851,23 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _isDepositingInCrab true if depositing into crab
      * @param _crabAmount amount of crab to deposit/withdraw
      * @param _ethInCrab amount of eth collateral owned by crab strategy
-     * @param _squeethInCrab amount of squeeth debt owed by crab strategy
+     * @param _wPowerPerpInCrab amount of wPowerPerp debt owed by crab strategy
      * @return wPowerPerpAmount
      */
     function _calcWPowerPerpAmountFromCrab(
         bool _isDepositingInCrab,
         uint256 _crabAmount,
         uint256 _ethInCrab,
-        uint256 _squeethInCrab
+        uint256 _wPowerPerpInCrab
     ) internal view returns (uint256) {
         uint256 wPowerPerpAmount;
         if (_isDepositingInCrab) {
             uint256 ethToDepositInCrab =
                 _crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_ethInCrab);
             (wPowerPerpAmount,) =
-                _calcWsqueethToMintAndFee(ethToDepositInCrab, _squeethInCrab, _ethInCrab);
+                _calcWPowerPerpToMintAndFee(ethToDepositInCrab, _wPowerPerpInCrab, _ethInCrab);
         } else {
-            wPowerPerpAmount = _crabAmount.wmul(_squeethInCrab).wdiv(IERC20(crab).totalSupply());
+            wPowerPerpAmount = _crabAmount.wmul(_wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
         }
 
         return wPowerPerpAmount;
@@ -872,12 +878,15 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @return delta and collateral ratio
      */
     function _getCurrentDeltaAndCollatRatio() internal view returns (uint256, uint256) {
-        (uint256 ethInCrab, uint256 squeethInCrab) =
+        (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
             IBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
         uint256 crabUsdPrice = (
-            ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
+            ethInCrab.wmul(ethUsdPrice).sub(
+                wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
+            )
         ).wdiv(IERC20(crab).totalSupply());
 
         uint256 usdcDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -895,26 +904,27 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
-     * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     * @dev calculate amount of wPowerPerp to mint and fee based on ETH to deposit into crab
      * @param _depositedEthAmount amount of ETH deposited
      * @param _strategyDebtAmount amount of wPowerperp debt in strategy vault before deposit
      * @param _strategyCollateralAmount amount of ETH collatal in strategy vault before deposit
-     * @return amount of wSqueeth to mint and fee
+     * @return amount of wPowerPerp to mint and fee
      */
-    function _calcWsqueethToMintAndFee(
+    function _calcWPowerPerpToMintAndFee(
         uint256 _depositedEthAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
-        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
         uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
-        uint256 feeAdjustment = squeethEthPrice.mul(feeRate).div(10000);
-        uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+        uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
+        uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
         );
-        uint256 fee = wSqueethToMint.wmul(feeAdjustment);
+        uint256 fee = wPowerPerpToMint.wmul(feeAdjustment);
 
-        return (wSqueethToMint, fee);
+        return (wPowerPerpToMint, fee);
     }
 
     /**
@@ -927,18 +937,19 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         view
     {
         // Get twap
-        uint256 squeethEthPrice = UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
 
         if (_isDepositingInCrab) {
             require(
                 _price
-                    >= squeethEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
+                    >= wPowerPerpEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
                 "AB17"
             );
         } else {
             require(
                 _price
-                    <= squeethEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
+                    <= wPowerPerpEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
                 "AB18"
             );
         }

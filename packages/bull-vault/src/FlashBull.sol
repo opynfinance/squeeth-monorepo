@@ -47,8 +47,8 @@ contract FlashBull is UniFlash {
     address private immutable usdc;
     /// @dev Crab V2 address
     address private immutable crab;
-    /// @dev ETH:wSqueeth Uniswap pool
-    address private immutable ethWSqueethPool;
+    /// @dev ETH:wPowerPerp Uniswap pool
+    address private immutable ethWPowerPerpPool;
     /// @dev ETH:USDC Uniswap pool
     address private immutable ethUSDCPool;
     /// @dev bull stratgey address
@@ -92,7 +92,7 @@ contract FlashBull is UniFlash {
     /// @dev flashWithdraw params structs
     struct FlashWithdrawParams {
         uint256 bullAmount;
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         uint24 wPowerPerpPoolFee;
         uint24 usdcPoolFee;
@@ -102,7 +102,7 @@ contract FlashBull is UniFlash {
     event FlashDeposit(
         uint256 crabAmount,
         uint256 ethDeposited,
-        uint256 wSqueethToMint,
+        uint256 wPowerPerpToMint,
         uint256 usdcToBorrow,
         uint256 wethToLend
     );
@@ -114,7 +114,8 @@ contract FlashBull is UniFlash {
         wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
         usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
-        ethWSqueethPool = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+        ethWPowerPerpPool =
+            IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
             IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
 
@@ -135,21 +136,21 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @notice flash deposit into strategy, providing ETH, selling wSqueeth and USDC, and receiving strategy tokens
-     * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wSqueeth and USDC
+     * @notice flash deposit into strategy, providing ETH, selling wPowerPerp and USDC, and receiving strategy tokens
+     * @dev this function will execute a flash swap where it receives ETH, deposits, mints, and collateralizes the loan using flash swap proceeds and msg.value, and then repays the flash swap with wPowerPerp and USDC
      * @param _params FlashDepositParams params
      */
     function flashDeposit(FlashDepositParams calldata _params) external payable {
         uint256 crabAmount;
-        uint256 wSqueethToMint;
+        uint256 wPowerPerpToMint;
         uint256 ethInCrab;
-        uint256 squeethInCrab;
+        uint256 wPowerPerpInCrab;
         {
-            (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
+            (ethInCrab, wPowerPerpInCrab) = _getCrabVaultDetails();
 
             uint256 ethFee;
-            (wSqueethToMint, ethFee) =
-                _calcWsqueethToMintAndFee(_params.ethToCrab, squeethInCrab, ethInCrab);
+            (wPowerPerpToMint, ethFee) =
+                _calcwPowerPerpToMintAndFee(_params.ethToCrab, wPowerPerpInCrab, ethInCrab);
             crabAmount = _calcSharesToMint(
                 _params.ethToCrab.sub(ethFee), ethInCrab, IERC20(crab).totalSupply()
             );
@@ -160,13 +161,13 @@ contract FlashBull is UniFlash {
             wPowerPerp,
             weth,
             _params.wPowerPerpPoolFee,
-            wSqueethToMint,
+            wPowerPerpToMint,
             _params.minEthFromSqth,
             uint8(FLASH_SOURCE.FLASH_DEPOSIT_CRAB),
             abi.encodePacked(_params.ethToCrab)
         );
 
-        (ethInCrab, squeethInCrab) = _getCrabVaultDetails();
+        (ethInCrab, wPowerPerpInCrab) = _getCrabVaultDetails();
         uint256 share;
         if (IERC20(bullStrategy).totalSupply() == 0) {
             share = ONE;
@@ -174,7 +175,7 @@ contract FlashBull is UniFlash {
             share = crabAmount.wdiv(IBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
         }
         (uint256 wethToLend, uint256 usdcToBorrow) = IBullStrategy(bullStrategy).calcLeverageEthUsdc(
-            crabAmount, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
+            crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
         );
 
         // ETH-USDC swap
@@ -195,11 +196,11 @@ contract FlashBull is UniFlash {
 
         IERC20(bullStrategy).transfer(msg.sender, IERC20(bullStrategy).balanceOf(address(this)));
 
-        emit FlashDeposit(crabAmount, msg.value, wSqueethToMint, usdcToBorrow, wethToLend);
+        emit FlashDeposit(crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend);
     }
 
     /**
-     * @notice flash withdraw from strategy, receiving ETH, providing wSqueeth and USDC, and providing strategy tokens
+     * @notice flash withdraw from strategy, receiving ETH, providing wPowerPerp and USDC, and providing strategy tokens
      * @param _params FlashWithdrawParams struct
      */
     function flashWithdraw(FlashWithdrawParams calldata _params) external {
@@ -212,8 +213,9 @@ contract FlashBull is UniFlash {
         {
             uint256 bullShare = _params.bullAmount.wdiv(IERC20(bullStrategy).totalSupply());
             crabToRedeem = bullShare.wmul(IBullStrategy(bullStrategy).getCrabBalance());
-            (, uint256 squeethInCrab) = _getCrabVaultDetails();
-            wPowerPerpToRedeem = crabToRedeem.wmul(squeethInCrab).wdiv(IERC20(crab).totalSupply());
+            (, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
+            wPowerPerpToRedeem =
+                crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
             usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(bullShare);
         }
 
@@ -223,7 +225,7 @@ contract FlashBull is UniFlash {
             wPowerPerp,
             _params.wPowerPerpPoolFee,
             wPowerPerpToRedeem,
-            _params.maxEthForSqueeth,
+            _params.maxEthForWPowerPerp,
             uint8(FLASH_SOURCE.FLASH_SWAP_WPOWERPERP),
             abi.encodePacked(
                 _params.bullAmount,
@@ -255,7 +257,7 @@ contract FlashBull is UniFlash {
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
             ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
 
-            // repay the squeeth flash swap
+            // repay the wPowerPerp flash swap
             IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
             FLASH_SOURCE(_uniFlashSwapData.callSource)
@@ -299,31 +301,31 @@ contract FlashBull is UniFlash {
     }
 
     /**
-     * @dev calculate amount of wSqueeth to mint and fee based on ETH to deposit into crab
+     * @dev calculate amount of wPowerPerp to mint and fee based on ETH to deposit into crab
      * @param _depositedEthAmount ETH amount deposited
      * @param _strategyDebtAmount amount of wPowerPerp debt in vault
      * @param _strategyCollateralAmount amount of ETH collateral in vault
-     * @return wSqueeth to mint, mint fee amount
+     * @return wPowerPerp to mint, mint fee amount
      */
-    function _calcWsqueethToMintAndFee(
+    function _calcwPowerPerpToMintAndFee(
         uint256 _depositedEthAmount,
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
         uint256 feeRate = IController(powerTokenController).feeRate();
         if (feeRate != 0) {
-            uint256 squeethEthPrice =
-                UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            uint256 feeAdjustment = squeethEthPrice.mul(feeRate).div(10000);
-            uint256 wSqueethToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+            uint256 wPowerPerpEthPrice =
+                UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+            uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
+            uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
                 _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
             );
-            uint256 fee = wSqueethToMint.wmul(feeAdjustment);
-            return (wSqueethToMint, fee);
+            uint256 fee = wPowerPerpToMint.wmul(feeAdjustment);
+            return (wPowerPerpToMint, fee);
         }
-        uint256 wSqueethToMint =
+        uint256 wPowerPerpToMint =
             _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
-        return (wSqueethToMint, 0);
+        return (wPowerPerpToMint, 0);
     }
 
     /**

@@ -32,6 +32,7 @@ contract FlashBullTestFork is Test {
 
     uint32 internal constant TWAP = 420;
     uint128 internal constant ONE = 1e18;
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     TestUtil internal testUtil;
     FlashBull internal flashBull;
@@ -156,7 +157,8 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+            minEthFromUsdc =
+                usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
@@ -259,7 +261,8 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(101e16));
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+            minEthFromUsdc =
+                usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
@@ -301,7 +304,8 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            minEthFromUsdc =
+                usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
@@ -343,7 +347,8 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+            minEthFromUsdc =
+                usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
@@ -386,7 +391,8 @@ contract FlashBullTestFork is Test {
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
             minEthFromSqueeth = wSqueethToMint.wmul(squeethEthPrice.wmul(99e16));
-            minEthFromUsdc = usdcToBorrow.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+            minEthFromUsdc =
+                usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
@@ -436,7 +442,7 @@ contract FlashBullTestFork is Test {
             FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
                 ethToCrab: ethToCrabSecond,
                 minEthFromSqth: wSqueethToMintSecond.wmul(squeethEthPrice.wmul(99e16)),
-                minEthFromUsdc: usdcToBorrowSecond.mul(1e12).wdiv(
+                minEthFromUsdc: usdcToBorrowSecond.mul(WETH_DECIMALS_DIFF).wdiv(
                     ethUsdPrice.wmul(uint256(1e18).add(5e15))
                     ),
                 wPowerPerpPoolFee: uint24(3000),
@@ -489,19 +495,20 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrab,
             uint256 usdcToRepay
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullStrategy.balanceOf(user1),
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -513,7 +520,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBull =
-            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+            ethToWithdrawFromCrab.sub(maxEthForWPowerPerp).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -559,19 +566,20 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrab,
             uint256 usdcToRepay
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeem,
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -583,7 +591,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBull =
-            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+            ethToWithdrawFromCrab.sub(maxEthForWPowerPerp).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -608,19 +616,20 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrab,
             uint256 usdcToRepay
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeem,
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -632,7 +641,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBull =
-            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+            ethToWithdrawFromCrab.sub(maxEthForWPowerPerp).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -659,19 +668,20 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrab,
             uint256 usdcToRepay
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(99e16));
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(99e16));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeem,
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -683,7 +693,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBull =
-            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+            ethToWithdrawFromCrab.sub(maxEthForWPowerPerp).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -708,19 +718,20 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrab,
             uint256 usdcToRepay
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
-        uint256 maxEthForSqueeth;
+        uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueeth = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
-            maxEthForUsdc = usdcToRepay.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForWPowerPerp = wPowerPerpToRedeem.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdc =
+                usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
         FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeem,
-            maxEthForSqueeth: maxEthForSqueeth,
+            maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -732,7 +743,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBull =
-            ethToWithdrawFromCrab.sub(maxEthForSqueeth).add(wethToWithdraw.sub(maxEthForUsdc));
+            ethToWithdrawFromCrab.sub(maxEthForWPowerPerp).add(wethToWithdraw.sub(maxEthForUsdc));
         userEthBalanceBeforeTx = user1.balance;
 
         vm.startPrank(user1);
@@ -770,20 +781,21 @@ contract FlashBullTestFork is Test {
             uint256 ethToWithdrawFromCrabSecond,
             uint256 usdcToRepaySecond
         ) = calcAssetsNeededForFlashWithdraw(bullToRedeemSecond);
-        uint256 maxEthForSqueethSecond;
+        uint256 maxEthForWPowerPerpSecond;
         uint256 maxEthForUsdcSecond;
         {
             uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
             uint256 squeethEthPrice =
                 UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
-            maxEthForSqueethSecond = wPowerPerpToRedeemSecond.wmul(squeethEthPrice.wmul(101e16));
-            maxEthForUsdcSecond =
-                usdcToRepaySecond.mul(1e12).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
+            maxEthForWPowerPerpSecond = wPowerPerpToRedeemSecond.wmul(squeethEthPrice.wmul(101e16));
+            maxEthForUsdcSecond = usdcToRepaySecond.mul(WETH_DECIMALS_DIFF).wdiv(
+                ethUsdPrice.wmul(uint256(1e18).sub(5e15))
+            );
         }
 
         FlashBull.FlashWithdrawParams memory paramsSecond = FlashBull.FlashWithdrawParams({
             bullAmount: bullToRedeemSecond,
-            maxEthForSqueeth: maxEthForSqueethSecond,
+            maxEthForWPowerPerp: maxEthForWPowerPerpSecond,
             maxEthForUsdc: maxEthForUsdcSecond,
             wPowerPerpPoolFee: uint24(3000),
             usdcPoolFee: uint24(3000)
@@ -796,7 +808,7 @@ contract FlashBullTestFork is Test {
         uint256 usdcBorrowedBeforeSecond = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 crabBalanceBeforeSecond = crabV2.balanceOf(address(bullStrategy));
         uint256 ethToWithdrawFromBullSecond = ethToWithdrawFromCrabSecond.sub(
-            maxEthForSqueethSecond
+            maxEthForWPowerPerpSecond
         ).add(wethToWithdrawSecond.sub(maxEthForUsdcSecond));
         userEthBalanceBeforeTx = user1.balance;
 

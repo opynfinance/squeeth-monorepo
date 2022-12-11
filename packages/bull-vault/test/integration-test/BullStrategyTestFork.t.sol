@@ -32,6 +32,8 @@ import { UniOracle } from "../../src/UniOracle.sol";
 contract BullStrategyTestFork is Test {
     using StrategyMath for uint256;
 
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+
     TestUtil internal testUtil;
     BullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
@@ -192,7 +194,7 @@ contract BullStrategyTestFork is Test {
     }
 
     function testDepositWhenTotalSupplyLessThanMinimum() public {
-        uint256 crabToDeposit = 1e12;
+        uint256 crabToDeposit = WETH_DECIMALS_DIFF;
         vm.startPrank(user1);
         (uint256 wethToLend, uint256 usdcToBorrow) =
             testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
@@ -276,7 +278,7 @@ contract BullStrategyTestFork is Test {
         _deposit(crabToDeposit);
         vm.stopPrank();
 
-        uint256 bullToRedeem = crabToDeposit.sub(1e12);
+        uint256 bullToRedeem = crabToDeposit.sub(WETH_DECIMALS_DIFF);
         (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
             _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToRedeem);

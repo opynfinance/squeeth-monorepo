@@ -37,8 +37,8 @@ contract LeverageBull is Ownable {
     /// @dev target CR for our ETH collateral
     uint256 public constant TARGET_CR = 2e18; // 2 collat ratio
 
-    /// @dev ETH:wSqueeth Uniswap pool
-    address internal immutable ethWSqueethPool;
+    /// @dev ETH:wPowerPerp Uniswap pool
+    address internal immutable ethWPowerPerpPool;
     /// @dev ETH:USDC Uniswap pool
     address internal immutable ethUSDCPool;
     /// @dev wPowerPerp address
@@ -49,9 +49,9 @@ contract LeverageBull is Ownable {
     address internal immutable weth;
     /// @dev euler markets module
     address internal immutable eulerMarkets;
-    /// @dev euler eToken that represent the collateral asset
+    /// @dev euler eToken that represent the collateral asset (WETH)
     address internal immutable eToken;
-    /// @dev euler dToken that represent the borrowed asset
+    /// @dev euler dToken that represent the borrowed asset (USDC)
     address internal immutable dToken;
     /// @dev auction contract address
     address public auction;
@@ -88,7 +88,7 @@ contract LeverageBull is Ownable {
         weth = IController(_powerTokenController).weth();
         usdc = IController(_powerTokenController).quoteCurrency();
         wPowerPerp = IController(_powerTokenController).wPowerPerp();
-        ethWSqueethPool = IController(_powerTokenController).wPowerPerpPool();
+        ethWPowerPerpPool = IController(_powerTokenController).wPowerPerpPool();
         ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
 
         IERC20(IController(_powerTokenController).weth()).approve(_euler, type(uint256).max);
@@ -160,11 +160,11 @@ contract LeverageBull is Ownable {
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
-        uint256 _squeethInCrab,
+        uint256 _wPowerPerpInCrab,
         uint256 _totalCrabSupply
     ) external view returns (uint256, uint256) {
         return _calcLeverageWethUsdc(
-            _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _totalCrabSupply
+            _crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _totalCrabSupply
         );
     }
 
@@ -193,7 +193,7 @@ contract LeverageBull is Ownable {
      * @param _crabAmount amount of crab token deposited
      * @param _bullShare amount of bull share minted
      * @param _ethInCrab eth in crab strategy
-     * @param _squeethInCrab oSQTH debt of crab strategy
+     * @param _wPowerPerpInCrab wPowerPerp debt of crab strategy
      * @param _crabTotalSupply total supply of crab tokens
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC, and total ETH deposited as collateral in Euler
      */
@@ -202,11 +202,11 @@ contract LeverageBull is Ownable {
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
-        uint256 _squeethInCrab,
+        uint256 _wPowerPerpInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
         (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
-            _crabAmount, _bullShare, _ethInCrab, _squeethInCrab, _crabTotalSupply
+            _crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _crabTotalSupply
         );
 
         require(wethToLend == _ethAmount, "LB0");
@@ -259,7 +259,7 @@ contract LeverageBull is Ownable {
      * @param _crabAmount amount of crab
      * @param _bullShare share of bull contract scaled to 1e18
      * @param _ethInCrab ETH collateral held through crab's vault
-     * @param _squeethInCrab oSQTH debt owed through crab's vault
+     * @param _wPowerPerpInCrab wPowerPerp debt owed through crab's vault
      * @param _totalCrabSupply total supply of crab token
      * @return weth to lend in Euler, usdc to borrow in Euler
      */
@@ -267,17 +267,17 @@ contract LeverageBull is Ownable {
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
-        uint256 _squeethInCrab,
+        uint256 _wPowerPerpInCrab,
         uint256 _totalCrabSupply
     ) internal view returns (uint256, uint256) {
         {
             if (_bullShare == ONE) {
                 uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                uint256 squeethEthPrice =
-                    UniOracle._getTwap(ethWSqueethPool, wPowerPerp, weth, TWAP, false);
+                uint256 wPowerPerpEthPrice =
+                    UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
                 uint256 crabUsdPrice = (
                     _ethInCrab.wmul(ethUsdPrice).sub(
-                        _squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
+                        _wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
                 uint256 wethToLend =
