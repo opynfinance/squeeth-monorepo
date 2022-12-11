@@ -16,7 +16,7 @@ import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
- * LB0: ETH sent is not equal to ETH to deposit in Euler
+ * LB0: ETH sent is not at least ETH to deposit in Euler
  * LB1: caller is not auction address
  * LB2: auction can not be set to 0 address
  */
@@ -196,7 +196,6 @@ contract LeverageBull is Ownable {
     /**
      * @notice deposit ETH into leverage component and borrow USDC
      * @dev this function handles only the leverage component part
-     * @param _ethAmount amount of ETH deposited from user
      * @param _crabAmount amount of crab token deposited
      * @param _bullShare amount of bull share minted
      * @param _ethInCrab eth in crab strategy
@@ -205,7 +204,6 @@ contract LeverageBull is Ownable {
      * @return ETH deposited as collateral in Euler and borrowed amount of USDC, and total ETH deposited as collateral in Euler
      */
     function _leverageDeposit(
-        uint256 _ethAmount,
         uint256 _crabAmount,
         uint256 _bullShare,
         uint256 _ethInCrab,
@@ -216,7 +214,7 @@ contract LeverageBull is Ownable {
             _crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _crabTotalSupply
         );
 
-        require(wethToLend == _ethAmount, "LB0");
+        require(wethToLend <= msg.value, "LB0");
 
         _depositWethInEuler(wethToLend);
         _borrowUsdcFromEuler(usdcToBorrow);

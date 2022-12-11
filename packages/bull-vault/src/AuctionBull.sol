@@ -125,6 +125,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -255,6 +265,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bytes32 r;
         bytes32 s;
     }
+
+    ///@dev _executeCrabDeposit params struct
 
     ///@dev _executeCrabDeposit params struct
     struct ExecuteCrabDepositParams {
