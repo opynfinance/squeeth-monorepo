@@ -324,18 +324,19 @@ contract FlashBull is UniFlash {
         uint256 _strategyDebtAmount,
         uint256 _strategyCollateralAmount
     ) internal view returns (uint256, uint256) {
+        uint256 wPowerPerpToMint;
         uint256 feeRate = IController(powerTokenController).feeRate();
         if (feeRate != 0) {
             uint256 wPowerPerpEthPrice =
                 UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
             uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
-            uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
+            wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
                 _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))
             );
             uint256 fee = wPowerPerpToMint.wmul(feeAdjustment);
             return (wPowerPerpToMint, fee);
         }
-        uint256 wPowerPerpToMint =
+        wPowerPerpToMint =
             _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(_strategyCollateralAmount);
         return (wPowerPerpToMint, 0);
     }

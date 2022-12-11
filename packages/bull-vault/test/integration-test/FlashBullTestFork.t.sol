@@ -395,7 +395,7 @@ contract FlashBullTestFork is Test {
                 usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
-        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
+        FlashBull.FlashDepositParams memory firstParams = FlashBull.FlashDepositParams({
             ethToCrab: ethToCrabInitial,
             minEthFromSqth: minEthFromSqueeth,
             minEthFromUsdc: minEthFromUsdc,
@@ -404,7 +404,7 @@ contract FlashBullTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(params);
+        flashBull.flashDeposit{value: totalEthToBull}(firstParams);
         vm.stopPrank();
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
         assertApproxEqAbs(
