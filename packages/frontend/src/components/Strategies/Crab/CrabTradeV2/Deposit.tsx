@@ -376,7 +376,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
-                title={`With standard, the deposit gets initiated and is submitted via auction to avoid price impact. This may take up until Tuesday.`}
+                title={`Standard deposit helps large deposits reduce price impact by submitting deposits via auction. Standard deposits get into the strategy by Tuesday. Instant deposits get into the strategy immediately.`}
               >
                 <HelpOutlineIcon fontSize="medium" />
               </Tooltip>

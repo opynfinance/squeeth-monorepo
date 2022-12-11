@@ -388,7 +388,7 @@ const CrabWithdraw: React.FC = () => {
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
-                title={`With standard, the withdraw gets initiated and is submitted via auction to avoid price impact. This may take up until Tuesday.`}
+                title={`Standard withdraw helps large withdraws reduce price impact by submitting withdraws via auction. Standard withdraws leave the strategy by Tuesday. Instant withdraws leave the strategy immediately.`}
               >
                 <HelpOutlineIcon fontSize="medium" />
               </Tooltip>
