@@ -85,6 +85,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -252,6 +262,26 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
 
     /**
      * @notice constructor for AuctionBull
@@ -493,11 +523,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 })
             );
 
-            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
 
-            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
@@ -636,14 +666,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      * @param _orders list of orders
      * @param remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
-     * @param _isDepositingInCrab true if the rebalance will deposit into Crab, false if withdrawing funds from Crab
      */
 
     function _pushFundsFromOrders(
         Order[] memory _orders,
         uint256 remainingAmount,
-        uint256 _clearingPrice,
-        bool _isDepositingInCrab
+        uint256 _clearingPrice
     ) internal {
         uint256 ordersLength = _orders.length;
         for (uint256 i; i < ordersLength; ++i) {
