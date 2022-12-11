@@ -1,7 +1,7 @@
 import { Box, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
 
@@ -19,6 +19,8 @@ import { BIG_ZERO } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
+import { useBullFlashDeposit, useGetFlashBulldepositParams } from '@state/bull/hooks'
+import debounce from 'lodash/debounce'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -76,12 +78,14 @@ enum BullTradeType {
 
 const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
-  const [depositAmount, setDepositAmount] = useState(0)
-  const [withdrawAmount, setWithdrawAmount] = useState(0)
+  const depositAmountRef = useRef('0')
+
+  const [withdrawAmount, setWithdrawAmount] = useState('0')
   const [slippage, setSlippage] = useState(0.25)
   const isDeposit = tradeType === BullTradeType.Deposit
   const isWithdraw = tradeType === BullTradeType.Withdraw
   const tabValue = tradeType === BullTradeType.Deposit ? 0 : 1
+  const [quoteLoading, setQuoteLoading] = useState(false)
 
   const negativeReturnsError = false
   const withdrawExpensive = false
@@ -97,6 +101,45 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const classes = useStyles()
   const confirmed = false
+
+  const [quote, setQuote] = useState({
+    ethToCrab: BIG_ZERO,
+    minEthFromSqth: BIG_ZERO,
+    minEthFromUsdc: BIG_ZERO,
+    wPowerPerpPoolFee: 0,
+    usdcPoolFee: 0,
+  })
+
+  const getFlashBullDepositParams = useGetFlashBulldepositParams()
+  const bullFlashDeposit = useBullFlashDeposit()
+
+  const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
+    setQuoteLoading(true)
+    getFlashBullDepositParams(new BigNumber(ethToDeposit))
+      .then((_quote) => {
+        console.log('', ethToDeposit.toString(), depositAmountRef.current)
+        if (ethToDeposit === depositAmountRef.current) setQuote(_quote)
+      })
+      .finally(() => {
+        if (ethToDeposit === depositAmountRef.current) setQuoteLoading(false)
+      })
+  }, 500)
+
+  const onInputChange = (ethToDeposit: string) => {
+    depositAmountRef.current = ethToDeposit
+    debouncedDepositQuote(ethToDeposit)
+  }
+
+  const onDepositClick = async () => {
+    const tx = bullFlashDeposit(
+      quote.ethToCrab,
+      quote.minEthFromSqth,
+      quote.minEthFromUsdc,
+      quote.wPowerPerpPoolFee,
+      quote.usdcPoolFee,
+      new BigNumber(depositAmountRef.current),
+    )
+  }
 
   return (
     <>
@@ -131,8 +174,8 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
             {isDeposit && (
               <InputToken
                 id="bull-deposit-eth-input"
-                value={depositAmount}
-                onInputChange={(value) => setDepositAmount(Number(value))}
+                value={depositAmountRef.current}
+                onInputChange={onInputChange}
                 balance={toTokenAmount(0 ?? BIG_ZERO, 18)}
                 logo={ethLogo}
                 symbol={'ETH'}
@@ -140,6 +183,8 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
                 error={false}
                 helperText={``}
                 balanceLabel="Balance"
+                isLoading={quoteLoading}
+                loadingMessage="Fetching best price"
               />
             )}
             {isWithdraw && (
@@ -147,7 +192,7 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
                 id="bull-withdraw-eth-input"
                 value={withdrawAmount}
                 onInputChange={(v) => {
-                  setWithdrawAmount(Number(v))
+                  setWithdrawAmount(v)
                 }}
                 balance={new BigNumber(500)}
                 logo={ethLogo}
@@ -255,6 +300,14 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
                   />
                 </Box>
               </Box>
+              <Metric
+                label="ETH to crab"
+                value={quote.ethToCrab.toString()}
+                isSmall
+                flexDirection="row"
+                justifyContent="space-between"
+                gridGap="12px"
+              />
             </Box>
 
             {isRestricted && <RestrictionInfo marginTop="24px" />}
@@ -289,8 +342,8 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
                   fullWidth
                   id="bull-deposit-btn"
                   variant={'contained'}
-                  onClick={() => {}}
-                  disabled={false}
+                  onClick={onDepositClick}
+                  disabled={quoteLoading}
                 >
                   Deposit
                 </PrimaryButtonNew>
