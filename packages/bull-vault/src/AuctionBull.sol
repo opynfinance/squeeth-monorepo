@@ -105,6 +105,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -271,7 +281,27 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     event SetRebalanceWethLimitPriceTolerance(
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
-    event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+    event SetAuctionManager(address oldAuctionManager, address newAuctionManager);
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
 
     /**
      * @notice constructor for AuctionBull
@@ -429,7 +459,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function setAuctionManager(address _auctionManager) external onlyOwner {
         require(_auctionManager != address(0), "AB19");
 
-        emit SetAuctionManager(_auctionManager, auctionManager);
+        emit SetAuctionManager(auctionManager, _auctionManager);
 
         auctionManager = _auctionManager;
     }

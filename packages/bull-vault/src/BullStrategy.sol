@@ -64,7 +64,7 @@ contract BullStrategy is ERC20, LeverageBull {
     event RedeemCrabAndWithdrawEth(
         uint256 indexed crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
     );
-    event SetShutdownContract(address newShutdownContract, address oldShutdownContract);
+    event SetShutdownContract(address oldShutdownContract, address newShutdownContract);
     event ShutdownRepayAndWithdraw(
         uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem
     );
