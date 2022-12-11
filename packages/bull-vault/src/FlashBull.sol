@@ -19,6 +19,11 @@ import { UniOracle } from "./UniOracle.sol";
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
+ * Error code
+ * FB0: can only receive eth from weth contract or bull strategy
+ */
+
+/**
  * @notice FlashBull contract
  * @dev handle the flashswap interactions
  * @author opyn team
@@ -134,7 +139,7 @@ contract FlashBull is UniFlash {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        require(msg.sender == weth || msg.sender == bullStrategy);
+        require(msg.sender == weth || msg.sender == bullStrategy, "FB1");
     }
 
     /**
