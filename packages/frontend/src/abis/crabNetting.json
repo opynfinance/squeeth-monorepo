@@ -202,6 +202,19 @@
       {
         "indexed": false,
         "internalType": "uint256",
+        "name": "newDepositsIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetDepositsIndex",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
       }
@@ -239,6 +252,19 @@
       }
     ],
     "name": "SetOTCPriceTolerance",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newWithdrawsIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "SetWithdrawsIndex",
     "type": "event"
   },
   {
@@ -348,6 +374,31 @@
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "withdrawer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "index",
+        "type": "uint256"
+      }
+    ],
+    "name": "WithdrawRejected",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "DOMAIN_SEPARATOR",
     "outputs": [
@@ -448,7 +499,7 @@
     ],
     "name": "checkOrder",
     "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -622,6 +673,11 @@
         "internalType": "uint256",
         "name": "amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -659,6 +715,11 @@
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_force",
+        "type": "bool"
       }
     ],
     "name": "dequeueCrab",
@@ -826,6 +887,19 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "i",
+        "type": "uint256"
+      }
+    ],
+    "name": "rejectWithdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "renounceOwnership",
     "outputs": [],
@@ -841,6 +915,19 @@
       }
     ],
     "name": "setAuctionTwapPeriod",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newDepositsIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "setDepositsIndex",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -893,6 +980,19 @@
       }
     ],
     "name": "setOTCPriceTolerance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newWithdrawsIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "setWithdrawsIndex",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1160,6 +1260,11 @@
         "internalType": "uint256",
         "name": "_amount",
         "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "_force",
+        "type": "bool"
       }
     ],
     "name": "withdrawUSDC",
@@ -1185,6 +1290,11 @@
       {
         "internalType": "uint256",
         "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
         "type": "uint256"
       }
     ],
