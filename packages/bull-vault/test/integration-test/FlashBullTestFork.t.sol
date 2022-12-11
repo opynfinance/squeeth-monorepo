@@ -238,6 +238,28 @@ contract FlashBullTestFork is Test {
         assertEq(bullToMint, bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
     }
 
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
     function testFlashDepositWithHugeSqthSlippage() public {
         uint256 ethToCrab = 5e18;
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();

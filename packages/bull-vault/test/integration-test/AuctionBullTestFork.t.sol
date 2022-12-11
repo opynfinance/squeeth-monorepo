@@ -417,6 +417,8 @@ contract AuctionBullTestFork is Test {
         );
     }
 
+    
+
     function testFullRebalanceWhenEthDownAndCrTooHigh() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
@@ -712,6 +714,9 @@ contract AuctionBullTestFork is Test {
     }
 
     function testLeverageRebalanceWhereWhenCallerNotAuctionManager() public {
+        uint256 usdcDebtBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
+        uint256 ethBalanceBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
+
         // move prices up
         vm.startPrank(user1);
         IERC20(usdc).approve(address(swapRouter), 10000000e6);
@@ -743,6 +748,9 @@ contract AuctionBullTestFork is Test {
         );
         vm.stopPrank();
         vm.warp(block.timestamp + 1000);
+
+        (uint256 deltaBeforeRebalance, uint256 crBeforeRebalance) =
+            auctionBull.getCurrentDeltaAndCollatRatio();
 
         uint256 crabPrice = testUtil.getCrabPrice();
         uint256 usdcDebtTarget =
@@ -1510,6 +1518,9 @@ contract AuctionBullTestFork is Test {
 
         vm.prank(user1);
         IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
+        uint256 squeethEthPrice = UniOracle._getTwap(
+            controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
+        );
 
         vm.prank(auctionManager);
         vm.expectRevert(bytes("AB5"));
@@ -1849,6 +1860,7 @@ contract AuctionBullTestFork is Test {
         IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
@@ -1959,6 +1971,7 @@ contract AuctionBullTestFork is Test {
         IERC20(wPowerPerp).approve(address(auctionBull), wPowerPerpAmountToTrade);
         userWPowerPerpBalanceBeforeAuction = IERC20(wPowerPerp).balanceOf(user1);
         userWethBalanceBeforeAuction = IERC20(weth).balanceOf(user1);
+        uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
         uint256 squeethEthPrice = UniOracle._getTwap(
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
