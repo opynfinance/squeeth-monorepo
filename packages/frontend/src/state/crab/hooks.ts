@@ -1002,7 +1002,7 @@ export const useDeQueueDepositUSDC = () => {
       if (!contract) return
 
       return await handleTransaction(
-        contract.methods.withdrawUSDC(amount.toString()).send({
+        contract.methods.withdrawUSDC(amount.toString(), false).send({
           from: address,
         }),
         onTxConfirmed,
@@ -1024,7 +1024,7 @@ export const useDeQueueWithdrawCrab = () => {
       if (!contract) return
 
       return await handleTransaction(
-        contract.methods.dequeueCrab(amount.toFixed(0)).send({
+        contract.methods.dequeueCrab(amount.toFixed(0), false).send({
           from: address,
         }),
         onTxConfirmed,
