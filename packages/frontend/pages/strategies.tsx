@@ -98,8 +98,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(4),
     },
     tradeSection: {
-      position: 'sticky',
-      top: '100px',
       border: '1px solid #242728',
       boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
       borderRadius: theme.spacing(0.7),
