@@ -56,7 +56,9 @@ contract LeverageBull is Ownable {
     /// @dev auction contract address
     address public auction;
 
-    event RepayAndWithdrawFromLeverage(address from, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event AuctionRepayAndWithdrawFromLeverage(
+        address indexed from, uint256 usdcToRepay, uint256 wethToWithdraw
+    );
     event SetAuction(address oldAuction, address newAuction);
 
     event DepositAndRepayFromLeverage(
@@ -121,7 +123,7 @@ contract LeverageBull is Ownable {
             IERC20(weth).transfer(msg.sender, _wethToWithdraw);
         }
 
-        emit RepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
+        emit AuctionRepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
     }
 
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
@@ -236,7 +238,10 @@ contract LeverageBull is Ownable {
      * @notice repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
-    function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal {
+    function _repayAndWithdrawFromLeverage(uint256 _bullShare)
+        internal
+        returns (uint256, uint256)
+    {
         uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 
@@ -246,7 +251,7 @@ contract LeverageBull is Ownable {
 
         IWETH9(weth).withdraw(wethToWithdraw);
 
-        emit RepayAndWithdrawFromLeverage(msg.sender, usdcToRepay, wethToWithdraw);
+        return (usdcToRepay, wethToWithdraw);
     }
 
     /**

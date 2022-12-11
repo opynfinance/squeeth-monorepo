@@ -51,8 +51,15 @@ contract BullStrategy is ERC20, LeverageBull {
     /// @dev set to true when redeemShortShutdown has been called
     bool public hasRedeemedInShutdown;
 
-    event Withdraw(address from, uint256 bullAmount, uint256 wPowerPerpToRedeem);
-    event Deposit(address from, uint256 crabAmount);
+    event Withdraw(
+        address indexed to,
+        uint256 bullAmount,
+        uint256 crabToRedeem,
+        uint256 wPowerPerpToRedeem,
+        uint256 usdcToRepay,
+        uint256 wethToWithdraw
+    );
+    event Deposit(address indexed from, uint256 crabAmount, uint256 wethLent, uint256 usdcBorrowed);
     event SetCap(uint256 oldCap, uint256 newCap);
     event RedeemCrabAndWithdrawEth(
         uint256 crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
@@ -61,6 +68,10 @@ contract BullStrategy is ERC20, LeverageBull {
     event ShutdownRepayAndWithdraw(
         uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem
     );
+    event Farm(address indexed asset, address indexed receiver);
+    event DepositEthIntoCrab(uint256 ethToDeposit);
+    event WithdrawShutdown(address indexed withdrawer, uint256 bullAmount, uint256 ethToReceive);
+
     /**
      * @notice constructor for BullStrategy
      * @dev this will open a vault in the power token contract and store the vault ID
@@ -105,6 +116,8 @@ contract BullStrategy is ERC20, LeverageBull {
         );
 
         IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+
+        emit Farm(_asset, _receiver);
     }
 
     /**
@@ -154,7 +167,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         (uint256 ethInCrab, uint256 squeethInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
-        (, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
+        (uint256 wethLent, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
             msg.value, bullToMint, share, ethInCrab, squeethInCrab, IERC20(crab).totalSupply()
         );
 
@@ -162,7 +175,7 @@ contract BullStrategy is ERC20, LeverageBull {
 
         IERC20(usdc).transfer(msg.sender, usdcBorrowed);
 
-        emit Deposit(msg.sender, _crabAmount);
+        emit Deposit(msg.sender, _crabAmount, wethLent, usdcBorrowed);
     }
 
     /**
@@ -187,11 +200,18 @@ contract BullStrategy is ERC20, LeverageBull {
         _decreaseCrabBalance(crabToRedeem);
         ICrabStrategyV2(crab).withdraw(crabToRedeem);
 
-        _repayAndWithdrawFromLeverage(share);
+        (uint256 usdcToRepay,) = _repayAndWithdrawFromLeverage(share);
+
+        emit Withdraw(
+            msg.sender,
+            _bullAmount,
+            crabToRedeem,
+            wPowerPerpToRedeem,
+            usdcToRepay,
+            address(this).balance
+            );
 
         payable(msg.sender).sendValue(address(this).balance);
-
-        emit Withdraw(msg.sender, _bullAmount, wPowerPerpToRedeem);
     }
 
     /**
@@ -212,8 +232,8 @@ contract BullStrategy is ERC20, LeverageBull {
 
         _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
-        IWETH9(weth).deposit{value: address(this).balance}();
-        uint256 wethBalanceToReturn = IERC20(weth).balanceOf(address(this));
+        uint256 wethBalanceToReturn = address(this).balance;
+        IWETH9(weth).deposit{value: wethBalanceToReturn}();
         IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
         emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
@@ -236,6 +256,8 @@ contract BullStrategy is ERC20, LeverageBull {
         _increaseCrabBalance(IERC20(crab).balanceOf(address(this)).sub(crabBalancebefore));
 
         IERC20(wPowerPerp).transfer(msg.sender, IERC20(wPowerPerp).balanceOf(address(this)));
+
+        emit DepositEthIntoCrab(_ethToDeposit);
     }
 
     /**
@@ -267,10 +289,15 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function withdrawShutdown(uint256 _bullAmount) external {
         require(hasRedeemedInShutdown, "BS3");
+
         uint256 share = _bullAmount.wdiv(totalSupply());
         uint256 ethToReceive = share.wmul(address(this).balance);
+
         _burn(msg.sender, _bullAmount);
+
         payable(msg.sender).sendValue(ethToReceive);
+
+        emit WithdrawShutdown(msg.sender, _bullAmount, ethToReceive);
     }
 
     /**

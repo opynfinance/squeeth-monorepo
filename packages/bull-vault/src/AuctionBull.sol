@@ -3,6 +3,8 @@ pragma solidity =0.7.6;
 
 pragma abicoder v2;
 
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -161,10 +163,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
-
-    event TransferToOrder(address trader, uint256 quanity, uint256 clearingPrice);
-
-    event TransferFromOrder(address trader, uint256 quanity, uint256 clearingPrice);
 
     constructor(
         address _auctionOwner,
@@ -336,9 +334,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
         } else {
+            console.log("reached withdraw");
             IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            console.log("redeem and withdraw done");
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+            console.log("push funds from orders done");
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
@@ -348,6 +349,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
+            console.log("lev rebal done");
         }
 
         // check that rebalance does not breach collateral ratio or delta tolerance
@@ -405,6 +407,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         emit LeverageRebalance(_isSellingUsdc, _usdcAmount, _wethLimitPrice);
     }
 
+    /**
+     * @notice allows an order to be cancelled by marking its nonce used for a given msg.sender
+     * @param _nonce the nonce to mark as used
+     */
+    function useNonce(uint256 _nonce) external {
+        _useNonce(msg.sender, _nonce);
+    }
+
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
@@ -416,14 +426,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      */
     function getCurrentDeltaAndCollatRatio() external view returns (uint256, uint256) {
         return _getCurrentDeltaAndCollatRatio();
-    }
-
-    /**
-     * @notice allows an order to be cancelled by marking its nonce used for a given msg.sender
-     * @param _nonce the nonce to mark as used
-     */
-    function useNonce(uint256 _nonce) external {
-        _useNonce(msg.sender, _nonce);
     }
 
     /**
@@ -604,6 +606,10 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
+            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
+                IERC20(usdc).balanceOf(address(this)),
+                _uniFlashSwapData.amountToPay.sub(remainingWeth)
+            );
 
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
@@ -672,6 +678,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
             uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+            console.log("mark 2 ");
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -736,7 +743,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
         }
-        emit TransferToOrder(_order.trader, _order.quantity, _clearingPrice);
     }
 
     /**
@@ -764,7 +770,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // trader send oSQTH and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
         }
-        emit TransferFromOrder(_order.trader, _order.quantity, _clearingPrice);
     }
 
     /**

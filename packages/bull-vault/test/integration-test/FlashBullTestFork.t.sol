@@ -538,7 +538,7 @@ contract FlashBullTestFork is Test {
         );
         assertEq(
             crabBalanceBefore.sub(crabToRedeem),
-            crabV2.balanceOf(address(bullStrategy)),
+            bullStrategy.getCrabBalance(),
             "Bull crab balance mismatch"
         );
         assertTrue((user1.balance).sub(userEthBalanceBeforeTx).sub(ethToWithdrawFromBull) <= 1e17);
