@@ -65,6 +65,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -232,6 +242,26 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
 
     /**
      * @notice constructor for AuctionBull
@@ -708,10 +738,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
-                IERC20(usdc).balanceOf(address(this)),
-                _uniFlashSwapData.amountToPay.sub(remainingWeth)
-            );
 
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
