@@ -57,6 +57,7 @@ export const useStyles = makeStyles((theme) =>
       padding: theme.spacing(2),
       color: theme.palette.primary.main,
       marginTop: theme.spacing(2),
+      textAlign: 'center',
     },
     dangerBtn: {
       color: theme.palette.error.main,

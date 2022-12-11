@@ -554,13 +554,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
               )}
             </Box>
           </div>
-          {crabQueued.isGreaterThan(0) || usdcQueued.isGreaterThan(0) ? (
-            <div className={classes.queueNotice}>
-              {usdcQueued.isGreaterThan(0)
-                ? 'Your deposit will fully enter the strategy by Tuesday'
-                : 'Your withdrawal will fully exit the strategy by Tuesday'}
-            </div>
-          ) : null}
+          {useQueue && <div className={classes.queueNotice}>Your deposit will fully enter the strategy by Tuesday</div>}
         </>
       )}
     </>
