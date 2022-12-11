@@ -417,8 +417,6 @@ contract AuctionBullTestFork is Test {
         );
     }
 
-    
-
     function testFullRebalanceWhenEthDownAndCrTooHigh() public {
         currentDebt = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         currentWethInLeverage = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
