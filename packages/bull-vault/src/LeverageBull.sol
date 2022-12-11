@@ -300,16 +300,15 @@ contract LeverageBull is Ownable {
                         _wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                wethToLend =
-                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
                 uint256 usdcToBorrow =
                     wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }
-        wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
-            _bullShare
-        ).wdiv(ONE.sub(_bullShare));
+        wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(
+            ONE.sub(_bullShare)
+        );
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
         return (wethToLend, usdcToBorrow);
