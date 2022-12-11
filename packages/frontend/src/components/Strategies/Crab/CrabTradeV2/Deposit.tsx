@@ -77,8 +77,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   )
   const [depositEthAmount, setDepositEthAmount] = useState(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(true)
-  const [useQueue, setUseQueue] = useState(true)
-  const [overrideQueueOption, setOverrideQueueOption] = useState(false)
+  const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
+  const [useQueue, setUseQueue] = useState(false)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
   const usdcQueued = useAtomValue(usdcQueuedAtom)
@@ -219,19 +219,18 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     }
   }, [ready, depositAmountBN.toString(), slippage, useUsdc, network, usdc, weth])
 
-  const depositTX = async (overrideQueue = false) => {
-    const isQueue = !overrideQueue && useQueue
+  const depositTX = async () => {
     setTxLoading(true)
 
     try {
       if (depositStep === DepositSteps.APPROVE) {
-        if (isQueue) {
+        if (useQueue) {
           await approveQueueUsdc(() => resetTransactionData())
         } else {
           await approveUsdc(() => resetTransactionData())
         }
       } else {
-        if (isQueue) {
+        if (useQueue) {
           await queueUSDC(depositAmountBN)
         } else if (useUsdc) {
           await flashDepositUSDC(depositAmountBN, slippage, () => {
@@ -286,29 +285,26 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
 
   useEffect(() => {
     if (!useUsdc || isNettingAuctionLive) {
+      setQueueOptionAvailable(false)
       setUseQueue(false)
       return
     }
 
     if (Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+      setQueueOptionAvailable(true)
       setUseQueue(true)
-      setOverrideQueueOption(false)
     } else {
+      setQueueOptionAvailable(false)
       setUseQueue(false)
-      setOverrideQueueOption(true)
     }
   }, [depositPriceImpact, useUsdc, isNettingAuctionLive])
 
   const confirmationMessage = useAppMemo(() => {
-    if (useQueue && !overrideQueueOption) {
+    if (useQueue) {
       return `Initiated ${depositAmountBN.toFixed(4)} ${depositToken} for deposit`
     }
     return `Deposited ${depositAmountBN.toFixed(4)} ${depositToken}`
-  }, [depositAmountBN, depositToken, useQueue, overrideQueueOption])
-
-  const setOverrideOption = (option: boolean) => {
-    setOverrideQueueOption(option)
-  }
+  }, [depositAmountBN, depositToken, useQueue])
 
   const depositPriceImpactNumber = Number(depositPriceImpact)
 
@@ -362,23 +358,21 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
 
           <Box display="flex" alignItems="center" gridGap="12px" marginTop="8px">
             <RoundedButton
-              style={{ borderRadius: '20px' }}
               variant="outlined"
-              color={overrideQueueOption || !useQueue ? 'primary' : 'default'}
+              color={!useQueue ? 'primary' : 'default'}
               size="small"
-              onClick={() => setOverrideOption(true)}
+              onClick={() => setUseQueue(false)}
             >
-              <Typography color={overrideQueueOption || !useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
+              <Typography color={!useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
             </RoundedButton>
             <RoundedButton
-              disabled={!useQueue}
-              style={{ borderRadius: '20px' }}
-              variant={!useQueue ? 'contained' : 'outlined'}
-              color={!overrideQueueOption ? 'primary' : 'default'}
+              disabled={!queueOptionAvailable}
+              variant={!queueOptionAvailable ? 'contained' : 'outlined'}
+              color={useQueue ? 'primary' : 'default'}
               size="small"
-              onClick={() => setOverrideOption(false)}
+              onClick={() => setUseQueue(true)}
             >
-              <Typography color={!overrideQueueOption ? 'primary' : 'textSecondary'}>Standard</Typography>
+              <Typography color={useQueue ? 'primary' : 'textSecondary'}>Standard</Typography>
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
@@ -529,10 +523,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   id="crab-deposit-btn"
                   variant={depositBtnVariant}
                   className={depositBtnClassName}
-                  onClick={() => depositTX(overrideQueueOption)}
+                  onClick={depositTX}
                   disabled={txLoading || !!depositError}
                 >
-                  {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT && !overrideQueueOption ? (
+                  {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT ? (
                     <>
                       Standard deposit
                       <Tooltip

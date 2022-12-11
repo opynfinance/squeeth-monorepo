@@ -94,10 +94,11 @@ export const PrimaryButtonNew = withStyles((theme) => ({
 
 export const RoundedButton = withStyles((theme) => ({
   root: {
+    textTransform: 'initial',
+    borderRadius: '20px',
     '&:disabled': {
       color: 'rgba(255, 255, 255, 0.4)',
       backgroundColor: theme.palette.background.lightStone,
     },
-    textTransform: 'initial',
   },
 }))(Button)

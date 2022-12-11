@@ -82,8 +82,8 @@ const CrabWithdraw: React.FC = () => {
   const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw, resetSqueethAmountOutFromWithdraw] =
     useStateWithReset(new BigNumber(0))
   const [useUsdc, setUseUsdc] = useState(true)
-  const [useQueue, setUseQueue] = useState(true)
-  const [overrideQueueOption, setOverrideQueueOption] = useState(false)
+  const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
+  const [useQueue, setUseQueue] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
   const usdcQueued = useAtomValue(usdcQueuedAtom)
@@ -229,8 +229,7 @@ const CrabWithdraw: React.FC = () => {
     }
   }, [ready, withdrawCrabAmount.toString(), slippage, network, useUsdc, usdc, weth])
 
-  const withdraw = async (overrideQueue = false) => {
-    const isQueue = !overrideQueue && useQueue
+  const withdraw = async () => {
     setTxLoading(true)
 
     try {
@@ -238,13 +237,13 @@ const CrabWithdraw: React.FC = () => {
         await claimAndWithdrawEth(withdrawAmountBN, slippage)
       } else {
         if (withdrawStep === WithdrawSteps.APPROVE) {
-          if (isQueue) {
+          if (useQueue) {
             await approveQueueCrab(() => resetTransactionData())
           } else {
             await approveCrab(() => resetTransactionData())
           }
         } else {
-          if (isQueue) {
+          if (useQueue) {
             await queueCRAB(withdrawCrabAmount)
           } else if (useUsdc) {
             await flashWithdrawUSDC(withdrawCrabAmount, slippage)
@@ -298,29 +297,26 @@ const CrabWithdraw: React.FC = () => {
 
   useEffect(() => {
     if (!useUsdc || isNettingAuctionLive) {
+      setQueueOptionAvailable(false)
       setUseQueue(false)
       return
     }
 
     if (Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+      setQueueOptionAvailable(true)
       setUseQueue(true)
-      setOverrideQueueOption(false)
     } else {
+      setQueueOptionAvailable(false)
       setUseQueue(false)
-      setOverrideQueueOption(true)
     }
   }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive])
 
   const confirmationMessage = useAppMemo(() => {
-    if (useQueue && !overrideQueueOption) {
+    if (useQueue) {
       return `Initiated ${withdrawAmountBN.toFixed(4)} ${depositToken} for withdrawal`
     }
     return `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
-  }, [useQueue, withdrawAmountBN, overrideQueueOption, depositToken])
-
-  const setOverrideOption = (option: boolean) => {
-    setOverrideQueueOption(option)
-  }
+  }, [useQueue, withdrawAmountBN, depositToken])
 
   const withdrawPriceImpactNumber = Number(withdrawPriceImpact)
 
@@ -374,23 +370,21 @@ const CrabWithdraw: React.FC = () => {
 
           <Box display="flex" alignItems="center" gridGap="12px" marginTop="8px">
             <RoundedButton
-              style={{ borderRadius: '20px' }}
               variant="outlined"
-              color={overrideQueueOption || !useQueue ? 'primary' : 'default'}
+              color={!useQueue ? 'primary' : 'default'}
               size="small"
-              onClick={() => setOverrideOption(true)}
+              onClick={() => setUseQueue(false)}
             >
-              <Typography color={overrideQueueOption || !useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
+              <Typography color={!useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
             </RoundedButton>
             <RoundedButton
-              disabled={!useQueue}
-              style={{ borderRadius: '20px' }}
-              variant={!useQueue ? 'contained' : 'outlined'}
-              color={!overrideQueueOption ? 'primary' : 'default'}
+              disabled={!queueOptionAvailable}
+              variant={!queueOptionAvailable ? 'contained' : 'outlined'}
+              color={useQueue ? 'primary' : 'default'}
               size="small"
-              onClick={() => setOverrideOption(false)}
+              onClick={() => setUseQueue(true)}
             >
-              <Typography color={!overrideQueueOption ? 'primary' : 'textSecondary'}>Standard</Typography>
+              <Typography color={useQueue ? 'primary' : 'textSecondary'}>Standard</Typography>
             </RoundedButton>
             <Box className={classes.infoIconGray}>
               <Tooltip
@@ -565,10 +559,10 @@ const CrabWithdraw: React.FC = () => {
                   id="crab-withdraw-btn"
                   variant={withdrawBtnVariant}
                   className={withdrawBtnClassName}
-                  onClick={() => withdraw(overrideQueueOption)}
+                  onClick={withdraw}
                   disabled={txLoading || !!withdrawError}
                 >
-                  {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW && !overrideQueueOption ? (
+                  {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW ? (
                     <>
                       Standard withdraw
                       <Tooltip
