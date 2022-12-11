@@ -115,6 +115,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -129,6 +139,7 @@ import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
 
 /**
  * Error code
@@ -153,6 +164,7 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  * AB18: price too high relative to Uniswap twap
  * AB19: auction manager can not be 0 address
  * AB20: can only receive eth from bull strategy
+ * AB21: invalid receiver address
  */
 
 /**
@@ -161,6 +173,7 @@ import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
  */
 contract AuctionBull is UniFlash, Ownable, EIP712 {
     using StrategyMath for uint256;
+    using Address for address payable;
 
     /// @dev typehash for signed orders
     bytes32 private constant _FULL_REBALANCE_TYPEHASH = keccak256(
@@ -242,13 +255,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         bytes32 r;
         bytes32 s;
     }
-    ///@dev _executeCrabDeposit params struct
 
+    ///@dev _executeCrabDeposit params struct
     struct ExecuteCrabDepositParams {
         uint256 crabAmount;
         uint256 wethTargetInEuler;
         uint256 wethLimitPrice;
         uint256 ethInCrab;
+        uint256 wethBoughtFromAuction;
         uint24 ethUsdcPoolFee;
     }
 
@@ -256,6 +270,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     struct ExecuteLeverageComponentRebalancingParams {
         uint256 wethTargetInEuler;
         uint256 wethLimitPrice;
+        uint256 netWethReceived;
         uint24 ethUsdcPoolFee;
     }
 
@@ -282,6 +297,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address oldAuctionManager, address newAuctionManager);
+    event Farm(address indexed asset, address indexed receiver);
 
     /**
      * @notice constructor for AuctionBull
@@ -533,6 +549,24 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     }
 
     /**
+     * @notice withdraw assets transfered directly to this contract
+     * @dev can only be called by owner
+     * @param _asset asset address
+     * @param _receiver receiver address
+     */
+    function farm(address _asset, address _receiver) external onlyOwner {
+        require(_receiver != address(0), "AB21");
+
+        if (_asset == address(0)) {
+            payable(_receiver).sendValue(address(this).balance);
+        } else {
+            IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        }
+
+        emit Farm(_asset, _receiver);
+    }
+
+    /**
      * @notice rebalance delta and collateral ratio of strategy using an array of signed orders
      * @dev can only be called by the auction manager
      * @param _orders list of orders
@@ -553,6 +587,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) external {
         require(msg.sender == auctionManager, "AB0");
         require(_clearingPrice > 0, "AB5");
+
         _checkFullRebalanceClearingPrice(_clearingPrice, _isDepositingInCrab);
         _checkRebalanceLimitPrice(_wethLimitPrice);
 
@@ -564,7 +599,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             _isDepositingInCrab, _crabAmount, ethInCrab, wPowerPerpInCrab
         );
 
-        _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
+        uint256 pulledFunds =
+            _pullFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice, _isDepositingInCrab);
 
         if (_isDepositingInCrab) {
             /**
@@ -579,21 +615,23 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     wethTargetInEuler: _wethTargetInEuler,
                     wethLimitPrice: _wethLimitPrice,
                     ethInCrab: ethInCrab,
+                    wethBoughtFromAuction: pulledFunds,
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
-            IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
-
-            _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
+            uint256 wethFromCrab =
+                IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            uint256 pushedFunds = _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
             _executeLeverageComponentRebalancing(
                 ExecuteLeverageComponentRebalancingParams({
                     wethTargetInEuler: _wethTargetInEuler,
                     wethLimitPrice: _wethLimitPrice,
+                    netWethReceived: wethFromCrab.sub(pushedFunds),
                     ethUsdcPoolFee: _ethUsdcPoolFee
                 })
             );
@@ -691,13 +729,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 remainingAmount,
         uint256 _clearingPrice,
         bool _isDepositingInCrab
-    ) internal {
+    ) internal returns (uint256) {
         // loop through orders, check each order validity
         // pull funds from orders
 
         uint256 prevPrice = _orders[0].price;
         uint256 currentPrice;
 
+        uint256 amountTransfered;
         uint256 ordersLength = _orders.length;
         for (uint256 i; i < ordersLength; ++i) {
             _verifyOrder(_orders[i], _clearingPrice, _isDepositingInCrab);
@@ -711,7 +750,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             }
             prevPrice = currentPrice;
 
-            _transferFromOrder(_orders[i], remainingAmount, _clearingPrice);
+            amountTransfered = amountTransfered.add(
+                _transferFromOrder(_orders[i], remainingAmount, _clearingPrice)
+            );
 
             if (remainingAmount > _orders[i].quantity) {
                 remainingAmount = remainingAmount.sub(_orders[i].quantity);
@@ -719,6 +760,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 break;
             }
         }
+
+        return amountTransfered;
     }
 
     /**
@@ -732,16 +775,20 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         Order[] memory _orders,
         uint256 remainingAmount,
         uint256 _clearingPrice
-    ) internal {
+    ) internal returns (uint256) {
+        uint256 pushedFunds;
         uint256 ordersLength = _orders.length;
         for (uint256 i; i < ordersLength; ++i) {
-            _transferToOrder(_orders[i], remainingAmount, _clearingPrice);
+            pushedFunds =
+                pushedFunds.add(_transferToOrder(_orders[i], remainingAmount, _clearingPrice));
             if (remainingAmount > _orders[i].quantity) {
                 remainingAmount = remainingAmount.sub(_orders[i].quantity);
             } else {
                 break;
             }
         }
+
+        return pushedFunds;
     }
 
     /**
@@ -753,7 +800,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 totalEthNeededForCrab =
             _params.crabAmount.wdiv(IERC20(crab).totalSupply()).wmul(_params.ethInCrab);
         // additional eth needed
-        uint256 ethNeededForCrab = totalEthNeededForCrab.sub(IERC20(weth).balanceOf(address(this)));
+        uint256 ethNeededForCrab = totalEthNeededForCrab.sub(_params.wethBoughtFromAuction);
         // WETH collateral in Euler
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         if (_params.wethTargetInEuler > wethInCollateral) {
@@ -918,12 +965,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     function _executeLeverageComponentRebalancing(
         ExecuteLeverageComponentRebalancingParams memory _params
     ) internal {
-        uint256 remainingWeth = IERC20(weth).balanceOf(address(this));
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        if (_params.wethTargetInEuler > remainingWeth.add(wethInCollateral)) {
+        if (_params.wethTargetInEuler > _params.netWethReceived.add(wethInCollateral)) {
             // have less ETH than we need in Euler, we have to buy and deposit it
             // borrow more USDC to buy WETH
-            uint256 wethToBuy = _params.wethTargetInEuler.sub(remainingWeth.add(wethInCollateral));
+            uint256 wethToBuy =
+                _params.wethTargetInEuler.sub(_params.netWethReceived.add(wethInCollateral));
             _exactOutFlashSwap(
                 usdc,
                 weth,
@@ -931,13 +978,14 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 wethToBuy,
                 wethToBuy.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                 uint8(FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH),
-                abi.encodePacked(wethToBuy.add(remainingWeth))
+                abi.encodePacked(wethToBuy.add(_params.netWethReceived))
             );
         } else {
             // have more ETH than we need in either Euler or from withdrawing from crab
             //we need to sell ETH and either deposit or withdraw from euler
-            uint256 wethToSell = remainingWeth.add(wethInCollateral).sub(_params.wethTargetInEuler);
-            // wethToSell + wEthTargetInEuler = remainingWeth+wethInCollateral
+            uint256 wethToSell =
+                _params.netWethReceived.add(wethInCollateral).sub(_params.wethTargetInEuler);
+            // wethToSell + wEthTargetInEuler = _params.netWethReceived+wethInCollateral
 
             // repay USDC debt from WETH
             if (_params.wethTargetInEuler < wethInCollateral) {
@@ -949,7 +997,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                     wethToSell,
                     wethToSell.wmul(_params.wethLimitPrice).div(WETH_DECIMALS_DIFF),
                     uint8(FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH),
-                    abi.encodePacked(remainingWeth)
+                    abi.encodePacked(_params.netWethReceived)
                 );
             } else {
                 // if we need to deposit to euler do that
@@ -974,6 +1022,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      */
     function _transferToOrder(Order memory _order, uint256 _remainingAmount, uint256 _clearingPrice)
         internal
+        returns (uint256)
     {
         // adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
@@ -982,11 +1031,15 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         if (_order.isBuying) {
             // trader sent WETH and receives wPowerPerp
             IERC20(wPowerPerp).transfer(_order.trader, _order.quantity);
+
+            return _order.quantity;
         } else {
             // trader sent wPowerPerp and receives WETH
             // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transfer(_order.trader, wethAmount);
+
+            return wethAmount;
         }
     }
 
@@ -1000,7 +1053,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         Order memory _order,
         uint256 _remainingAmount,
         uint256 _clearingPrice
-    ) internal {
+    ) internal returns (uint256) {
         // adjust quantity for partial fills
         if (_remainingAmount < _order.quantity) {
             _order.quantity = _remainingAmount;
@@ -1011,9 +1064,13 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             // WETH clearing price for the order
             uint256 wethAmount = _order.quantity.wmul(_clearingPrice);
             IERC20(weth).transferFrom(_order.trader, address(this), wethAmount);
+
+            return wethAmount;
         } else {
             // trader send wPowerPerp and receives WETH
             IERC20(wPowerPerp).transferFrom(_order.trader, address(this), _order.quantity);
+
+            return _order.quantity;
         }
     }
 

@@ -428,7 +428,7 @@ contract BullStrategyTestFork is Test {
     function testFarmWhenAssetIsNotFarmable() public {
         vm.prank(bullOwner);
         vm.expectRevert(bytes("BS5"));
-        bullStrategy.farm(usdc, bullOwner);
+        bullStrategy.farm(eToken, bullOwner);
     }
 
     /**

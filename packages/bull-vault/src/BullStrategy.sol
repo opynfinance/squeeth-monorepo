@@ -28,6 +28,7 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * BS8: Caller is not auction address
  * BS9: deposited amount less than minimum
  * BS10: remaining amount of bull token should be more than minimum or zero
+ * BS11: invalid receiver address
  */
 
 /**
@@ -103,19 +104,20 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw airdropped asset
+     * @notice withdraw assets transfered directly to this contract
      * @dev can only be called by owner
      * @param _asset asset address
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
-        require(
-            (_asset != crab) && (_asset != usdc) && (_asset != weth) && (_asset != eToken)
-                && (_asset != dToken) && (_asset != wPowerPerp),
-            "BS5"
-        );
+        require((_asset != crab) && (_asset != eToken) && (_asset != dToken), "BS5");
+        require(_receiver != address(0), "BS21");
 
-        IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        if (_asset == address(0)) {
+            payable(_receiver).sendValue(address(this).balance);
+        } else {
+            IERC20(_asset).transfer(_receiver, IERC20(_asset).balanceOf(address(this)));
+        }
 
         emit Farm(_asset, _receiver);
     }
@@ -218,6 +220,7 @@ contract BullStrategy is ERC20, LeverageBull {
      */
     function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
         external
+        returns (uint256)
     {
         require(msg.sender == auction, "BS8");
 
@@ -234,6 +237,8 @@ contract BullStrategy is ERC20, LeverageBull {
         IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
         emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
+
+        return wethBalanceToReturn;
     }
 
     /**
