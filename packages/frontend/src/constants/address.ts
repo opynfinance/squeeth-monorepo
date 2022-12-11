@@ -162,7 +162,7 @@ export const CRAB_HELPER: Address = {
 export const CRAB_NETTING: Address = {
   1: '',
   3: '',
-  5: '0xf3e40abf4c06b9454440cb93d42e60de5e67db2a',
+  5: '0xF0fa0E43b3ab87e1d9E39Ebb95Ae1F894CB9f5D0',
   421611: '',
   31337: '',
 }
