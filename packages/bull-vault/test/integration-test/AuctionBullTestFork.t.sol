@@ -2046,22 +2046,23 @@ contract AuctionBullTestFork is Test {
                 price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
-                nonce: 0
+                nonce: 1
             });
-            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            bidDigest = sigUtil.getTypedDataHash(orderSig);
             (v, r, s) = vm.sign(user1Pk, bidDigest);
-            AuctionBull.Order memory orderData = AuctionBull.Order({
-                bidId: 1,
+            orderData = AuctionBull.Order({
+                bidId: 2,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade.wdiv(2e18),
                 price: type(uint256).max - 1,
                 isBuying: isDepositingInCrab,
                 expiry: block.timestamp + 1000,
-                nonce: 0,
+                nonce: 1,
                 v: v,
                 r: r,
                 s: s
             });
+
             orders.push(orderData);
 
             // trader signing bid
