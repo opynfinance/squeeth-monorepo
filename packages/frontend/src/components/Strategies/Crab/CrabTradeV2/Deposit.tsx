@@ -466,9 +466,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   <Metric
                     label="Price Impact"
                     value={formatNumber(depositPriceImpactNumber) + '%'}
-                    textColor={
-                      depositPriceImpactNumber > 3 ? 'error' : depositPriceImpactNumber < 1 ? 'success' : undefined
-                    }
+                    textColor={depositPriceImpactNumber > 3 ? 'error' : undefined}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"

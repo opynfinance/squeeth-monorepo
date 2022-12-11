@@ -466,7 +466,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
 
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="open-short-card">
@@ -983,7 +983,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(sellCloseQuote.priceImpact)) ? 0 : Number(sellCloseQuote.priceImpact)
-  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="close-short-card">

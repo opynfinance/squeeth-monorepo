@@ -502,9 +502,7 @@ const CrabWithdraw: React.FC = () => {
                   <Metric
                     label="Price Impact"
                     value={formatNumber(withdrawPriceImpactNumber) + '%'}
-                    textColor={
-                      withdrawPriceImpactNumber > 3 ? 'error' : withdrawPriceImpactNumber < 1 ? 'success' : undefined
-                    }
+                    textColor={withdrawPriceImpactNumber > 3 ? 'error' : undefined}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"

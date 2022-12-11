@@ -458,7 +458,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
   const squeethExposure = osqthPrice.times(sqthTradeAmount).toNumber()
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="open-long-card">
@@ -836,7 +836,7 @@ const CloseLong: React.FC<BuyProps> = () => {
 
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-  const priceImpactColor = priceImpact > 3 ? 'error' : priceImpact < 1 ? 'success' : undefined
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="close-long-card">
