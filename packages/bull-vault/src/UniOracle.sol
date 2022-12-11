@@ -26,11 +26,12 @@ library UniOracle {
 
     /**
      * @notice get twap converted with base & quote token decimals
-     * @dev if period is longer than the current timestamp - first timestamp stored in the pool, this will revert with "OLD"
+     * @dev if period is longer than the current timestamp - first timestamp stored in the pool and !_checkPeriod, this will revert with "OLD"
      * @param _pool uniswap pool address
      * @param _base base currency. to get eth/usd price, eth is base token
      * @param _quote quote currency. to get eth/usd price, usd is the quote currency
      * @param _period number of seconds in the past to start calculating time-weighted average
+     * @param _checkPeriod if true, checks the maximum period and overrides it if less than period provided
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
     function _getTwap(

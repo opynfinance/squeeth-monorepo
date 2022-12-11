@@ -31,6 +31,7 @@ contract LeverageBull is Ownable {
 
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
+    /// @dev 1e18
     uint256 internal constant ONE = 1e18;
     /// @dev WETH decimals - USDC decimals
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
@@ -93,6 +94,10 @@ contract LeverageBull is Ownable {
         IEulerMarkets(_eulerMarkets).enterMarket(0, IController(_powerTokenController).weth());
     }
 
+    /**
+     * @notice sets the auction implementation contract that is able to call functions to adjust debt and collateral in an auction
+     * @param _auction new auction address
+     */
     function setAuction(address _auction) external onlyOwner {
         require(_auction != address(0), "LB2");
 
@@ -101,6 +106,11 @@ contract LeverageBull is Ownable {
         auction = _auction;
     }
 
+    /**
+     * @notice called by the auction address to repay USDC debt and withdraw weth from Euler
+     * @param _usdcToRepay amount of USDC to repay
+     * @param _wethToWithdraw amount of WETH to withdraw
+     */
     function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
         external
     {
@@ -118,6 +128,11 @@ contract LeverageBull is Ownable {
         emit AuctionRepayAndWithdrawFromLeverage(msg.sender, _usdcToRepay, _wethToWithdraw);
     }
 
+    /**
+     * @notice called by the auction address to repay USDC debt and withdraw weth from Euler
+     * @param _wethToDeposit amount of WETH to deposit
+     * @param _usdcToBorrow amount of USDC to borrow
+     */
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external {
         require(msg.sender == auction, "LB1");
 

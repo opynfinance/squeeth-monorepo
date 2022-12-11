@@ -21,8 +21,8 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
  */
 
 /**
- * @notice FlashBull contract
- * @dev handle the flashswap interactions
+ * @notice EmergencyShutdown contract
+ * @dev handle the emergency shutdown of the Bull strategy if the wPowerPerp and Crab contracts are shut down
  * @author opyn team
  */
 contract EmergencyShutdown is UniFlash, Ownable {
@@ -34,8 +34,10 @@ contract EmergencyShutdown is UniFlash, Ownable {
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     /// @dev enum to differentiate between Uniswap swap callback function source
 
+    /// @dev enum to differentiate between Uniswap swap callback function source
     enum FLASH_SOURCE { SHUTDOWN }
 
+    /// @dev redeemShortShutdown params structs
     struct ShutdownParams {
         uint256 shareToUnwind;
         uint256 ethLimitPrice;
@@ -76,8 +78,9 @@ contract EmergencyShutdown is UniFlash, Ownable {
     }
 
     /**
-     * @notice uniswap flash swap callback function
+     * @notice uniswap flash swap callback function to handle different types of flashswaps
      * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
+     * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {

@@ -95,6 +95,9 @@ contract BullStrategy is ERC20, LeverageBull {
         IERC20(IController(_powerTokenController).wPowerPerp()).approve(_crab, type(uint256).max);
     }
 
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
     receive() external payable {
         require(msg.sender == weth || msg.sender == address(crab), "BS1");
     }
@@ -118,7 +121,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice set strategy cap
+     * @notice set strategy cap which is checked on deposits and compared against the collateral in Euler
      * @param _cap strategy cap
      */
     function setCap(uint256 _cap) external onlyOwner {
@@ -140,7 +143,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice deposit to crab: deposits crab and ETH, receives USDC and wPowerPerp
+     * @notice deposit to crab: deposits crab and ETH, receives USDC, wPowerPerp and Bull token
      * @param _crabAmount amount of crab token to deposit
      */
     function deposit(uint256 _crabAmount) external payable {
@@ -176,8 +179,8 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice withdraw from crab: repay wPowerPerp and USDC and receive ETH
-     * @param _bullAmount amount of bull token to redeem
+     * @notice withdraw from crab: repay wPowerPerp, USDC and Bull token and receive ETH
+     * @param _bullAmount amount of Bull token to redeem
      */
     function withdraw(uint256 _bullAmount) external {
         uint256 share = _bullAmount.wdiv(totalSupply());
@@ -210,7 +213,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice auction strategy redeems some crab to withdraw eth
+     * @notice auction contract redeems some crab to withdraw eth
      * @param _crabToRedeem amount of crab token redeemed by auction
      * @param _wPowerPerpToRedeem amount of wPowerPerp sent back for crab redeem
      */
@@ -235,7 +238,7 @@ contract BullStrategy is ERC20, LeverageBull {
     }
 
     /**
-     * @notice auction strategy deposits into crab and receives some wPowerPerp
+     * @notice auction contract deposits into crab and receives some wPowerPerp
      * @param _ethToDeposit amount of eth to deposit
      */
     function depositEthIntoCrab(uint256 _ethToDeposit) external {
