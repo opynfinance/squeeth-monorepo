@@ -95,6 +95,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -262,6 +272,26 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
     );
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
+
+    /**
+     * @notice constructor for AuctionBull
+     * @param _auctionManager the address that can run auctions
+     * @param _bull bull strategy address
+     * @param _factory uniswap factory address
+     * @param _crab crab strategy address
+     * @param _eToken euler collateral token address for weth
+     * @param _dToken euler debt token address for usdc
+     */
 
     /**
      * @notice constructor for AuctionBull
@@ -1111,14 +1141,12 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         if (_isDepositingInCrab) {
             require(
-                _price
-                    >= wPowerPerpEthPrice.mul((ONE.sub(fullRebalanceClearingPriceTolerance))).div(ONE),
+                _price >= wPowerPerpEthPrice.wmul((ONE.sub(fullRebalanceClearingPriceTolerance))),
                 "AB17"
             );
         } else {
             require(
-                _price
-                    <= wPowerPerpEthPrice.mul((ONE.add(fullRebalanceClearingPriceTolerance))).div(ONE),
+                _price <= wPowerPerpEthPrice.wmul((ONE.add(fullRebalanceClearingPriceTolerance))),
                 "AB18"
             );
         }
