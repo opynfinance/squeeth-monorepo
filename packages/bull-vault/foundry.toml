@@ -5,10 +5,11 @@ libs = ['lib']
 test = 'test'
 auto_detect_solc = true
 optimizer = true
-optimizer_runs = 2000
+optimizer_runs = 1500
 
 [profile.test]
 no_match_test = "Fuzzing"
+no_match_contract = "Fuzz"
 gas_reports = ["BullStrategy", "FlashBull"]
 
 [profile.fuzz]
@@ -20,6 +21,7 @@ dictionary_weight = 40
 include_storage = true
 include_push_bytes = true
 match_test = "Fuzzing"
+match_contract = "Fuzz"
 
 [profile.invariant]
 runs = 256
@@ -46,5 +48,12 @@ yul = true
 [profile.coverage.optimizer_details.yulDetails]
 stackAllocation = true
 optimizerSteps = ''
+
+[rpc_endpoints]
+mainnet = "${MAINNET_RPC_URL}"
+goerli = "${GOERLI_RPC_URL}"
+
+[etherscan]
+goerli = { key = "${ETHERSCAN_API_KEY}" }
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config

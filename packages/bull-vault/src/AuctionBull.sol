@@ -25,6 +25,16 @@ import { console } from "forge-std/console.sol";
 
 import { console } from "forge-std/console.sol";
 
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IBullStrategy } from "./interface/IBullStrategy.sol";
@@ -185,7 +195,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     event SetAuctionManager(address newAuctionManager, address oldAuctionManager);
 
     constructor(
-        address _auctionOwner,
         address _auctionManager,
         address _bull,
         address _factory,
@@ -215,8 +224,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
             _bull, type(uint256).max
         );
-
-        transferOwnership(_auctionOwner);
     }
 
     receive() external payable {
@@ -623,10 +630,6 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_REPAY_USDC_WITHDRAW_WETH
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
-                IERC20(usdc).balanceOf(address(this)),
-                _uniFlashSwapData.amountToPay.sub(remainingWeth)
-            );
 
             IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),

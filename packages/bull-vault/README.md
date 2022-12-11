@@ -5,6 +5,7 @@
 - [BULL VAULT](#bull-vault)
   - [Table of Contents](#table-of-contents)
   - [Local Development](#local-development)
+  - [How To Deploy](#how-to-deploy)
   - [Audits](#audits)
   - [License](#license)
 
@@ -58,6 +59,35 @@ FOUNDRY_PROFILE=test forge test forge test  -vvvv
 ```
 
 For more information on foundry testing and use, see [Foundry Book installation instructions](https://book.getfoundry.sh/getting-started/installation.html).
+
+## How To Deploy
+
+Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables.
+
+The deployment script for [Mainnet](/packages/bull-vault/script/MainnetDeploy.s.sol) and [Goerli](/packages/bull-vault/script/GoerliDeploy.s.sol) can be executed using the below command:
+```shell
+$ source .env
+$ forge script script/MainnetDeploy.s.sol:MainnetDeploy --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv
+```
+
+## SCRIPTS
+
+### ADD LIQUIDITY IN EULER MARKET
+
+Make sure to add the env vars `SCRIPT_USER_PK` and `UNDERLYING_AMOUNT` in the `.env` file.
+
+To add USDC liquidity:
+```shell
+$ source .env
+
+# for USDC 
+$ forge script script/GoerliAddUsdcLiquidityEuler.s.sol:GoerliAddUsdcLiquidityEuler --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+
+# for WETH
+$ forge script script/GoerliAddWethLiquidityEuler.s.sol:GoerliAddWethLiquidityEuler --rpc-url $GOERLI_RPC_URL --broadcast --verify -vvvv
+```
+
+To add liquidity for asset other than WETH or USDC, create a new script following the `GoerliAddUsdcLiquidityEuler` pattern. 
 
 ## Audits
 

@@ -84,7 +84,8 @@ contract BullStrategyTestFork is Test {
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         crabOwner = crabV2.owner();
         bullStrategy =
-        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
+            new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -92,8 +93,8 @@ contract BullStrategyTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown =
-        new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
-
+            new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        emergencyShutdown.transferOwnership(bullOwner);
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
 
@@ -203,13 +204,31 @@ contract BullStrategyTestFork is Test {
     }
 
     function testWithdrawalShutdown() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
+        vm.stopPrank();
+
+        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
+
+        assertEq(bullCrabBalanceAfter.sub(crabToDeposit), bullCrabBalanceBefore);
+        assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertTrue(
+            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
+        );
+        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
+        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+
         vm.startPrank(controllerOwner);
         controller.shutDown();
         assertEq(controller.isShutDown(), true);
         vm.stopPrank();
 
         vm.startPrank(user1);
-        vm.expectRevert(bytes("BS7"));
+        vm.expectRevert();
         bullStrategy.withdraw(0);
         vm.stopPrank();
     }
