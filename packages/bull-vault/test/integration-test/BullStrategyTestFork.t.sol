@@ -198,7 +198,7 @@ contract BullStrategyTestFork is Test {
     function testDepositWhenTotalSupplyLessThanMinimum() public {
         uint256 crabToDeposit = WETH_DECIMALS_DIFF;
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) =
+        (uint256 wethToLend,) =
             testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS9"));
@@ -208,11 +208,9 @@ contract BullStrategyTestFork is Test {
 
     function testInitialDepositWithInsufficient() public {
         uint256 crabToDeposit = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) =
+        (uint256 wethToLend,) =
             testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
@@ -269,7 +267,6 @@ contract BullStrategyTestFork is Test {
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         vm.startPrank(user1);
         (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDepositInitially);
@@ -313,7 +310,6 @@ contract BullStrategyTestFork is Test {
 
     function testWithdrawWhenRemainingSupplyLessThanMinimum() public {
         uint256 crabToDeposit = 15e18;
-        uint256 bullToMint = testUtil.calcBullToMint(crabToDeposit);
 
         // crabby deposit into bull
         vm.startPrank(user1);
@@ -321,22 +317,12 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = crabToDeposit.sub(WETH_DECIMALS_DIFF);
-        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
+        (uint256 wPowerPerpToRedeem,) =
             _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToRedeem);
-        uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToRedeem);
         // transfer some oSQTH from some squeether
         vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
         IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
-
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
-        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
-        uint256 userEthBalanceBefore = address(user1).balance;
-
-        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
         vm.startPrank(user1);
         IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
@@ -368,7 +354,6 @@ contract BullStrategyTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
         uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 

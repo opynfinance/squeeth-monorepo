@@ -37,7 +37,7 @@ jobs:
           version: nightly
 
       - name: Build
-        run: cd packages/bull-vault && forge build
+        run: cd packages/bull-vault && forge build --force
 
   test-bull-vault:
     name: tests

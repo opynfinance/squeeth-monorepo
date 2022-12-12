@@ -130,7 +130,7 @@ contract BullStrategyTest is Test {
 
     function testDepositEthIntoCrabWhenFeeIsZero() public {
         uint256 ethToDeposit = 10e18;
-        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        (uint256 ethInCrab,) = testUtil.getCrabVaultDetails();
 
         uint256 crabShare = ethToDeposit.wdiv(ethInCrab.add(ethToDeposit));
         uint256 crabToBeMinted =
