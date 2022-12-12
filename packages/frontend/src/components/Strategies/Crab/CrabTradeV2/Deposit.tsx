@@ -311,12 +311,12 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
 
   const depositBtnVariant =
-    Number(depositPriceImpact) > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
+    depositPriceImpactNumber > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
   const depositBtnClassName =
-    Number(depositPriceImpact) > 3
-      ? classes.dangerBtn
+    depositPriceImpactNumber > 3
+      ? classes.btnDanger
       : depositFundingWarning || depositPriceImpactWarning
-      ? classes.warningBtn
+      ? classes.btnWarning
       : ''
 
   return (
@@ -358,25 +358,25 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
             </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="8px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
             <RoundedButton
               variant="outlined"
-              color={!useQueue ? 'primary' : 'default'}
               size="small"
               onClick={() => setUseQueue(false)}
+              className={!useQueue ? classes.btnActive : classes.btnDefault}
             >
-              <Typography color={!useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
+              Instant
             </RoundedButton>
             <RoundedButton
               disabled={!queueOptionAvailable}
               variant={!queueOptionAvailable ? 'contained' : 'outlined'}
-              color={useQueue ? 'primary' : 'default'}
               size="small"
               onClick={() => setUseQueue(true)}
+              className={useQueue ? classes.btnActive : classes.btnDefault}
             >
-              <Typography color={useQueue ? 'primary' : 'textSecondary'}>Standard</Typography>
+              Standard
             </RoundedButton>
-            <Box className={classes.infoIconGray}>
+            <Box className={classes.infoIconGray} display="flex" alignItems="center">
               <Tooltip
                 title={`Standard deposit helps large deposits reduce price impact by submitting deposits via auction. Standard deposits get into the strategy by Tuesday. Instant deposits get into the strategy immediately.`}
               >

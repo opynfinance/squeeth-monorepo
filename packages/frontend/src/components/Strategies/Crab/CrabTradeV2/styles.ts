@@ -59,7 +59,7 @@ export const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(2),
       textAlign: 'center',
     },
-    dangerBtn: {
+    btnDanger: {
       color: theme.palette.error.main,
       borderColor: theme.palette.error.main,
       backgroundColor: 'transparent',
@@ -70,7 +70,7 @@ export const useStyles = makeStyles((theme) =>
         backgroundColor: 'transparent',
       },
     },
-    warningBtn: {
+    btnWarning: {
       color: theme.palette.warning.main,
       borderColor: theme.palette.warning.main,
       backgroundColor: 'transparent',
@@ -80,6 +80,14 @@ export const useStyles = makeStyles((theme) =>
         borderColor: theme.palette.warning.main,
         backgroundColor: 'transparent',
       },
+    },
+    btnDefault: {
+      color: 'rgba(255, 255, 255, 0.4)',
+      border: '2px solid transparent',
+    },
+    btnActive: {
+      color: theme.palette.primary.main,
+      border: `2px solid ${theme.palette.primary.main}`,
     },
   }),
 )

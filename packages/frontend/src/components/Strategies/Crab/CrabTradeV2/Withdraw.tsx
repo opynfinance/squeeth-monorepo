@@ -323,12 +323,12 @@ const CrabWithdraw: React.FC = () => {
   const withdrawPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(withdrawPriceImpact)
 
   const withdrawBtnVariant =
-    Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'
+    withdrawPriceImpactNumber > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'
   const withdrawBtnClassName =
-    Number(withdrawPriceImpact) > 3
-      ? classes.dangerBtn
+    withdrawPriceImpactNumber > 3
+      ? classes.btnDanger
       : withdrawFundingWarning || withdrawPriceImpactWarning
-      ? classes.warningBtn
+      ? classes.btnWarning
       : ''
 
   return (
@@ -370,25 +370,25 @@ const CrabWithdraw: React.FC = () => {
             </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="8px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
             <RoundedButton
               variant="outlined"
-              color={!useQueue ? 'primary' : 'default'}
               size="small"
               onClick={() => setUseQueue(false)}
+              className={!useQueue ? classes.btnActive : classes.btnDefault}
             >
-              <Typography color={!useQueue ? 'primary' : 'textSecondary'}>Instant</Typography>
+              Instant
             </RoundedButton>
             <RoundedButton
               disabled={!queueOptionAvailable}
               variant={!queueOptionAvailable ? 'contained' : 'outlined'}
-              color={useQueue ? 'primary' : 'default'}
               size="small"
               onClick={() => setUseQueue(true)}
+              className={useQueue ? classes.btnActive : classes.btnDefault}
             >
-              <Typography color={useQueue ? 'primary' : 'textSecondary'}>Standard</Typography>
+              Standard
             </RoundedButton>
-            <Box className={classes.infoIconGray}>
+            <Box className={classes.infoIconGray} display="flex" alignItems="center">
               <Tooltip
                 title={`Standard withdraw helps large withdraws reduce price impact by submitting withdraws via auction. Standard withdraws leave the strategy by Tuesday. Instant withdraws leave the strategy immediately.`}
               >
