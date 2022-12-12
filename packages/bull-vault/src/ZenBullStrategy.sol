@@ -88,7 +88,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         address _euler,
         address _eulerMarketsModule
     )
-        ERC20("Bull Vault", "BullVault")
+        ERC20("Zen Bull Strategy", "ZenBull")
         LeverageZen(_euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
