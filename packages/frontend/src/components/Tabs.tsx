@@ -46,7 +46,6 @@ export const SqueethTabsNew = withStyles((theme) => {
       height: '100%',
       borderRadius: theme.spacing(0.7),
       background: theme.palette.primary.main,
-      zIndex: -10,
     },
   }
 })(Tabs)
@@ -65,6 +64,7 @@ export const SqueethTabNew = withStyles((theme) => {
     },
     selected: {
       color: theme.palette.background.default,
+      zIndex: 10,
     },
   }
 })(Tab)
