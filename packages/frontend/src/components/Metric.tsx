@@ -80,18 +80,17 @@ const useLabelStyles = makeStyles((theme) =>
   }),
 )
 
-export const MetricLabel: React.FC<{ label: string | React.ReactNode; tooltipTitle: string | React.ReactNode }> = ({
-  label,
-  tooltipTitle,
-}) => {
+export const MetricLabel: React.FC<{ label: string; tooltipTitle?: string }> = ({ label, tooltipTitle }) => {
   const classes = useLabelStyles()
 
   return (
     <div className={classes.labelContainer}>
       <Typography className={classes.label}>{label}</Typography>
-      <Tooltip title={tooltipTitle || ''}>
-        <InfoIcon fontSize="small" className={classes.infoIcon} />
-      </Tooltip>
+      {tooltipTitle ? (
+        <Tooltip title={tooltipTitle}>
+          <InfoIcon fontSize="small" className={classes.infoIcon} />
+        </Tooltip>
+      ) : null}
     </div>
   )
 }

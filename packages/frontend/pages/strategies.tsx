@@ -73,7 +73,7 @@ const useStyles = makeStyles((theme) =>
       },
     },
     rightColumn: {
-      flexBasis: '440px',
+      flexBasis: '452px',
       [theme.breakpoints.down('xs')]: {
         flex: '1',
       },

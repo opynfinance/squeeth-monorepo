@@ -9,7 +9,7 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
 import { crabStrategySlippageAtomV2, isNettingAuctionLiveAtom, usdcQueuedAtom } from '@state/crab/atoms'
@@ -453,7 +453,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
               </div>
             )}
 
-            <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
+            <Box marginTop="24px">
               <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
                 <Metric
                   label="Slippage"
@@ -461,18 +461,29 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"
-                  gridGap="12px"
+                  gridGap="8px"
                 />
 
-                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+                <Box display="flex" alignItems="center" gridGap="6px" flex="1">
                   <Metric
-                    label="Price Impact"
+                    label={
+                      <MetricLabel
+                        label="Price Impact"
+                        tooltipTitle={
+                          useQueue
+                            ? `For standard deposit, the average price impact is ${formatNumber(
+                                depositPriceImpactNumber,
+                              )}% based on historical auctions`
+                            : undefined
+                        }
+                      />
+                    }
                     value={formatNumber(depositPriceImpactNumber) + '%'}
                     textColor={depositPriceImpactNumber > 3 ? 'error' : undefined}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"
-                    gridGap="12px"
+                    gridGap="8px"
                   />
 
                   <TradeSettings

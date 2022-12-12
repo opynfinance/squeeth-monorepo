@@ -9,7 +9,7 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
@@ -497,18 +497,29 @@ const CrabWithdraw: React.FC = () => {
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"
-                  gridGap="12px"
+                  gridGap="8px"
                 />
 
-                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+                <Box display="flex" alignItems="center" gridGap="6px" flex="1">
                   <Metric
-                    label="Price Impact"
+                    label={
+                      <MetricLabel
+                        label="Price Impact"
+                        tooltipTitle={
+                          useQueue
+                            ? `For standard withdraw, the average price impact is ${formatNumber(
+                                withdrawPriceImpactNumber,
+                              )}% based on historical auctions`
+                            : undefined
+                        }
+                      />
+                    }
                     value={formatNumber(withdrawPriceImpactNumber) + '%'}
                     textColor={withdrawPriceImpactNumber > 3 ? 'error' : undefined}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"
-                    gridGap="12px"
+                    gridGap="8px"
                   />
 
                   <TradeSettings
