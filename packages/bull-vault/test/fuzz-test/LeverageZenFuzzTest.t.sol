@@ -13,7 +13,7 @@ import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import { LeverageBull } from "../../src/LeverageBull.sol";
+import { LeverageZen } from "../../src/LeverageZen.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -21,9 +21,9 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
- * @notice Ropsten fork testing
+ * @notice fuzz testing
  */
-contract LeverageBullFuzzTest is Test {
+contract LeverageZenFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
@@ -31,7 +31,7 @@ contract LeverageBullFuzzTest is Test {
     uint256 public constant TARGET_CR = 2e18; // 200% collat ratio
 
     Controller internal controller;
-    LeverageBull internal leverageBull;
+    LeverageZen internal leverageBull;
 
     uint256 internal leverageOwnerPk;
     uint256 internal deployerPk;
@@ -64,7 +64,7 @@ contract LeverageBullFuzzTest is Test {
         euler = 0x27182842E098f60e3D576794A5bFFb0777E025d3;
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
-        leverageBull = new LeverageBull(euler, eulerMarketsModule, address(controller));
+        leverageBull = new LeverageZen(euler, eulerMarketsModule, address(controller));
         leverageBull.transferOwnership(leverageOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();

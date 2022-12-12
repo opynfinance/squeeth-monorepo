@@ -12,19 +12,19 @@ import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { FlashBull } from "../../src/FlashBull.sol";
+import { FlashZen } from "../../src/FlashZen.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
- * @notice Ropsten fork testing
+ * @notice fuzz testing
  */
-contract FlashBullFuzzTest is Test {
+contract FlashZenFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
@@ -32,8 +32,8 @@ contract FlashBullFuzzTest is Test {
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     TestUtil internal testUtil;
-    FlashBull internal flashBull;
-    BullStrategy internal bullStrategy;
+    FlashZen internal flashBull;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
 
@@ -70,14 +70,14 @@ contract FlashBullFuzzTest is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy = new BullStrategy(
+        bullStrategy = new ZenBullStrategy(
             address(crabV2),
             address(controller),
             euler,
             eulerMarketsModule
         );
         bullStrategy.transferOwnership(deployer);
-        flashBull = new FlashBull(
+        flashBull = new FlashZen(
             address(bullStrategy),
             0x1F98431c8aD98523631AE4a59f267346ea31F984
         );
@@ -154,7 +154,7 @@ contract FlashBullFuzzTest is Test {
         flashBull.flashDeposit{
             value: calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint)
         }(
-            FlashBull.FlashDepositParams({
+            FlashZen.FlashDepositParams({
                 ethToCrab: _ethToCrab,
                 minEthFromSqth: minEthFromSqueeth,
                 minEthFromUsdc: minEthFromUsdc,
@@ -206,7 +206,7 @@ contract FlashBullFuzzTest is Test {
                 usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
-        FlashBull.FlashWithdrawParams memory params = FlashBull.FlashWithdrawParams({
+        FlashZen.FlashWithdrawParams memory params = FlashZen.FlashWithdrawParams({
             bullAmount: bullStrategy.balanceOf(user1),
             maxEthForWPowerPerp: maxEthForWPowerPerp,
             maxEthForUsdc: maxEthForUsdc,

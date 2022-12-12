@@ -2,7 +2,7 @@
 
 pragma solidity =0.7.6;
 
-interface ILeverageBull {
+interface ILeverageZen {
     function calcLeverageEthUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,

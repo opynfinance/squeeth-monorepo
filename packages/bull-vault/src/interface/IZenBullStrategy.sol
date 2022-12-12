@@ -2,7 +2,7 @@
 
 pragma solidity =0.7.6;
 
-interface IBullStrategy {
+interface IZenBullStrategy {
     function deposit(uint256 _crabAmount) external payable;
     function withdraw(uint256 _bullAmount) external;
     function crab() external view returns (address);
