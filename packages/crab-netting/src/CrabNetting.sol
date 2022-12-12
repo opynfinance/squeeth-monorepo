@@ -741,7 +741,7 @@ contract CrabNetting is Ownable, EIP712 {
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
         require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "Price tolerance has to be less than 20%");
-        uint256 previousOtcTolerance = auctionTwapPeriod;
+        uint256 previousOtcTolerance = otcPriceTolerance;
 
         otcPriceTolerance = _otcPriceTolerance;
 
