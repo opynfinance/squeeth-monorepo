@@ -13,12 +13,11 @@ import Metric from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
-  crabQueuedAtom,
   crabStrategySlippageAtomV2,
   currentCrabPositionETHActualAtomV2,
   currentCrabPositionValueAtomV2,
   isNettingAuctionLiveAtom,
-  usdcQueuedAtom,
+  crabQueuedAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -49,6 +48,7 @@ import {
   VOL_PERCENT_SCALAR,
   YEAR,
   AVERAGE_AUCTION_PRICE_IMPACT,
+  CRAB_TOKEN_DECIMALS,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -87,8 +87,6 @@ const CrabWithdraw: React.FC = () => {
   const [useQueue, setUseQueue] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
-  const usdcQueued = useAtomValue(usdcQueuedAtom)
-  const crabQueued = useAtomValue(crabQueuedAtom)
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
@@ -113,9 +111,10 @@ const CrabWithdraw: React.FC = () => {
   const flashWithdrawUSDC = useFlashWithdrawV2USDC()
   const queueCRAB = useQueueWithdrawCrab()
   const getUserCrabForEthAmount = useETHtoCrab()
+  const [crabQueued, setCrabQueued] = useAtom(crabQueuedAtom)
+
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
@@ -245,7 +244,9 @@ const CrabWithdraw: React.FC = () => {
           }
         } else {
           if (useQueue) {
-            await queueCRAB(withdrawCrabAmount)
+            await queueCRAB(withdrawCrabAmount, () => {
+              setCrabQueued(crabQueued.plus(fromTokenAmount(withdrawCrabAmount, CRAB_TOKEN_DECIMALS)))
+            })
           } else if (useUsdc) {
             await flashWithdrawUSDC(withdrawCrabAmount, slippage)
           } else {

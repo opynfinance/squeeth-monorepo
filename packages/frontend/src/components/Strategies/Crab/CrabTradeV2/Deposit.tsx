@@ -12,7 +12,7 @@ import { InputToken } from '@components/InputNew'
 import Metric from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
-import { crabQueuedAtom, crabStrategySlippageAtomV2, isNettingAuctionLiveAtom, usdcQueuedAtom } from '@state/crab/atoms'
+import { crabStrategySlippageAtomV2, isNettingAuctionLiveAtom, usdcQueuedAtom } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
   useFlashDepositV2,
@@ -82,8 +82,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const [useQueue, setUseQueue] = useState(false)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
-  const usdcQueued = useAtomValue(usdcQueuedAtom)
-  const crabQueued = useAtomValue(crabQueuedAtom)
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
@@ -101,9 +99,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const flashDepositUSDC = useFlashDepositUSDC(calculateETHtoBorrowFromUniswap)
   const queueUSDC = useQueueDepositUSDC()
+  const [usdcQueued, setUsdcQueued] = useAtom(usdcQueuedAtom)
+
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
@@ -232,7 +231,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
         }
       } else {
         if (useQueue) {
-          await queueUSDC(depositAmountBN)
+          await queueUSDC(depositAmountBN, () => {
+            setUsdcQueued(usdcQueued.plus(fromTokenAmount(depositAmountBN, USDC_DECIMALS)))
+          })
         } else if (useUsdc) {
           await flashDepositUSDC(depositAmountBN, slippage, () => {
             setStrategyData()
