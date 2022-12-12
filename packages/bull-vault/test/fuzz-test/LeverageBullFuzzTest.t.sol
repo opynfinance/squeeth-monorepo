@@ -166,9 +166,6 @@ contract LeverageBullFuzzTest is Test {
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
-        uint256 balanceOfUnderlying =
-            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
-
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
         uint256 usdcToBorrow =
             _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
@@ -212,9 +209,6 @@ contract LeverageBullFuzzTest is Test {
 
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
-
-        uint256 balanceOfUnderlying =
-            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
 
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
         uint256 usdcToBorrow =
