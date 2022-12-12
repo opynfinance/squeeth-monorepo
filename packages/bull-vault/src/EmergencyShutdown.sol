@@ -50,6 +50,11 @@ contract EmergencyShutdown is UniFlash, Ownable {
     /// @dev bull stratgey address
     address public immutable bullStrategy;
 
+    /**
+     * @notice constructor
+     * @param _bull bull strategy address
+     * @param _factory uniswap v3 factory
+     */
     constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
         weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
