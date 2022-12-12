@@ -264,8 +264,6 @@ contract FlashZenTestFork is Test {
                 usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
 
-        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-
         FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: ethToCrab,
             minEthFromSqth: minEthFromSqueeth,
@@ -306,8 +304,6 @@ contract FlashZenTestFork is Test {
                 usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).sub(5e15)));
         }
 
-        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
-
         FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: ethToCrab,
             minEthFromSqth: minEthFromSqueeth,
@@ -347,8 +343,6 @@ contract FlashZenTestFork is Test {
             minEthFromUsdc =
                 usdcToBorrow.mul(WETH_DECIMALS_DIFF).wdiv(ethUsdPrice.wmul(uint256(1e18).add(5e15)));
         }
-
-        uint256 bullToMint = testUtil.calcBullToMint(crabToBeMinted);
 
         FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: ethToCrab,
