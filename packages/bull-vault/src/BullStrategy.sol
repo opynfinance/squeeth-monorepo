@@ -20,15 +20,16 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * Error codes
  * BS1: Can't receive ETH from this sender
  * BS2: Strategy cap reached max
- * BS3: redeemShortShutdown must be called first
- * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
+ * BS3: RedeemShortShutdown must be called first
+ * BS4: Emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
  * BS5: Can't farm token
- * BS6: invalid shutdownContract address set
- * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
+ * BS6: Invalid shutdownContract address set
+ * BS7: wPowerPerp contract has been shutdown
  * BS8: Caller is not auction address
  * BS9: deposited amount less than minimum
- * BS10: remaining amount of bull token should be more than minimum or zero
- * BS11: invalid receiver address
+ * BS10: Remaining amount of bull token should be more than minimum or zero
+ * BS11: Invalid receiver address
+ * BS12: Strategy is shutdown
  */
 
 /**
@@ -110,8 +111,10 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
+        require(!IController(powerTokenController).isShutDown(), "BS7");
+        require(!hasRedeemedInShutdown, "BS12");
         require((_asset != crab) && (_asset != eToken) && (_asset != dToken), "BS5");
-        require(_receiver != address(0), "BS21");
+        require(_receiver != address(0), "BS11");
 
         if (_asset == address(0)) {
             payable(_receiver).sendValue(address(this).balance);
