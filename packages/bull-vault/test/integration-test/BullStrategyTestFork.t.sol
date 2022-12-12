@@ -453,6 +453,35 @@ contract BullStrategyTestFork is Test {
         bullStrategy.farm(eToken, bullOwner);
     }
 
+    function testFarmWhenHasRedeemedInShutdownIsTrue() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.store(address(bullStrategy), bytes32(uint256(10)), bytes32(uint256(1)));
+
+        vm.startPrank(bullOwner);
+        vm.expectRevert(bytes("BS12"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
+    function testFarmWhenControllerIsShutdown() public {
+        vm.startPrank(controller.owner());
+        controller.shutDown();
+        assertEq(controller.isShutDown(), true);
+        vm.stopPrank();
+
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.startPrank(bullOwner);
+        vm.expectRevert(bytes("BS7"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
     /**
      *
      * /************************************************************* Helper functions for testing! ********************************************************
