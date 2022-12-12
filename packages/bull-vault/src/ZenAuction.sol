@@ -381,8 +381,9 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
-            uint256 wethFromCrab =
-                IZenBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            uint256 wethFromCrab = IZenBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(
+                _crabAmount, wPowerPerpAmount
+            );
             uint256 pushedFunds = _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
@@ -962,7 +963,8 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
     ) internal view returns (uint256, uint256) {
         uint256 wPowerPerpEthPrice =
             UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
-        uint256 feeRate = IController(IZenBullStrategy(bullStrategy).powerTokenController()).feeRate();
+        uint256 feeRate =
+            IController(IZenBullStrategy(bullStrategy).powerTokenController()).feeRate();
         uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
         uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))

@@ -88,17 +88,18 @@ contract TestUtil is Test {
                         squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(crabV2.totalSupply());
-                wethToLend = zenBullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(
-                    ethUsdPrice
-                );
+                wethToLend = zenBullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice)
+                    .wdiv(ethUsdPrice);
                 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(zenBullStrategy.TARGET_CR()).div(
                     WETH_DECIMALS_DIFF
                 );
             }
         } else {
-            uint256 share = _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
-            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy)).wmul(share)
-                .wdiv(uint256(1e18).sub(share));
+            uint256 share =
+                _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
+            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy)).wmul(
+                share
+            ).wdiv(uint256(1e18).sub(share));
             usdcToBorrow = IEulerDToken(dToken).balanceOf(address(zenBullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );
@@ -161,7 +162,8 @@ contract TestUtil is Test {
         if (IERC20(zenBullStrategy).totalSupply() == 0) {
             return _crabToDeposit;
         } else {
-            uint256 share = _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
+            uint256 share =
+                _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
             return share.wmul(zenBullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
     }

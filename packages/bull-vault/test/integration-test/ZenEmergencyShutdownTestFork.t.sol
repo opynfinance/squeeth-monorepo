@@ -93,7 +93,7 @@ contract ZenEmergencyShutdownTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown =
-            new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         emergencyShutdown.transferOwnership(bullOwner);
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));

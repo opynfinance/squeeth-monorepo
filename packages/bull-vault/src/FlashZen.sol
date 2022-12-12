@@ -190,7 +190,8 @@ contract FlashZen is UniFlash {
         } else {
             share = crabAmount.wdiv(IZenBullStrategy(bullStrategy).getCrabBalance().add(crabAmount));
         }
-        (uint256 wethToLend, uint256 usdcToBorrow) = IZenBullStrategy(bullStrategy).calcLeverageEthUsdc(
+        (uint256 wethToLend, uint256 usdcToBorrow) = IZenBullStrategy(bullStrategy)
+            .calcLeverageEthUsdc(
             crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
         );
 
