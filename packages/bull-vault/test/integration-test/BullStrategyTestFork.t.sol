@@ -198,8 +198,7 @@ contract BullStrategyTestFork is Test {
     function testDepositWhenTotalSupplyLessThanMinimum() public {
         uint256 crabToDeposit = WETH_DECIMALS_DIFF;
         vm.startPrank(user1);
-        (uint256 wethToLend,) =
-            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS9"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
@@ -210,8 +209,7 @@ contract BullStrategyTestFork is Test {
         uint256 crabToDeposit = 10e18;
 
         vm.startPrank(user1);
-        (uint256 wethToLend,) =
-            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
         // Deposit 1 ETH less than needed
@@ -317,8 +315,7 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = crabToDeposit.sub(WETH_DECIMALS_DIFF);
-        (uint256 wPowerPerpToRedeem,) =
-            _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
+        (uint256 wPowerPerpToRedeem,) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToRedeem);
         // transfer some oSQTH from some squeether
         vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);

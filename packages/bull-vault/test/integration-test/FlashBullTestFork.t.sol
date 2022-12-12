@@ -551,12 +551,8 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = 10e18;
-        (
-            ,
-            uint256 wPowerPerpToRedeem,
-            ,
-            uint256 usdcToRepay
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
@@ -592,12 +588,8 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (
-            ,
-            uint256 wPowerPerpToRedeem,
-            ,
-            uint256 usdcToRepay
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
@@ -633,12 +625,8 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = bullStrategy.balanceOf(user1);
-        (
-            ,
-            uint256 wPowerPerpToRedeem,
-            ,
-            uint256 usdcToRepay
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
@@ -674,12 +662,8 @@ contract FlashBullTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = 5e18;
-        (
-            uint256 crabToRedeem,
-            uint256 wPowerPerpToRedeem,
-            ,
-            uint256 usdcToRepay
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeem);
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem,, uint256 usdcToRepay) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeem);
         uint256 maxEthForWPowerPerp;
         uint256 maxEthForUsdc;
         {
@@ -735,12 +719,8 @@ contract FlashBullTestFork is Test {
         // Second withdrawal
 
         uint256 bullToRedeemSecond = bullStrategy.balanceOf(user1);
-        (
-            uint256 crabToRedeemSecond,
-            uint256 wPowerPerpToRedeemSecond,
-            ,
-            uint256 usdcToRepaySecond
-        ) = calcAssetsNeededForFlashWithdraw(bullToRedeemSecond);
+        (uint256 crabToRedeemSecond, uint256 wPowerPerpToRedeemSecond,, uint256 usdcToRepaySecond) =
+            calcAssetsNeededForFlashWithdraw(bullToRedeemSecond);
         uint256 maxEthForWPowerPerpSecond;
         uint256 maxEthForUsdcSecond;
         {
