@@ -129,7 +129,7 @@ contract LeverageZen is Ownable {
     }
 
     /**
-     * @notice called by the auction address to repay USDC debt and withdraw weth from Euler
+     * @notice called by the auction address to depost WETH in Euler or borrow USDC debt
      * @param _wethToDeposit amount of WETH to deposit
      * @param _usdcToBorrow amount of USDC to borrow
      */
