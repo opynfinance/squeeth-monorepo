@@ -48,6 +48,7 @@ import {
   VOL_PERCENT_FIXED,
   VOL_PERCENT_SCALAR,
   YEAR,
+  AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -318,7 +319,7 @@ const CrabWithdraw: React.FC = () => {
     return `Withdrawn ${withdrawAmountBN.toFixed(4)} ${depositToken}`
   }, [useQueue, withdrawAmountBN, depositToken])
 
-  const withdrawPriceImpactNumber = Number(withdrawPriceImpact)
+  const withdrawPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(withdrawPriceImpact)
 
   const withdrawBtnVariant =
     Number(withdrawPriceImpact) > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'

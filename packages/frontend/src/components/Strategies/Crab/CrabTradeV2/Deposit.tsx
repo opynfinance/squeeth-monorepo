@@ -39,6 +39,7 @@ import {
   VOL_PERCENT_SCALAR,
   WETH_DECIMALS,
   YEAR,
+  AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -217,7 +218,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
         })
       })
     }
-  }, [ready, depositAmountBN.toString(), slippage, useUsdc, network, usdc, weth])
+  }, [ready, depositAmountBN, slippage, useUsdc, network, usdc, weth])
 
   const depositTX = async () => {
     setTxLoading(true)
@@ -306,7 +307,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     return `Deposited ${depositAmountBN.toFixed(4)} ${depositToken}`
   }, [depositAmountBN, depositToken, useQueue])
 
-  const depositPriceImpactNumber = Number(depositPriceImpact)
+  const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
 
   const depositBtnVariant =
     Number(depositPriceImpact) > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
