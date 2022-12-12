@@ -523,6 +523,10 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function depositAuction(DepositAuctionParams calldata _p) external onlyOwner {
         _checkOTCPrice(_p.clearingPrice, false);
+        uint256 ethUSDCPrice = IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, auctionTwapPeriod, true);
+        require(
+            (_p.depositsQueued * (1e18 - otcPriceTolerance) * 1e12 / ethUSDCPrice) < _p.minEth, "Min Eth Out too low"
+        );
         /**
          * step 1: get eth from mm
          *     step 2: get eth from deposit usdc
@@ -707,13 +711,18 @@ contract CrabNetting is Ownable, EIP712 {
         }
 
         // step 4 convert to USDC
+        uint256 ethUSDCPrice = IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, auctionTwapPeriod, true);
+        uint256 amountIn = (IERC20(weth).balanceOf(address(this)) - initWethBalance);
+        require(
+            (amountIn * ethUSDCPrice * (1e18 - otcPriceTolerance) / 1e36 / 1e12) < _p.minUSDC, "Min USDC Out too low"
+        );
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
             tokenIn: address(weth),
             tokenOut: address(usdc),
             fee: _p.ethUSDFee,
             recipient: address(this),
             deadline: block.timestamp,
-            amountIn: (IERC20(weth).balanceOf(address(this)) - initWethBalance),
+            amountIn: amountIn,
             amountOutMinimum: _p.minUSDC,
             sqrtPriceLimitX96: 0
         });
