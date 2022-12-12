@@ -67,16 +67,19 @@ contract FlashBull is UniFlash {
         uint256 ethToDepositInCrab;
     }
 
+    /// @dev struct for data encoding
     struct FlashDepositCollateralData {
         uint256 crabToDeposit;
         uint256 wethToLend;
     }
 
+    /// @dev struct for data encoding
     struct FlashWithdrawBullData {
         uint256 bullToRedeem;
         uint256 usdcToRepay;
     }
 
+    /// @dev struct for data encoding
     struct FlashSwapWPowerPerpData {
         uint256 bullToRedeem;
         uint256 crabToRedeem;
@@ -114,6 +117,11 @@ contract FlashBull is UniFlash {
         uint256 wethToLend
     );
 
+    /**
+     * @notice constructor
+     * @param _bull bull address
+     * @param _factory factory address
+     */
     constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
         crab = IBullStrategy(_bull).crab();

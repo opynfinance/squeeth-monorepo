@@ -146,6 +146,11 @@ contract LeverageBull is Ownable {
         }
     }
 
+    /**
+     * @notice called by the auction address to deposit more WETH into Euler or repay USDC debt
+     * @param _wethToDeposit WETH amount to deposit
+     * @param _usdcToRepay USDC amount to repay
+     */
     function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
         external
     {
@@ -163,6 +168,15 @@ contract LeverageBull is Ownable {
         emit DepositAndRepayFromLeverage(msg.sender, _wethToDeposit, _usdcToRepay);
     }
 
+    /**
+     * @notice calculate target amounts of weth collateral and usdc debt based on crab and bull state
+     * @param _crabAmount amount of crab
+     * @param _bullShare share of bull contract scaled to 1e18
+     * @param _ethInCrab ETH collateral held through crab's vault
+     * @param _wPowerPerpInCrab wPowerPerp debt owed through crab's vault
+     * @param _totalCrabSupply total supply of crab token
+     * @return weth to lend in Euler, usdc to borrow in Euler
+     */
     function calcLeverageEthUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
