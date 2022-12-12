@@ -5,7 +5,7 @@ pragma abicoder v2;
 
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-import { IBullStrategy } from "./interface/IBullStrategy.sol";
+import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IEulerEToken } from "./interface/IEulerEToken.sol";
 import { IEulerDToken } from "./interface/IEulerDToken.sol";
@@ -46,10 +46,10 @@ import { Address } from "openzeppelin/utils/Address.sol";
  */
 
 /**
- * @notice AuctionBull contract
+ * @notice ZenAuction contract
  * @author opyn team
  */
-contract AuctionBull is UniFlash, Ownable, EIP712 {
+contract ZenAuction is UniFlash, Ownable, EIP712 {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -171,16 +171,16 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     );
 
     event SetFullRebalanceClearingPriceTolerance(
-        uint256 _oldPriceTolerance, uint256 _newPriceTolerance
+        uint256 oldPriceTolerance, uint256 newPriceTolerance
     );
     event SetRebalanceWethLimitPriceTolerance(
-        uint256 _oldWethLimitPriceTolerance, uint256 _newWethLimitPriceTolerance
+        uint256 oldWethLimitPriceTolerance, uint256 newWethLimitPriceTolerance
     );
     event SetAuctionManager(address oldAuctionManager, address newAuctionManager);
     event Farm(address indexed asset, address indexed receiver);
 
     /**
-     * @notice constructor for AuctionBull
+     * @notice constructor for ZenAuction
      * @param _auctionManager the address that can run auctions
      * @param _bull bull strategy address
      * @param _factory uniswap factory address
@@ -198,24 +198,24 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) UniFlash(_factory) Ownable() EIP712("AuctionBull", "1") {
         auctionManager = _auctionManager;
         bullStrategy = _bull;
-        weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
-        usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
+        weth = IController(IZenBullStrategy(_bull).powerTokenController()).weth();
+        usdc = IController(IZenBullStrategy(_bull).powerTokenController()).quoteCurrency();
         ethWPowerPerpPool =
-            IController(IBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
+            IController(IZenBullStrategy(_bull).powerTokenController()).wPowerPerpPool();
         ethUSDCPool =
-            IController(IBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
-        wPowerPerp = IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp();
+            IController(IZenBullStrategy(_bull).powerTokenController()).ethQuoteCurrencyPool();
+        wPowerPerp = IController(IZenBullStrategy(_bull).powerTokenController()).wPowerPerp();
         crab = _crab;
         eToken = _eToken;
         dToken = _dToken;
 
-        IERC20(IController(IBullStrategy(_bull).powerTokenController()).weth()).approve(
+        IERC20(IController(IZenBullStrategy(_bull).powerTokenController()).weth()).approve(
             _bull, type(uint256).max
         );
-        IERC20(IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(
+        IERC20(IController(IZenBullStrategy(_bull).powerTokenController()).quoteCurrency()).approve(
             _bull, type(uint256).max
         );
-        IERC20(IController(IBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
+        IERC20(IController(IZenBullStrategy(_bull).powerTokenController()).wPowerPerp()).approve(
             _bull, type(uint256).max
         );
     }
@@ -352,7 +352,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
         // get current crab vault state
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-            IBullStrategy(bullStrategy).getCrabVaultDetails();
+            IZenBullStrategy(bullStrategy).getCrabVaultDetails();
         // total amount of wPowerPerp to trade given crab amount
         uint256 wPowerPerpAmount = _calcWPowerPerpAmountFromCrab(
             _isDepositingInCrab, _crabAmount, ethInCrab, wPowerPerpInCrab
@@ -381,8 +381,9 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
 
             _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
         } else {
-            uint256 wethFromCrab =
-                IBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpAmount);
+            uint256 wethFromCrab = IZenBullStrategy(bullStrategy).redeemCrabAndWithdrawWEth(
+                _crabAmount, wPowerPerpAmount
+            );
             uint256 pushedFunds = _pushFundsFromOrders(_orders, wPowerPerpAmount, _clearingPrice);
 
             // rebalance bull strategy delta
@@ -621,7 +622,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             FLASH_SOURCE(_uniFlashSwapData.callSource)
                 == FLASH_SOURCE.LEVERAGE_REBALANCE_INCREASE_DEBT
         ) {
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+            IZenBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 IERC20(weth).balanceOf(address(this)), _uniFlashSwapData.amountToPay
             );
 
@@ -632,7 +633,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         ) {
             uint256 usdcToRepay = abi.decode(_uniFlashSwapData.callData, (uint256));
             // Repay some USDC debt
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
+            IZenBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 usdcToRepay, _uniFlashSwapData.amountToPay
             );
 
@@ -642,7 +643,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
                 == FLASH_SOURCE.FULL_REBALANCE_BORROW_USDC_BUY_WETH
         ) {
             uint256 wethToDeposit = abi.decode(_uniFlashSwapData.callData, (uint256));
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+            IZenBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 wethToDeposit, _uniFlashSwapData.amountToPay
             );
 
@@ -653,7 +654,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         ) {
             uint256 wethToDeposit = abi.decode(_uniFlashSwapData.callData, (uint256));
 
-            IBullStrategy(bullStrategy).auctionDepositAndRepayFromLeverage(
+            IZenBullStrategy(bullStrategy).auctionDepositAndRepayFromLeverage(
                 wethToDeposit, IERC20(usdc).balanceOf(address(this))
             );
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
@@ -663,7 +664,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         ) {
             uint256 remainingWeth = abi.decode(_uniFlashSwapData.callData, (uint256));
 
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
+            IZenBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)),
                 _uniFlashSwapData.amountToPay.sub(remainingWeth)
             );
@@ -677,11 +678,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             (uint256 wethToLeverage, uint256 ethToCrab) =
                 abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+            IZenBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 wethToLeverage, _uniFlashSwapData.amountToPay
             );
 
-            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
+            IZenBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
@@ -691,13 +692,13 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             (uint256 wethToWithdraw, uint256 ethToCrab) =
                 abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(0, wethToWithdraw);
+            IZenBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(0, wethToWithdraw);
 
-            IBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
+            IZenBullStrategy(bullStrategy).depositAndBorrowFromLeverage(
                 0, _uniFlashSwapData.amountToPay
             );
 
-            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
+            IZenBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (
@@ -707,11 +708,11 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
             (uint256 wethToWithdraw, uint256 ethToCrab) =
                 abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
-            IBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
+            IZenBullStrategy(bullStrategy).auctionRepayAndWithdrawFromLeverage(
                 IERC20(usdc).balanceOf(address(this)), wethToWithdraw
             );
 
-            IBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
+            IZenBullStrategy(bullStrategy).depositEthIntoCrab(ethToCrab);
 
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
@@ -924,7 +925,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
      */
     function _getCurrentDeltaAndCollatRatio() internal view returns (uint256, uint256) {
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-            IBullStrategy(bullStrategy).getCrabVaultDetails();
+            IZenBullStrategy(bullStrategy).getCrabVaultDetails();
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
         uint256 wPowerPerpEthPrice =
             UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
@@ -938,7 +939,7 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
         uint256 wethInCollateral = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
 
         uint256 delta = (wethInCollateral.wmul(ethUsdPrice)).wdiv(
-            (IBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(
+            (IZenBullStrategy(bullStrategy).getCrabBalance().wmul(crabUsdPrice)).add(
                 wethInCollateral.wmul(ethUsdPrice)
             ).sub(usdcDebt.mul(WETH_DECIMALS_DIFF))
         );
@@ -962,7 +963,8 @@ contract AuctionBull is UniFlash, Ownable, EIP712 {
     ) internal view returns (uint256, uint256) {
         uint256 wPowerPerpEthPrice =
             UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
-        uint256 feeRate = IController(IBullStrategy(bullStrategy).powerTokenController()).feeRate();
+        uint256 feeRate =
+            IController(IZenBullStrategy(bullStrategy).powerTokenController()).feeRate();
         uint256 feeAdjustment = wPowerPerpEthPrice.mul(feeRate).div(10000);
         uint256 wPowerPerpToMint = _depositedEthAmount.wmul(_strategyDebtAmount).wdiv(
             _strategyCollateralAmount.add(_strategyDebtAmount.wmul(feeAdjustment))

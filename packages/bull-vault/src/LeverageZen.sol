@@ -22,11 +22,11 @@ import { UniOracle } from "./UniOracle.sol";
  */
 
 /**
- * @notice LeverageBull contract
+ * @notice LeverageZen contract
  * @dev contract that interacts with leverage component (borrow and collateral on Euler)
  * @author opyn team
  */
-contract LeverageBull is Ownable {
+contract LeverageZen is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period

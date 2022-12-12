@@ -13,7 +13,7 @@ import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
 // lib
@@ -22,13 +22,13 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
- * @notice Ropsten fork testing
+ * @notice fuzz testing
  */
-contract BullStrategyFuzzTest is Test {
+contract ZenBullStrategyFuzzTest is Test {
     using StrategyMath for uint256;
 
     TestUtil internal testUtil;
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
 
@@ -65,7 +65,7 @@ contract BullStrategyFuzzTest is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-            new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
         bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();

@@ -16,10 +16,10 @@ import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 import { SwapRouter } from "v3-periphery/SwapRouter.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
+import { ZenEmergencyShutdown } from "../../src/ZenEmergencyShutdown.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -29,16 +29,16 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract ZenBullStrategyTestFork is Test {
     using StrategyMath for uint256;
 
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     TestUtil internal testUtil;
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    EmergencyShutdown internal emergencyShutdown;
+    ZenEmergencyShutdown internal emergencyShutdown;
     Quoter internal quoter;
 
     uint256 internal bullOwnerPk;
@@ -76,7 +76,7 @@ contract BullStrategyTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-            new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
         bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
@@ -85,7 +85,7 @@ contract BullStrategyTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown =
-            new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         emergencyShutdown.transferOwnership(bullOwner);
 
         testUtil =
