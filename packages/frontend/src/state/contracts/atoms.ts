@@ -15,6 +15,8 @@ import quoterAbi from '../../abis/quoter.json'
 import crabHelperAbi from '../../abis/crabHelper.json'
 import flashBullAbi from '../../abis/flashBullStrategy.json'
 import bullStrategyAbi from '../../abis/bullStrategy.json'
+import eTokenAbi from '../../abis/eulerEToken.json'
+import auctionBullAbi from '../../abis/auctionBull.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -114,4 +116,18 @@ export const bullStrategyContractAtom = atom<Contract | null>((get) => {
   const { bullStrategy } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, bullStrategy, bullStrategyAbi)
+})
+
+export const wethETokenContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { wethEToken } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, wethEToken, eTokenAbi)
+})
+
+export const auctionBullContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { auctionBull } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, auctionBull, auctionBullAbi)
 })

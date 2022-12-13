@@ -3,7 +3,13 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-import { bullStrategyContractAtom, flashBullContractAtom, quoterContractAtom } from '@state/contracts/atoms'
+import {
+  auctionBullContractAtom,
+  bullStrategyContractAtom,
+  flashBullContractAtom,
+  quoterContractAtom,
+  wethETokenContractAtom,
+} from '@state/contracts/atoms'
 import { indexAtom } from '@state/controller/atoms'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
 import { addressesAtom } from '@state/positions/atoms'
@@ -20,9 +26,13 @@ import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
 import { useQueryClient } from 'react-query'
 import {
+  bullCapAtom,
+  bullCRAtom,
+  bullDeltaAtom,
   bullCrabBalanceAtom,
   bullCurrentETHPositionAtom,
   bullCurrentUSDCPositionAtom,
+  bullDepositedEthAtom,
   bullEthValuePerShareAtom,
   bullEulerUsdcDebtPerShareAtom,
   bullEulerWethCollatPerShareAtom,
@@ -33,8 +43,6 @@ import { calcAssetNeededForFlashWithdraw, getWethToLendFromCrabEth } from './uti
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
   const setBullUserState = useSetBullUserState()
-
-  console.log('Here')
 
   useEffect(() => {
     setBullState()
@@ -47,25 +55,47 @@ export const useInitBullStrategy = () => {
 
 export const useSetBullState = () => {
   const bullContract = useAtomValue(bullStrategyContractAtom)
+  const etokenContract = useAtomValue(wethETokenContractAtom)
+  const auctionBullContract = useAtomValue(auctionBullContractAtom)
   const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
   const setBullSupply = useUpdateAtom(bullSupplyAtom)
   const setEulerWeth = useUpdateAtom(bullEulerWethCollatPerShareAtom)
   const setEulerUsdc = useUpdateAtom(bullEulerUsdcDebtPerShareAtom)
+  const setBullCap = useUpdateAtom(bullCapAtom)
+  const setDepositedEth = useUpdateAtom(bullDepositedEthAtom)
+  const setBullCR = useUpdateAtom(bullCRAtom)
+  const setBullDelta = useUpdateAtom(bullDeltaAtom)
+  const { bullStrategy } = useAtomValue(addressesAtom)
 
   const setBullState = useAppCallback(async () => {
-    if (!bullContract) return null
+    if (!bullContract || !etokenContract || !auctionBullContract) return null
 
     const p1 = bullContract.methods.getCrabBalance().call()
     const p2 = bullContract.methods.totalSupply().call()
     const p3 = bullContract.methods.calcWethToWithdraw(BIG_ONE).call()
     const p4 = bullContract.methods.calcUsdcToRepay(BIG_ONE).call()
+    const p5 = bullContract.methods.strategyCap().call()
+    const p6 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call()
+    const p7 = auctionBullContract.methods.getCurrentDeltaAndCollatRatio().call()
 
-    const [crabBalance, totalSupply, eulerWeth, eulerUsdc] = await Promise.all([p1, p2, p3, p4])
+    const [crabBalance, totalSupply, eulerWeth, eulerUsdc, bullCap, depositedEth, deltaAndCr] = await Promise.all([
+      p1,
+      p2,
+      p3,
+      p4,
+      p5,
+      p6,
+      p7,
+    ])
     setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
     setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
     setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
     setEulerUsdc(toTokenAmount(eulerUsdc, USDC_DECIMALS))
-  }, [bullContract])
+    setBullCap(toTokenAmount(bullCap, WETH_DECIMALS))
+    setDepositedEth(toTokenAmount(depositedEth, WETH_DECIMALS))
+    setBullDelta(toTokenAmount(deltaAndCr[0], WETH_DECIMALS))
+    setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
+  }, [bullContract, bullStrategy, auctionBullContract])
 
   return setBullState
 }

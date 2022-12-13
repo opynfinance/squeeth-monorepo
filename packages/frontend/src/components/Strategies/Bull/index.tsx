@@ -67,7 +67,7 @@ function BullStrategy() {
               Strategy Details
             </Typography>
             <Box marginTop="12px">
-              <BullCapDetails maxCap={new BigNumber(7000)} depositedAmount={new BigNumber(200)} />
+              <BullCapDetails />
             </Box>
             <Box marginTop="32px">
               <BullStrategyMetrics />

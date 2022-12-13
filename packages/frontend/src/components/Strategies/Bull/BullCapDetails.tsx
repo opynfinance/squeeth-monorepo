@@ -5,6 +5,8 @@ import React from 'react'
 import clsx from 'clsx'
 
 import { CustomLinearProgressNew } from '@components/CustomProgress'
+import { useAtomValue } from 'jotai'
+import { bullCapAtom, bullDepositedEthAtom } from '@state/bull/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -24,13 +26,11 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-type CapType = {
-  maxCap: BigNumber
-  depositedAmount: BigNumber
-}
-
-const BullCapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
+const BullCapDetails: React.FC = () => {
   const classes = useStyles()
+
+  const depositedAmount = useAtomValue(bullDepositedEthAtom)
+  const maxCap = useAtomValue(bullCapAtom)
 
   return (
     <div className={classes.container}>

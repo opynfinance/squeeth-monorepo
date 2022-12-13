@@ -174,3 +174,19 @@ export const BULL_STRATEGY: Address = {
   421611: '',
   31337: '',
 }
+
+export const WETH_E_TOKEN: Address = {
+  1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
+  3: '',
+  5: '0xef5e087d827194732bc1843351cca80982e154eb',
+  421611: '',
+  31337: '',
+}
+
+export const AUCTION_BULL: Address = {
+  1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
+  3: '',
+  5: '0x2b8A9986da413d1E1a1A02e5a257D96E46992B21',
+  421611: '',
+  31337: '',
+}
