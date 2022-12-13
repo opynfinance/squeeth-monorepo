@@ -137,7 +137,7 @@ const CrabPosition: React.FC = () => {
                     {formatCurrency(Number(toTokenAmount(usdcQueued, USDC_DECIMALS)))}
                   </Typography>
                   <Button style={{ marginLeft: '8px' }} color="primary" disabled={usdcLoading} onClick={onDeQueueUSDC}>
-                    {!usdcLoading ? 'Cancel' : <CircularProgress color="primary" size="1rem" />}
+                    {!usdcLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
                   </Button>
                 </Box>
               }

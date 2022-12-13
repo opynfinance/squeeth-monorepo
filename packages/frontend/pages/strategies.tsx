@@ -30,7 +30,7 @@ import {
   useCurrentCrabPositionValue,
 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
-import { Vaults } from '@constants/enums'
+import { Vaults, VaultSubtitle } from '@constants/enums'
 import bull from 'public/images/bull.gif'
 import bear from 'public/images/bear.gif'
 
@@ -98,6 +98,37 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const useTabLabelStyles = makeStyles((theme) =>
+  createStyles({
+    title: {
+      fontSize: '24px',
+      fontWeight: 700,
+      lineHeight: '2rem',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '20px',
+        lineHeight: '1.5rem',
+      },
+    },
+    subtitle: {
+      fontSize: '16px',
+      fontWeight: 400,
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '13px',
+      },
+    },
+  }),
+)
+
+const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
+  const classes = useTabLabelStyles()
+  return (
+    <>
+      <Typography className={classes.title}>{title}</Typography>
+      <Typography className={classes.subtitle}>{subtitle}</Typography>
+    </>
+  )
+}
+
 const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
@@ -148,9 +179,13 @@ const Strategies: React.FC = () => {
           }}
           aria-label="disabled tabs example"
         >
-          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBear} icon={<div>🐻</div>} />
-          <Tab style={{ textTransform: 'none' }} label={Vaults.CrabVault} icon={<div>🦀</div>} />
-          <Tab style={{ textTransform: 'none' }} label={Vaults.ETHBull} icon={<div>🐂</div>} />
+          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBear} />} icon={<div>🐻</div>} />
+          <Tab
+            style={{ textTransform: 'none' }}
+            label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
+            icon={<div>🦀</div>}
+          />
+          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBull} />} icon={<div>🐂</div>} />
         </Tabs>
         {selectedIdx === 2 ? ( //bull vault
           <div className={classes.comingSoon}>
