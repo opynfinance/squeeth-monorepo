@@ -479,7 +479,7 @@ const CrabWithdraw: React.FC = () => {
             ) : null}
 
             <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
-              {useUsdc ? (
+              {useUsdc && !useQueue ? (
                 <Metric
                   label="Min USDC to receive"
                   value={formatNumber(usdcAmountOutFromWithdraw.toNumber()) + ' USDC'}
