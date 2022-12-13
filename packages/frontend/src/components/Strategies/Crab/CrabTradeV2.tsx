@@ -468,15 +468,18 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
     }
   }
 
-  const handleTokenChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setUseUsdc(event.target.checked)
+  const handleTokenChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setUseUsdc(event.target.checked)
 
-    if (depositOption === 0) {
-      resetDepositAmount()
-    } else {
-      resetWithdrawAmount()
-    }
-  }, [])
+      if (depositOption === 0) {
+        resetDepositAmount()
+      } else {
+        resetWithdrawAmount()
+      }
+    },
+    [depositOption],
+  )
 
   const setDepositMax = () => {
     if (!useUsdc) setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
