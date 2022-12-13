@@ -4,12 +4,12 @@ orbs:
   node: circleci/node@1.1.6
 
 workflows:
-  build-test-report:
+  hardhat-build-test-report:
     jobs:
-      - checkout-and-install
+      - checkout-and-install-hardhat
       - compile:
           requires:
-            - checkout-and-install
+            - checkout-and-install-hardhat
       - lint:
           requires:
             - compile
@@ -25,13 +25,16 @@ workflows:
       - e2e-test:
           requires:
             - compile
+  frontend-build-test-report:
+    jobs:
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
 
 jobs:
-  checkout-and-install:
+  # hardhat-build-test-report jobs
+  checkout-and-install-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -148,7 +151,8 @@ jobs:
       - run:
           name: Mainnet E2E Test 
           command: yarn test:e2e
-
+  
+  # frontend-build-test-report jobs
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
@@ -182,3 +186,17 @@ jobs:
       - run: 
           name: Unit tests
           command: yarn test:ci
+
+  # zen-bull-vault-build-test-report jobs
+  checkout-and-install-zen-bull-vault:
+    working_directory: ~/squeeth/packages/bull-vault
+    steps:
+      - checkout:
+        path: ~/squeeth
+      - run:
+        name: Install foundry
+        command:
+          - curl -L https://foundry.paradigm.xyz | bash
+          - export PATH=~/squeeth/.foundry/bin
+          - foundryup -b master
+
