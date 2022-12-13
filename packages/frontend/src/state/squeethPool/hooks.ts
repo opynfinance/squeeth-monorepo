@@ -28,7 +28,6 @@ import {
   readyAtom,
   squeethInitialPriceAtom,
   squeethInitialPriceErrorAtom,
-  squeethPriceeAtom,
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
