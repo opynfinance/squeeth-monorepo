@@ -114,7 +114,7 @@ contract DepositTest is BaseForkSetup {
         crab.approve(address(netting), 2 * 1e18);
         netting.queueCrabForWithdrawal(2 * 1e18);
 
-        vm.expectRevert(bytes("auction is live"));
+        vm.expectRevert(bytes("N2"));
         netting.dequeueCrab(2 * 1e18, false);
         vm.stopPrank();
     }
@@ -126,7 +126,7 @@ contract DepositTest is BaseForkSetup {
         usdc.approve(address(netting), 2 * 1e6);
         netting.depositUSDC(2 * 1e6);
 
-        vm.expectRevert(bytes("auction is live"));
+        vm.expectRevert(bytes("N2"));
         netting.withdrawUSDC(2 * 1e6, false);
         vm.stopPrank();
     }
@@ -165,7 +165,7 @@ contract DepositTest is BaseForkSetup {
         netting.toggleAuctionLive();
 
         vm.startPrank(depositor);
-        vm.expectRevert(bytes("auction is live"));
+        vm.expectRevert(bytes("N2"));
         netting.withdrawUSDC(2e6, false);
         skip(8 * 24 * 60 * 60);
         netting.withdrawUSDC(2e6, true);
@@ -182,7 +182,7 @@ contract DepositTest is BaseForkSetup {
         netting.toggleAuctionLive();
 
         vm.startPrank(withdrawer);
-        vm.expectRevert(bytes("auction is live"));
+        vm.expectRevert(bytes("N2"));
         netting.dequeueCrab(2e18, false);
         skip(8 * 24 * 60 * 60);
         netting.dequeueCrab(2e18, true);

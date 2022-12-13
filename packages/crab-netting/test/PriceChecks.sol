@@ -32,12 +32,12 @@ contract PriceChecks is BaseForkSetup {
 
     function testCrabPriceHigh() public {
         console.log("expecting a high crdab price");
-        vm.expectRevert(bytes("Crab Price too high"));
+        vm.expectRevert(bytes("N23"));
         netting.netAtPrice(1500e6, totalUSDCRequired / 2);
     }
 
     function testCrabPriceLow() public {
-        vm.expectRevert(bytes("Crab Price too low"));
+        vm.expectRevert(bytes("N24"));
         netting.netAtPrice(1100e6, totalUSDCRequired / 2);
     }
 }

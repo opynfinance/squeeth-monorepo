@@ -194,7 +194,7 @@ contract DepositAuctionTest is BaseForkSetup {
         p.flashDepositFee = 3000;
         p.ethToFlashDeposit = (p.ethToFlashDeposit * 1) / 10 ** 7;
 
-        vm.expectRevert(bytes("Price too low relative to Uniswap twap."));
+        vm.expectRevert(bytes("N22"));
         netting.depositAuction(p);
     }
 

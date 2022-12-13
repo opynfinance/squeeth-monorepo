@@ -215,7 +215,7 @@ contract TestWithdrawAuction is BaseForkSetup {
         params.ethUSDFee = 500;
         // get equivalent usdc quote with slippage and send
 
-        vm.expectRevert(bytes("Price too high relative to Uniswap twap."));
+        vm.expectRevert(bytes("N21"));
         netting.withdrawAuction(params);
     }
 }
