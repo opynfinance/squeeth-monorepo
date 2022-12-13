@@ -7,7 +7,7 @@ interface InputNumberCustomProps extends InputBaseProps {
 }
 export type InputNumberProps = InputNumberCustomProps
 
-const InputNumber: React.FC<InputNumberProps> = ({ value, onInputChange = () => {}, ...props }) => {
+const InputNumber: React.FC<InputNumberProps> = ({ value, onInputChange = () => {}, inputProps, ...props }) => {
   const handleChange = (val: string) => {
     if (isNaN(Number(val))) {
       return onInputChange('0')
@@ -36,11 +36,11 @@ const InputNumber: React.FC<InputNumberProps> = ({ value, onInputChange = () => 
 
   return (
     <InputBase
-      type="number"
       value={value}
       onChange={(event) => handleChange(event.target.value)}
       placeholder="0"
       autoComplete="false"
+      inputProps={{ inputmode: 'numeric', pattern: '[0-9]*', ...inputProps }}
       {...props}
     />
   )

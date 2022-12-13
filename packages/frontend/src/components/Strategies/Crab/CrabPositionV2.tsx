@@ -128,7 +128,7 @@ const CrabPosition: React.FC = () => {
               label={
                 <MetricLabel
                   label="Initiated Deposit"
-                  tooltipTitle="Your deposit has been initiated and will submitted via  auction to avoid price impact. This may take up until Tuesday"
+                  tooltipTitle="Your deposit has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday"
                 />
               }
               value={
@@ -147,8 +147,8 @@ const CrabPosition: React.FC = () => {
             <Metric
               label={
                 <MetricLabel
-                  label="Initiated withdrawal"
-                  tooltipTitle="Your withdrawal has been initiated and will submitted via  auction to avoid price impact. This may take up until Tuesday"
+                  label="Initiated Withdrawal"
+                  tooltipTitle="Your withdrawal has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday"
                 />
               }
               value={
