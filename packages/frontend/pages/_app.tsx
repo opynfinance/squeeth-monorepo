@@ -79,7 +79,7 @@ function MyApp({ Component, pageProps }: any) {
   useEffect(() => {
     function onRouteChangeComplete(url: string) {
       const e: string = url.split('?')[0].substring(1).toUpperCase()
-      track('NAV_TEST_' + e)
+      track('NAV_' + e)
     }
     router.events.on('routeChangeComplete', onRouteChangeComplete)
 
