@@ -749,11 +749,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     />
                   )}
 
-                  <TradeSettings
-                    isCrab={true}
-                    setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                    crabSlippage={new BigNumber(slippage)}
-                  />
+                  <TradeSettings setSlippage={(amt) => setSlippage(amt.toNumber())} slippage={new BigNumber(slippage)} />
                 </Box>
               </Box>
             </Box>
@@ -785,7 +781,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"
-                  onClick={() => {}}
+                  onClick={() => { }}
                   disabled={true}
                   id="crab-unsupported-network-btn"
                 >
@@ -806,13 +802,13 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(depositPriceImpact) > 3 || !!warning
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : depositFundingWarning || depositPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                        : { marginTop: '8px' }
                   }
                 >
                   {!txLoading &&
-                  (depositFundingWarning || depositPriceImpactWarning) &&
-                  depositStep === DepositSteps.DEPOSIT ? (
+                    (depositFundingWarning || depositPriceImpactWarning) &&
+                    depositStep === DepositSteps.DEPOSIT ? (
                     'Deposit anyway'
                   ) : !txLoading ? (
                     depositStep
@@ -833,15 +829,15 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
                     Number(withdrawPriceImpact) > 3
                       ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c', marginTop: '8px' }
                       : withdrawFundingWarning || withdrawPriceImpactWarning
-                      ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
-                      : { marginTop: '8px' }
+                        ? { color: '#F3FF6C', backgroundColor: 'transparent', borderColor: '#F3FF6C', marginTop: '8px' }
+                        : { marginTop: '8px' }
                   }
                   onClick={() => withdraw()}
                   disabled={txLoading || !!withdrawError}
                 >
                   {!txLoading &&
-                  (withdrawFundingWarning || withdrawPriceImpactWarning) &&
-                  withdrawStep === WithdrawSteps.WITHDRAW ? (
+                    (withdrawFundingWarning || withdrawPriceImpactWarning) &&
+                    withdrawStep === WithdrawSteps.WITHDRAW ? (
                     'Withdraw anyway'
                   ) : !txLoading ? (
                     withdrawStep

@@ -30,6 +30,12 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
   return ethPrice.data ?? new BigNumber(0)
 }
 
+export const useOnChainETHPrice = (refetchIntervalSec = 30) => {
+  const queryClient = useQueryClient()
+  const index = useAtomValue(indexAtom)
+  return toTokenAmount(index, 18).sqrt()
+}
+
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
   const coin = 'ethereum'
 

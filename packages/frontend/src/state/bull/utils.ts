@@ -25,21 +25,38 @@ export const getWethToLendFromCrabEth = async (
     )
     .call()
 
-  // console.log(
-  //   data,
-  //   crabToGet.toString(),
-  //   bullShare.toString(),
-  //   vault.collateralAmount.plus(ethToCrab).toString(),
-  //   vault.shortAmount.plus(oSqthToMint).toString(),
-  //   totalCrabSupply.toString(),
-  // )
-
   const [wethToLend, usdcToBorrow] = [data[0], data[1]]
   return {
     oSqthToMint,
     wethToLend: toTokenAmount(wethToLend, WETH_DECIMALS),
     usdcToBorrow: toTokenAmount(usdcToBorrow, USDC_DECIMALS),
   }
+}
+
+export const calcAssetNeededForFlashWithdraw = async (
+  bullStrategy: Contract,
+  bullAmount: BigNumber,
+  vault: Vault,
+  bullSupply: BigNumber,
+  bullCrabBalance: BigNumber,
+  totalCrabSupply: BigNumber,
+) => {
+  const bullShare = bullAmount.div(bullSupply)
+  const crabToRedeem = bullShare.times(bullCrabBalance)
+  const wPowerPerpToRedeem = crabToRedeem.times(vault.shortAmount).div(totalCrabSupply)
+  const ethToWithdraw = crabToRedeem.times(vault.collateralAmount).div(totalCrabSupply)
+  console.log(
+    'Hello',
+    ethToWithdraw.toString(),
+    bullShare.toString(),
+    await bullStrategy.methods.calcUsdcToRepay(bullShare),
+  )
+  const usdcToRepay = toTokenAmount(
+    await bullStrategy.methods.calcUsdcToRepay(fromTokenAmount(bullShare, 18).toFixed(0)).call(),
+    USDC_DECIMALS,
+  )
+
+  return { crabToRedeem, wPowerPerpToRedeem, ethToWithdraw, usdcToRepay }
 }
 
 // ToDo: Include fee calculation

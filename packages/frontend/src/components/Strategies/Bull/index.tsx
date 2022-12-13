@@ -10,6 +10,7 @@ import BullPosition from './BullPosition'
 import BullStrategyInfo from './BullStrategyInfo'
 import BullStrategyRebalances from './BullStrategyRebalances'
 import BullStrategyCharts from './BullStrategyCharts'
+import { useInitBullStrategy } from '@state/bull/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -52,6 +53,8 @@ const useStyles = makeStyles((theme) =>
 
 function BullStrategy() {
   const classes = useStyles()
+  useInitBullStrategy()
+
   return (
     <div>
       <Box marginTop="40px">

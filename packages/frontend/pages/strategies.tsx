@@ -292,7 +292,6 @@ const Strategies: React.FC = () => {
   useCurrentCrabPositionValueV2()
   useCurrentCrabPositionValue()
   useInitCrabMigration()
-  useInitBullStrategy()
 
   const index = useAtomValue(indexAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)

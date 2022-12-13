@@ -6,9 +6,6 @@ import SettingsIcon from '@material-ui/icons/Settings'
 import BigNumber from 'bignumber.js'
 import * as React from 'react'
 
-import { slippageAmountAtom } from 'src/state/trade/atoms'
-import { useAtom } from 'jotai'
-
 const useStyles = makeStyles((theme) =>
   createStyles({
     dialogTitle: {
@@ -48,25 +45,14 @@ const useStyles = makeStyles((theme) =>
 )
 
 type TradeSettingsProps = {
-  isCrab?: boolean
-  isBull?: boolean
-  setCrabSlippage?: (amt: BigNumber) => void
-  setBullSlippage?: (amt: BigNumber) => void
-  crabSlippage?: BigNumber
-  bullSlippage?: BigNumber
+  setSlippage: (amt: BigNumber) => void
+  slippage: BigNumber
 }
 
-export const TradeSettings: React.FC<TradeSettingsProps> = ({
-  isCrab,
-  isBull,
-  setCrabSlippage,
-  setBullSlippage,
-  crabSlippage,
-  bullSlippage,
-}) => {
+export const TradeSettings: React.FC<TradeSettingsProps> = ({ setSlippage, slippage }) => {
   const classes = useStyles()
 
-  const [slippageAmount, setSlippageAmount] = useAtom(slippageAmountAtom)
+  const [slippageAmount, setSlippageAmount] = React.useState(slippage.toString())
 
   const [open, setOpen] = React.useState(false)
 
@@ -76,6 +62,7 @@ export const TradeSettings: React.FC<TradeSettingsProps> = ({
 
   const handleClose = () => {
     setOpen(false)
+    setSlippage(new BigNumber(slippageAmount))
   }
 
   return (
@@ -104,25 +91,19 @@ export const TradeSettings: React.FC<TradeSettingsProps> = ({
         <DialogContent className={classes.dialogContent}>
           <TextField
             size="small"
-            value={isCrab ? crabSlippage : isBull ? bullSlippage : slippageAmount}
+            value={slippageAmount}
             type="number"
             className={classes.slippageInput}
             margin="dense"
-            onChange={
-              isCrab
-                ? (event) => (setCrabSlippage ? setCrabSlippage(new BigNumber(event.target.value)) : null)
-                : isBull
-                ? (event) => (setBullSlippage ? setBullSlippage(new BigNumber(event.target.value)) : null)
-                : (event) => setSlippageAmount(new BigNumber(event.target.value))
-            }
+            onChange={(event) => setSlippageAmount(event.target.value)}
             id="filled-basic"
             label="Slippage Tolerance"
             variant="outlined"
-            error={slippageAmount.lte(0.05) || slippageAmount.gte(1)}
+            error={Number(slippageAmount) < 0.05 || Number(slippageAmount) > 1}
             helperText={
-              slippageAmount.lte(0.05)
+              Number(slippageAmount) < 0.05
                 ? 'Your transaction may fail'
-                : slippageAmount.gte(1)
+                : Number(slippageAmount) > 1
                 ? 'Your transaction may be frontrun'
                 : null
             }

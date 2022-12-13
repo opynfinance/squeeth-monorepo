@@ -162,7 +162,7 @@ export const CRAB_HELPER: Address = {
 export const FLASH_BULL_STRATEGY: Address = {
   1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
-  5: '0xE47f67B08CA77670133Af293E189f48C79332d51',
+  5: '0x5B71AaC5625e25B7244db9C13f3164F9e910547B',
   421611: '',
   31337: '',
 }
@@ -170,7 +170,7 @@ export const FLASH_BULL_STRATEGY: Address = {
 export const BULL_STRATEGY: Address = {
   1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
-  5: '0x95F6251D3A0e0Dc5a7E52a13ef74951C5fF6503a',
+  5: '0x36F59dF22A942a8c7D96b13b79c5b45C41f683d9',
   421611: '',
   31337: '',
 }

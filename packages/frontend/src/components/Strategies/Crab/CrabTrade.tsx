@@ -264,11 +264,7 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
           ) : null}
           {depositOption === 0 ? null : (
             <div className={classes.settingsButton}>
-              <TradeSettings
-                isCrab={true}
-                setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                crabSlippage={new BigNumber(slippage)}
-              />
+              <TradeSettings setSlippage={(amt) => setSlippage(amt.toNumber())} slippage={new BigNumber(slippage)} />
             </div>
           )}
           <div className={classes.tradeContainer}>
@@ -299,8 +295,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                       depositError
                         ? depositError
                         : warning
-                        ? warning
-                        : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                          ? warning
+                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                     }
                     convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                     onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}

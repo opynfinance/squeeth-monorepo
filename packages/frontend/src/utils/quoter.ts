@@ -42,9 +42,9 @@ export const getExactOut = async (
   }
 
   const quote = await contract.methods.quoteExactOutputSingle(quoteExactOutputSingleParams).call()
-  const minAmountIn = new BigNumber(quote.amountIn)
+  const maxAmountIn = new BigNumber(quote.amountIn)
     .times(100 + slippage)
     .div(100)
     .toFixed(0)
-  return { ...quote, minAmountIn }
+  return { ...quote, maxAmountIn }
 }

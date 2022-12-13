@@ -54,7 +54,7 @@
     "anonymous": false,
     "inputs": [
       {
-        "indexed": false,
+        "indexed": true,
         "internalType": "address",
         "name": "from",
         "type": "address"
@@ -104,6 +104,31 @@
       }
     ],
     "name": "Deposit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wethDeposited",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdcRepaid",
+        "type": "uint256"
+      }
+    ],
+    "name": "DepositAndRepayFromLeverage",
     "type": "event"
   },
   {
@@ -429,6 +454,24 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_wethToDeposit",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_usdcToRepay",
+        "type": "uint256"
+      }
+    ],
+    "name": "auctionDepositAndRepayFromLeverage",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

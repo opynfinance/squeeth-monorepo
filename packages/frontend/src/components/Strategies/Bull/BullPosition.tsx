@@ -5,6 +5,8 @@ import clsx from 'clsx'
 
 import Metric from '@components/Metric'
 import { useBullPosition } from '@hooks/useBullPosition'
+import { useAtomValue } from 'jotai'
+import { bullCurrentETHPositionAtom, bullCurrentUSDCPositionAtom } from '@state/bull/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -46,12 +48,13 @@ const useStyles = makeStyles((theme) =>
 )
 
 const BullPosition: React.FC = () => {
-  const positionValue = {} // hook for bull position values
+  const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
+  const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const classes = useStyles()
 
   const { loading } = useBullPosition()
 
-  if (!positionValue) {
+  if (!bullPosition) {
     return null
   }
 
@@ -72,8 +75,12 @@ const BullPosition: React.FC = () => {
             label="Position value"
             value={
               <div>
-                <Typography className={clsx(classes.metricValue, classes.white)}>55.53 ETH</Typography>
-                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>$60,000.00</Typography>
+                <Typography className={clsx(classes.metricValue, classes.white)}>
+                  {bullPosition.toFixed(6)} ETH
+                </Typography>
+                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>
+                  ${bullUsdcPosition.toFixed(2)}
+                </Typography>
               </div>
             }
           />
