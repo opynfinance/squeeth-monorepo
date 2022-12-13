@@ -195,11 +195,11 @@ jobs:
     working_directory: ~/squeeth/packages/bull-vault
     steps:
       - checkout:
-        path: ~/squeeth
+          path: ~/squeeth
       - run:
-        name: Install foundry
-        command:
-          - curl -L https://foundry.paradigm.xyz | bash
-          - export PATH=~/squeeth/.foundry/bin
-          - foundryup -b master
+          name: Install foundry
+          command:
+            - curl -L https://foundry.paradigm.xyz | bash
+            - export PATH=~/squeeth/.foundry/bin
+            - foundryup -b master
 
