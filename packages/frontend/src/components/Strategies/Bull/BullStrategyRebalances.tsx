@@ -101,7 +101,7 @@ export const BullStrategyRebalances: React.FC = () => {
   const networkId = useAtomValue(networkIdAtom)
 
   const onClickLoadMore = useCallback(() => {
-    setVisibleRecords(visibleRecords + 10)
+    setVisibleRecords(visibleRecords + 3)
     setTimeout(() => {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, 200)
