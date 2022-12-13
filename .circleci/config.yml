@@ -31,6 +31,9 @@ workflows:
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
+  zen-bull-vault-build-test-report:
+    jobs:
+      - checkout-and-install-zen-bull-vault
 
 jobs:
   # hardhat-build-test-report jobs
