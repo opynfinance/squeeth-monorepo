@@ -198,8 +198,8 @@ jobs:
           path: ~/squeeth
       - run:
           name: Install foundry
-          commands:
-            - curl -L https://foundry.paradigm.xyz | bash
-            - export PATH=~/squeeth/.foundry/bin
-            - foundryup -b master
+          command: |
+            curl -L https://foundry.paradigm.xyz | bash
+            export PATH=~/squeeth/.foundry/bin
+            foundryup -b master
 
