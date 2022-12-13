@@ -184,7 +184,6 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   const [useUsdc, setUseUsdc] = useState(true)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
-  const [maxClicked, setMaxClicked] = useState(false)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -485,14 +484,9 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
   }
 
   const setWithdrawMax = () => {
-    setMaxClicked(true)
     if (!useUsdc) setWithdrawAmount(currentEthValue.toString())
     else setWithdrawAmount(currentUsdcValue.toString())
   }
-
-  useAppEffect(() => {
-    if (maxClicked) setWithdrawAmount(currentUsdcValue.toString())
-  }, [maxClicked, currentUsdcValue])
 
   const depositToken = useMemo(() => (useUsdc ? 'USDC' : 'ETH'), [useUsdc])
 
@@ -608,10 +602,7 @@ const CrabTradeV2: React.FC<CrabTradeV2Type> = ({ maxCap, depositedAmount }) => 
               <InputToken
                 id="crab-withdraw-eth-input"
                 value={withdrawAmount}
-                onInputChange={(v) => {
-                  setMaxClicked(false)
-                  setWithdrawAmount(v)
-                }}
+                onInputChange={setWithdrawAmount}
                 balance={useUsdc ? currentUsdcValue : currentEthValue}
                 logo={useUsdc ? usdcLogo : ethLogo}
                 symbol={depositToken}
