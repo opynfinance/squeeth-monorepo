@@ -13,6 +13,11 @@ export enum Vaults {
   Short = 'Short Squeeth', //pure short squeeth
 }
 
+export enum VaultSubtitle {
+  CrabVault = 'Stack USDC',
+  ETHBull = 'Stack ETH',
+}
+
 export enum TransactionType {
   BUY = 'Bought',
   SELL = 'Sold',
