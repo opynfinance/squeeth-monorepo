@@ -108,6 +108,8 @@ const CrabPosition: React.FC = () => {
     setCrabLoading(false)
   }
 
+  console.log(crabQueued.toString(), 'USDc queued')
+
   if (currentCrabPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) return null
 
   return (
@@ -123,7 +125,7 @@ const CrabPosition: React.FC = () => {
         </Box>
       ) : (
         <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px" flexWrap="wrap">
-          {usdcQueued.isGreaterThan(0) ? (
+          {usdcQueued.isGreaterThan('100') ? (
             <Metric
               label={
                 <MetricLabel
@@ -143,7 +145,7 @@ const CrabPosition: React.FC = () => {
               }
             />
           ) : null}
-          {crabQueued.isGreaterThan(0) ? (
+          {crabQueued.isGreaterThan('10000000000') ? (
             <Metric
               label={
                 <MetricLabel
