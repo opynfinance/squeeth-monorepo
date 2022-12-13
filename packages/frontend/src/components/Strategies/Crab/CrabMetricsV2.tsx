@@ -6,29 +6,30 @@ import Metric, { MetricLabel } from '@components/Metric'
 import { formatNumber, formatCurrency } from '@utils/formatter'
 import { toTokenAmount } from '@utils/calculations'
 import { Tooltips } from '@constants/enums'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from '@state/controller/atoms'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
 import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2, crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
 
 const CrabMetricsV2: React.FC = () => {
-  const index = useAtomValue(indexAtom)
+  const ethPrice = useOnChainETHPrice()
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
-  const ethPriceAtLastHedge = useAtomValue(ethPriceAtLastHedgeAtomV2)
+  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
 
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
-  const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
-  const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
-  const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
+  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
+  const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableMovePercentV2 * ethPriceAtLastHedge
+  const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableMovePercentV2 * ethPriceAtLastHedge
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
       <Metric
         flexBasis="250px"
         label={<MetricLabel label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
-        value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
+        value={formatCurrency(ethPrice.toNumber())}
       />
       <Metric
         flexBasis="250px"
