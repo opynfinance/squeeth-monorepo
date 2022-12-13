@@ -28,7 +28,6 @@ import {
   readyAtom,
   squeethInitialPriceAtom,
   squeethInitialPriceErrorAtom,
-  squeethPriceeAtom,
   squeethTokenAtom,
   wethTokenAtom,
 } from './atoms'
@@ -223,7 +222,7 @@ export const useUpdateSqueethPrices = () => {
 
 export const useGetWSqueethPositionValue = () => {
   const ethPrice = useETHPrice()
-  const squeethInitialPrice = useAtomValue(squeethPriceeAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
   const getWSqueethPositionValue = useAppCallback(
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice).times(ethPrice)
@@ -235,7 +234,7 @@ export const useGetWSqueethPositionValue = () => {
 }
 
 export const useGetWSqueethPositionValueInETH = () => {
-  const squeethInitialPrice = useAtomValue(squeethPriceeAtom)
+  const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
   const getWSqueethPositionValueInETH = useAppCallback(
     (amount: BigNumber | number) => {
       return new BigNumber(amount).times(squeethInitialPrice)

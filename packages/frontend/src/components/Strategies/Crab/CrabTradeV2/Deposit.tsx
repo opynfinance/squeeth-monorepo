@@ -358,7 +358,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
             </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="24px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="12px">
             <RoundedButton
               variant="outlined"
               size="small"
