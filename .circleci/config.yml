@@ -193,6 +193,8 @@ jobs:
   # zen-bull-vault-build-test-report jobs
   checkout-and-install-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
+    docker:
+      - image: cimg/rust:1.65-node
     steps:
       - checkout:
           path: ~/squeeth
