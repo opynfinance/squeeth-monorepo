@@ -53,10 +53,15 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
     let timestampsArr: any[] = []
     timestampsArr = data?.crabUserTxes ? data?.crabUserTxes.map((tx) => tx.timestamp * 1000) : []
     if (timestampsArr.length > 0) {
-      getHistoricEthPrices(timestampsArr).then((result) => {
-        setEthUsdPriceMap(result ?? undefined)
-        setEthUsdPriceMapLoading(false)
-      })
+      getHistoricEthPrices(timestampsArr)
+        .then((result) => {
+          setEthUsdPriceMap(result ?? undefined)
+        })
+        .finally(() => {
+          setEthUsdPriceMapLoading(false)
+        })
+    } else {
+      setEthUsdPriceMapLoading(false)
     }
   }, [data?.crabUserTxes, usdc])
 

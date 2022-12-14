@@ -120,7 +120,9 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
   const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
+    console.log(txHistoryData, 'Crab')
+    if (txHistoryLoading || !txHistoryData || txHistoryData.length === 0)
+      return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
     const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
