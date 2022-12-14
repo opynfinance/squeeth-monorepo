@@ -211,7 +211,5 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run:
-          name: build
-          comamnd: forge build
+      - run: forge build
 
