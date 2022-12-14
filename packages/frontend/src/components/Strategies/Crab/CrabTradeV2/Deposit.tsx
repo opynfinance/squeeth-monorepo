@@ -65,7 +65,7 @@ enum DepositSteps {
   DEPOSIT = 'Deposit',
 }
 
-const OTC_PRICE_IMPACT_THRESHOLD = process.env.OTC_PRICE_IMPACT_THRESHOLD || 1
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.OTC_PRICE_IMPACT_THRESHOLD) || 1
 
 const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
@@ -325,8 +325,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     depositPriceImpactNumber > 3
       ? classes.btnDanger
       : depositFundingWarning || depositPriceImpactWarning
-      ? classes.btnWarning
-      : ''
+        ? classes.btnWarning
+        : ''
 
   return (
     <>
@@ -481,8 +481,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                         tooltipTitle={
                           useQueue
                             ? `For standard deposit, the average price impact is ${formatNumber(
-                                depositPriceImpactNumber,
-                              )}% based on historical auctions`
+                              depositPriceImpactNumber,
+                            )}% based on historical auctions`
                             : undefined
                         }
                       />
@@ -540,7 +540,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   <PrimaryButtonNew
                     fullWidth
                     variant="contained"
-                    onClick={() => {}}
+                    onClick={() => { }}
                     disabled={true}
                     id="crab-unsupported-network-btn"
                   >

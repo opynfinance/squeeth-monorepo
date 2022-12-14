@@ -65,7 +65,7 @@ enum WithdrawSteps {
   WITHDRAW = 'Withdraw',
 }
 
-const OTC_PRICE_IMPACT_THRESHOLD = process.env.OTC_PRICE_IMPACT_THRESHOLD || 1
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.OTC_PRICE_IMPACT_THRESHOLD) || 1
 
 const CrabWithdraw: React.FC = () => {
   const classes = useStyles()
@@ -333,8 +333,8 @@ const CrabWithdraw: React.FC = () => {
     withdrawPriceImpactNumber > 3
       ? classes.btnDanger
       : withdrawFundingWarning || withdrawPriceImpactWarning
-      ? classes.btnWarning
-      : ''
+        ? classes.btnWarning
+        : ''
 
   return (
     <>
@@ -513,8 +513,8 @@ const CrabWithdraw: React.FC = () => {
                         tooltipTitle={
                           useQueue
                             ? `For standard withdraw, the average price impact is ${formatNumber(
-                                withdrawPriceImpactNumber,
-                              )}% based on historical auctions`
+                              withdrawPriceImpactNumber,
+                            )}% based on historical auctions`
                             : undefined
                         }
                       />
@@ -572,7 +572,7 @@ const CrabWithdraw: React.FC = () => {
                   <PrimaryButtonNew
                     fullWidth
                     variant="contained"
-                    onClick={() => {}}
+                    onClick={() => { }}
                     disabled={true}
                     id="crab-unsupported-network-btn"
                   >
