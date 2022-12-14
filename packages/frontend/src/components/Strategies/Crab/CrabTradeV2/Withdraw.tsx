@@ -593,7 +593,11 @@ const CrabWithdraw: React.FC = () => {
                     withdrawStep === WithdrawSteps.WITHDRAW ? (
                     'Withdraw anyway'
                   ) : !txLoading ? (
-                    withdrawStep
+                    withdrawStep === WithdrawSteps.APPROVE ? (
+                      'Approve strategy to withdraw'
+                    ) : (
+                      'Withdraw'
+                    )
                   ) : (
                     <CircularProgress color="primary" size="1.5rem" />
                   )}
