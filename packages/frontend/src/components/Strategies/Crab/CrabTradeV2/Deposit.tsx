@@ -65,7 +65,8 @@ enum DepositSteps {
   DEPOSIT = 'Deposit',
 }
 
-const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.OTC_PRICE_IMPACT_THRESHOLD) || 1
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
+console.log(OTC_PRICE_IMPACT_THRESHOLD, 'Threshold', process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD)
 
 const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) => {
   const classes = useStyles()
