@@ -33,7 +33,8 @@ workflows:
             - checkout-and-install-frontend
   zen-bull-vault-build-test-report:
     jobs:
-      - checkout-and-install-zen-bull-vault
+      # - checkout-and-install-zen-bull-vault
+      - compile
 
 jobs:
   # hardhat-build-test-report jobs
@@ -191,17 +192,25 @@ jobs:
           command: yarn test:ci
 
   # zen-bull-vault-build-test-report jobs
-  checkout-and-install-zen-bull-vault:
+  # checkout-and-install-zen-bull-vault:
+  #   working_directory: ~/squeeth/packages/bull-vault
+  #   docker:
+  #     - image: ghcr.io/foundry-rs/foundry:latest
+  #   steps:
+  #     - checkout:
+  #         path: ~/squeeth
+  #     - run:
+  #         name: Install foundry
+  #         command: curl -L https://foundry.paradigm.xyz | bash
+            
+  #           # export PATH=~/squeeth/.foundry/bin
+  #           # foundryup -b master
+  compile:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
-      - image: cimg/rust:1.65-node
+      - image: ghcr.io/foundry-rs/foundry:latest
     steps:
-      - checkout:
-          path: ~/squeeth
       - run:
-          name: Install foundry
-          command: curl -L https://foundry.paradigm.xyz | bash
-            
-            # export PATH=~/squeeth/.foundry/bin
-            # foundryup -b master
+          name: build
+          comamnd: forge build
 
