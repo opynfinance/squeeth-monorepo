@@ -360,6 +360,7 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
+        console.log('Price: ', ethPrice.toString(), collateralOne.minus(ethDebtOne).times(ethPrice).toString(), squeethInitialPrice.toString())
         setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
       }
 
