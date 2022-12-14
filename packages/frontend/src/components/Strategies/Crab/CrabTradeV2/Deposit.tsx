@@ -88,7 +88,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
-  const minUSDCAmount = useAtomValue(minUSDCAmountAtom)
+  const minUSDCAmountValue = useAtomValue(minUSDCAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
@@ -291,6 +291,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     }
   }, [useUsdc, usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
 
+  const minUSDCAmount = toTokenAmount(minUSDCAmountValue, USDC_DECIMALS)
   const isDepositAmountLessThanMinAllowed = depositAmountBN.lt(minUSDCAmount)
 
   useEffect(() => {

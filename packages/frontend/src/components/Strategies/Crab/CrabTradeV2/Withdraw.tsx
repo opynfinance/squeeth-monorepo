@@ -89,7 +89,7 @@ const CrabWithdraw: React.FC = () => {
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
-  const minCrabAmount = useAtomValue(minCrabAmountAtom)
+  const minCrabAmountValue = useAtomValue(minCrabAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -299,6 +299,7 @@ const CrabWithdraw: React.FC = () => {
     }
   }, [useUsdc, crabAllowance, withdrawCrabAmount, crabQueueAllowance, useQueue])
 
+  const minCrabAmount = toTokenAmount(minCrabAmountValue, CRAB_TOKEN_DECIMALS)
   const isWithdrawCrabAmountLessThanMinAllowed = withdrawCrabAmount.lt(minCrabAmount)
 
   useEffect(() => {
