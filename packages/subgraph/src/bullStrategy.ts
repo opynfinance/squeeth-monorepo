@@ -9,7 +9,8 @@ import {
     DepositEthIntoCrab,
     WithdrawShutdown,
     AuctionRepayAndWithdrawFromLeverage,
-    SetAuction
+    SetAuction,
+    Transfer
 } from "../generated/BullStrategy/BullStrategy"
 import {
     SetCrUpperAndLower,
@@ -47,6 +48,10 @@ function loadOrCreateTx(id: string): BullUserTxSchema {
   userTx.ethAmount = BigInt.zero()
   userTx.type = "TRANSFER"
   userTx.timestamp = BigInt.zero()
+  userTx.bullAmount = BigInt.zero()
+  userTx.wSqueethAmount = BigInt.zero()
+  userTx.wethLentAmount = BigInt.zero()
+  userTx.usdcBorrowedAmount = BigInt.zero()
 
   return userTx
 }
@@ -58,6 +63,12 @@ function loadOrCreateStrategy(id: string): Strategy {
   strategy =  new Strategy(id)
   strategy.totalSupply = BigInt.zero()
   return strategy
+}
+
+export function handleTransfer(event: Transfer): void {
+  const userTx = loadOrCreateTx(event.transaction.hash.toHex())
+  userTx.bullAmount = event.params.value
+  userTx.save()
 }
 
 export function handleWithdraw(event: Withdraw): void {
