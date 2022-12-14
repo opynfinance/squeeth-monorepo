@@ -68,11 +68,11 @@ const CrabPosition: React.FC = () => {
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
+    console.log(currentCrabPositionValue.toString(), depositedUsd.toString(), 'Position value')
     return pnlInPerctv2(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
 
   const loading = useAppMemo(() => {
-    console.log('Crab position loading : ', isCrabPositionLoading, isCrabPositionValueLoading)
     return isCrabPositionLoading || isCrabPositionValueLoading
   }, [isCrabPositionLoading, isCrabPositionValueLoading])
 
@@ -183,7 +183,7 @@ const CrabPosition: React.FC = () => {
                   <Typography className={clsx(classes.metricValue, classes.white)}>
                     {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())}
                   </Typography>
-                  <Typography className={clsx(classes.metricSubValue, pnl.isNegative() ? classes.red : classes.green)}>
+                  <Typography className={clsx(classes.metricSubValue, pnl.isPositive() ? classes.green : classes.red)}>
                     {formatNumber(pnl.toNumber()) + '%'}
                   </Typography>
                 </Box>
