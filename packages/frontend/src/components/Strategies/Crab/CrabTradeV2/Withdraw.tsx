@@ -433,7 +433,7 @@ const CrabWithdraw: React.FC = () => {
                 <InfoIcon fontSize="medium" />
               </div>
               <Typography variant="caption" color="textSecondary" className={classes.infoText}>
-                Crab aims to earn yield in dollar terms. A crab position reduces ETH holdings when the price of ETH
+                Crab aims to earn premium in dollar terms. A crab position reduces ETH holdings when the price of ETH
                 increases. It increases ETH holdings when the price of ETH decreases.{' '}
                 <a
                   className={classes.link}

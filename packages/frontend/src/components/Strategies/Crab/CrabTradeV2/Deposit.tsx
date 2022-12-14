@@ -412,7 +412,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                 <InfoIcon fontSize="medium" />
               </div>
               <Typography variant="caption" color="textSecondary" className={classes.infoText}>
-                Crab aims to earn yield in dollar terms. A crab position reduces ETH holdings when the price of ETH
+                Crab aims to earn premium in dollar terms. A crab position reduces ETH holdings when the price of ETH
                 increases. It increases ETH holdings when the price of ETH decreases.{' '}
                 <a
                   className={classes.link}
@@ -431,7 +431,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                 <div className={classes.infoIcon}>
                   <Tooltip
                     title={
-                      'The strategy sells squeeth to earn yield. Yield is currently lower than usual. You can still deposit, but you may be more likely to have negative returns.'
+                      'The strategy sells squeeth to earn premium. Premium is currently lower than usual. You can still deposit, but you may be more likely to have negative returns.'
                     }
                   >
                     <InfoIcon fontSize="medium" />
