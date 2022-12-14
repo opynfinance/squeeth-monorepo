@@ -34,7 +34,7 @@ workflows:
   zen-bull-vault-build-test-report:
     jobs:
       # - checkout-and-install-zen-bull-vault
-      - compile
+      - zen-bull-vault-compile
 
 jobs:
   # hardhat-build-test-report jobs
@@ -205,7 +205,7 @@ jobs:
             
   #           # export PATH=~/squeeth/.foundry/bin
   #           # foundryup -b master
-  compile:
+  zen-bull-vault-compile:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
