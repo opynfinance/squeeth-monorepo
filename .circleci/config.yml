@@ -211,5 +211,5 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: forge build
+      - run: cd packages/bull-vault && forge build
 
