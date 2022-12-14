@@ -98,7 +98,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
-      ongoingTransactionAmountRef.current = new BigNumber(withdrawAmountRef.current)
+      ongoingTransactionAmountRef.current = new BigNumber(withdrawAmount)
       await bullFlashWithdraw(
         new BigNumber(withdrawAmountRef.current),
         quote.maxEthForWPowerPerp,
