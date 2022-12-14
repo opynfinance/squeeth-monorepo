@@ -11,7 +11,7 @@ import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import Metric, { MetricLabel } from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlInPerctv2 } from 'src/lib/pnl'
-import { crabQueuedAtom, crabUSDValueAtom, usdcQueuedAtom } from '@state/crab/atoms'
+import { crabQueuedAtom, crabQueuedInUsdAtom, crabUSDValueAtom, usdcQueuedAtom } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, USDC_DECIMALS } from '@constants/index'
 import { useTransactionStatus } from '@state/wallet/hooks'
@@ -65,12 +65,13 @@ const CrabPosition: React.FC = () => {
 
   const [usdcQueued, setUsdcQueued] = useAtom(usdcQueuedAtom)
   const [crabQueued, setCrabQueued] = useAtom(crabQueuedAtom)
+  const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
     console.log(currentCrabPositionValue.toString(), depositedUsd.toString(), 'Position value')
-    return pnlInPerctv2(currentCrabPositionValue, depositedUsd)
-  }, [currentCrabPositionValue, depositedUsd])
+    return pnlInPerctv2(currentCrabPositionValue.plus(crabV2QueuedInUsd), depositedUsd)
+  }, [currentCrabPositionValue, depositedUsd, crabV2QueuedInUsd])
 
   const loading = useAppMemo(() => {
     return isCrabPositionLoading || isCrabPositionValueLoading
