@@ -210,6 +210,7 @@ jobs:
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
+      - checkout
       - run:
           name: build
           comamnd: forge build
