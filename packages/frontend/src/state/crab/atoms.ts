@@ -47,6 +47,8 @@ export const userCrabSharesV2 = atom(BIG_ZERO)
 
 export const usdcQueuedAtom = atom(BIG_ZERO)
 export const crabQueuedAtom = atom(BIG_ZERO)
+export const crabQueuedInEthAtom = atom(BIG_ZERO)
+export const crabQueuedInUsdAtom = atom(BIG_ZERO)
 export const crabUSDValueAtom = atom(BIG_ZERO)
 
 export const isNettingAuctionLiveAtom = atom(false)

@@ -37,6 +37,8 @@ import {
   crabQueuedAtom,
   crabUSDValueAtom,
   isNettingAuctionLiveAtom,
+  crabQueuedInEthAtom,
+  crabQueuedInUsdAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -311,8 +313,11 @@ export const useCurrentCrabPositionValueV2 = () => {
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtomV2)
   const { value: userCrabBalance, loading: balLoading } = useTokenBalance(crabStrategy2, 15, 18)
   const userMigratedShares = useAtomValue(userMigratedSharesAtom)
+  const crabQueuedShares = useAtomValue(crabQueuedAtom)
   const setUserMigratedSharesETH = useUpdateAtom(userMigratedSharesETHAtom)
   const setCurrentCrabPositionETHActual = useUpdateAtom(currentCrabPositionETHActualAtomV2)
+  const setCrabQueuedInEth = useUpdateAtom(crabQueuedInEthAtom)
+  const setCrabQueuedInUsd = useUpdateAtom(crabQueuedInUsdAtom)
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
@@ -338,11 +343,13 @@ export const useCurrentCrabPositionValueV2 = () => {
         setIsCrabPositionValueLoading(true)
       }
       fetchQueuedData()
-      const [collateral, squeethDebt, collateralOne, squeethDebtOne] = await Promise.all([
+      const [collateral, squeethDebt, collateralOne, squeethDebtOne, collatMigrated, debtMigrated] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
         getCollateralFromCrabAmount(BIG_ONE, contract, vault),
         getWsqueethFromCrabAmount(BIG_ONE, contract),
+        getCollateralFromCrabAmount(toTokenAmount(crabQueuedShares, 18), contract, vault),
+        getWsqueethFromCrabAmount(toTokenAmount(crabQueuedShares, 18), contract),
       ])
 
       if (
@@ -370,6 +377,12 @@ export const useCurrentCrabPositionValueV2 = () => {
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
 
+      if (debtMigrated && collatMigrated && !collatMigrated?.isZero() && !debtMigrated?.isZero()) {
+        const ethDebtOne = getWSqueethPositionValueInETH(debtMigrated)
+        setCrabQueuedInEth(collatMigrated.minus(ethDebtOne))
+        setCrabQueuedInUsd(collatMigrated.minus(ethDebtOne).times(ethPrice))
+      }
+
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
       setUserMigratedSharesETH(
@@ -396,6 +409,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     balLoading,
     squeethInitialPrice,
     setCrabUsdValue,
+    crabQueuedShares,
   ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
