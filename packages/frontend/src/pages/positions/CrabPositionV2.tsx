@@ -47,7 +47,7 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
   }, [collatRatio, setStrategyData])
 
   const initiatedDepositAmount = toTokenAmount(usdcQueued, USDC_DECIMALS)
-  const initiatedWithdrawlAmount = toTokenAmount(crabQueued, 18).times(toTokenAmount(crabUsdValue, 18))
+  const initiatedWithdrawalAmount = toTokenAmount(crabQueued, 18).times(toTokenAmount(crabUsdValue, 18))
 
   return (
     <div className={classes.position} id="pos-page-crab">
@@ -129,7 +129,7 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
                 <InfoIcon fontSize="small" className={classes.infoIcon} />
               </Tooltip>
               <Typography variant="body1">
-                {!loading ? formatCurrency(Number(initiatedWithdrawlAmount)) : 'Loading'}
+                {!loading ? formatCurrency(Number(initiatedWithdrawalAmount)) : 'Loading'}
               </Typography>
             </div>
           )}
