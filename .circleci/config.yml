@@ -36,8 +36,7 @@ workflows:
       # - checkout-and-install-zen-bull-vault
       - zen-bull-vault-compile
       - zen-bull-vault-test
-        context:
-          - squeeth-monorepo-zen-bull-vault
+        context: squeeth-monorepo-zen-bull-vault
 
 jobs:
   # hardhat-build-test-report jobs
