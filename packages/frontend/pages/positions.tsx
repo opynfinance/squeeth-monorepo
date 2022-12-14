@@ -9,12 +9,7 @@ const PositionsPage = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   useInitCrabMigration()
 
-  if (address && supportedNetwork)
-    return (
-      <>
-        <Positions />
-      </>
-    )
+  if (address && supportedNetwork) return <Positions />
 
   return <ConnectWallet />
 }

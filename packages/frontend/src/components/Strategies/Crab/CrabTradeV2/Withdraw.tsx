@@ -18,6 +18,7 @@ import {
   currentCrabPositionValueAtomV2,
   isNettingAuctionLiveAtom,
   crabQueuedAtom,
+  minCrabAmountAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -88,6 +89,7 @@ const CrabWithdraw: React.FC = () => {
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
+  const minCrabAmountValue = useAtomValue(minCrabAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -297,8 +299,11 @@ const CrabWithdraw: React.FC = () => {
     }
   }, [useUsdc, crabAllowance, withdrawCrabAmount, crabQueueAllowance, useQueue])
 
+  const minCrabAmount = toTokenAmount(minCrabAmountValue, CRAB_TOKEN_DECIMALS)
+  const isWithdrawCrabAmountLessThanMinAllowed = withdrawCrabAmount.lt(minCrabAmount)
+
   useEffect(() => {
-    if (!useUsdc || isNettingAuctionLive) {
+    if (!useUsdc || isNettingAuctionLive || isWithdrawCrabAmountLessThanMinAllowed) {
       setQueueOptionAvailable(false)
       setUseQueue(false)
       return
@@ -311,7 +316,7 @@ const CrabWithdraw: React.FC = () => {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive])
+  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed])
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue) {
@@ -429,7 +434,7 @@ const CrabWithdraw: React.FC = () => {
                 <InfoIcon fontSize="medium" />
               </div>
               <Typography variant="caption" color="textSecondary" className={classes.infoText}>
-                Crab aims to earn yield in dollar terms. A crab position reduces ETH holdings when the price of ETH
+                Crab aims to earn premium in dollar terms. A crab position reduces ETH holdings when the price of ETH
                 increases. It increases ETH holdings when the price of ETH decreases.{' '}
                 <a
                   className={classes.link}
@@ -531,79 +536,90 @@ const CrabWithdraw: React.FC = () => {
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="24px" />}
-
-            <Box marginTop="24px">
-              {isRestricted ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={selectWallet}
-                  disabled={true}
-                  id="open-long-restricted-btn"
-                >
-                  {'Unavailable'}
-                </PrimaryButtonNew>
-              ) : !connected ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={selectWallet}
-                  disabled={!!txLoading}
-                  id="crab-select-wallet-btn"
-                >
-                  {'Connect Wallet'}
-                </PrimaryButtonNew>
-              ) : !supportedNetwork ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={() => {}}
-                  disabled={true}
-                  id="crab-unsupported-network-btn"
-                >
-                  {'Unsupported Network'}
-                </PrimaryButtonNew>
-              ) : (
-                <PrimaryButtonNew
-                  fullWidth
-                  id="crab-withdraw-btn"
-                  variant={withdrawBtnVariant}
-                  className={withdrawBtnClassName}
-                  onClick={withdraw}
-                  disabled={txLoading || !!withdrawError}
-                >
-                  {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW ? (
-                    <>
-                      Standard withdraw
-                      <Tooltip
-                        title={
-                          <div>
-                            Your withdrawal will be submitted via auction to avoid price impact. This may take until
-                            Tuesday.
-                          </div>
-                        }
-                        style={{ marginLeft: '8' }}
-                      >
-                        <InfoOutlinedIcon fontSize="small" />
-                      </Tooltip>
-                    </>
-                  ) : !txLoading &&
-                    (withdrawFundingWarning || withdrawPriceImpactWarning) &&
-                    withdrawStep === WithdrawSteps.WITHDRAW ? (
-                    'Withdraw anyway'
-                  ) : !txLoading ? (
-                    withdrawStep
-                  ) : (
-                    <CircularProgress color="primary" size="1.5rem" />
-                  )}
-                </PrimaryButtonNew>
+            <div className={classes.ctaSection}>
+              {useQueue && (
+                <div className={classes.queueNotice}>
+                  <Typography variant="subtitle2" color="primary">
+                    Your withdrawal will fully exit the strategy by Tuesday
+                  </Typography>
+                </div>
               )}
-            </Box>
+
+              {isRestricted && <RestrictionInfo marginTop="24px" />}
+
+              <div>
+                {isRestricted ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={selectWallet}
+                    disabled={true}
+                    id="open-long-restricted-btn"
+                  >
+                    {'Unavailable'}
+                  </PrimaryButtonNew>
+                ) : !connected ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={selectWallet}
+                    disabled={!!txLoading}
+                    id="crab-select-wallet-btn"
+                  >
+                    {'Connect Wallet'}
+                  </PrimaryButtonNew>
+                ) : !supportedNetwork ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={() => {}}
+                    disabled={true}
+                    id="crab-unsupported-network-btn"
+                  >
+                    {'Unsupported Network'}
+                  </PrimaryButtonNew>
+                ) : (
+                  <PrimaryButtonNew
+                    fullWidth
+                    id="crab-withdraw-btn"
+                    variant={withdrawBtnVariant}
+                    className={withdrawBtnClassName}
+                    onClick={withdraw}
+                    disabled={txLoading || !!withdrawError}
+                  >
+                    {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW ? (
+                      <>
+                        Standard withdraw
+                        <Tooltip
+                          title={
+                            <div>
+                              Your withdrawal will be submitted via auction to reduce price impact. This may take until
+                              Tuesday.
+                            </div>
+                          }
+                          style={{ marginLeft: '8' }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      </>
+                    ) : !txLoading &&
+                      (withdrawFundingWarning || withdrawPriceImpactWarning) &&
+                      withdrawStep === WithdrawSteps.WITHDRAW ? (
+                      'Withdraw anyway'
+                    ) : !txLoading ? (
+                      withdrawStep === WithdrawSteps.APPROVE ? (
+                        'Approve strategy to withdraw'
+                      ) : (
+                        'Withdraw'
+                      )
+                    ) : (
+                      <CircularProgress color="primary" size="1.5rem" />
+                    )}
+                  </PrimaryButtonNew>
+                )}
+              </div>
+            </div>
           </div>
-          {useQueue && (
-            <div className={classes.queueNotice}>Your withdrawal will fully exit the strategy by Tuesday</div>
-          )}
         </>
       )}
     </>

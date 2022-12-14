@@ -15,6 +15,7 @@ import { crabQueuedAtom, crabQueuedInUsdAtom, crabUSDValueAtom, usdcQueuedAtom }
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, USDC_DECIMALS } from '@constants/index'
 import { useTransactionStatus } from '@state/wallet/hooks'
+import { Tooltips } from '@constants/enums'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -126,14 +127,10 @@ const CrabPosition: React.FC = () => {
         </Box>
       ) : (
         <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px" flexWrap="wrap">
+          {/* hide position for dust amount */}
           {usdcQueued.isGreaterThan('100') ? (
             <Metric
-              label={
-                <MetricLabel
-                  label="Initiated Deposit"
-                  tooltipTitle="Your deposit has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday"
-                />
-              }
+              label={<MetricLabel label="Initiated Deposit" tooltipTitle={Tooltips.InitiatedDeposit} />}
               value={
                 <Box className={classes.queuedPosition}>
                   <Typography className={clsx(classes.metricValue, classes.white)}>
@@ -146,14 +143,10 @@ const CrabPosition: React.FC = () => {
               }
             />
           ) : null}
+          {/* hide position for dust amount */}
           {crabQueued.isGreaterThan('10000000000') ? (
             <Metric
-              label={
-                <MetricLabel
-                  label="Initiated Withdrawal"
-                  tooltipTitle="Your withdrawal has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday"
-                />
-              }
+              label={<MetricLabel label="Initiated Withdrawal" tooltipTitle={Tooltips.InitiatedWithdrawal} />}
               value={
                 <Box className={classes.queuedPosition}>
                   <Typography className={clsx(classes.metricValue, classes.white)}>

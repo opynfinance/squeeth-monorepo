@@ -52,13 +52,25 @@ export const useStyles = makeStyles((theme) =>
       fontWeight: 500,
       fontSize: '13px',
     },
+    ctaSection: {
+      marginTop: theme.spacing(3),
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '16px',
+    },
     queueNotice: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(1.5),
       padding: theme.spacing(2),
-      color: theme.palette.primary.main,
-      marginTop: theme.spacing(2),
       textAlign: 'center',
+    },
+    btnDefault: {
+      color: 'rgba(255, 255, 255, 0.4)',
+      border: '2px solid transparent',
+    },
+    btnActive: {
+      color: theme.palette.primary.main,
+      border: `2px solid ${theme.palette.primary.main}`,
     },
     btnDanger: {
       color: theme.palette.error.main,
@@ -81,14 +93,6 @@ export const useStyles = makeStyles((theme) =>
         borderColor: theme.palette.warning.main,
         backgroundColor: 'transparent',
       },
-    },
-    btnDefault: {
-      color: 'rgba(255, 255, 255, 0.4)',
-      border: '2px solid transparent',
-    },
-    btnActive: {
-      color: theme.palette.primary.main,
-      border: `2px solid ${theme.palette.primary.main}`,
     },
   }),
 )
