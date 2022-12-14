@@ -97,7 +97,7 @@ const ConfirmGraphic: React.FC<{ type?: ConfirmType }> = ({ type }) => {
           className={classes.img}
         />
         <Typography variant="body1" component="div">
-          Stay Squeethy!
+          Stay Bullish!
         </Typography>
       </div>
     )
