@@ -18,6 +18,7 @@ import {
   currentCrabPositionValueAtomV2,
   isNettingAuctionLiveAtom,
   crabQueuedAtom,
+  minCrabAmountAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -88,6 +89,7 @@ const CrabWithdraw: React.FC = () => {
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
+  const minCrabAmount = useAtomValue(minCrabAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
@@ -297,8 +299,10 @@ const CrabWithdraw: React.FC = () => {
     }
   }, [useUsdc, crabAllowance, withdrawCrabAmount, crabQueueAllowance, useQueue])
 
+  const isWithdrawCrabAmountLessThanMinAllowed = withdrawCrabAmount.lt(minCrabAmount)
+
   useEffect(() => {
-    if (!useUsdc || isNettingAuctionLive) {
+    if (!useUsdc || isNettingAuctionLive || isWithdrawCrabAmountLessThanMinAllowed) {
       setQueueOptionAvailable(false)
       setUseQueue(false)
       return
@@ -311,7 +315,7 @@ const CrabWithdraw: React.FC = () => {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive])
+  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed])
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue) {

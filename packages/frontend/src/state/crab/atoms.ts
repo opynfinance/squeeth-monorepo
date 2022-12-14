@@ -52,6 +52,8 @@ export const crabQueuedInUsdAtom = atom(BIG_ZERO)
 export const crabUSDValueAtom = atom(BIG_ZERO)
 
 export const isNettingAuctionLiveAtom = atom(false)
+export const minUSDCAmountAtom = atom(BIG_ZERO)
+export const minCrabAmountAtom = atom(BIG_ZERO)
 
 export const crabLoadingAtom = atom((get) => {
   const loading = get(loadingAtom)

@@ -39,6 +39,8 @@ import {
   isNettingAuctionLiveAtom,
   crabQueuedInEthAtom,
   crabQueuedInUsdAtom,
+  minUSDCAmountAtom,
+  minCrabAmountAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -367,7 +369,12 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
-        console.log('Price: ', ethPrice.toString(), collateralOne.minus(ethDebtOne).times(ethPrice).toString(), squeethInitialPrice.toString())
+        console.log(
+          'Price: ',
+          ethPrice.toString(),
+          collateralOne.minus(ethDebtOne).times(ethPrice).toString(),
+          squeethInitialPrice.toString(),
+        )
         setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
       }
 
@@ -990,6 +997,8 @@ export const useQueuedCrabPositionAndStatus = () => {
   const setUsdcQueued = useSetAtom(usdcQueuedAtom)
   const setCrabQueued = useSetAtom(crabQueuedAtom)
   const setNettingAuctionLive = useSetAtom(isNettingAuctionLiveAtom)
+  const setMinUSDCAmount = useSetAtom(minUSDCAmountAtom)
+  const setMinCrabAmount = useSetAtom(minCrabAmountAtom)
 
   const fetchAndStoreQueuedPosition = async () => {
     if (!contract || !address) return
@@ -997,11 +1006,21 @@ export const useQueuedCrabPositionAndStatus = () => {
     const usdcPromise = contract.methods.usdBalance(address).call()
     const crabPromise = contract.methods.crabBalance(address).call()
     const auctionStatusPromise = contract.methods.isAuctionLive().call()
+    const minUSDCAmountPromise = contract.methods.minUSDCAmount().call()
+    const minCrabAmountPromise = contract.methods.minCrabAmount().call()
 
-    const [usdcQueued, crabQueued, auctionStatus] = await Promise.all([usdcPromise, crabPromise, auctionStatusPromise])
+    const [usdcQueued, crabQueued, auctionStatus, minUSDCAmount, minCrabAmount] = await Promise.all([
+      usdcPromise,
+      crabPromise,
+      auctionStatusPromise,
+      minUSDCAmountPromise,
+      minCrabAmountPromise,
+    ])
     setUsdcQueued(new BigNumber(usdcQueued))
     setCrabQueued(new BigNumber(crabQueued))
     setNettingAuctionLive(auctionStatus)
+    setMinUSDCAmount(new BigNumber(minUSDCAmount))
+    setMinCrabAmount(new BigNumber(minCrabAmount))
   }
 
   return fetchAndStoreQueuedPosition

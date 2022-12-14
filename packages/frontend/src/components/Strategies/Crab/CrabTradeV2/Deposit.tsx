@@ -12,7 +12,12 @@ import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
-import { crabStrategySlippageAtomV2, isNettingAuctionLiveAtom, usdcQueuedAtom } from '@state/crab/atoms'
+import {
+  crabStrategySlippageAtomV2,
+  isNettingAuctionLiveAtom,
+  usdcQueuedAtom,
+  minUSDCAmountAtom,
+} from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
   useFlashDepositV2,
@@ -83,6 +88,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
+  const minUSDCAmount = useAtomValue(minUSDCAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
@@ -285,8 +291,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     }
   }, [useUsdc, usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
 
+  const isDepositAmountLessThanMinAllowed = depositAmountBN.lt(minUSDCAmount)
+
   useEffect(() => {
-    if (!useUsdc || isNettingAuctionLive) {
+    if (!useUsdc || isNettingAuctionLive || isDepositAmountLessThanMinAllowed) {
       setQueueOptionAvailable(false)
       setUseQueue(false)
       return
@@ -299,7 +307,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [depositPriceImpact, useUsdc, isNettingAuctionLive])
+  }, [depositPriceImpact, useUsdc, isNettingAuctionLive, isDepositAmountLessThanMinAllowed])
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue) {
