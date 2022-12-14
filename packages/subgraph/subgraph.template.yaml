@@ -284,6 +284,8 @@ dataSources:
           handler: handleAuctionRepayAndWithdrawFromLeverage
         - event: SetAuction(address,address)
           handler: handleSetAuction
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
       file: ./src/bullStrategy.ts
   - kind: ethereum/contract
     name: AuctionBull
