@@ -65,7 +65,8 @@ enum WithdrawSteps {
   WITHDRAW = 'Withdraw',
 }
 
-const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.OTC_PRICE_IMPACT_THRESHOLD) || 1
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
+console.log(OTC_PRICE_IMPACT_THRESHOLD)
 
 const CrabWithdraw: React.FC = () => {
   const classes = useStyles()
