@@ -27,6 +27,7 @@ import { indexAtom } from 'src/state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
+import CrabPositionV2 from './CrabPositionV2'
 import YourVaults from './YourVaults'
 import LongSqueeth from './LongSqueeth'
 import ShortSqueeth from './ShortSqueeth'
@@ -41,7 +42,6 @@ import {
 } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
 import { crabQueuedInEthAtom, crabQueuedInUsdAtom } from '@state/crab/atoms'
 
@@ -171,7 +171,7 @@ export default function Positions() {
         )}
 
         {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
-          <CrabPosition
+          <CrabPositionV2
             depositedEth={depositedEthV2}
             depositedUsd={depositedUsdV2}
             loading={isCrabV2loading}

@@ -92,6 +92,8 @@ export enum Tooltips {
   osqthRefVol = 'Squeeth reference volatility based on deribit options and squeeth replicating portfolio. Squeeth ref vol is calculated/refreshed every 5 minutes.',
   ETHUp2x = 'The value of your position if ETH goes up 2x, not including premiums',
   ETHDown50 = 'The value of your position if ETH goes down 50%, not including premiums',
+  InitiatedDeposit = 'Your deposit has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday',
+  InitiatedWithdrawal = 'Your withdrawal has been initiated and will be submitted via auction to avoid price impact. This may take up until Tuesday',
 }
 
 export enum Links {
