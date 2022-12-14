@@ -13,20 +13,22 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
 import debounce from 'lodash/debounce'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
+import { BullTradeType, BullTransactionConfirmation } from './index'
 import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
 
-const BullDepsoit: React.FC = () => {
+const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
 
   const depositAmountRef = useRef('0')
   const [depositAmount, setDepositAmount] = useState('0')
+  const ongoingTransactionAmountRef = useRef(new BigNumber(0))
   const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
@@ -75,9 +77,21 @@ const BullDepsoit: React.FC = () => {
     debouncedDepositQuote(ethToDeposit)
   }
 
+  const onTxnConfirmed = useCallback(() => {
+    depositAmountRef.current = '0'
+    setDepositAmount('0')
+    onTxnConfirm({
+      status: true,
+      amount: ongoingTransactionAmountRef.current,
+      tradeType: BullTradeType.Deposit,
+    })
+    ongoingTransactionAmountRef.current = new BigNumber(0)
+  }, [onTxnConfirm])
+
   const onDepositClick = async () => {
     setTxLoading(true)
     try {
+      ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
       await bullFlashDeposit(
         quote.ethToCrab,
         quote.minEthFromSqth,
@@ -85,6 +99,7 @@ const BullDepsoit: React.FC = () => {
         quote.wPowerPerpPoolFee,
         quote.usdcPoolFee,
         new BigNumber(depositAmountRef.current),
+        onTxnConfirmed,
       )
     } catch (e) {
       console.log(e)
@@ -223,4 +238,4 @@ const BullDepsoit: React.FC = () => {
   )
 }
 
-export default BullDepsoit
+export default BullDeposit
