@@ -438,7 +438,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   </Tooltip>
                 </div>
                 <Typography variant="caption" className={classes.infoText}>
-                  Crab yield is currently lower than usual. Consider depositing later.
+                  Crab premium is currently lower than usual. Consider depositing later.
                 </Typography>
               </div>
             )}
