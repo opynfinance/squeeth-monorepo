@@ -87,7 +87,7 @@ function MyApp({ Component, pageProps }: any) {
       router.events.off('routeChangeComplete', onRouteChangeComplete)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [track])
 
   return (
     <RestrictUserProvider>
