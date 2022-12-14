@@ -579,7 +579,7 @@ const CrabWithdraw: React.FC = () => {
                       <Tooltip
                         title={
                           <div>
-                            Your withdrawal will be submitted via auction to avoid price impact. This may take until
+                            Your withdrawal will be submitted via auction to reduce price impact. This may take until
                             Tuesday.
                           </div>
                         }
