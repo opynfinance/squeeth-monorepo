@@ -11,10 +11,9 @@ import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
 import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { FlashBull } from "../../src/FlashBull.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -27,22 +26,23 @@ contract TestUtil is Test {
     uint128 internal constant ONE = 1e18;
     uint32 internal constant TWAP = 420;
     uint256 internal constant INDEX_SCALE = 10000;
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     address internal eToken;
     address internal dToken;
 
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal zenBullStrategy;
     Controller internal controller;
     CrabStrategyV2 internal crabV2;
 
     constructor(
-        address payable _bullStrategy,
+        address payable _zenBullStrategy,
         address payable _controller,
         address _eToken,
         address _dToken,
         address payable _crabV2
     ) {
-        bullStrategy = BullStrategy(_bullStrategy);
+        zenBullStrategy = ZenBullStrategy(_zenBullStrategy);
         controller = Controller(_controller);
         eToken = _eToken;
         dToken = _dToken;
@@ -66,7 +66,7 @@ contract TestUtil is Test {
     {
         uint256 wethToLend;
         uint256 usdcToBorrow;
-        if (IERC20(bullStrategy).totalSupply() == 0) {
+        if (IERC20(zenBullStrategy).totalSupply() == 0) {
             {
                 uint256 ethUsdPrice = UniOracle._getTwap(
                     controller.ethQuoteCurrencyPool(),
@@ -88,16 +88,19 @@ contract TestUtil is Test {
                         squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(crabV2.totalSupply());
-                wethToLend = bullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice).wdiv(
-                    ethUsdPrice
+                wethToLend = zenBullStrategy.TARGET_CR().wmul(_crabToDeposit).wmul(crabUsdPrice)
+                    .wdiv(ethUsdPrice);
+                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(zenBullStrategy.TARGET_CR()).div(
+                    WETH_DECIMALS_DIFF
                 );
-                usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(bullStrategy.TARGET_CR()).div(1e12);
             }
         } else {
-            uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
-            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(share)
-                .wdiv(uint256(1e18).sub(share));
-            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(bullStrategy)).wmul(share).wdiv(
+            uint256 share =
+                _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
+            wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy)).wmul(
+                share
+            ).wdiv(uint256(1e18).sub(share));
+            usdcToBorrow = IEulerDToken(dToken).balanceOf(address(zenBullStrategy)).wmul(share).wdiv(
                 uint256(1e18).sub(share)
             );
         }
@@ -139,28 +142,29 @@ contract TestUtil is Test {
             ethInCrab.wmul(ethUsdPrice).sub(squeethInCrab.wmul(squeethEthPrice).wmul(ethUsdPrice))
         ).wdiv(crabV2.totalSupply());
         uint256 totalEthDelta = (
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)
+            IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy)).wmul(ethUsdPrice)
         ).wdiv(
             _crabToDeposit.wmul(crabUsdPrice).add(
-                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).wmul(ethUsdPrice)
-            ).sub(IEulerDToken(dToken).balanceOf(address(bullStrategy)).mul(1e12))
+                IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy)).wmul(ethUsdPrice)
+            ).sub(IEulerDToken(dToken).balanceOf(address(zenBullStrategy)).mul(WETH_DECIMALS_DIFF))
         );
 
         return totalEthDelta;
     }
 
     function calcWethToWithdraw(uint256 _bullAmount) external view returns (uint256) {
-        return (_bullAmount.wdiv(bullStrategy.totalSupply())).wmul(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
+        return (_bullAmount.wdiv(zenBullStrategy.totalSupply())).wmul(
+            IEulerEToken(eToken).balanceOfUnderlying(address(zenBullStrategy))
         );
     }
 
     function calcBullToMint(uint256 _crabToDeposit) external view returns (uint256) {
-        if (IERC20(bullStrategy).totalSupply() == 0) {
+        if (IERC20(zenBullStrategy).totalSupply() == 0) {
             return _crabToDeposit;
         } else {
-            uint256 share = _crabToDeposit.wdiv(bullStrategy.getCrabBalance().add(_crabToDeposit));
-            return share.wmul(bullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
+            uint256 share =
+                _crabToDeposit.wdiv(zenBullStrategy.getCrabBalance().add(_crabToDeposit));
+            return share.wmul(zenBullStrategy.totalSupply()).wdiv(uint256(1e18).sub(share));
         }
     }
 
@@ -199,7 +203,7 @@ contract TestUtil is Test {
             controller.wPowerPerpPool(), controller.wPowerPerp(), controller.weth(), TWAP, false
         );
 
-        uint256 feeRate = IController(bullStrategy.powerTokenController()).feeRate();
+        uint256 feeRate = IController(zenBullStrategy.powerTokenController()).feeRate();
         uint256 feeAdjustment = wSqueethEthPrice.mul(feeRate).div(10000);
 
         wSqueethToMint = _depositedAmount.wmul(_strategyDebtAmount).wdiv(

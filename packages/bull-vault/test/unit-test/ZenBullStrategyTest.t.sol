@@ -16,30 +16,30 @@ import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
 import { SwapRouter } from "v3-periphery/SwapRouter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
-import { FlashBull } from "../../src/FlashBull.sol";
+import { ZenEmergencyShutdown } from "../../src/ZenEmergencyShutdown.sol";
+import { FlashZen } from "../../src/FlashZen.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
 import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
- * @notice Ropsten fork testing
+ * @notice mainnet fork testing
  */
-contract BullStrategyTest is Test {
+contract ZenBullStrategyTest is Test {
     using StrategyMath for uint256;
 
     uint128 internal constant ONE = 1e18;
 
     TestUtil internal testUtil;
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    EmergencyShutdown internal emergencyShutdown;
-    FlashBull internal flashBull;
+    ZenEmergencyShutdown internal emergencyShutdown;
+    FlashZen internal flashBull;
 
     uint256 internal bullOwnerPk;
     uint256 internal deployerPk;
@@ -79,16 +79,18 @@ contract BullStrategyTest is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy.transferOwnership(bullOwner);
         address factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-        flashBull = new FlashBull(address(bullStrategy), factory);
+        flashBull = new FlashZen(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
         emergencyShutdown =
-        new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        emergencyShutdown.transferOwnership(bullOwner);
 
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
@@ -128,7 +130,7 @@ contract BullStrategyTest is Test {
 
     function testDepositEthIntoCrabWhenFeeIsZero() public {
         uint256 ethToDeposit = 10e18;
-        (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
+        (uint256 ethInCrab,) = testUtil.getCrabVaultDetails();
 
         uint256 crabShare = ethToDeposit.wdiv(ethInCrab.add(ethToDeposit));
         uint256 crabToBeMinted =
@@ -209,7 +211,7 @@ contract BullStrategyTest is Test {
         uint256 totalEthToBull =
             testUtil.calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint);
 
-        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
+        FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: _ethToCrab,
             minEthFromSqth: 0,
             minEthFromUsdc: 0,

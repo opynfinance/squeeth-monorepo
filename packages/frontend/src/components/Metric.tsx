@@ -9,7 +9,7 @@ interface StyleProps {
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: (props: StyleProps): string => (props.isSmall ? '16px 20px' : '20px 24px'),
+      padding: (props: StyleProps): string => (props.isSmall ? '16px 16px' : '20px 24px'),
       backgroundColor: theme.palette.background.stone,
       borderRadius: '12px',
     },

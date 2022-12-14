@@ -2,9 +2,7 @@
 
 pragma solidity =0.7.6;
 
-import { ILeverageBull } from "./ILeverageBull.sol";
-
-interface IBullStrategy {
+interface IZenBullStrategy {
     function deposit(uint256 _crabAmount) external payable;
     function withdraw(uint256 _bullAmount) external;
     function crab() external view returns (address);
@@ -21,11 +19,14 @@ interface IBullStrategy {
     function getCrabBalance() external view returns (uint256);
     function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
         external;
+    function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
+        external;
     function shutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind) external;
     function hasRedeemedInShutdown() external view returns (bool);
     function depositAndBorrowFromLeverage(uint256 _wethToDeposit, uint256 _usdcToBorrow) external;
     function TARGET_CR() external view returns (uint256);
     function depositEthIntoCrab(uint256 _ethToDeposit) external;
     function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
-        external;
+        external
+        returns (uint256);
 }

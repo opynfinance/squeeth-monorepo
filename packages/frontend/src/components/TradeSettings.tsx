@@ -86,6 +86,7 @@ export const TradeSettings: React.FC<TradeSettingsProps> = ({ isCrab, setCrabSli
         onClose={handleClose}
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
+        disableScrollLock
       >
         <DialogTitle className={classes.dialogTitle} id="alert-dialog-title">
           <p>Slippage Tolerance</p>

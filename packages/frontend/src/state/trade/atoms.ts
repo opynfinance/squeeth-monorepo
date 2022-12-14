@@ -10,7 +10,7 @@ const quoteEmptyState = {
   amountOut: BIG_ZERO,
   minimumAmountOut: BIG_ZERO,
   priceImpact: '0',
-  pools: Array<Array<any>>()
+  pools: Array<Array<any>>(),
 }
 
 const sellCloseEmptyState = {
@@ -25,7 +25,7 @@ export const tradeLoadingAtom = atom(false)
 export const tradeSuccessAtom = atom(false)
 export const tradeCompletedAtom = atomWithReset(false)
 export const openPositionAtom = atom(0)
-export const quoteAtom = atom(quoteEmptyState)
+export const quoteAtom = atomWithReset(quoteEmptyState)
 export const inputQuoteLoadingAtom = atom(false)
 export const squeethExposureAtom = atom(0)
 export const confirmedAmountAtom = atom('0')

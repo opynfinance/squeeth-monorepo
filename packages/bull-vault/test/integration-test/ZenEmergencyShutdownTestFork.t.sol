@@ -13,10 +13,10 @@ import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
 import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
+import { ZenEmergencyShutdown } from "../../src/ZenEmergencyShutdown.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -26,14 +26,14 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract ZenEmergencyShutdownTestFork is Test {
     using StrategyMath for uint256;
 
     TestUtil internal testUtil;
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    EmergencyShutdown internal emergencyShutdown;
+    ZenEmergencyShutdown internal emergencyShutdown;
     Quoter internal quoter;
 
     uint256 internal bullOwnerPk;
@@ -84,7 +84,8 @@ contract BullStrategyTestFork is Test {
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         crabOwner = crabV2.owner();
         bullStrategy =
-        new BullStrategy(bullOwner, address(crabV2), address(controller), euler, eulerMarketsModule);
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -92,8 +93,8 @@ contract BullStrategyTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown =
-        new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984, bullOwner);
-
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        emergencyShutdown.transferOwnership(bullOwner);
         testUtil =
         new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
 
@@ -136,8 +137,6 @@ contract BullStrategyTestFork is Test {
     function testSetUpBullStrategy() public {
         assertTrue(bullStrategy.owner() == bullOwner);
         assertTrue(bullStrategy.strategyCap() == cap);
-        assertTrue(emergencyShutdown.owner() == bullOwner);
-        assertTrue(emergencyShutdown.bullStrategy() == address(bullStrategy));
     }
 
     function testSetUpEmergencyShutdown() public {
@@ -171,7 +170,7 @@ contract BullStrategyTestFork is Test {
     }
 
     function testRedeemShortShutdownCallerNotwner() public {
-        EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
+        ZenEmergencyShutdown.ShutdownParams memory params = ZenEmergencyShutdown.ShutdownParams({
             shareToUnwind: ONE,
             ethLimitPrice: 1000,
             ethPoolFee: uint24(3000)
@@ -203,13 +202,31 @@ contract BullStrategyTestFork is Test {
     }
 
     function testWithdrawalShutdown() public {
+        uint256 crabToDeposit = 10e18;
+        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
+        uint256 userEthBalanceBefore = address(user1).balance;
+        vm.startPrank(user1);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDeposit);
+        vm.stopPrank();
+
+        uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
+
+        assertEq(bullCrabBalanceAfter.sub(crabToDeposit), bullCrabBalanceBefore);
+        assertEq(bullStrategy.balanceOf(user1), crabToDeposit);
+        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
+        assertTrue(
+            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))) <= 1
+        );
+        assertEq(userEthBalanceBefore.sub(address(user1).balance), wethToLend);
+        assertEq(IERC20(usdc).balanceOf(user1), usdcToBorrow);
+
         vm.startPrank(controllerOwner);
         controller.shutDown();
         assertEq(controller.isShutDown(), true);
         vm.stopPrank();
 
         vm.startPrank(user1);
-        vm.expectRevert(bytes("BS7"));
+        vm.expectRevert();
         bullStrategy.withdraw(0);
         vm.stopPrank();
     }
@@ -294,7 +311,7 @@ contract BullStrategyTestFork is Test {
         uint256 ethInLeverage = bullStrategy.calcWethToWithdraw(percentToRedeem);
         uint256 contractEthBefore = address(bullStrategy).balance;
 
-        EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
+        ZenEmergencyShutdown.ShutdownParams memory params = ZenEmergencyShutdown.ShutdownParams({
             shareToUnwind: percentToRedeem,
             ethLimitPrice: effectivePrice.wmul(0.9e18),
             ethPoolFee: uint24(3000)
@@ -319,8 +336,8 @@ contract BullStrategyTestFork is Test {
 
         contractEthBefore = contractEthAfter;
         uint256 percentBullToRedeem = 0.5e18; // 50%
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(address(user1));
-        uint256 bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
+        uint256 userBullBalanceBeforeShutdown = bullStrategy.balanceOf(address(user1));
+        uint256 bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBeforeShutdown);
         uint256 expectedProceeds =
             bullToRedeem.wdiv(bullStrategy.totalSupply()).wmul(contractEthBefore);
         uint256 userEthBalanceBefore = address(user1).balance;
@@ -333,7 +350,7 @@ contract BullStrategyTestFork is Test {
         uint256 userBullBalanceAfter = bullStrategy.balanceOf(address(user1));
         //user checks
         assertEq(address(user1).balance, userEthBalanceBefore.add(expectedProceeds));
-        assertEq(userBullBalanceAfter, userBullBalanceBefore.sub(bullToRedeem));
+        assertEq(userBullBalanceAfter, userBullBalanceBeforeShutdown.sub(bullToRedeem));
         //contract state checks
         assertEq(contractEthAfter, contractEthBefore.sub(expectedProceeds));
         assertEq(bullSupplyAfter, bullSupplyBefore.sub(bullToRedeem));
@@ -344,8 +361,8 @@ contract BullStrategyTestFork is Test {
 
         contractEthBefore = contractEthAfter;
         percentBullToRedeem = 1e18; // 100%
-        userBullBalanceBefore = bullStrategy.balanceOf(address(user1));
-        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
+        userBullBalanceBeforeShutdown = bullStrategy.balanceOf(address(user1));
+        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBeforeShutdown);
         expectedProceeds = bullToRedeem.wdiv(bullStrategy.totalSupply()).wmul(contractEthBefore);
         userEthBalanceBefore = address(user1).balance;
         bullSupplyBefore = bullStrategy.totalSupply();
@@ -357,7 +374,7 @@ contract BullStrategyTestFork is Test {
         userBullBalanceAfter = bullStrategy.balanceOf(address(user1));
         //user checks
         assertEq(address(user1).balance, userEthBalanceBefore.add(expectedProceeds));
-        assertEq(userBullBalanceAfter, userBullBalanceBefore.sub(bullToRedeem));
+        assertEq(userBullBalanceAfter, userBullBalanceBeforeShutdown.sub(bullToRedeem));
         //contract state checks
         assertEq(contractEthAfter, contractEthBefore.sub(expectedProceeds));
         assertEq(bullSupplyAfter, bullSupplyBefore.sub(bullToRedeem));
@@ -447,9 +464,9 @@ contract BullStrategyTestFork is Test {
 
             uint256 totalEthInLeverage = bullStrategy.calcWethToWithdraw(ONE);
             uint256 ethInLeverage = bullStrategy.calcWethToWithdraw(percentToRedeem);
-            uint256 contractEthBefore = address(bullStrategy).balance;
+            uint256 contractEthBeforeRedeem = address(bullStrategy).balance;
 
-            EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
+            ZenEmergencyShutdown.ShutdownParams memory params = ZenEmergencyShutdown.ShutdownParams({
                 shareToUnwind: percentToRedeem,
                 ethLimitPrice: effectivePrice.wmul(0.9e18),
                 ethPoolFee: uint24(3000)
@@ -458,12 +475,12 @@ contract BullStrategyTestFork is Test {
             emergencyShutdown.redeemShortShutdown(params);
             vm.stopPrank();
 
-            uint256 contractEthAfter = address(bullStrategy).balance;
+            uint256 contractEthAfterRedeem = address(bullStrategy).balance;
 
             assertEq(
-                contractEthAfter,
+                contractEthAfterRedeem,
                 ethFromCrabRedemption.add(ethInLeverage.sub(expectedEthToPay)).add(
-                    contractEthBefore
+                    contractEthBeforeRedeem
                 )
             );
             assertEq(
@@ -508,9 +525,9 @@ contract BullStrategyTestFork is Test {
 
             uint256 totalEthInLeverage = bullStrategy.calcWethToWithdraw(ONE);
             uint256 ethInLeverage = bullStrategy.calcWethToWithdraw(percentToRedeem);
-            uint256 contractEthBefore = address(bullStrategy).balance;
+            uint256 contractEthBeforeRedeem = address(bullStrategy).balance;
 
-            EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
+            ZenEmergencyShutdown.ShutdownParams memory params = ZenEmergencyShutdown.ShutdownParams({
                 shareToUnwind: percentToRedeem,
                 ethLimitPrice: effectivePrice.wmul(0.9e18),
                 ethPoolFee: uint24(3000)
@@ -519,12 +536,12 @@ contract BullStrategyTestFork is Test {
             emergencyShutdown.redeemShortShutdown(params);
             vm.stopPrank();
 
-            uint256 contractEthAfter = address(bullStrategy).balance;
+            uint256 contractEthAfterRedeem = address(bullStrategy).balance;
 
             assertEq(
-                contractEthAfter,
+                contractEthAfterRedeem,
                 ethFromCrabRedemption.add(ethInLeverage.sub(expectedEthToPay)).add(
-                    contractEthBefore
+                    contractEthBeforeRedeem
                 )
             );
             assertEq(
@@ -549,7 +566,7 @@ contract BullStrategyTestFork is Test {
 
         {
             vm.startPrank(bullOwner);
-            EmergencyShutdown.ShutdownParams memory params = EmergencyShutdown.ShutdownParams({
+            ZenEmergencyShutdown.ShutdownParams memory params = ZenEmergencyShutdown.ShutdownParams({
                 shareToUnwind: ONE,
                 ethLimitPrice: 0,
                 ethPoolFee: uint24(3000)
@@ -563,8 +580,8 @@ contract BullStrategyTestFork is Test {
 
         uint256 contractEthBefore = address(bullStrategy).balance;
         uint256 percentBullToRedeem = 0.5e18; // 50%
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(address(user1));
-        uint256 bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
+        uint256 userBullBalanceBeforeShutdown = bullStrategy.balanceOf(address(user1));
+        uint256 bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBeforeShutdown);
         uint256 expectedProceeds =
             bullToRedeem.wdiv(bullStrategy.totalSupply()).wmul(contractEthBefore);
         uint256 userEthBalanceBefore = address(user1).balance;
@@ -577,7 +594,7 @@ contract BullStrategyTestFork is Test {
         uint256 userBullBalanceAfter = bullStrategy.balanceOf(address(user1));
         //user checks
         assertEq(address(user1).balance, userEthBalanceBefore.add(expectedProceeds));
-        assertEq(userBullBalanceAfter, userBullBalanceBefore.sub(bullToRedeem));
+        assertEq(userBullBalanceAfter, userBullBalanceBeforeShutdown.sub(bullToRedeem));
         //contract state checks
         assertEq(contractEthAfter, contractEthBefore.sub(expectedProceeds));
         assertEq(bullSupplyAfter, bullSupplyBefore.sub(bullToRedeem));
@@ -588,8 +605,8 @@ contract BullStrategyTestFork is Test {
 
         contractEthBefore = contractEthAfter;
         percentBullToRedeem = 1e18; // 100%
-        userBullBalanceBefore = bullStrategy.balanceOf(address(user2));
-        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
+        userBullBalanceBeforeShutdown = bullStrategy.balanceOf(address(user2));
+        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBeforeShutdown);
         expectedProceeds = bullToRedeem.wdiv(bullStrategy.totalSupply()).wmul(contractEthBefore);
         userEthBalanceBefore = address(user2).balance;
         bullSupplyBefore = bullStrategy.totalSupply();
@@ -601,7 +618,7 @@ contract BullStrategyTestFork is Test {
         userBullBalanceAfter = bullStrategy.balanceOf(address(user2));
         //user checks
         assertEq(address(user2).balance, userEthBalanceBefore.add(expectedProceeds));
-        assertEq(userBullBalanceAfter, userBullBalanceBefore.sub(bullToRedeem));
+        assertEq(userBullBalanceAfter, userBullBalanceBeforeShutdown.sub(bullToRedeem));
         //contract state checks
         assertEq(contractEthAfter, contractEthBefore.sub(expectedProceeds));
         assertEq(bullSupplyAfter, bullSupplyBefore.sub(bullToRedeem));
@@ -612,8 +629,8 @@ contract BullStrategyTestFork is Test {
 
         contractEthBefore = contractEthAfter;
         percentBullToRedeem = 1e18; // 100%
-        userBullBalanceBefore = bullStrategy.balanceOf(address(user1));
-        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBefore);
+        userBullBalanceBeforeShutdown = bullStrategy.balanceOf(address(user1));
+        bullToRedeem = percentBullToRedeem.wmul(userBullBalanceBeforeShutdown);
         expectedProceeds = bullToRedeem.wdiv(bullStrategy.totalSupply()).wmul(contractEthBefore);
         userEthBalanceBefore = address(user1).balance;
         bullSupplyBefore = bullStrategy.totalSupply();
@@ -625,7 +642,7 @@ contract BullStrategyTestFork is Test {
         userBullBalanceAfter = bullStrategy.balanceOf(address(user1));
         //user checks
         assertEq(address(user1).balance, userEthBalanceBefore.add(expectedProceeds));
-        assertEq(userBullBalanceAfter, userBullBalanceBefore.sub(bullToRedeem));
+        assertEq(userBullBalanceAfter, userBullBalanceBeforeShutdown.sub(bullToRedeem));
         //contract state checks
         assertEq(contractEthAfter, contractEthBefore.sub(expectedProceeds));
         assertEq(bullSupplyAfter, bullSupplyBefore.sub(bullToRedeem));
