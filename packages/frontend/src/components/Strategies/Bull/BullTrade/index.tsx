@@ -1,27 +1,12 @@
-import { Box, Tooltip, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
-import React, { useRef, useState } from 'react'
-import { useAtomValue } from 'jotai'
-import InfoIcon from '@material-ui/icons/Info'
+import React, { useState } from 'react'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import { TradeSettings } from '@components/TradeSettings'
-import RestrictionInfo from '@components/RestrictionInfo'
-import { InputToken } from '@components/InputNew'
-import { LinkWrapper } from '@components/LinkWrapper'
-import Metric from '@components/Metric'
-import { useSelectWallet } from '@state/wallet/hooks'
-import { indexAtom } from '@state/controller/atoms'
-import { BIG_ZERO } from '@constants/index'
-import { toTokenAmount } from '@utils/calculations'
-import { formatNumber } from '@utils/formatter'
-import ethLogo from 'public/images/eth-logo.svg'
-import { useBullFlashDeposit, useGetFlashBulldepositParams } from '@state/bull/hooks'
-import debounce from 'lodash/debounce'
-import BullDepsoit from './Deposit'
+import { useTransactionStatus } from '@state/wallet/hooks'
+import BullDeposit from './Deposit'
 import BullWithdraw from './Withdraw'
 
 const useStyles = makeStyles((theme) =>
@@ -73,25 +58,38 @@ type BullTrade = {
   depositedAmount: BigNumber
 }
 
-enum BullTradeType {
+export enum BullTradeType {
   Deposit = 'Deposit',
   Withdraw = 'Withdraw',
+}
+
+export interface BullTransactionConfirmation {
+  status: boolean
+  amount: BigNumber
+  tradeType: BullTradeType
 }
 
 const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
   const isDeposit = tradeType === BullTradeType.Deposit
   const tabValue = tradeType === BullTradeType.Deposit ? 0 : 1
+  const [confirmedTransactionData, setConfirmedTransactionData] = useState<BullTransactionConfirmation | undefined>()
+  const { confirmed, transactionData, resetTransactionData } = useTransactionStatus()
 
   const classes = useStyles()
-  const confirmed = false
 
   return (
     <>
-      {confirmed ? (
+      {confirmed && confirmedTransactionData?.status ? (
         <>
-          <Confirmed confirmationMessage={`Confirmation Message`} txnHash={''} confirmType={ConfirmType.BULL} />
-          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained">
+          <Confirmed
+            confirmationMessage={`${
+              confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
+            } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
+            txnHash={transactionData?.hash ?? ''}
+            confirmType={ConfirmType.BULL}
+          />
+          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={resetTransactionData}>
             Close
           </PrimaryButtonNew>
         </>
@@ -108,7 +106,11 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
             <SqueethTabNew id="bull-deposit-tab" label="Deposit" />
             <SqueethTabNew id="bull-withdraw-tab" label="Withdraw" />
           </SqueethTabsNew>
-          {isDeposit ? <BullDepsoit /> : <BullWithdraw />}
+          {isDeposit ? (
+            <BullDeposit onTxnConfirm={setConfirmedTransactionData} />
+          ) : (
+            <BullWithdraw onTxnConfirm={setConfirmedTransactionData} />
+          )}
         </>
       )}
     </>

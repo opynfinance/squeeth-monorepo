@@ -13,7 +13,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
@@ -25,11 +25,13 @@ import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
+import { BullTradeType, BullTransactionConfirmation } from './index'
 
-const BullWithdraw: React.FC = () => {
+const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
 
   const withdrawAmountRef = useRef('0')
+  const ongoingTransactionAmountRef = useRef(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState('0')
   const [txLoading, setTxLoading] = useState(false)
 
@@ -82,15 +84,29 @@ const BullWithdraw: React.FC = () => {
     debouncedDepositQuote(_bullToWithdraw.toString())
   }
 
+  const onTxnConfirmed = useCallback(() => {
+    withdrawAmountRef.current = '0'
+    setWithdrawAmount('0')
+    onTxnConfirm({
+      status: true,
+      amount: ongoingTransactionAmountRef.current,
+      tradeType: BullTradeType.Withdraw,
+    })
+    ongoingTransactionAmountRef.current = new BigNumber(0)
+  }, [onTxnConfirm])
+
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
+      ongoingTransactionAmountRef.current = new BigNumber(withdrawAmountRef.current)
+      console.log('withdrawAmountRef.current', withdrawAmountRef.current)
       await bullFlashWithdraw(
         new BigNumber(withdrawAmountRef.current),
         quote.maxEthForWPowerPerp,
         quote.maxEthForUsdc,
         quote.wPowerPerpPoolFee,
         quote.usdcPoolFee,
+        onTxnConfirmed,
       )
     } catch (e) {
       console.log(e)
