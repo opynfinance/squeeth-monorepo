@@ -210,6 +210,8 @@ jobs:
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
+      - checkout:
+          path: ~/squeeth
       - run:
           name: build
           comamnd: forge build
