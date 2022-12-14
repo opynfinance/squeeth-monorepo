@@ -503,77 +503,86 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="24px" />}
-
-            <Box marginTop="24px">
-              {isRestricted ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={selectWallet}
-                  disabled={true}
-                  id="open-long-restricted-btn"
-                >
-                  {'Unavailable'}
-                </PrimaryButtonNew>
-              ) : !connected ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={selectWallet}
-                  disabled={!!txLoading}
-                  id="crab-select-wallet-btn"
-                >
-                  {'Connect Wallet'}
-                </PrimaryButtonNew>
-              ) : !supportedNetwork ? (
-                <PrimaryButtonNew
-                  fullWidth
-                  variant="contained"
-                  onClick={() => {}}
-                  disabled={true}
-                  id="crab-unsupported-network-btn"
-                >
-                  {'Unsupported Network'}
-                </PrimaryButtonNew>
-              ) : (
-                <PrimaryButtonNew
-                  fullWidth
-                  id="crab-deposit-btn"
-                  variant={depositBtnVariant}
-                  className={depositBtnClassName}
-                  onClick={depositTX}
-                  disabled={txLoading || !!depositError}
-                >
-                  {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT ? (
-                    <>
-                      Standard deposit
-                      <Tooltip
-                        title={
-                          <div>
-                            Your deposit will be submitted via auction to reduce price impact. This may take until
-                            Tuesday.
-                          </div>
-                        }
-                        style={{ marginLeft: '8' }}
-                      >
-                        <InfoOutlinedIcon fontSize="small" />
-                      </Tooltip>
-                    </>
-                  ) : !txLoading &&
-                    (depositFundingWarning || depositPriceImpactWarning) &&
-                    depositStep === DepositSteps.DEPOSIT ? (
-                    'Deposit anyway'
-                  ) : !txLoading ? (
-                    depositStep
-                  ) : (
-                    <CircularProgress color="primary" size="1.5rem" />
-                  )}
-                </PrimaryButtonNew>
+            <div className={classes.ctaSection}>
+              {useQueue && (
+                <div className={classes.queueNotice}>
+                  <Typography variant="subtitle2" color="primary">
+                    Your deposit will fully enter the strategy by Tuesday
+                  </Typography>
+                </div>
               )}
-            </Box>
+
+              {isRestricted && <RestrictionInfo />}
+
+              <div>
+                {isRestricted ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={selectWallet}
+                    disabled={true}
+                    id="open-long-restricted-btn"
+                  >
+                    {'Unavailable'}
+                  </PrimaryButtonNew>
+                ) : !connected ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={selectWallet}
+                    disabled={!!txLoading}
+                    id="crab-select-wallet-btn"
+                  >
+                    {'Connect Wallet'}
+                  </PrimaryButtonNew>
+                ) : !supportedNetwork ? (
+                  <PrimaryButtonNew
+                    fullWidth
+                    variant="contained"
+                    onClick={() => {}}
+                    disabled={true}
+                    id="crab-unsupported-network-btn"
+                  >
+                    {'Unsupported Network'}
+                  </PrimaryButtonNew>
+                ) : (
+                  <PrimaryButtonNew
+                    fullWidth
+                    id="crab-deposit-btn"
+                    variant={depositBtnVariant}
+                    className={depositBtnClassName}
+                    onClick={depositTX}
+                    disabled={txLoading || !!depositError}
+                  >
+                    {!txLoading && useQueue && depositStep === DepositSteps.DEPOSIT ? (
+                      <>
+                        Standard deposit
+                        <Tooltip
+                          title={
+                            <div>
+                              Your deposit will be submitted via auction to reduce price impact. This may take until
+                              Tuesday.
+                            </div>
+                          }
+                          style={{ marginLeft: '8' }}
+                        >
+                          <InfoOutlinedIcon fontSize="small" />
+                        </Tooltip>
+                      </>
+                    ) : !txLoading &&
+                      (depositFundingWarning || depositPriceImpactWarning) &&
+                      depositStep === DepositSteps.DEPOSIT ? (
+                      'Deposit anyway'
+                    ) : !txLoading ? (
+                      depositStep
+                    ) : (
+                      <CircularProgress color="primary" size="1.5rem" />
+                    )}
+                  </PrimaryButtonNew>
+                )}
+              </div>
+            </div>
           </div>
-          {useQueue && <div className={classes.queueNotice}>Your deposit will fully enter the strategy by Tuesday</div>}
         </>
       )}
     </>
