@@ -36,6 +36,8 @@ workflows:
       # - checkout-and-install-zen-bull-vault
       - zen-bull-vault-compile
       - zen-bull-vault-test
+        context:
+          - squeeth-monorepo-zen-bull-vault
 
 jobs:
   # hardhat-build-test-report jobs
@@ -212,7 +214,7 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && forge build --force --sizes
+      - run: cd packages/bull-vault && forge build --force
 
   zen-bull-vault-test:
     working_directory: ~/squeeth/packages/bull-vault
