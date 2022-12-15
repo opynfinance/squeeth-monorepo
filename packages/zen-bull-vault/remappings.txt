@@ -1,0 +1,11 @@
+ds-test/=lib/forge-std/lib/ds-test/src/
+forge-std/=lib/forge-std/src/
+openzeppelin/=lib/openzeppelin-contracts/contracts/
+solenv/=lib/solenv/src/
+solidity-stringutils/=lib/solenv/lib/solidity-stringutils/src/
+squeeth-monorepo/=lib/squeeth-monorepo/packages/hardhat/contracts/
+v3-core/=lib/v3-core/contracts/
+v3-periphery/=lib/v3-periphery/contracts/
+@openzeppelin=lib/openzeppelin-contracts/
+@uniswap/v3-core/=lib/v3-core/
+@uniswap/v3-periphery/=lib/v3-periphery/
