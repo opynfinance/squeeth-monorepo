@@ -33,6 +33,7 @@ workflows:
             - checkout-and-install-frontend
   zen-bull-vault:
     jobs:
+      - install-zen-bull-vault
       - lint-zen-bull-vault
       - compile-zen-bull-vault:
           requires:
@@ -158,7 +159,7 @@ jobs:
           command: npx hardhat size-contracts
 
   e2e-test-hardhat:
-    working_directory:  ~/squeeth/packages/hardhat
+    working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
     steps:
@@ -209,6 +210,16 @@ jobs:
           command: yarn test:ci
 
   # zen-bull-vault jobs
+  install-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint zen-bull-vault
+          command: cd packages/zen-bull-vault && forge install
+
   lint-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
