@@ -491,11 +491,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                     gridGap="8px"
                   />
 
-                  <TradeSettings
-                    isCrab={true}
-                    setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                    crabSlippage={new BigNumber(slippage)}
-                  />
+                  {!useQueue && (
+                    <TradeSettings
+                      isCrab={true}
+                      setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                      crabSlippage={new BigNumber(slippage)}
+                    />
+                  )}
                 </Box>
               </Box>
             </Box>
