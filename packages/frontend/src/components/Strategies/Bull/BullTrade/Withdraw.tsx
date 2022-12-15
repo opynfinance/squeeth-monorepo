@@ -4,16 +4,24 @@ import { LinkWrapper } from '@components/LinkWrapper'
 import Metric from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
-import { BIG_ZERO, WETH_DECIMALS } from '@constants/index'
+import {
+  BIG_ZERO,
+  FUNDING_PERIOD,
+  INDEX_SCALE,
+  VOL_PERCENT_FIXED,
+  VOL_PERCENT_SCALAR,
+  WETH_DECIMALS,
+  YEAR,
+} from '@constants/index'
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
 import { useGetFlashWithdrawParams, useBullFlashWithdraw } from '@state/bull/hooks'
-import { indexAtom } from '@state/controller/atoms'
+import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
@@ -26,6 +34,9 @@ import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
 import { BullTradeType, BullTransactionConfirmation } from './index'
+import useStateWithReset from '@hooks/useStateWithReset'
+import useAppMemo from '@hooks/useAppMemo'
+import { useCalculateEthWillingToPayV2 } from '@state/crab/hooks'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -33,6 +44,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const withdrawAmountRef = useRef('0')
   const ongoingTransactionAmountRef = useRef(new BigNumber(0))
   const [withdrawAmount, setWithdrawAmount] = useState('0')
+  const withdrawAmountBN = useMemo(() => new BigNumber(withdrawAmount), [withdrawAmount])
   const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
@@ -44,11 +56,21 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const bullPositionValueInEth = useAtomValue(bullCurrentETHPositionAtom)
+  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
+    new BigNumber(0),
+  )
+
+  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw, resetSqueethAmountOutFromWithdraw] =
+    useStateWithReset(new BigNumber(0))
 
   const selectWallet = useSelectWallet()
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+
+  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
 
   const { bullStrategy, flashBull } = useAtomValue(addressesAtom)
   const { value: bullBalance } = useTokenBalance(bullStrategy, 15, WETH_DECIMALS)
@@ -64,6 +86,38 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
   const bullFlashWithdraw = useBullFlashWithdraw()
+
+  const showPriceImpactWarning = useAppMemo(() => {
+    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+    const scalingFactor = new BigNumber(INDEX_SCALE)
+    const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
+    const executionVol = new BigNumber(
+      Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber()),
+    )
+      .div(fundingPeriod)
+      .sqrt()
+    const showPriceImpactWarning = executionVol
+      .minus(impliedVol)
+      .abs()
+      .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
+
+    return showPriceImpactWarning
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [impliedVol, ethAmountInFromWithdraw, squeethAmountOutFromWithdraw])
+
+  useEffect(() => {
+    if (withdrawAmountBN.isZero()) {
+      resetEthAmountInFromWithdraw()
+      resetSqueethAmountOutFromWithdraw()
+      return
+    }
+
+    calculateEthWillingToPay(withdrawAmountBN, slippage).then((q) => {
+      setEthAmountInFromWithdraw(q.amountIn)
+      setSqueethAmountOutFromWithdraw(q.squeethDebt)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [withdrawAmountBN.toString(), slippage])
 
   const debouncedDepositQuote = debounce(async (bullToWithdraw: string) => {
     setQuoteLoading(true)
@@ -169,6 +223,24 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
             </div>
             <Typography variant="caption" className={classes.infoText}>
               Too high deposit warning
+              <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
+            </Typography>
+          </div>
+        ) : null}
+
+        {showPriceImpactWarning ? (
+          <div className={classes.notice}>
+            <div className={classes.infoIcon}>
+              <Tooltip
+                title={
+                  'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
+                }
+              >
+                <InfoIcon fontSize="medium" />
+              </Tooltip>
+            </div>
+            <Typography variant="caption" className={classes.infoText}>
+              High price impact. Try smaller amount or contact us through{' '}
               <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
             </Typography>
           </div>
