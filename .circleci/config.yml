@@ -200,7 +200,9 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && forge build --force
+      - run: 
+          name: Build zen-bull-vault
+          command: cd packages/bull-vault && forge build --force
 
   zen-bull-vault-test:
     working_directory: ~/squeeth/packages/bull-vault
