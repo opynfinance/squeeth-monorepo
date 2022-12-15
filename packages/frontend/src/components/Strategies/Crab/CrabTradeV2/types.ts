@@ -22,4 +22,5 @@ export interface OngoingTransaction {
   amount: BigNumber
   queuedTransaction: boolean
   token: 'ETH' | 'USDC'
+  analytics?: string[]
 }

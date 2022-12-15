@@ -59,6 +59,8 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
+import { EVENT_NAME } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -134,6 +136,15 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
+
+  const { track } = useAmplitude()
+
+  const recordAnalytics = useCallback(
+    (events: string[]) => {
+      events.forEach((event) => track(event))
+    },
+    [track],
+  )
 
   useEffect(() => {
     if (confirmed && prevCrabTxData?.length === data?.length) {
@@ -246,9 +257,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         : CrabTradeTransactionType.Instant,
       token: transaction.token,
     })
+    transaction.analytics ? recordAnalytics(transaction.analytics) : null
     resetWithdrawAmount()
     ongoingTransaction.current = undefined
-  }, [setCrabQueued, crabQueued, onTxnConfirm, resetWithdrawAmount])
+  }, [setCrabQueued, crabQueued, onTxnConfirm, resetWithdrawAmount, recordAnalytics])
 
   const withdraw = async () => {
     setTxLoading(true)
@@ -264,10 +276,12 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
             await approveCrab(() => resetTransactionData())
           }
         } else {
+          const userForceInstantAnalytics = queueOptionAvailable && !useQueue
           ongoingTransaction.current = {
             amount: withdrawAmountBN,
             token: useUsdc ? 'USDC' : 'ETH',
             queuedTransaction: useQueue,
+            analytics: userForceInstantAnalytics ? [EVENT_NAME.USER_FORCE_INSTANT_WIT_CRAB] : undefined,
           }
 
           if (useQueue) {
