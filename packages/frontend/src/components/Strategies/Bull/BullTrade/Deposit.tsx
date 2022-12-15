@@ -4,16 +4,16 @@ import { LinkWrapper } from '@components/LinkWrapper'
 import Metric from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
-import { BIG_ZERO } from '@constants/index'
+import { BIG_ZERO, FUNDING_PERIOD, INDEX_SCALE, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, YEAR } from '@constants/index'
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
-import { indexAtom } from '@state/controller/atoms'
+import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
@@ -21,12 +21,21 @@ import debounce from 'lodash/debounce'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
 import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
+import useStateWithReset from '@hooks/useStateWithReset'
+import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
+import useAppMemo from '@hooks/useAppMemo'
 
 const BullDepsoit: React.FC = () => {
   const classes = useZenBullStyles()
 
   const depositAmountRef = useRef('0')
   const [depositAmount, setDepositAmount] = useState('0')
+  const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
+  const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit, resetSqueethAmountInFromDeposit] =
+    useStateWithReset(new BigNumber(0))
+  const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit, resetEthAmountOutFromDeposit] = useStateWithReset(
+    new BigNumber(0),
+  )
   const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
@@ -41,6 +50,8 @@ const BullDepsoit: React.FC = () => {
   const selectWallet = useSelectWallet()
 
   const index = useAtomValue(indexAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const impliedVol = useAtomValue(impliedVolAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const [quote, setQuote] = useState({
@@ -56,6 +67,7 @@ const BullDepsoit: React.FC = () => {
 
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
+  const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
 
   const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
     setQuoteLoading(true)
@@ -91,6 +103,36 @@ const BullDepsoit: React.FC = () => {
     }
     setTxLoading(false)
   }
+
+  const depositPriceImpactWarning = useAppMemo(() => {
+    const squeethPrice = ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
+    const scalingFactor = new BigNumber(INDEX_SCALE)
+    const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
+    const executionVol = new BigNumber(
+      Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber()),
+    )
+      .div(fundingPeriod)
+      .sqrt()
+    const showPriceImpactWarning = executionVol
+      .minus(impliedVol)
+      .abs()
+      .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
+    return showPriceImpactWarning
+  }, [impliedVol, ethAmountOutFromDeposit, squeethAmountInFromDeposit, normFactor, ethIndexPrice])
+
+  useEffect(() => {
+    if (depositAmountBN.isZero()) {
+      resetEthAmountOutFromDeposit()
+      resetSqueethAmountInFromDeposit()
+      return
+    }
+
+    calculateETHtoBorrowFromUniswap(depositAmountBN, slippage).then((q) => {
+      setEthAmountOutFromDeposit(q.amountOut)
+      setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [depositAmountBN.toString(), slippage])
 
   return (
     <>
@@ -137,6 +179,24 @@ const BullDepsoit: React.FC = () => {
             </div>
             <Typography variant="caption" className={classes.infoText}>
               Too high deposit warning
+              <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
+            </Typography>
+          </div>
+        ) : null}
+
+        {depositPriceImpactWarning ? (
+          <div className={classes.notice}>
+            <div className={classes.infoIcon}>
+              <Tooltip
+                title={
+                  'High price impact means that you are losing a significant amount of value due to the size of your trade. Depositing a smaller size can reduce your price impact.'
+                }
+              >
+                <InfoIcon fontSize="medium" />
+              </Tooltip>
+            </div>
+            <Typography variant="caption" className={classes.infoText}>
+              High price impact. Try smaller amount or contact us through{' '}
               <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
             </Typography>
           </div>
