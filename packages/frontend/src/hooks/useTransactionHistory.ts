@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 
-import { TransactionType } from '../constants'
+import { BIG_ZERO, TransactionType } from '../constants'
 import {
   transactions,
   transactionsVariables,
@@ -41,7 +41,7 @@ export const useTransactionHistory = () => {
 
   const { data: crabData } = useUserCrabTxHistory(address || '')
   const { data: crabV2Data } = useUserCrabV2TxHistory(address || '')
-  const { data: bullData } = useUserBullTxHistory(address || '')
+  const { data: bullData } = useUserBullTxHistory(address || '', true)
 
   const addRemoveLiquidityTrans =
     ethPriceMap &&
@@ -166,16 +166,16 @@ export const useTransactionHistory = () => {
     }
   })
 
-  const bullTransactions = (crabV2Data || [])?.map((c) => {
+  const bullTransactions = (bullData || [])?.map((c) => {
     const transactionType =
       c.type === BullStrategyTxType.FLASH_DEPOSIT
         ? TransactionType.BULL_FLASH_DEPOSIT
         : TransactionType.BULL_FLASH_WITHDRAW
-    const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
+    const { ethAmount, ethUsdValue: usdValue, timestamp } = c
 
     return {
       transactionType,
-      squeethAmount: squeethAmount.abs(),
+      squeethAmount: BIG_ZERO,
       ethAmount: ethAmount.abs(),
       usdValue,
       timestamp,

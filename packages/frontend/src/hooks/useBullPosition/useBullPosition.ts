@@ -13,6 +13,7 @@ import {
   bullDepositedUSDCAtom,
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
+  bullPositionLoadedAtom,
   isBullReadyAtom,
 } from '@state/bull/atoms'
 import { useUserBullTxHistory } from '@hooks/useUserBullTxHistory'
@@ -33,8 +34,9 @@ export const useBullPosition = (user: string) => {
   const setEthPnlPerct = useSetAtom(bullEthPnlPerctAtom)
   const setDepositedEth = useSetAtom(bullDepositedETHAtom)
   const setDepositedUsdc = useSetAtom(bullDepositedUSDCAtom)
+  const setPositionLoaded = useSetAtom(bullPositionLoadedAtom)
 
-  const { loading: txHistoryLoading, data: txHistoryData } = useUserBullTxHistory(user)
+  const { loading: txHistoryLoading, data: txHistoryData } = useUserBullTxHistory(user, true)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -75,11 +77,12 @@ export const useBullPosition = (user: string) => {
     setEthPnlPerct(_ethPnlInPerct)
     setDepositedEth(depositedEth)
     setDepositedUsdc(depositedUsd)
+    setPositionLoaded(true)
   }, [bullCurrentEthValue, depositedEth, depositedUsd])
 
   useEffect(() => {
-    setPnL()
-  }, [setPnL])
+    if (isBullReady && !txHistoryLoading) setPnL()
+  }, [isBullReady, setPnL, txHistoryLoading])
 }
 
 /*

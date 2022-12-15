@@ -10,6 +10,8 @@ import {
   bullDepositedUSDCAtom,
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
+  bullPositionLoadedAtom,
+  isBullReadyAtom,
 } from '@state/bull/atoms'
 
 const BullPosition: React.FC = () => {
@@ -23,7 +25,9 @@ const BullPosition: React.FC = () => {
   const bullEthPnl = useAtomValue(bullEthPnlAtom)
   const bullEthPnlInPerct = useAtomValue(bullEthPnlPerctAtom)
 
-  const loading = false
+  const loading = !useAtomValue(bullPositionLoadedAtom)
+
+  if (bullCurrentETH.isZero()) return null
 
   return (
     <div className={classes.position} id="pos-page-bull">
@@ -70,7 +74,7 @@ const BullPosition: React.FC = () => {
               className={bullEthPnl.isLessThan(0) ? classes.red : classes.green}
               id="pos-page-crab-pnl-amount"
             >
-              {!loading ? `${bullEthPnl.toFixed(2)} ETH` : 'Loading'}
+              {!loading ? `${bullEthPnl.toFixed(6)} ETH` : 'Loading'}
             </Typography>
             <Typography variant="caption" className={bullEthPnlInPerct.isLessThan(0) ? classes.red : classes.green}>
               {!loading ? `${bullEthPnlInPerct.toFixed(2)}` + '%' : 'Loading'}

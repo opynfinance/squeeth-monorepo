@@ -122,7 +122,7 @@ export const useSetBullUserState = () => {
   const setBullUserState = useAppCallback(async () => {
     if (!bullContract || !crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero()) return null
 
-    const leverageComponent = eulerWeth.minus(eulerUsdc.div(ethPrice))
+    const leverageComponent = bullShare.times(eulerWeth.minus(eulerUsdc.div(ethPrice))).div(bullSupply)
     const userCrab = bullShare.times(bullCrabBalance).div(bullSupply)
     const crabCollat = userCrab.times(crabV2Vault.collateralAmount).div(crabTotalSupply)
     const crabDebt = userCrab.times(crabV2Vault.shortAmount).div(crabTotalSupply)
