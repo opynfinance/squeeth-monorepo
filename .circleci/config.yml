@@ -33,7 +33,6 @@ workflows:
             - checkout-and-install-frontend
   zen-bull-vault-build-test-report:
     jobs:
-      # - checkout-and-install-zen-bull-vault
       - zen-bull-vault-compile
       - zen-bull-vault-test:
           context: 
@@ -195,19 +194,6 @@ jobs:
           command: yarn test:ci
 
   # zen-bull-vault-build-test-report jobs
-  # checkout-and-install-zen-bull-vault:
-  #   working_directory: ~/squeeth/packages/bull-vault
-  #   docker:
-  #     - image: ghcr.io/foundry-rs/foundry:latest
-  #   steps:
-  #     - checkout:
-  #         path: ~/squeeth
-  #     - run:
-  #         name: Install foundry
-  #         command: curl -L https://foundry.paradigm.xyz | bash
-            
-  #           # export PATH=~/squeeth/.foundry/bin
-  #           # foundryup -b master
   zen-bull-vault-compile:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
@@ -223,6 +209,23 @@ jobs:
     steps:
       - checkout
       - run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee ../../bull_gas_report.ansi
+
+  zen-bull-vault-fuzzing:
+    working_directory: ~/squeeth/packages/bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
+      
+  zen-bull-vault-fuzzing:
+    working_directory: ~/squeeth/packages/bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
+
 
 
 
