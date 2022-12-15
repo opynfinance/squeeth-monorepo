@@ -687,18 +687,25 @@ export const useQueueDepositUSDC = () => {
   const contract = useAtomValue(crabNettingContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
 
   const depositUSDC = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
-
-      console.log('Queue:', fromTokenAmount(amount, USDC_DECIMALS).toString())
-      return await handleTransaction(
-        contract.methods.depositUSDC(fromTokenAmount(amount, USDC_DECIMALS).toString()).send({
-          from: address,
-        }),
-        onTxConfirmed,
-      )
+      track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_CLICK)
+      try {
+        console.log('Queue:', fromTokenAmount(amount, USDC_DECIMALS).toString())
+        await handleTransaction(
+          contract.methods.depositUSDC(fromTokenAmount(amount, USDC_DECIMALS).toString()).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_SUCCESS)
+      } catch (e) {
+        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_FAILED)
+        console.log(e)
+      }
     },
     [contract, address, handleTransaction],
   )
@@ -710,18 +717,26 @@ export const useQueueWithdrawCrab = () => {
   const contract = useAtomValue(crabNettingContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
 
   const queueWithdraw = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
 
+      track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_CLICK)
       console.log('Queue: withdraw', fromTokenAmount(amount, WETH_DECIMALS).toString())
-      return await handleTransaction(
-        contract.methods.queueCrabForWithdrawal(fromTokenAmount(amount, WETH_DECIMALS).toFixed(0)).send({
-          from: address,
-        }),
-        onTxConfirmed,
-      )
+      try {
+        await handleTransaction(
+          contract.methods.queueCrabForWithdrawal(fromTokenAmount(amount, WETH_DECIMALS).toFixed(0)).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_SUCCESS)
+      } catch (e) {
+        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_FAILED)
+        console.log(e)
+      }
     },
     [contract, address, handleTransaction],
   )

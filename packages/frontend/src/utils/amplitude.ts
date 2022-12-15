@@ -2,16 +2,15 @@ import { init, track, Types } from '@amplitude/analytics-browser'
 import { getCookieName, CookieStorage } from '@amplitude/analytics-client-common'
 import { canStoreCookies } from './cookies'
 
-const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY  && !!canStoreCookies()
+const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY && !!canStoreCookies()
 
 // Should be called once before calling track event
 export const initializeAmplitude = () => {
- 
-  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies() ) return
+  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies()) return
 
   isOptedOut().then((optOut) => {
-   // console.log('Opted out', optOut)
-    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY ) return
+    // console.log('Opted out', optOut)
+    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
 
     init(process.env.NEXT_PUBLIC_AMPLITUDE_KEY, undefined, {
       serverZone: Types.ServerZone.EU,
@@ -51,6 +50,12 @@ export enum EVENT_NAME {
   WITHDRAW_CRAB_CLICK = 'WITHDRAW_CRAB_CLICK',
   WITHDRAW_CRAB_SUCCESS = 'WITHDRAW_CRAB_SUCCESS',
   WITHDRAW_CRAB_FAILED = 'WITHDRAW_CRAB_FAILED',
+  DEPOSIT_STN_CRAB_USDC_CLICK = 'DEPOSIT_STN_CRAB_USDC_CLICK',
+  DEPOSIT_STN_CRAB_USDC_SUCCESS = 'DEPOSIT_STN_CRAB_USDC_SUCCESS',
+  DEPOSIT_STN_CRAB_USDC_FAILED = 'DEPOSIT_STN_CRAB_USDC_FAILED',
+  WITHDRAW_STN_CRAB_USDC_CLICK = 'WITHDRAW_STN_CRAB_USDC_CLICK',
+  WITHDRAW_STN_CRAB_USDC_SUCCESS = 'WITHDRAW_STN_CRAB_USDC_SUCCESS',
+  WITHDRAW_STN_CRAB_USDC_FAILED = 'WITHDRAW_STN_CRAB_USDC_FAILED',
 }
 
 export const isOptedOut = async () => {
