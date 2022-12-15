@@ -2,8 +2,8 @@ import { Button, createStyles, makeStyles, Typography } from '@material-ui/core'
 import Image from 'next/image'
 import React from 'react'
 
-import discordIcon from '../../../public/images/discord.svg'
-import { Modal, ModalProps } from '../Modal/Modal'
+import { Modal, ModalProps } from '@components/Modal/Modal'
+import discordIcon from 'public/images/discord.svg'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

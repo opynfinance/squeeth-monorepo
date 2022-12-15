@@ -1,24 +1,25 @@
-import CustomLinearProgress from '@components/CustomProgress'
-import { Typography } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React from 'react'
+import clsx from 'clsx'
+
+import { CustomLinearProgressNew } from '@components/CustomProgress'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
-      padding: theme.spacing(2, 5),
-      background: theme.palette.background.stone,
-      borderRadius: theme.spacing(2),
       width: '100%',
-      // maxWidth: '640px',
     },
-    vaultDetails: {
-      display: 'flex',
-      justifyContent: 'space-between',
+    label: {
+      fontSize: '14px',
+      fontWeight: 400,
     },
-    vaultProgress: {
-      marginTop: theme.spacing(2),
+    value: {
+      fontFamily: 'DM Mono',
+    },
+    green: {
+      color: theme.palette.success.main,
     },
   }),
 )
@@ -33,27 +34,20 @@ const CapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
 
   return (
     <div className={classes.container}>
-      <div className={classes.vaultDetails}>
-        <div>
-          <Typography variant="body2" color="textSecondary">
-            Strategy Deposits
-          </Typography>
-          <Typography variant="h6">
-            {depositedAmount.gt(maxCap)
-              ? Number(maxCap.toFixed(4)).toLocaleString()
-              : Number(depositedAmount.toFixed(4)).toLocaleString()}{' '}
-            ETH
-          </Typography>
-        </div>
-        <div>
-          <Typography variant="body2" color="textSecondary">
-            Strategy Capacity
-          </Typography>
-          <Typography variant="h6">{Number(maxCap.toFixed(4)).toLocaleString()} ETH</Typography>
-        </div>
-      </div>
-      <div className={classes.vaultProgress}>
-        <CustomLinearProgress
+      <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom="8px">
+        <Typography className={clsx(classes.label, classes.value, classes.green)}>
+          {depositedAmount.gt(maxCap)
+            ? Number(maxCap.toFixed(4)).toLocaleString()
+            : Number(depositedAmount.toFixed(4)).toLocaleString()}{' '}
+          ETH
+        </Typography>
+
+        <Typography className={clsx(classes.label, classes.value)}>
+          {Number(maxCap.toFixed(4)).toLocaleString()} ETH
+        </Typography>
+      </Box>
+      <div>
+        <CustomLinearProgressNew
           variant="determinate"
           value={
             depositedAmount.gt(maxCap)
@@ -61,6 +55,10 @@ const CapDetails: React.FC<CapType> = ({ maxCap, depositedAmount }) => {
               : depositedAmount.div(maxCap).times(100).toNumber()
           }
         />
+        <Box display="flex" justifyContent="space-between" alignItems="center" marginTop="8px">
+          <Typography className={clsx(classes.label, classes.green)}>Deposits</Typography>
+          <Typography className={classes.label}>Cap</Typography>
+        </Box>
       </div>
     </div>
   )

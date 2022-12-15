@@ -9,4 +9,8 @@ interface IController {
     function quoteCurrency() external view returns (address);
 
     function ethQuoteCurrencyPool() external view returns (address);
+
+    function setFeeRate(uint256 _newFeeRate) external;
+
+    function setFeeRecipient(address _newFeeRecipient) external;
 }

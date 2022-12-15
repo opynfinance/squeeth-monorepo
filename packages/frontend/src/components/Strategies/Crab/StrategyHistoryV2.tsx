@@ -1,155 +1,102 @@
-import { useCrabStrategyV2TxHistory } from '@hooks/useCrabV2AuctionHistory'
-import { IconButton, Typography } from '@material-ui/core'
+import { IconButton, Typography, Link, Button } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import React, { useState } from 'react'
-import { EtherscanPrefix } from '../../../constants'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
-import Menu from '@material-ui/core/Menu'
-import MenuItem from '@material-ui/core/MenuItem'
-import KeyboardArrowDownOutlinedIcon from '@material-ui/icons/KeyboardArrowDownOutlined'
-import { GreyButton } from '@components/Button'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { CrabStrategyV2TxType, Networks } from '../../../types/index'
+import React, { useRef, useCallback } from 'react'
 import clsx from 'clsx'
-import { useAtomValue } from 'jotai'
-import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
+import { useAtom, useAtomValue } from 'jotai'
+
+import { EtherscanPrefix } from '@constants/index'
+import { useCrabStrategyV2TxHistory } from '@hooks/useCrabV2AuctionHistory'
+import { networkIdAtom } from '@state/wallet/atoms'
+import { formatNumber } from '@utils/formatter'
+import { visibleStrategyHedgesAtom } from '@state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {
-      marginTop: theme.spacing(10),
-      marginBottom: theme.spacing(10),
-    },
-    txItem: {
+    container: {},
+    statContainer: {
       background: theme.palette.background.stone,
       borderRadius: theme.spacing(1),
       padding: theme.spacing(1, 2),
-      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(1.5),
       display: 'flex',
+      gap: '24px',
+      flexWrap: 'wrap',
+      flexDirection: 'row',
+      [theme.breakpoints.down('xs')]: {
+        flexDirection: 'column',
+      },
     },
-    txSubItemTitle: {
-      width: '37%',
+    statHeader: {
+      flexBasis: '25%',
+      minWidth: 'max-content',
     },
-    txSubItem: {
+    statHeaderTitle: {
+      color: 'rgba(255, 255, 255)',
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+      fontFamily: 'DM Sans',
+    },
+    stat: {
       display: 'flex',
-      alignItems: 'center',
-      width: '30%',
+      flexDirection: 'column',
+      flex: 1,
+      minWidth: 'max-content',
+    },
+    label: {
+      color: 'rgba(255, 255, 255, 0.5)',
+      fontSize: '14px',
+      fontWeight: 500,
+      width: 'max-content',
+    },
+    value: {
+      color: 'rgba(255, 255, 255)',
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+      fontFamily: 'DM Mono',
     },
     txLink: {
       display: 'flex',
       alignItems: 'center',
-      width: '3%',
+      flexBasis: 'max-content',
     },
-    green: {
-      color: theme.palette.success.main,
+    moreButtonContainer: {
+      display: 'flex',
+      justifyContent: 'center',
+      marginBottom: '24px',
     },
-    red: {
-      color: theme.palette.error.main,
+    moreButton: {
+      textTransform: 'none',
     },
   }),
 )
 
-enum TxType {
-  HEDGES = 'Hedges',
-  MY_TX = 'My Transactions',
-}
-
 export const CrabStrategyV2History: React.FC = () => {
   const classes = useStyles()
-  const { data } = useCrabStrategyV2TxHistory()
-
-  const address = useAtomValue(addressAtom)
+  const [visibleHedges, setVisibleHedges] = useAtom(visibleStrategyHedgesAtom)
+  const { data, showMore } = useCrabStrategyV2TxHistory()
+  const bottomRef = useRef<HTMLDivElement>(null)
   const networkId = useAtomValue(networkIdAtom)
 
-  const [txType, setTxType] = useState(TxType.HEDGES)
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleClose = () => {
-    setAnchorEl(null)
-  }
-
-  const handleItemClick = (type: TxType) => {
-    setTxType(type)
-    setAnchorEl(null)
-  }
+  const onClickLoadMore = useCallback(() => {
+    setVisibleHedges(visibleHedges + 3)
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 200)
+  }, [visibleHedges, setVisibleHedges])
 
   return (
     <div className={classes.container}>
-      <div style={{ display: 'flex', marginTop: '32px' }}>
-        <Typography variant="h5" color="primary" style={{}}>
-          Strategy History
-        </Typography>
-        <GreyButton
-          aria-controls="simple-menu"
-          aria-haspopup="true"
-          style={{ marginLeft: '16px', width: '200px' }}
-          onClick={handleClick}
-          endIcon={<KeyboardArrowDownOutlinedIcon color="primary" />}
-        >
-          {txType}
-        </GreyButton>
-        <Menu id="simple-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
-          <MenuItem onClick={() => handleItemClick(TxType.HEDGES)}>Hedges</MenuItem>
-          {!!address ? <MenuItem onClick={() => handleItemClick(TxType.MY_TX)}>My Transactions</MenuItem> : null}
-        </Menu>
-      </div>
-      {!!address && txType === TxType.MY_TX ? <UserCrabHistory user={address} networkId={networkId} /> : null}
-      {txType === TxType.HEDGES ? (
-        <div>
-          {data?.map((d) => {
-            return (
-              <div className={classes.txItem} key={d.id}>
-                <div className={classes.txSubItemTitle}>
-                  <Typography variant="subtitle1">Hedge</Typography>
-                  <Typography variant="caption" color="textSecondary">
-                    {new Date(d.timestamp * 1000).toLocaleString(undefined, {
-                      day: 'numeric',
-                      month: 'short',
-                      hour: 'numeric',
-                      minute: 'numeric',
-                    })}
-                  </Typography>
-                </div>
-                <div className={clsx(classes.txSubItem, d.isBuying ? classes.green : classes.red)}>
-                  <Typography variant="subtitle1">
-                    <b style={{ fontWeight: 600 }}>{d.oSqueethAmount.toFixed(6)}</b> oSQTH
-                  </Typography>
-                </div>
-                <div className={clsx(classes.txSubItem, d.isBuying ? classes.red : classes.green)}>
-                  <Typography variant="subtitle1">
-                    <b style={{ fontWeight: 600 }}>{d.ethAmount.toFixed(6)}</b> ETH
-                  </Typography>
-                </div>
-                <div className={classes.txLink}>
-                  <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${d.id}`} target="_blank">
-                    <OpenInNewIcon style={{ fontSize: '16px' }} color="secondary" />
-                  </IconButton>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user, networkId }) => {
-  const classes = useStyles()
-  const { data } = useUserCrabV2TxHistory(user, true)
-
-  return (
-    <>
       {data?.map((d) => {
         return (
-          <div className={classes.txItem} key={d.id}>
-            <div className={classes.txSubItemTitle}>
-              <Typography variant="subtitle1">{d.txTitle}</Typography>
-              <Typography variant="caption" color="textSecondary">
+          <div className={classes.statContainer} key={d.id}>
+            <div className={classes.statHeader}>
+              <Typography className={clsx(classes.statHeaderTitle)}>
+                {d.isBuying ? 'Bought oSQTH' : 'Sold oSQTH'}
+              </Typography>
+              <Typography className={classes.label}>
                 {new Date(d.timestamp * 1000).toLocaleString(undefined, {
                   day: 'numeric',
                   month: 'short',
@@ -158,31 +105,40 @@ const UserCrabHistory: React.FC<{ user: string; networkId: Networks }> = ({ user
                 })}
               </Typography>
             </div>
-            <div className={classes.txSubItem}>
-              <Typography
-                variant="subtitle1"
-                className={
-                  d.type === CrabStrategyV2TxType.FLASH_DEPOSIT || d.type === CrabStrategyV2TxType.DEPOSIT_V1
-                    ? classes.red
-                    : classes.green
-                }
-              >
-                <b style={{ fontWeight: 600 }}>{d.ethAmount.toFixed(6)}</b> ETH
-              </Typography>
-              <Typography variant="caption" color="textSecondary">
-                ${d.ethUsdValue.toFixed(2)}
-              </Typography>
+
+            <div className={classes.stat}>
+              <Typography className={classes.label}>Size</Typography>
+              <Typography className={classes.value}>{formatNumber(d.oSqueethAmount.toNumber(), 2)} oSQTH</Typography>
             </div>
-            <div className={classes.txSubItem} />
-            <div className={classes.txLink}>
-              <IconButton size="small" href={`${EtherscanPrefix[networkId]}/${d.id}`} target="_blank">
-                <OpenInNewIcon style={{ fontSize: '16px' }} color="secondary" />
+            <div className={classes.stat}>
+              <Typography className={classes.label}>Clearing price</Typography>
+              <Typography className={classes.value}>{formatNumber(d.ethAmount.toNumber(), 2)} WETH</Typography>
+            </div>
+
+            <Link href={`${EtherscanPrefix[networkId]}${d.id}`} target="_blank" className={classes.txLink}>
+              <Typography color="primary">View Transaction</Typography>
+              <IconButton size="small">
+                <OpenInNewIcon style={{ fontSize: '16px' }} color="primary" />
               </IconButton>
-            </div>
+            </Link>
           </div>
         )
       })}
-    </>
+      <div ref={bottomRef} />
+      {showMore && (
+        <div className={classes.moreButtonContainer}>
+          <Button
+            size="large"
+            className={classes.moreButton}
+            onClick={onClickLoadMore}
+            color="primary"
+            variant="outlined"
+          >
+            Load More
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }
 

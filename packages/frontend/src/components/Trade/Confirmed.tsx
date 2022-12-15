@@ -3,15 +3,18 @@ import Image from 'next/image'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 
-import { EtherscanPrefix } from '../../constants'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { EtherscanPrefix } from '@constants/index'
+import { networkIdAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
+    container: {
+      textAlign: 'center',
+      marginBottom: theme.spacing(4),
+    },
     etherscan: {
       color: theme.palette.primary.main,
       marginTop: theme.spacing(1),
-      marginBotton: theme.spacing(3),
     },
     thirdHeading: {
       marginTop: theme.spacing(3),
@@ -22,8 +25,7 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     squeethCat: {
-      marginTop: theme.spacing(6),
-      marginBottom: theme.spacing(6),
+      marginTop: theme.spacing(4),
     },
     uniswapLink: {
       marginTop: theme.spacing(6),
@@ -63,7 +65,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, con
   const networkId = useAtomValue(networkIdAtom)
 
   return (
-    <div>
+    <div className={classes.container}>
       <div>
         <Typography variant="body1" className={classes.confMsg} id="conf-msg">
           {' '}

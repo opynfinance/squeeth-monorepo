@@ -18,5 +18,6 @@ export const wethPriceAtom = atom((get) => {
   )
 })
 export const squeethInitialPriceAtom = atom(BIG_ZERO)
-export const squeethPriceeAtom = atom(BIG_ZERO)
+export const squeethInitialPriceErrorAtom = atom('')
+export const squeethPriceeAtom = atom(BIG_ZERO) // not being used
 export const readyAtom = atom(false)

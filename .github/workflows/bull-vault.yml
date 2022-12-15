@@ -1,0 +1,113 @@
+# on: [push]
+
+# name: Bull-Vault
+
+# env:
+#   FORK_URL: ${{secrets.FORK_URL}}    
+
+# jobs:
+#   check-bull-vault:
+#     name: formatting check
+#     runs-on: ubuntu-20.04
+
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-node@v2
+
+#       - name: Install Foundry
+#         uses: onbjerg/foundry-toolchain@v1
+#         with:
+#           version: nightly
+
+#       - name: Run fmt check
+#         run: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+
+#   build-bull-vault:
+#     name: build
+#     needs: check-bull-vault
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           submodules: recursive
+
+#       - name: Install Foundry
+#         uses: foundry-rs/foundry-toolchain@v1
+#         with:
+#           version: nightly
+
+#       - name: Build
+#         run: cd packages/bull-vault && forge build --force
+
+#   test-bull-vault:
+#     name: tests
+#     needs: build-bull-vault
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           submodules: recursive
+
+#       - name: Install Foundry
+#         uses: foundry-rs/foundry-toolchain@v1
+#         with:
+#           version: nightly
+
+#       - name: Run tests
+#         run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee ../../bull_gas_report.ansi
+
+#   fuzzing-bull-vault:
+#     name: fuzz tests
+#     needs: build-bull-vault
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           submodules: recursive
+
+#       - name: Install Foundry
+#         uses: foundry-rs/foundry-toolchain@v1
+#         with:
+#           version: nightly
+
+#       - name: Run fuzz testing
+#         run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
+        
+#   coverage-bull-vault:
+#     name: coverage
+#     needs: test-bull-vault
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - uses: actions/checkout@v3
+#         with:
+#           submodules: recursive
+
+#       - name: Install Foundry
+#         uses: foundry-rs/foundry-toolchain@v1
+#         with:
+#           version: nightly
+
+#       - name: Run coverage
+#         run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
+
+#   compare-gas-reports:
+#     name: gas difference
+#     needs: test-bull-vault
+#     runs-on: ubuntu-20.04
+#     steps:
+#       - name: Compare gas reports
+#         uses: Rubilmax/foundry-gas-diff@v3.9
+#         with:
+#           sortCriteria: avg,max # optionnally sort diff rows by criteria
+#           sortOrders: desc,asc # and directions
+#           report: bull_gas_report.ansi
+#         id: gas_diff
+
+#       - name: Add gas diff to sticky comment
+#         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+#         uses: marocchino/sticky-pull-request-comment@v2
+#         with:
+#           # delete the comment in case changes no longer impact gas costs
+#           delete: ${{ !steps.gas_diff.outputs.markdown }}
+#           message: ${{ steps.gas_diff.outputs.markdown }}
+

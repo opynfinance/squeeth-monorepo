@@ -6,23 +6,23 @@
 	path = packages/services/optimism
 	url = https://github.com/ethereum-optimism/optimism
 	branch = regenesis/0.4.0
-[submodule "packages/bull-vault/lib/forge-std"]
-	path = packages/bull-vault/lib/forge-std
+[submodule "packages/zen-bull-vault/lib/forge-std"]
+	path = packages/zen-bull-vault/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "packages/bull-vault/lib/solenv"]
-	path = packages/bull-vault/lib/solenv
+[submodule "packages/zen-bull-vault/lib/solenv"]
+	path = packages/zen-bull-vault/lib/solenv
 	url = https://github.com/memester-xyz/solenv
-[submodule "packages/bull-vault/lib/squeeth-monorepo"]
-	path = packages/bull-vault/lib/squeeth-monorepo
+[submodule "packages/zen-bull-vault/lib/squeeth-monorepo"]
+	path = packages/zen-bull-vault/lib/squeeth-monorepo
 	url = https://github.com/opynfinance/squeeth-monorepo
-[submodule "packages/bull-vault/lib/openzeppelin-contracts"]
-	path = packages/bull-vault/lib/openzeppelin-contracts
+[submodule "packages/zen-bull-vault/lib/openzeppelin-contracts"]
+	path = packages/zen-bull-vault/lib/openzeppelin-contracts
 	url = https://github.com/openzeppelin/openzeppelin-contracts
-[submodule "packages/bull-vault/lib/v3-core"]
-	path = packages/bull-vault/lib/v3-core
+[submodule "packages/zen-bull-vault/lib/v3-core"]
+	path = packages/zen-bull-vault/lib/v3-core
 	url = https://github.com/Uniswap/v3-core
-[submodule "packages/bull-vault/lib/v3-periphery"]
-	path = packages/bull-vault/lib/v3-periphery
+[submodule "packages/zen-bull-vault/lib/v3-periphery"]
+	path = packages/zen-bull-vault/lib/v3-periphery
 	url = https://github.com/Uniswap/v3-periphery
 [submodule "packages/crab-netting/lib/forge-std"]
 	path = packages/crab-netting/lib/forge-std

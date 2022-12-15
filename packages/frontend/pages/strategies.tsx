@@ -1,27 +1,21 @@
-import { LinkButton } from '@components/Button'
-import Nav from '@components/Nav'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
-import CapDetails from '@components/Strategies/Crab/CapDetails'
-import CrabStrategyHistory from '@components/Strategies/Crab/StrategyHistory'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfo'
-import StrategyInfoV1 from '@components/Strategies/Crab/StrategyInfoV1'
-import StrategyInfoItem from '@components/Strategies/StrategyInfoItem'
-import { Typography, Tab, Tabs, Box, createGenerateClassName } from '@material-ui/core'
-import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState } from 'react'
-import { Tooltips } from '@constants/index'
-import { Links, Vaults } from '@constants/enums'
 import Image from 'next/image'
-import bull from '../public/images/bull.gif'
-import bear from '../public/images/bear.gif'
+import { Typography, Tab, Tabs, Box, Tooltip } from '@material-ui/core'
+import { createStyles, makeStyles } from '@material-ui/core/styles'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { useAtomValue } from 'jotai'
+
+import Nav from '@components/Nav'
+import CapDetails from '@components/Strategies/Crab/CapDetails'
+import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
+import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
+import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
 import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
-import { useAtomValue } from 'jotai'
-import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useSelectWallet } from 'src/state/wallet/hooks'
+import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+import Metric from '@components/Metric'
+import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import {
   crabStrategyCollatRatioAtom,
   crabStrategyCollatRatioAtomV2,
@@ -32,38 +26,108 @@ import {
   maxCapAtomV2,
   timeAtLastHedgeAtom,
   timeAtLastHedgeAtomV2,
-} from 'src/state/crab/atoms'
+} from '@state/crab/atoms'
 import {
   useCurrentCrabPositionValueV2,
   useSetProfitableMovePercent,
   useSetProfitableMovePercentV2,
+  useSetStrategyData,
   useSetStrategyDataV2,
   useCurrentCrabPositionValue,
-  useSetStrategyData,
-} from 'src/state/crab/hooks'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from 'src/state/controller/atoms'
-import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { ToggleButton, ToggleButtonGroup } from '@material-ui/lab'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
+} from '@state/crab/hooks'
+import { currentImpliedFundingAtom, dailyHistoricalFundingAtom, indexAtom } from '@state/controller/atoms'
+import { useInitCrabMigration } from '@state/crabMigration/hooks'
+import { formatNumber, formatCurrency } from '@utils/formatter'
+import { toTokenAmount } from '@utils/calculations'
+import { Tooltips } from '@constants/enums'
+import { Vaults } from '@constants/enums'
+import bull from 'public/images/bull.gif'
+import bear from 'public/images/bear.gif'
+
+const useLabelStyles = makeStyles((theme) =>
+  createStyles({
+    labelContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      color: 'rgba(255, 255, 255, 0.5)',
+    },
+    label: {
+      fontSize: '15px',
+      fontWeight: 500,
+      width: 'max-content',
+    },
+    infoIcon: {
+      fontSize: '15px',
+      marginLeft: theme.spacing(0.5),
+    },
+  }),
+)
+
+const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
+  const classes = useLabelStyles()
+
+  return (
+    <div className={classes.labelContainer}>
+      <Typography className={classes.label}>{label}</Typography>
+      <Tooltip title={tooltipTitle}>
+        <InfoIcon fontSize="small" className={classes.infoIcon} />
+      </Tooltip>
+    </div>
+  )
+}
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
+      maxWidth: '1280px',
+      width: '80%',
+      margin: '0 auto',
+      padding: theme.spacing(1, 5),
+      [theme.breakpoints.down('lg')]: {
+        maxWidth: 'none',
+        width: '90%',
+      },
       [theme.breakpoints.down('md')]: {
-        padding: theme.spacing(5, 5),
+        width: '100%',
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(4, 4),
+        padding: theme.spacing(1, 4),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(2, 2),
+        padding: theme.spacing(1, 3),
       },
-      margin: '0 auto',
-      maxWidth: '1080px',
+    },
+    columnContainer: {
+      marginTop: '32px',
+      display: 'flex',
+      justifyContent: 'center',
+      gridGap: '96px',
+      flexWrap: 'wrap',
+      [theme.breakpoints.down('md')]: {
+        gridGap: '40px',
+      },
+    },
+    leftColumn: {
+      flex: 1,
+      minWidth: '480px',
+      [theme.breakpoints.down('xs')]: {
+        minWidth: '320px',
+      },
+    },
+    rightColumn: {
+      flexBasis: '440px',
+      [theme.breakpoints.down('xs')]: {
+        flex: '1',
+      },
     },
     header: {
       display: 'flex',
       marginTop: theme.spacing(4),
+    },
+    subtitle: {
+      fontSize: '20px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
     },
     boldFont: {
       fontWeight: 'bold',
@@ -93,7 +157,7 @@ const useStyles = makeStyles((theme) =>
       width: '350px',
       [theme.breakpoints.up('lg')]: {
         width: '350px',
-        maxHeight: '440px',
+        maxHeight: '452px',
         minHeight: '350px',
         height: 'fit-content',
         position: 'sticky',
@@ -165,6 +229,12 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'right',
       marginLeft: theme.spacing(2),
     },
+    tradeSection: {
+      border: '1px solid #242728',
+      boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
+      borderRadius: theme.spacing(0.7),
+      padding: '32px 24px',
+    },
   }),
 )
 
@@ -172,7 +242,7 @@ const Strategies: React.FC = () => {
   const [selectedIdx, setSelectedIdx] = useState(1)
 
   // which crab strategy to display. V1 or V2.
-  const [displayCrabV1, setDisplayCrabV1] = useState(false)
+  const [displayCrabV1] = useState(false)
 
   const classes = useStyles()
   const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
@@ -193,14 +263,11 @@ const Strategies: React.FC = () => {
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
-  const address = useAtomValue(addressAtom)
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
-  const selectWallet = useSelectWallet()
-
   const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
   const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
 
   const ethPrice = Number(toTokenAmount(ethPriceAtLastHedge, 18))
+
   const lowerPriceBandForProfitability = ethPrice - profitableMovePercentV2 * ethPrice
   const upperPriceBandForProfitability = ethPrice + profitableMovePercentV2 * ethPrice
 
@@ -218,13 +285,6 @@ const Strategies: React.FC = () => {
     if (selectedIdx === 2) return Vaults.ETHBull
     else return Vaults.Custom
   }, [selectedIdx])
-
-  const switchToV1 = () => {
-    setDisplayCrabV1(true)
-  }
-  const switchToV2 = () => {
-    setDisplayCrabV1(false)
-  }
 
   return (
     <div>
@@ -261,138 +321,129 @@ const Strategies: React.FC = () => {
           </div>
         ) : (
           <div>
-            <div className={classes.header}>
-              <Typography variant="h6">🦀</Typography>
-              <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-                Crab Strategy - Earn USD Returns
-              </Typography>
-              <div className={classes.toggle}>
-                <ToggleButtonGroup size="small" color="primary" value={displayCrabV1} exclusive>
-                  <ToggleButton value={false} onClick={switchToV2}>
-                    V2
-                  </ToggleButton>
-                  <ToggleButton value={true} onClick={switchToV1}>
-                    V1
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              </div>
-            </div>
-            {displayCrabV1 ? (
-              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
-                be profitable if ETH moves less than approximately{' '}
-                <b className={classes.boldFont}>{(profitableMovePercent * 100).toFixed(2)}%</b> in either direction each
-                day. Crab hedges daily, reducing risk of liquidations. Crab aims to be profitable in USD terms, stacking
-                ETH if price drops and selling ETH if price increases.
-                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            ) : (
-              <Typography variant="subtitle1" color="textSecondary" className={classes.description}>
-                Crab automates a strategy that performs best in sideways markets. Based on current premiums, crab would
-                be profitable if ETH moves less than approximately{' '}
-                <b className={classes.boldFont}>{(profitableMovePercentV2 * 100).toFixed(2)}%</b> in either direction
-                between 2 day hedges. Crab hedges approximately three times a week (on MWF). Crab aims to be profitable
-                in USD terms, stacking ETH if price drops and selling ETH price increases.
-                <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            )}
-            <div className={classes.body}>
-              <div className={classes.details}>
-                <CapDetailsComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                <div className={classes.overview}>
-                  <StrategyInfoItem
-                    value={Number(toTokenAmount(index, 18).sqrt()).toFixed(2).toLocaleString()}
-                    label="ETH Price ($)"
-                    tooltip={Tooltips.SpotPrice}
-                    priceType="spot"
+            <Box marginTop="40px">
+              <CrabPositionV2 />
+            </Box>
+
+            <div className={classes.columnContainer}>
+              <div className={classes.leftColumn}>
+                <Box>
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Details
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <CapDetailsComponent
+                      maxCap={maxCap}
+                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
+                    />
+                  </Box>
+                </Box>
+
+                <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px" marginTop="32px">
+                  <Metric
+                    flexBasis="250px"
+                    label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
+                    value={formatCurrency(toTokenAmount(index, 18).sqrt().toNumber())}
                   />
-                  <StrategyInfoItem
-                    value={(currentImpliedFunding * 100).toFixed(2)}
-                    label="Current Implied Premium (%)"
-                    tooltip={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
+                  <Metric
+                    flexBasis="250px"
+                    label={
+                      <Label
+                        label="Current Implied Premium"
+                        tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
+                      />
+                    }
+                    value={formatNumber(currentImpliedFunding * 100) + '%'}
                   />
-                  <StrategyInfoItem
-                    value={(dailyHistoricalFunding.funding * 100).toFixed(2)}
-                    label="Historical Daily Premium (%)"
-                    tooltip={`${
-                      Tooltips.StrategyEarnFunding
-                    }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                  <Metric
+                    flexBasis="250px"
+                    label={
+                      <Label
+                        label="Historical Daily Premium"
+                        tooltipTitle={`${
+                          Tooltips.StrategyEarnFunding
+                        }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+                      />
+                    }
+                    value={formatNumber(dailyHistoricalFunding.funding * 100) + '%'}
                   />
-                  <StrategyInfoItem
-                    link="https://www.squeethportal.xyz/auctionHistory"
+                  <Metric
+                    flexBasis="250px"
+                    label={
+                      <Label
+                        label="Last hedged at"
+                        tooltipTitle={
+                          'Last hedged at ' +
+                          new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                            day: 'numeric',
+                            month: 'long',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            timeZoneName: 'long',
+                          }) +
+                          '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
+                        }
+                      />
+                    }
                     value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                       day: 'numeric',
                       month: 'numeric',
                       hour: 'numeric',
                       minute: 'numeric',
                     })}
-                    label="Last hedged at"
-                    tooltip={
-                      'Last hedged at ' +
-                      new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-                        day: 'numeric',
-                        month: 'long',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                        timeZoneName: 'long',
-                      }) +
-                      '. Hedges approximately 3 times a week (on MWF) or every 20% ETH price move'
+                  />
+                  <Metric
+                    flexBasis="250px"
+                    label={
+                      <Label
+                        label={`Approx Profitable (${formatNumber(profitableMovePercentV2 * 100)}%)`}
+                        tooltipTitle={Tooltips.StrategyProfitThreshold}
+                      />
+                    }
+                    value={
+                      formatCurrency(lowerPriceBandForProfitability) +
+                      ' - ' +
+                      formatCurrency(upperPriceBandForProfitability)
                     }
                   />
-                  {displayCrabV1 ? (
-                    <StrategyInfoItem
-                      value={(profitableMovePercent * 100).toFixed(2)}
-                      label="Current Profit Threshold (%)"
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  ) : (
-                    <StrategyInfoItem
-                      value={
-                        '~' +
-                        lowerPriceBandForProfitability.toFixed(2) +
-                        ' - ' +
-                        upperPriceBandForProfitability.toFixed(2)
-                      }
-                      label={
-                        'Approx Profitable (' + (profitableMovePercentV2 * 100).toFixed(2) + '%) between ETH Prices ($)'
-                      }
-                      tooltip={Tooltips.StrategyProfitThreshold}
-                    />
-                  )}
-                  <StrategyInfoItem
-                    link="https://squeeth.opyn.co/vault/286"
-                    value={collatRatio === Infinity ? '0.00' : collatRatio.toString()}
-                    label="Collat Ratio (%)"
-                    tooltip={Tooltips.StrategyCollRatio}
+                  <Metric
+                    flexBasis="250px"
+                    label={<Label label="Collateralization Ratio" tooltipTitle={Tooltips.StrategyCollRatio} />}
+                    value={formatNumber(collatRatio === Infinity ? 0 : collatRatio) + '%'}
                   />
-                </div>
-                {displayCrabV1 ? null : <StrategyChartsV2 />}
-                {displayCrabV1 ? <StrategyInfoV1 /> : <StrategyInfo />}
-                {displayCrabV1 ? <CrabStrategyHistory /> : <CrabStrategyV2History />}
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Crab PnL
+                  </Typography>
+
+                  <Box marginTop="12px">
+                    <StrategyChartsV2 />
+                  </Box>
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Profitability conditions
+                  </Typography>
+                  <StrategyInfo />
+                </Box>
+
+                <Box marginTop="32px">
+                  <Typography variant="h4" className={classes.subtitle}>
+                    Strategy Hedges
+                  </Typography>
+                  <Box marginTop="24px">
+                    <CrabStrategyV2History />
+                  </Box>
+                </Box>
               </div>
-              <div className={classes.tradeCard}>
-                {supportedNetwork && (
-                  <div className={classes.tradeForm}>
-                    {!!address ? (
-                      <CrabTradeComponent
-                        maxCap={maxCap}
-                        depositedAmount={vault?.collateralAmount || new BigNumber(0)}
-                      />
-                    ) : (
-                      <div className={classes.connectWalletDiv}>
-                        <LinkButton className={classes.strategiesConnectWalletBtn} onClick={() => selectWallet()}>
-                          Connect Wallet
-                        </LinkButton>
-                      </div>
-                    )}
-                  </div>
-                )}
+              <div className={classes.rightColumn}>
+                <div className={classes.tradeSection}>
+                  <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+                </div>
               </div>
             </div>
           </div>

@@ -15,7 +15,7 @@ import BigNumber from 'bignumber.js'
 import useAppCallback from '@hooks/useAppCallback'
 import { useInitCrabMigration, useQueueMigrate } from 'src/state/crabMigration/hooks'
 import { currentCrabPositionValueAtom, currentCrabPositionValueInETHAtom } from 'src/state/crab/atoms'
-import TradeInfoItem from '@components/Trade/TradeInfoItem'
+import TradeInfoItem from '@components/TradeOld/TradeInfoItem'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

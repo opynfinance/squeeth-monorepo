@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-only
+// SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
 // interface
@@ -75,7 +75,38 @@ struct Receipt {
     address sender;
     /// @dev usdc amount to queue for deposit or crab amount to queue for withdrawal
     uint256 amount;
+    /// @dev time of deposit
+    uint256 timestamp;
 }
+
+/**
+ * Crab netting error codes
+ * N1: deposit amount smaller than minimum OTC amount
+ * N2: auction is live
+ * N3: remaining amount smaller than minimum, consider removing full balance
+ * N4: force withdraw after 1 week from deposit
+ * N5: withdraw amount smaller than minimum OTC amount
+ * N6: remaining amount smaller than minimum, consider removing full balance
+ * N7: Not enough deposits to net
+ * N8: Not enough withdrawals to net
+ * N9: signature incorrect
+ * N10: order expired
+ * N11: Min ETH out too low
+ * N12: auction order not buying sqth
+ * N13: buy order price less than clearing
+ * N14: not enough buy orders for sqth
+ * N15: auction order is not selling
+ * N16: sell order price greater than clearing
+ * N17: min USDC out too low
+ * N18: twap period cannot be less than 180
+ * N19: Price tolerance has to be less than 20%
+ * N20: Nonce already used
+ * N21: Price too high relative to Uniswap twap.
+ * N22: Price too low relative to Uniswap twap.
+ * N23: Crab Price too high
+ * N24: Crab Price too low
+ * N25: only weth and crab can send me monies
+ */
 
 /**
  * @dev CrabNetting contract
@@ -177,12 +208,16 @@ contract CrabNetting is Ownable, EIP712 {
         address indexed withdrawer, uint256 crabAmount, uint256 usdcAmount, uint256 indexed receiptIndex
     );
 
+    event WithdrawRejected(address indexed withdrawer, uint256 crabAmount, uint256 index);
+
     event BidTraded(uint256 indexed bidId, address indexed trader, uint256 quantity, uint256 price, bool isBuying);
 
     event SetAuctionTwapPeriod(uint32 previousTwap, uint32 newTwap);
     event SetOTCPriceTolerance(uint256 previousTolerance, uint256 newOtcPriceTolerance);
     event SetMinCrab(uint256 amount);
     event SetMinUSDC(uint256 amount);
+    event SetDepositsIndex(uint256 newDepositsIndex);
+    event SetWithdrawsIndex(uint256 newWithdrawsIndex);
     event NonceTrue(address sender, uint256 nonce);
     event ToggledAuctionLive(bool isAuctionLive);
 
@@ -255,17 +290,35 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice set the depositIndex so that we want to skip processing some deposits
+     * @param _newDepositsIndex the new deposits index
+     */
+    function setDepositsIndex(uint256 _newDepositsIndex) external onlyOwner {
+        depositsIndex = _newDepositsIndex;
+        emit SetDepositsIndex(_newDepositsIndex);
+    }
+
+    /**
+     * @notice set the withdraw index so that we want to skip processing some withdraws
+     * @param _newWithdrawsIndex the new withdraw index
+     */
+    function setWithdrawsIndex(uint256 _newWithdrawsIndex) external onlyOwner {
+        withdrawsIndex = _newWithdrawsIndex;
+        emit SetWithdrawsIndex(_newWithdrawsIndex);
+    }
+
+    /**
      * @notice queue USDC for deposit into crab strategy
      * @param _amount USDC amount to deposit
      */
     function depositUSDC(uint256 _amount) external {
-        require(_amount >= minUSDCAmount, "deposit amount smaller than minimum OTC amount");
+        require(_amount >= minUSDCAmount, "N1");
 
         IERC20(usdc).transferFrom(msg.sender, address(this), _amount);
 
         // update usd balance of user, add their receipt, and receipt index to user deposits index
         usdBalance[msg.sender] = usdBalance[msg.sender] + _amount;
-        deposits.push(Receipt(msg.sender, _amount));
+        deposits.push(Receipt(msg.sender, _amount, block.timestamp));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
 
         emit USDCQueued(msg.sender, _amount, usdBalance[msg.sender], deposits.length - 1);
@@ -274,21 +327,22 @@ contract CrabNetting is Ownable, EIP712 {
     /**
      * @notice withdraw USDC from queue
      * @param _amount USDC amount to dequeue
+     * @param _force forceWithdraw if deposited more than a week ago
      */
-    function withdrawUSDC(uint256 _amount) external {
-        require(!isAuctionLive, "auction is live");
+    function withdrawUSDC(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "N2");
 
         usdBalance[msg.sender] = usdBalance[msg.sender] - _amount;
-        require(
-            usdBalance[msg.sender] >= minUSDCAmount || usdBalance[msg.sender] == 0,
-            "remaining amount smaller than minimum, consider removing full balance"
-        );
+        require(usdBalance[msg.sender] >= minUSDCAmount || usdBalance[msg.sender] == 0, "N3");
 
         // start withdrawing from the users last deposit
         uint256 toRemove = _amount;
         uint256 lastIndexP1 = userDepositsIndex[msg.sender].length;
         for (uint256 i = lastIndexP1; i > 0; i--) {
             Receipt storage r = deposits[userDepositsIndex[msg.sender][i - 1]];
+            if (_force) {
+                require(block.timestamp > r.timestamp + 1 weeks, "N4");
+            }
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
@@ -296,6 +350,7 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 toRemove -= r.amount;
                 delete deposits[userDepositsIndex[msg.sender][i - 1]];
+                userDepositsIndex[msg.sender].pop();
             }
         }
         IERC20(usdc).transfer(msg.sender, _amount);
@@ -308,10 +363,10 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _amount crab amount to withdraw
      */
     function queueCrabForWithdrawal(uint256 _amount) external {
-        require(_amount >= minCrabAmount, "withdraw amount smaller than minimum OTC amount");
+        require(_amount >= minCrabAmount, "N5");
         IERC20(crab).transferFrom(msg.sender, address(this), _amount);
         crabBalance[msg.sender] = crabBalance[msg.sender] + _amount;
-        withdraws.push(Receipt(msg.sender, _amount));
+        withdraws.push(Receipt(msg.sender, _amount, block.timestamp));
         userWithdrawsIndex[msg.sender].push(withdraws.length - 1);
         emit CrabQueued(msg.sender, _amount, crabBalance[msg.sender], withdraws.length - 1);
     }
@@ -319,19 +374,20 @@ contract CrabNetting is Ownable, EIP712 {
     /**
      * @notice withdraw Crab from queue
      * @param _amount Crab amount to dequeue
+     * @param _force forceWithdraw if deposited more than a week ago
      */
-    function dequeueCrab(uint256 _amount) external {
-        require(!isAuctionLive, "auction is live");
+    function dequeueCrab(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "N2");
         crabBalance[msg.sender] = crabBalance[msg.sender] - _amount;
-        require(
-            crabBalance[msg.sender] >= minCrabAmount || crabBalance[msg.sender] == 0,
-            "remaining amount smaller than minimum, consider removing full balance"
-        );
+        require(crabBalance[msg.sender] >= minCrabAmount || crabBalance[msg.sender] == 0, "N6");
         // deQueue crab from the last, last in first out
         uint256 toRemove = _amount;
         uint256 lastIndexP1 = userWithdrawsIndex[msg.sender].length;
         for (uint256 i = lastIndexP1; i > 0; i--) {
             Receipt storage r = withdraws[userWithdrawsIndex[msg.sender][i - 1]];
+            if (_force) {
+                require(block.timestamp > r.timestamp + 1 weeks, "N4");
+            }
             if (r.amount > toRemove) {
                 r.amount -= toRemove;
                 toRemove = 0;
@@ -339,6 +395,7 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 toRemove -= r.amount;
                 delete withdraws[userWithdrawsIndex[msg.sender][i - 1]];
+                userWithdrawsIndex[msg.sender].pop();
             }
         }
         IERC20(crab).transfer(msg.sender, _amount);
@@ -353,8 +410,8 @@ contract CrabNetting is Ownable, EIP712 {
     function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
         _checkCrabPrice(_price);
         uint256 crabQuantity = (_quantity * 1e18) / _price;
-        require(_quantity <= IERC20(usdc).balanceOf(address(this)), "Not enough deposits to net");
-        require(crabQuantity <= IERC20(crab).balanceOf(address(this)), "Not enough withdrawals to net");
+        require(_quantity <= IERC20(usdc).balanceOf(address(this)), "N7");
+        require(crabQuantity <= IERC20(crab).balanceOf(address(this)), "N8");
 
         // process deposits and send crab
         uint256 i = depositsIndex;
@@ -444,7 +501,7 @@ contract CrabNetting is Ownable, EIP712 {
         return sum;
     }
 
-    function checkOrder(Order memory _order) external {
+    function checkOrder(Order memory _order) external view {
         return _checkOrder(_order);
     }
 
@@ -452,8 +509,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @dev checks the expiry nonce and signer of an order
      * @param _order is the Order struct
      */
-    function _checkOrder(Order memory _order) internal {
-        _useNonce(_order.trader, _order.nonce);
+    function _checkOrder(Order memory _order) internal view {
         bytes32 structHash = keccak256(
             abi.encode(
                 _CRAB_NETTING_TYPEHASH,
@@ -469,8 +525,8 @@ contract CrabNetting is Ownable, EIP712 {
 
         bytes32 hash = _hashTypedDataV4(structHash);
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
-        require(offerSigner == _order.trader, "Signature not correct");
-        require(_order.expiry >= block.timestamp, "order expired");
+        require(offerSigner == _order.trader, "N9");
+        require(_order.expiry >= block.timestamp, "N10");
     }
 
     /**
@@ -480,7 +536,7 @@ contract CrabNetting is Ownable, EIP712 {
     function _debtToMint(uint256 _amount) internal view returns (uint256) {
         uint256 feeAdjustment = _calcFeeAdjustment();
         (,, uint256 collateral, uint256 debt) = ICrabStrategyV2(crab).getVaultDetails();
-        uint256 wSqueethToMint = (_amount * debt) / (collateral + (debt * feeAdjustment));
+        uint256 wSqueethToMint = (_amount * debt) / (collateral + (debt * feeAdjustment) / 1e18);
         return wSqueethToMint;
     }
 
@@ -490,6 +546,8 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function depositAuction(DepositAuctionParams calldata _p) external onlyOwner {
         _checkOTCPrice(_p.clearingPrice, false);
+        uint256 ethUSDCPrice = IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, auctionTwapPeriod, true);
+        require((_p.depositsQueued * (1e18 - otcPriceTolerance) * 1e12 / ethUSDCPrice) < _p.minEth, "N11");
         /**
          * step 1: get eth from mm
          *     step 2: get eth from deposit usdc
@@ -505,9 +563,10 @@ contract CrabNetting is Ownable, EIP712 {
         // step 1 get all the eth in
         uint256 remainingToSell = sqthToSell;
         for (uint256 i = 0; i < _p.orders.length; i++) {
-            require(_p.orders[i].isBuying, "auction order not buying sqth");
-            require(_p.orders[i].price >= _p.clearingPrice, "buy order price less than clearing");
+            require(_p.orders[i].isBuying, "N12");
+            require(_p.orders[i].price >= _p.clearingPrice, "N13");
             _checkOrder(_p.orders[i]);
+            _useNonce(_p.orders[i].trader, _p.orders[i].nonce);
             if (_p.orders[i].quantity >= remainingToSell) {
                 IWETH(weth).transferFrom(
                     _p.orders[i].trader, address(this), (remainingToSell * _p.clearingPrice) / 1e18
@@ -521,7 +580,7 @@ contract CrabNetting is Ownable, EIP712 {
                 remainingToSell -= _p.orders[i].quantity;
             }
         }
-        require(remainingToSell == 0, "not enough buy orders for sqth");
+        require(remainingToSell == 0, "N14");
 
         // step 2
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
@@ -585,11 +644,11 @@ contract CrabNetting is Ownable, EIP712 {
                 remainingDeposits = remainingDeposits - queuedAmount;
                 usdBalance[deposits[k].sender] -= queuedAmount;
 
-                portion.crab = (((queuedAmount * 1e18) / _p.depositsQueued) * to_send.crab) / 1e18;
+                portion.crab = queuedAmount * to_send.crab / _p.depositsQueued;
 
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = (((queuedAmount * 1e18) / _p.depositsQueued) * to_send.eth) / 1e18;
+                portion.eth = queuedAmount * to_send.eth / _p.depositsQueued;
                 if (portion.eth > 1e12) {
                     IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
@@ -602,10 +661,10 @@ contract CrabNetting is Ownable, EIP712 {
             } else {
                 usdBalance[deposits[k].sender] -= remainingDeposits;
 
-                portion.crab = (((remainingDeposits * 1e18) / _p.depositsQueued) * to_send.crab) / 1e18;
+                portion.crab = remainingDeposits * to_send.crab / _p.depositsQueued;
                 IERC20(crab).transfer(deposits[k].sender, portion.crab);
 
-                portion.eth = (((remainingDeposits * 1e18) / _p.depositsQueued) * to_send.eth) / 1e18;
+                portion.eth = remainingDeposits * to_send.eth / _p.depositsQueued;
                 if (portion.eth > 1e12) {
                     IWETH(weth).transfer(deposits[k].sender, portion.eth);
                 } else {
@@ -642,8 +701,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 toPull = sqthRequired;
         for (uint256 i = 0; i < _p.orders.length && toPull > 0; i++) {
             _checkOrder(_p.orders[i]);
-            require(!_p.orders[i].isBuying, "auction order is not selling");
-            require(_p.orders[i].price <= _p.clearingPrice, "sell order price greater than clearing");
+            _useNonce(_p.orders[i].trader, _p.orders[i].nonce);
+            require(!_p.orders[i].isBuying, "N15");
+            require(_p.orders[i].price <= _p.clearingPrice, "N16");
             if (_p.orders[i].quantity < toPull) {
                 toPull -= _p.orders[i].quantity;
                 IERC20(sqth).transferFrom(_p.orders[i].trader, address(this), _p.orders[i].quantity);
@@ -672,13 +732,16 @@ contract CrabNetting is Ownable, EIP712 {
         }
 
         // step 4 convert to USDC
+        uint256 ethUSDCPrice = IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, auctionTwapPeriod, true);
+        uint256 amountIn = (IERC20(weth).balanceOf(address(this)) - initWethBalance);
+        require((amountIn * ethUSDCPrice * (1e18 - otcPriceTolerance) / 1e36 / 1e12) < _p.minUSDC, "N17");
         ISwapRouter.ExactInputSingleParams memory params = ISwapRouter.ExactInputSingleParams({
             tokenIn: address(weth),
             tokenOut: address(usdc),
             fee: _p.ethUSDFee,
             recipient: address(this),
             deadline: block.timestamp,
-            amountIn: (IERC20(weth).balanceOf(address(this)) - initWethBalance),
+            amountIn: amountIn,
             amountOutMinimum: _p.minUSDC,
             sqrtPriceLimitX96: 0
         });
@@ -700,7 +763,7 @@ contract CrabNetting is Ownable, EIP712 {
                 crabBalance[withdraw.sender] -= withdraw.amount;
 
                 // send proportional usdc
-                usdcAmount = (((withdraw.amount * 1e18) / _p.crabToWithdraw) * usdcReceived) / 1e18;
+                usdcAmount = withdraw.amount * usdcReceived / _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
                 emit CrabWithdrawn(withdraw.sender, withdraw.amount, usdcAmount, j);
                 delete withdraws[j];
@@ -710,7 +773,7 @@ contract CrabNetting is Ownable, EIP712 {
                 crabBalance[withdraw.sender] -= remainingWithdraws;
 
                 // send proportional usdc
-                usdcAmount = (((remainingWithdraws * 1e18) / _p.crabToWithdraw) * usdcReceived) / 1e18;
+                usdcAmount = remainingWithdraws * usdcReceived / _p.crabToWithdraw;
                 IERC20(usdc).transfer(withdraw.sender, usdcAmount);
                 emit CrabWithdrawn(withdraw.sender, remainingWithdraws, usdcAmount, j);
 
@@ -722,11 +785,24 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     /**
+     * @dev owner rejects the withdraw at index i thereby sending the withdrawer their crab back
+     * @param i index of the Withdraw receipt to reject
+     */
+    function rejectWithdraw(uint256 i) external onlyOwner {
+        Receipt memory withdraw = withdraws[i];
+        crabBalance[withdraw.sender] -= withdraw.amount;
+        ICrabStrategyV2(crab).transfer(withdraw.sender, withdraw.amount);
+        delete withdraws[i];
+
+        emit WithdrawRejected(withdraw.sender, withdraw.amount, i);
+    }
+
+    /**
      * @notice owner can set the twap period in seconds that is used for obtaining TWAP prices
      * @param _auctionTwapPeriod the twap period, in seconds
      */
     function setAuctionTwapPeriod(uint32 _auctionTwapPeriod) external onlyOwner {
-        require(_auctionTwapPeriod >= 180, "twap period cannot be less than 180");
+        require(_auctionTwapPeriod >= 180, "N18");
         uint32 previousTwap = auctionTwapPeriod;
 
         auctionTwapPeriod = _auctionTwapPeriod;
@@ -740,8 +816,8 @@ contract CrabNetting is Ownable, EIP712 {
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "Price tolerance has to be less than 20%");
-        uint256 previousOtcTolerance = auctionTwapPeriod;
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "N19");
+        uint256 previousOtcTolerance = otcPriceTolerance;
 
         otcPriceTolerance = _otcPriceTolerance;
 
@@ -754,7 +830,7 @@ contract CrabNetting is Ownable, EIP712 {
      * @param _nonce number that is to be traded only once
      */
     function _useNonce(address _trader, uint256 _nonce) internal {
-        require(!nonces[_trader][_nonce], "Nonce already used");
+        require(!nonces[_trader][_nonce], "N20");
         nonces[_trader][_nonce] = true;
     }
 
@@ -768,15 +844,9 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 squeethEthPrice = IOracle(oracle).getTwap(ethSqueethPool, sqth, weth, auctionTwapPeriod, true);
 
         if (_isAuctionBuying) {
-            require(
-                _price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18,
-                "Price too high relative to Uniswap twap."
-            );
+            require(_price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18, "N21");
         } else {
-            require(
-                _price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18,
-                "Price too low relative to Uniswap twap."
-            );
+            require(_price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18, "N22");
         }
     }
 
@@ -788,8 +858,8 @@ contract CrabNetting is Ownable, EIP712 {
         uint256 crabFairPrice =
             ((collateral - ((debt * squeethEthPrice) / 1e18)) * usdcEthPrice) / ICrabStrategyV2(crab).totalSupply();
         crabFairPrice = crabFairPrice / 1e12; //converting from units of 18 to 6
-        require(_price <= (crabFairPrice * (1e18 + otcPriceTolerance)) / 1e18, "Crab Price too high");
-        require(_price >= (crabFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "Crab Price too low");
+        require(_price <= (crabFairPrice * (1e18 + otcPriceTolerance)) / 1e18, "N23");
+        require(_price >= (crabFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "N24");
     }
 
     function _calcFeeAdjustment() internal view returns (uint256) {
@@ -800,6 +870,6 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     receive() external payable {
-        require(msg.sender == weth || msg.sender == crab, "only weth and crab can send me monies");
+        require(msg.sender == weth || msg.sender == crab, "N25");
     }
 }
