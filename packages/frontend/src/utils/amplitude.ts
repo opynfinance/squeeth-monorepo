@@ -2,16 +2,15 @@ import { init, track, Types } from '@amplitude/analytics-browser'
 import { getCookieName, CookieStorage } from '@amplitude/analytics-client-common'
 import { canStoreCookies } from './cookies'
 
-const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY  && !!canStoreCookies()
+const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY && !!canStoreCookies()
 
 // Should be called once before calling track event
 export const initializeAmplitude = () => {
- 
-  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies() ) return
+  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies()) return
 
   isOptedOut().then((optOut) => {
-   // console.log('Opted out', optOut)
-    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY ) return
+    // console.log('Opted out', optOut)
+    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
 
     init(process.env.NEXT_PUBLIC_AMPLITUDE_KEY, undefined, {
       serverZone: Types.ServerZone.EU,
@@ -51,6 +50,8 @@ export enum EVENT_NAME {
   WITHDRAW_CRAB_CLICK = 'WITHDRAW_CRAB_CLICK',
   WITHDRAW_CRAB_SUCCESS = 'WITHDRAW_CRAB_SUCCESS',
   WITHDRAW_CRAB_FAILED = 'WITHDRAW_CRAB_FAILED',
+  USER_FORCE_INSTANT_DEP_CRAB = 'USER_FORCE_INSTANT_DEP_CRAB',
+  USER_FORCE_INSTANT_WIT_CRAB = 'USER_FORCE_INSTANT_WIT_CRAB',
 }
 
 export const isOptedOut = async () => {

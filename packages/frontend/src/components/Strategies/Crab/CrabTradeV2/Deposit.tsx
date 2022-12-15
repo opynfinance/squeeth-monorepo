@@ -49,6 +49,8 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
+import { EVENT_NAME } from '@utils/amplitude'
+import useAmplitude from '@hooks/useAmplitude'
 
 type CrabDepositProps = {
   maxCap: BigNumber
@@ -112,6 +114,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
   const { isRestricted } = useRestrictUser()
 
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+
+  const { track } = useAmplitude()
 
   const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
@@ -222,6 +226,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     }
   }, [ready, depositAmountBN, slippage, useUsdc, network, usdc, weth])
 
+  const recordAnalytics = useCallback(
+    (events: string[]) => {
+      events.forEach((event) => track(event))
+    },
+    [track],
+  )
+
   const onTxnConfirmed = useCallback(() => {
     if (!ongoingTransaction.current) return
     const transaction = ongoingTransaction.current
@@ -239,9 +250,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
         : CrabTradeTransactionType.Instant,
       token: transaction.token,
     })
+    transaction.analytics ? recordAnalytics(transaction.analytics) : null
     resetDepositAmount()
     ongoingTransaction.current = undefined
-  }, [usdcQueued, setUsdcQueued, setStrategyData, onTxnConfirm, resetDepositAmount])
+  }, [usdcQueued, setUsdcQueued, setStrategyData, onTxnConfirm, resetDepositAmount, recordAnalytics])
 
   const depositTX = async () => {
     setTxLoading(true)
@@ -254,10 +266,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
           await approveUsdc(() => resetTransactionData())
         }
       } else {
+        const userForceInstantAnalytics = queueOptionAvailable && !useQueue
+
         ongoingTransaction.current = {
           amount: depositAmountBN,
           queuedTransaction: useQueue,
           token: useUsdc ? 'USDC' : 'ETH',
+          analytics: userForceInstantAnalytics ? [EVENT_NAME.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
         }
         if (useQueue) {
           await queueUSDC(depositAmountBN, onTxnConfirmed)
