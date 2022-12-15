@@ -210,7 +210,6 @@ jobs:
 
   # zen-bull-vault jobs
   lint-zen-bull-vault:
-    working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
@@ -220,7 +219,6 @@ jobs:
           command: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
 
   compile-zen-bull-vault:
-    working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
@@ -230,15 +228,13 @@ jobs:
           command: cd packages/bull-vault && forge build --force
 
   test-zen-bull-vault:
-    working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee ../../bull_gas_report.ansi
+      - run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
 
   fuzzing-zen-bull-vault:
-    working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
@@ -246,7 +242,6 @@ jobs:
       - run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
       
   coverage-zen-bull-vault:
-    working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
