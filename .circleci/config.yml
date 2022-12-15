@@ -4,7 +4,7 @@ orbs:
   node: circleci/node@1.1.6
 
 workflows:
-  hardhat-build-test-report:
+  hardhat:
     jobs:
       - checkout-and-install-hardhat
       - compile:
@@ -25,27 +25,33 @@ workflows:
       - e2e-test:
           requires:
             - compile
-  frontend-build-test-report:
+  frontend:
     jobs:
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
-  zen-bull-vault-build-test-report:
+  zen-bull-vault:
     jobs:
       - zen-bull-vault-compile
       - zen-bull-vault-test:
+          require:
+            - zen-bull-vault-compile
           context: 
             - squeeth-monorepo-zen-bull-vault
       - zen-bull-vault-fuzzing:
+          require:
+            - zen-bull-vault-compile
           context: 
             - squeeth-monorepo-zen-bull-vault
       - zen-bull-vault-coverage:
+          require:
+            - zen-bull-vault-test
           context: 
             - squeeth-monorepo-zen-bull-vault
 
 jobs:
-  # hardhat-build-test-report jobs
+  # hardhat jobs
   checkout-and-install-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -164,7 +170,7 @@ jobs:
           name: Mainnet E2E Test 
           command: yarn test:e2e
   
-  # frontend-build-test-report jobs
+  # frontend jobs
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
@@ -199,7 +205,7 @@ jobs:
           name: Unit tests
           command: yarn test:ci
 
-  # zen-bull-vault-build-test-report jobs
+  # zen-bull-vault jobs
   zen-bull-vault-compile:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
