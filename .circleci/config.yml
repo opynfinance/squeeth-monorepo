@@ -210,43 +210,48 @@ jobs:
 
   # zen-bull-vault jobs
   lint-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
       - run: 
           name: Lint zen-bull-vault
-          command: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+          command: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
 
   compile-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
       - run: 
           name: Build zen-bull-vault
-          command: cd packages/bull-vault && forge build --force
+          command: cd packages/zen-bull-vault && forge build --force
 
   test-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
 
   fuzzing-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
       
   coverage-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: cd packages/bull-vault && FOUNDRY_PROFILE=coverage forge coverage
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=coverage forge coverage
 
 
 
