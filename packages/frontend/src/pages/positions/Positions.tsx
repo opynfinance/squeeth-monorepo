@@ -27,6 +27,7 @@ import { indexAtom } from 'src/state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
+import CrabPositionV2 from './CrabPositionV2'
 import YourVaults from './YourVaults'
 import LongSqueeth from './LongSqueeth'
 import ShortSqueeth from './ShortSqueeth'
@@ -41,8 +42,8 @@ import {
 } from 'src/state/crab/hooks'
 import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
+import { crabQueuedInEthAtom, crabQueuedInUsdAtom } from '@state/crab/atoms'
 
 export default function Positions() {
   const classes = useStyles()
@@ -59,6 +60,7 @@ export default function Positions() {
   const index = useAtomValue(indexAtom)
   const setStrategyDataV2 = useSetStrategyDataV2()
   const setStrategyData = useSetStrategyData()
+  const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
 
   useAppEffect(() => {
     setStrategyDataV2()
@@ -96,11 +98,11 @@ export default function Positions() {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
   const pnlWMidPriceInUSDV2 = useAppMemo(() => {
-    return pnlv2(currentCrabPositionValueV2, depositedUsdV2)
-  }, [currentCrabPositionValueV2, depositedUsdV2])
+    return pnlv2(currentCrabPositionValueV2.plus(crabV2QueuedInUsd), depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2, crabV2QueuedInUsd])
   const pnlWMidPriceInPerctV2 = useAppMemo(() => {
-    return pnlInPerctv2(currentCrabPositionValueV2, depositedUsdV2)
-  }, [currentCrabPositionValueV2, depositedUsdV2])
+    return pnlInPerctv2(currentCrabPositionValueV2.plus(crabV2QueuedInUsd), depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2, crabV2QueuedInUsd])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -135,11 +137,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-          depositedEth.isZero() &&
-          depositedEthV2.isZero() &&
-          squeethAmount.isZero() &&
-          mintedDebt.isZero() &&
-          lpedSqueeth.isZero() ? (
+        depositedEth.isZero() &&
+        depositedEthV2.isZero() &&
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -169,7 +171,7 @@ export default function Positions() {
         )}
 
         {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
-          <CrabPosition
+          <CrabPositionV2
             depositedEth={depositedEthV2}
             depositedUsd={depositedUsdV2}
             loading={isCrabV2loading}

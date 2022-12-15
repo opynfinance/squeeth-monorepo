@@ -296,9 +296,6 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
 
-  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
-  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-
   useAppEffect(() => {
     getSellQuote(amount, slippageAmount).then(setQuote)
   }, [amount, slippageAmount, getSellQuote, setQuote])
@@ -466,6 +463,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   useAppEffect(() => {
     setCollatRatio(collatPercent / 100)
   }, [collatPercent, setCollatRatio])
+
+  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
+  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="open-short-card">
@@ -639,6 +640,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                   <Metric
                     label="Price Impact"
                     value={formatNumber(priceImpact) + '%'}
+                    textColor={priceImpactColor}
                     isSmall
                     flexDirection="row"
                     justifyContent="space-between"
@@ -981,6 +983,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
 
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(sellCloseQuote.priceImpact)) ? 0 : Number(sellCloseQuote.priceImpact)
+  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
 
   return (
     <div id="close-short-card">
@@ -1190,6 +1193,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                 <Metric
                   label="Price Impact"
                   value={formatNumber(priceImpact) + '%'}
+                  textColor={priceImpactColor}
                   isSmall
                   flexDirection="row"
                   justifyContent="space-between"

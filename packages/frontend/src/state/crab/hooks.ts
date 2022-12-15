@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useCallback, useEffect } from 'react'
 
@@ -33,6 +33,14 @@ import {
   currentEthLoadingAtomV2,
   currentCrabPositionETHActualAtomV2,
   ethPriceAtLastHedgeAtomV2,
+  usdcQueuedAtom,
+  crabQueuedAtom,
+  crabUSDValueAtom,
+  isNettingAuctionLiveAtom,
+  crabQueuedInEthAtom,
+  crabQueuedInUsdAtom,
+  minUSDCAmountAtom,
+  minCrabAmountAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -55,17 +63,18 @@ import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } fro
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
-import { currentImpliedFundingAtom, impliedVolAtom, normFactorAtom } from '../controller/atoms'
+import { currentImpliedFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '../controller/atoms'
 import {
   crabHelperContractAtom,
   crabMigrationContractAtom,
+  crabNettingContractAtom,
   crabStrategyContractAtom,
   crabStrategyContractAtomV2,
 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
-import { BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS } from '@constants/index'
+import { BIG_ONE, BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import { useETHPrice } from '@hooks/useETHPrice'
+import { useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
@@ -148,6 +157,7 @@ export const useSetStrategyDataV2 = () => {
         if (v) {
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount)
             .then((cl) => {
+              console.log('CR', cl.collateralPercent)
               setCollatRatio(cl.collateralPercent)
               setLiquidationPrice(cl.liquidationPrice)
               setLoading(false)
@@ -305,16 +315,21 @@ export const useCurrentCrabPositionValueV2 = () => {
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtomV2)
   const { value: userCrabBalance, loading: balLoading } = useTokenBalance(crabStrategy2, 15, 18)
   const userMigratedShares = useAtomValue(userMigratedSharesAtom)
+  const crabQueuedShares = useAtomValue(crabQueuedAtom)
   const setUserMigratedSharesETH = useUpdateAtom(userMigratedSharesETHAtom)
   const setCurrentCrabPositionETHActual = useUpdateAtom(currentCrabPositionETHActualAtomV2)
+  const setCrabQueuedInEth = useUpdateAtom(crabQueuedInEthAtom)
+  const setCrabQueuedInUsd = useUpdateAtom(crabQueuedInUsdAtom)
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useETHPrice()
+  const ethPrice = useOnChainETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const normFactor = useAtomValue(normFactorAtom)
   const squeethInitialPrice = useAtomValue(squeethInitialPriceAtom)
+  const setCrabUsdValue = useSetAtom(crabUSDValueAtom)
+  const fetchQueuedData = useQueuedCrabPositionAndStatus()
 
   useEffect(() => {
     setStrategyData()
@@ -329,9 +344,14 @@ export const useCurrentCrabPositionValueV2 = () => {
       if (balLoading) {
         setIsCrabPositionValueLoading(true)
       }
-      const [collateral, squeethDebt] = await Promise.all([
+      fetchQueuedData()
+      const [collateral, squeethDebt, collateralOne, squeethDebtOne, collatMigrated, debtMigrated] = await Promise.all([
         getCollateralFromCrabAmount(userShares, contract, vault),
         getWsqueethFromCrabAmount(userShares, contract),
+        getCollateralFromCrabAmount(BIG_ONE, contract, vault),
+        getWsqueethFromCrabAmount(BIG_ONE, contract),
+        getCollateralFromCrabAmount(toTokenAmount(crabQueuedShares, 18), contract, vault),
+        getWsqueethFromCrabAmount(toTokenAmount(crabQueuedShares, 18), contract),
       ])
 
       if (
@@ -347,12 +367,28 @@ export const useCurrentCrabPositionValueV2 = () => {
       }
 
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
+      if (collateralOne && squeethDebtOne) {
+        const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
+        console.log(
+          'Price: ',
+          ethPrice.toString(),
+          collateralOne.minus(ethDebtOne).times(ethPrice).toString(),
+          squeethInitialPrice.toString(),
+        )
+        setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
+      }
 
       // Or else vault would have been liquidated
       if (collateral.lt(ethDebt)) return
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
       const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+
+      if (debtMigrated && collatMigrated && !collatMigrated?.isZero() && !debtMigrated?.isZero()) {
+        const ethDebtOne = getWSqueethPositionValueInETH(debtMigrated)
+        setCrabQueuedInEth(collatMigrated.minus(ethDebtOne))
+        setCrabQueuedInUsd(collatMigrated.minus(ethDebtOne).times(ethPrice))
+      }
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
       setCurrentCrabPositionValueInETH(crabPositionValueInETH)
@@ -379,6 +415,8 @@ export const useCurrentCrabPositionValueV2 = () => {
     vault,
     balLoading,
     squeethInitialPrice,
+    setCrabUsdValue,
+    crabQueuedShares,
   ])
 
   return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
@@ -425,7 +463,13 @@ export const useCalculateETHtoBorrowFromUniswap = () => {
         }
       }
 
-      console.log('Eth to borrow: ', prevState.ethBorrow.toString(), prevState.minimumAmountOut.toString())
+      console.log(
+        'Eth to borrow: ',
+        prevState.ethBorrow.toString(),
+        prevState.minimumAmountOut.toString(),
+        start.toString(),
+        end.toString(),
+      )
       return prevState
     },
     [vault?.id, getSellQuote],
@@ -476,7 +520,13 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
         }
       }
 
-      console.log('Eth to borrow: ', prevState.ethBorrow.toString(), prevState.minimumAmountOut.toString())
+      console.log(
+        'Eth to borrow: ',
+        prevState.ethBorrow.toString(),
+        prevState.minimumAmountOut.toString(),
+        start.toString(),
+        end.toString(),
+      )
       return prevState
     },
     [vault?.id, getSellQuote],
@@ -631,6 +681,67 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   )
 
   return flashDepositUSDC
+}
+
+export const useQueueDepositUSDC = () => {
+  const contract = useAtomValue(crabNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+
+  const depositUSDC = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+      track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_CLICK)
+      try {
+        console.log('Queue:', fromTokenAmount(amount, USDC_DECIMALS).toString())
+        await handleTransaction(
+          contract.methods.depositUSDC(fromTokenAmount(amount, USDC_DECIMALS).toString()).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_SUCCESS)
+      } catch (e) {
+        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_FAILED)
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return depositUSDC
+}
+
+export const useQueueWithdrawCrab = () => {
+  const contract = useAtomValue(crabNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+
+  const queueWithdraw = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_CLICK)
+      console.log('Queue: withdraw', fromTokenAmount(amount, WETH_DECIMALS).toString())
+      try {
+        await handleTransaction(
+          contract.methods.queueCrabForWithdrawal(fromTokenAmount(amount, WETH_DECIMALS).toFixed(0)).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_SUCCESS)
+      } catch (e) {
+        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_FAILED)
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return queueWithdraw
 }
 
 export const useFlashWithdraw = () => {
@@ -893,4 +1004,83 @@ export const useSetProfitableMovePercentV2 = () => {
   }, [contract, currentImpliedVol])
 
   return profitableMovePercentV2
+}
+
+export const useQueuedCrabPositionAndStatus = () => {
+  const contract = useAtomValue(crabNettingContractAtom)
+  const address = useAtomValue(addressAtom)
+  const setUsdcQueued = useSetAtom(usdcQueuedAtom)
+  const setCrabQueued = useSetAtom(crabQueuedAtom)
+  const setNettingAuctionLive = useSetAtom(isNettingAuctionLiveAtom)
+  const setMinUSDCAmount = useSetAtom(minUSDCAmountAtom)
+  const setMinCrabAmount = useSetAtom(minCrabAmountAtom)
+
+  const fetchAndStoreQueuedPosition = async () => {
+    if (!contract || !address) return
+
+    const usdcPromise = contract.methods.usdBalance(address).call()
+    const crabPromise = contract.methods.crabBalance(address).call()
+    const auctionStatusPromise = contract.methods.isAuctionLive().call()
+    const minUSDCAmountPromise = contract.methods.minUSDCAmount().call()
+    const minCrabAmountPromise = contract.methods.minCrabAmount().call()
+
+    const [usdcQueued, crabQueued, auctionStatus, minUSDCAmount, minCrabAmount] = await Promise.all([
+      usdcPromise,
+      crabPromise,
+      auctionStatusPromise,
+      minUSDCAmountPromise,
+      minCrabAmountPromise,
+    ])
+    setUsdcQueued(new BigNumber(usdcQueued))
+    setCrabQueued(new BigNumber(crabQueued))
+    setNettingAuctionLive(auctionStatus)
+    setMinUSDCAmount(new BigNumber(minUSDCAmount))
+    setMinCrabAmount(new BigNumber(minCrabAmount))
+  }
+
+  return fetchAndStoreQueuedPosition
+}
+
+export const useDeQueueDepositUSDC = () => {
+  const contract = useAtomValue(crabNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const deQueueUSDC = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      return await handleTransaction(
+        contract.methods.withdrawUSDC(amount.toString(), false).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return deQueueUSDC
+}
+
+export const useDeQueueWithdrawCrab = () => {
+  const contract = useAtomValue(crabNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const queueWithdraw = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      return await handleTransaction(
+        contract.methods.dequeueCrab(amount.toFixed(0), false).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return queueWithdraw
 }

@@ -2,6 +2,7 @@ import { DEFAULT_SLIPPAGE, OSQUEETH_DECIMALS, UNI_POOL_FEES, WETH_DECIMALS, ZERO
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useOracle } from '@hooks/contracts/useOracle'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
 import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
@@ -199,16 +200,16 @@ export const useGetBuyQuoteForETH = () => {
 }
 
 export const useUpdateSqueethPrices = () => {
-  const { getExactIn } = useUniswapQuoter()
+  const { getTwapSafe } = useOracle()
 
   const setSqueethInitialPrice = useUpdateAtom(squeethInitialPriceAtom)
   const setSqueethInitialPriceError = useUpdateAtom(squeethInitialPriceErrorAtom)
   const setReady = useUpdateAtom(readyAtom)
-  const { oSqueeth, weth } = useAtomValue(addressesAtom)
+  const { oSqueeth, weth, squeethPool } = useAtomValue(addressesAtom)
 
   useAppEffect(() => {
-    getExactIn(oSqueeth, weth, fromTokenAmount(1, OSQUEETH_DECIMALS), UNI_POOL_FEES, DEFAULT_SLIPPAGE)
-      .then((quote) => setSqueethInitialPrice(toTokenAmount(quote.minAmountOut, WETH_DECIMALS)))
+    getTwapSafe(squeethPool, oSqueeth, weth, 1)
+      .then((quote) => setSqueethInitialPrice(quote))
       .catch((error) => {
         console.error(error)
         setSqueethInitialPriceError(getErrorMessage(error))
@@ -216,7 +217,7 @@ export const useUpdateSqueethPrices = () => {
       .finally(() => {
         setReady(true)
       })
-  }, [getExactIn, oSqueeth, weth, setReady, setSqueethInitialPrice, setSqueethInitialPriceError])
+  }, [getTwapSafe, oSqueeth, weth, setReady, setSqueethInitialPrice, setSqueethInitialPriceError, squeethPool])
 }
 
 export const useGetWSqueethPositionValue = () => {

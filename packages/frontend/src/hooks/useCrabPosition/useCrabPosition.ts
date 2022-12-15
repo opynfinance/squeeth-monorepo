@@ -13,6 +13,7 @@ import {
   crabLoadingAtomV2,
   crabPositionValueLoadingAtom,
   crabPositionValueLoadingAtomV2,
+  crabQueuedInEthAtom,
   currentCrabPositionValueInETHAtom,
   currentCrabPositionValueInETHAtomV2,
 } from 'src/state/crab/atoms'
@@ -108,6 +109,7 @@ export const useCrabPositionV2 = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtomV2)
   const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtomV2)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const currentQueuedCrabEth = useAtomValue(crabQueuedInEthAtom)
 
   const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabV2TxHistory(user)
 
@@ -120,18 +122,26 @@ export const useCrabPositionV2 = (user: string) => {
   const [minPnL, setMinPnL] = useState(BIG_ZERO)
 
   const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
+    console.log(txHistoryData, 'Crab')
+    if (txHistoryLoading || !txHistoryData || txHistoryData.length === 0)
+      return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
     const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
           tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
           tx.type === CrabStrategyV2TxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT_V1
+          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
+          tx.type === CrabStrategyTxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
         ) {
           acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
           acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue)
           acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount)
-        } else if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW || tx.type === CrabStrategyV2TxType.WITHDRAW) {
+        } else if (
+          tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.OTC_WITHDRAW
+        ) {
           acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount)
         }
 
@@ -153,15 +163,16 @@ export const useCrabPositionV2 = (user: string) => {
   }, [txHistoryData, txHistoryLoading])
 
   const calculateCurrentValue = useAppCallback(async () => {
-    const minCurrentUsd = currentEthValue.times(ethIndexPrice)
+    const ethValue = currentEthValue.plus(currentQueuedCrabEth)
+    const minCurrentUsd = ethValue.times(ethIndexPrice)
     const minPnlUsd = minCurrentUsd.minus(depositedUsd)
 
-    setMinCurrentEth(currentEthValue)
+    setMinCurrentEth(ethValue)
     setMinCurrentUsd(minCurrentUsd)
 
     setMinPnlUsd(minPnlUsd)
     setMinPnL(minPnlUsd.div(depositedUsd).times(100))
-  }, [currentEthValue, depositedUsd, ethIndexPrice])
+  }, [currentEthValue, currentQueuedCrabEth, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
     if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) return

@@ -13,6 +13,11 @@ export enum Vaults {
   Short = 'Short Squeeth', //pure short squeeth
 }
 
+export enum VaultSubtitle {
+  CrabVault = 'Stack USDC',
+  ETHBull = 'Stack ETH',
+}
+
 export enum TransactionType {
   BUY = 'Bought',
   SELL = 'Sold',
@@ -20,12 +25,14 @@ export enum TransactionType {
   BURN_SHORT = 'Bought back and burned',
   ADD_LIQUIDITY = 'Added Liquidity',
   REMOVE_LIQUIDITY = 'Removed Liquidity',
-  CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
-  CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
-  CRAB_V2_FLASH_DEPOSIT = 'Flash deposit in crab V2',
-  CRAB_V2_FLASH_WITHDRAW = 'Flash withdraw in crab V2',
-  CRAB_V2_USDC_FLASH_DEPOSIT = 'Flash deposit USDC in crab V2',
-  CRAB_V2_USDC_FLASH_WITHDRAW = 'Flash withdraw USDC in crab V2',
+  CRAB_FLASH_DEPOSIT = 'Deposit in crab',
+  CRAB_FLASH_WITHDRAW = 'Withdraw from crab',
+  CRAB_V2_FLASH_DEPOSIT = 'Deposit to crab V2',
+  CRAB_V2_FLASH_WITHDRAW = 'Withdraw from crab V2',
+  CRAB_V2_USDC_FLASH_DEPOSIT = 'Deposit USDC to crab V2',
+  CRAB_V2_USDC_FLASH_WITHDRAW = 'Withdraw USDC from crab V2',
+  OTC_DEPOSIT = 'Deposit USDC to crab v2',
+  OTC_WITHDRAW = 'Withdraw USDC from crab V2',
 }
 
 export enum CloseType {
@@ -85,6 +92,8 @@ export enum Tooltips {
   osqthRefVol = 'Squeeth reference volatility based on deribit options and squeeth replicating portfolio. Squeeth ref vol is calculated/refreshed every 5 minutes.',
   ETHUp2x = 'The value of your position if ETH goes up 2x, not including premiums',
   ETHDown50 = 'The value of your position if ETH goes down 50%, not including premiums',
+  InitiatedDeposit = 'Your deposit has been initiated and will be submitted via auction to reduce price impact. This may take up until Tuesday',
+  InitiatedWithdrawal = 'Your withdrawal has been initiated and will be submitted via auction to reduce price impact. This may take up until Tuesday',
 }
 
 export enum Links {
