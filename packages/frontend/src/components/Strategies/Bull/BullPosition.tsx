@@ -6,7 +6,17 @@ import clsx from 'clsx'
 import Metric from '@components/Metric'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { useAtomValue } from 'jotai'
-import { bullCurrentETHPositionAtom, bullCurrentUSDCPositionAtom } from '@state/bull/atoms'
+import {
+  bullCurrentETHPositionAtom,
+  bullCurrentUSDCPositionAtom,
+  bullEthPnlAtom,
+  bullEthPnlPerctAtom,
+  bullPositionLoadedAtom,
+  isBullReadyAtom,
+} from '@state/bull/atoms'
+import { addressAtom } from '@state/wallet/atoms'
+import { indexAtom } from '@state/controller/atoms'
+import { toTokenAmount } from '@utils/calculations'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -48,13 +58,20 @@ const useStyles = makeStyles((theme) =>
 )
 
 const BullPosition: React.FC = () => {
+  const address = useAtomValue(addressAtom)
   const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
+  const bullEthPnL = useAtomValue(bullEthPnlAtom)
+  const bullEthPnlPerct = useAtomValue(bullEthPnlPerctAtom)
+  const ethPrice = toTokenAmount(useAtomValue(indexAtom), 18).sqrt()
   const classes = useStyles()
 
-  const { loading } = useBullPosition()
+  console.log(ethPrice.toString())
 
-  if (!bullPosition) {
+  useBullPosition(address ?? '')
+  const loading = !useAtomValue(bullPositionLoadedAtom)
+
+  if (bullPosition.isZero()) {
     return null
   }
 
@@ -89,10 +106,16 @@ const BullPosition: React.FC = () => {
             value={
               <div>
                 <Box display="flex" alignItems="center" gridGap="12px">
-                  <Typography className={clsx(classes.metricValue, classes.white)}>8.53 ETH</Typography>
-                  <Typography className={clsx(classes.metricSubValue, classes.green)}>+15.36%</Typography>
+                  <Typography className={clsx(classes.metricValue, classes.white)}>
+                    {bullEthPnL.toFixed(6)} ETH
+                  </Typography>
+                  <Typography className={clsx(classes.metricSubValue, classes.green)}>
+                    {bullEthPnlPerct.toFixed(2)}%
+                  </Typography>
                 </Box>
-                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>$9,498.00</Typography>
+                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>
+                  ${bullEthPnL.times(ethPrice).toFixed(2)}
+                </Typography>
               </div>
             }
           />

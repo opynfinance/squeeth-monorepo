@@ -37,6 +37,7 @@ import {
   bullEulerUsdcDebtPerShareAtom,
   bullEulerWethCollatPerShareAtom,
   bullSupplyAtom,
+  isBullReadyAtom,
 } from './atoms'
 import { calcAssetNeededForFlashWithdraw, getWethToLendFromCrabEth } from './utils'
 
@@ -116,11 +117,12 @@ export const useSetBullUserState = () => {
   const setBullCurrentPosition = useUpdateAtom(bullCurrentETHPositionAtom)
   const setBullCurrentUsdcPosition = useUpdateAtom(bullCurrentUSDCPositionAtom)
   const setBullEthValuePerShare = useUpdateAtom(bullEthValuePerShareAtom)
+  const setBullReady = useUpdateAtom(isBullReadyAtom)
 
   const setBullUserState = useAppCallback(async () => {
     if (!bullContract || !crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero()) return null
 
-    const leverageComponent = eulerWeth.minus(eulerUsdc.div(ethPrice))
+    const leverageComponent = bullShare.times(eulerWeth.minus(eulerUsdc.div(ethPrice))).div(bullSupply)
     const userCrab = bullShare.times(bullCrabBalance).div(bullSupply)
     const crabCollat = userCrab.times(crabV2Vault.collateralAmount).div(crabTotalSupply)
     const crabDebt = userCrab.times(crabV2Vault.shortAmount).div(crabTotalSupply)
@@ -131,6 +133,7 @@ export const useSetBullUserState = () => {
     setBullCurrentPosition(new BigNumber(userBullPosition.toFixed(18)))
     setBullCurrentUsdcPosition(userBullPosition.times(ethPrice))
     setBullEthValuePerShare(userBullPosition.div(bullShare))
+    setBullReady(true)
   }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth])
 
   return setBullUserState

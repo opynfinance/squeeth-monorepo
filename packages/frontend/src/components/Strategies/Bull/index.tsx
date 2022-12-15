@@ -73,9 +73,9 @@ function BullStrategy() {
               <BullStrategyMetrics />
             </Box>
 
-            <Box marginTop="32px">
+            {/* <Box marginTop="32px">
               <BullStrategyCharts />
-            </Box>
+            </Box> */}
 
             <Box marginTop="32px">
               <BullStrategyInfo />
