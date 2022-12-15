@@ -12,12 +12,7 @@ import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
-import {
-  crabStrategySlippageAtomV2,
-  isNettingAuctionLiveAtom,
-  usdcQueuedAtom,
-  minUSDCAmountAtom,
-} from '@state/crab/atoms'
+import { crabStrategySlippageAtomV2, usdcQueuedAtom, minUSDCAmountAtom } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
   useFlashDepositV2,
@@ -88,7 +83,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const [useQueue, setUseQueue] = useState(false)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
 
-  const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
   const minUSDCAmountValue = useAtomValue(minUSDCAmountAtom)
 
   const connected = useAtomValue(connectedWalletAtom)
@@ -296,7 +290,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
   const isDepositAmountLessThanMinAllowed = depositAmountBN.lt(minUSDCAmount)
 
   useEffect(() => {
-    if (!useUsdc || isNettingAuctionLive || isDepositAmountLessThanMinAllowed) {
+    if (!useUsdc || isDepositAmountLessThanMinAllowed) {
       setQueueOptionAvailable(false)
       setUseQueue(false)
       return
@@ -309,7 +303,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [depositPriceImpact, useUsdc, isNettingAuctionLive, isDepositAmountLessThanMinAllowed])
+  }, [depositPriceImpact, useUsdc, isDepositAmountLessThanMinAllowed])
 
   const confirmationMessage = useAppMemo(() => {
     if (useQueue) {
@@ -457,8 +451,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
                   </Tooltip>
                 </div>
                 <Typography variant="caption" className={classes.infoText}>
-                  High price impact. Try smaller amount or{' '}
-                  {isNettingAuctionLive ? 'wait for auction to be over.' : 'use USDC to queue deposit.'}
+                  High price impact. Try smaller amount or use USDC to queue deposit.
                 </Typography>
               </div>
             )}
