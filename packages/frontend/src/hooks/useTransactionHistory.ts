@@ -11,11 +11,12 @@ import {
 import TRANSACTIONS_QUERY from '../queries/uniswap/transactionsQuery'
 import { useUserCrabTxHistory } from './useUserCrabTxHistory'
 import { useUserCrabV2TxHistory } from './useUserCrabV2TxHistory'
-import { CrabStrategyTxType } from '../types'
+import { BullStrategyTxType, CrabStrategyTxType } from '../types'
 import { CrabStrategyV2TxType } from '../types'
 import { addressAtom } from 'src/state/wallet/atoms'
 import { addressesAtom, isWethToken0Atom, swapsAtom } from 'src/state/positions/atoms'
 import { useEthPriceMap } from 'src/state/ethPriceCharts/atoms'
+import { useUserBullTxHistory } from './useUserBullTxHistory'
 
 const bigZero = new BigNumber(0)
 
@@ -40,6 +41,7 @@ export const useTransactionHistory = () => {
 
   const { data: crabData } = useUserCrabTxHistory(address || '')
   const { data: crabV2Data } = useUserCrabV2TxHistory(address || '')
+  const { data: bullData } = useUserBullTxHistory(address || '')
 
   const addRemoveLiquidityTrans =
     ethPriceMap &&
@@ -164,12 +166,30 @@ export const useTransactionHistory = () => {
     }
   })
 
+  const bullTransactions = (crabV2Data || [])?.map((c) => {
+    const transactionType =
+      c.type === BullStrategyTxType.FLASH_DEPOSIT
+        ? TransactionType.BULL_FLASH_DEPOSIT
+        : TransactionType.BULL_FLASH_WITHDRAW
+    const { oSqueethAmount: squeethAmount, ethAmount, ethUsdValue: usdValue, timestamp } = c
+
+    return {
+      transactionType,
+      squeethAmount: squeethAmount.abs(),
+      ethAmount: ethAmount.abs(),
+      usdValue,
+      timestamp,
+      txId: c.id,
+    }
+  })
+
   return {
     transactions: [
       ...(transactions || []),
       ...(addRemoveLiquidityTrans || []),
       ...crabTransactions,
       ...crabV2Transactions,
+      ...bullTransactions,
     ].sort((transactionA, transactionB) => transactionB.timestamp - transactionA.timestamp),
     loading,
   }

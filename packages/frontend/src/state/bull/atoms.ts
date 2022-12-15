@@ -12,5 +12,14 @@ export const bullDepositedEthAtom = atom(new BigNumber(0))
 export const bullDeltaAtom = atom(new BigNumber(0))
 export const bullCRAtom = atom(new BigNumber(0))
 
+// Positions
 export const bullCurrentETHPositionAtom = atom(new BigNumber(0))
 export const bullCurrentUSDCPositionAtom = atom(new BigNumber(0))
+
+export const bullDepositedETHAtom = atom(new BigNumber(0))
+export const bullDepositedUSDCAtom = atom(new BigNumber(0))
+
+export const bullEthPnlAtom = atom(new BigNumber(0))
+export const bullEthPnlPerctAtom = atom(new BigNumber(0))
+
+export const isBullReadyAtom = atom(false)

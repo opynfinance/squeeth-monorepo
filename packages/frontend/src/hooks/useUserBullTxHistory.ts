@@ -2,24 +2,12 @@ import { useQuery } from '@apollo/client'
 import { userBullTxes, userBullTxesVariables } from '../queries/squeeth/__generated__/userBullTxes'
 import USER_BULL_TX_QUERY from '../queries/squeeth/userBullQuery'
 import { toTokenAmount } from '@utils/calculations'
-import {
-  WETH_DECIMALS,
-  OSQUEETH_DECIMALS,
-  V2_MIGRATION_ETH_AMOUNT,
-  V2_MIGRATION_SUPPLY,
-  V2_MIGRATION_OSQTH_AMOUNT,
-  V2_MIGRATION_OSQTH_PRICE,
-  V2_MIGRATION_ETH_PRICE,
-  USDC_DECIMALS,
-  BIG_ZERO,
-} from '../constants'
+import { WETH_DECIMALS } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { CrabStrategyV2TxType } from '../types/index'
 import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import useAppMemo from './useAppMemo'
-import BigNumber from 'bignumber.js'
-import { addressesAtom } from 'src/state/positions/atoms'
 import { getHistoricEthPrices } from './useETHPrice'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -28,9 +16,8 @@ const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.FLASH_WITHDRAW) return 'Flash Withdraw'
 }
 
-export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => {
+export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
-  const { usdc } = useAtomValue(addressesAtom)
   const [ethUsdPriceMap, setEthUsdPriceMap] = useState()
   const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(true)
   const { data, loading, startPolling, stopPolling } = useQuery<userBullTxes, userBullTxesVariables>(

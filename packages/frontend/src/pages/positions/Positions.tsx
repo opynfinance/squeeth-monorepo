@@ -43,6 +43,9 @@ import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
 import useAppEffect from '@hooks/useAppEffect'
+import { useBullPosition } from '@hooks/useBullPosition'
+import BullPosition from './BullPosition'
+import { useInitBullStrategy } from '@state/bull/hooks'
 
 export default function Positions() {
   const classes = useStyles()
@@ -59,6 +62,8 @@ export default function Positions() {
   const index = useAtomValue(indexAtom)
   const setStrategyDataV2 = useSetStrategyDataV2()
   const setStrategyData = useSetStrategyData()
+  useInitBullStrategy()
+  useBullPosition(address ?? '')
 
   useAppEffect(() => {
     setStrategyDataV2()
@@ -180,6 +185,8 @@ export default function Positions() {
             version="Crab Strategy V2"
           />
         )}
+
+        {!!address ? <BullPosition /> : null}
 
         {activePositions?.length > 0 && (
           <>

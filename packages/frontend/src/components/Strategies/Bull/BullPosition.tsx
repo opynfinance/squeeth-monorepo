@@ -7,6 +7,7 @@ import Metric from '@components/Metric'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { useAtomValue } from 'jotai'
 import { bullCurrentETHPositionAtom, bullCurrentUSDCPositionAtom } from '@state/bull/atoms'
+import { addressAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -48,11 +49,13 @@ const useStyles = makeStyles((theme) =>
 )
 
 const BullPosition: React.FC = () => {
+  const address = useAtomValue(addressAtom)
   const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const classes = useStyles()
 
-  const { loading } = useBullPosition()
+  useBullPosition(address ?? '')
+  const loading = false
 
   if (!bullPosition) {
     return null
