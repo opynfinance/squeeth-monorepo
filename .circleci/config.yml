@@ -220,7 +220,7 @@ jobs:
       - checkout
       - run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
       
-  zen-bull-vault-fuzzing:
+  zen-bull-vault-coverage:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
