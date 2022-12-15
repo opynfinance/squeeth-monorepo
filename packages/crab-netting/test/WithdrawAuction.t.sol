@@ -124,7 +124,7 @@ contract TestWithdrawAuction is BaseForkSetup {
 
     function testWithdrawAuctionAfterFullWithdraw() public {
         vm.startPrank(withdrawer);
-        netting.dequeueCrab(6e18);
+        netting.dequeueCrab(6e18, false);
         netting.queueCrabForWithdrawal(6e18);
         vm.stopPrank();
 
@@ -215,7 +215,7 @@ contract TestWithdrawAuction is BaseForkSetup {
         params.ethUSDFee = 500;
         // get equivalent usdc quote with slippage and send
 
-        vm.expectRevert(bytes("Price too high relative to Uniswap twap."));
+        vm.expectRevert(bytes("N21"));
         netting.withdrawAuction(params);
     }
 }

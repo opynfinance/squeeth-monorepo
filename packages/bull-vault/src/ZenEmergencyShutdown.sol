@@ -7,7 +7,7 @@ pragma abicoder v2;
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-import { IBullStrategy } from "./interface/IBullStrategy.sol";
+import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 // contract
 import { UniFlash } from "./UniFlash.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
@@ -20,11 +20,11 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
  */
 
 /**
- * @notice EmergencyShutdown contract
+ * @notice ZenEmergencyShutdown contract
  * @dev handle the emergency shutdown of the Bull strategy if the wPowerPerp and Crab contracts are shut down
  * @author opyn team
  */
-contract EmergencyShutdown is UniFlash, Ownable {
+contract ZenEmergencyShutdown is UniFlash, Ownable {
     using StrategyMath for uint256;
 
     /// @dev 1e18
@@ -50,10 +50,15 @@ contract EmergencyShutdown is UniFlash, Ownable {
     /// @dev bull stratgey address
     address public immutable bullStrategy;
 
+    /**
+     * @notice constructor
+     * @param _bull bull strategy address
+     * @param _factory uniswap v3 factory
+     */
     constructor(address _bull, address _factory) UniFlash(_factory) {
         bullStrategy = _bull;
-        weth = IController(IBullStrategy(_bull).powerTokenController()).weth();
-        usdc = IController(IBullStrategy(_bull).powerTokenController()).quoteCurrency();
+        weth = IController(IZenBullStrategy(_bull).powerTokenController()).weth();
+        usdc = IController(IZenBullStrategy(_bull).powerTokenController()).quoteCurrency();
     }
 
     /**
@@ -62,9 +67,9 @@ contract EmergencyShutdown is UniFlash, Ownable {
      */
 
     function redeemShortShutdown(ShutdownParams calldata _params) external onlyOwner {
-        require(!IBullStrategy(bullStrategy).hasRedeemedInShutdown(), "ES1");
+        require(!IZenBullStrategy(bullStrategy).hasRedeemedInShutdown(), "ES1");
 
-        uint256 usdcToRepay = IBullStrategy(bullStrategy).calcUsdcToRepay(_params.shareToUnwind);
+        uint256 usdcToRepay = IZenBullStrategy(bullStrategy).calcUsdcToRepay(_params.shareToUnwind);
         _exactOutFlashSwap(
             weth,
             usdc,
@@ -87,7 +92,7 @@ contract EmergencyShutdown is UniFlash, Ownable {
                 abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
             IERC20(usdc).approve(bullStrategy, usdcToRepay);
-            IBullStrategy(bullStrategy).shutdownRepayAndWithdraw(
+            IZenBullStrategy(bullStrategy).shutdownRepayAndWithdraw(
                 _uniFlashSwapData.amountToPay, shareToUnwind
             );
 

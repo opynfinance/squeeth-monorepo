@@ -16,10 +16,10 @@ import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 import { SwapRouter } from "v3-periphery/SwapRouter.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { EmergencyShutdown } from "../../src/EmergencyShutdown.sol";
+import { ZenEmergencyShutdown } from "../../src/ZenEmergencyShutdown.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -29,16 +29,16 @@ import { UniOracle } from "../../src/UniOracle.sol";
 /**
  * @notice Ropsten fork testing
  */
-contract BullStrategyTestFork is Test {
+contract ZenBullStrategyTestFork is Test {
     using StrategyMath for uint256;
 
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
     TestUtil internal testUtil;
-    BullStrategy internal bullStrategy;
+    ZenBullStrategy internal bullStrategy;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
-    EmergencyShutdown internal emergencyShutdown;
+    ZenEmergencyShutdown internal emergencyShutdown;
     Quoter internal quoter;
 
     uint256 internal bullOwnerPk;
@@ -76,7 +76,7 @@ contract BullStrategyTestFork is Test {
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
         bullStrategy =
-            new BullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
         bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
@@ -85,7 +85,7 @@ contract BullStrategyTestFork is Test {
         wPowerPerp = controller.wPowerPerp();
         quoter = Quoter(0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6);
         emergencyShutdown =
-            new EmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         emergencyShutdown.transferOwnership(bullOwner);
 
         testUtil =
@@ -198,8 +198,7 @@ contract BullStrategyTestFork is Test {
     function testDepositWhenTotalSupplyLessThanMinimum() public {
         uint256 crabToDeposit = WETH_DECIMALS_DIFF;
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) =
-            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS9"));
         bullStrategy.deposit{value: wethToLend}(crabToDeposit);
@@ -208,12 +207,9 @@ contract BullStrategyTestFork is Test {
 
     function testInitialDepositWithInsufficient() public {
         uint256 crabToDeposit = 10e18;
-        uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         vm.startPrank(user1);
-        (uint256 wethToLend, uint256 usdcToBorrow) =
-            testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
+        (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
         // Deposit 1 ETH less than needed
@@ -269,7 +265,6 @@ contract BullStrategyTestFork is Test {
     function testSecondDeposit() public {
         uint256 crabToDepositInitially = 10e18;
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         vm.startPrank(user1);
         (uint256 wethToLend, uint256 usdcToBorrow) = _deposit(crabToDepositInitially);
@@ -313,7 +308,6 @@ contract BullStrategyTestFork is Test {
 
     function testWithdrawWhenRemainingSupplyLessThanMinimum() public {
         uint256 crabToDeposit = 15e18;
-        uint256 bullToMint = testUtil.calcBullToMint(crabToDeposit);
 
         // crabby deposit into bull
         vm.startPrank(user1);
@@ -321,22 +315,11 @@ contract BullStrategyTestFork is Test {
         vm.stopPrank();
 
         uint256 bullToRedeem = crabToDeposit.sub(WETH_DECIMALS_DIFF);
-        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
-            _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
+        (uint256 wPowerPerpToRedeem,) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToRedeem);
-        uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToRedeem);
         // transfer some oSQTH from some squeether
         vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
         IERC20(wPowerPerp).transfer(user1, wPowerPerpToRedeem);
-
-        uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
-        uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
-        uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
-        uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
-        uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
-        uint256 userEthBalanceBefore = address(user1).balance;
-
-        uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
         vm.startPrank(user1);
         IERC20(usdc).approve(address(bullStrategy), usdcToRepay);
@@ -368,7 +351,6 @@ contract BullStrategyTestFork is Test {
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
         uint256 userUsdcBalanceBefore = IERC20(usdc).balanceOf(user1);
         uint256 userWPowerPerpBalanceBefore = IERC20(wPowerPerp).balanceOf(user1);
-        uint256 userEthBalanceBefore = address(user1).balance;
 
         uint256 crabBalanceBefore = crabV2.balanceOf(address(bullStrategy));
 
@@ -469,6 +451,35 @@ contract BullStrategyTestFork is Test {
         vm.prank(bullOwner);
         vm.expectRevert(bytes("BS5"));
         bullStrategy.farm(eToken, bullOwner);
+    }
+
+    function testFarmWhenHasRedeemedInShutdownIsTrue() public {
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.store(address(bullStrategy), bytes32(uint256(10)), bytes32(uint256(1)));
+
+        vm.startPrank(bullOwner);
+        vm.expectRevert(bytes("BS12"));
+        bullStrategy.farm(dai, bullOwner);
+    }
+
+    function testFarmWhenControllerIsShutdown() public {
+        vm.startPrank(controller.owner());
+        controller.shutDown();
+        assertEq(controller.isShutDown(), true);
+        vm.stopPrank();
+
+        uint256 daiAmount = 10e18;
+        address dai = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
+        IERC20(dai).transfer(address(bullStrategy), daiAmount);
+
+        vm.startPrank(bullOwner);
+        vm.expectRevert(bytes("BS7"));
+        bullStrategy.farm(dai, bullOwner);
     }
 
     /**

@@ -3,10 +3,10 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import { BullStrategy } from "../src/BullStrategy.sol";
-import { EmergencyShutdown } from "../src/EmergencyShutdown.sol";
-import { AuctionBull } from "../src/AuctionBull.sol";
-import { FlashBull } from "../src/FlashBull.sol";
+import { ZenBullStrategy } from "../src/ZenBullStrategy.sol";
+import { ZenEmergencyShutdown } from "../src/ZenEmergencyShutdown.sol";
+import { ZenAuction } from "../src/ZenAuction.sol";
+import { FlashZen } from "../src/FlashZen.sol";
 
 contract DeployScript is Script {
     /// @dev owner address for BullStrategy, EmergencyShutdown and AuctionBull
@@ -20,7 +20,7 @@ contract DeployScript is Script {
     address private eTokenAddress;
     address private dTokenAddress;
 
-    uint256 private bullStrategyCap;
+    uint256 private zenBullStrategyCap;
     uint256 private fullRebalancePriceTolerance;
     uint256 private rebalanceWethLimitPriceTolerance;
     uint256 private crUpper;
@@ -29,10 +29,10 @@ contract DeployScript is Script {
     uint256 private deltaLower;
 
     // Deploy contracts
-    BullStrategy bullStrategy;
-    EmergencyShutdown emergencyShutdown;
-    AuctionBull auctionBull;
-    FlashBull flashBull;
+    ZenBullStrategy zenBullStrategy;
+    ZenEmergencyShutdown emergencyShutdown;
+    ZenAuction zenAuction;
+    FlashZen flashZen;
 
     function run() public {
         uint256 deployerKey = vm.envUint("DEPLOYER_PK");
@@ -42,12 +42,12 @@ contract DeployScript is Script {
         vm.startBroadcast(deployerAddress);
 
         // deploy contracts
-        bullStrategy =
-        new BullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);
-        emergencyShutdown = new EmergencyShutdown(address(bullStrategy), uniFactoryAddress);
-        auctionBull =
-        new AuctionBull(auctionManagerAddress, address(bullStrategy), uniFactoryAddress, crabAddress, eTokenAddress, dTokenAddress);
-        flashBull = new FlashBull(address(bullStrategy), uniFactoryAddress);
+        zenBullStrategy =
+        new ZenBullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);
+        emergencyShutdown = new ZenEmergencyShutdown(address(zenBullStrategy), uniFactoryAddress);
+        zenAuction =
+        new ZenAuction(auctionManagerAddress, address(zenBullStrategy), uniFactoryAddress, crabAddress, eTokenAddress, dTokenAddress);
+        flashZen = new FlashZen(address(zenBullStrategy), uniFactoryAddress);
 
         // set contracts params
         setBullStrategyParams();
@@ -82,7 +82,7 @@ contract DeployScript is Script {
     }
 
     function setUintParamsAtConstructor(
-        uint256 _bullStrategyCap,
+        uint256 _zenBullStrategyCap,
         uint256 _fullRebalancePriceTolerance,
         uint256 _rebalanceWethLimitPriceTolerance,
         uint256 _crUpper,
@@ -90,7 +90,7 @@ contract DeployScript is Script {
         uint256 _deltaUpper,
         uint256 _deltaLower
     ) internal {
-        bullStrategyCap = _bullStrategyCap;
+        zenBullStrategyCap = _zenBullStrategyCap;
         fullRebalancePriceTolerance = _fullRebalancePriceTolerance;
         rebalanceWethLimitPriceTolerance = _rebalanceWethLimitPriceTolerance;
         crUpper = _crUpper;
@@ -110,40 +110,40 @@ contract DeployScript is Script {
         require(eTokenAddress != address(0));
         require(dTokenAddress != address(0));
 
-        require(bullStrategyCap > 0);
+        require(zenBullStrategyCap > 0);
     }
 
     function setBullStrategyParams() private {
-        bullStrategy.setCap(bullStrategyCap);
-        bullStrategy.setShutdownContract(address(emergencyShutdown));
-        bullStrategy.setAuction(address(auctionBull));
+        zenBullStrategy.setCap(zenBullStrategyCap);
+        zenBullStrategy.setShutdownContract(address(emergencyShutdown));
+        zenBullStrategy.setAuction(address(zenAuction));
 
-        require(bullStrategy.strategyCap() == bullStrategyCap);
-        require(bullStrategy.shutdownContract() == address(emergencyShutdown));
-        require(bullStrategy.auction() == address(auctionBull));
+        require(zenBullStrategy.strategyCap() == zenBullStrategyCap);
+        require(zenBullStrategy.shutdownContract() == address(emergencyShutdown));
+        require(zenBullStrategy.auction() == address(zenAuction));
     }
 
     function setAuctionBullParams() private {
-        auctionBull.setAuctionManager(auctionManagerAddress);
-        auctionBull.setFullRebalanceClearingPriceTolerance(fullRebalancePriceTolerance);
-        auctionBull.setRebalanceWethLimitPriceTolerance(rebalanceWethLimitPriceTolerance);
-        auctionBull.setCrUpperAndLower(crLower, crUpper);
-        auctionBull.setDeltaUpperAndLower(deltaLower, deltaUpper);
+        zenAuction.setAuctionManager(auctionManagerAddress);
+        zenAuction.setFullRebalanceClearingPriceTolerance(fullRebalancePriceTolerance);
+        zenAuction.setRebalanceWethLimitPriceTolerance(rebalanceWethLimitPriceTolerance);
+        zenAuction.setCrUpperAndLower(crLower, crUpper);
+        zenAuction.setDeltaUpperAndLower(deltaLower, deltaUpper);
 
-        require(auctionBull.auctionManager() == auctionManagerAddress);
-        require(auctionBull.fullRebalanceClearingPriceTolerance() == fullRebalancePriceTolerance);
-        require(auctionBull.rebalanceWethLimitPriceTolerance() == rebalanceWethLimitPriceTolerance);
-        require(auctionBull.crLower() == crLower && auctionBull.crUpper() == crUpper);
-        require(auctionBull.deltaLower() == deltaLower && auctionBull.deltaUpper() == deltaUpper);
+        require(zenAuction.auctionManager() == auctionManagerAddress);
+        require(zenAuction.fullRebalanceClearingPriceTolerance() == fullRebalancePriceTolerance);
+        require(zenAuction.rebalanceWethLimitPriceTolerance() == rebalanceWethLimitPriceTolerance);
+        require(zenAuction.crLower() == crLower && zenAuction.crUpper() == crUpper);
+        require(zenAuction.deltaLower() == deltaLower && zenAuction.deltaUpper() == deltaUpper);
     }
 
     function transferOwnershipToSystemOwnerAddress() private {
-        bullStrategy.transferOwnership(systemOwnerAddress);
+        zenBullStrategy.transferOwnership(systemOwnerAddress);
         emergencyShutdown.transferOwnership(systemOwnerAddress);
-        auctionBull.transferOwnership(systemOwnerAddress);
+        zenAuction.transferOwnership(systemOwnerAddress);
 
-        require(bullStrategy.owner() == systemOwnerAddress);
+        require(zenBullStrategy.owner() == systemOwnerAddress);
         require(emergencyShutdown.owner() == systemOwnerAddress);
-        require(auctionBull.owner() == systemOwnerAddress);
+        require(zenAuction.owner() == systemOwnerAddress);
     }
 }

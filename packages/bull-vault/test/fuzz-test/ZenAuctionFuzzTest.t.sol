@@ -17,11 +17,11 @@ import { ISwapRouter } from "v3-periphery/interfaces/ISwapRouter.sol";
 import { TestUtil } from "../util/TestUtil.t.sol";
 import { SwapRouter } from "v3-periphery/SwapRouter.sol";
 import { Quoter } from "v3-periphery/lens/Quoter.sol";
-import { BullStrategy } from "../../src/BullStrategy.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
 import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
 import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { AuctionBull } from "../../src/AuctionBull.sol";
-import { FlashBull } from "../../src/FlashBull.sol";
+import { ZenAuction } from "../../src/ZenAuction.sol";
+import { FlashZen } from "../../src/FlashZen.sol";
 import { SigUtil } from "../util/SigUtil.sol";
 // lib
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
@@ -29,18 +29,18 @@ import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; 
 import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
- * @notice Ropsten fork testing
+ * @notice fuzz testing
  */
-contract AuctionBullFuzzTest is Test {
+contract ZenAuctionFuzzTest is Test {
     using StrategyMath for uint256;
 
     uint32 internal constant TWAP = 420;
     uint128 internal constant ONE = 1e18;
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
 
-    BullStrategy internal bullStrategy;
-    FlashBull internal flashBull;
-    AuctionBull internal auctionBull;
+    ZenBullStrategy internal bullStrategy;
+    FlashZen internal flashBull;
+    ZenAuction internal auctionBull;
     CrabStrategyV2 internal crabV2;
     Controller internal controller;
     SwapRouter internal swapRouter;
@@ -82,7 +82,7 @@ contract AuctionBullFuzzTest is Test {
     uint256 userWPowerPerpBalanceBeforeAuction;
     uint256 user2WethBalanceBeforeAuction;
     uint256 user2WPowerPerpBalanceBeforeAuction;
-    AuctionBull.Order[] orders;
+    ZenAuction.Order[] orders;
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -108,14 +108,14 @@ contract AuctionBullFuzzTest is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy = new BullStrategy(
+        bullStrategy = new ZenBullStrategy(
             address(crabV2),
             address(controller),
             euler,
             eulerMarketsModule
         );
         bullStrategy.transferOwnership(owner);
-        flashBull = new FlashBull(address(bullStrategy), factory);
+        flashBull = new FlashZen(address(bullStrategy), factory);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -123,7 +123,7 @@ contract AuctionBullFuzzTest is Test {
         wPowerPerp = controller.wPowerPerp();
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
-        auctionBull = new AuctionBull(
+        auctionBull = new ZenAuction(
             auctionManager,
             address(bullStrategy),
             factory,
@@ -304,7 +304,7 @@ contract AuctionBullFuzzTest is Test {
             });
             bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
             (v, r, s) = vm.sign(user1Pk, bidDigest);
-            AuctionBull.Order memory orderData = AuctionBull.Order({
+            ZenAuction.Order memory orderData = ZenAuction.Order({
                 bidId: 1,
                 trader: user1,
                 quantity: wPowerPerpAmountToTrade,
@@ -464,7 +464,7 @@ contract AuctionBullFuzzTest is Test {
         uint256 totalEthToBull =
             calcTotalEthToBull(wethToLend, ethToCrab, usdcToBorrow, wSqueethToMint);
 
-        FlashBull.FlashDepositParams memory params = FlashBull.FlashDepositParams({
+        FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: ethToCrab,
             minEthFromSqth: 0,
             minEthFromUsdc: 0,

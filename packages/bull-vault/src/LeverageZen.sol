@@ -22,11 +22,11 @@ import { UniOracle } from "./UniOracle.sol";
  */
 
 /**
- * @notice LeverageBull contract
+ * @notice LeverageZen contract
  * @dev contract that interacts with leverage component (borrow and collateral on Euler)
  * @author opyn team
  */
-contract LeverageBull is Ownable {
+contract LeverageZen is Ownable {
     using StrategyMath for uint256;
 
     /// @dev TWAP period
@@ -129,7 +129,7 @@ contract LeverageBull is Ownable {
     }
 
     /**
-     * @notice called by the auction address to repay USDC debt and withdraw weth from Euler
+     * @notice called by the auction address to depost WETH in Euler or borrow USDC debt
      * @param _wethToDeposit amount of WETH to deposit
      * @param _usdcToBorrow amount of USDC to borrow
      */
@@ -146,6 +146,11 @@ contract LeverageBull is Ownable {
         }
     }
 
+    /**
+     * @notice called by the auction address to deposit more WETH into Euler or repay USDC debt
+     * @param _wethToDeposit WETH amount to deposit
+     * @param _usdcToRepay USDC amount to repay
+     */
     function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
         external
     {
@@ -163,6 +168,15 @@ contract LeverageBull is Ownable {
         emit DepositAndRepayFromLeverage(msg.sender, _wethToDeposit, _usdcToRepay);
     }
 
+    /**
+     * @notice calculate target amounts of weth collateral and usdc debt based on crab and bull state
+     * @param _crabAmount amount of crab
+     * @param _bullShare share of bull contract scaled to 1e18
+     * @param _ethInCrab ETH collateral held through crab's vault
+     * @param _wPowerPerpInCrab wPowerPerp debt owed through crab's vault
+     * @param _totalCrabSupply total supply of crab token
+     * @return weth to lend in Euler, usdc to borrow in Euler
+     */
     function calcLeverageEthUsdc(
         uint256 _crabAmount,
         uint256 _bullShare,
@@ -275,6 +289,7 @@ contract LeverageBull is Ownable {
         uint256 _wPowerPerpInCrab,
         uint256 _totalCrabSupply
     ) internal view returns (uint256, uint256) {
+        uint256 wethToLend;
         {
             if (_bullShare == ONE) {
                 uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
@@ -285,16 +300,15 @@ contract LeverageBull is Ownable {
                         _wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
                     )
                 ).wdiv(_totalCrabSupply);
-                uint256 wethToLend =
-                    TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
+                wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
                 uint256 usdcToBorrow =
                     wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }
-        uint256 wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(
-            _bullShare
-        ).wdiv(ONE.sub(_bullShare));
+        wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(
+            ONE.sub(_bullShare)
+        );
         uint256 usdcToBorrow =
             IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
         return (wethToLend, usdcToBorrow);

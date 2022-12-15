@@ -10,7 +10,7 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
-import { LeverageBull } from "./LeverageBull.sol";
+import { LeverageZen } from "./LeverageZen.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
@@ -20,22 +20,23 @@ import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
  * Error codes
  * BS1: Can't receive ETH from this sender
  * BS2: Strategy cap reached max
- * BS3: redeemShortShutdown must be called first
- * BS4: emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
+ * BS3: RedeemShortShutdown must be called first
+ * BS4: Emergency shutdown contract needs to initiate the shutdownRepayAndWithdraw call
  * BS5: Can't farm token
- * BS6: invalid shutdownContract address set
- * BS7: wPowerPerp contract has been shutdown - withdrawals and deposits are not allowed
+ * BS6: Invalid shutdownContract address set
+ * BS7: wPowerPerp contract has been shutdown
  * BS8: Caller is not auction address
  * BS9: deposited amount less than minimum
- * BS10: remaining amount of bull token should be more than minimum or zero
- * BS11: invalid receiver address
+ * BS10: Remaining amount of bull token should be more than minimum or zero
+ * BS11: Invalid receiver address
+ * BS12: Strategy is shutdown
  */
 
 /**
- * @notice BullStrategy contract
+ * @notice ZenBullStrategy contract
  * @author opyn team
  */
-contract BullStrategy is ERC20, LeverageBull {
+contract ZenBullStrategy is ERC20, LeverageZen {
     using StrategyMath for uint256;
     using Address for address payable;
 
@@ -87,9 +88,8 @@ contract BullStrategy is ERC20, LeverageBull {
         address _euler,
         address _eulerMarketsModule
     )
-        ERC20("Bull Vault", "BullVault")
-        // LeverageBull handles Euler leverage trades
-        LeverageBull(_euler, _eulerMarketsModule, _powerTokenController)
+        ERC20("Zen Bull Strategy", "ZenBull")
+        LeverageZen(_euler, _eulerMarketsModule, _powerTokenController)
     {
         crab = _crab;
         powerTokenController = _powerTokenController;
@@ -110,8 +110,10 @@ contract BullStrategy is ERC20, LeverageBull {
      * @param _receiver receiver address
      */
     function farm(address _asset, address _receiver) external onlyOwner {
+        require(!IController(powerTokenController).isShutDown(), "BS7");
+        require(!hasRedeemedInShutdown, "BS12");
         require((_asset != crab) && (_asset != eToken) && (_asset != dToken), "BS5");
-        require(_receiver != address(0), "BS21");
+        require(_receiver != address(0), "BS11");
 
         if (_asset == address(0)) {
             payable(_receiver).sendValue(address(this).balance);

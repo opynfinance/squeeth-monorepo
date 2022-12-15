@@ -33,8 +33,6 @@ contract AddLiquidityEuler is Script {
         IEulerMarkets markets = IEulerMarkets(eulerMarkets);
         markets.enterMarket(0, underlying);
 
-        uint256 balanceOf = IEulerEToken(eToken).balanceOf(address(this));
-
         vm.stopBroadcast();
     }
 }
