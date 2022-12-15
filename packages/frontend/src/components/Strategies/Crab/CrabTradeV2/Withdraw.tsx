@@ -334,8 +334,8 @@ const CrabWithdraw: React.FC = () => {
     withdrawPriceImpactNumber > 3
       ? classes.btnDanger
       : withdrawFundingWarning || withdrawPriceImpactWarning
-        ? classes.btnWarning
-        : ''
+      ? classes.btnWarning
+      : ''
 
   return (
     <>
@@ -514,8 +514,8 @@ const CrabWithdraw: React.FC = () => {
                         tooltipTitle={
                           useQueue
                             ? `For standard withdraw, the average price impact is ${formatNumber(
-                              withdrawPriceImpactNumber,
-                            )}% based on historical auctions`
+                                withdrawPriceImpactNumber,
+                              )}% based on historical auctions`
                             : undefined
                         }
                       />
@@ -541,7 +541,7 @@ const CrabWithdraw: React.FC = () => {
               {useQueue && (
                 <div className={classes.queueNotice}>
                   <Typography variant="subtitle2" color="primary">
-                    Your withdrawal will fully exit the strategy by Tuesday
+                    To reduce price impact, your withdrawal may take up until Tuesday to enter the strategy
                   </Typography>
                 </div>
               )}
@@ -573,7 +573,7 @@ const CrabWithdraw: React.FC = () => {
                   <PrimaryButtonNew
                     fullWidth
                     variant="contained"
-                    onClick={() => { }}
+                    onClick={() => {}}
                     disabled={true}
                     id="crab-unsupported-network-btn"
                   >
