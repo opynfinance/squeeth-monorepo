@@ -5815,7 +5815,7 @@
       }
     },
     "script/AddLiquidityEuler.s.sol": {
-      "lastModificationDate": 1670841491120,
+      "lastModificationDate": 1670931039118,
       "contentHash": "87dbc36bf962f3e645cd7138dc8ced4b",
       "sourceName": "script/AddLiquidityEuler.s.sol",
       "solcConfig": {
@@ -5985,7 +5985,7 @@
       }
     },
     "script/GoerliAddUsdcLiquidityEuler.s.sol": {
-      "lastModificationDate": 1670841417411,
+      "lastModificationDate": 1670931039118,
       "contentHash": "5ca92ddebbf5a19bb729a030bc143b83",
       "sourceName": "script/GoerliAddUsdcLiquidityEuler.s.sol",
       "solcConfig": {
@@ -6045,7 +6045,7 @@
       }
     },
     "script/GoerliAddWethLiquidityEuler.s.sol": {
-      "lastModificationDate": 1670841417408,
+      "lastModificationDate": 1670931039117,
       "contentHash": "f45a0f4213ffd904a38ff70f21223d99",
       "sourceName": "script/GoerliAddWethLiquidityEuler.s.sol",
       "solcConfig": {
@@ -6329,7 +6329,7 @@
       }
     },
     "src/FlashZen.sol": {
-      "lastModificationDate": 1670841499023,
+      "lastModificationDate": 1670930997315,
       "contentHash": "4230bb148df850e865b565700f6faa06",
       "sourceName": "src/FlashZen.sol",
       "solcConfig": {
@@ -6494,7 +6494,7 @@
       }
     },
     "src/UniFlash.sol": {
-      "lastModificationDate": 1670841417409,
+      "lastModificationDate": 1670928878284,
       "contentHash": "9124fff84eb38ab060ad835c314a58f8",
       "sourceName": "src/UniFlash.sol",
       "solcConfig": {
@@ -6550,7 +6550,7 @@
       }
     },
     "src/UniOracle.sol": {
-      "lastModificationDate": 1670841417421,
+      "lastModificationDate": 1670928895898,
       "contentHash": "7eb6c527ee39bcf1e707a459c29d92c0",
       "sourceName": "src/UniOracle.sol",
       "solcConfig": {
@@ -6608,7 +6608,7 @@
       }
     },
     "src/ZenAuction.sol": {
-      "lastModificationDate": 1670841499023,
+      "lastModificationDate": 1670933701700,
       "contentHash": "8d8cb2a0250c7f8ca34e5da644a7f9d2",
       "sourceName": "src/ZenAuction.sol",
       "solcConfig": {
@@ -6781,7 +6781,7 @@
       }
     },
     "src/ZenEmergencyShutdown.sol": {
-      "lastModificationDate": 1670841498898,
+      "lastModificationDate": 1670930997317,
       "contentHash": "7ae045640098111a743eb13901f3db5a",
       "sourceName": "src/ZenEmergencyShutdown.sol",
       "solcConfig": {
@@ -6861,7 +6861,7 @@
       }
     },
     "src/interface/ICrabStrategyV2.sol": {
-      "lastModificationDate": 1670841417407,
+      "lastModificationDate": 1670928878287,
       "contentHash": "4b8ad331e54217296ba2120708681c79",
       "sourceName": "src/interface/ICrabStrategyV2.sol",
       "solcConfig": {
@@ -6903,7 +6903,7 @@
       }
     },
     "src/interface/IEulerDToken.sol": {
-      "lastModificationDate": 1670841417407,
+      "lastModificationDate": 1670928878287,
       "contentHash": "a75d203aeb217e74ce6c67f6deeac670",
       "sourceName": "src/interface/IEulerDToken.sol",
       "solcConfig": {
@@ -6943,7 +6943,7 @@
       }
     },
     "src/interface/IEulerEToken.sol": {
-      "lastModificationDate": 1670841417406,
+      "lastModificationDate": 1670928878287,
       "contentHash": "0c9327e5d687d1c2fb84ddb22e6a2778",
       "sourceName": "src/interface/IEulerEToken.sol",
       "solcConfig": {
@@ -6983,7 +6983,7 @@
       }
     },
     "src/interface/IEulerMarkets.sol": {
-      "lastModificationDate": 1670841417406,
+      "lastModificationDate": 1670928878288,
       "contentHash": "c0c0eb183b9e37d251ba213fac9ad0ab",
       "sourceName": "src/interface/IEulerMarkets.sol",
       "solcConfig": {
@@ -7023,7 +7023,7 @@
       }
     },
     "src/interface/ILeverageZen.sol": {
-      "lastModificationDate": 1670841498897,
+      "lastModificationDate": 1670930997318,
       "contentHash": "4e2f89a8926e8ee4fb4570410962c4c5",
       "sourceName": "src/interface/ILeverageZen.sol",
       "solcConfig": {
@@ -7063,7 +7063,7 @@
       }
     },
     "src/interface/IZenBullStrategy.sol": {
-      "lastModificationDate": 1670841498897,
+      "lastModificationDate": 1670930997318,
       "contentHash": "d6ee9520fe61f6cdd40b0ef204a34d92",
       "sourceName": "src/interface/IZenBullStrategy.sol",
       "solcConfig": {
@@ -8279,7 +8279,7 @@
       }
     },
     "test/unit-test/mock/EulerDtokenMock.t.sol": {
-      "lastModificationDate": 1670841417411,
+      "lastModificationDate": 1670848858866,
       "contentHash": "6257f02572467f0820b5bb7875487e5a",
       "sourceName": "test/unit-test/mock/EulerDtokenMock.t.sol",
       "solcConfig": {
@@ -8340,7 +8340,7 @@
       }
     },
     "test/unit-test/mock/EulerEtokenMock.t.sol": {
-      "lastModificationDate": 1670841417408,
+      "lastModificationDate": 1670848858862,
       "contentHash": "228b799398234954c6779426b85d97ea",
       "sourceName": "test/unit-test/mock/EulerEtokenMock.t.sol",
       "solcConfig": {
@@ -8402,7 +8402,7 @@
       }
     },
     "test/unit-test/mock/EulerMarketsMock.t.sol": {
-      "lastModificationDate": 1670841417410,
+      "lastModificationDate": 1670848858864,
       "contentHash": "537eb3205602e2f85b5587a7320e6b3c",
       "sourceName": "test/unit-test/mock/EulerMarketsMock.t.sol",
       "solcConfig": {
@@ -8458,7 +8458,7 @@
       }
     },
     "test/unit-test/mock/EulerMock.t.sol": {
-      "lastModificationDate": 1670841417409,
+      "lastModificationDate": 1670848858864,
       "contentHash": "df32589baefa50e4fc28368c8955316c",
       "sourceName": "test/unit-test/mock/EulerMock.t.sol",
       "solcConfig": {
@@ -8518,7 +8518,7 @@
       }
     },
     "test/unit-test/mock/Weth9Mock.t.sol": {
-      "lastModificationDate": 1670841417406,
+      "lastModificationDate": 1670848858861,
       "contentHash": "1b64fb1a84e5e8aca6cec6fefa2109cc",
       "sourceName": "test/unit-test/mock/Weth9Mock.t.sol",
       "solcConfig": {
@@ -8579,7 +8579,7 @@
       }
     },
     "test/unit-test/util/UnitSetupUtil.t.sol": {
-      "lastModificationDate": 1670841417425,
+      "lastModificationDate": 1670848858887,
       "contentHash": "4dd167fc52767ace5e7bafd85a8439e3",
       "sourceName": "test/unit-test/util/UnitSetupUtil.t.sol",
       "solcConfig": {
@@ -8741,7 +8741,7 @@
       }
     },
     "test/util/SigUtil.sol": {
-      "lastModificationDate": 1670841417412,
+      "lastModificationDate": 1670848858867,
       "contentHash": "dfe87e645b609fc210261949a9623a0b",
       "sourceName": "test/util/SigUtil.sol",
       "solcConfig": {
