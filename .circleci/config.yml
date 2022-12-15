@@ -7,24 +7,24 @@ workflows:
   hardhat:
     jobs:
       - checkout-and-install-hardhat
-      - compile:
+      - compile-hardhat:
           requires:
             - checkout-and-install-hardhat
-      - lint:
+      - lint-hardhat:
           requires:
-            - compile
-      - unit-test-contracts:
+            - compile-hardhat
+      - unit-test-hardhat:
           requires:
-            - compile
-      - integration-test-contracts:
+            - compile-hardhat
+      - integration-test-hardhat:
           requires:
-            - compile
-      - contract-size:
+            - compile-hardhat
+      - contract-size-hardhat:
           requires:
-            - compile
-      - e2e-test:
+            - compile-hardhat
+      - e2e-test-hardhat:
           requires:
-            - compile
+            - compile-hardhat
   frontend:
     jobs:
       - checkout-and-install-frontend
@@ -33,20 +33,20 @@ workflows:
             - checkout-and-install-frontend
   zen-bull-vault:
     jobs:
-      - zen-bull-vault-compile
-      - zen-bull-vault-test:
+      - compile-zen-bull-vault
+      - test-zen-bull-vault:
           requires:
-            - zen-bull-vault-compile
+            - compile-zen-bull-vault
           context: 
             - squeeth-monorepo-zen-bull-vault
-      - zen-bull-vault-fuzzing:
+      - fuzzing-zen-bull-vault:
           requires:
-            - zen-bull-vault-compile
+            - compile-zen-bull-vault
           context: 
             - squeeth-monorepo-zen-bull-vault
-      - zen-bull-vault-coverage:
+      - coverage-zen-bull-vault:
           requires:
-            - zen-bull-vault-test
+            - test-zen-bull-vault
           context: 
             - squeeth-monorepo-zen-bull-vault
 
@@ -73,7 +73,7 @@ jobs:
           paths:
             - ~/squeeth
 
-  compile:
+  compile-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -94,7 +94,7 @@ jobs:
          paths:
            - artifacts
 
-  lint:
+  lint-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -109,7 +109,7 @@ jobs:
           name: Lint
           command: yarn lint:check
   
-  unit-test-contracts:
+  unit-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -124,7 +124,7 @@ jobs:
           name: Unit tests
           command: yarn test:crab-unit
   
-  integration-test-contracts:
+  integration-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -139,7 +139,7 @@ jobs:
           name: Integration tests
           command: yarn test:crab-integration
     
-  contract-size:
+  contract-size-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -154,7 +154,7 @@ jobs:
           name: Check Contracts Size
           command: npx hardhat size-contracts
 
-  e2e-test:
+  e2e-test-hardhat:
     working_directory:  ~/squeeth/packages/hardhat
     docker:
       - image: cimg/node:16.6.0
@@ -206,7 +206,17 @@ jobs:
           command: yarn test:ci
 
   # zen-bull-vault jobs
-  zen-bull-vault-compile:
+  compile-zen-bull-vault:
+    working_directory: ~/squeeth/packages/bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint zen-bull-vault
+          command: cd packages/bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  compile-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
@@ -216,7 +226,7 @@ jobs:
           name: Build zen-bull-vault
           command: cd packages/bull-vault && forge build --force
 
-  zen-bull-vault-test:
+  test-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
@@ -224,7 +234,7 @@ jobs:
       - checkout
       - run: cd packages/bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report | tee ../../bull_gas_report.ansi
 
-  zen-bull-vault-fuzzing:
+  fuzzing-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
@@ -232,7 +242,7 @@ jobs:
       - checkout
       - run: cd packages/bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
       
-  zen-bull-vault-coverage:
+  coverage-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
