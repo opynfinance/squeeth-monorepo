@@ -94,8 +94,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
   const selectWallet = useSelectWallet()
 
   const { usdc, weth, crabHelper, crabNetting } = useAtomValue(addressesAtom)
-  const { data: balance } = useWalletBalance()
-  const { value: usdcBalance } = useTokenBalance(usdc, 15, USDC_DECIMALS)
+  const { data: balance, refetch: refetchWalletBalance } = useWalletBalance()
+  const { value: usdcBalance, refetch: refetchUsdcBalance } = useTokenBalance(usdc, 15, USDC_DECIMALS)
   const { getExactIn } = useUniswapQuoter()
   const setStrategyData = useSetStrategyDataV2()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
@@ -240,8 +240,18 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
       token: transaction.token,
     })
     resetDepositAmount()
+    refetchUsdcBalance()
+    refetchWalletBalance()
     ongoingTransaction.current = undefined
-  }, [usdcQueued, setUsdcQueued, setStrategyData, onTxnConfirm, resetDepositAmount])
+  }, [
+    usdcQueued,
+    setUsdcQueued,
+    setStrategyData,
+    onTxnConfirm,
+    resetDepositAmount,
+    refetchUsdcBalance,
+    refetchWalletBalance,
+  ])
 
   const depositTX = async () => {
     setTxLoading(true)
