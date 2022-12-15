@@ -497,20 +497,22 @@ const CrabWithdraw: React.FC = () => {
               ) : null}
 
               <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-                <Metric
-                  label="Slippage"
-                  value={formatNumber(slippage) + '%'}
-                  isSmall
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  gridGap="8px"
-                />
+                {!useQueue && (
+                  <Metric
+                    label="Slippage"
+                    value={formatNumber(slippage) + '%'}
+                    isSmall
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    gridGap="8px"
+                  />
+                )}
 
                 <Box display="flex" alignItems="center" gridGap="6px" flex="1">
                   <Metric
                     label={
                       <MetricLabel
-                        label="Price Impact"
+                        label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
                         tooltipTitle={
                           useQueue
                             ? `For standard withdraw, the average price impact is ${formatNumber(
