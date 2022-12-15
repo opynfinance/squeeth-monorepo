@@ -35,17 +35,17 @@ workflows:
     jobs:
       - zen-bull-vault-compile
       - zen-bull-vault-test:
-          require:
+          requires:
             - zen-bull-vault-compile
           context: 
             - squeeth-monorepo-zen-bull-vault
       - zen-bull-vault-fuzzing:
-          require:
+          requires:
             - zen-bull-vault-compile
           context: 
             - squeeth-monorepo-zen-bull-vault
       - zen-bull-vault-coverage:
-          require:
+          requires:
             - zen-bull-vault-test
           context: 
             - squeeth-monorepo-zen-bull-vault
