@@ -37,6 +37,12 @@ workflows:
       - zen-bull-vault-test:
           context: 
             - squeeth-monorepo-zen-bull-vault
+      - zen-bull-vault-fuzzing:
+          context: 
+            - squeeth-monorepo-zen-bull-vault
+      - zen-bull-vault-coverage:
+          context: 
+            - squeeth-monorepo-zen-bull-vault
 
 jobs:
   # hardhat-build-test-report jobs
