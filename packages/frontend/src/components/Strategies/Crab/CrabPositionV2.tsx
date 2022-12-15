@@ -11,7 +11,13 @@ import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import Metric, { MetricLabel } from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlInPerctv2 } from 'src/lib/pnl'
-import { crabQueuedAtom, crabQueuedInUsdAtom, crabUSDValueAtom, usdcQueuedAtom } from '@state/crab/atoms'
+import {
+  crabQueuedAtom,
+  crabQueuedInUsdAtom,
+  crabUSDValueAtom,
+  usdcQueuedAtom,
+  isNettingAuctionLiveAtom,
+} from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO, USDC_DECIMALS } from '@constants/index'
 import { useTransactionStatus } from '@state/wallet/hooks'
@@ -67,6 +73,7 @@ const CrabPosition: React.FC = () => {
   const [usdcQueued, setUsdcQueued] = useAtom(usdcQueuedAtom)
   const [crabQueued, setCrabQueued] = useAtom(crabQueuedAtom)
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
+  const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
 
   const classes = useStyles()
   const pnl = useAppMemo(() => {
@@ -136,9 +143,16 @@ const CrabPosition: React.FC = () => {
                   <Typography className={clsx(classes.metricValue, classes.white)}>
                     {formatCurrency(Number(toTokenAmount(usdcQueued, USDC_DECIMALS)))}
                   </Typography>
-                  <Button style={{ marginLeft: '8px' }} color="primary" disabled={usdcLoading} onClick={onDeQueueUSDC}>
-                    {!usdcLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
-                  </Button>
+                  {!isNettingAuctionLive && (
+                    <Button
+                      style={{ marginLeft: '8px' }}
+                      color="primary"
+                      disabled={usdcLoading}
+                      onClick={onDeQueueUSDC}
+                    >
+                      {!usdcLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
+                    </Button>
+                  )}
                 </Box>
               }
             />
@@ -152,9 +166,16 @@ const CrabPosition: React.FC = () => {
                   <Typography className={clsx(classes.metricValue, classes.white)}>
                     {formatCurrency(Number(toTokenAmount(crabQueued, 18).times(toTokenAmount(crabUsdValue, 18))))}
                   </Typography>
-                  <Button style={{ marginLeft: '8px' }} color="primary" disabled={crabLoading} onClick={onDeQueueCrab}>
-                    {!crabLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
-                  </Button>
+                  {!isNettingAuctionLive && (
+                    <Button
+                      style={{ marginLeft: '8px' }}
+                      color="primary"
+                      disabled={crabLoading}
+                      onClick={onDeQueueCrab}
+                    >
+                      {!crabLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
+                    </Button>
+                  )}
                 </Box>
               }
             />
