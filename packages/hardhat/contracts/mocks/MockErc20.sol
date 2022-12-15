@@ -6,25 +6,20 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract MockErc20 is ERC20, Ownable {
-
     /// @dev mapping to track whitelisted minters
     mapping(address => bool) internal whitelistedMinters;
-    
-    /// @notice emits an event when a minter is whitelisted 
-    event MinterWhitelisted(address indexed account );
 
-    /// @notice emits an event when a minter is blacklisted 
+    /// @notice emits an event when a minter is whitelisted
+    event MinterWhitelisted(address indexed account);
+
+    /// @notice emits an event when a minter is blacklisted
     event MinterBlacklisted(address indexed account);
-    
 
     /**
      * @notice check if the sender is whitelistd
      */
     modifier onlyWhitelisted() {
-        require(
-            whitelistedMinters[msg.sender] || msg.sender == owner(),
-            "Address not a whitelisted minter"
-        );
+        require(whitelistedMinters[msg.sender] || msg.sender == owner(), "Address not a whitelisted minter");
         _;
     }
 
@@ -72,7 +67,4 @@ contract MockErc20 is ERC20, Ownable {
 
         emit MinterBlacklisted(_account);
     }
-
-
-  
 }

@@ -19,15 +19,12 @@ contract OpynWETH9 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
     mapping(address => bool) internal whitelistedMinters;
-   
-   /**
+
+    /**
      * @notice check if the sender is whitelistd
      */
     modifier onlyWhitelisted() {
-        require(
-            whitelistedMinters[msg.sender] || msg.sender == owner,
-            "Address not a whitelisted minter"
-        );
+        require(whitelistedMinters[msg.sender] || msg.sender == owner, "Address not a whitelisted minter");
         _;
     }
 
@@ -40,13 +37,11 @@ contract OpynWETH9 {
     }
 
     function mint(address _to, uint256 _amount) public onlyWhitelisted {
-
         balanceOf[_to] += _amount;
         emit Deposit(_to, _amount);
     }
 
     function burn(address _from, uint256 _amount) public onlyWhitelisted {
-
         balanceOf[_from] -= _amount;
         emit Withdrawal(_from, _amount);
     }
