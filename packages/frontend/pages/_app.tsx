@@ -40,6 +40,7 @@ function MyApp({ Component, pageProps }: any) {
   useRenderCounter('9', '0')
 
   const router = useRouter()
+  const { track } = useAmplitude()
   const networkId = useAtomValue(networkIdAtom)
   const client = useMemo(() => uniswapClient[networkId] || uniswapClient[1], [networkId])
 
@@ -74,6 +75,19 @@ function MyApp({ Component, pageProps }: any) {
       router.events.off('routeChangeComplete', onRouteChangeComplete)
     }
   }, [router.events, siteID])
+
+  useEffect(() => {
+    function onRouteChangeComplete(url: string) {
+      const e: string = url.split('?')[0].substring(1).toUpperCase()
+      track('NAV_' + e)
+    }
+    router.events.on('routeChangeComplete', onRouteChangeComplete)
+
+    return () => {
+      router.events.off('routeChangeComplete', onRouteChangeComplete)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [track])
 
   return (
     <RestrictUserProvider>

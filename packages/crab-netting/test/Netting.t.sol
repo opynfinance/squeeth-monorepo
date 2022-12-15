@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {BaseForkSetup} from "./BaseForkSetup.t.sol";
 
+import {console} from "forge-std/console.sol";
+
 contract NettingTest is BaseForkSetup {
     function setUp() public override {
         BaseForkSetup.setUp(); // gives you netting, depositor, withdrawer, usdc, crab
@@ -93,7 +95,7 @@ contract NettingTest is BaseForkSetup {
         assertEq(crab.balanceOf(depositor), 0, "depositor starting balance");
         vm.prank(depositor);
         uint256 withdrawQuantity = 50e6;
-        netting.withdrawUSDC(withdrawQuantity);
+        netting.withdrawUSDC(withdrawQuantity, false);
         uint256 price = 1330e6;
         uint256 quantity = 200e6 - withdrawQuantity;
         netting.netAtPrice(price, quantity);
@@ -104,12 +106,12 @@ contract NettingTest is BaseForkSetup {
         uint256 price = 1330e6;
         uint256 quantity = 200e6;
         vm.startPrank(depositor);
-        netting.withdrawUSDC(80e6);
+        netting.withdrawUSDC(80e6, false);
         netting.depositUSDC(80e6);
         vm.stopPrank();
 
         vm.prank(withdrawer);
-        netting.dequeueCrab(20e18 - (quantity * 1e18) / price);
+        netting.dequeueCrab(20e18 - (quantity * 1e18) / price, false);
         netting.netAtPrice(price, 200e6); // net for 100 USD where 1 crab is 10 USD, so 10 crab
         assertEq(netting.crabBalance(withdrawer), 0, "crab balance not zero after first netting");
 
@@ -141,7 +143,35 @@ contract NettingTest is BaseForkSetup {
     function testCannotWithdrawMoreThanDeposited() public {
         vm.startPrank(depositor);
         vm.expectRevert(stdError.arithmeticError);
-        netting.withdrawUSDC(210e6);
+        netting.withdrawUSDC(210e6, false);
         vm.stopPrank();
+    }
+
+    function testSkipsUSDCBannedAddress() public {
+        // remove the withdrawers crab so that we dont net them
+        vm.prank(withdrawer);
+        netting.dequeueCrab(20e18, false);
+
+        // get bob the blacklisted address some crab
+        address bob = address(0xAa05F7C7eb9AF63D6cC03C36c4f4Ef6c37431EE0);
+        vm.prank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
+        crab.transfer(bob, 10e18);
+
+        // bob now deposits
+        vm.startPrank(bob);
+        crab.approve(address(netting), 10e18);
+        netting.queueCrabForWithdrawal(10e18);
+        vm.stopPrank();
+
+        vm.expectRevert(bytes("Blacklistable: account is blacklisted"));
+        netting.netAtPrice(1330e6, 200e6);
+
+        netting.rejectWithdraw(3);
+        vm.prank(withdrawer);
+        netting.queueCrabForWithdrawal(20e18);
+        netting.netAtPrice(1330e6, 200e6);
+
+        assertEq(crab.balanceOf(bob), 10e18);
+        assertEq(netting.crabBalance(bob), 0);
     }
 }
