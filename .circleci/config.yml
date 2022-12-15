@@ -33,7 +33,10 @@ workflows:
             - checkout-and-install-frontend
   zen-bull-vault:
     jobs:
-      - compile-zen-bull-vault
+      - lint-zen-bull-vault
+      - compile-zen-bull-vault:
+          requires:
+            - lint-zen-bull-vault
       - test-zen-bull-vault:
           requires:
             - compile-zen-bull-vault
@@ -206,7 +209,7 @@ jobs:
           command: yarn test:ci
 
   # zen-bull-vault jobs
-  compile-zen-bull-vault:
+  lint-zen-bull-vault:
     working_directory: ~/squeeth/packages/bull-vault
     docker:
       - image: ghcr.io/foundry-rs/foundry:latest
