@@ -334,8 +334,8 @@ const CrabWithdraw: React.FC = () => {
     withdrawPriceImpactNumber > 3
       ? classes.btnDanger
       : withdrawFundingWarning || withdrawPriceImpactWarning
-        ? classes.btnWarning
-        : ''
+      ? classes.btnWarning
+      : ''
 
   return (
     <>
@@ -497,25 +497,27 @@ const CrabWithdraw: React.FC = () => {
               ) : null}
 
               <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-                <Metric
-                  label="Slippage"
-                  value={formatNumber(slippage) + '%'}
-                  isSmall
-                  flexDirection="row"
-                  justifyContent="space-between"
-                  gridGap="8px"
-                />
+                {!useQueue && (
+                  <Metric
+                    label="Slippage"
+                    value={formatNumber(slippage) + '%'}
+                    isSmall
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    gridGap="8px"
+                  />
+                )}
 
                 <Box display="flex" alignItems="center" gridGap="6px" flex="1">
                   <Metric
                     label={
                       <MetricLabel
-                        label="Price Impact"
+                        label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
                         tooltipTitle={
                           useQueue
                             ? `For standard withdraw, the average price impact is ${formatNumber(
-                              withdrawPriceImpactNumber,
-                            )}% based on historical auctions`
+                                withdrawPriceImpactNumber,
+                              )}% based on historical auctions`
                             : undefined
                         }
                       />
@@ -528,11 +530,13 @@ const CrabWithdraw: React.FC = () => {
                     gridGap="8px"
                   />
 
-                  <TradeSettings
-                    isCrab={true}
-                    setCrabSlippage={(s) => setSlippage(s.toNumber())}
-                    crabSlippage={new BigNumber(slippage)}
-                  />
+                  {!useQueue && (
+                    <TradeSettings
+                      isCrab={true}
+                      setCrabSlippage={(s) => setSlippage(s.toNumber())}
+                      crabSlippage={new BigNumber(slippage)}
+                    />
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -541,7 +545,7 @@ const CrabWithdraw: React.FC = () => {
               {useQueue && (
                 <div className={classes.queueNotice}>
                   <Typography variant="subtitle2" color="primary">
-                    Your withdrawal will fully exit the strategy by Tuesday
+                    To reduce price impact, your withdrawal may take up until Tuesday to enter the strategy
                   </Typography>
                 </div>
               )}
@@ -573,7 +577,7 @@ const CrabWithdraw: React.FC = () => {
                   <PrimaryButtonNew
                     fullWidth
                     variant="contained"
-                    onClick={() => { }}
+                    onClick={() => {}}
                     disabled={true}
                     id="crab-unsupported-network-btn"
                   >
