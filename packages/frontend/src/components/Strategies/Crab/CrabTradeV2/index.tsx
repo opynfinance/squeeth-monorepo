@@ -27,12 +27,12 @@ const CrabTradeV2: React.FC<CrabTradeProps> = ({ maxCap, depositedAmount }) => {
     if (!confirmedTransactionData?.status) return ``
     if (confirmedTransactionData.tradeType === CrabTradeType.Deposit) {
       return confirmedTransactionData.transactionType === CrabTradeTransactionType.Queued
-        ? `Initiated ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token} for deposit`
+        ? `Initiated ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token} deposit`
         : `Deposited ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token}`
     }
     if (confirmedTransactionData.tradeType === CrabTradeType.Withdraw) {
       return confirmedTransactionData.transactionType === CrabTradeTransactionType.Queued
-        ? `Initiated ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token} for withdrawal`
+        ? `Initiated ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token} withdraw`
         : `Withdrawn ${confirmedTransactionData.amount.toFixed(4)} ${confirmedTransactionData.token}`
     }
     return ``
