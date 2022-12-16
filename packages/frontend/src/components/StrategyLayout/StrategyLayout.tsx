@@ -77,8 +77,8 @@ const routeMap = {
 }
 
 const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
-  const [selectedIdx, setSelectedIdx] = useState(1)
   const router = useRouter()
+  const [selectedIdx, setSelectedIdx] = useState(() => routeMap[router.pathname])
 
   const classes = useStyles()
 
