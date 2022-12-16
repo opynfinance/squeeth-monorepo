@@ -251,13 +251,13 @@
       {
         "indexed": false,
         "internalType": "address",
-        "name": "newShutdownContract",
+        "name": "oldShutdownContract",
         "type": "address"
       },
       {
         "indexed": false,
         "internalType": "address",
-        "name": "oldShutdownContract",
+        "name": "newShutdownContract",
         "type": "address"
       }
     ],
@@ -826,7 +826,13 @@
       }
     ],
     "name": "redeemCrabAndWithdrawWEth",
-    "outputs": [],
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "stateMutability": "nonpayable",
     "type": "function"
   },
