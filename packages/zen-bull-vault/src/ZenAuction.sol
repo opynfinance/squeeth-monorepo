@@ -14,7 +14,7 @@ import { UniFlash } from "./UniFlash.sol";
 import { UniOracle } from "./UniOracle.sol";
 import { EIP712 } from "openzeppelin/drafts/EIP712.sol";
 // lib
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { ECDSA } from "openzeppelin/cryptography/ECDSA.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 

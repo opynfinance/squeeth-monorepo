@@ -12,7 +12,7 @@ import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
 import { LeverageZen } from "./LeverageZen.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**

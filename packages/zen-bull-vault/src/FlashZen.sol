@@ -12,7 +12,7 @@ import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 // contract
 import { UniFlash } from "./UniFlash.sol";
 // lib
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { UniOracle } from "./UniOracle.sol";
 import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
