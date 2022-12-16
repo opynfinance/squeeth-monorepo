@@ -19,6 +19,12 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
         "indexed": false,
         "internalType": "uint256",
         "name": "crabAmount",
@@ -55,6 +61,12 @@
   {
     "anonymous": false,
     "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
       {
         "indexed": false,
         "internalType": "uint256",
@@ -114,7 +126,7 @@
             "type": "uint24"
           }
         ],
-        "internalType": "struct FlashBull.FlashDepositParams",
+        "internalType": "struct FlashZen.FlashDepositParams",
         "name": "_params",
         "type": "tuple"
       }
@@ -154,7 +166,7 @@
             "type": "uint24"
           }
         ],
-        "internalType": "struct FlashBull.FlashWithdrawParams",
+        "internalType": "struct FlashZen.FlashWithdrawParams",
         "name": "_params",
         "type": "tuple"
       }
