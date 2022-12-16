@@ -33,5 +33,13 @@
   "CrabHelper": "0x2F55e27E669F070dEf7B5771dB72f6B31A6d4df8",
   "CrabHelper-start-block": 15765940,
   "CrabNetting": "0x6E536adDB53d1b47d357cdca83BCF460194A395F",
-  "CrabNetting-start-block": 16185539
+  "CrabNetting-start-block": 16185539,
+  "ZenAuction": "0x6cd0890054d308264cD68B0b6ba38A36860593ec",
+  "ZenAuction-start-block": 16199889,
+  "ZenBullStrategy": "0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507",
+  "ZenBullStrategy-start-block": 16199889,
+  "ZenEmergencyShutdown": "0x67eF7C98f17ba050056369C9C4E2b9475AE7705E",
+  "ZenEmergencyShutdown-start-block": 16199889,
+  "FlashZen": "0x11A56a3A7A6Eb768A9125798B1eABE9EBD9EcE02",
+  "FlashZen-start-block": 16199889
 }
