@@ -6,9 +6,6 @@
 	path = packages/services/optimism
 	url = https://github.com/ethereum-optimism/optimism
 	branch = regenesis/0.4.0
-[submodule "packages/zen-bull-vault/lib/solenv"]
-	path = packages/zen-bull-vault/lib/solenv
-	url = https://github.com/memester-xyz/solenv
 [submodule "packages/zen-bull-vault/lib/squeeth-monorepo"]
 	path = packages/zen-bull-vault/lib/squeeth-monorepo
 	url = https://github.com/opynfinance/squeeth-monorepo
@@ -36,6 +33,3 @@
 [submodule "packages/crab-netting/lib/v3-core"]
 	path = packages/crab-netting/lib/v3-core
 	url = https://github.com/uniswap/v3-core
-[submodule "packages/zen-bull-vault/lib/forge-std"]
-	path = packages/zen-bull-vault/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
