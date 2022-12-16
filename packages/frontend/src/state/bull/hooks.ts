@@ -161,6 +161,7 @@ export const useGetFlashBulldepositParams = () => {
       wPowerPerpPoolFee: UNI_POOL_FEES,
       usdcPoolFee: getUSDCPoolFee(network),
       priceImpact: 0,
+      wethToLend: BIG_ZERO,
     }),
     [network],
   )
@@ -218,7 +219,7 @@ export const useGetFlashBulldepositParams = () => {
 
         const priceImpact = (1 - executionPrice.div(cumulativeSpotPrice).toNumber()) * 100
 
-        prevState = { ...emptyState, ethToCrab, minEthFromSqth, minEthFromUsdc, priceImpact }
+        prevState = { ...emptyState, ethToCrab, minEthFromSqth, minEthFromUsdc, priceImpact, wethToLend }
 
         const totalToBull = ethToCrab.plus(wethToLend).minus(minEthFromSqth).minus(minEthFromUsdc)
         // Total to bull should almost equal to totalEthDeposit

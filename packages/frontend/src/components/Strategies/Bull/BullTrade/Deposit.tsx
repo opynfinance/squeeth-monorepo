@@ -21,10 +21,11 @@ import debounce from 'lodash/debounce'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
 import { BullTradeType, BullTransactionConfirmation } from './index'
-import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
+import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
 import useStateWithReset from '@hooks/useStateWithReset'
 import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
+import { bullCapAtom, bullDepositedEthAtom } from '@state/bull/atoms'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -44,7 +45,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const [quoteLoading, setQuoteLoading] = useState(false)
 
   const negativeReturnsError = false
-  const highDepositWarning = false
   const { isRestricted } = useRestrictUser()
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -55,6 +55,10 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const normFactor = useAtomValue(normFactorAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+  const bullCap = useAtomValue(bullCapAtom)
+  const bullDepositedEth = useAtomValue(bullDepositedEthAtom)
+  const crabCap = useAtomValue(maxCapAtomV2)
+  const crabDepositedEth = useAtomValue(crabStrategyVaultAtomV2)?.collateralAmount || BIG_ZERO
 
   const [quote, setQuote] = useState({
     ethToCrab: BIG_ZERO,
@@ -63,6 +67,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     wPowerPerpPoolFee: 0,
     usdcPoolFee: 0,
     priceImpact: 0,
+    wethToLend: BIG_ZERO,
   })
 
   const { data: balance } = useWalletBalance()
@@ -149,6 +154,12 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [depositAmountBN.toString(), slippage])
 
+  const depositError = useAppMemo(() => {
+    if (quote.ethToCrab.plus(crabDepositedEth).gt(crabCap) || quote.wethToLend.plus(bullDepositedEth).gt(bullCap)) {
+      return 'Deposit amount exceeds cap. Try a smaller amount.'
+    }
+  }, [bullCap, bullDepositedEth, crabCap, crabDepositedEth, quote.ethToCrab, quote.wethToLend])
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
@@ -166,8 +177,8 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           logo={ethLogo}
           symbol={'ETH'}
           usdPrice={ethIndexPrice}
-          error={false}
-          helperText={``}
+          error={!!depositError}
+          helperText={depositError}
           balanceLabel="Balance"
           isLoading={quoteLoading}
           loadingMessage="Fetching best price"
@@ -182,19 +193,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             </div>
             <Typography variant="caption" className={classes.infoText}>
               Negative returns warning
-            </Typography>
-          </div>
-        ) : null}
-        {highDepositWarning ? (
-          <div className={classes.notice}>
-            <div className={classes.infoIcon}>
-              <Tooltip title={'Too high deposit warning'}>
-                <InfoIcon fontSize="medium" />
-              </Tooltip>
-            </div>
-            <Typography variant="caption" className={classes.infoText}>
-              Too high deposit warning
-              <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
             </Typography>
           </div>
         ) : null}
@@ -287,7 +285,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               id="bull-deposit-btn"
               variant={'contained'}
               onClick={onDepositClick}
-              disabled={quoteLoading || txLoading || depositAmount === '0'}
+              disabled={quoteLoading || txLoading || depositAmount === '0' || !!depositError}
             >
               {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
             </PrimaryButtonNew>
