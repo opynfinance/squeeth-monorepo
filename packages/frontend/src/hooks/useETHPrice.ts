@@ -7,6 +7,7 @@ import { useAtomValue } from 'jotai'
 
 const ethPriceQueryKeys = {
   currentEthPrice: () => ['currentEthPrice'],
+  onChainEthPrice: () => ['onChainEthPrice'],
 }
 
 /**
@@ -28,6 +29,16 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
   })
 
   return ethPrice.data ?? new BigNumber(0)
+}
+
+/**
+ * Get's the onchain ETH price
+ * @returns {BigNumber} price denominated in USD
+ */
+export const useOnChainETHPrice = () => {
+  const index = useAtomValue(indexAtom)
+
+  return toTokenAmount(index, 18).sqrt()
 }
 
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {

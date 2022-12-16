@@ -21,6 +21,8 @@ export const VOL_PERCENT_FIXED = 0.1
 
 export const VOL_PERCENT_SCALAR = 0.1
 
+export const AVERAGE_AUCTION_PRICE_IMPACT = 0.79
+
 //7min, 420 seconds
 export const TWAP_PERIOD = 420
 
@@ -35,10 +37,12 @@ export const INDEX_SCALE = 10000
 export const OSQUEETH_DECIMALS = 18
 export const WETH_DECIMALS = 18
 export const USDC_DECIMALS = 6
+export const CRAB_TOKEN_DECIMALS = 18
 
 export const SWAP_EVENT_TOPIC = '0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67'
 
 export const BIG_ZERO = new BigNumber(0)
+export const BIG_ONE = new BigNumber(10).pow(18)
 export const TWELVEDATA_NO_PRICEDATA_DURATION = 62
 export const BLOCKED_COUNTRIES = ['US', 'BY', 'CU', 'IR', 'IQ', 'CI', 'LR', 'KP', 'SD', 'SY', 'ZW']
 

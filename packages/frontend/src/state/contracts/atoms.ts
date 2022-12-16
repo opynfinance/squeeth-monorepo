@@ -13,6 +13,7 @@ import shortAbi from '../../abis/shortHelper.json'
 import crabMigrationAbi from '../../abis/crabMigration.json'
 import quoterAbi from '../../abis/quoter.json'
 import crabHelperAbi from '../../abis/crabHelper.json'
+import crabNettingAbi from '../../abis/crabNetting.json'
 import { addressesAtom } from '../positions/atoms'
 import { web3Atom } from '../wallet/atoms'
 
@@ -98,4 +99,11 @@ export const crabHelperContractAtom = atom<Contract | null>((get) => {
   const { crabHelper } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, crabHelper, crabHelperAbi)
+})
+
+export const crabNettingContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { crabNetting } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, crabNetting, crabNettingAbi)
 })
