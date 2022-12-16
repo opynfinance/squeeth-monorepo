@@ -25,7 +25,7 @@ import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } fro
 import useStateWithReset from '@hooks/useStateWithReset'
 import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
-import { bullCapAtom, bullDepositedEthAtom } from '@state/bull/atoms'
+import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -56,7 +56,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const impliedVol = useAtomValue(impliedVolAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const bullCap = useAtomValue(bullCapAtom)
-  const bullDepositedEth = useAtomValue(bullDepositedEthAtom)
+  const bullDepositedEth = useAtomValue(bullDepositedEthInEulerAtom)
   const crabCap = useAtomValue(maxCapAtomV2)
   const crabDepositedEth = useAtomValue(crabStrategyVaultAtomV2)?.collateralAmount || BIG_ZERO
 

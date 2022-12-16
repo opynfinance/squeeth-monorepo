@@ -1,0 +1,604 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "moduleGitCommit_",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "euler_",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "euler",
+    "outputs": [
+      {
+        "internalType": "contract Euler",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "exec",
+    "outputs": [
+      {
+        "internalType": "contract Exec",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getAccountStatus",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "collateralValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "liabilityValue",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "healthScore",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getDTokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getETokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getEnteredMarkets",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getEulerAccountAllowance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "getPTokenBalance",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "getPriceFull",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "twap",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "twapPeriod",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currPrice",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "getPricingConfig",
+    "outputs": [
+      {
+        "internalType": "uint16",
+        "name": "pricingType",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint32",
+        "name": "pricingParameters",
+        "type": "uint32"
+      },
+      {
+        "internalType": "address",
+        "name": "pricingForwarded",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "getTokenInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "symbol",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "getTotalSupplyAndDebts",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "poolSize",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalBalances",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalBorrows",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "reserveBalance",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "interestAccumulator",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "interestRateModel",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "interestRates",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "borrowSPY",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "borrowAPY",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "supplyAPY",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "irmSettings",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "kink",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "baseAPY",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "kinkAPY",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxAPY",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "baseSupplyAPY",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "kinkSupplyAPY",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxSupplyAPY",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct EulerSimpleLens.ResponseIRM",
+        "name": "r",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "markets",
+    "outputs": [
+      {
+        "internalType": "contract Markets",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "moduleGitCommit",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "reserveFee",
+    "outputs": [
+      {
+        "internalType": "uint32",
+        "name": "",
+        "type": "uint32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "underlyingToAssetConfig",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "eTokenAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "borrowIsolated",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint32",
+            "name": "collateralFactor",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint32",
+            "name": "borrowFactor",
+            "type": "uint32"
+          },
+          {
+            "internalType": "uint24",
+            "name": "twapWindow",
+            "type": "uint24"
+          }
+        ],
+        "internalType": "struct Storage.AssetConfig",
+        "name": "config",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "underlyingToDToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "dToken",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "underlyingToEToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "eToken",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "underlyingToInternalTokens",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "eToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "dToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "pToken",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "underlying",
+        "type": "address"
+      }
+    ],
+    "name": "underlyingToPToken",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "pToken",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

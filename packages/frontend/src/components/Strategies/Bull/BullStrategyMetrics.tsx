@@ -6,10 +6,11 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
-import { bullCRAtom } from '@state/bull/atoms'
-import { crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
+import { bullCRAtom, bullCurrentFundingAtom, bullThresholdAtom } from '@state/bull/atoms'
+import { crabStrategyCollatRatioAtomV2, ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
-import { formatNumber } from '@utils/formatter'
+import { formatCurrency, formatNumber } from '@utils/formatter'
+import { toTokenAmount } from '@utils/calculations'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -47,7 +48,14 @@ const BullStrategyMetrics: React.FC = () => {
   const bullCr = useAtomValue(bullCRAtom).times(100)
   const crabCr = useAtomValue(crabStrategyCollatRatioAtomV2)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentImpliedFunding = useAtomValue(bullCurrentFundingAtom)
+  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
+  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
+  const bullProfitThreshold = useAtomValue(bullThresholdAtom)
+  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
+
+  const lowerPriceBandForProfitability = ethPriceAtLastHedge - bullProfitThreshold * ethPriceAtLastHedge
+  const upperPriceBandForProfitability = ethPriceAtLastHedge + bullProfitThreshold * ethPriceAtLastHedge
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px">
@@ -85,7 +93,7 @@ const BullStrategyMetrics: React.FC = () => {
             label="Last rebalance"
             tooltipTitle={
               'Last rebalanced at ' +
-              new Date().toLocaleString(undefined, {
+              new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
                 day: 'numeric',
                 month: 'long',
                 hour: 'numeric',
@@ -96,12 +104,17 @@ const BullStrategyMetrics: React.FC = () => {
             }
           />
         }
-        value={`11/18, 8:44 AM`}
+        value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+          day: 'numeric',
+          month: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+        })}
       />
       <Metric
         flexBasis="250px"
         label={<Label label="Stack ETH if between" tooltipTitle={Tooltips.BullStrategyProfitThreshold} />}
-        value={`~$1,128 - $1,293`}
+        value={formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)}
       />
       <Metric
         flexBasis="250px"
