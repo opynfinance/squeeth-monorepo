@@ -39,7 +39,7 @@ import {
   Vault,
 } from "../generated/schema"
 import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
-import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
+import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR, FLASH_BULL_ADDR, BULL_ADDR } from "./constants";
 import { CrabNetting, CrabWithdrawn, USDCDeposited } from "../generated/CrabNetting/CrabNetting";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
