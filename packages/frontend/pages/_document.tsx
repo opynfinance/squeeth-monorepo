@@ -19,6 +19,7 @@ export default class MyDocument extends Document {
         <body>
           <Main />
           <NextScript />
+          <div id="rain"></div>
           <div id="background-radial-gradient"></div>
         </body>
       </Html>
