@@ -33,8 +33,8 @@ export enum TransactionType {
   CRAB_V2_USDC_FLASH_WITHDRAW = 'Withdraw USDC from crab V2',
   OTC_DEPOSIT = 'Deposit USDC to crab v2',
   OTC_WITHDRAW = 'Withdraw USDC from crab V2',
-  BULL_FLASH_DEPOSIT = 'Flash deposit in bull',
-  BULL_FLASH_WITHDRAW = 'Flash withdraw from bull',
+  BULL_FLASH_DEPOSIT = 'Deposit in bull',
+  BULL_FLASH_WITHDRAW = 'Withdraw from bull',
 }
 
 export enum CloseType {
