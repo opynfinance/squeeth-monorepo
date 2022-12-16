@@ -170,7 +170,7 @@ export const CRAB_NETTING: Address = {
 export const FLASH_BULL_STRATEGY: Address = {
   1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
-  5: '0x5B71AaC5625e25B7244db9C13f3164F9e910547B',
+  5: '0x3876aF971560FD4c4ba3FB18632AcC0570B745b1',
   421611: '',
   31337: '',
 }
@@ -178,7 +178,7 @@ export const FLASH_BULL_STRATEGY: Address = {
 export const BULL_STRATEGY: Address = {
   1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
-  5: '0x36F59dF22A942a8c7D96b13b79c5b45C41f683d9',
+  5: '0x2a5AD7582a9e42944Ee32671436593D16999c70a',
   421611: '',
   31337: '',
 }
@@ -194,7 +194,7 @@ export const WETH_E_TOKEN: Address = {
 export const AUCTION_BULL: Address = {
   1: '0x2f55e27e669f070def7b5771db72f6b31a6d4df8',
   3: '',
-  5: '0x2b8A9986da413d1E1a1A02e5a257D96E46992B21',
+  5: '0xE5E4302933aef104Bb93181Ae9E8A664E42c8d9C',
   421611: '',
   31337: '',
 }
