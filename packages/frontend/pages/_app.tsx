@@ -30,6 +30,7 @@ import { setUserId } from '@amplitude/analytics-browser'
 import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import CookiePopUp from '@components/CookiePopUp'
+import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 
 initializeAmplitude()
 
@@ -163,7 +164,9 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <CssBaseline />
         <ComputeSwapsProvider>
           <WalletFailModal />
-          <Component {...pageProps} />
+          <StrategyLayout>
+            <Component {...pageProps} />
+          </StrategyLayout>
         </ComputeSwapsProvider>
       </ThemeProvider>
       <CookiePopUp />

@@ -129,7 +129,7 @@ const Nav: React.FC = () => {
         <div className={classes.navDiv}>
           <div style={{ display: 'flex' }}>
             <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies" name="Strategies" />
+            <NavLink path="/strategies/crab" name="Strategies" />
             {/* <NavLink path="/trade" name="Trade 1" /> */}
             <NavLink path="/positions" name="Positions" />
             <NavLink path="/lp" name="LP" />
