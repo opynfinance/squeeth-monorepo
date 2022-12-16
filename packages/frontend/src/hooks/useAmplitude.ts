@@ -9,10 +9,10 @@ const useAmplitude = () => {
 
   const track = useCallback(
     (eventName: EVENT_NAME | string, eventProps?: Record<string, unknown>) => {
+      console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
       if (networkId === Networks.MAINNET) {
         return trackEvent(eventName, eventProps)
       }
-      console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     },
     [networkId],
   )

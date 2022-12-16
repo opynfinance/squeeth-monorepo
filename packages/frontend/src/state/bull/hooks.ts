@@ -73,8 +73,8 @@ export const useSetBullState = () => {
 
     const p1 = bullContract.methods.getCrabBalance().call()
     const p2 = bullContract.methods.totalSupply().call()
-    const p3 = bullContract.methods.calcWethToWithdraw(BIG_ONE).call()
-    const p4 = bullContract.methods.calcUsdcToRepay(BIG_ONE).call()
+    const p3 = bullContract.methods.calcWethToWithdraw(BIG_ONE.toString()).call()
+    const p4 = bullContract.methods.calcUsdcToRepay(BIG_ONE.toString()).call()
     const p5 = bullContract.methods.strategyCap().call()
     const p6 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call()
     const p7 = auctionBullContract.methods.getCurrentDeltaAndCollatRatio().call()
@@ -88,6 +88,7 @@ export const useSetBullState = () => {
       p6,
       p7,
     ])
+
     setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
     setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
     setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
