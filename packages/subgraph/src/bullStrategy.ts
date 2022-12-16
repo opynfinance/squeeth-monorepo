@@ -269,6 +269,7 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.bullAmount = event.params.bullAmount
   userTx.save()
 }
 
