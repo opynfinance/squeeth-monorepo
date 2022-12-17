@@ -243,6 +243,28 @@ dataSources:
           handler: handleFlashWithdrawERC20
       file: ./src/crabV2.ts
   - kind: ethereum/contract
+    name: CrabNetting
+    network: {{network}}
+    source:
+      address: "{{CrabNetting}}"
+      abi: CrabNetting
+      startBlock: {{CrabNetting-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabNetting
+          file: ./abis/CrabNetting.json
+      eventHandlers:
+        - event: USDCDeposited(indexed address,uint256,uint256,indexed uint256,uint256)
+          handler: handleNettingDeposit
+        - event: CrabWithdrawn(indexed address,uint256,uint256,indexed uint256)
+          handler: handleNettingWithdraw
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
     name: ZenBullStrategy
     network: {{network}}
     source:
