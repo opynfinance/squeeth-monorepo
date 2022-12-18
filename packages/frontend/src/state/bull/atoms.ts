@@ -41,12 +41,12 @@ export const bullCurrentFundingAtom = atom((get) => {
   const usdDebt = get(bullEulerUSDCDebtAtom)
   const ethCollat = get(bullDepositedEthInEulerAtom)
   const ethCollatInUsd = ethCollat.times(ethPrice)
-  const crabShares = get(bullCrabBalanceAtom).times(get(crabUSDValueAtom))
+  const dollarValueOfCrabInBull = get(bullCrabBalanceAtom).times(get(crabUSDValueAtom))
 
   const usdInterest = usdDebt.times(Math.exp(usdRate.div(365 / 2).toNumber())).minus(usdDebt)
   const ethInterest = ethCollatInUsd.times(Math.exp(ethRate.div(365 / 2).toNumber())).minus(ethCollatInUsd)
   const totalRate = ethInterest.minus(usdInterest)
-  const interestFunding = totalRate.div(crabShares).div(2)
+  const interestFunding = totalRate.div(dollarValueOfCrabInBull).div(2) // Divided by 2 because we are calculating for 2 days
   const squeethFunding = get(currentImpliedFundingAtom)
 
   return interestFunding.plus(squeethFunding).toNumber()
