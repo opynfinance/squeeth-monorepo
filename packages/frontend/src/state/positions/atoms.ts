@@ -26,6 +26,7 @@ import {
   BULL_STRATEGY,
   WETH_E_TOKEN,
   AUCTION_BULL,
+  EULER_SIMPLE_LENS,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -70,6 +71,7 @@ export const addressesAtom = atom((get) => {
     bullStrategy: BULL_STRATEGY[networkId].toLowerCase(),
     wethEToken: WETH_E_TOKEN[networkId].toLowerCase(),
     auctionBull: AUCTION_BULL[networkId].toLowerCase(),
+    eulerSimpleLens: EULER_SIMPLE_LENS[networkId].toLowerCase(),
   }
 })
 
