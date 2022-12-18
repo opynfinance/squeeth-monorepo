@@ -194,7 +194,6 @@ export const useGetDebtAmount = () => {
       const ethUsdcPrice = await getTwapSafe(ethUsdcPool, weth, usdc, TWAP_PERIOD)
       const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
       const ethDebt = new BigNumber(_shortAmt).div(INDEX_SCALE).multipliedBy(normFactor).multipliedBy(ethUsdcPrice)
-      console.log(ethUsdcPrice.toString(), _shortAmt.toString(), ethDebt.toString())
       return toTokenAmount(ethDebt, 18)
     },
     [contract, ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
@@ -283,7 +282,6 @@ export const useGetCollatRatioAndLiqPrice = () => {
 
         
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
-        console.log('CR num', collateralPercent, effectiveCollat.toString(), debt.toString())
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
         if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
 
