@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Typography, Box } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
@@ -11,6 +11,7 @@ import BullStrategyInfo from './BullStrategyInfo'
 import BullStrategyRebalances from './BullStrategyRebalances'
 import BullStrategyCharts from './BullStrategyCharts'
 import { useInitBullStrategy } from '@state/bull/hooks'
+import { useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from '@state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -53,7 +54,13 @@ const useStyles = makeStyles((theme) =>
 
 function BullStrategy() {
   const classes = useStyles()
+  useCurrentCrabPositionValueV2()
   useInitBullStrategy()
+  const setStrategyDataV2 = useSetStrategyDataV2()
+
+  useEffect(() => {
+    setStrategyDataV2()
+  }, [setStrategyDataV2])
 
   return (
     <div>
