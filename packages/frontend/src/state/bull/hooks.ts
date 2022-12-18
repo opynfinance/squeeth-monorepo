@@ -6,6 +6,7 @@ import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import {
   auctionBullContractAtom,
   bullStrategyContractAtom,
+  eulerLensContractAtom,
   flashBullContractAtom,
   quoterContractAtom,
   wethETokenContractAtom,
@@ -32,14 +33,16 @@ import {
   bullCrabBalanceAtom,
   bullCurrentETHPositionAtom,
   bullCurrentUSDCPositionAtom,
-  bullDepositedEthAtom,
+  bullDepositedEthInEulerAtom,
   bullEthValuePerShareAtom,
   bullEulerUsdcDebtPerShareAtom,
   bullEulerWethCollatPerShareAtom,
   bullSupplyAtom,
   isBullReadyAtom,
+  eulerUsdcBorrowRateAtom,
+  eulerETHLendRateAtom,
 } from './atoms'
-import { calcAssetNeededForFlashWithdraw, getWethToLendFromCrabEth } from './utils'
+import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
 
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
@@ -58,18 +61,21 @@ export const useSetBullState = () => {
   const bullContract = useAtomValue(bullStrategyContractAtom)
   const etokenContract = useAtomValue(wethETokenContractAtom)
   const auctionBullContract = useAtomValue(auctionBullContractAtom)
+  const eulerLenseContract = useAtomValue(eulerLensContractAtom)
   const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
   const setBullSupply = useUpdateAtom(bullSupplyAtom)
   const setEulerWeth = useUpdateAtom(bullEulerWethCollatPerShareAtom)
   const setEulerUsdc = useUpdateAtom(bullEulerUsdcDebtPerShareAtom)
   const setBullCap = useUpdateAtom(bullCapAtom)
-  const setDepositedEth = useUpdateAtom(bullDepositedEthAtom)
+  const setDepositedEth = useUpdateAtom(bullDepositedEthInEulerAtom)
   const setBullCR = useUpdateAtom(bullCRAtom)
   const setBullDelta = useUpdateAtom(bullDeltaAtom)
-  const { bullStrategy } = useAtomValue(addressesAtom)
+  const setUsdcBorrowRate = useUpdateAtom(eulerUsdcBorrowRateAtom)
+  const setEthLendRate = useUpdateAtom(eulerETHLendRateAtom)
+  const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
 
   const setBullState = useAppCallback(async () => {
-    if (!bullContract || !etokenContract || !auctionBullContract) return null
+    if (!bullContract || !etokenContract || !auctionBullContract || !eulerLenseContract) return null
 
     const p1 = bullContract.methods.getCrabBalance().call()
     const p2 = bullContract.methods.totalSupply().call()
@@ -78,16 +84,21 @@ export const useSetBullState = () => {
     const p5 = bullContract.methods.strategyCap().call()
     const p6 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call()
     const p7 = auctionBullContract.methods.getCurrentDeltaAndCollatRatio().call()
+    const p8 = eulerLenseContract.methods.interestRates(weth).call()
+    const p9 = eulerLenseContract.methods.interestRates(usdc).call()
 
-    const [crabBalance, totalSupply, eulerWeth, eulerUsdc, bullCap, depositedEth, deltaAndCr] = await Promise.all([
-      p1,
-      p2,
-      p3,
-      p4,
-      p5,
-      p6,
-      p7,
-    ])
+    const [
+      crabBalance,
+      totalSupply,
+      eulerWeth,
+      eulerUsdc,
+      bullCap,
+      depositedEth,
+      deltaAndCr,
+      wethInterests,
+      usdcInterests,
+    ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
+
     setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
     setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
     setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
@@ -96,7 +107,9 @@ export const useSetBullState = () => {
     setDepositedEth(toTokenAmount(depositedEth, WETH_DECIMALS))
     setBullDelta(toTokenAmount(deltaAndCr[0], WETH_DECIMALS))
     setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
-  }, [bullContract, bullStrategy, auctionBullContract])
+    setUsdcBorrowRate(getEulerInterestRate(new BigNumber(usdcInterests[1])))
+    setEthLendRate(getEulerInterestRate(new BigNumber(wethInterests[2])))
+  }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc])
 
   return setBullState
 }
