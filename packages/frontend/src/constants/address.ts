@@ -198,3 +198,11 @@ export const AUCTION_BULL: Address = {
   421611: '',
   31337: '',
 }
+
+export const EULER_SIMPLE_LENS: Address = {
+  1: '0x5077B7642abF198b4a5b7C4BdCE4f03016C7089C',
+  3: '',
+  5: '0x62626a0f051B547b3182e55D1Eba667138790D8D',
+  421611: '',
+  31337: '',
+}

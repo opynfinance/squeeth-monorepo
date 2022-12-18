@@ -8,7 +8,7 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).json({ status: 'error', message: 'Error fetching information' })
     return
   }
-  
+
   const jsonResponse = await axios.get(`${SQUEETH_PORTAL_API}/api/auction/getLastHedge`)
   res.status(200).json(jsonResponse.data)
 }
