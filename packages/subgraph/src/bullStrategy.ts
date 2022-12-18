@@ -11,7 +11,7 @@ import {
     AuctionRepayAndWithdrawFromLeverage,
     SetAuction,
     Transfer
-} from "../generated/BullStrategy/BullStrategy"
+} from "../generated/ZenBullStrategy/ZenBullStrategy"
 import {
     SetCrUpperAndLower,
     SetDeltaUpperAndLower,
@@ -20,11 +20,11 @@ import {
     SetFullRebalanceClearingPriceTolerance,
     SetRebalanceWethLimitPriceTolerance,
     SetAuctionManager
-} from "../generated/AuctionBull/AuctionBull"
+} from "../generated/ZenAuction/ZenAuction"
 import {
     FlashWithdraw,
     FlashDeposit,
-} from "../generated/FlashBull/FlashBull"
+} from "../generated/FlashZen/FlashZen"
 import {
     SetAddress as SetAddressSchema,
     SetUpperLower as SetUpperLowerSchema,
@@ -36,7 +36,7 @@ import {
     Strategy,
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import { BigInt, Bytes } from "@graphprotocol/graph-ts"
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
 
 function loadOrCreateTx(id: string): BullUserTxSchema {
   let userTx = BullUserTx.load(id)
@@ -217,15 +217,15 @@ export function handleLeverageRebalance(event: LeverageRebalance): void {
 
 export function handleSetFullRebalanceClearingPriceTolerance(event: SetFullRebalanceClearingPriceTolerance): void {
   const params = new SetParamsSchema(event.transaction.hash.toHex());
-  params.oldValue = event.params._oldPriceTolerance
-  params.newValue = event.params._newPriceTolerance
+  params.oldValue = event.params.oldPriceTolerance
+  params.newValue = event.params.newPriceTolerance
   params.save()
 }
 
 export function handleSetRebalanceWethLimitPriceTolerance(event: SetRebalanceWethLimitPriceTolerance): void {
   const params = new SetParamsSchema(event.transaction.hash.toHex());
-  params.oldValue = event.params._oldWethLimitPriceTolerance
-  params.newValue = event.params._newWethLimitPriceTolerance
+  params.oldValue = event.params.oldWethLimitPriceTolerance
+  params.newValue = event.params.newWethLimitPriceTolerance
   params.save()
 }
 
@@ -246,11 +246,11 @@ export function handleFullRebalance(event: FullRebalance): void {
   rebalance.isDepositingInCrab = event.params.isDepositingInCrab
   rebalance.timestamp = event.block.timestamp
   rebalance.save()
-}
+  }
 
 export function handleFlashDeposit(event: FlashDeposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
-  userTx.ethAmount = event.transaction.value
+  userTx.ethAmount = event.params.ethDeposited
   userTx.crabAmount = event.params.crabAmount
   userTx.user = event.transaction.from
   userTx.wethLentAmount = event.params.wethToLend
