@@ -14,9 +14,12 @@ import {
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
+  isBullPositionRefetchingAtom,
   isBullReadyAtom,
 } from '@state/bull/atoms'
 import { useUserBullTxHistory } from '@hooks/useUserBullTxHistory'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { addressesAtom } from '@state/positions/atoms'
 
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
@@ -27,6 +30,11 @@ import { useUserBullTxHistory } from '@hooks/useUserBullTxHistory'
   minPnL = minPnlUsd / depositedUsd * 100
 */
 export const useBullPosition = (user: string) => {
+  const { bullStrategy } = useAtomValue(addressesAtom)
+  const { refetch } = useTokenBalance(bullStrategy)
+
+  const [txToSearch, setTxToSearch] = useState<string | undefined>(undefined)
+
   const isBullReady = useAtomValue(isBullReadyAtom)
   const bullCurrentEthValue = useAtomValue(bullCurrentETHPositionAtom)
 
@@ -35,11 +43,11 @@ export const useBullPosition = (user: string) => {
   const setDepositedEth = useSetAtom(bullDepositedETHAtom)
   const setDepositedUsdc = useSetAtom(bullDepositedUSDCAtom)
   const setPositionLoaded = useSetAtom(bullPositionLoadedAtom)
+  const setIsPositionRefetching = useSetAtom(isBullPositionRefetchingAtom)
 
-  const { loading: txHistoryLoading, data: txHistoryData } = useUserBullTxHistory(user, true)
+  const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserBullTxHistory(user, true)
 
   const index = useAtomValue(indexAtom)
-  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
 
   const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
     if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
@@ -81,8 +89,33 @@ export const useBullPosition = (user: string) => {
   }, [bullCurrentEthValue, depositedEth, depositedUsd])
 
   useEffect(() => {
+    if (!txToSearch) stopPolling()
+
+    const match = txHistoryData?.find((tx) => tx.id.toLowerCase() === txToSearch)
+    if (match) {
+      refetch(() => {
+        setIsPositionRefetching(false)
+      })
+      setTxToSearch(undefined)
+    }
+  }, [refetch, setIsPositionRefetching, stopPolling, txHistoryData, txToSearch])
+
+  const pollForNewTx = useAppCallback(
+    (tx: string) => {
+      setIsPositionRefetching(true)
+      setTxToSearch(tx)
+      startPolling(500)
+    },
+    [setIsPositionRefetching, startPolling],
+  )
+
+  useEffect(() => {
     if (isBullReady && !txHistoryLoading) setPnL()
   }, [isBullReady, setPnL, txHistoryLoading])
+
+  return {
+    pollForNewTx,
+  }
 }
 
 /*

@@ -12,6 +12,7 @@ import {
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
+  isBullPositionRefetchingAtom,
 } from '@state/bull/atoms'
 import { addressAtom } from '@state/wallet/atoms'
 import { indexAtom } from '@state/controller/atoms'
@@ -57,7 +58,6 @@ const useStyles = makeStyles((theme) =>
 )
 
 const BullPosition: React.FC = () => {
-  const address = useAtomValue(addressAtom)
   const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const bullEthPnL = useAtomValue(bullEthPnlAtom)
@@ -65,10 +65,8 @@ const BullPosition: React.FC = () => {
   const ethPrice = toTokenAmount(useAtomValue(indexAtom), 18).sqrt()
   const classes = useStyles()
 
-  console.log(ethPrice.toString())
-
-  useBullPosition(address ?? '')
   const loading = !useAtomValue(bullPositionLoadedAtom)
+  const isPositionRefetching = useAtomValue(isBullPositionRefetchingAtom)
 
   if (bullPosition.isZero()) {
     return null
@@ -80,7 +78,7 @@ const BullPosition: React.FC = () => {
         My Position
       </Typography>
 
-      {loading ? (
+      {loading || isPositionRefetching ? (
         <Box mt={2} display="flex" alignItems="center" gridGap="20px" height={94}>
           <CircularProgress color="primary" size="1rem" />
           <Typography>Fetching current position...</Typography>
