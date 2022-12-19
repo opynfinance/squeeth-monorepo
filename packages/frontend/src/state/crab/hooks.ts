@@ -165,7 +165,6 @@ export const useSetStrategyDataV2 = () => {
         if (v) {
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount)
             .then((cl) => {
-              console.log('CR', cl.collateralPercent)
               setCollatRatio(cl.collateralPercent)
               setLiquidationPrice(cl.liquidationPrice)
               setLoading(false)
@@ -378,12 +377,6 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
-        console.log(
-          'Price: ',
-          ethPrice.toString(),
-          collateralOne.minus(ethDebtOne).times(ethPrice).toString(),
-          squeethInitialPrice.toString(),
-        )
         setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
       }
 

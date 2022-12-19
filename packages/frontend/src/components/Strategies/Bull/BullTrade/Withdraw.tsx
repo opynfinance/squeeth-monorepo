@@ -132,22 +132,25 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const onInputChange = (ethToWithdraw: string) => {
     const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
-    console.log('_bullToWithdraw', _bullToWithdraw.toString())
     setWithdrawAmount(ethToWithdraw)
     withdrawAmountRef.current = _bullToWithdraw.toString()
     debouncedDepositQuote(_bullToWithdraw.toString())
   }
 
-  const onTxnConfirmed = useCallback(() => {
-    withdrawAmountRef.current = '0'
-    setWithdrawAmount('0')
-    onTxnConfirm({
-      status: true,
-      amount: ongoingTransactionAmountRef.current,
-      tradeType: BullTradeType.Withdraw,
-    })
-    ongoingTransactionAmountRef.current = new BigNumber(0)
-  }, [onTxnConfirm])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      withdrawAmountRef.current = '0'
+      setWithdrawAmount('0')
+      onTxnConfirm({
+        status: true,
+        amount: ongoingTransactionAmountRef.current,
+        tradeType: BullTradeType.Withdraw,
+        txId: id,
+      })
+      ongoingTransactionAmountRef.current = new BigNumber(0)
+    },
+    [onTxnConfirm],
+  )
 
   const onWithdrawClick = async () => {
     setTxLoading(true)
