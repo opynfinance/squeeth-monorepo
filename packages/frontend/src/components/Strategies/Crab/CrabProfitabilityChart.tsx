@@ -61,25 +61,28 @@ const AxisLabel = ({ axisType, x, y, width, height, children }) => {
 const getDataPoints = (funding: number, ethPriceAtLastHedge: number) => {
   const dataPoints = []
 
-  const starting = -20
-  const increment = 0.1
-  const ending = 20
+  const starting = new BigNumber(-20)
+  const increment = new BigNumber(0.1)
+  const ending = new BigNumber(20)
 
   let current = starting
-  while (current <= ending) {
-    const ethReturnPercent = current
-    const crabReturn = (funding - Math.pow(ethReturnPercent, 2)) / 100
+  while (current.lte(ending)) {
+    const ethReturn = current.div(100).toNumber()
+    const crabReturn = (funding - Math.pow(ethReturn, 2)) * 100
     const crabReturnPositive = crabReturn > 0 ? crabReturn : null
 
     dataPoints.push({
-      ethPrice: ethPriceAtLastHedge + (ethReturnPercent / 100) * ethPriceAtLastHedge,
+      funding,
+      current,
+      ethReturn,
+      ethPrice: ethPriceAtLastHedge + ethReturn * ethPriceAtLastHedge,
       crabReturn,
       crabReturnPositive,
     })
 
-    current += increment
+    current = current.plus(increment)
   }
-  console.log({ dataPoints })
+  console.log({ dataPoints: dataPoints })
 
   return dataPoints
 }
@@ -97,10 +100,10 @@ const CrabProfitabilityChart: React.FC = () => {
 
   console.log({ lowerPriceBandForProfitability, upperPriceBandForProfitability })
 
-  const funding = ((currentImpliedFunding * 365) / 2) * 100
+  const funding = 2 * currentImpliedFunding
   console.log({ currentImpliedFunding, dailyHistoricalFunding: dailyHistoricalFunding.funding })
 
-  const theoreticalEthReturnForProfitability = Math.sqrt(2 * currentImpliedFunding)
+  const theoreticalEthReturnForProfitability = Math.sqrt(funding)
 
   const theoreticalUpperPriceBandForProfitability =
     ethPriceAtLastHedge + theoreticalEthReturnForProfitability * ethPriceAtLastHedge
@@ -111,8 +114,8 @@ const CrabProfitabilityChart: React.FC = () => {
   const data = getDataPoints(funding, ethPriceAtLastHedge)
 
   const getCrabReturnPercent = (ethPriceVal: number) => {
-    const ethReturnPercent = ((ethPriceVal - ethPriceAtLastHedge) / ethPriceAtLastHedge) * 100
-    return (funding - Math.pow(ethReturnPercent, 2)) / 100
+    const ethReturn = (ethPriceVal - ethPriceAtLastHedge) / ethPriceAtLastHedge
+    return (funding - Math.pow(ethReturn, 2)) * 100
   }
 
   console.log({ crabReturnPercent: getCrabReturnPercent(1041) })
