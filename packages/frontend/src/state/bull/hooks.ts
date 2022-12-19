@@ -1,9 +1,12 @@
+import { useQuery } from '@apollo/client'
 import { BIG_ONE, BIG_ZERO, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import STRATEGY_QUERY from '@queries/squeeth/strategyQuery'
+import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__generated__/strategyQuery'
 import {
   auctionBullContractAtom,
   bullStrategyContractAtom,
@@ -20,10 +23,11 @@ import { useGetWSqueethPositionValueInETH } from '@state/squeethPool/hooks'
 import { addressAtom, networkIdAtom } from '@state/wallet/atoms'
 import { useHandleTransaction } from '@state/wallet/hooks'
 import { BULL_EVENTS } from '@utils/amplitude'
+import { squeethClient } from '@utils/apollo-client'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { getExactIn, getExactOut } from '@utils/quoter'
 import BigNumber from 'bignumber.js'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
 import { useQueryClient } from 'react-query'
@@ -43,12 +47,28 @@ import {
   isBullReadyAtom,
   eulerUsdcBorrowRateAtom,
   eulerETHLendRateAtom,
+  bullTimeAtLastHedgeAtom,
 } from './atoms'
 import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
 
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
   const setBullUserState = useSetBullUserState()
+  const setBullTimeAtLastHedge = useSetAtom(bullTimeAtLastHedgeAtom)
+  const { auctionBull } = useAtomValue(addressesAtom)
+  const networkId = useAtomValue(networkIdAtom)
+
+  const { data, loading } = useQuery<strategyQuery, strategyQueryVariables>(STRATEGY_QUERY, {
+    variables: { strategyId: auctionBull },
+    fetchPolicy: 'cache-and-network',
+    client: squeethClient[networkId],
+  })
+
+  useEffect(() => {
+    if (loading) return
+
+    setBullTimeAtLastHedge(data?.strategy?.lastHedgeTimestamp)
+  }, [data?.strategy?.lastHedgeTimestamp, loading, setBullTimeAtLastHedge])
 
   useEffect(() => {
     setBullState()

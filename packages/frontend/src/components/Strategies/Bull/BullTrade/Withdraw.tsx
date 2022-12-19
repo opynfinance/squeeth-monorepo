@@ -194,6 +194,12 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     setTxLoading(false)
   }
 
+  const withdrawError = useAppMemo(() => {
+    if (withdrawAmountBN.gt(bullPositionValueInEth)) {
+      return 'Withdraw amount greater than strategy balance'
+    }
+  }, [bullPositionValueInEth, withdrawAmountBN])
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
@@ -211,8 +217,8 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           logo={ethLogo}
           symbol={'ETH'}
           usdPrice={ethIndexPrice}
-          error={false}
-          helperText={``}
+          error={!!withdrawError}
+          helperText={withdrawError}
           balanceLabel="Balance"
           isLoading={quoteLoading}
           loadingMessage="Fetching best price"
@@ -343,7 +349,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               id="bull-deposit-btn"
               variant={'contained'}
               onClick={onWithdrawClick}
-              disabled={quoteLoading || txLoading}
+              disabled={quoteLoading || txLoading || !!withdrawError}
             >
               {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>

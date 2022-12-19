@@ -60,3 +60,5 @@ export const bullThresholdAtom = atom((get) => {
   const impliedVol = Math.sqrt(funding * 365)
   return impliedVol / Math.sqrt(365 / 2)
 })
+
+export const bullTimeAtLastHedgeAtom = atom(0)

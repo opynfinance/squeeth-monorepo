@@ -6,6 +6,7 @@ import clsx from 'clsx'
 
 import { Links } from '@constants/enums'
 import BullProfit from 'public/images/BullProfit.svg'
+import { formatNumber } from '@utils/formatter'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -44,10 +45,16 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export const BullStrategyInfo: React.FC = () => {
+type BullStrategyInfoType = {
+  lowerPriceBandForProfitability: number
+  upperPriceBandForProfitability: number
+}
+
+export const BullStrategyInfo: React.FC<BullStrategyInfoType> = ({
+  lowerPriceBandForProfitability,
+  upperPriceBandForProfitability,
+}) => {
   const classes = useStyles()
-  const ethPriceUp = `$1293`
-  const ethPriceDown = `$1128`
   const shortSqueethPosition = `150%`
   const ethLeveragePosition = `127%`
 
@@ -59,7 +66,8 @@ export const BullStrategyInfo: React.FC = () => {
       <div className={classes.container}>
         <Typography variant="subtitle1" className={clsx(classes.caption, classes.fontColorCaption)}>
           Zen bull likes zen bull markets. It makes money when ETH goes up, slow and steady. It stacks ETH when ETH
-          stays within around {ethPriceDown}-{ethPriceUp} before the next rebalance.
+          stays within around ${formatNumber(lowerPriceBandForProfitability)}- $
+          {formatNumber(upperPriceBandForProfitability)} before the next rebalance.
         </Typography>
 
         <div className={classes.profitImage}>
@@ -77,9 +85,9 @@ export const BullStrategyInfo: React.FC = () => {
             based on large ETH price changes helps prevent a liquidation from occurring.
             <br /> <br />
             Based on current premiums, zen bull strategy would only be stacking ETH if ETH stays within ETH stays within
-            around {ethPriceDown}-{ethPriceUp} before the next rebalance. The implied premium which you deposit at
-            impacts your profitability. Depositing at a higher premium than expected increases likelihood of
-            profitability.
+            around ${formatNumber(lowerPriceBandForProfitability)}- ${formatNumber(upperPriceBandForProfitability)}{' '}
+            before the next rebalance. The implied premium which you deposit at impacts your profitability. Depositing
+            at a higher premium than expected increases likelihood of profitability.
             <br /> <br />
             If the Squeeth premium increases, it will be more expensive to close your position. Zen bull aims to be
             profitable in ETH terms.{' '}
