@@ -45,12 +45,6 @@ export const calcAssetNeededForFlashWithdraw = async (
   const crabToRedeem = bullShare.times(bullCrabBalance)
   const wPowerPerpToRedeem = crabToRedeem.times(vault.shortAmount).div(totalCrabSupply)
   const ethToWithdraw = crabToRedeem.times(vault.collateralAmount).div(totalCrabSupply)
-  console.log(
-    'Hello',
-    ethToWithdraw.toString(),
-    bullShare.toString(),
-    await bullStrategy.methods.calcUsdcToRepay(bullShare),
-  )
   const usdcToRepay = toTokenAmount(
     await bullStrategy.methods.calcUsdcToRepay(fromTokenAmount(bullShare, 18).toFixed(0)).call(),
     USDC_DECIMALS,
@@ -66,7 +60,6 @@ const calcWsqueethToMint = (depositEthAmount: BigNumber, strategyDebt: BigNumber
 
 const calcCrabToMint = (depositEthAmount: BigNumber, strategyCollat: BigNumber, totalSupply: BigNumber) => {
   const depositorShare = depositEthAmount.div(strategyCollat.plus(depositEthAmount))
-  console.log(depositorShare.toString(), totalSupply.toString())
 
   return totalSupply.times(depositorShare).div(new BigNumber(1).minus(depositorShare))
 }

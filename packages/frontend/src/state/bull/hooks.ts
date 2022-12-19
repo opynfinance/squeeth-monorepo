@@ -26,6 +26,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
 import { useQueryClient } from 'react-query'
+import { useMountedState } from 'react-use'
 import {
   bullCapAtom,
   bullCRAtom,
@@ -74,6 +75,8 @@ export const useSetBullState = () => {
   const setEthLendRate = useUpdateAtom(eulerETHLendRateAtom)
   const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
 
+  const isMounted = useMountedState()
+
   const setBullState = useAppCallback(async () => {
     if (!bullContract || !etokenContract || !auctionBullContract || !eulerLenseContract) return null
 
@@ -99,6 +102,8 @@ export const useSetBullState = () => {
       usdcInterests,
     ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
 
+    if (!isMounted()) return null
+
     setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
     setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
     setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
@@ -109,13 +114,12 @@ export const useSetBullState = () => {
     setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
     setUsdcBorrowRate(getEulerInterestRate(new BigNumber(usdcInterests[1])))
     setEthLendRate(getEulerInterestRate(new BigNumber(wethInterests[2])))
-  }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc])
+  }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc, isMounted])
 
   return setBullState
 }
 
 export const useSetBullUserState = () => {
-  const bullContract = useAtomValue(bullStrategyContractAtom)
   const { bullStrategy } = useAtomValue(addressesAtom)
   const { value: bullShare } = useTokenBalance(bullStrategy)
   const eulerWeth = useAtomValue(bullEulerWethCollatPerShareAtom)
@@ -132,8 +136,10 @@ export const useSetBullUserState = () => {
   const setBullEthValuePerShare = useUpdateAtom(bullEthValuePerShareAtom)
   const setBullReady = useUpdateAtom(isBullReadyAtom)
 
+  const isMounted = useMountedState()
+
   const setBullUserState = useAppCallback(async () => {
-    if (!bullContract || !crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero()) return null
+    if (!crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero() || !isMounted()) return null
 
     const leverageComponent = bullShare.times(eulerWeth.minus(eulerUsdc.div(ethPrice))).div(bullSupply)
     const userCrab = bullShare.times(bullCrabBalance).div(bullSupply)
@@ -143,11 +149,12 @@ export const useSetBullUserState = () => {
 
     const crabComponent = crabCollat.minus(crabDebtInEth)
     const userBullPosition = crabComponent.plus(leverageComponent)
+    if (!isMounted()) return null
     setBullCurrentPosition(new BigNumber(userBullPosition.toFixed(18)))
     setBullCurrentUsdcPosition(userBullPosition.times(ethPrice))
     setBullEthValuePerShare(userBullPosition.div(bullShare))
     setBullReady(true)
-  }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth])
+  }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth, isMounted])
 
   return setBullUserState
 }
@@ -311,7 +318,7 @@ export const useBullFlashDeposit = () => {
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
     ethToSend: BigNumber,
-    onTxConfirmed?: () => void,
+    onTxConfirmed?: (id?: string) => void,
   ) => {
     if (!flashBullContract) return
 
@@ -360,13 +367,6 @@ export const useGetFlashWithdrawParams = () => {
   const getFlashWithdrawParams = async (bullToFlashWithdraw: BigNumber) => {
     if (!bullStrategyContract || !crabV2Vault || !quoterContract) return emptyState
 
-    console.log(
-      bullToFlashWithdraw.toString(),
-      crabV2Vault.toString(),
-      bullSupply.toString(),
-      bullCrabBalance.toString(),
-      crabTotalSupply.toString(),
-    )
     const { wPowerPerpToRedeem, usdcToRepay } = await calcAssetNeededForFlashWithdraw(
       bullStrategyContract,
       bullToFlashWithdraw,

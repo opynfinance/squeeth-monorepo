@@ -92,7 +92,7 @@ export const useHandleTransaction = () => {
   const setTransactionData = useUpdateAtom(transactionDataAtom)
 
   const handleTransaction = useCallback(
-    (tx: any, onTxConfirmed?: () => void) => {
+    (tx: any, onTxConfirmed?: (id?: string) => void) => {
       if (!notify) return
       tx.on('transactionHash', (hash: string) => {
         const { emitter } = notify.hash(hash)
@@ -105,7 +105,7 @@ export const useHandleTransaction = () => {
 
           if (transaction.status === 'confirmed') {
             if (onTxConfirmed) {
-              onTxConfirmed()
+              onTxConfirmed(hash)
             }
             refetch()
           }
