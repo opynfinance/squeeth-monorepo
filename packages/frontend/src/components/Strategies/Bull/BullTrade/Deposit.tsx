@@ -183,10 +183,22 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, [depositAmountBN.toString(), slippage])
 
   const depositError = useAppMemo(() => {
+    if (depositAmountBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18))) {
+      return 'Insufficient ETH balance'
+    }
     if (quote.ethToCrab.plus(crabDepositedEth).gt(crabCap) || quote.wethToLend.plus(bullDepositedEth).gt(bullCap)) {
       return 'Deposit amount exceeds cap. Try a smaller amount.'
     }
-  }, [bullCap, bullDepositedEth, crabCap, crabDepositedEth, quote.ethToCrab, quote.wethToLend])
+  }, [
+    balance,
+    bullCap,
+    bullDepositedEth,
+    crabCap,
+    crabDepositedEth,
+    depositAmountBN,
+    quote.ethToCrab,
+    quote.wethToLend,
+  ])
 
   return (
     <>

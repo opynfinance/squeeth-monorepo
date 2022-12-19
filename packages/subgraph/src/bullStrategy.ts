@@ -37,6 +37,8 @@ import {
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
 import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import { loadOrCreateStrategy } from "./util"
+import { AUCTION_BULL } from "./constants"
 
 function loadOrCreateTx(id: string): BullUserTxSchema {
   let userTx = BullUserTx.load(id)
@@ -54,15 +56,6 @@ function loadOrCreateTx(id: string): BullUserTxSchema {
   userTx.usdcBorrowedAmount = BigInt.zero()
 
   return userTx
-}
-
-function loadOrCreateStrategy(id: string): Strategy {
-  let strategy = Strategy.load(id)
-  if (strategy) return strategy
-
-  strategy =  new Strategy(id)
-  strategy.totalSupply = BigInt.zero()
-  return strategy
 }
 
 export function handleWithdraw(event: Withdraw): void {
@@ -213,6 +206,11 @@ export function handleLeverageRebalance(event: LeverageRebalance): void {
   rebalance.wethLimitAmount = event.params.wethLimitAmount
   rebalance.timestamp = event.block.timestamp
   rebalance.save()
+
+  const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
+  strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeTx = event.transaction.hash.toHex()
+  strategy.save()
 }
 
 export function handleSetFullRebalanceClearingPriceTolerance(event: SetFullRebalanceClearingPriceTolerance): void {
@@ -246,7 +244,12 @@ export function handleFullRebalance(event: FullRebalance): void {
   rebalance.isDepositingInCrab = event.params.isDepositingInCrab
   rebalance.timestamp = event.block.timestamp
   rebalance.save()
-  }
+
+  const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
+  strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeTx = event.transaction.hash.toHex()
+  strategy.save()
+}
 
 export function handleFlashDeposit(event: FlashDeposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())

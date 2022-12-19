@@ -6,7 +6,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
-import { bullCRAtom, bullCurrentFundingAtom, bullThresholdAtom } from '@state/bull/atoms'
+import { bullCRAtom, bullCurrentFundingAtom, bullThresholdAtom, bullTimeAtLastHedgeAtom } from '@state/bull/atoms'
 import { crabStrategyCollatRatioAtomV2, ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { formatCurrency, formatNumber } from '@utils/formatter'
@@ -45,19 +45,21 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
   )
 }
 
-const BullStrategyMetrics: React.FC = () => {
+type BullMetricsType = {
+  lowerPriceBandForProfitability: number
+  upperPriceBandForProfitability: number
+}
+
+const BullStrategyMetrics: React.FC<BullMetricsType> = ({
+  lowerPriceBandForProfitability,
+  upperPriceBandForProfitability,
+}) => {
   const ethPrice = useOnChainETHPrice()
   const bullCr = useAtomValue(bullCRAtom).times(100)
   const crabCr = useAtomValue(crabStrategyCollatRatioAtomV2)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(bullCurrentFundingAtom)
-  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
-  const bullProfitThreshold = useAtomValue(bullThresholdAtom)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
-
-  const lowerPriceBandForProfitability = ethPriceAtLastHedge - bullProfitThreshold * ethPriceAtLastHedge
-  const upperPriceBandForProfitability = ethPriceAtLastHedge + bullProfitThreshold * ethPriceAtLastHedge
+  const timeAtLastHedge = useAtomValue(bullTimeAtLastHedgeAtom)
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px">
@@ -81,9 +83,8 @@ const BullStrategyMetrics: React.FC = () => {
         label={
           <Label
             label="Historical Daily Premium"
-            tooltipTitle={`${
-              Tooltips.StrategyEarnFunding
-            }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+            tooltipTitle={`${Tooltips.StrategyEarnFunding
+              }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
           />
         }
         value={`${formatNumber(dailyHistoricalFunding.funding * 100)}%`}

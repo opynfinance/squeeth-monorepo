@@ -41,6 +41,7 @@ import {
 import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
 import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR, FLASH_BULL_ADDR, BULL_ADDR } from "./constants";
 import { CrabNetting, CrabWithdrawn, USDCDeposited } from "../generated/CrabNetting/CrabNetting";
+import { loadOrCreateStrategy } from "./util";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
   let userTx = CrabUserTx.load(id)
@@ -55,15 +56,6 @@ function loadOrCreateTx(id: string): CrabUserTxSchema {
   userTx.transaction = id
 
   return userTx
-}
-
-function loadOrCreateStrategy(id: string): Strategy {
-  let strategy = Strategy.load(id)
-  if (strategy) return strategy
-
-  strategy =  new Strategy(id)
-  strategy.totalSupply = BigInt.zero()
-  return strategy
 }
 
 export function handleDeposit(event: Deposit): void {
@@ -283,6 +275,11 @@ export function handleHedgeOTC(event: HedgeOTC): void {
   hedge.isBuying = event.params.isBuying;
   hedge.timestamp = event.block.timestamp;
   hedge.save();
+
+  const strategy = loadOrCreateStrategy(CRAB_V2_ADDR.toHex())
+  strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeTx = event.transaction.hash.toHex()
+  strategy.save()
 }
 
 export function handleHedgeOTCSingle(event: HedgeOTCSingle): void {
