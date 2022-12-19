@@ -6,12 +6,7 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
 import { BIG_ZERO, FUNDING_PERIOD, INDEX_SCALE, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, YEAR } from '@constants/index'
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
-import {
-  useGetFlashBulldepositParams,
-  useBullFlashDeposit,
-  useSetBullState,
-  useSetBullUserState,
-} from '@state/bull/hooks'
+import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -31,6 +26,9 @@ import useStateWithReset from '@hooks/useStateWithReset'
 import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
+import { BULL_EVENTS } from '@utils/amplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
+import useAmplitude from '@hooks/useAmplitude'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -80,6 +78,14 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
+  const { track } = useAmplitude()
+
+  const trackUserEnteredDepositAmount = useCallback(
+    (amount: BigNumber) => track(BULL_EVENTS.DEPOSIT_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+
+  const [trackDepositAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredDepositAmount)
 
   const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
     setQuoteLoading(true)
@@ -94,6 +100,8 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, 500)
 
   const onInputChange = (ethToDeposit: string) => {
+    const depositEthBN = new BigNumber(ethToDeposit)
+    depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
     setDepositAmount(ethToDeposit)
     depositAmountRef.current = ethToDeposit
     debouncedDepositQuote(ethToDeposit)
@@ -109,9 +117,10 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
         tradeType: BullTradeType.Deposit,
         txId: id,
       })
+      resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm],
+    [onTxnConfirm, resetTracking],
   )
 
   const onDepositClick = useCallback(async () => {
@@ -128,6 +137,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
         onTxnConfirmed,
       )
     } catch (e) {
+      resetTracking()
       console.log(e)
     }
     setTxLoading(false)
@@ -139,6 +149,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     quote.wPowerPerpPoolFee,
     quote.usdcPoolFee,
     onTxnConfirmed,
+    resetTracking,
   ])
 
   const depositPriceImpactWarning = useAppMemo(() => {
