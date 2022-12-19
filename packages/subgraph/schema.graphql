@@ -184,6 +184,8 @@ type Strategy @entity {
   id: ID!
   totalSupply: BigInt!
   vaultId: BigInt!
+  lastHedgeTimestamp: BigInt!
+  lastHedgeTx: String!
 }
 
 type BullUserTx @entity {

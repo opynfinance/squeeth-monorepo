@@ -1,5 +1,5 @@
 import { Address, BigInt, dataSource } from "@graphprotocol/graph-ts";
-import { getShortHelperAddr, getCrabV2Addr, getCrabMigrationAddr, getCrabV1Addr, getBullAddr, getFlashBullAddr } from "./util";
+import { getShortHelperAddr, getCrabV2Addr, getCrabMigrationAddr, getCrabV1Addr, getBullAddr, getFlashBullAddr, getAuctionBullAddr } from "./util";
 
 export const BIGINT_ONE = BigInt.fromI32(1);
 export const BIGINT_ZERO = BigInt.fromI32(0);
@@ -22,6 +22,9 @@ export const MAINNET_FLASH_BULL_ADDR = Address.fromString(
 );
 export const MAINNET_BULL_STRATEGY_ADDR = Address.fromString(
   "0x312416A95237d49A42d63fc3f734608A57e77eaB"
+);
+export const MAINNET_AUCTION_BULL_ADDR = Address.fromString(
+  "0xE5E4302933aef104Bb93181Ae9E8A664E42c8d9C"
 );
 // ropsten
 export const ROPSTEN_SHORT_HELPER_ADDR = Address.fromString(
@@ -73,3 +76,4 @@ export const CRAB_MIGRATION_ADDR = getCrabMigrationAddr(dataSource.network());
 export const CRAB_V1_ADDR = getCrabV1Addr(dataSource.network());
 export const FLASH_BULL_ADDR = getFlashBullAddr(dataSource.network());
 export const BULL_ADDR = getBullAddr(dataSource.network());
+export const AUCTION_BULL = getAuctionBullAddr(dataSource.network());
