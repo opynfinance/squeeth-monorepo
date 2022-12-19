@@ -103,6 +103,11 @@ export enum BullStrategyTxType {
   FLASH_WITHDRAW = 'FLASH_WITHDRAW',
 }
 
+export enum BullRebalanceType {
+  LEVERAGE_REBALANCE = 'Leverage Rebalance',
+  FULL_REBALANCE = 'Full Rebalance',
+}
+
 export default class ChartDataInfo {
   time!: number
   value!: number

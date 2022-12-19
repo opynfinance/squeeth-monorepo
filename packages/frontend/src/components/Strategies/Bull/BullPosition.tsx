@@ -68,7 +68,7 @@ const BullPosition: React.FC = () => {
   const loading = !useAtomValue(bullPositionLoadedAtom)
   const isPositionRefetching = useAtomValue(isBullPositionRefetchingAtom)
 
-  if (bullPosition.isZero()) {
+  if (bullPosition.isZero() && !isPositionRefetching) {
     return null
   }
 
