@@ -364,19 +364,9 @@ const CrabWithdraw: React.FC = () => {
             <Typography variant="h4" className={classes.subtitle}>
               Strategy Withdraw
             </Typography>
-
-            <Box className={classes.tokenSelectBox}>
-              <Typography variant="caption" className={classes.tokenChoice}>
-                ETH
-              </Typography>
-              <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" />
-              <Typography variant="caption" className={classes.tokenChoice}>
-                USDC
-              </Typography>
-            </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="12px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
             <RoundedButton
               variant="outlined"
               size="small"
@@ -429,25 +419,6 @@ const CrabWithdraw: React.FC = () => {
               error={!!withdrawError}
               helperText={withdrawError}
             />
-
-            <div className={classes.noticeGray}>
-              <div className={classes.infoIconGray}>
-                <InfoIcon fontSize="medium" />
-              </div>
-              <Typography variant="caption" color="textSecondary" className={classes.infoText}>
-                Crab aims to earn premium in dollar terms. A crab position reduces ETH holdings when the price of ETH
-                increases. It increases ETH holdings when the price of ETH decreases.{' '}
-                <a
-                  className={classes.link}
-                  href="https://twitter.com/wadepros/status/1580566152844955649?s=20&t=Z4KHUkfbzOfhvauqS7cUwQ"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            </div>
 
             {withdrawFundingWarning ? (
               <div className={classes.notice}>

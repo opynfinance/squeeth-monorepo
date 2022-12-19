@@ -6,16 +6,17 @@ export enum TradeMode {
 }
 
 export enum Vaults {
-  ETHBear = 'Bear Strategy', // long 1 eth + short squeeth
-  CrabVault = 'Crab Strategy', // long 2 eth + short squeeth
-  ETHBull = 'Bull Strategy', // long 3 eth + short squeeth
+  ETHBear = 'Bear', // long 1 eth + short squeeth
+  CrabVault = 'Crab', // long 2 eth + short squeeth
+  ETHZenBull = 'Bull', // long 3 eth + short squeeth
   Custom = 'Custom Strategy', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
 }
 
 export enum VaultSubtitle {
-  CrabVault = 'Stack USDC',
-  ETHBull = 'Stack ETH',
+  ETHBear = 'Short ETH',
+  CrabVault = 'Stack USD',
+  ETHZenBull = 'Stack ETH',
 }
 
 export enum TransactionType {

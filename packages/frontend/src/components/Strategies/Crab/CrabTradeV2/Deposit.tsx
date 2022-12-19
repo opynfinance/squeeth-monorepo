@@ -252,14 +252,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
     setTxLoading(false)
   }
 
-  const handleTokenChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setUseUsdc(event.target.checked)
-      resetDepositAmount()
-    },
-    [resetDepositAmount],
-  )
-
   const setDepositMax = () => {
     if (!useUsdc) setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
     else setDepositAmount(usdcBalance.toString())
@@ -350,19 +342,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
             <Typography variant="h4" className={classes.subtitle}>
               Strategy Deposit
             </Typography>
-
-            <Box className={classes.tokenSelectBox}>
-              <Typography variant="caption" className={classes.tokenChoice}>
-                ETH
-              </Typography>
-              <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" />
-              <Typography variant="caption" className={classes.tokenChoice}>
-                USDC
-              </Typography>
-            </Box>
           </Box>
 
-          <Box display="flex" alignItems="center" gridGap="12px" marginTop="12px">
+          <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
             <RoundedButton
               variant="outlined"
               size="small"
@@ -402,25 +384,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount }) =>
               error={!!depositError}
               helperText={depositError}
             />
-
-            <div className={classes.noticeGray}>
-              <div className={classes.infoIconGray}>
-                <InfoIcon fontSize="medium" />
-              </div>
-              <Typography variant="caption" color="textSecondary" className={classes.infoText}>
-                Crab aims to earn premium in dollar terms. A crab position reduces ETH holdings when the price of ETH
-                increases. It increases ETH holdings when the price of ETH decreases.{' '}
-                <a
-                  className={classes.link}
-                  href="https://twitter.com/wadepros/status/1580566152844955649?s=20&t=Z4KHUkfbzOfhvauqS7cUwQ"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {' '}
-                  Learn more.{' '}
-                </a>
-              </Typography>
-            </div>
 
             {depositFundingWarning && (
               <div className={classes.notice}>

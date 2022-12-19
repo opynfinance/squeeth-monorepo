@@ -977,7 +977,7 @@ export const useSetProfitableMovePercent = () => {
   return profitableMovePercent
 }
 
-export const useSetProfitableMovePercentV2 = () => {
+export const useProfitableMovePercentV2 = () => {
   const [profitableMovePercentV2, setProfitableMovePercentV2] = useAtom(profitableMovePercentAtomV2)
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const currentImpliedVol = useAtomValue(impliedVolAtom)

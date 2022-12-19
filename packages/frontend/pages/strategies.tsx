@@ -6,29 +6,10 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
 
 import Nav from '@components/Nav'
-import CapDetails from '@components/Strategies/Crab/CapDetails'
-import CapDetailsV2 from '@components/Strategies/Crab/CapDetailsV2'
-import CrabStrategyV2History from '@components/Strategies/Crab/StrategyHistoryV2'
-import StrategyInfo from '@components/Strategies/Crab/StrategyInfoV2'
-import CrabTrade from '@components/Strategies/Crab/CrabTrade'
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
-import { StrategyChartsV2 } from '@components/Strategies/Crab/StrategyChartsV2'
-import CrabPositionV2 from '@components/Strategies/Crab/CrabPositionV2'
-import CrabMetricsV2 from '@components/Strategies/Crab/CrabMetricsV2'
-import {
-  crabStrategyCollatRatioAtom,
-  crabStrategyCollatRatioAtomV2,
-  crabStrategyVaultAtom,
-  crabStrategyVaultAtomV2,
-  maxCapAtom,
-  maxCapAtomV2,
-} from '@state/crab/atoms'
-import {
-  useCurrentCrabPositionValueV2,
-  useSetStrategyData,
-  useSetStrategyDataV2,
-  useCurrentCrabPositionValue,
-} from '@state/crab/hooks'
+import CrabProfitabilityChart from '@components/Strategies/Crab/CrabProfitabilityChart'
+import { crabStrategyCollatRatioAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
+import { useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { Vaults, VaultSubtitle } from '@constants/enums'
 import bull from 'public/images/bull.gif'
@@ -36,7 +17,7 @@ import bear from 'public/images/bear.gif'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    container: {
+    content: {
       maxWidth: '1280px',
       width: '80%',
       margin: '0 auto',
@@ -55,7 +36,7 @@ const useStyles = makeStyles((theme) =>
         padding: theme.spacing(1, 3),
       },
     },
-    columnContainer: {
+    container: {
       marginTop: '32px',
       display: 'flex',
       justifyContent: 'center',
@@ -78,10 +59,21 @@ const useStyles = makeStyles((theme) =>
         flex: '1',
       },
     },
-    subtitle: {
-      fontSize: '20px',
+    sectionTitle: {
+      fontSize: '22px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
+    },
+    text: {
+      marginTop: '16px',
+      color: '#BDBDBD',
+    },
+    tabsRoot: {
+      borderBottom: '1px solid #333333',
+      marginTop: '16px',
+    },
+    tabsIndicator: {
+      backgroundColor: '#26E6F8',
     },
     comingSoon: {
       height: '50vh',
@@ -108,6 +100,7 @@ const useTabLabelStyles = makeStyles((theme) =>
         fontSize: '20px',
         lineHeight: '1.5rem',
       },
+      textTransform: 'initial',
     },
     subtitle: {
       fontSize: '16px',
@@ -115,6 +108,7 @@ const useTabLabelStyles = makeStyles((theme) =>
       [theme.breakpoints.down('xs')]: {
         fontSize: '13px',
       },
+      textTransform: 'initial',
     },
   }),
 )
@@ -129,135 +123,99 @@ const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title
   )
 }
 
-const Strategies: React.FC = () => {
-  const [selectedIdx, setSelectedIdx] = useState(1)
-
-  // which crab strategy to display. V1 or V2.
-  const [displayCrabV1] = useState(false)
+const Strategy: React.FC<{ selectedIndex: number }> = ({ selectedIndex }) => {
+  const maxCap = useAtomValue(maxCapAtomV2)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
 
   const classes = useStyles()
-  const maxCap = useAtomValue(displayCrabV1 ? maxCapAtom : maxCapAtomV2)
-  const vault = useAtomValue(displayCrabV1 ? crabStrategyVaultAtom : crabStrategyVaultAtomV2)
-  const collatRatio = useAtomValue(displayCrabV1 ? crabStrategyCollatRatioAtom : crabStrategyCollatRatioAtomV2)
-  const setStrategyData = useSetStrategyData()
+
+  if (selectedIndex === 0) {
+    return (
+      <div className={classes.comingSoon}>
+        <Image src={bear} alt="squeeth token" width={200} height={130} />
+        <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
+          Coming soon
+        </Typography>
+      </div>
+    )
+  }
+
+  if (selectedIndex === 2) {
+    return (
+      <div className={classes.comingSoon}>
+        <Image src={bull} alt="squeeth token" width={200} height={130} />
+        <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
+          Coming soon
+        </Typography>
+      </div>
+    )
+  }
+
+  return (
+    <div className={classes.container}>
+      <div className={classes.leftColumn}>
+        <div>
+          <Typography variant="h2" className={classes.sectionTitle}>
+            About Crab
+          </Typography>
+          <Typography variant="body1" className={classes.text}>
+            In general, Crab earns USDC returns except when there is high ETH volatility in the market, when it may draw
+            down. The strategy stacks USDC if ETH is within the below bands at the next hedge.
+          </Typography>
+
+          <CrabProfitabilityChart />
+        </div>
+      </div>
+      <div className={classes.rightColumn}>
+        <div className={classes.tradeSection}>
+          <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const Strategies: React.FC = () => {
+  const [selectedIndex, setSelectedIndex] = useState(1)
+
+  const classes = useStyles()
+  const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
   const setStrategyDataV2 = useSetStrategyDataV2()
 
-  useCurrentCrabPositionValueV2()
-  useCurrentCrabPositionValue()
-  useInitCrabMigration()
-
-  const CapDetailsComponent = displayCrabV1 ? CapDetails : CapDetailsV2
-  const CrabTradeComponent = displayCrabV1 ? CrabTrade : CrabTradeV2
+  // useCurrentCrabPositionValueV2()
+  // useInitCrabMigration()
 
   useEffect(() => {
-    if (displayCrabV1) setStrategyData()
-  }, [collatRatio, displayCrabV1, setStrategyData])
+    // setStrategyDataV2()
+  }, [collatRatio, setStrategyDataV2])
 
-  useEffect(() => {
-    if (!displayCrabV1) setStrategyDataV2()
-  }, [collatRatio, displayCrabV1, setStrategyDataV2])
-
-  useMemo(() => {
-    if (selectedIdx === 0) return Vaults.ETHBear
-    if (selectedIdx === 1) return Vaults.CrabVault
-    if (selectedIdx === 2) return Vaults.ETHBull
-    else return Vaults.Custom
-  }, [selectedIdx])
+  const handleTabChange = (_, value: number) => setSelectedIndex(value)
 
   return (
     <div>
-      <div id="rain"></div>
       <Nav />
-      <div className={classes.container}>
+
+      <div>
         <Tabs
-          variant="fullWidth"
-          value={selectedIdx}
+          centered
+          classes={{ root: classes.tabsRoot, indicator: classes.tabsIndicator }}
+          value={selectedIndex}
           indicatorColor="primary"
           textColor="primary"
-          onChange={(event, value) => {
-            setSelectedIdx(value)
-          }}
-          aria-label="disabled tabs example"
+          onChange={handleTabChange}
+          aria-label="squeeth-strategies"
         >
-          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBear} />} icon={<div>🐻</div>} />
+          <Tab label={<TabLabel title={Vaults.ETHBear} subtitle={VaultSubtitle.ETHBear} />} icon={<div>🐻</div>} />
+          <Tab label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />} icon={<div>🦀</div>} />
           <Tab
-            style={{ textTransform: 'none' }}
-            label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
-            icon={<div>🦀</div>}
+            label={<TabLabel title={Vaults.ETHZenBull} subtitle={VaultSubtitle.ETHZenBull} />}
+            icon={<div>🐂</div>}
           />
-          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBull} />} icon={<div>🐂</div>} />
         </Tabs>
-        {selectedIdx === 2 ? ( //bull vault
-          <div className={classes.comingSoon}>
-            <Image src={bull} alt="squeeth token" width={200} height={130} />
-            <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-              Coming soon
-            </Typography>
-          </div>
-        ) : selectedIdx === 0 ? ( //bear vault
-          <div className={classes.comingSoon}>
-            <Image src={bear} alt="squeeth token" width={200} height={130} />
-            <Typography variant="h6" style={{ marginLeft: '8px' }} color="primary">
-              Coming soon
-            </Typography>
-          </div>
-        ) : (
-          <div>
-            <Box marginTop="40px">
-              <CrabPositionV2 />
-            </Box>
 
-            <div className={classes.columnContainer}>
-              <div className={classes.leftColumn}>
-                <Box>
-                  <Typography variant="h4" className={classes.subtitle}>
-                    Strategy Details
-                  </Typography>
-
-                  <Box marginTop="12px">
-                    <CapDetailsComponent
-                      maxCap={maxCap}
-                      depositedAmount={vault?.collateralAmount || new BigNumber(0)}
-                    />
-                  </Box>
-                </Box>
-
-                <CrabMetricsV2 />
-
-                <Box marginTop="32px">
-                  <Typography variant="h4" className={classes.subtitle}>
-                    Crab PnL
-                  </Typography>
-
-                  <Box marginTop="12px">
-                    <StrategyChartsV2 />
-                  </Box>
-                </Box>
-
-                <Box marginTop="32px">
-                  <Typography variant="h4" className={classes.subtitle}>
-                    Profitability conditions
-                  </Typography>
-                  <StrategyInfo />
-                </Box>
-
-                <Box marginTop="32px">
-                  <Typography variant="h4" className={classes.subtitle}>
-                    Strategy Hedges
-                  </Typography>
-                  <Box marginTop="24px">
-                    <CrabStrategyV2History />
-                  </Box>
-                </Box>
-              </div>
-              <div className={classes.rightColumn}>
-                <div className={classes.tradeSection}>
-                  <CrabTradeComponent maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className={classes.content}>
+          <Strategy selectedIndex={selectedIndex} />
+        </div>
       </div>
     </div>
   )

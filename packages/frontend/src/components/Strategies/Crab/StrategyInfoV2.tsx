@@ -8,7 +8,7 @@ import { Links } from '@constants/enums'
 import CrabProfit_Flat from 'public/images/CrabProfit_Flat_v2.svg'
 import CrabProfit_Increase from 'public/images/CrabProfit_Increase_v2.svg'
 import CrabProfit_Decrease from 'public/images/CrabProfit_Decrease_v2.svg'
-import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
+import { useProfitableMovePercentV2 } from '@state/crab/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,7 +57,7 @@ const useStyles = makeStyles((theme) =>
 
 export const StrategyInfo: React.FC = () => {
   const classes = useStyles()
-  const profitableMovePercent = useSetProfitableMovePercentV2()
+  const profitableMovePercent = useProfitableMovePercentV2()
 
   const [profitToggle, setProfitToggle] = React.useState('flat')
 

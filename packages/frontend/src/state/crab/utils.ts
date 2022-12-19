@@ -69,7 +69,7 @@ export const getTimeAtLastHedge = async (contract: Contract | null) => {
 
 export const getWsqueethFromCrabAmount = async (crabAmount: BigNumber, contract: Contract | null) => {
   if (!contract || crabAmount.isNaN()) return null
-  
+
   const result = await contract.methods.getWsqueethFromCrabAmount(fromTokenAmount(crabAmount, 18).toFixed(0)).call()
   return toTokenAmount(result.toString(), 18)
 }

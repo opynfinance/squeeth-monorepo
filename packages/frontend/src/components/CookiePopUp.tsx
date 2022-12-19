@@ -1,9 +1,7 @@
-import CookieConsent, { Cookies } from "react-cookie-consent";
-import { CookieNames, trackCookieChoice } from "@utils/cookies";
-import { createStyles, makeStyles } from "@material-ui/core";
-import Link from "next/link";
-
-
+import CookieConsent, { Cookies } from 'react-cookie-consent'
+import { CookieNames, trackCookieChoice } from '@utils/cookies'
+import { createStyles, makeStyles } from '@material-ui/core'
+import Link from 'next/link'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -15,9 +13,9 @@ const useStyles = makeStyles((theme) =>
       top: '60%',
       right: '0px',
       bottom: 'auto',
-      zIndex: 2000,
       transform: 'translate3d(-10%, -50%, 9999990px)',
       width: '85%',
+      zIndex: theme.zIndex.snackbar,
     },
   }),
 )
@@ -45,7 +43,7 @@ const CookiePopUp: React.FC = () => {
         }}
         expires={365}
         enableDeclineButton
-        declineButtonText= "Decline"
+        declineButtonText="Decline"
         declineButtonStyle={{
           backgroundColor: 'transparent',
           border: '2px solid #D9D9D9',

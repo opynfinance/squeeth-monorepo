@@ -7,7 +7,7 @@ import { formatNumber, formatCurrency } from '@utils/formatter'
 import { toTokenAmount } from '@utils/calculations'
 import { Tooltips } from '@constants/enums'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
-import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
+import { useProfitableMovePercentV2 } from '@state/crab/hooks'
 import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2, crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 
@@ -19,7 +19,7 @@ const CrabMetricsV2: React.FC = () => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const collatRatio = useAtomValue(crabStrategyCollatRatioAtomV2)
 
-  const profitableMovePercentV2 = useSetProfitableMovePercentV2()
+  const profitableMovePercentV2 = useProfitableMovePercentV2()
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
   const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableMovePercentV2 * ethPriceAtLastHedge
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableMovePercentV2 * ethPriceAtLastHedge
