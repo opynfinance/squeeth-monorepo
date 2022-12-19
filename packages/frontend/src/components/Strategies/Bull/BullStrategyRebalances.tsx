@@ -109,7 +109,7 @@ export const BullStrategyRebalances: React.FC = () => {
 
   return (
     <Box>
-      <Typography variant="h4" className={classes.subtitle}>
+      {/* <Typography variant="h4" className={classes.subtitle}>
         Strategy Rebalances
       </Typography>
       <Box marginTop="24px">
@@ -150,7 +150,7 @@ export const BullStrategyRebalances: React.FC = () => {
         })}
         <div ref={bottomRef} />
         {showMore && <MoreButton onClick={onClickLoadMore} />}
-      </Box>
+      </Box> */}
     </Box>
   )
 }

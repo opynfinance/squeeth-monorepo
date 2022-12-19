@@ -66,5 +66,5 @@ const calcCrabToMint = (depositEthAmount: BigNumber, strategyCollat: BigNumber, 
 
 // https://docs.euler.finance/developers/numeric-limits#interestrate
 export const getEulerInterestRate = (apy: BigNumber) => {
-  return apy.times(86400 * 365).div(new BigNumber(10).pow(27))
+  return apy.div(new BigNumber(10).pow(27))
 }

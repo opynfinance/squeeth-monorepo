@@ -16,6 +16,7 @@ import {
 import { CrabStrategyV2 } from "../generated/CrabStrategyV2/CrabStrategyV2"
 import { CrabAuction, CrabStrategyTx, Strategy } from "../generated/schema"
 import { CRAB_V1_ADDR } from "./constants"
+import { loadOrCreateStrategy } from "./util"
 
 function loadOrCreateTx(id: string): CrabStrategyTx {
   let strategy = CrabStrategyTx.load(id)
@@ -26,15 +27,6 @@ function loadOrCreateTx(id: string): CrabStrategyTx {
   strategy.lpAmount = BigInt.zero()
   strategy.ethAmount = BigInt.zero()
   strategy.timestamp = BigInt.zero()
-  return strategy
-}
-
-function loadOrCreateStrategy(id: string): Strategy {
-  let strategy = Strategy.load(id)
-  if (strategy) return strategy
-
-  strategy =  new Strategy(id)
-  strategy.totalSupply = BigInt.zero()
   return strategy
 }
 
