@@ -15,7 +15,11 @@ import {
   ROPSTEN_CRAB_V1_ADDR,
   GOERLI_CRAB_V2_ADDR,
   GOERLI_CRAB_MIGRATION_ADDR,
-  GOERLI_CRAB_V1_ADDR
+  GOERLI_CRAB_V1_ADDR,
+  MAINNET_FLASH_BULL_ADDR,
+  GOERLI_FLASH_BULL_ADDR,
+  MAINNET_BULL_STRATEGY_ADDR,
+  GOERLI_BULL_STRATEGY_ADDR
 } from "./constants";
 
 export function getShortHelperAddr(networkName: string): Address {
@@ -60,6 +64,28 @@ export function getCrabV1Addr(networkName: string): Address {
     addr = ROPSTEN_CRAB_V1_ADDR
   } else if (networkName == "goerli") {
     addr = GOERLI_CRAB_V1_ADDR
+  }
+
+  return addr;
+}
+
+export function getFlashBullAddr(networkName: string): Address {
+  let addr = MAINNET_FLASH_BULL_ADDR;
+  if (networkName == "ropsten") {
+    addr = GOERLI_FLASH_BULL_ADDR
+  } else if (networkName == "goerli") {
+    addr = GOERLI_FLASH_BULL_ADDR
+  }
+
+  return addr;
+}
+
+export function getBullAddr(networkName: string): Address {
+  let addr = MAINNET_BULL_STRATEGY_ADDR;
+  if (networkName == "ropsten") {
+    addr = GOERLI_BULL_STRATEGY_ADDR
+  } else if (networkName == "goerli") {
+    addr = GOERLI_BULL_STRATEGY_ADDR
   }
 
   return addr;

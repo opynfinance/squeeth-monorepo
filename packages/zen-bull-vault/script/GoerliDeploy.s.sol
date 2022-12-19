@@ -13,9 +13,9 @@ contract GoerliDeploy is DeployScript {
     address public constant uniFactoryAddress = 0x55C0ceF3cc64F511C34b18c720bCf38feC6C6fFa;
     address public constant eTokenAddress = 0xEf5e087D827194732Bc1843351ccA80982E154eB;
     address public constant dTokenAddress = 0x356079240635B276A63065478471d89340443C49;
-    uint256 public constant bullStrategyCap = 500e18;
-    uint256 public constant fullRebalancePriceTolerance = 2e17;
-    uint256 public constant rebalanceWethLimitPriceTolerance = 2e17;
+    uint256 public constant bullStrategyCap = 500000e18;
+    uint256 public constant fullRebalancePriceTolerance = 0.05e18;
+    uint256 public constant rebalanceWethLimitPriceTolerance = 0.05e18;
     uint256 public constant crUpper = 2.2e18;
     uint256 public constant crLower = 1.8e18;
     uint256 public constant deltaUpper = 1.1e18;
