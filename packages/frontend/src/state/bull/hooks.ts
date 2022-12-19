@@ -1,5 +1,6 @@
 import { BIG_ONE, BIG_ZERO, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
@@ -16,9 +17,9 @@ import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2A
 import { addressesAtom } from '@state/positions/atoms'
 import { squeethInitialPriceAtom } from '@state/squeethPool/atoms'
 import { useGetWSqueethPositionValueInETH } from '@state/squeethPool/hooks'
-import { slippageAmountAtom } from '@state/trade/atoms'
 import { addressAtom, networkIdAtom } from '@state/wallet/atoms'
 import { useHandleTransaction } from '@state/wallet/hooks'
+import { BULL_EVENTS } from '@utils/amplitude'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { getExactIn, getExactOut } from '@utils/quoter'
 import BigNumber from 'bignumber.js'
@@ -310,8 +311,9 @@ export const useBullFlashDeposit = () => {
   const flashBullContract = useAtomValue(flashBullContractAtom)
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
 
-  const flashDepositToBull = (
+  const flashDepositToBull = async (
     ethToCrab: BigNumber,
     minEthFromSqth: BigNumber,
     minEthFromUsdc: BigNumber,
@@ -321,22 +323,31 @@ export const useBullFlashDeposit = () => {
     onTxConfirmed?: (id?: string) => void,
   ) => {
     if (!flashBullContract) return
-
-    return handleTransaction(
-      flashBullContract.methods
-        .flashDeposit({
-          ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
-          minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
-          minEthFromUsdc: fromTokenAmount(minEthFromUsdc, 18).toFixed(0),
-          wPowerPerpPoolFee,
-          usdcPoolFee,
-        })
-        .send({
-          from: address,
-          value: fromTokenAmount(ethToSend, 18).toFixed(0),
-        }),
-      onTxConfirmed,
-    )
+    track(BULL_EVENTS.DEPOSIT_BULL_CLICK)
+    try {
+      await handleTransaction(
+        flashBullContract.methods
+          .flashDeposit({
+            ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
+            minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
+            minEthFromUsdc: fromTokenAmount(minEthFromUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .send({
+            from: address,
+            value: fromTokenAmount(ethToSend, 18).toFixed(0),
+          }),
+        onTxConfirmed,
+      )
+      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, { amount: ethToSend.toNumber() })
+    } catch (e: any) {
+      if (e?.code === 4001) {
+        track(BULL_EVENTS.DEPOSIT_BULL_REVERT)
+      }
+      track(BULL_EVENTS.DEPOSIT_BULL_FAILED, { code: e?.code, message: e?.message })
+      console.log(e)
+    }
   }
 
   return flashDepositToBull
@@ -445,8 +456,9 @@ export const useBullFlashWithdraw = () => {
   const flashBullContract = useAtomValue(flashBullContractAtom)
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
 
-  const flashWithdrawFromBull = (
+  const flashWithdrawFromBull = async (
     bullAmount: BigNumber,
     maxEthForWPowerPerp: BigNumber,
     maxEthForUsdc: BigNumber,
@@ -455,21 +467,30 @@ export const useBullFlashWithdraw = () => {
     onTxConfirmed?: () => void,
   ) => {
     if (!flashBullContract) return
-
-    return handleTransaction(
-      flashBullContract.methods
-        .flashWithdraw({
-          bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
-          maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
-          maxEthForUsdc: fromTokenAmount(maxEthForUsdc, 18).toFixed(0),
-          wPowerPerpPoolFee,
-          usdcPoolFee,
-        })
-        .send({
-          from: address,
-        }),
-      onTxConfirmed,
-    )
+    track(BULL_EVENTS.WITHDRAW_BULL_CLICK)
+    try {
+      await handleTransaction(
+        flashBullContract.methods
+          .flashWithdraw({
+            bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
+            maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
+            maxEthForUsdc: fromTokenAmount(maxEthForUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, { amount: bullAmount.toNumber() })
+    } catch (e: any) {
+      if (e?.code === 4001) {
+        track(BULL_EVENTS.WITHDRAW_BULL_REVERT)
+      }
+      track(BULL_EVENTS.WITHDRAW_BULL_FAILED, { code: e?.code, message: e?.message })
+      console.log(e)
+    }
   }
 
   return flashWithdrawFromBull
