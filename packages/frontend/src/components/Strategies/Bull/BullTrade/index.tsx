@@ -73,7 +73,7 @@ export interface BullTransactionConfirmation {
   txId?: string
 }
 
-const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
+const BullTrade: React.FC<BullTrade> = () => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
   const isDeposit = tradeType === BullTradeType.Deposit
   const tabValue = tradeType === BullTradeType.Deposit ? 0 : 1
@@ -101,8 +101,9 @@ const BullTrade: React.FC<BullTrade> = ({ maxCap, depositedAmount }) => {
       {confirmed && confirmedTransactionData?.status ? (
         <>
           <Confirmed
-            confirmationMessage={`${confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
-              } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
+            confirmationMessage={`${
+              confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
+            } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.BULL}
           />
