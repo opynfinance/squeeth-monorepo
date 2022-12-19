@@ -6,12 +6,11 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
-import { bullCRAtom, bullCurrentFundingAtom, bullThresholdAtom, bullTimeAtLastHedgeAtom } from '@state/bull/atoms'
-import { crabStrategyCollatRatioAtomV2, ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
+import { bullCRAtom, bullCurrentFundingAtom, bullTimeAtLastHedgeAtom } from '@state/bull/atoms'
+import { dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -83,8 +82,9 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
         label={
           <Label
             label="Historical Daily Premium"
-            tooltipTitle={`${Tooltips.StrategyEarnFunding
-              }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
+            tooltipTitle={`${
+              Tooltips.StrategyEarnFunding
+            }. ${`Historical daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}`}
           />
         }
         value={`${formatNumber(dailyHistoricalFunding.funding * 100)}%`}
@@ -107,12 +107,16 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
             }
           />
         }
-        value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-          day: 'numeric',
-          month: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
-        })}
+        value={
+          timeAtLastHedge
+            ? new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                day: 'numeric',
+                month: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+              })
+            : '--'
+        }
       />
       <Metric
         flexBasis="250px"

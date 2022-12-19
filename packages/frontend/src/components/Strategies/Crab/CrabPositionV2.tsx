@@ -117,8 +117,6 @@ const CrabPosition: React.FC = () => {
     setCrabLoading(false)
   }
 
-  console.log(crabQueued.toString(), 'USDc queued')
-
   if (currentCrabPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) return null
 
   return (
