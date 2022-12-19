@@ -105,9 +105,9 @@ function BullStrategy() {
               />
             </Box>
 
-            <Box marginTop="32px">
+            {/* <Box marginTop="32px">
               <BullStrategyRebalances />
-            </Box>
+            </Box> */}
           </Box>
         </div>
         <div className={classes.rightColumn}>
