@@ -26,6 +26,9 @@ import useStateWithReset from '@hooks/useStateWithReset'
 import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
+import { BULL_EVENTS } from '@utils/amplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
+import useAmplitude from '@hooks/useAmplitude'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
