@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePrevious } from 'react-use'
 import { Contract } from 'web3-eth-contract'
 import { useQuery } from 'react-query'
@@ -8,6 +8,8 @@ import { useAtomValue } from 'jotai'
 import erc20Abi from '../../abis/erc20.json'
 import { toTokenAmount } from '@utils/calculations'
 import { addressAtom, connectedWalletAtom, networkIdAtom, web3Atom } from 'src/state/wallet/atoms'
+
+type Callback = (newBalance: BigNumber) => void
 
 interface TokenQueryKeyParams {
   token: string
@@ -34,6 +36,8 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   const connected = useAtomValue(connectedWalletAtom)
   const network = useAtomValue(networkIdAtom)
 
+  const onRefetchCallback = useRef<Callback>()
+
   // Contract being state mess up if the network is ropsten
   // It take one rerender to update the correct contract ie) mainnet => ropsten
   // updateBalance returns 0 as it use mainnet contract. Since it's useQuery the value is cached always
@@ -53,10 +57,14 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   useEffect(() => {
     if (poll && prevBalance && balanceQuery.data && prevBalance !== balanceQuery.data?.toString()) {
       setPoll(false)
+      onRefetchCallback.current?.(balanceQuery.data)
     }
   }, [balanceQuery.data?.toString(), poll, prevBalance])
 
-  const refetch = useCallback(() => setPoll(true), [])
+  const refetch = useCallback((cb?: Callback) => {
+    onRefetchCallback.current = cb
+    setPoll(true)
+  }, [])
 
   return {
     value: balanceQuery.data ?? new BigNumber(0),

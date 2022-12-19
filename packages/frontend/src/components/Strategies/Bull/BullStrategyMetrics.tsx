@@ -11,6 +11,7 @@ import { crabStrategyCollatRatioAtomV2, ethPriceAtLastHedgeAtomV2, timeAtLastHed
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { toTokenAmount } from '@utils/calculations'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -45,6 +46,7 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
 }
 
 const BullStrategyMetrics: React.FC = () => {
+  const ethPrice = useOnChainETHPrice()
   const bullCr = useAtomValue(bullCRAtom).times(100)
   const crabCr = useAtomValue(crabStrategyCollatRatioAtomV2)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
@@ -62,7 +64,7 @@ const BullStrategyMetrics: React.FC = () => {
       <Metric
         flexBasis="250px"
         label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
-        value={`$1,119.07`}
+        value={formatCurrency(ethPrice.toNumber())}
       />
       <Metric
         flexBasis="250px"
