@@ -26,6 +26,7 @@ export const bullEthPnlPerctAtom = atom(new BigNumber(0))
 
 export const isBullReadyAtom = atom(false)
 export const bullPositionLoadedAtom = atom(false)
+export const isBullPositionRefetchingAtom = atom(false)
 
 export const eulerUsdcBorrowRateAtom = atom(new BigNumber(0.05))
 export const eulerETHLendRateAtom = atom(new BigNumber(0.1))

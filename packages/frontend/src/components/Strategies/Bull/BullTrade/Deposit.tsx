@@ -6,7 +6,12 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
 import { BIG_ZERO, FUNDING_PERIOD, INDEX_SCALE, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, YEAR } from '@constants/index'
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
-import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
+import {
+  useGetFlashBulldepositParams,
+  useBullFlashDeposit,
+  useSetBullState,
+  useSetBullUserState,
+} from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -94,18 +99,22 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     debouncedDepositQuote(ethToDeposit)
   }
 
-  const onTxnConfirmed = useCallback(() => {
-    depositAmountRef.current = '0'
-    setDepositAmount('0')
-    onTxnConfirm({
-      status: true,
-      amount: ongoingTransactionAmountRef.current,
-      tradeType: BullTradeType.Deposit,
-    })
-    ongoingTransactionAmountRef.current = new BigNumber(0)
-  }, [onTxnConfirm])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      depositAmountRef.current = '0'
+      setDepositAmount('0')
+      onTxnConfirm({
+        status: true,
+        amount: ongoingTransactionAmountRef.current,
+        tradeType: BullTradeType.Deposit,
+        txId: id,
+      })
+      ongoingTransactionAmountRef.current = new BigNumber(0)
+    },
+    [onTxnConfirm],
+  )
 
-  const onDepositClick = async () => {
+  const onDepositClick = useCallback(async () => {
     setTxLoading(true)
     try {
       ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
@@ -122,7 +131,15 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       console.log(e)
     }
     setTxLoading(false)
-  }
+  }, [
+    bullFlashDeposit,
+    quote.ethToCrab,
+    quote.minEthFromSqth,
+    quote.minEthFromUsdc,
+    quote.wPowerPerpPoolFee,
+    quote.usdcPoolFee,
+    onTxnConfirmed,
+  ])
 
   const depositPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
