@@ -37,6 +37,9 @@ import { BullTradeType, BullTransactionConfirmation } from './index'
 import useStateWithReset from '@hooks/useStateWithReset'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCalculateEthWillingToPayV2 } from '@state/crab/hooks'
+import useAmplitude from '@hooks/useAmplitude'
+import { BULL_EVENTS } from '@utils/amplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -86,6 +89,13 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
   const bullFlashWithdraw = useBullFlashWithdraw()
+  const { track } = useAmplitude()
+
+  const trackUserEnteredWithdrawAmount = useCallback(
+    (amount: BigNumber) => track(BULL_EVENTS.DEPOSIT_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+  const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
@@ -131,6 +141,8 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, 500)
 
   const onInputChange = (ethToWithdraw: string) => {
+    const withdrawEthBN = new BigNumber(ethToWithdraw)
+    withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
     const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
     setWithdrawAmount(ethToWithdraw)
     withdrawAmountRef.current = _bullToWithdraw.toString()
@@ -147,9 +159,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         tradeType: BullTradeType.Withdraw,
         txId: id,
       })
+      resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm],
+    [onTxnConfirm, resetTracking],
   )
 
   const onWithdrawClick = async () => {
@@ -165,6 +178,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         onTxnConfirmed,
       )
     } catch (e) {
+      resetTracking()
       console.log(e)
     }
     setTxLoading(false)
