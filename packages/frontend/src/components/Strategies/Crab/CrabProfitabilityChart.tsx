@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea } from 'recharts'
-import { Box, Typography } from '@material-ui/core'
+import { Box, Typography, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
@@ -9,30 +9,32 @@ import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { formatCurrency, formatNumber } from '@utils/formatter'
 
 const CandyBar = (props: any) => {
-  const { x: oX, y: oY, width: oWidth, height: oHeight, fill } = props
+  const { x, y, width, height, fill, stroke } = props
 
-  const x = oX
-  const y = oHeight < 0 ? oY + oHeight : oY
-  const width = oWidth
-  const height = Math.abs(oHeight)
+  const barX = x
+  const barY = height < 0 ? y + height : y
+  const barWidth = width
+  const barHeight = Math.abs(height)
 
   return (
     <>
-      <rect fill={fill} mask="url(#mask-stripe)" x={x} y={y} width={width} height={height} />
-      <rect x={x} y={y} width={1} height={height} fill="#67FABF" />
-      <rect x={x + width} y={y} width={1} height={height} fill="#67FABF" />
+      <rect x={barX} y={barY} width={barWidth} height={barHeight} fill={fill} />
+      <rect x={barX} y={barY} width={1} height={barHeight} fill={stroke} />
+      <rect x={barX + barWidth} y={barY} width={1} height={barHeight} fill={stroke} />
     </>
   )
 }
 
-const getDataPoints = (funding: number, ethPriceAtLastHedge: number) => {
+// generate data from -percentRange to +percentRange
+const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRange: number) => {
   const dataPoints = []
 
-  const starting = new BigNumber(-20)
+  const starting = new BigNumber(-percentRange)
   const increment = new BigNumber(0.1)
-  const ending = new BigNumber(20)
+  const ending = new BigNumber(percentRange)
 
   let current = starting
   while (current.lte(ending)) {
@@ -55,70 +57,34 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number) => {
   return dataPoints
 }
 
-const CrabProfitabilityChart: React.FC = () => {
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const ethPrice = useOnChainETHPrice()
 
+  const funding = 2 * currentImpliedFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
+  const currentEthPrice = Number(ethPrice)
   const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableMovePercentV2 * ethPriceAtLastHedge
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableMovePercentV2 * ethPriceAtLastHedge
 
-  const funding = 2 * currentImpliedFunding
-
-  const theoreticalEthReturnForProfitability = Math.sqrt(funding)
-
-  const theoreticalUpperPriceBandForProfitability =
-    ethPriceAtLastHedge + theoreticalEthReturnForProfitability * ethPriceAtLastHedge
-  const theoreticalLowerPriceBandForProfitability =
-    ethPriceAtLastHedge - theoreticalEthReturnForProfitability * ethPriceAtLastHedge
-
-  // generate data from -20% to 20%
-  const data = getDataPoints(funding, ethPriceAtLastHedge)
+  const data = useMemo(() => {
+    const percentRange = profitableMovePercentV2 * 5 * 100 // 5x the profitable move percent
+    return getDataPoints(funding, ethPriceAtLastHedge, percentRange)
+  }, [funding, ethPriceAtLastHedge, profitableMovePercentV2])
 
   const getCrabReturnPercent = (ethPriceVal: number) => {
     const ethReturn = (ethPriceVal - ethPriceAtLastHedge) / ethPriceAtLastHedge
     return (funding - Math.pow(ethReturn, 2)) * 100
   }
 
-  if (funding === 0) {
-    return <div>chart</div>
-  }
+  const theme = useTheme()
+  const successColor = theme.palette.success.main
+  const errorColor = theme.palette.error.main
 
   return (
     <>
-      <Box display="flex" flexWrap="wrap" gridGap="32px" marginTop="24px">
-        <div>
-          <Typography variant="h6">Funding</Typography>
-          <Typography variant="body1">{new BigNumber(funding).div(100) + '%'}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Lower Price Band</Typography>
-          <Typography variant="body1">{lowerPriceBandForProfitability}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Upper Price Band</Typography>
-          <Typography variant="body1">{upperPriceBandForProfitability}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">ETH Price At Last Hedge</Typography>
-          <Typography variant="body1">{ethPriceAtLastHedge}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">ETH Price</Typography>
-          <Typography variant="body1">{ethPrice.toNumber()}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Theoretical Lower Price Band</Typography>
-          <Typography variant="body1">{theoreticalLowerPriceBandForProfitability}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Theoretical Upper Price Band</Typography>
-          <Typography variant="body1">{theoreticalUpperPriceBandForProfitability}</Typography>
-        </div>
-      </Box>
-      <Box height={300} width={500} marginTop="64px" display="flex" justifyContent="flex-start">
+      <Box height={300} width={700} marginTop="64px" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
@@ -128,7 +94,7 @@ const CrabProfitabilityChart: React.FC = () => {
             <XAxis
               type="number"
               dataKey="ethPrice"
-              domain={['dataMin - 50', 'dataMax + 50']}
+              domain={['dataMin - 100', 'dataMax + 200']}
               tick={false}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
@@ -139,7 +105,7 @@ const CrabProfitabilityChart: React.FC = () => {
               type="number"
               dataKey="crabReturn"
               tick={false}
-              domain={['dataMin - 1', 'dataMax + 1']}
+              domain={['dataMin - 0.5', 'dataMax + 0.5']}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
               stroke="#fff"
@@ -147,20 +113,21 @@ const CrabProfitabilityChart: React.FC = () => {
               width={1}
             />
 
-            <Line type="monotone" dataKey="crabReturnNegative" stroke="#FA7B67" dot={false} strokeWidth={1} />
-            <Line type="monotone" dataKey="crabReturnPositive" stroke="#67FABF" dot={false} strokeWidth={1} />
+            <Line type="monotone" dataKey="crabReturnNegative" stroke={errorColor} strokeWidth={1} dot={false} />
+            <Line type="monotone" dataKey="crabReturnPositive" stroke={successColor} strokeWidth={1} dot={false} />
 
             <ReferenceArea
-              fill={'rgba(103, 250, 191, 0.09)'}
               shape={<CandyBar />}
-              x1={theoreticalLowerPriceBandForProfitability}
-              x2={theoreticalUpperPriceBandForProfitability}
+              x1={lowerPriceBandForProfitability}
+              x2={upperPriceBandForProfitability}
+              fill={successColor + '16'}
+              stroke={successColor}
             />
             <ReferenceDot
-              x={ethPrice.toNumber()}
-              y={getCrabReturnPercent(ethPrice.toNumber())}
+              x={currentEthPrice}
+              y={getCrabReturnPercent(currentEthPrice)}
               r={5}
-              fill="#67FABF"
+              fill={successColor}
               strokeWidth={0}
             />
             <ReferenceDot
@@ -178,8 +145,39 @@ const CrabProfitabilityChart: React.FC = () => {
           </LineChart>
         </ResponsiveContainer>
       </Box>
+      <Box display="flex" flexWrap="wrap" gridGap="32px" marginTop="24px">
+        <div>
+          <Typography variant="h6">Current Implied Premium</Typography>
+          <Typography variant="body1">{formatNumber(currentImpliedFunding * 100) + '%'}</Typography>
+        </div>
+        <div>
+          <Typography variant="h6">Lower Price Band</Typography>
+          <Typography variant="body1">{formatCurrency(lowerPriceBandForProfitability)}</Typography>
+        </div>
+        <div>
+          <Typography variant="h6">Upper Price Band</Typography>
+          <Typography variant="body1">{formatCurrency(upperPriceBandForProfitability)}</Typography>
+        </div>
+        <div>
+          <Typography variant="h6">ETH Price At Last Hedge</Typography>
+          <Typography variant="body1">{formatCurrency(ethPriceAtLastHedge)}</Typography>
+        </div>
+        <div>
+          <Typography variant="h6">Current ETH Price</Typography>
+          <Typography variant="body1">{formatCurrency(currentEthPrice)}</Typography>
+        </div>
+      </Box>
     </>
   )
 }
 
-export default CrabProfitabilityChart
+function ChartWrapper() {
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+
+  if (currentImpliedFunding === 0) {
+    return <></>
+  }
+  return <Chart currentImpliedFunding={currentImpliedFunding} />
+}
+
+export default ChartWrapper
