@@ -20,7 +20,14 @@ import SettingMenu from './SettingsMenu'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
-    nav: {
+    root: {
+      borderBottom: `1px solid ${theme.palette.background.stone}`,
+      position: 'sticky',
+      top: '0px',
+      backdropFilter: 'blur(30px)',
+      zIndex: theme.zIndex.appBar,
+    },
+    content: {
       maxWidth: '1280px',
       width: '80%',
       padding: theme.spacing(0, 2.5),
@@ -28,12 +35,6 @@ const useStyles = makeStyles((theme) =>
       height: '64px',
       display: 'flex',
       alignItems: 'center',
-      position: 'sticky',
-      top: '0px',
-      zIndex: 30,
-      //background: theme.palette.background.default,
-      borderBottom: `1px solid ${theme.palette.background.stone}`,
-      backdropFilter: 'blur(30px)',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
         width: '90%',
@@ -118,30 +119,31 @@ const Nav: React.FC = () => {
   const [isCopied, setCopied] = useCopyClipboard()
 
   return (
-    <div className={classes.nav}>
-      <div className={classes.logo}>
-        <a href="https://squeeth.opyn.co/">
-          <Image src={logo} alt="logo" width={127} height={55} />
-        </a>
-      </div>
-      {/*For Desktop view*/}
-      <Hidden smDown>
-        <div className={classes.navDiv}>
-          <div style={{ display: 'flex' }}>
-            <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies/crab" name="Strategies" />
-            {/* <NavLink path="/trade" name="Trade 1" /> */}
-            <NavLink path="/positions" name="Positions" />
-            <NavLink path="/lp" name="LP" />
-            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
-              <Typography className={classes.navLink} variant="h6">
-                FAQ
-              </Typography>
-            </a>
-          </div>
+    <div className={classes.root}>
+      <div className={classes.content}>
+        <div className={classes.logo}>
+          <a href="https://squeeth.opyn.co/">
+            <Image src={logo} alt="logo" width={127} height={55} />
+          </a>
         </div>
-        <div className={classes.wallet}>
-          {/* <Button
+        {/*For Desktop view*/}
+        <Hidden smDown>
+          <div className={classes.navDiv}>
+            <div style={{ display: 'flex' }}>
+              <NavLink path="/" name="Trade" />
+              <NavLink path="/strategies/crab" name="Strategies" />
+              {/* <NavLink path="/trade" name="Trade 1" /> */}
+              <NavLink path="/positions" name="Positions" />
+              <NavLink path="/lp" name="LP" />
+              <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+                <Typography className={classes.navLink} variant="h6">
+                  FAQ
+                </Typography>
+              </a>
+            </div>
+          </div>
+          <div className={classes.wallet}>
+            {/* <Button
             variant="contained"
             onClick={(e) => {
               e.preventDefault()
@@ -155,71 +157,72 @@ const Nav: React.FC = () => {
           >
             Share Feedback
           </Button> */}
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => {
-              setCopied(oSqueeth)
-            }}
-          >
-            {isCopied ? (
-              <>Copied</>
-            ) : (
-              <>
-                <span style={{ textTransform: 'none' }}>oSQTH</span>
-                <Hidden mdDown>
-                  : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
-                </Hidden>
-              </>
-            )}
-          </Button>
-          <WalletButton />
-          <SettingMenu />
-        </div>
-      </Hidden>
-      <Hidden mdUp>
-        <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
-        <IconButton onClick={() => setNavOpen(true)}>
-          <MenuIcon />
-        </IconButton>
-        <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
-          <div className={classes.navDrawer}>
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <WalletButton />
-              <SettingMenu />
-            </div>
             <Button
               variant="outlined"
               color="primary"
               onClick={() => {
                 setCopied(oSqueeth)
               }}
-              style={{
-                marginTop: '8px',
-                width: '200px',
-              }}
             >
               {isCopied ? (
                 <>Copied</>
               ) : (
                 <>
-                  <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
-                  {oSqueeth?.substring(oSqueeth.length - 4)}
+                  <span style={{ textTransform: 'none' }}>oSQTH</span>
+                  <Hidden mdDown>
+                    : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
+                  </Hidden>
                 </>
               )}
             </Button>
-            <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies" name="Strategies" />
-            <NavLink path="/positions" name="Positions" />
-            <NavLink path="/lp" name="LP" />
-            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
-              <Typography className={classes.navLink} variant="h6">
-                FAQ
-              </Typography>
-            </a>
+            <WalletButton />
+            <SettingMenu />
           </div>
-        </Drawer>
-      </Hidden>
+        </Hidden>
+        <Hidden mdUp>
+          <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
+          <IconButton onClick={() => setNavOpen(true)}>
+            <MenuIcon />
+          </IconButton>
+          <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
+            <div className={classes.navDrawer}>
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <WalletButton />
+                <SettingMenu />
+              </div>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setCopied(oSqueeth)
+                }}
+                style={{
+                  marginTop: '8px',
+                  width: '200px',
+                }}
+              >
+                {isCopied ? (
+                  <>Copied</>
+                ) : (
+                  <>
+                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                    {oSqueeth?.substring(oSqueeth.length - 4)}
+                  </>
+                )}
+              </Button>
+              <NavLink path="/" name="Trade" />
+              <NavLink path="/strategies" name="Strategies" />
+              <NavLink path="/positions" name="Positions" />
+              <NavLink path="/lp" name="LP" />
+              <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+                <Typography className={classes.navLink} variant="h6">
+                  FAQ
+                </Typography>
+              </a>
+            </div>
+          </Drawer>
+        </Hidden>
+      </div>
     </div>
   )
 }
