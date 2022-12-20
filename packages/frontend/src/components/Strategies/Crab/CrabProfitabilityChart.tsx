@@ -5,7 +5,6 @@ import { Box, Typography, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
-import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
@@ -59,21 +58,21 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
 
 const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const profitableMovePercentV2 = useSetProfitableMovePercentV2()
   const ethPrice = useOnChainETHPrice()
 
   const funding = 2 * currentImpliedFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
   const currentEthPrice = Number(ethPrice)
-  const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableMovePercentV2 * ethPriceAtLastHedge
-  const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableMovePercentV2 * ethPriceAtLastHedge
+  const profitableBoundsPercent = Math.sqrt(funding)
+  const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableBoundsPercent * ethPriceAtLastHedge
+  const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
 
   const data = useMemo(() => {
-    const percentRange = profitableMovePercentV2 * 5 * 100 // 5x the profitable move percent
+    const percentRange = profitableBoundsPercent * 5 * 100 // 5x the profitable move percent
     return getDataPoints(funding, ethPriceAtLastHedge, percentRange)
-  }, [funding, ethPriceAtLastHedge, profitableMovePercentV2])
+  }, [funding, ethPriceAtLastHedge, profitableBoundsPercent])
 
-  const getCrabReturnPercent = (ethPriceVal: number) => {
+  const getCrabReturn = (ethPriceVal: number) => {
     const ethReturn = (ethPriceVal - ethPriceAtLastHedge) / ethPriceAtLastHedge
     return (funding - Math.pow(ethReturn, 2)) * 100
   }
@@ -130,20 +129,20 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             />
             <ReferenceDot
               x={currentEthPrice}
-              y={getCrabReturnPercent(currentEthPrice)}
+              y={getCrabReturn(currentEthPrice)}
               r={5}
               fill={successColor}
               strokeWidth={0}
             />
             <ReferenceDot
               x={lowerPriceBandForProfitability}
-              y={getCrabReturnPercent(lowerPriceBandForProfitability)}
+              y={getCrabReturn(lowerPriceBandForProfitability)}
               r={3}
               fill="#000"
             />
             <ReferenceDot
               x={upperPriceBandForProfitability}
-              y={getCrabReturnPercent(upperPriceBandForProfitability)}
+              y={getCrabReturn(upperPriceBandForProfitability)}
               r={3}
               fill="#000"
             />
