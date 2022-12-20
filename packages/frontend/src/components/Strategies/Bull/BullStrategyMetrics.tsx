@@ -75,7 +75,11 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
             tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
           />
         }
-        value={`${formatNumber(currentImpliedFunding * 100)}%`}
+        value={
+          currentImpliedFunding && currentImpliedFunding != Infinity
+            ? `${formatNumber(currentImpliedFunding * 100)}%`
+            : '-'
+        }
       />
       <Metric
         flexBasis="250px"
@@ -121,7 +125,11 @@ const BullStrategyMetrics: React.FC<BullMetricsType> = ({
       <Metric
         flexBasis="250px"
         label={<Label label="Stack ETH if between" tooltipTitle={Tooltips.BullStrategyProfitThreshold} />}
-        value={formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)}
+        value={
+          lowerPriceBandForProfitability && lowerPriceBandForProfitability != Infinity
+            ? formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)
+            : '-'
+        }
       />
       <Metric
         flexBasis="250px"
