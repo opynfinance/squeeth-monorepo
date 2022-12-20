@@ -7,7 +7,7 @@ import {
   crabv2StrategyFilterStartDateAtom,
   useCrabPnLV2ChartData,
 } from 'src/state/crab/atoms'
-import { crabV2graphOptions } from '@constants/diagram'
+import { pnlGraphOptions } from '@constants/diagram'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import Grid from '@material-ui/core/Grid'
@@ -203,7 +203,7 @@ function CrabStrategyV2PnLChart() {
 
   const chartOptions = useAppMemo(() => {
     return {
-      ...crabV2graphOptions,
+      ...pnlGraphOptions,
       series: series,
       ...axes,
     }
