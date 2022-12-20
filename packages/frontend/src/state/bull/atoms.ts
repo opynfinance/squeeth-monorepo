@@ -1,7 +1,10 @@
+import { BULL_START_DATE } from '@constants/index'
 import { indexAtom, currentImpliedFundingAtom } from '@state/controller/atoms'
 import { crabUSDValueAtom } from '@state/crab/atoms'
+import { getBullChartData } from '@utils/pricer'
 import BigNumber from 'bignumber.js'
-import { atom } from 'jotai'
+import { atom, useAtomValue } from 'jotai'
+import { useQuery } from 'react-query'
 
 export const visibleStrategyRebalancesAtom = atom<number>(3)
 export const bullCrabBalanceAtom = atom(new BigNumber(0))
@@ -62,3 +65,24 @@ export const bullThresholdAtom = atom((get) => {
 })
 
 export const bullTimeAtLastHedgeAtom = atom(0)
+
+export const bullStrategyFilterStartDateAtom = atom<Date>(new Date(BULL_START_DATE))
+export const bullStrategyFilterEndDateAtom = atom<Date>(new Date())
+
+export const useBullPnLChartData = () => {
+  const startDate = useAtomValue(bullStrategyFilterStartDateAtom)
+  const endDate = useAtomValue(bullStrategyFilterEndDateAtom)
+
+  return useQuery(
+    ['pnlChart', { startDate, endDate }],
+    async () =>
+      getBullChartData(
+        Number(startDate.valueOf().toString().slice(0, -3)),
+        Number(endDate.valueOf().toString().slice(0, -3)),
+      ),
+    {
+      staleTime: Infinity,
+      refetchOnWindowFocus: true,
+    },
+  )
+}

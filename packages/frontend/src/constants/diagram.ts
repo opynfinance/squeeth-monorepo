@@ -42,7 +42,7 @@ export const graphOptions = {
   },
 }
 
-export const crabV2graphOptions = {
+export const pnlGraphOptions = {
   chart: {
     backgroundColor: 'none',
     zoomType: 'xy',

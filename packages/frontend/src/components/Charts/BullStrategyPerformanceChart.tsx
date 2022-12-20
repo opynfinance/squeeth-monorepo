@@ -9,18 +9,13 @@ import { useAtom } from 'jotai'
 import { DatePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 
 import useAppMemo from '@hooks/useAppMemo'
-import {
-  crabv2StrategyFilterEndDateAtom,
-  crabv2StrategyFilterStartDateAtom,
-  useCrabPnLV2ChartData,
-} from 'src/state/crab/atoms'
-import { crabV2graphOptions } from '@constants/diagram'
-import { CRABV2_START_DATE } from '@constants/index'
+import { pnlGraphOptions } from '@constants/diagram'
+import { BULL_START_DATE } from '@constants/index'
+import { bullStrategyFilterEndDateAtom, bullStrategyFilterStartDateAtom, useBullPnLChartData } from '@state/bull/atoms'
 
 export type ChartDataInfo = {
   timestamp: number
-  crabPnL: number
-  crabEthPnl: number
+  bullEthPnl: number
   ethUsdPnl: number
 }
 
@@ -62,14 +57,13 @@ const useStyles = makeStyles((theme) =>
 function BullStrategyPerformanceChart() {
   const classes = useStyles()
 
-  const minDate = CRABV2_START_DATE
-  const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
-  const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
+  const minDate = BULL_START_DATE
+  const [startDate, setStartDate] = useAtom(bullStrategyFilterStartDateAtom)
+  const [endDate, setEndDate] = useAtom(bullStrategyFilterEndDateAtom)
 
-  const query = useCrabPnLV2ChartData()
+  const query = useBullPnLChartData()
 
-  const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
-  const crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabEthPnl])
+  const bullEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
   const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.ethUsdPnl])
 
   useEffect(() => {
@@ -81,25 +75,26 @@ function BullStrategyPerformanceChart() {
   }, [])
 
   const series = [
+    // {
+    //   name: 'Bull/USD % Return',
+    //   yAxis: 0,
+    //   data: bullUsdPnlSeries,
+    //   tooltip: {
+    //     valueDecimals: 2,
+    //     valueSuffix: '%',
+    //   },
+    //   color: '#5B7184',
+    // },
     {
-      name: 'Crab/USD 🦀  % Return',
       yAxis: 0,
-      data: crabUsdPnlSeries,
+      name: 'Bull/ETH 🧘🐂 % Return',
+      data: bullEthPnlSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
       },
+    
       color: '#70E3F6',
-    },
-    {
-      yAxis: 0,
-      name: 'Crab/ETH % Return',
-      data: crabEthPnlSeries,
-      tooltip: {
-        valueDecimals: 2,
-        valueSuffix: '%',
-      },
-      color: '#5B7184',
     },
     {
       yAxis: 0,
@@ -131,7 +126,7 @@ function BullStrategyPerformanceChart() {
 
   const chartOptions = useAppMemo(() => {
     return {
-      ...crabV2graphOptions,
+      ...pnlGraphOptions,
       series: series,
       ...axes,
     }
@@ -169,7 +164,7 @@ function BullStrategyPerformanceChart() {
 
       <div className={classes.chartContainer} style={{ maxHeight: 'none' }}>
         <div style={{ flex: '1 1 0', marginTop: '8px' }}>
-          {crabUsdPnlSeries ? (
+          {bullEthPnlSeries ? (
             <HighchartsReact highcharts={Highcharts} options={chartOptions} />
           ) : (
             <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
