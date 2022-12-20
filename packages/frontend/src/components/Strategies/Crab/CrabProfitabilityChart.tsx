@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
-import { Box, Typography, useTheme } from '@material-ui/core'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label, Text } from 'recharts'
+import { Box, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-import { formatCurrency, formatNumber } from '@utils/formatter'
+import { formatNumber } from '@utils/formatter'
 
 const CandyBar = (props: any) => {
   const { x, y, width, height, fill, stroke } = props
@@ -88,19 +88,27 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
       <Box height={300} width="100%" marginTop="64px" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
-              <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
-            </marker>
+            <defs>
+              <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
+                <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
+              </marker>
 
-            <marker id="dot" viewBox="0 0 16 16" refX="8" refY="8" markerWidth="8" markerHeight="8">
-              <circle cx="8" cy="8" r="8" fill="#ffffff80" />
-            </marker>
+              <marker id="dot" viewBox="0 0 16 16" refX="8" refY="8" markerWidth="8" markerHeight="8">
+                <circle cx="8" cy="8" r="8" fill="#ffffff80" />
+              </marker>
+
+              {/* https://stackoverflow.com/a/12263962/5733330 */}
+              <filter x="-0.05" y="-0.05" width="1.1" height="1.1" id="removebackground">
+                <feFlood floodColor={theme.palette.background.default} />
+                <feComposite in="SourceGraphic" />
+              </filter>
+            </defs>
 
             <XAxis
               height={1}
               type="number"
               dataKey="ethPrice"
-              domain={['dataMin - 80', 'dataMax + 240']}
+              domain={['dataMin - 80', 'dataMax + 160']}
               tick={false}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
@@ -126,6 +134,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeOpacity="0.5"
               stroke="#fff"
               markerStart="url(#arrowhead)"
+              yAxisId="0"
             >
               <Label value="Crab Strategy" position="insideTopLeft" offset={14} fill="#ffffff80" />
             </YAxis>
@@ -190,32 +199,11 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
                 position="insideTop"
                 offset={20}
                 fill={currentCrabReturn < 0 ? errorColor : successColor}
+                filter="url(#removebackground)"
               />
             </ReferenceDot>
           </LineChart>
         </ResponsiveContainer>
-      </Box>
-      <Box display="flex" flexWrap="wrap" gridGap="32px" marginTop="48px">
-        <div>
-          <Typography variant="h6">Current Implied Premium</Typography>
-          <Typography variant="body1">{formatNumber(currentImpliedFunding * 100) + '%'}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Lower Price Band</Typography>
-          <Typography variant="body1">{formatCurrency(lowerPriceBandForProfitability)}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Upper Price Band</Typography>
-          <Typography variant="body1">{formatCurrency(upperPriceBandForProfitability)}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">ETH Price At Last Hedge</Typography>
-          <Typography variant="body1">{formatCurrency(ethPriceAtLastHedge)}</Typography>
-        </div>
-        <div>
-          <Typography variant="h6">Current ETH Price</Typography>
-          <Typography variant="body1">{formatCurrency(currentEthPrice)}</Typography>
-        </div>
       </Box>
     </>
   )
