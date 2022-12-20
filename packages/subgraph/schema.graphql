@@ -184,4 +184,62 @@ type Strategy @entity {
   id: ID!
   totalSupply: BigInt!
   vaultId: BigInt!
+  lastHedgeTimestamp: BigInt!
+  lastHedgeTx: String!
+}
+
+type BullUserTx @entity {
+  id: ID!
+  owner: Bytes!
+  user: Bytes!
+  ethAmount: BigInt!
+  bullAmount: BigInt!
+  crabAmount: BigInt
+  wSqueethAmount: BigInt!
+  wethLentAmount: BigInt!
+  usdcBorrowedAmount: BigInt!
+  type: String!
+  timestamp: BigInt!
+  erc20Token: String
+  erc20Amount: BigInt
+  excessEth: BigInt
+}
+
+type SetAddress @entity {
+  id: ID!
+  oldAddress: Bytes!
+  newAddress: Bytes!
+  timestamp: BigInt!
+}
+
+type SetUpperLower @entity {
+  id: ID!
+  oldLower: BigInt!
+  oldUpper: BigInt!
+  newLower: BigInt!
+  newUpper: BigInt!
+}
+
+type SetParams @entity {
+  id: ID!
+  oldValue: BigInt!
+  newValue: BigInt!
+}
+
+type LeverageRebalance @entity {
+  id: ID!
+  isSellingUsdc: Boolean
+  usdcAmount: BigInt!
+  wethLimitAmount: BigInt!
+  timestamp: BigInt!
+}
+
+type FullRebalance @entity {
+  id: ID!
+  crabAmount: BigInt
+  clearingPrice: BigInt
+  wPowerPerpAmount: BigInt
+  wethTargetInEuler: BigInt
+  isDepositingInCrab: Boolean
+  timestamp: BigInt!
 }

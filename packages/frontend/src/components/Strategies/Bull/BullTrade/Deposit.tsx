@@ -26,6 +26,9 @@ import useStateWithReset from '@hooks/useStateWithReset'
 import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
+import { BULL_EVENTS } from '@utils/amplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
+import useAmplitude from '@hooks/useAmplitude'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -75,6 +78,14 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
+  const { track } = useAmplitude()
+
+  const trackUserEnteredDepositAmount = useCallback(
+    (amount: BigNumber) => track(BULL_EVENTS.DEPOSIT_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+
+  const [trackDepositAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredDepositAmount)
 
   const debouncedDepositQuote = debounce(async (ethToDeposit: string) => {
     setQuoteLoading(true)
@@ -89,23 +100,30 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, 500)
 
   const onInputChange = (ethToDeposit: string) => {
+    const depositEthBN = new BigNumber(ethToDeposit)
+    depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
     setDepositAmount(ethToDeposit)
     depositAmountRef.current = ethToDeposit
     debouncedDepositQuote(ethToDeposit)
   }
 
-  const onTxnConfirmed = useCallback(() => {
-    depositAmountRef.current = '0'
-    setDepositAmount('0')
-    onTxnConfirm({
-      status: true,
-      amount: ongoingTransactionAmountRef.current,
-      tradeType: BullTradeType.Deposit,
-    })
-    ongoingTransactionAmountRef.current = new BigNumber(0)
-  }, [onTxnConfirm])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      depositAmountRef.current = '0'
+      setDepositAmount('0')
+      onTxnConfirm({
+        status: true,
+        amount: ongoingTransactionAmountRef.current,
+        tradeType: BullTradeType.Deposit,
+        txId: id,
+      })
+      resetTracking()
+      ongoingTransactionAmountRef.current = new BigNumber(0)
+    },
+    [onTxnConfirm, resetTracking],
+  )
 
-  const onDepositClick = async () => {
+  const onDepositClick = useCallback(async () => {
     setTxLoading(true)
     try {
       ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
@@ -119,10 +137,20 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
         onTxnConfirmed,
       )
     } catch (e) {
+      resetTracking()
       console.log(e)
     }
     setTxLoading(false)
-  }
+  }, [
+    bullFlashDeposit,
+    quote.ethToCrab,
+    quote.minEthFromSqth,
+    quote.minEthFromUsdc,
+    quote.wPowerPerpPoolFee,
+    quote.usdcPoolFee,
+    onTxnConfirmed,
+    resetTracking,
+  ])
 
   const depositPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
@@ -155,10 +183,22 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, [depositAmountBN.toString(), slippage])
 
   const depositError = useAppMemo(() => {
+    if (depositAmountBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18))) {
+      return 'Insufficient ETH balance'
+    }
     if (quote.ethToCrab.plus(crabDepositedEth).gt(crabCap) || quote.wethToLend.plus(bullDepositedEth).gt(bullCap)) {
       return 'Deposit amount exceeds cap. Try a smaller amount.'
     }
-  }, [bullCap, bullDepositedEth, crabCap, crabDepositedEth, quote.ethToCrab, quote.wethToLend])
+  }, [
+    balance,
+    bullCap,
+    bullDepositedEth,
+    crabCap,
+    crabDepositedEth,
+    depositAmountBN,
+    quote.ethToCrab,
+    quote.wethToLend,
+  ])
 
   return (
     <>

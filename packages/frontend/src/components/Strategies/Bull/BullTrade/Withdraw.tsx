@@ -37,6 +37,9 @@ import { BullTradeType, BullTransactionConfirmation } from './index'
 import useStateWithReset from '@hooks/useStateWithReset'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCalculateEthWillingToPayV2 } from '@state/crab/hooks'
+import useAmplitude from '@hooks/useAmplitude'
+import { BULL_EVENTS } from '@utils/amplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -86,6 +89,13 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
   const bullFlashWithdraw = useBullFlashWithdraw()
+  const { track } = useAmplitude()
+
+  const trackUserEnteredWithdrawAmount = useCallback(
+    (amount: BigNumber) => track(BULL_EVENTS.WITHDRAW_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+  const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
@@ -131,23 +141,29 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, 500)
 
   const onInputChange = (ethToWithdraw: string) => {
+    const withdrawEthBN = new BigNumber(ethToWithdraw)
+    withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
     const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
-    console.log('_bullToWithdraw', _bullToWithdraw.toString())
     setWithdrawAmount(ethToWithdraw)
     withdrawAmountRef.current = _bullToWithdraw.toString()
     debouncedDepositQuote(_bullToWithdraw.toString())
   }
 
-  const onTxnConfirmed = useCallback(() => {
-    withdrawAmountRef.current = '0'
-    setWithdrawAmount('0')
-    onTxnConfirm({
-      status: true,
-      amount: ongoingTransactionAmountRef.current,
-      tradeType: BullTradeType.Withdraw,
-    })
-    ongoingTransactionAmountRef.current = new BigNumber(0)
-  }, [onTxnConfirm])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      withdrawAmountRef.current = '0'
+      setWithdrawAmount('0')
+      onTxnConfirm({
+        status: true,
+        amount: ongoingTransactionAmountRef.current,
+        tradeType: BullTradeType.Withdraw,
+        txId: id,
+      })
+      resetTracking()
+      ongoingTransactionAmountRef.current = new BigNumber(0)
+    },
+    [onTxnConfirm, resetTracking],
+  )
 
   const onWithdrawClick = async () => {
     setTxLoading(true)
@@ -162,6 +178,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         onTxnConfirmed,
       )
     } catch (e) {
+      resetTracking()
       console.log(e)
     }
     setTxLoading(false)
@@ -176,6 +193,12 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     }
     setTxLoading(false)
   }
+
+  const withdrawError = useAppMemo(() => {
+    if (withdrawAmountBN.gt(bullPositionValueInEth)) {
+      return 'Withdraw amount greater than strategy balance'
+    }
+  }, [bullPositionValueInEth, withdrawAmountBN])
 
   return (
     <>
@@ -194,8 +217,8 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           logo={ethLogo}
           symbol={'ETH'}
           usdPrice={ethIndexPrice}
-          error={false}
-          helperText={``}
+          error={!!withdrawError}
+          helperText={withdrawError}
           balanceLabel="Balance"
           isLoading={quoteLoading}
           loadingMessage="Fetching best price"
@@ -326,7 +349,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               id="bull-deposit-btn"
               variant={'contained'}
               onClick={onWithdrawClick}
-              disabled={quoteLoading || txLoading}
+              disabled={quoteLoading || txLoading || !!withdrawError}
             >
               {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>

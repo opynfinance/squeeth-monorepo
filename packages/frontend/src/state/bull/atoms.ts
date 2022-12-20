@@ -26,6 +26,7 @@ export const bullEthPnlPerctAtom = atom(new BigNumber(0))
 
 export const isBullReadyAtom = atom(false)
 export const bullPositionLoadedAtom = atom(false)
+export const isBullPositionRefetchingAtom = atom(false)
 
 export const eulerUsdcBorrowRateAtom = atom(new BigNumber(0.05))
 export const eulerETHLendRateAtom = atom(new BigNumber(0.1))
@@ -59,3 +60,5 @@ export const bullThresholdAtom = atom((get) => {
   const impliedVol = Math.sqrt(funding * 365)
   return impliedVol / Math.sqrt(365 / 2)
 })
+
+export const bullTimeAtLastHedgeAtom = atom(0)

@@ -12,14 +12,12 @@ import {
   loadingAtom,
   profitableMovePercentAtom,
   profitableMovePercentAtomV2,
-  crabStrategySlippageAtom,
   isTimeHedgeAvailableAtom,
   isPriceHedgeAvailableAtom,
   currentEthLoadingAtom,
   currentCrabPositionValueAtom,
   currentCrabPositionValueInETHAtom,
   crabPositionValueLoadingAtom,
-  crabLoadingAtom,
   crabStrategyVaultAtomV2,
   maxCapAtomV2,
   crabStrategyCollatRatioAtomV2,
@@ -74,7 +72,14 @@ import {
   crabStrategyContractAtomV2,
 } from '../contracts/atoms'
 import useAppCallback from '@hooks/useAppCallback'
-import { BIG_ONE, BIG_ZERO, ETH_USDC_POOL_FEES, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
+import {
+  BIG_ONE,
+  BIG_ZERO,
+  REVERTED_TRANSACTION_CODE,
+  UNI_POOL_FEES,
+  USDC_DECIMALS,
+  WETH_DECIMALS,
+} from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
 import { useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
@@ -84,7 +89,7 @@ import { Networks } from '../../types/index'
 import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { getEthPriceAtHedge } from '@utils/pricer'
 import { squeethInitialPriceAtom } from '../squeethPool/atoms'
-import { EVENT_NAME } from '@utils/amplitude'
+import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 
 export const useSetStrategyData = () => {
@@ -160,7 +165,6 @@ export const useSetStrategyDataV2 = () => {
         if (v) {
           getCollatRatioAndLiqPrice(v.collateralAmount, v.shortAmount)
             .then((cl) => {
-              console.log('CR', cl.collateralPercent)
               setCollatRatio(cl.collateralPercent)
               setLiquidationPrice(cl.liquidationPrice)
               setLoading(false)
@@ -373,12 +377,6 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
-        console.log(
-          'Price: ',
-          ethPrice.toString(),
-          collateralOne.minus(ethDebtOne).times(ethPrice).toString(),
-          squeethInitialPrice.toString(),
-        )
         setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
       }
 
@@ -598,7 +596,7 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
-      track(EVENT_NAME.DEPOSIT_CRAB_CLICK, { amount: amount.plus(_ethBorrow).toString() })
+      track(CRAB_EVENTS.DEPOSIT_CRAB_CLICK, { amount: amount.plus(_ethBorrow).toString() })
       try {
         const tx = await handleTransaction(
           contract.methods.flashDeposit(ethBorrow.plus(ethDeposit).toFixed(0), poolFeePercent).send({
@@ -608,10 +606,11 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
           onTxConfirmed,
         )
 
-        track(EVENT_NAME.DEPOSIT_CRAB_SUCCESS)
+        track(CRAB_EVENTS.DEPOSIT_CRAB_SUCCESS, { amount: amount.plus(_ethBorrow).toNumber() })
         return tx
-      } catch (e) {
-        track(EVENT_NAME.DEPOSIT_CRAB_FAILED, {})
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_CRAB_REVERT) : null
+        track(CRAB_EVENTS.DEPOSIT_CRAB_FAILED, { code: e?.code })
         throw e
       }
     },
@@ -656,7 +655,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
       // TODO: fix it so it uses v2 ratio, not v1.
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = ethAmount
-      track(EVENT_NAME.DEPOSIT_CRAB_USDC_CLICK, { amount: amount.toString() })
+      track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_CLICK, { amount: amount.toString() })
       try {
         const tx = await handleTransaction(
           contract.methods
@@ -674,10 +673,11 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
           onTxConfirmed,
         )
 
-        track(EVENT_NAME.DEPOSIT_CRAB_USDC_SUCCESS)
+        track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
         return tx
-      } catch (e) {
-        track(EVENT_NAME.DEPOSIT_CRAB_USDC_FAILED, {})
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_REVERT) : null
+        track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
     },
@@ -696,7 +696,7 @@ export const useQueueDepositUSDC = () => {
   const depositUSDC = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
-      track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_CLICK)
+      track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_CLICK)
       try {
         console.log('Queue:', fromTokenAmount(amount, USDC_DECIMALS).toString())
         await handleTransaction(
@@ -705,9 +705,10 @@ export const useQueueDepositUSDC = () => {
           }),
           onTxConfirmed,
         )
-        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_SUCCESS)
-      } catch (e) {
-        track(EVENT_NAME.DEPOSIT_STN_CRAB_USDC_FAILED)
+        track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_REVERT) : null
+        track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
     },
@@ -727,7 +728,7 @@ export const useQueueWithdrawCrab = () => {
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
 
-      track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_CLICK)
+      track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_CLICK)
       console.log('Queue: withdraw', fromTokenAmount(amount, WETH_DECIMALS).toString())
       try {
         await handleTransaction(
@@ -736,9 +737,10 @@ export const useQueueWithdrawCrab = () => {
           }),
           onTxConfirmed,
         )
-        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_SUCCESS)
-      } catch (e) {
-        track(EVENT_NAME.WITHDRAW_STN_CRAB_USDC_FAILED)
+        track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_REVERT) : null
+        track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
     },
@@ -790,7 +792,7 @@ export const useFlashWithdrawV2 = () => {
       const ethWillingToPay = fromTokenAmount(_ethWillingToPay, 18)
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
-      track(EVENT_NAME.WITHDRAW_CRAB_CLICK)
+      track(CRAB_EVENTS.WITHDRAW_CRAB_CLICK)
       try {
         const tx = await handleTransaction(
           contract.methods
@@ -800,10 +802,11 @@ export const useFlashWithdrawV2 = () => {
             }),
           onTxConfirmed,
         )
-        track(EVENT_NAME.WITHDRAW_CRAB_SUCCESS)
+        track(CRAB_EVENTS.WITHDRAW_CRAB_SUCCESS, { amount: amount.toNumber() })
         return tx
-      } catch (e) {
-        track(EVENT_NAME.WITHDRAW_CRAB_FAILED)
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.WITHDRAW_CRAB_REVERT) : null
+        track(CRAB_EVENTS.WITHDRAW_CRAB_FAILED, { code: e?.code })
         throw e
       }
     },

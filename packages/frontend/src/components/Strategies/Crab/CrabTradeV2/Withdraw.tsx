@@ -59,8 +59,9 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
-import { EVENT_NAME } from '@utils/amplitude'
+import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -138,6 +139,21 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const normFactor = useAtomValue(normFactorAtom)
 
   const { track } = useAmplitude()
+
+  const trackUserEnteredWithdrawAmount = useCallback(
+    (amount: BigNumber) => track(CRAB_EVENTS.WITHDRAW_CRAB_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+  const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
+
+  const onInputChange = useCallback(
+    (amount: string) => {
+      setWithdrawAmount(amount)
+      const withdraw = new BigNumber(amount)
+      withdraw.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdraw) : null
+    },
+    [setWithdrawAmount, trackWithdrawAmountEnteredOnce],
+  )
 
   const recordAnalytics = useCallback(
     (events: string[]) => {
@@ -259,8 +275,9 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     })
     transaction.analytics ? recordAnalytics(transaction.analytics) : null
     resetWithdrawAmount()
+    resetTracking()
     ongoingTransaction.current = undefined
-  }, [setCrabQueued, crabQueued, onTxnConfirm, resetWithdrawAmount, recordAnalytics])
+  }, [setCrabQueued, crabQueued, onTxnConfirm, resetWithdrawAmount, recordAnalytics, resetTracking])
 
   const withdraw = async () => {
     setTxLoading(true)
@@ -281,7 +298,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
             amount: withdrawAmountBN,
             token: useUsdc ? 'USDC' : 'ETH',
             queuedTransaction: useQueue,
-            analytics: userForceInstantAnalytics ? [EVENT_NAME.USER_FORCE_INSTANT_WIT_CRAB] : undefined,
+            analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_WIT_CRAB] : undefined,
           }
 
           if (useQueue) {
@@ -296,6 +313,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       updateSharesData()
       setStrategyData()
     } catch (e) {
+      resetTracking()
       console.log(e)
     }
 
@@ -428,7 +446,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         <InputToken
           id="crab-withdraw-eth-input"
           value={withdrawAmount}
-          onInputChange={setWithdrawAmount}
+          onInputChange={onInputChange}
           balance={useUsdc ? currentUsdcValue : currentEthValue}
           logo={useUsdc ? usdcLogo : ethLogo}
           symbol={depositToken}

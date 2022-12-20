@@ -8,8 +8,9 @@ import { useAtom, useAtomValue } from 'jotai'
 import { EtherscanPrefix } from '@constants/index'
 import { networkIdAtom } from '@state/wallet/atoms'
 import { formatNumber } from '@utils/formatter'
-import { useBullStrategyRebalances } from '@hooks/useBullStrategyRebalances'
 import { visibleStrategyRebalancesAtom } from '@state/bull/atoms'
+import { useBullHedgeHistory } from '@hooks/useBullHedgeHistory'
+import { BullRebalanceType } from '../../../types'
 
 const useMoreButtonStyles = makeStyles(() =>
   createStyles({
@@ -96,7 +97,7 @@ const MoreButton: React.FC<{ onClick?: () => void }> = ({ onClick }) => {
 export const BullStrategyRebalances: React.FC = () => {
   const classes = useStyles()
   const [visibleRecords, setVisibleRecords] = useAtom(visibleStrategyRebalancesAtom)
-  const { data, showMore } = useBullStrategyRebalances() // use the bull strategy rebalances here
+  const { transactions } = useBullHedgeHistory() // use the bull strategy rebalances here
   const bottomRef = useRef<HTMLDivElement>(null)
   const networkId = useAtomValue(networkIdAtom)
 
@@ -113,13 +114,11 @@ export const BullStrategyRebalances: React.FC = () => {
         Strategy Rebalances
       </Typography>
       <Box marginTop="24px">
-        {data?.map((d) => {
+        {transactions?.map((d) => {
           return (
             <div className={classes.statContainer} key={d.id}>
               <div className={classes.statHeader}>
-                <Typography className={clsx(classes.statHeaderTitle)}>
-                  {d.isBuying ? 'Bought oSQTH' : 'Sold oSQTH'}
-                </Typography>
+                <Typography className={clsx(classes.statHeaderTitle)}>{d.type}</Typography>
                 <Typography className={classes.label}>
                   {new Date(d.timestamp * 1000).toLocaleString(undefined, {
                     day: 'numeric',
@@ -131,12 +130,10 @@ export const BullStrategyRebalances: React.FC = () => {
               </div>
 
               <div className={classes.stat}>
-                <Typography className={classes.label}>Size</Typography>
-                <Typography className={classes.value}>{formatNumber(d.oSqueethAmount.toNumber(), 2)} oSQTH</Typography>
-              </div>
-              <div className={classes.stat}>
-                <Typography className={classes.label}>Clearing price</Typography>
-                <Typography className={classes.value}>{formatNumber(d.ethAmount.toNumber(), 2)} WETH</Typography>
+                <Typography className={classes.label}>Is selling</Typography>
+                <Typography className={classes.value}>
+                  {d.isDepositingInCrab === true || d.isSellingUsdc === true ? 'Yes' : 'No'}
+                </Typography>
               </div>
 
               <Link href={`${EtherscanPrefix[networkId]}${d.id}`} target="_blank" className={classes.txLink}>
@@ -149,7 +146,7 @@ export const BullStrategyRebalances: React.FC = () => {
           )
         })}
         <div ref={bottomRef} />
-        {showMore && <MoreButton onClick={onClickLoadMore} />}
+        {/* {showMore && <MoreButton onClick={onClickLoadMore} />} */}
       </Box>
     </Box>
   )

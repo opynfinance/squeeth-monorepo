@@ -6,11 +6,11 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
-import { bullCRAtom, bullCurrentFundingAtom, bullThresholdAtom } from '@state/bull/atoms'
-import { crabStrategyCollatRatioAtomV2, ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
+import { bullCRAtom, bullCurrentFundingAtom, bullTimeAtLastHedgeAtom } from '@state/bull/atoms'
+import { dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import { toTokenAmount } from '@utils/calculations'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
 
 const useLabelStyles = makeStyles((theme) =>
   createStyles({
@@ -44,25 +44,28 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
   )
 }
 
-const BullStrategyMetrics: React.FC = () => {
+type BullMetricsType = {
+  lowerPriceBandForProfitability: number
+  upperPriceBandForProfitability: number
+}
+
+const BullStrategyMetrics: React.FC<BullMetricsType> = ({
+  lowerPriceBandForProfitability,
+  upperPriceBandForProfitability,
+}) => {
+  const ethPrice = useOnChainETHPrice()
   const bullCr = useAtomValue(bullCRAtom).times(100)
   const crabCr = useAtomValue(crabStrategyCollatRatioAtomV2)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const currentImpliedFunding = useAtomValue(bullCurrentFundingAtom)
-  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
-  const bullProfitThreshold = useAtomValue(bullThresholdAtom)
-  const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
-
-  const lowerPriceBandForProfitability = ethPriceAtLastHedge - bullProfitThreshold * ethPriceAtLastHedge
-  const upperPriceBandForProfitability = ethPriceAtLastHedge + bullProfitThreshold * ethPriceAtLastHedge
+  const timeAtLastHedge = useAtomValue(bullTimeAtLastHedgeAtom)
 
   return (
     <Box display="flex" alignItems="center" flexWrap="wrap" gridGap="12px">
       <Metric
         flexBasis="250px"
         label={<Label label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
-        value={`$1,119.07`}
+        value={formatCurrency(ethPrice.toNumber())}
       />
       <Metric
         flexBasis="250px"
@@ -72,7 +75,11 @@ const BullStrategyMetrics: React.FC = () => {
             tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
           />
         }
-        value={`${formatNumber(currentImpliedFunding * 100)}%`}
+        value={
+          currentImpliedFunding && currentImpliedFunding != Infinity
+            ? `${formatNumber(currentImpliedFunding * 100)}%`
+            : '-'
+        }
       />
       <Metric
         flexBasis="250px"
@@ -104,17 +111,25 @@ const BullStrategyMetrics: React.FC = () => {
             }
           />
         }
-        value={new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
-          day: 'numeric',
-          month: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric',
-        })}
+        value={
+          timeAtLastHedge
+            ? new Date(timeAtLastHedge * 1000).toLocaleString(undefined, {
+                day: 'numeric',
+                month: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+              })
+            : '--'
+        }
       />
       <Metric
         flexBasis="250px"
         label={<Label label="Stack ETH if between" tooltipTitle={Tooltips.BullStrategyProfitThreshold} />}
-        value={formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)}
+        value={
+          lowerPriceBandForProfitability && lowerPriceBandForProfitability != Infinity
+            ? formatCurrency(lowerPriceBandForProfitability) + ' - ' + formatCurrency(upperPriceBandForProfitability)
+            : '-'
+        }
       />
       <Metric
         flexBasis="250px"

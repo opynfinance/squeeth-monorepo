@@ -1,8 +1,12 @@
+import { useQuery } from '@apollo/client'
 import { BIG_ONE, BIG_ZERO, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import STRATEGY_QUERY from '@queries/squeeth/strategyQuery'
+import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__generated__/strategyQuery'
 import {
   auctionBullContractAtom,
   bullStrategyContractAtom,
@@ -16,16 +20,18 @@ import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2A
 import { addressesAtom } from '@state/positions/atoms'
 import { squeethInitialPriceAtom } from '@state/squeethPool/atoms'
 import { useGetWSqueethPositionValueInETH } from '@state/squeethPool/hooks'
-import { slippageAmountAtom } from '@state/trade/atoms'
 import { addressAtom, networkIdAtom } from '@state/wallet/atoms'
 import { useHandleTransaction } from '@state/wallet/hooks'
+import { BULL_EVENTS } from '@utils/amplitude'
+import { squeethClient } from '@utils/apollo-client'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { getExactIn, getExactOut } from '@utils/quoter'
 import BigNumber from 'bignumber.js'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useEffect, useMemo } from 'react'
 import { useQueryClient } from 'react-query'
+import { useMountedState } from 'react-use'
 import {
   bullCapAtom,
   bullCRAtom,
@@ -41,12 +47,28 @@ import {
   isBullReadyAtom,
   eulerUsdcBorrowRateAtom,
   eulerETHLendRateAtom,
+  bullTimeAtLastHedgeAtom,
 } from './atoms'
 import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
 
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
   const setBullUserState = useSetBullUserState()
+  const setBullTimeAtLastHedge = useSetAtom(bullTimeAtLastHedgeAtom)
+  const { auctionBull } = useAtomValue(addressesAtom)
+  const networkId = useAtomValue(networkIdAtom)
+
+  const { data, loading } = useQuery<strategyQuery, strategyQueryVariables>(STRATEGY_QUERY, {
+    variables: { strategyId: auctionBull },
+    fetchPolicy: 'cache-and-network',
+    client: squeethClient[networkId],
+  })
+
+  useEffect(() => {
+    if (loading) return
+
+    setBullTimeAtLastHedge(data?.strategy?.lastHedgeTimestamp)
+  }, [data?.strategy?.lastHedgeTimestamp, loading, setBullTimeAtLastHedge])
 
   useEffect(() => {
     setBullState()
@@ -74,6 +96,8 @@ export const useSetBullState = () => {
   const setEthLendRate = useUpdateAtom(eulerETHLendRateAtom)
   const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
 
+  const isMounted = useMountedState()
+
   const setBullState = useAppCallback(async () => {
     if (!bullContract || !etokenContract || !auctionBullContract || !eulerLenseContract) return null
 
@@ -99,6 +123,8 @@ export const useSetBullState = () => {
       usdcInterests,
     ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9])
 
+    if (!isMounted()) return null
+
     setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
     setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
     setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
@@ -109,13 +135,12 @@ export const useSetBullState = () => {
     setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
     setUsdcBorrowRate(getEulerInterestRate(new BigNumber(usdcInterests[1])))
     setEthLendRate(getEulerInterestRate(new BigNumber(wethInterests[2])))
-  }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc])
+  }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc, isMounted])
 
   return setBullState
 }
 
 export const useSetBullUserState = () => {
-  const bullContract = useAtomValue(bullStrategyContractAtom)
   const { bullStrategy } = useAtomValue(addressesAtom)
   const { value: bullShare } = useTokenBalance(bullStrategy)
   const eulerWeth = useAtomValue(bullEulerWethCollatPerShareAtom)
@@ -132,8 +157,10 @@ export const useSetBullUserState = () => {
   const setBullEthValuePerShare = useUpdateAtom(bullEthValuePerShareAtom)
   const setBullReady = useUpdateAtom(isBullReadyAtom)
 
+  const isMounted = useMountedState()
+
   const setBullUserState = useAppCallback(async () => {
-    if (!bullContract || !crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero()) return null
+    if (!crabV2Vault || eulerWeth.isZero() || eulerUsdc.isZero() || !isMounted()) return null
 
     const leverageComponent = bullShare.times(eulerWeth.minus(eulerUsdc.div(ethPrice))).div(bullSupply)
     const userCrab = bullShare.times(bullCrabBalance).div(bullSupply)
@@ -143,11 +170,12 @@ export const useSetBullUserState = () => {
 
     const crabComponent = crabCollat.minus(crabDebtInEth)
     const userBullPosition = crabComponent.plus(leverageComponent)
+    if (!isMounted()) return null
     setBullCurrentPosition(new BigNumber(userBullPosition.toFixed(18)))
     setBullCurrentUsdcPosition(userBullPosition.times(ethPrice))
     setBullEthValuePerShare(userBullPosition.div(bullShare))
     setBullReady(true)
-  }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth])
+  }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth, isMounted])
 
   return setBullUserState
 }
@@ -220,15 +248,15 @@ export const useGetFlashBulldepositParams = () => {
           slippage,
         )
 
-        const [{ minAmountOut: oSqthProceeds }, { minAmountOut: usdcProceeds }] = await Promise.all([
-          oSqthProceedsPromise,
-          usdcProceedsPromise,
-        ])
+        const [
+          { minAmountOut: oSqthMinProceeds, amountOut: oSqthProceeds },
+          { minAmountOut: usdcMinProceeds, amountOut: usdcProceeds },
+        ] = await Promise.all([oSqthProceedsPromise, usdcProceedsPromise])
 
-        const minEthFromSqth = toTokenAmount(oSqthProceeds, 18)
-        const minEthFromUsdc = toTokenAmount(usdcProceeds, 18)
+        const minEthFromSqth = toTokenAmount(oSqthMinProceeds, 18)
+        const minEthFromUsdc = toTokenAmount(usdcMinProceeds, 18)
         const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethPrice))
-        const executionPrice = new BigNumber(minEthFromSqth).plus(minEthFromUsdc)
+        const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
         const priceImpact = (1 - executionPrice.div(cumulativeSpotPrice).toNumber()) * 100
 
@@ -303,33 +331,43 @@ export const useBullFlashDeposit = () => {
   const flashBullContract = useAtomValue(flashBullContractAtom)
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
 
-  const flashDepositToBull = (
+  const flashDepositToBull = async (
     ethToCrab: BigNumber,
     minEthFromSqth: BigNumber,
     minEthFromUsdc: BigNumber,
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
     ethToSend: BigNumber,
-    onTxConfirmed?: () => void,
+    onTxConfirmed?: (id?: string) => void,
   ) => {
     if (!flashBullContract) return
-
-    return handleTransaction(
-      flashBullContract.methods
-        .flashDeposit({
-          ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
-          minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
-          minEthFromUsdc: fromTokenAmount(minEthFromUsdc, 18).toFixed(0),
-          wPowerPerpPoolFee,
-          usdcPoolFee,
-        })
-        .send({
-          from: address,
-          value: fromTokenAmount(ethToSend, 18).toFixed(0),
-        }),
-      onTxConfirmed,
-    )
+    track(BULL_EVENTS.DEPOSIT_BULL_CLICK)
+    try {
+      await handleTransaction(
+        flashBullContract.methods
+          .flashDeposit({
+            ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
+            minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
+            minEthFromUsdc: fromTokenAmount(minEthFromUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .send({
+            from: address,
+            value: fromTokenAmount(ethToSend, 18).toFixed(0),
+          }),
+        onTxConfirmed,
+      )
+      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, { amount: ethToSend.toNumber() })
+    } catch (e: any) {
+      if (e?.code === 4001) {
+        track(BULL_EVENTS.DEPOSIT_BULL_REVERT)
+      }
+      track(BULL_EVENTS.DEPOSIT_BULL_FAILED, { code: e?.code, message: e?.message })
+      console.log(e)
+    }
   }
 
   return flashDepositToBull
@@ -360,13 +398,6 @@ export const useGetFlashWithdrawParams = () => {
   const getFlashWithdrawParams = async (bullToFlashWithdraw: BigNumber) => {
     if (!bullStrategyContract || !crabV2Vault || !quoterContract) return emptyState
 
-    console.log(
-      bullToFlashWithdraw.toString(),
-      crabV2Vault.toString(),
-      bullSupply.toString(),
-      bullCrabBalance.toString(),
-      crabTotalSupply.toString(),
-    )
     const { wPowerPerpToRedeem, usdcToRepay } = await calcAssetNeededForFlashWithdraw(
       bullStrategyContract,
       bullToFlashWithdraw,
@@ -394,15 +425,16 @@ export const useGetFlashWithdrawParams = () => {
       slippage,
     )
 
-    const [{ maxAmountIn: oSqthProceeds }, { maxAmountIn: usdcProceeds }] = await Promise.all([
-      oSqthProceedsPromise,
-      usdcProceedsPromise,
-    ])
-    const maxEthForWPowerPerp = toTokenAmount(oSqthProceeds, 18)
-    const maxEthForUsdc = toTokenAmount(usdcProceeds, 18)
+    const [
+      { maxAmountIn: oSqthMinProceeds, amountIn: oSqthProceeds },
+      { maxAmountIn: usdcMinProceeds, amountIn: usdcProceeds },
+    ] = await Promise.all([oSqthProceedsPromise, usdcProceedsPromise])
+
+    const maxEthForWPowerPerp = toTokenAmount(oSqthMinProceeds, 18)
+    const maxEthForUsdc = toTokenAmount(usdcMinProceeds, 18)
 
     const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethPrice))
-    const executionPrice = new BigNumber(maxEthForWPowerPerp).plus(maxEthForUsdc)
+    const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
     const priceImpact = (executionPrice.div(cumulativeSpotPrice).toNumber() - 1) * 100
 
@@ -445,8 +477,9 @@ export const useBullFlashWithdraw = () => {
   const flashBullContract = useAtomValue(flashBullContractAtom)
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
+  const { track } = useAmplitude()
 
-  const flashWithdrawFromBull = (
+  const flashWithdrawFromBull = async (
     bullAmount: BigNumber,
     maxEthForWPowerPerp: BigNumber,
     maxEthForUsdc: BigNumber,
@@ -455,21 +488,30 @@ export const useBullFlashWithdraw = () => {
     onTxConfirmed?: () => void,
   ) => {
     if (!flashBullContract) return
-
-    return handleTransaction(
-      flashBullContract.methods
-        .flashWithdraw({
-          bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
-          maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
-          maxEthForUsdc: fromTokenAmount(maxEthForUsdc, 18).toFixed(0),
-          wPowerPerpPoolFee,
-          usdcPoolFee,
-        })
-        .send({
-          from: address,
-        }),
-      onTxConfirmed,
-    )
+    track(BULL_EVENTS.WITHDRAW_BULL_CLICK)
+    try {
+      await handleTransaction(
+        flashBullContract.methods
+          .flashWithdraw({
+            bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
+            maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
+            maxEthForUsdc: fromTokenAmount(maxEthForUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
+      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, { amount: bullAmount.toNumber() })
+    } catch (e: any) {
+      if (e?.code === 4001) {
+        track(BULL_EVENTS.WITHDRAW_BULL_REVERT)
+      }
+      track(BULL_EVENTS.WITHDRAW_BULL_FAILED, { code: e?.code, message: e?.message })
+      console.log(e)
+    }
   }
 
   return flashWithdrawFromBull

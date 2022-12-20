@@ -12,6 +12,10 @@ import BullStrategyRebalances from './BullStrategyRebalances'
 import BullStrategyCharts from './BullStrategyCharts'
 import { useInitBullStrategy } from '@state/bull/hooks'
 import { useCurrentCrabPositionValueV2, useSetStrategyDataV2 } from '@state/crab/hooks'
+import { bullThresholdAtom } from '@state/bull/atoms'
+import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2 } from '@state/crab/atoms'
+import { toTokenAmount } from '@utils/calculations'
+import { useAtomValue } from 'jotai'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -58,6 +62,13 @@ function BullStrategy() {
   useInitBullStrategy()
   const setStrategyDataV2 = useSetStrategyDataV2()
 
+  const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
+  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
+  const bullProfitThreshold = useAtomValue(bullThresholdAtom)
+
+  const lowerPriceBandForProfitability = ethPriceAtLastHedge - bullProfitThreshold * ethPriceAtLastHedge
+  const upperPriceBandForProfitability = ethPriceAtLastHedge + bullProfitThreshold * ethPriceAtLastHedge
+
   useEffect(() => {
     setStrategyDataV2()
   }, [setStrategyDataV2])
@@ -77,7 +88,10 @@ function BullStrategy() {
               <BullCapDetails />
             </Box>
             <Box marginTop="32px">
-              <BullStrategyMetrics />
+              <BullStrategyMetrics
+                lowerPriceBandForProfitability={lowerPriceBandForProfitability}
+                upperPriceBandForProfitability={upperPriceBandForProfitability}
+              />
             </Box>
 
             {/* <Box marginTop="32px">
@@ -85,12 +99,15 @@ function BullStrategy() {
             </Box> */}
 
             <Box marginTop="32px">
-              <BullStrategyInfo />
+              <BullStrategyInfo
+                lowerPriceBandForProfitability={lowerPriceBandForProfitability}
+                upperPriceBandForProfitability={upperPriceBandForProfitability}
+              />
             </Box>
 
-            <Box marginTop="32px">
+            {/* <Box marginTop="32px">
               <BullStrategyRebalances />
-            </Box>
+            </Box> */}
           </Box>
         </div>
         <div className={classes.rightColumn}>

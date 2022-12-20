@@ -39,8 +39,9 @@ import {
   Vault,
 } from "../generated/schema"
 import { ClaimV2Shares, DepositV1Shares } from "../generated/CrabMigration/CrabMigration";
-import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR } from "./constants";
+import { CRAB_MIGRATION_ADDR, CRAB_V1_ADDR, CRAB_V2_ADDR, FLASH_BULL_ADDR, BULL_ADDR } from "./constants";
 import { CrabNetting, CrabWithdrawn, USDCDeposited } from "../generated/CrabNetting/CrabNetting";
+import { loadOrCreateStrategy } from "./util";
 
 function loadOrCreateTx(id: string): CrabUserTxSchema {
   let userTx = CrabUserTx.load(id)
@@ -57,16 +58,8 @@ function loadOrCreateTx(id: string): CrabUserTxSchema {
   return userTx
 }
 
-function loadOrCreateStrategy(id: string): Strategy {
-  let strategy = Strategy.load(id)
-  if (strategy) return strategy
-
-  strategy =  new Strategy(id)
-  strategy.totalSupply = BigInt.zero()
-  return strategy
-}
-
 export function handleDeposit(event: Deposit): void {
+  if (event.params.depositor.equals(FLASH_BULL_ADDR) || event.params.depositor.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.wSqueethAmount
   userTx.lpAmount = event.params.lpAmount
@@ -79,6 +72,7 @@ export function handleDeposit(event: Deposit): void {
 }
 
 export function handleWithdraw(event: Withdraw): void {
+  if (event.params.withdrawer.equals(FLASH_BULL_ADDR) || event.params.withdrawer.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.wSqueethAmount
   userTx.lpAmount = event.params.crabAmount
@@ -102,6 +96,7 @@ export function handleWithdrawShutdown(event: WithdrawShutdown): void {
 }
 
 export function handleFlashDeposit(event: FlashDeposit): void {
+  if (event.params.depositor.equals(FLASH_BULL_ADDR) || event.params.depositor.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.tradedAmountOut
   if (event.transaction.value.isZero()) {
@@ -124,6 +119,7 @@ export function handleFlashDeposit(event: FlashDeposit): void {
 }
 
 export function handleFlashWithdraw(event: FlashWithdraw): void {
+  if (event.params.withdrawer.equals(FLASH_BULL_ADDR) || event.params.withdrawer.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.wSqueethAmount = event.params.wSqueethAmount
   userTx.lpAmount = event.params.crabAmount
@@ -138,6 +134,7 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
 }
 
 export function handleFlashDepositCallback(event: FlashDepositCallback): void {
+  if (event.params.depositor.equals(FLASH_BULL_ADDR) || event.params.depositor.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = ((userTx.ethAmount !== null ? userTx.ethAmount : BigInt.fromString('0')) as BigInt).minus(event.params.excess)
   userTx.type = 'FLASH_DEPOSIT_CALLBACK'
@@ -192,6 +189,7 @@ export function handleNettingWithdraw(event: CrabWithdrawn): void {
 }
 
 export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void {
+  if (event.params.withdrawer.equals(FLASH_BULL_ADDR) || event.params.withdrawer.equals(BULL_ADDR)) return
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.ethAmount = event.params.excess
   userTx.type = 'FLASH_WITHDRAW_CALLBACK'
@@ -277,6 +275,11 @@ export function handleHedgeOTC(event: HedgeOTC): void {
   hedge.isBuying = event.params.isBuying;
   hedge.timestamp = event.block.timestamp;
   hedge.save();
+
+  const strategy = loadOrCreateStrategy(CRAB_V2_ADDR.toHex())
+  strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeTx = event.transaction.hash.toHex()
+  strategy.save()
 }
 
 export function handleHedgeOTCSingle(event: HedgeOTCSingle): void {

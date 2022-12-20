@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity =0.7.6;
-
 pragma abicoder v2;
 
 // interface
@@ -12,7 +11,7 @@ import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { UniFlash } from "./UniFlash.sol";
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 //lib
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 
 /**
  * Error codes

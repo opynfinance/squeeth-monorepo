@@ -13,7 +13,7 @@
     "deploy:ropsten": "yarn prepare:ropsten && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-ropsten",
     "prepare:mainnet": "mustache config/mainnet-config.json subgraph.template.yaml > subgraph.yaml",
     "prepare:goerli": "mustache config/goerli-config.json subgraph.template.yaml > subgraph.yaml",
-    "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth-goerli"
+    "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ haythem96/squeeth-temp-subgraph"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.33.1",

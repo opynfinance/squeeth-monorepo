@@ -1,12 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-
+// SPDX-License-Identifier: GPL-3.0-only
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
 import "v3-core/interfaces/IUniswapV3Pool.sol";
 import { IERC20Detailed } from "squeeth-monorepo/interfaces/IERC20Detailed.sol";
-
 // lib
 import "v3-periphery/libraries/Path.sol";
 import "v3-periphery/libraries/PoolAddress.sol";

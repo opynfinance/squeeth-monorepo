@@ -27,7 +27,7 @@ import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import '@utils/amplitude'
 import { setUserId } from '@amplitude/analytics-browser'
-import { EVENT_NAME, initializeAmplitude } from '@utils/amplitude'
+import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
@@ -118,7 +118,7 @@ const Init = () => {
       if (valid) {
         setAddress(onboardAddress)
         setUserId(onboardAddress)
-        track(EVENT_NAME.WALLET_CONNECTED)
+        track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false

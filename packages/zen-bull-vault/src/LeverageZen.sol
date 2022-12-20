@@ -11,7 +11,7 @@ import { IEulerDToken } from "./interface/IEulerDToken.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 // lib
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { UniOracle } from "./UniOracle.sol";
 
 /**

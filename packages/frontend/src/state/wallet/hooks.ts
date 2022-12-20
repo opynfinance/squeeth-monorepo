@@ -28,7 +28,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
 import { setUserId } from '@amplitude/analytics-browser'
-import { EVENT_NAME } from '@utils/amplitude'
+import { WALLET_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 
 export const useSelectWallet = () => {
@@ -49,7 +49,7 @@ export const useSelectWallet = () => {
               setAddress(onboardAddress)
               // Analytics
               setUserId(onboardAddress)
-              track(EVENT_NAME.WALLET_CONNECTED)
+              track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
             } else {
               setWalletFailVisible(true)
             }
@@ -92,7 +92,7 @@ export const useHandleTransaction = () => {
   const setTransactionData = useUpdateAtom(transactionDataAtom)
 
   const handleTransaction = useCallback(
-    (tx: any, onTxConfirmed?: () => void) => {
+    (tx: any, onTxConfirmed?: (id?: string) => void) => {
       if (!notify) return
       tx.on('transactionHash', (hash: string) => {
         const { emitter } = notify.hash(hash)
@@ -105,7 +105,7 @@ export const useHandleTransaction = () => {
 
           if (transaction.status === 'confirmed') {
             if (onTxConfirmed) {
-              onTxConfirmed()
+              onTxConfirmed(hash)
             }
             refetch()
           }

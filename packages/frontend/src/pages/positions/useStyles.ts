@@ -90,6 +90,10 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
+    emoji: {
+      width: '18px',
+      maxHeight: '25px',
+    },
   }),
 )
 
