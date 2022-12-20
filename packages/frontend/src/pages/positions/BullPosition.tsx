@@ -1,6 +1,7 @@
-import { Tooltip, Typography } from '@material-ui/core'
+import { Tooltip, Typography, makeStyles } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import useStyles from './useStyles'
+import Image from 'next/image'
 import { Tooltips } from '../../constants'
 import { useAtomValue } from 'jotai'
 import {
@@ -11,8 +12,8 @@ import {
   bullEthPnlAtom,
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
-  isBullReadyAtom,
 } from '@state/bull/atoms'
+import bullEmoji from 'public/images/bull_emoji.png'
 
 const BullPosition: React.FC = () => {
   const classes = useStyles()
@@ -33,7 +34,9 @@ const BullPosition: React.FC = () => {
     <div className={classes.position} id="pos-page-bull">
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
-          <Typography>🐂</Typography>
+          <div className={classes.emoji}>
+            <Image src={bullEmoji} width="100%" alt="zen bull" />
+          </div>
           <Typography style={{ marginLeft: '8px' }}>Bull</Typography>
         </div>
       </div>
