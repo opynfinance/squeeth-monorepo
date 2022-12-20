@@ -37,7 +37,7 @@ const BullPosition: React.FC = () => {
           <div className={classes.emoji}>
             <Image src={bullEmoji} width="100%" alt="zen bull" />
           </div>
-          <Typography style={{ marginLeft: '8px' }}>Bull</Typography>
+          <Typography style={{ marginLeft: '8px' }}>Zen Bull</Typography>
         </div>
       </div>
       <div className={classes.shortPositionData}>
