@@ -87,7 +87,7 @@ export function VaultChart({
   // )
 
   // const lineSeries = useMemo(() => {
-  //   if (vault === Vaults.ETHBull)
+  //   if (vault === Vaults.ETHZenBull)
   //     return [
   //       { data: longEthPNL, legend: 'Long ETH' },
   //       { data: seriesRebalance, legend: 'ETH Bull Strategy (incl. funding)' },
@@ -113,7 +113,7 @@ export function VaultChart({
   // }, [vault, longEthPNL, shortEthPNL, seriesRebalance, getStableYieldPNL, longAmount, shortSeries])
 
   // const lineSeriesPercentage = useMemo(() => {
-  //   if (vault === Vaults.ETHBull)
+  //   if (vault === Vaults.ETHZenBull)
   //     return [
   //       { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
   //       {

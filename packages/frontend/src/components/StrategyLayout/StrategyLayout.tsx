@@ -118,7 +118,7 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
           />
           <Tab
             style={{ textTransform: 'none' }}
-            label={<TabLabel title={Vaults.ETHBull} subtitle={VaultSubtitle.ETHBull} />}
+            label={<TabLabel title={Vaults.ETHZenBull} subtitle={VaultSubtitle.ETHZenBull} />}
             icon={
               <div className={classes.emoji}>
                 <Image alt="zen bull emoji" src={bullEmoji} width={'100%'} />
