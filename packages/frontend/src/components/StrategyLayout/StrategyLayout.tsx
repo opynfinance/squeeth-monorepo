@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Typography, Tab, Tabs } from '@material-ui/core'
+import Image from 'next/image'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import bullEmoji from 'public/images/bull_emoji.png'
 
 import Nav from '@components/Nav'
 import { Vaults, VaultSubtitle } from '@constants/enums'
@@ -60,6 +62,10 @@ const useStyles = makeStyles((theme) =>
         padding: theme.spacing(1, 3),
       },
     },
+    emoji: {
+      width: '18px',
+      maxHeight: '25px',
+    },
   }),
 )
 const STRATEGIES_PATH = '/strategies'
@@ -113,7 +119,11 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
           <Tab
             style={{ textTransform: 'none' }}
             label={<TabLabel title={Vaults.ETHBull} subtitle={VaultSubtitle.ETHBull} />}
-            icon={<div>🧘🐂</div>}
+            icon={
+              <div className={classes.emoji}>
+                <Image alt="zen bull emoji" src={bullEmoji} width={'100%'} />
+              </div>
+            }
           />
         </Tabs>
         {children}
