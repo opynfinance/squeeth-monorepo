@@ -81,9 +81,11 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const successColor = theme.palette.success.main
   const errorColor = theme.palette.error.main
 
+  const currentCrabReturn = getCrabReturn(currentEthPrice)
+
   return (
     <>
-      <Box height={300} width={700} marginTop="64px" display="flex" justifyContent="flex-start">
+      <Box height={300} width="100%" marginTop="64px" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
@@ -98,7 +100,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               height={1}
               type="number"
               dataKey="ethPrice"
-              domain={['dataMin - 100', 'dataMax + 200']}
+              domain={['dataMin - 80', 'dataMax + 240']}
               tick={false}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
@@ -106,7 +108,13 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               markerEnd="url(#arrowhead)"
               markerStart="url(#dot)"
             >
-              <Label value="ETH Price" position="insideBottomRight" offset={14} fill="#ffffff80" />
+              <Label
+                value="ETH Price"
+                position="insideBottomRight"
+                offset={14}
+                fill="#ffffff80"
+                enableBackground={'fill'}
+              />
             </XAxis>
             <YAxis
               width={1}
@@ -122,8 +130,22 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               <Label value="Crab Strategy" position="insideTopLeft" offset={14} fill="#ffffff80" />
             </YAxis>
 
-            <Line type="monotone" dataKey="crabReturnNegative" stroke={errorColor} strokeWidth={1} dot={false} />
-            <Line type="monotone" dataKey="crabReturnPositive" stroke={successColor} strokeWidth={1} dot={false} />
+            <Line
+              type="monotone"
+              dataKey="crabReturnNegative"
+              stroke={errorColor}
+              strokeWidth={1}
+              dot={false}
+              isAnimationActive={false}
+            />
+            <Line
+              type="monotone"
+              dataKey="crabReturnPositive"
+              stroke={successColor}
+              strokeWidth={1}
+              dot={false}
+              isAnimationActive={false}
+            />
 
             <ReferenceArea
               shape={<CandyBar />}
@@ -133,25 +155,43 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               stroke={successColor}
             />
 
+            <ReferenceDot x={lowerPriceBandForProfitability} y={getCrabReturn(lowerPriceBandForProfitability)} r={0}>
+              <Label
+                fontFamily={'DM Mono'}
+                fontWeight={500}
+                value={'$' + formatNumber(lowerPriceBandForProfitability, 0)}
+                position="insideBottomRight"
+                offset={8}
+                fill="#ffffffcc"
+              />
+            </ReferenceDot>
+            <ReferenceDot x={upperPriceBandForProfitability} y={getCrabReturn(upperPriceBandForProfitability)} r={0}>
+              <Label
+                fontFamily={'DM Mono'}
+                fontWeight={500}
+                value={'$' + formatNumber(upperPriceBandForProfitability, 0)}
+                position="insideBottomLeft"
+                offset={8}
+                fill="#ffffffcc"
+              />
+            </ReferenceDot>
+
             <ReferenceDot
               x={currentEthPrice}
-              y={getCrabReturn(currentEthPrice)}
+              y={currentCrabReturn}
               r={5}
-              fill={successColor}
+              fill={currentCrabReturn < 0 ? errorColor : successColor}
               strokeWidth={0}
-            />
-            <ReferenceDot
-              x={lowerPriceBandForProfitability}
-              y={getCrabReturn(lowerPriceBandForProfitability)}
-              r={3}
-              fill="#000"
-            />
-            <ReferenceDot
-              x={upperPriceBandForProfitability}
-              y={getCrabReturn(upperPriceBandForProfitability)}
-              r={3}
-              fill="#000"
-            />
+            >
+              <Label
+                fontFamily="DM Mono"
+                fontWeight={500}
+                value={'$' + formatNumber(currentEthPrice, 0)}
+                position="insideTop"
+                offset={20}
+                fill={currentCrabReturn < 0 ? errorColor : successColor}
+              />
+            </ReferenceDot>
           </LineChart>
         </ResponsiveContainer>
       </Box>
