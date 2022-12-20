@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
 import { Box, Typography, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
@@ -92,6 +92,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             </marker>
 
             <XAxis
+              height={1}
               type="number"
               dataKey="ethPrice"
               domain={['dataMin - 100', 'dataMax + 200']}
@@ -100,8 +101,11 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeOpacity="0.5"
               stroke="#fff"
               markerEnd="url(#arrowhead)"
-            />
+            >
+              <Label value="ETH Price" position="insideBottomRight" offset={12} fill="#ffffff80" />
+            </XAxis>
             <YAxis
+              width={1}
               type="number"
               dataKey="crabReturn"
               tick={false}
@@ -110,8 +114,9 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeOpacity="0.5"
               stroke="#fff"
               markerStart="url(#arrowhead)"
-              width={1}
-            />
+            >
+              <Label value="Crab Strategy" position="insideTopLeft" offset={12} fill="#ffffff80" />
+            </YAxis>
 
             <Line type="monotone" dataKey="crabReturnNegative" stroke={errorColor} strokeWidth={1} dot={false} />
             <Line type="monotone" dataKey="crabReturnPositive" stroke={successColor} strokeWidth={1} dot={false} />
@@ -145,7 +150,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
           </LineChart>
         </ResponsiveContainer>
       </Box>
-      <Box display="flex" flexWrap="wrap" gridGap="32px" marginTop="24px">
+      <Box display="flex" flexWrap="wrap" gridGap="32px" marginTop="48px">
         <div>
           <Typography variant="h6">Current Implied Premium</Typography>
           <Typography variant="body1">{formatNumber(currentImpliedFunding * 100) + '%'}</Typography>
