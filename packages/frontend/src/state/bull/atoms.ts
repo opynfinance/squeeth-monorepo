@@ -49,6 +49,7 @@ export const bullCurrentFundingAtom = atom((get) => {
   const totalRate = ethInterest.minus(usdInterest)
   const interestFunding = totalRate.div(dollarValueOfCrabInBull).div(2) // Divided by 2 because we are calculating for 2 days
   const squeethFunding = get(currentImpliedFundingAtom)
+
   return interestFunding.plus(squeethFunding).toNumber()
 })
 

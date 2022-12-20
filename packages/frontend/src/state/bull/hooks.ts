@@ -248,15 +248,15 @@ export const useGetFlashBulldepositParams = () => {
           slippage,
         )
 
-        const [{ minAmountOut: oSqthProceeds }, { minAmountOut: usdcProceeds }] = await Promise.all([
-          oSqthProceedsPromise,
-          usdcProceedsPromise,
-        ])
+        const [
+          { minAmountOut: oSqthMinProceeds, amountOut: oSqthProceeds },
+          { minAmountOut: usdcMinProceeds, amountOut: usdcProceeds },
+        ] = await Promise.all([oSqthProceedsPromise, usdcProceedsPromise])
 
-        const minEthFromSqth = toTokenAmount(oSqthProceeds, 18)
-        const minEthFromUsdc = toTokenAmount(usdcProceeds, 18)
+        const minEthFromSqth = toTokenAmount(oSqthMinProceeds, 18)
+        const minEthFromUsdc = toTokenAmount(usdcMinProceeds, 18)
         const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethPrice))
-        const executionPrice = new BigNumber(minEthFromSqth).plus(minEthFromUsdc)
+        const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
         const priceImpact = (1 - executionPrice.div(cumulativeSpotPrice).toNumber()) * 100
 
@@ -425,15 +425,16 @@ export const useGetFlashWithdrawParams = () => {
       slippage,
     )
 
-    const [{ maxAmountIn: oSqthProceeds }, { maxAmountIn: usdcProceeds }] = await Promise.all([
-      oSqthProceedsPromise,
-      usdcProceedsPromise,
-    ])
-    const maxEthForWPowerPerp = toTokenAmount(oSqthProceeds, 18)
-    const maxEthForUsdc = toTokenAmount(usdcProceeds, 18)
+    const [
+      { maxAmountIn: oSqthMinProceeds, amountIn: oSqthProceeds },
+      { maxAmountIn: usdcMinProceeds, amountIn: usdcProceeds },
+    ] = await Promise.all([oSqthProceedsPromise, usdcProceedsPromise])
+
+    const maxEthForWPowerPerp = toTokenAmount(oSqthMinProceeds, 18)
+    const maxEthForUsdc = toTokenAmount(usdcMinProceeds, 18)
 
     const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethPrice))
-    const executionPrice = new BigNumber(maxEthForWPowerPerp).plus(maxEthForUsdc)
+    const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
     const priceImpact = (executionPrice.div(cumulativeSpotPrice).toNumber() - 1) * 100
 
