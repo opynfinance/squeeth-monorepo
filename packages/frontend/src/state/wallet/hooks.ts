@@ -28,7 +28,7 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { checkIsValidAddress } from './apis'
 import { setUserId } from '@amplitude/analytics-browser'
-import { EVENT_NAME } from '@utils/amplitude'
+import { WALLET_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 
 export const useSelectWallet = () => {
@@ -49,7 +49,7 @@ export const useSelectWallet = () => {
               setAddress(onboardAddress)
               // Analytics
               setUserId(onboardAddress)
-              track(EVENT_NAME.WALLET_CONNECTED)
+              track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
             } else {
               setWalletFailVisible(true)
             }

@@ -6,6 +6,8 @@ export * from './enums'
 export const UNI_POOL_FEES = 3000
 export const ETH_USDC_POOL_FEES = 500
 
+export const REVERTED_TRANSACTION_CODE = 4001
+
 //17.5 days, 420 hours
 export const FUNDING_PERIOD = 17.5
 
