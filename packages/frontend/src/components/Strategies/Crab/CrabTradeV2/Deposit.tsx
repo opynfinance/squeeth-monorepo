@@ -49,8 +49,9 @@ import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
-import { EVENT_NAME } from '@utils/amplitude'
+import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
+import useExecuteOnce from '@hooks/useExecuteOnce'
 
 type CrabDepositProps = {
   maxCap: BigNumber
@@ -128,6 +129,23 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
 
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
+  const { track } = useAmplitude()
+
+  const trackUserEnteredDepositAmount = useCallback(
+    (amount: BigNumber) => track(CRAB_EVENTS.DEPOSIT_CRAB_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+
+  const [trackDepositAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredDepositAmount)
+
+  const onInputChange = useCallback(
+    (amount: string) => {
+      setDepositAmount(amount)
+      const deposit = new BigNumber(amount)
+      deposit.isGreaterThan(0) ? trackDepositAmountEnteredOnce(deposit) : null
+    },
+    [setDepositAmount, trackDepositAmountEnteredOnce],
+  )
 
   useEffect(() => {
     if (confirmed && prevCrabTxData?.length === data?.length) {
@@ -224,8 +242,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     }
   }, [ready, depositAmountBN, slippage, useUsdc, network, usdc, weth])
 
-  const { track } = useAmplitude()
-
   const recordAnalytics = useCallback(
     (events: string[]) => {
       events.forEach((event) => track(event))
@@ -252,6 +268,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     })
     transaction.analytics ? recordAnalytics(transaction.analytics) : null
     resetDepositAmount()
+    resetTracking()
     transaction.token === 'ETH' ? refetchWalletBalance() : refetchUsdcBalance()
     ongoingTransaction.current = undefined
   }, [
@@ -263,6 +280,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     refetchUsdcBalance,
     refetchWalletBalance,
     recordAnalytics,
+    resetTracking,
   ])
 
   const depositTX = async () => {
@@ -281,7 +299,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
           amount: depositAmountBN,
           queuedTransaction: useQueue,
           token: useUsdc ? 'USDC' : 'ETH',
-          analytics: userForceInstantAnalytics ? [EVENT_NAME.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
+          analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
         }
         if (useQueue) {
           await queueUSDC(depositAmountBN, onTxnConfirmed)
@@ -293,6 +311,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
       }
     } catch (e) {
       console.log(e)
+      resetTracking()
       setTxLoading(false)
     }
     setTxLoading(false)
@@ -411,7 +430,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
         <InputToken
           id="crab-deposit-eth-input"
           value={depositAmount}
-          onInputChange={setDepositAmount}
+          onInputChange={onInputChange}
           balance={useUsdc ? usdcBalance : toTokenAmount(balance ?? BIG_ZERO, 18)}
           logo={useUsdc ? usdcLogo : ethLogo}
           symbol={depositToken}
