@@ -101,7 +101,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               stroke="#fff"
               markerEnd="url(#arrowhead)"
             >
-              <Label value="ETH Price" position="insideBottomRight" offset={12} fill="#ffffff80" />
+              <Label value="ETH Price" position="insideBottomRight" offset={14} fill="#ffffff80" />
             </XAxis>
             <YAxis
               width={1}
@@ -114,7 +114,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               stroke="#fff"
               markerStart="url(#arrowhead)"
             >
-              <Label value="Crab Strategy" position="insideTopLeft" offset={12} fill="#ffffff80" />
+              <Label value="Crab Strategy" position="insideTopLeft" offset={14} fill="#ffffff80" />
             </YAxis>
 
             <Line type="monotone" dataKey="crabReturnNegative" stroke={errorColor} strokeWidth={1} dot={false} />
