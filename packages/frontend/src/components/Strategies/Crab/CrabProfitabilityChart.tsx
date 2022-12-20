@@ -90,6 +90,10 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
             </marker>
 
+            <marker id="dot" viewBox="0 0 16 16" refX="8" refY="8" markerWidth="8" markerHeight="8">
+              <circle cx="8" cy="8" r="8" fill="#ffffff80" />
+            </marker>
+
             <XAxis
               height={1}
               type="number"
@@ -100,6 +104,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeOpacity="0.5"
               stroke="#fff"
               markerEnd="url(#arrowhead)"
+              markerStart="url(#dot)"
             >
               <Label value="ETH Price" position="insideBottomRight" offset={14} fill="#ffffff80" />
             </XAxis>
@@ -127,6 +132,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               fill={successColor + '16'}
               stroke={successColor}
             />
+
             <ReferenceDot
               x={currentEthPrice}
               y={getCrabReturn(currentEthPrice)}
