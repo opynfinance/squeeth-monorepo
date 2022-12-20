@@ -94,6 +94,11 @@ const BullTrade: React.FC<BullTrade> = () => {
     [pollForNewTx, transactionData?.hash],
   )
 
+  const onClose = useCallback(() => {
+    setConfirmedTransactionData(undefined)
+    resetTransactionData()
+  }, [setConfirmedTransactionData, resetTransactionData])
+
   const classes = useStyles()
 
   return (
@@ -107,7 +112,7 @@ const BullTrade: React.FC<BullTrade> = () => {
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.BULL}
           />
-          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={resetTransactionData}>
+          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
             Close
           </PrimaryButtonNew>
         </>
