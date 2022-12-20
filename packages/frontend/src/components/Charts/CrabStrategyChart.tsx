@@ -103,7 +103,7 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
   const lineSeries = useAppMemo(() => {
     if (!shortEthPNL || !longEthPNL || !seriesRebalance || !shortSeries) return
 
-    if (vault === Vaults.ETHBull)
+    if (vault === Vaults.ETHZenBull)
       return [
         { data: longEthPNL, legend: 'Long ETH' },
         { data: seriesRebalance, legend: 'ETH Bull Strategy (incl. premium)' },
@@ -131,7 +131,7 @@ function CrabStrategyChart({ vault, longAmount }: { vault?: Vaults; longAmount: 
   // const lineSeriesPercentage = useAppMemo(() => {
   //   if (!startingETHPrice || !seriesRebalance || !longEthPNL || !shortEthPNL) return
 
-  //   if (vault === Vaults.ETHBull)
+  //   if (vault === Vaults.ETHZenBull)
   //     return [
   //       { data: convertPNLToPriceChart(longEthPNL, startingETHPrice), legend: 'Long ETH' },
   //       {

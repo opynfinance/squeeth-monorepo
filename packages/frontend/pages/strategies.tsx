@@ -189,7 +189,7 @@ const Strategies: React.FC = () => {
     // setStrategyDataV2()
   }, [collatRatio, setStrategyDataV2])
 
-  const handleTabChange = (_, value: number) => setSelectedIndex(value)
+  const handleTabChange = (event: any, value: number) => setSelectedIndex(value)
 
   return (
     <div>

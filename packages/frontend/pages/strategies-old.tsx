@@ -160,7 +160,7 @@ const Strategies: React.FC = () => {
   useMemo(() => {
     if (selectedIdx === 0) return Vaults.ETHBear
     if (selectedIdx === 1) return Vaults.CrabVault
-    if (selectedIdx === 2) return Vaults.ETHBull
+    if (selectedIdx === 2) return Vaults.ETHZenBull
     else return Vaults.Custom
   }, [selectedIdx])
 
@@ -185,7 +185,7 @@ const Strategies: React.FC = () => {
             label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
             icon={<div>🦀</div>}
           />
-          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBull} />} icon={<div>🐂</div>} />
+          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHZenBull} />} icon={<div>🐂</div>} />
         </Tabs>
         {selectedIdx === 2 ? ( //bull vault
           <div className={classes.comingSoon}>
