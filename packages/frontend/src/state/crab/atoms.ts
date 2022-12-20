@@ -73,6 +73,7 @@ export const crabLoadingAtomV2 = atom((get) => {
 export const crabv2StrategyFilterStartDateAtom = atom<Date>(new Date(CRABV2_START_DATE))
 export const crabv2StrategyFilterEndDateAtom = atom<Date>(new Date())
 
+
 export const useCrabPnLV2ChartData = () => {
   const startDate = useAtomValue(crabv2StrategyFilterStartDateAtom)
   const endDate = useAtomValue(crabv2StrategyFilterEndDateAtom)
@@ -90,3 +91,5 @@ export const useCrabPnLV2ChartData = () => {
     },
   )
 }
+
+

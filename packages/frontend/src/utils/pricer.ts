@@ -614,3 +614,15 @@ export const getEthPriceAtHedge = async() => {
 
   return data?.auction?.ethPrice
 }
+
+export const getBullChartData = async (startDateTimestamp: number, endDateTimestamp: number) => {
+
+  const domain = omdbBaseUrl
+  const base_url = `${domain}/metrics/zenbull/pnl/${startDateTimestamp}/${endDateTimestamp}`
+  const url = `${base_url}`
+
+  const response = await fetch(url)
+  const data = await response.json()
+  return data
+}
+
