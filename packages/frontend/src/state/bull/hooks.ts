@@ -315,7 +315,7 @@ export const useGetFlashBulldepositParams = () => {
       const data = await queryClient.fetchQuery({
         queryKey: `${queryKey}-${totalEthDeposit.toString()}`,
         queryFn: () => getFlashBullDepositParams(totalEthDeposit),
-        staleTime: 300_000,
+        staleTime: 60_000,
       })
       return data
     } catch (error) {
@@ -332,6 +332,7 @@ export const useBullFlashDeposit = () => {
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
+  const { flashBull } = useAtomValue(addressesAtom)
 
   const flashDepositToBull = async (
     ethToCrab: BigNumber,
@@ -345,6 +346,29 @@ export const useBullFlashDeposit = () => {
     if (!flashBullContract) return
     track(BULL_EVENTS.DEPOSIT_BULL_CLICK)
     try {
+      try {
+        const gasEstimate = await flashBullContract.methods
+          .flashDeposit({
+            ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
+            minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
+            minEthFromUsdc: fromTokenAmount(minEthFromUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .estimateGas({
+            to: flashBull,
+            value: fromTokenAmount(ethToSend, WETH_DECIMALS).toFixed(0),
+            from: address,
+          })
+
+        console.log('gasEstimate for flashdeposit', gasEstimate)
+        if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
+      } catch (e) {
+        track(BULL_EVENTS.DEPOSIT_BULL_WRONG_GAS)
+        alert('Error occurred, please refresh and try again')
+        throw e
+      }
+
       await handleTransaction(
         flashBullContract.methods
           .flashDeposit({
@@ -461,7 +485,7 @@ export const useGetFlashWithdrawParams = () => {
       const data = await queryClient.fetchQuery({
         queryKey: `${queryKey}-${bullToWithdraw.toString()}`,
         queryFn: () => getFlashWithdrawParams(bullToWithdraw),
-        staleTime: 300_000,
+        staleTime: 60_000,
       })
       return data
     } catch (error) {
@@ -478,6 +502,7 @@ export const useBullFlashWithdraw = () => {
   const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
+  const { flashBull } = useAtomValue(addressesAtom)
 
   const flashWithdrawFromBull = async (
     bullAmount: BigNumber,
@@ -490,6 +515,27 @@ export const useBullFlashWithdraw = () => {
     if (!flashBullContract) return
     track(BULL_EVENTS.WITHDRAW_BULL_CLICK)
     try {
+      try {
+        const gasEstimate = await flashBullContract.methods
+          .flashWithdraw({
+            bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
+            maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
+            maxEthForUsdc: fromTokenAmount(maxEthForUsdc, 18).toFixed(0),
+            wPowerPerpPoolFee,
+            usdcPoolFee,
+          })
+          .estimateGas({
+            to: flashBull,
+            from: address,
+          })
+
+        console.log('gasEstimate for flashwithdraw', gasEstimate)
+        if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
+      } catch (e) {
+        track(BULL_EVENTS.WITHDRAW_BULL_WRONG_GAS)
+        alert('Error occurred, please refresh and try again')
+        throw e
+      }
       await handleTransaction(
         flashBullContract.methods
           .flashWithdraw({
