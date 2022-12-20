@@ -1,33 +1,14 @@
 import React from 'react'
-import dynamic from 'next/dynamic'
 import { useAtomValue } from 'jotai'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Area,
-  ReferenceDot,
-  ReferenceArea,
-} from 'recharts'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea } from 'recharts'
 import { Box, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { dailyHistoricalFundingAtom, currentImpliedFundingAtom } from '@state/controller/atoms'
-import { graphOptions } from '@constants/diagram'
 import { useProfitableMovePercentV2 } from '@state/crab/hooks'
-import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2, crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
+import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-import { formatCurrency } from '@utils/formatter'
-
-const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
-
-const NUMBER_OF_DAYS = 2
 
 const CandyBar = (props: any) => {
   const { x: oX, y: oY, width: oWidth, height: oHeight, fill } = props
@@ -46,18 +27,6 @@ const CandyBar = (props: any) => {
   )
 }
 
-const AxisLabel = ({ axisType, x, y, width, height, children }) => {
-  const isVert = axisType === 'yAxis'
-  const rot = isVert ? -90 : 0
-  const cx = isVert ? -height / 2 : x + width / 2
-  const cy = isVert ? y : y + height / 2 + 14
-  return (
-    <text x={cx} y={cy} transform={`rotate(${rot})`} textAnchor="middle">
-      {children}
-    </text>
-  )
-}
-
 const getDataPoints = (funding: number, ethPriceAtLastHedge: number) => {
   const dataPoints = []
 
@@ -68,21 +37,19 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number) => {
   let current = starting
   while (current.lte(ending)) {
     const ethReturn = current.div(100).toNumber()
+
     const crabReturn = (funding - Math.pow(ethReturn, 2)) * 100
-    const crabReturnPositive = crabReturn > 0 ? crabReturn : null
+    const crabReturnPositive = crabReturn >= 0 ? crabReturn : null
+    const crabReturnNegative = crabReturn < 0 ? crabReturn : null
 
     dataPoints.push({
-      funding,
-      current,
-      ethReturn,
       ethPrice: ethPriceAtLastHedge + ethReturn * ethPriceAtLastHedge,
-      crabReturn,
       crabReturnPositive,
+      crabReturnNegative,
     })
 
     current = current.plus(increment)
   }
-  console.log({ dataPoints: dataPoints })
 
   return dataPoints
 }
@@ -156,18 +123,41 @@ const CrabProfitabilityChart: React.FC = () => {
           <Typography variant="body1">{theoreticalUpperPriceBandForProfitability}</Typography>
         </div>
       </Box>
-      <Box height={300} width={600} marginTop="64px">
+      <Box height={300} width={500} marginTop="64px" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart width={500} height={300} data={data}>
-            <XAxis type="number" dataKey="ethPrice" domain={['dataMin - 50', 'dataMax + 50']} tick={false} />
-            <YAxis type="number" dataKey="crabReturn" tick={false} domain={['dataMin - 1', 'dataMax + 1']} />
+          <LineChart data={data}>
+            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto-start-reverse">
+              <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
+            </marker>
+
+            <XAxis
+              type="number"
+              dataKey="ethPrice"
+              domain={['dataMin - 50', 'dataMax + 50']}
+              tick={false}
+              strokeDasharray="5,5"
+              strokeOpacity="0.5"
+              stroke="#fff"
+              markerEnd="url(#arrowhead)"
+            />
+            <YAxis
+              type="number"
+              dataKey="crabReturn"
+              tick={false}
+              domain={['dataMin - 1', 'dataMax + 1']}
+              strokeDasharray="5,5"
+              strokeOpacity="0.5"
+              stroke="#fff"
+              markerStart="url(#arrowhead)"
+              width={1}
+            />
 
             {/* <Legend /> */}
             {/* <Line type="monotone" dataKey="ethPrice" stroke="#8884d8" activeDot={{ r: 8 }} /> */}
 
-            <Tooltip />
+            {/* <Tooltip /> */}
 
-            <Line type="monotone" dataKey="crabReturn" stroke="#FA7B67" dot={false} strokeWidth={1} />
+            <Line type="monotone" dataKey="crabReturnNegative" stroke="#FA7B67" dot={false} strokeWidth={1} />
             <Line type="monotone" dataKey="crabReturnPositive" stroke="#67FABF" dot={false} strokeWidth={1} />
 
             <ReferenceArea
