@@ -4,6 +4,10 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { intervalToDuration } from 'date-fns'
 import { sortBy } from 'lodash'
 
+const padZero = (number: number, padding: number): String => {
+  return `${number}`.padStart(padding, '0')
+}
+
 const getNextHedgeDate = (now: Date): Date => {
   // hedges every monday, wednesday, friday at 16:30 UTC
 
@@ -48,6 +52,7 @@ const useStyles = makeStyles(() =>
       fontSize: '15px',
       color: 'rgba(255, 255, 255, 0.5)',
       fontWeight: 500,
+      textAlign: 'right',
     },
     value: {
       fontSize: '20px',
@@ -64,12 +69,16 @@ const NextHedgeTimer: React.FC = () => {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      const current = new Date()
-      const now = new Date(current.setHours(current.getHours() + 8))
+      const now = new Date()
       const nextHedgeDate = getNextHedgeDate(now)
 
       const duration = intervalToDuration({ start: now, end: nextHedgeDate })
-      const result = `${duration.days}D ${duration.hours}H ${duration.minutes}M ${duration.seconds}S`
+      const days = padZero(duration.days ?? 0, 2)
+      const hours = padZero(duration.hours ?? 0, 2)
+      const minutes = padZero(duration.minutes ?? 0, 2)
+      const seconds = padZero(duration.seconds ?? 0, 2)
+
+      const result = `${days}D ${hours}H ${minutes}M ${seconds}S`
       setTimeLeft(result)
     }, 1000)
 
@@ -77,12 +86,12 @@ const NextHedgeTimer: React.FC = () => {
   }, [])
 
   return (
-    <>
+    <div>
       <Typography className={classes.label}>Next hedge in</Typography>
       <Typography className={classes.value} variant="subtitle2">
         {timeLeft}
       </Typography>
-    </>
+    </div>
   )
 }
 
