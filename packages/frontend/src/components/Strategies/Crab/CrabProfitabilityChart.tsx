@@ -1,6 +1,16 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label, Text } from 'recharts'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  ReferenceDot,
+  ReferenceArea,
+  Label,
+  Tooltip,
+} from 'recharts'
 import { Box, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
@@ -85,7 +95,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 
   return (
     <>
-      <Box height={300} width="100%" marginTop="64px" display="flex" justifyContent="flex-start">
+      <Box height={300} width="100%" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <defs>
@@ -155,6 +165,8 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               dot={false}
               isAnimationActive={false}
             />
+
+            <Tooltip />
 
             <ReferenceArea
               shape={<CandyBar />}
