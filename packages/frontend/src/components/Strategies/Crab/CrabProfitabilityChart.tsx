@@ -1,16 +1,6 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-  ReferenceDot,
-  ReferenceArea,
-  Label,
-  Tooltip,
-} from 'recharts'
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
 import { Box, useTheme } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
@@ -78,7 +68,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
 
   const data = useMemo(() => {
-    const percentRange = profitableBoundsPercent * 5 * 100 // 5x the profitable move percent
+    const percentRange = profitableBoundsPercent * 4 * 100 // 5x the profitable move percent
     return getDataPoints(funding, ethPriceAtLastHedge, percentRange)
   }, [funding, ethPriceAtLastHedge, profitableBoundsPercent])
 
@@ -108,7 +98,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               </marker>
 
               {/* https://stackoverflow.com/a/12263962/5733330 */}
-              <filter x="-0.05" y="-0.05" width="1.1" height="1.1" id="removebackground">
+              <filter x="0" y="0" width="1" height="1" id="removebackground">
                 <feFlood floodColor={theme.palette.background.default} />
                 <feComposite in="SourceGraphic" />
               </filter>
@@ -118,7 +108,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               height={1}
               type="number"
               dataKey="ethPrice"
-              domain={['dataMin - 80', 'dataMax + 160']}
+              domain={['dataMin - 40', 'dataMax + 200']}
               tick={false}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
@@ -165,8 +155,6 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               dot={false}
               isAnimationActive={false}
             />
-
-            <Tooltip />
 
             <ReferenceArea
               shape={<CandyBar />}
