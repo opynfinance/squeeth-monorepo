@@ -191,6 +191,14 @@ export const WETH_E_TOKEN: Address = {
   31337: '',
 }
 
+export const USDC_D_TOKEN: Address = {
+  1: '0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42',
+  3: '',
+  5: '0x356079240635b276a63065478471d89340443c49',
+  421611: '',
+  31337: '',
+}
+
 export const AUCTION_BULL: Address = {
   1: '0x6cd0890054d308264cD68B0b6ba38A36860593ec',
   3: '',
