@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
-import { Box, useTheme } from '@material-ui/core'
+import { Box, useTheme, Fade } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
@@ -68,7 +68,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
 
   const data = useMemo(() => {
-    const percentRange = profitableBoundsPercent * 4 * 100 // 5x the profitable move percent
+    const percentRange = profitableBoundsPercent * 4 * 100 // 4x the profitable move percent
     return getDataPoints(funding, ethPriceAtLastHedge, percentRange)
   }, [funding, ethPriceAtLastHedge, profitableBoundsPercent])
 
@@ -84,7 +84,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const currentCrabReturn = getCrabReturn(currentEthPrice)
 
   return (
-    <>
+    <Fade in={true}>
       <Box height={300} width="100%" display="flex" justifyContent="flex-start">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
@@ -205,7 +205,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
           </LineChart>
         </ResponsiveContainer>
       </Box>
-    </>
+    </Fade>
   )
 }
 
