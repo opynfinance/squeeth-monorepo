@@ -200,6 +200,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     }
   }, [bullPositionValueInEth, withdrawAmountBN])
 
+  const setWithdrawMax = () => {
+    setWithdrawAmount(bullPositionValueInEth.toString())
+  }
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
@@ -222,7 +226,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           balanceLabel="Balance"
           isLoading={quoteLoading}
           loadingMessage="Fetching best price"
-          onBalanceClick={() => onInputChange(bullPositionValueInEth.toString())}
+          onBalanceClick={setWithdrawMax}
         />
 
         {negativeReturnsError ? (
