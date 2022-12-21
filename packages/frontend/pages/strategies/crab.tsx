@@ -141,7 +141,7 @@ const Strategies: React.FC = () => {
 
           <Box marginTop="32px">
             <Typography variant="h4" className={classes.subtitle}>
-              Crab PnL
+              Performance
             </Typography>
 
             <Box marginTop="12px">

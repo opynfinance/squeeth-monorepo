@@ -19,8 +19,6 @@ import { useAtom } from 'jotai'
 export type ChartDataInfo = {
   timestamp: number
   crabPnL: number
-  crabEthPnl: number
-  ethUsdPnl: number
 }
 
 const useStyles = makeStyles((theme) =>
@@ -68,65 +66,6 @@ function CrabStrategyV2PnLChart() {
   const query = useCrabPnLV2ChartData()
 
   const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
-  const crabEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabEthPnl])
-  const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.ethUsdPnl])
-
-  const lastMarkerPoints = useAppMemo(() => {
-    const crabUsdMarkerArray = crabUsdPnlSeries ? crabUsdPnlSeries[crabUsdPnlSeries?.length - 1] : []
-    const crabEthMarkerArray = crabEthPnlSeries ? crabEthPnlSeries[crabEthPnlSeries?.length - 1] : []
-    const ethUsdMarkerArray = ethUsdPnlSeries ? ethUsdPnlSeries[ethUsdPnlSeries?.length - 1] : []
-
-    const crabUsdMarker = crabUsdMarkerArray ? crabUsdMarkerArray[1] : 0
-    const crabEthMarker = crabEthMarkerArray ? crabEthMarkerArray[1] : 0
-    const ethUsdMarker = ethUsdMarkerArray ? ethUsdMarkerArray[1] : 0
-
-    const lastCrabUsdItem = crabUsdPnlSeries ? crabUsdPnlSeries.pop() : []
-    const newCrabUsdLastItem = {
-      x: lastCrabUsdItem && lastCrabUsdItem[0],
-      y: lastCrabUsdItem && lastCrabUsdItem[1],
-      dataLabels: {
-        align: 'center',
-        enabled: true,
-        useHTML: true,
-        formatter: function () {
-          return '<div style="color:#BABBBB"> Crab/USD 🦀</div>'
-        },
-      },
-    }
-    if (crabUsdPnlSeries) crabUsdPnlSeries.push(newCrabUsdLastItem)
-
-    const lastCrabEthItem = crabEthPnlSeries ? crabEthPnlSeries.pop() : []
-    const newCrabEthLastItem = {
-      x: lastCrabEthItem && lastCrabEthItem[0],
-      y: lastCrabEthItem && lastCrabEthItem[1],
-      dataLabels: {
-        align: 'center',
-        enabled: true,
-        useHTML: true,
-        formatter: function () {
-          return '<div style="color:#BABBBB"> Crab/ETH </div>'
-        },
-      },
-    }
-    if (crabEthPnlSeries) crabEthPnlSeries.push(newCrabEthLastItem)
-
-    const lastEthUsdItem = ethUsdPnlSeries ? ethUsdPnlSeries.pop() : []
-    const newEthUsdLastItem = {
-      x: lastEthUsdItem && lastEthUsdItem[0],
-      y: lastEthUsdItem && lastEthUsdItem[1],
-      dataLabels: {
-        align: 'center',
-        enabled: true,
-        useHTML: true,
-        formatter: function () {
-          return '<div style="color:#BABBBB"> ETH/USD </div>'
-        },
-      },
-    }
-    if (ethUsdPnlSeries) ethUsdPnlSeries.push(newEthUsdLastItem)
-
-    return [crabUsdMarker, crabEthMarker, ethUsdMarker]
-  }, [crabUsdPnlSeries, crabEthPnlSeries, ethUsdPnlSeries])
 
   useEffect(() => {
     Highcharts.setOptions({
@@ -146,27 +85,7 @@ function CrabStrategyV2PnLChart() {
         valueSuffix: '%',
       },
       color: '#70E3F6',
-    },
-    {
-      yAxis: 0,
-      name: 'Crab/ETH % Return',
-      data: crabEthPnlSeries,
-      tooltip: {
-        valueDecimals: 2,
-        valueSuffix: '%',
-      },
-      color: '#5B7184',
-    },
-    {
-      yAxis: 0,
-      name: 'ETH/USD % return',
-      data: ethUsdPnlSeries,
-      tooltip: {
-        valueDecimals: 2,
-        valueSuffix: '%',
-      },
-      color: '#484B3D',
-    },
+    }
   ]
 
   const axes = {
@@ -182,22 +101,7 @@ function CrabStrategyV2PnLChart() {
           },
         },
         gridLineColor: 'rgba(221,221,221,0.1)',
-      },
-      //  {
-      //     title: {
-      //       text: ''
-      //     },
-      //     opposite:true,
-      //     linkedTo:0,
-      //    // tickPositions:lastMarkerPoints,
-      //     gridLineWidth:0,
-      //     labels: {
-      //       style: {
-      //         color: '#e6e6e6'
-      //       },
-      //     format: '{value:.2f}' + '%'
-      //     }
-      //   }
+      }
     ],
   }
 
