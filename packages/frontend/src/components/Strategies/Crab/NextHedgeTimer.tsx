@@ -1,72 +1,45 @@
 import React, { useEffect, useState } from 'react'
-import { Box, Typography } from '@material-ui/core'
+import { Typography } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { intervalToDuration, isBefore, nextDay as getNextDay } from 'date-fns'
-
-const withHedgeTime = (date: Date): Date => {
-  const timezoneDate = new Date(date).getDate()
-
-  const withTime = new Date(date.setUTCDate(timezoneDate)).setUTCHours(16, 30, 0, 0)
-  return new Date(withTime)
-}
-
-const getNextHedgeDay = (now: Date, day: Day): Date => {
-  const nextDay = getNextDay(now, day)
-
-  return nextDay
-}
-
-const getTodayInUTC = (date: Date): Date => {
-  const todayInUTC = Date.UTC(
-    date.getUTCFullYear(),
-    date.getUTCMonth(),
-    date.getUTCDate(),
-    date.getUTCHours(),
-    date.getUTCMinutes(),
-    date.getUTCSeconds(),
-  )
-
-  return new Date(todayInUTC)
-}
+import { intervalToDuration } from 'date-fns'
+import { sortBy } from 'lodash'
 
 const getNextHedgeDate = (now: Date): Date => {
   // hedges every monday, wednesday, friday at 16:30 UTC
 
-  // const nextMonday = getNextDayinUTC(now, 1)
-  // const nextMondayHedgeDate = withHedgeTime(nextMonday)
-  // console.log({ nextMonday, nextMondayHedgeDate })
+  // next monday at 16:30 UTC
+  const nextMondayHedge = new Date(now)
+  nextMondayHedge.setUTCDate(nextMondayHedge.getUTCDate() + ((1 + 7 - nextMondayHedge.getUTCDay()) % 7 || 7))
+  nextMondayHedge.setUTCHours(16, 30, 0, 0)
 
-  // compare in UTC terms
+  // next wednesday at 16:30 UTC
+  const nextWednesdayHedge = new Date(now)
+  nextWednesdayHedge.setUTCDate(nextWednesdayHedge.getUTCDate() + ((3 + 7 - nextWednesdayHedge.getUTCDay()) % 7 || 7))
+  nextWednesdayHedge.setUTCHours(16, 30, 0, 0)
+
+  // next wednesday at 16:30 UTC
+  const nextFridayHedge = new Date(now)
+  nextFridayHedge.setUTCDate(nextFridayHedge.getUTCDate() + ((5 + 7 - nextFridayHedge.getUTCDay()) % 7 || 7))
+  nextFridayHedge.setUTCHours(16, 30, 0, 0)
+
+  // today at 16:30 UTC
+  const todayHedge = new Date(now)
+  todayHedge.setUTCDate(todayHedge.getUTCDate())
+  todayHedge.setUTCHours(16, 30, 0, 0)
+
   const isMondayInUTC = now.getUTCDay() === 1
   const isWednesdayInUTC = now.getUTCDay() === 3
   const isFridayInUTC = now.getUTCDay() === 5
   const hasHedgeTimePassedInUTC = now.getUTCHours() > 16 || (now.getUTCHours() === 16 && now.getUTCMinutes() >= 30)
 
-  // calculate next 3 hedge dates, could be today as well depending on time
+  // if today is monday, wednesday, friday and time is before 16:30 UTC, use today's hedge date
+  const comingMondayHedge = isMondayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextMondayHedge
+  const comingWednesdayHedge = isWednesdayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextWednesdayHedge
+  const comingFridayHedge = isFridayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextFridayHedge
 
-  //get today in UTC
-  const todayInUTC = getTodayInUTC(now)
-  console.log({ todayInUTC })
-
-  // give today's hedge date if it's not passed yet in utc
-
-  // const nextMonday = isMonday && !hasHedgeTimePassed ? now : getNextDayinUTC(now, 1)
-  // const nextWednesday = isWednesday && !hasHedgeTimePassed ? now : getNextDayinUTC(now, 3)
-  // const nextFriday = isFriday && !hasHedgeTimePassed ? now : getNextDayinUTC(now, 5)
-
-  // // set hedge time
-  // const nextMondayHedgeDate = withHedgeTime(nextMonday)
-  // const nextWednesdayHedgeDate = withHedgeTime(nextWednesday)
-  // const nextFridayHedgeDate = withHedgeTime(nextFriday)
-
-  // console.log({ now, nextMondayHedgeDate, nextWednesdayHedgeDate, nextFridayHedgeDate })
-
-  // // find closest hedge date
-  // const nextHedgeDate = [nextMondayHedgeDate, nextWednesdayHedgeDate, nextFridayHedgeDate].reduce((a, b) => {
-  //   return isBefore(a, b) ? a : b
-  // })
-  // return nextHedgeDate
-  return now
+  // find closest hedge date
+  const nextHedges = sortBy([comingMondayHedge, comingWednesdayHedge, comingFridayHedge], (date) => date.getTime())
+  return nextHedges[0]
 }
 
 const useStyles = makeStyles(() =>
@@ -92,12 +65,12 @@ const NextHedgeTimer: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const current = new Date()
-      const now = new Date(current.setHours(current.getHours() + 10))
+      const now = new Date(current.setHours(current.getHours() + 8))
       const nextHedgeDate = getNextHedgeDate(now)
 
       const duration = intervalToDuration({ start: now, end: nextHedgeDate })
-      const formatted = `${duration.days}D ${duration.hours}H ${duration.minutes}M ${duration.seconds}S`
-      setTimeLeft(formatted)
+      const result = `${duration.days}D ${duration.hours}H ${duration.minutes}M ${duration.seconds}S`
+      setTimeLeft(result)
     }, 1000)
 
     return () => clearInterval(interval)
