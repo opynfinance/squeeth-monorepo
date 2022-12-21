@@ -44,11 +44,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const depositAmountRef = useRef('0')
   const [depositAmount, setDepositAmount] = useState('0')
   const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
-  const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit, resetSqueethAmountInFromDeposit] =
-    useStateWithReset(new BigNumber(0))
-  const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit, resetEthAmountOutFromDeposit] = useStateWithReset(
-    new BigNumber(0),
-  )
+
   const ongoingTransactionAmountRef = useRef(new BigNumber(0))
   const [txLoading, setTxLoading] = useState(false)
 
@@ -75,6 +71,10 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     ethToCrab: BIG_ZERO,
     minEthFromSqth: BIG_ZERO,
     minEthFromUsdc: BIG_ZERO,
+    ethOutForSqth: BIG_ZERO,
+    ethOutForUsdc: BIG_ZERO,
+    oSqthIn: BIG_ZERO,
+    usdcIn: BIG_ZERO,
     wPowerPerpPoolFee: 0,
     usdcPoolFee: 0,
     priceImpact: 0,
@@ -85,7 +85,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
-  const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
   const { track } = useAmplitude()
 
   const trackUserEnteredDepositAmount = useCallback(
@@ -161,7 +160,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   ])
 
   const depositPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
+    const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
@@ -174,21 +173,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       .abs()
       .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
     return showPriceImpactWarning
-  }, [impliedVol, ethAmountOutFromDeposit, squeethAmountInFromDeposit, normFactor, ethIndexPrice])
-
-  useEffect(() => {
-    if (depositAmountBN.isZero()) {
-      resetEthAmountOutFromDeposit()
-      resetSqueethAmountInFromDeposit()
-      return
-    }
-
-    calculateETHtoBorrowFromUniswap(depositAmountBN, slippage).then((q) => {
-      setEthAmountOutFromDeposit(q.amountOut)
-      setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [depositAmountBN.toString(), slippage])
+  }, [quote.ethOutForSqth, quote.oSqthIn, normFactor, ethIndexPrice, impliedVol])
 
   const depositError = useAppMemo(() => {
     if (depositAmountBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18))) {

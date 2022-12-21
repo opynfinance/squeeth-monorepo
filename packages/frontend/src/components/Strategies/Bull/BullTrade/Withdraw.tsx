@@ -59,12 +59,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const bullPositionValueInEth = useAtomValue(bullCurrentETHPositionAtom)
-  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
-    new BigNumber(0),
-  )
-
-  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw, resetSqueethAmountOutFromWithdraw] =
-    useStateWithReset(new BigNumber(0))
 
   const selectWallet = useSelectWallet()
 
@@ -72,8 +66,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
-
-  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
 
   const { bullStrategy, flashBull } = useAtomValue(addressesAtom)
   const { value: bullBalance } = useTokenBalance(bullStrategy, 15, WETH_DECIMALS)
@@ -85,6 +77,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     wPowerPerpPoolFee: 0,
     usdcPoolFee: 0,
     priceImpact: 0,
+    ethInForSqth: BIG_ZERO,
+    ethInForUsdc: BIG_ZERO,
+    oSqthOut: BIG_ZERO,
+    usdcOut: BIG_ZERO,
   })
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
@@ -98,7 +94,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
@@ -112,22 +108,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
 
     return showPriceImpactWarning
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [impliedVol, ethAmountInFromWithdraw, squeethAmountOutFromWithdraw])
-
-  useEffect(() => {
-    if (withdrawAmountBN.isZero()) {
-      resetEthAmountInFromWithdraw()
-      resetSqueethAmountOutFromWithdraw()
-      return
-    }
-
-    calculateEthWillingToPay(withdrawAmountBN, slippage).then((q) => {
-      setEthAmountInFromWithdraw(q.amountIn)
-      setSqueethAmountOutFromWithdraw(q.squeethDebt)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [withdrawAmountBN.toString(), slippage])
+  }, [quote.ethInForSqth, quote.oSqthOut, normFactor, ethIndexPrice, impliedVol])
 
   const debouncedDepositQuote = debounce(async (bullToWithdraw: string) => {
     setQuoteLoading(true)

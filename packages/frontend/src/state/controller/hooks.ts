@@ -382,7 +382,7 @@ const useIndex = () => {
         topics: [SWAP_EVENT_TOPIC],
       },
       () => {
-        getIndex(3, contract).then(setIndex)
+        getIndex(1, contract).then(setIndex)
       },
     )
 
