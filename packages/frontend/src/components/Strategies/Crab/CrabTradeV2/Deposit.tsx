@@ -171,16 +171,15 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     const squeethPrice = ethAmountOutFromDeposit.div(squeethAmountInFromDeposit)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
-    const executionVol = new BigNumber(
-      Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber()),
-    )
-      .div(fundingPeriod)
-      .sqrt()
+    const log = Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())
+    const executionVol = new BigNumber(log).div(fundingPeriod).sqrt()
 
-    const showPriceImpactWarning = executionVol
-      .minus(impliedVol)
-      .abs()
-      .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
+    const showPriceImpactWarning =
+      log < 0 ||
+      executionVol
+        .minus(impliedVol)
+        .abs()
+        .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
     return showPriceImpactWarning
   }, [impliedVol, ethAmountOutFromDeposit, squeethAmountInFromDeposit, useQueue, ethIndexPrice, normFactor])
 
