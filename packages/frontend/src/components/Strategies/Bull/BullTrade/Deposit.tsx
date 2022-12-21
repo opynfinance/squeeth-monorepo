@@ -4,7 +4,15 @@ import { LinkWrapper } from '@components/LinkWrapper'
 import Metric from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
-import { BIG_ZERO, FUNDING_PERIOD, INDEX_SCALE, VOL_PERCENT_FIXED, VOL_PERCENT_SCALAR, YEAR } from '@constants/index'
+import {
+  BIG_ZERO,
+  FUNDING_PERIOD,
+  INDEX_SCALE,
+  VOL_PERCENT_FIXED,
+  VOL_PERCENT_SCALAR,
+  YEAR,
+  WETH_DECIMALS,
+} from '@constants/index'
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
@@ -200,6 +208,10 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     quote.wethToLend,
   ])
 
+  const setDepositMax = () => {
+    setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
+  }
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
@@ -220,6 +232,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           error={!!depositError}
           helperText={depositError}
           balanceLabel="Balance"
+          onBalanceClick={setDepositMax}
           isLoading={quoteLoading}
           loadingMessage="Fetching best price"
         />
