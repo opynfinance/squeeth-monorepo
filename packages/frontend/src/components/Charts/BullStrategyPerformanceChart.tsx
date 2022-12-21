@@ -16,7 +16,6 @@ import { bullStrategyFilterEndDateAtom, bullStrategyFilterStartDateAtom, useBull
 export type ChartDataInfo = {
   timestamp: number
   bullEthPnl: number
-  ethUsdPnl: number
 }
 
 const useStyles = makeStyles((theme) =>
@@ -64,7 +63,6 @@ function BullStrategyPerformanceChart() {
   const query = useBullPnLChartData()
 
   const bullEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
-  const ethUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.ethUsdPnl])
 
   useEffect(() => {
     Highcharts.setOptions({
@@ -75,16 +73,6 @@ function BullStrategyPerformanceChart() {
   }, [])
 
   const series = [
-    // {
-    //   name: 'Bull/USD % Return',
-    //   yAxis: 0,
-    //   data: bullUsdPnlSeries,
-    //   tooltip: {
-    //     valueDecimals: 2,
-    //     valueSuffix: '%',
-    //   },
-    //   color: '#5B7184',
-    // },
     {
       yAxis: 0,
       name: 'Bull/ETH 🧘🐂 % Return',
@@ -95,17 +83,7 @@ function BullStrategyPerformanceChart() {
       },
     
       color: '#70E3F6',
-    },
-    {
-      yAxis: 0,
-      name: 'ETH/USD % return',
-      data: ethUsdPnlSeries,
-      tooltip: {
-        valueDecimals: 2,
-        valueSuffix: '%',
-      },
-      color: '#484B3D',
-    },
+    }
   ]
 
   const axes = {
