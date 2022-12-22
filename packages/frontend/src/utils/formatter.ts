@@ -1,10 +1,12 @@
 import { toTokenAmount } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 
-export const formatCurrency: (number: number) => string = (number) => {
+export const formatCurrency: (number: number, decimals?: number) => string = (number, decimals = 2) => {
   return number.toLocaleString('en-us', {
     style: 'currency',
     currency: 'USD',
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   })
 }
 
