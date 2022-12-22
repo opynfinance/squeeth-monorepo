@@ -1,7 +1,6 @@
 import { Box } from '@material-ui/core'
 import React, { useState, useEffect, useCallback } from 'react'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
-import BigNumber from 'bignumber.js'
 
 import { useSetStrategyDataV2 } from '@state/crab/hooks'
 import Deposit from './Deposit'
@@ -12,15 +11,10 @@ import useAppMemo from '@hooks/useAppMemo'
 import { PrimaryButtonNew } from '@components/Button'
 import { CrabTransactionConfirmation, CrabTradeType, CrabTradeTransactionType } from './types'
 
-type CrabTradeProps = {
-  maxCap: BigNumber
-  depositedAmount: BigNumber
-}
-
-const CrabTradeV2: React.FC<CrabTradeProps> = ({ maxCap, depositedAmount }) => {
+const CrabTradeV2: React.FC = () => {
   const [depositOption, setDepositOption] = useState(0)
-  const setStrategyData = useSetStrategyDataV2()
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<CrabTransactionConfirmation | undefined>()
+  const setStrategyData = useSetStrategyDataV2()
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
 
   const confirmationMessage = useAppMemo(() => {
@@ -45,9 +39,9 @@ const CrabTradeV2: React.FC<CrabTradeProps> = ({ maxCap, depositedAmount }) => {
 
   useEffect(() => {
     setStrategyData()
-  }, [])
+  }, [setStrategyData])
 
-  if (confirmed && confirmedTransactionData?.status)
+  if (confirmed && confirmedTransactionData?.status) {
     return (
       <>
         <Confirmed
@@ -60,6 +54,7 @@ const CrabTradeV2: React.FC<CrabTradeProps> = ({ maxCap, depositedAmount }) => {
         </PrimaryButtonNew>
       </>
     )
+  }
 
   return (
     <>
@@ -76,7 +71,7 @@ const CrabTradeV2: React.FC<CrabTradeProps> = ({ maxCap, depositedAmount }) => {
 
       <Box marginTop="32px">
         {depositOption === 0 ? (
-          <Deposit maxCap={maxCap} depositedAmount={depositedAmount} onTxnConfirm={setConfirmedTransactionData} />
+          <Deposit onTxnConfirm={setConfirmedTransactionData} />
         ) : (
           <Withdraw onTxnConfirm={setConfirmedTransactionData} />
         )}

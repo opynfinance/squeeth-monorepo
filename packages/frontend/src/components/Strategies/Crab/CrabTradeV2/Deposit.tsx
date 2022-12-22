@@ -11,7 +11,13 @@ import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
-import { crabStrategySlippageAtomV2, usdcQueuedAtom, minUSDCAmountAtom } from '@state/crab/atoms'
+import {
+  crabStrategySlippageAtomV2,
+  usdcQueuedAtom,
+  minUSDCAmountAtom,
+  maxCapAtomV2,
+  crabStrategyVaultAtomV2,
+} from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
   useFlashDepositV2,
@@ -54,8 +60,6 @@ import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 
 type CrabDepositProps = {
-  maxCap: BigNumber
-  depositedAmount: BigNumber
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
 }
 
@@ -66,7 +70,7 @@ enum DepositSteps {
 
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
-const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTxnConfirm }) => {
+const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const classes = useStyles()
   const [depositAmount, setDepositAmount, resetDepositAmount] = useStateWithReset('0')
   const [debouncedDepositAmount] = useDebounce(depositAmount, 500)
@@ -126,6 +130,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
 
   const prevCrabTxData = usePrevious(data)
 
+  const maxCap = useAtomValue(maxCapAtomV2)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
   const { track } = useAmplitude()
@@ -153,6 +159,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
       stopPolling()
     }
   }, [confirmed, prevCrabTxData?.length, data?.length])
+
+  const depositedAmount = vault?.collateralAmount ?? BIG_ZERO
 
   const depositPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false
@@ -377,8 +385,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
     depositPriceImpactNumber > 3
       ? classes.btnDanger
       : depositFundingWarning || depositPriceImpactWarning
-        ? classes.btnWarning
-        : ''
+      ? classes.btnWarning
+      : ''
 
   return (
     <>
@@ -513,8 +521,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
                     tooltipTitle={
                       useQueue
                         ? `For standard deposit, the average price impact is ${formatNumber(
-                          depositPriceImpactNumber,
-                        )}% based on historical auctions`
+                            depositPriceImpactNumber,
+                          )}% based on historical auctions`
                         : undefined
                     }
                   />
@@ -570,7 +578,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ maxCap, depositedAmount, onTx
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
-                onClick={() => { }}
+                onClick={() => {}}
                 disabled={true}
                 id="crab-unsupported-network-btn"
               >

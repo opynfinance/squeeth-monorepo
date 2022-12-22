@@ -1,13 +1,10 @@
-import BigNumber from 'bignumber.js'
 import React from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { useAtomValue } from 'jotai'
 
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
 import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
-import { crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,9 +46,6 @@ const useStyles = makeStyles((theme) =>
 )
 
 const Crab: React.FC = () => {
-  const maxCap = useAtomValue(maxCapAtomV2)
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-
   const classes = useStyles()
 
   return (
@@ -65,7 +59,7 @@ const Crab: React.FC = () => {
       </div>
       <div className={classes.rightColumn}>
         <div className={classes.tradeSection}>
-          <CrabTradeV2 maxCap={maxCap} depositedAmount={vault?.collateralAmount || new BigNumber(0)} />
+          <CrabTradeV2 />
         </div>
       </div>
     </div>
