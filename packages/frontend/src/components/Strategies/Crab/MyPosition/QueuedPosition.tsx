@@ -32,11 +32,6 @@ const DepositQueued: React.FC = () => {
 
   const classes = useStyles()
 
-  // ignore dust amount
-  if (usdcQueued.isLessThan('100')) {
-    return null
-  }
-
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
       <Typography variant="h4" className={classes.sectionTitle}>
@@ -79,11 +74,6 @@ const WithdrawQueued: React.FC = () => {
 
   const classes = useStyles()
 
-  // ignore dust amount
-  if (crabQueued.isLessThan('10000000000')) {
-    return null
-  }
-
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
       <Typography variant="h4" className={classes.sectionTitle}>
@@ -109,10 +99,21 @@ const WithdrawQueued: React.FC = () => {
 }
 
 const QueuedPosition: React.FC = () => {
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
+
+  // ignore dust amount
+  const showQueuedDeposit = usdcQueued.isGreaterThan('100')
+  const showQueuedWithdraw = crabQueued.isGreaterThan('10000000000')
+
+  if (!showQueuedDeposit && !showQueuedWithdraw) {
+    return null
+  }
+
   return (
-    <Box display="flex" gridGap="40px">
-      <DepositQueued />
-      <WithdrawQueued />
+    <Box display="flex" gridGap="80px">
+      {showQueuedDeposit && <DepositQueued />}
+      {showQueuedWithdraw && <WithdrawQueued />}
     </Box>
   )
 }
