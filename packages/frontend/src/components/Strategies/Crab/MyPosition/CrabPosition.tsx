@@ -51,10 +51,11 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
               className={clsx(
                 classes.description,
                 classes.textSemibold,
+                classes.textMonospace,
                 isPnlPositive ? classes.colorSuccess : classes.colorError,
               )}
             >
-              {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())}
+              {formatNumber(pnl.toNumber()) + '%'}
             </Typography>
           </Box>
 
@@ -62,10 +63,11 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
             className={clsx(
               classes.description,
               classes.textSemibold,
+              classes.textMonospace,
               isPnlPositive ? classes.colorSuccess : classes.colorError,
             )}
           >
-            ({isPnlPositive && '+' + formatNumber(pnl.toNumber()) + '%'})
+            ({isPnlPositive && '+' + formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
           </Typography>
           <Typography className={classes.description}>since deposit</Typography>
         </Box>

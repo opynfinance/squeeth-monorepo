@@ -32,7 +32,10 @@ const About: React.FC = () => {
         </Box>
       </Box>
 
-      <Typography className={classes.description}>$2,960,000 TVL</Typography>
+      <Box display="flex" gridGap="12px">
+        <Typography className={clsx(classes.description, classes.textMonospace)}>$2,960,000</Typography>
+        <Typography className={classes.description}>TVL</Typography>
+      </Box>
     </Box>
   )
 }

@@ -44,6 +44,9 @@ const useStyles = makeStyles((theme) =>
       color: '#BDBDBD',
       lineHeight: '130%',
     },
+    textMonospace: {
+      fontFamily: 'DM Mono',
+    },
   }),
 )
 
