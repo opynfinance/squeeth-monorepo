@@ -48,7 +48,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Strategies: React.FC = () => {
+const Crab: React.FC = () => {
   const maxCap = useAtomValue(maxCapAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
 
@@ -72,6 +72,4 @@ const Strategies: React.FC = () => {
   )
 }
 
-const Page: React.FC = () => <Strategies />
-
-export default Page
+export default Crab
