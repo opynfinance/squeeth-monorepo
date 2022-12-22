@@ -111,7 +111,7 @@ const QueuedPosition: React.FC = () => {
   }
 
   return (
-    <Box display="flex" gridGap="80px">
+    <Box display="flex" gridRowGap="40px" gridColumnGap="80px" flexWrap="wrap">
       {showQueuedDeposit && <DepositQueued />}
       {showQueuedWithdraw && <WithdrawQueued />}
     </Box>
