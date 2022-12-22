@@ -47,7 +47,8 @@ const useStyles = makeStyles((theme) =>
       maxWidth: '1280px',
       width: '80%',
       margin: '0 auto',
-      padding: theme.spacing(1, 5),
+      padding: theme.spacing(1, 5, 10, 5),
+
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
         width: '90%',
@@ -56,10 +57,10 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(1, 4),
+        padding: theme.spacing(1, 4, 8, 4),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(1, 3),
+        padding: theme.spacing(1, 3, 6, 3),
       },
     },
     emoji: {
