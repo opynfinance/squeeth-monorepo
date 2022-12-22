@@ -15,7 +15,7 @@ export enum Vaults {
 
 export enum VaultSubtitle {
   ETHBear = 'Short ETH',
-  CrabVault = 'Stack USD',
+  CrabVault = 'Stack USDC',
   ETHZenBull = 'Stack ETH',
 }
 

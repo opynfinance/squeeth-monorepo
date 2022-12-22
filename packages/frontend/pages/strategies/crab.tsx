@@ -1,12 +1,12 @@
 import BigNumber from 'bignumber.js'
 import React from 'react'
-import { Typography, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtomValue } from 'jotai'
 
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
-import NextHedgeTimer from '@components/Strategies/Crab/NextHedgeTimer'
-import CrabProfitabilityChart from '@components/Strategies/Crab/CrabProfitabilityChart'
+import MyPosition from '@components/Strategies/Crab/MyPosition'
+import About from '@components/Strategies/Crab/About'
+import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
 import { crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
 
 const useStyles = makeStyles((theme) =>
@@ -34,14 +34,10 @@ const useStyles = makeStyles((theme) =>
         flex: '1',
       },
     },
-    sectionTitle: {
-      fontSize: '22px',
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    text: {
-      marginTop: '16px',
-      color: '#BDBDBD',
+    infoContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '72px',
     },
     tradeSection: {
       border: '1px solid #242728',
@@ -61,21 +57,10 @@ const Strategies: React.FC = () => {
   return (
     <div className={classes.container}>
       <div className={classes.leftColumn}>
-        <div>
-          <Typography variant="h2" className={classes.sectionTitle}>
-            About Crab
-          </Typography>
-          <Typography variant="body1" className={classes.text}>
-            In general, Crab earns USDC returns except when there is high ETH volatility in the market, when it may draw
-            down. The strategy stacks USDC if ETH is within the below bands at the next hedge.
-          </Typography>
-
-          <Box position="relative" marginTop="32px">
-            <Box position="absolute" top="10px" right="0px">
-              <NextHedgeTimer />
-            </Box>
-            <CrabProfitabilityChart />
-          </Box>
+        <div className={classes.infoContainer}>
+          <MyPosition />
+          <StrategyPerformance />
+          <About />
         </div>
       </div>
       <div className={classes.rightColumn}>

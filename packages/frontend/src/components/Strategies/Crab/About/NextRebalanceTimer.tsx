@@ -63,7 +63,7 @@ const useStyles = makeStyles(() =>
   }),
 )
 
-const NextHedgeTimer: React.FC = () => {
+const NextRebalanceTimer: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState('')
   const classes = useStyles()
 
@@ -95,4 +95,4 @@ const NextHedgeTimer: React.FC = () => {
   )
 }
 
-export default NextHedgeTimer
+export default NextRebalanceTimer

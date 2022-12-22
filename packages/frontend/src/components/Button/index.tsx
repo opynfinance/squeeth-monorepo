@@ -107,3 +107,17 @@ export const RoundedButton = withStyles((theme) => ({
     fontWeight: 700,
   },
 }))(Button)
+
+export const TextButton = withStyles((theme) => ({
+  root: {
+    color: theme.palette.primary.main,
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+    textTransform: 'initial',
+    padding: '0',
+    fontSize: '16px',
+    fontWeight: 400,
+  },
+}))(Button)

@@ -1,0 +1,77 @@
+import React from 'react'
+import { Box, Typography } from '@material-ui/core'
+import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
+import BigNumber from 'bignumber.js'
+import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
+
+import { formatCurrency, formatNumber } from '@utils/formatter'
+import useStyles from '@components/Strategies/Crab/useStyles'
+import { BIG_ZERO } from '@constants/index'
+import { crabQueuedAtom, usdcQueuedAtom } from '@state/crab/atoms'
+
+interface CrabPositionProps {
+  depositedUsd: BigNumber
+  currentPosition: BigNumber
+  pnl: BigNumber
+}
+
+const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl }) => {
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
+
+  const classes = useStyles()
+
+  const currentPositionValue = currentPosition.isGreaterThan(0) ? currentPosition : BIG_ZERO
+  const isPnlPositive = pnl.isGreaterThanOrEqualTo(0)
+
+  if (currentPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) {
+    return null
+  }
+
+  return (
+    <Box display="flex" flexDirection="column" gridGap="8px">
+      <Typography variant="h4" className={classes.sectionTitle}>
+        My Crab Position
+      </Typography>
+
+      <Typography className={classes.heading}>{formatCurrency(currentPositionValue.toNumber())}</Typography>
+
+      {pnl.isFinite() && (
+        <Box display="flex" alignItems="center" gridGap="8px">
+          <Box display="flex" marginLeft="-6px">
+            {isPnlPositive ? (
+              <ArrowDropUpIcon className={classes.colorSuccess} />
+            ) : (
+              <ArrowDropDownIcon className={classes.colorError} />
+            )}
+
+            <Typography
+              className={clsx(
+                classes.description,
+                classes.textSemibold,
+                isPnlPositive ? classes.colorSuccess : classes.colorError,
+              )}
+            >
+              {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())}
+            </Typography>
+          </Box>
+
+          <Typography
+            className={clsx(
+              classes.description,
+              classes.textSemibold,
+              isPnlPositive ? classes.colorSuccess : classes.colorError,
+            )}
+          >
+            ({isPnlPositive && '+' + formatNumber(pnl.toNumber()) + '%'})
+          </Typography>
+          <Typography className={classes.description}>since deposit</Typography>
+        </Box>
+      )}
+    </Box>
+  )
+}
+
+export default CrabPosition
