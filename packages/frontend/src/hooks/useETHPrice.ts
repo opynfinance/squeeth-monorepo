@@ -37,8 +37,7 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
  */
 export const useOnChainETHPrice = () => {
   const index = useAtomValue(indexAtom)
-
-  return toTokenAmount(index, 18).sqrt()
+  return index
 }
 
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {

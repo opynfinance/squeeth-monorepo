@@ -28,7 +28,8 @@ import {
 } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
-import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { SQUEETH_UNI_POOL } from '@constants/address'
+import useAppEffect from '@hooks/useAppEffect'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -279,8 +280,6 @@ export const useGetCollatRatioAndLiqPrice = () => {
       const debt = await getDebtAmount(shortAmount)
 
       if (debt && !debt.isZero() && debt.isPositive()) {
-
-        
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
         if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
@@ -360,36 +359,20 @@ const useNormFactor = () => {
   return normFactor
 }
 
-const useIndex = () => {
-  const address = useAtomValue(addressAtom)
-  const web3 = useAtomValue(web3Atom)
-  const networkId = useAtomValue(networkIdAtom)
+export const useIndex = () => {
+  const { getTwapSafe } = useOracle()
   const [index, setIndex] = useAtom(indexAtom)
-  const contract = useAtomValue(controllerContractAtom)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
 
-  useEffect(() => {
-    if (!contract) return
-    getIndex(1, contract).then(setIndex)
-  }, [address, networkId, contract, setIndex])
-
-  // setup index listender
-  useEffect(() => {
-    if (!web3) return
-    const sub = web3.eth.subscribe(
-      'logs',
-      {
-        address: [ETH_USDC_POOL[networkId]],
-        topics: [SWAP_EVENT_TOPIC],
-      },
-      () => {
-        getIndex(1, contract).then(setIndex)
-      },
-    )
+  useAppEffect(() => {
+    const interval = setInterval(() => {
+      getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => setIndex(quote))
+    }, 15000)
 
     return () => {
-      sub.unsubscribe()
+      clearInterval(interval)
     }
-  }, [contract, web3, networkId])
+  }, [getTwapSafe, ethUsdcPool, weth])
 
   return index
 }
@@ -454,13 +437,13 @@ const useMark = () => {
   return mark
 }
 
-const useOsqthRefVol =  async () : Promise<number> =>  {
+const useOsqthRefVol = async (): Promise<number> => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [OsqthRefVol, setOsqthRefVol] = useAtom(osqthRefVolAtom)
   useEffect(() => {
     getOsqthRefVol().then(setOsqthRefVol)
-  }, [address,networkId])
+  }, [address, networkId])
   return OsqthRefVol
 }
 

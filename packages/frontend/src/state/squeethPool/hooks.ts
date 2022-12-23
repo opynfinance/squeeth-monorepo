@@ -208,15 +208,21 @@ export const useUpdateSqueethPrices = () => {
   const { oSqueeth, weth, squeethPool } = useAtomValue(addressesAtom)
 
   useAppEffect(() => {
-    getTwapSafe(squeethPool, oSqueeth, weth, 1)
-      .then((quote) => setSqueethInitialPrice(quote))
-      .catch((error) => {
-        console.error(error)
-        setSqueethInitialPriceError(getErrorMessage(error))
-      })
-      .finally(() => {
-        setReady(true)
-      })
+    const interval = setInterval(() => {
+      getTwapSafe(squeethPool, oSqueeth, weth, 1)
+        .then((quote) => setSqueethInitialPrice(quote))
+        .catch((error) => {
+          console.error(error)
+          setSqueethInitialPriceError(getErrorMessage(error))
+        })
+        .finally(() => {
+          setReady(true)
+        })
+    }, 15000)
+
+    return () => {
+      clearInterval(interval)
+    }
   }, [getTwapSafe, oSqueeth, weth, setReady, setSqueethInitialPrice, setSqueethInitialPriceError, squeethPool])
 }
 
