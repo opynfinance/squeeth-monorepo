@@ -7,12 +7,15 @@ import { useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import { pnlInPerctv2 } from 'src/lib/pnl'
-import { crabQueuedInUsdAtom } from '@state/crab/atoms'
+import { crabQueuedInUsdAtom, crabQueuedAtom, usdcQueuedAtom } from '@state/crab/atoms'
 import useStyles from '@components/Strategies/Crab/useStyles'
+import { BIG_ZERO } from '@constants/index'
 import CrabPosition from './CrabPosition'
 import QueuedPosition from './QueuedPosition'
 
 const MyPosition: React.FC = () => {
+  const usdcQueued = useAtomValue(usdcQueuedAtom)
+  const crabQueued = useAtomValue(crabQueuedAtom)
   const address = useAtomValue(addressAtom)
   const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
   const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
@@ -30,6 +33,11 @@ const MyPosition: React.FC = () => {
 
   const classes = useStyles()
 
+  const currentPositionValue = currentCrabPositionValue.isGreaterThan(0) ? currentCrabPositionValue : BIG_ZERO
+  if (currentPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) {
+    return null
+  }
+
   if (loading) {
     return (
       <Box display="flex" alignItems="flex-start" marginTop="8px" height="98px">
@@ -43,7 +51,7 @@ const MyPosition: React.FC = () => {
 
   return (
     <Box display="flex" flexDirection="column" gridGap="40px">
-      <CrabPosition depositedUsd={depositedUsd} currentPosition={currentCrabPositionValue} pnl={pnl} />
+      <CrabPosition depositedUsd={depositedUsd} currentPosition={currentPositionValue} pnl={pnl} />
       <QueuedPosition />
     </Box>
   )

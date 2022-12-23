@@ -4,12 +4,9 @@ import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
-import { useAtomValue } from 'jotai'
 
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/Crab/useStyles'
-import { BIG_ZERO } from '@constants/index'
-import { crabQueuedAtom, usdcQueuedAtom } from '@state/crab/atoms'
 
 interface CrabPositionProps {
   depositedUsd: BigNumber
@@ -18,17 +15,9 @@ interface CrabPositionProps {
 }
 
 const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl }) => {
-  const usdcQueued = useAtomValue(usdcQueuedAtom)
-  const crabQueued = useAtomValue(crabQueuedAtom)
-
   const classes = useStyles()
 
-  const currentPositionValue = currentPosition.isGreaterThan(0) ? currentPosition : BIG_ZERO
   const isPnlPositive = pnl.isGreaterThanOrEqualTo(0)
-
-  if (currentPositionValue.isZero() && usdcQueued.isZero() && crabQueued.isZero()) {
-    return null
-  }
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
@@ -37,7 +26,7 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
       </Typography>
 
       <Typography className={clsx(classes.heading, classes.textMonospace)}>
-        {formatCurrency(currentPositionValue.toNumber())}
+        {formatCurrency(currentPosition.toNumber())}
       </Typography>
 
       {pnl.isFinite() && (
