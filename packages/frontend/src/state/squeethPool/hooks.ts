@@ -21,7 +21,6 @@ import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { useHandleTransaction } from '../wallet/hooks'
 import wethAbi from '../../abis/weth.json'
 import { Pair } from '@uniswap/v2-sdk'
-import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 
 import {
   poolAtom,
@@ -34,6 +33,7 @@ import {
 import { computeRealizedLPFeePercent } from './price'
 import { slippageAmountAtom } from '../trade/atoms'
 import { getErrorMessage } from '@utils/error'
+import useInterval from '@hooks/useInterval'
 // import { BaseProvider } from '@ethersproject/providers'
 // import {BaseProvider} from '@ethers
 
@@ -207,8 +207,8 @@ export const useUpdateSqueethPrices = () => {
   const setReady = useUpdateAtom(readyAtom)
   const { oSqueeth, weth, squeethPool } = useAtomValue(addressesAtom)
 
-  useAppEffect(() => {
-    const getTwapSqueeth = () => {
+  const getTwapSqueeth = () => {
+    if (squeethPool && oSqueeth && weth)
       getTwapSafe(squeethPool, oSqueeth, weth, 1)
         .then((quote) => setSqueethInitialPrice(quote))
         .catch((error) => {
@@ -218,15 +218,12 @@ export const useUpdateSqueethPrices = () => {
         .finally(() => {
           setReady(true)
         })
-    }
-    getTwapSqueeth()
-    const interval = setInterval(() => {
-      getTwapSqueeth()
-    }, 15000)
+  }
 
-    return () => {
-      clearInterval(interval)
-    }
+  useInterval(getTwapSqueeth, 15000)
+
+  useAppEffect(() => {
+    getTwapSqueeth()
   }, [getTwapSafe, oSqueeth, weth, setReady, setSqueethInitialPrice, setSqueethInitialPriceError, squeethPool])
 }
 

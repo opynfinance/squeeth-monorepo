@@ -11,6 +11,7 @@ import {
   indexAtom,
   normFactorAtom,
   osqthRefVolAtom,
+  ethPriceAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -28,8 +29,9 @@ import {
 } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
-import { SQUEETH_UNI_POOL } from '@constants/address'
+import { SQUEETH_UNI_POOL, ETH_USDC_POOL } from '@constants/address'
 import useAppEffect from '@hooks/useAppEffect'
+import useInterval from '@hooks/useInterval'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -359,32 +361,60 @@ const useNormFactor = () => {
   return normFactor
 }
 
-export const useIndex = () => {
-  const { getTwapSafe } = useOracle()
+const useIndex = () => {
+  const address = useAtomValue(addressAtom)
+  const web3 = useAtomValue(web3Atom)
+  const networkId = useAtomValue(networkIdAtom)
   const [index, setIndex] = useAtom(indexAtom)
-  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+  const contract = useAtomValue(controllerContractAtom)
 
-  useAppEffect(() => {
-    const getTwapEth = () => {
-      if (ethUsdcPool && weth && usdc) {
-        getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
-          setIndex(quote)
-        })
-      }
-    }
+  useEffect(() => {
+    if (!contract) return
+    getIndex(1, contract).then(setIndex)
+  }, [address, networkId, contract, setIndex])
 
-    getTwapEth()
-
-    const interval = setInterval(() => {
-      getTwapEth()
-    }, 15000)
+  // setup index listender
+  useEffect(() => {
+    if (!web3) return
+    const sub = web3.eth.subscribe(
+      'logs',
+      {
+        address: [ETH_USDC_POOL[networkId]],
+        topics: [SWAP_EVENT_TOPIC],
+      },
+      () => {
+        getIndex(1, contract).then(setIndex)
+      },
+    )
 
     return () => {
-      clearInterval(interval)
+      sub.unsubscribe()
     }
-  }, [getTwapSafe, ethUsdcPool, weth])
+  }, [contract, web3, networkId])
 
   return index
+}
+
+export const useUpdateEthPrice = () => {
+  const { getTwapSafe } = useOracle()
+  const [ethPrice, setEthPrice] = useAtom(ethPriceAtom)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+
+  const getTwapEth = () => {
+    if (ethUsdcPool && weth && usdc) {
+      getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
+        setEthPrice(quote)
+      })
+    }
+  }
+
+  useInterval(getTwapEth, 15000)
+
+  useAppEffect(() => {
+    getTwapEth()
+  }, [getTwapSafe])
+
+  return ethPrice
 }
 
 const useDailyHistoricalFunding = () => {
@@ -459,6 +489,7 @@ const useOsqthRefVol = async (): Promise<number> => {
 
 export const useInitController = () => {
   useIndex()
+  useUpdateEthPrice()
   useMark()
   useCurrentImpliedFunding()
   useDailyHistoricalFunding()
