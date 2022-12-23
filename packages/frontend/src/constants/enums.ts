@@ -7,14 +7,14 @@ export enum TradeMode {
 
 export enum Vaults {
   ETHBear = 'Bear', // long 1 eth + short squeeth
-  CrabVault = 'Crab', // long 2 eth + short squeeth
-  ETHZenBull = 'Bull', // long 3 eth + short squeeth
+  CrabVault = 'Crab USDC', // long 2 eth + short squeeth
+  ETHZenBull = 'Zen Bull ETH', // long 3 eth + short squeeth
   Custom = 'Custom Strategy', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
 }
 
 export enum VaultSubtitle {
-  ETHBear = 'Short ETH',
+  ETHBear = 'Coming Soon',
   CrabVault = 'Stack USDC',
   ETHZenBull = 'Stack ETH',
 }

@@ -2,44 +2,13 @@ import React, { useEffect, useState } from 'react'
 import { Typography, Tab, Tabs } from '@material-ui/core'
 import Image from 'next/image'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import bullEmoji from 'public/images/bull_emoji.png'
+import { useRouter } from 'next/router'
 
 import Nav from '@components/Nav'
 import { Vaults, VaultSubtitle } from '@constants/enums'
-import { useRouter } from 'next/router'
-
-const useTabLabelStyles = makeStyles((theme) =>
-  createStyles({
-    title: {
-      fontSize: '24px',
-      fontWeight: 700,
-      fontFamily: 'DM Sans',
-      lineHeight: '2rem',
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '20px',
-        lineHeight: '1.5rem',
-      },
-    },
-    subtitle: {
-      fontSize: '16px',
-      fontWeight: 400,
-      fontFamily: 'DM Sans',
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '13px',
-      },
-    },
-  }),
-)
-
-const TabLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
-  const classes = useTabLabelStyles()
-  return (
-    <div>
-      <Typography className={classes.title}>{title}</Typography>
-      <Typography className={classes.subtitle}>{subtitle}</Typography>
-    </div>
-  )
-}
+import Emoji from '@components/Emoji'
+import ethLogo from 'public/images/eth-logo.svg'
+import usdcLogo from 'public/images/usdc-logo.svg'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -63,12 +32,67 @@ const useStyles = makeStyles((theme) =>
         padding: theme.spacing(1, 3, 6, 3),
       },
     },
-    emoji: {
-      width: '18px',
-      maxHeight: '25px',
+  }),
+)
+
+const useTabStyles = makeStyles((theme) =>
+  createStyles({
+    tabsRoot: {
+      borderBottom: '1px solid #333333',
+      marginTop: '16px',
+    },
+    tabsIndicator: {
+      backgroundColor: '#26E6F8',
+    },
+    tabRoot: {
+      paddingTop: '12px',
+      paddingBottom: '12px',
+      width: '240px',
+      [theme.breakpoints.down('md')]: {
+        width: '30%',
+      },
+    },
+    labelTitle: {
+      textTransform: 'initial',
+      fontSize: '24px',
+      fontWeight: 700,
+
+      lineHeight: '2rem',
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '20px',
+        lineHeight: '1.5rem',
+      },
+    },
+    labelSubtitle: {
+      textTransform: 'initial',
+      fontSize: '16px',
+      fontWeight: 400,
+      [theme.breakpoints.down('xs')]: {
+        fontSize: '13px',
+      },
+    },
+    strategyIconContainer: {
+      position: 'relative',
+    },
+    strategyEmoji: {
+      fontSize: '20px',
+    },
+    strategyTokenLogoContainer: {
+      position: 'absolute',
+      bottom: 16,
+      left: 0,
+      right: 0,
+      width: '20px',
+      height: '20px',
+      zIndex: -10,
+      margin: 'auto',
+    },
+    strategyTokenLogo: {
+      width: '100%',
     },
   }),
 )
+
 const STRATEGIES_PATH = '/strategies'
 
 const CRAB_PATH = `${STRATEGIES_PATH}/crab`
@@ -83,52 +107,92 @@ const routeMap = {
   [BULL_PATH]: 2,
 }
 
+const StrategyLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
+  const classes = useTabStyles()
+
+  return (
+    <div>
+      <Typography className={classes.labelTitle}>{title}</Typography>
+      <Typography className={classes.labelSubtitle}>{subtitle}</Typography>
+    </div>
+  )
+}
+
+interface StrategyIconProps {
+  emoji: string
+  emojiLabel?: string
+  tokenLogo?: string
+  tokenLabel?: string
+}
+
+const StrategyIcon: React.FC<StrategyIconProps> = ({ emoji, emojiLabel, tokenLogo, tokenLabel }) => {
+  const classes = useTabStyles()
+
+  return (
+    <div className={classes.strategyIconContainer}>
+      <Emoji className={classes.strategyEmoji} aria-label={emojiLabel}>
+        {emoji}
+      </Emoji>
+      {tokenLogo && (
+        <div className={classes.strategyTokenLogoContainer}>
+          <Image className={classes.strategyTokenLogo} src={tokenLogo} alt={tokenLabel ?? ''} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
   const router = useRouter()
   const [selectedIdx, setSelectedIdx] = useState(() => routeMap[router.pathname])
 
   const classes = useStyles()
+  const tabClasses = useTabStyles()
 
   useEffect(() => {
     setSelectedIdx(routeMap[router.pathname])
   }, [router.pathname])
 
-  if (!allowedPaths.includes(router.pathname)) return children
+  if (!allowedPaths.includes(router.pathname)) {
+    return children
+  }
 
   return (
     <div>
       <Nav />
-      <div className={classes.container}>
-        <Tabs
-          variant="fullWidth"
-          value={selectedIdx}
-          indicatorColor="primary"
-          textColor="primary"
-          onChange={(_, value) => {
-            if (routeMap[BEAR_PATH] === value) router.push(BEAR_PATH, undefined, { shallow: true })
-            if (routeMap[BULL_PATH] === value) router.push(BULL_PATH, undefined, { shallow: true })
-            if (routeMap[CRAB_PATH] === value) router.push(CRAB_PATH, undefined, { shallow: true })
-          }}
-          aria-label="disabled tabs example"
-        >
-          <Tab style={{ textTransform: 'none' }} label={<TabLabel title={Vaults.ETHBear} />} icon={<div>🐻</div>} />
-          <Tab
-            style={{ textTransform: 'none' }}
-            label={<TabLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
-            icon={<div>🦀</div>}
-          />
-          <Tab
-            style={{ textTransform: 'none' }}
-            label={<TabLabel title={Vaults.ETHZenBull} subtitle={VaultSubtitle.ETHZenBull} />}
-            icon={
-              <div className={classes.emoji}>
-                <Image alt="zen bull emoji" src={bullEmoji} width={'100%'} />
-              </div>
-            }
-          />
-        </Tabs>
-        {children}
-      </div>
+
+      <Tabs
+        centered
+        classes={{ root: tabClasses.tabsRoot, indicator: tabClasses.tabsIndicator }}
+        value={selectedIdx}
+        indicatorColor="primary"
+        textColor="primary"
+        onChange={(_, value) => {
+          if (routeMap[BEAR_PATH] === value) router.push(BEAR_PATH, undefined, { shallow: true })
+          if (routeMap[BULL_PATH] === value) router.push(BULL_PATH, undefined, { shallow: true })
+          if (routeMap[CRAB_PATH] === value) router.push(CRAB_PATH, undefined, { shallow: true })
+        }}
+        aria-label="strategy tabs"
+      >
+        <Tab
+          classes={{ root: tabClasses.tabRoot }}
+          label={<StrategyLabel title={Vaults.ETHBear} subtitle={VaultSubtitle.ETHBear} />}
+          icon={<StrategyIcon emoji="🐻" emojiLabel="bear" />}
+          disabled
+        />
+        <Tab
+          classes={{ root: tabClasses.tabRoot }}
+          label={<StrategyLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
+          icon={<StrategyIcon emoji="🦀" emojiLabel="crab" tokenLogo={usdcLogo} tokenLabel="USDC" />}
+        />
+        <Tab
+          classes={{ root: tabClasses.tabRoot }}
+          label={<StrategyLabel title={Vaults.ETHZenBull} subtitle={VaultSubtitle.ETHZenBull} />}
+          icon={<StrategyIcon emoji="🧘🐂" emojiLabel="zen bull" tokenLogo={ethLogo} tokenLabel="ETH" />}
+        />
+      </Tabs>
+
+      <div className={classes.container}>{children}</div>
     </div>
   )
 }
