@@ -25,6 +25,11 @@ const useStyles = makeStyles((theme) =>
       color: '#BDBDBD',
       lineHeight: '130%',
     },
+    textSmall: {
+      fontSize: '14px',
+      color: 'rgba(255, 255, 255, 0.5)',
+      fontWeight: 500,
+    },
     textMargin: {
       marginTop: '8px',
     },

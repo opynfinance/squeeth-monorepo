@@ -83,6 +83,29 @@ const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps
   )
 }
 
+const PerformanceMetric: React.FC<{ label: string; value: number }> = ({ label, value }) => {
+  const classes = useStyles()
+
+  return (
+    <Box display="flex" justifyContent="flex-end" gridGap="6px">
+      <Typography className={classes.textSmall}>{label}</Typography>
+
+      <Box minWidth="6ch" display="flex" justifyContent="flex-end">
+        <Typography
+          className={clsx(
+            classes.textSmall,
+            classes.textMonospace,
+            value >= 0 ? classes.colorSuccess : classes.colorError,
+          )}
+        >
+          {value >= 0 && '+'}
+          {value}%
+        </Typography>
+      </Box>
+    </Box>
+  )
+}
+
 const StrategyPerformance: React.FC = () => {
   const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
@@ -131,12 +154,13 @@ const StrategyPerformance: React.FC = () => {
     }
   })
 
+  const classes = useStyles()
+
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
   const tvl = vaultCollateral.multipliedBy(ethPrice).integerValue()
 
-  const classes = useStyles()
-
-  const performance = 20.3
+  const historicalPerformance = 7.3
+  const annualizedPerformance = 20.3
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
@@ -149,11 +173,11 @@ const StrategyPerformance: React.FC = () => {
           className={clsx(
             classes.heading,
             classes.textMonospace,
-            performance >= 0 ? classes.colorSuccess : classes.colorError,
+            annualizedPerformance >= 0 ? classes.colorSuccess : classes.colorError,
           )}
         >
-          {performance >= 0 && '+'}
-          {performance}%
+          {annualizedPerformance >= 0 && '+'}
+          {annualizedPerformance}%
         </Typography>
         <Typography className={classes.description}>Annual USD Return</Typography>
 
@@ -171,39 +195,48 @@ const StrategyPerformance: React.FC = () => {
         <Typography className={classes.description}>TVL</Typography>
       </Box>
 
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
-          <DatePicker
-            id="start-date-strategy-performance"
-            label="Start Date"
-            placeholder="MM/DD/YYYY"
-            format={'MM/dd/yyyy'}
-            value={startDate}
-            minDate={CRABV2_START_DATE}
-            onChange={(d) => setStartDate(d || new Date())}
-            animateYearScrolling={false}
-            autoOk={true}
-            clearable
-            TextFieldComponent={CustomTextField}
-          />
+      <Box display="flex" justifyContent="space-between" alignItems="flex-end">
+        <div>
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+            <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
+              <DatePicker
+                id="start-date-strategy-performance"
+                label="Start Date"
+                placeholder="MM/DD/YYYY"
+                format={'MM/dd/yyyy'}
+                value={startDate}
+                minDate={CRABV2_START_DATE}
+                onChange={(d) => setStartDate(d || new Date())}
+                animateYearScrolling={false}
+                autoOk={true}
+                clearable
+                TextFieldComponent={CustomTextField}
+              />
 
-          <Divider orientation="horizontal" className={classes.divider} />
+              <Divider orientation="horizontal" className={classes.divider} />
 
-          <DatePicker
-            id="end-date-strategy-performance"
-            label="End Date"
-            placeholder="MM/DD/YYYY"
-            format={'MM/dd/yyyy'}
-            value={endDate}
-            minDate={startDate}
-            onChange={(d) => setEndDate(d || new Date())}
-            animateYearScrolling={false}
-            autoOk={true}
-            clearable
-            TextFieldComponent={CustomTextField}
-          />
+              <DatePicker
+                id="end-date-strategy-performance"
+                label="End Date"
+                placeholder="MM/DD/YYYY"
+                format={'MM/dd/yyyy'}
+                value={endDate}
+                minDate={startDate}
+                onChange={(d) => setEndDate(d || new Date())}
+                animateYearScrolling={false}
+                autoOk={true}
+                clearable
+                TextFieldComponent={CustomTextField}
+              />
+            </Box>
+          </MuiPickersUtilsProvider>
+        </div>
+
+        <Box display="flex" flexDirection="column" gridGap="4px">
+          <PerformanceMetric label="Historical Returns" value={historicalPerformance} />
+          <PerformanceMetric label="Annualized" value={annualizedPerformance} />
         </Box>
-      </MuiPickersUtilsProvider>
+      </Box>
 
       <Box marginTop="12px">
         {crabUsdPnlSeries ? (
