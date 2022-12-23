@@ -365,8 +365,18 @@ export const useIndex = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
 
   useAppEffect(() => {
+    const getTwapEth = () => {
+      if (ethUsdcPool && weth && usdc) {
+        getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
+          setIndex(quote)
+        })
+      }
+    }
+
+    getTwapEth()
+
     const interval = setInterval(() => {
-      getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => setIndex(quote))
+      getTwapEth()
     }, 15000)
 
     return () => {
