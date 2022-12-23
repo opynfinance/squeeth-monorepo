@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Switch, Tooltip, Typography } from '@material-ui/core'
+import { Box, CircularProgress, Tooltip, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
@@ -49,7 +49,6 @@ import {
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
-import ethLogo from 'public/images/eth-logo.svg'
 import usdcLogo from 'public/images/usdc-logo.svg'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
@@ -86,7 +85,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     new BigNumber(0),
   )
   const [depositEthAmount, setDepositEthAmount] = useState(new BigNumber(0))
-  const [useUsdc, setUseUsdc] = useState(true)
   const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
   const [useQueue, setUseQueue] = useState(false)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
@@ -100,12 +98,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const selectWallet = useSelectWallet()
 
   const { usdc, weth, crabHelper, crabNetting } = useAtomValue(addressesAtom)
-  const { data: balance, refetch: refetchWalletBalance } = useWalletBalance()
   const { value: usdcBalance, refetch: refetchUsdcBalance } = useTokenBalance(usdc, 15, USDC_DECIMALS)
   const { getExactIn } = useUniswapQuoter()
   const setStrategyData = useSetStrategyDataV2()
   const calculateETHtoBorrowFromUniswap = useCalculateETHtoBorrowFromUniswapV2()
-  const flashDeposit = useFlashDepositV2(calculateETHtoBorrowFromUniswap)
   const flashDepositUSDC = useFlashDepositUSDC(calculateETHtoBorrowFromUniswap)
   const queueUSDC = useQueueDepositUSDC()
   const [usdcQueued, setUsdcQueued] = useAtom(usdcQueuedAtom)
@@ -204,15 +200,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         inputError = `Amount greater than strategy cap since it flash borrows ${borrowEth.toFixed(
           2,
         )} ETH. Input a smaller amount`
-      } else if (!useUsdc && toTokenAmount(balance ?? BIG_ZERO, 18).lt(depositAmountBN)) {
-        inputError = 'Insufficient ETH balance'
-      } else if (useUsdc && usdcBalance.lt(depositAmountBN)) {
+      } else if (usdcBalance.lt(depositAmountBN)) {
         inputError = 'Insufficient USDC balance'
       }
     }
 
     return inputError
-  }, [connected, depositEthAmount, depositAmountBN, depositedAmount, maxCap, borrowEth, usdcBalance, balance, useUsdc])
+  }, [connected, depositEthAmount, depositAmountBN, depositedAmount, maxCap, borrowEth, usdcBalance])
 
   useEffect(() => {
     if (!ready) {
@@ -227,27 +221,17 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       return
     }
 
-    if (!useUsdc) {
-      setDepositEthAmount(depositAmountBN)
-      calculateETHtoBorrowFromUniswap(depositAmountBN, slippage).then((q) => {
+    const fee = getUSDCPoolFee(network)
+    getExactIn(usdc, weth, fromTokenAmount(depositAmountBN, USDC_DECIMALS), fee, slippage).then((usdcq) => {
+      setDepositEthAmount(toTokenAmount(usdcq.amountOut, WETH_DECIMALS))
+      calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.minAmountOut, WETH_DECIMALS), slippage).then((q) => {
         setDepositPriceImpact(q.priceImpact)
         setBorrowEth(q.ethBorrow)
         setEthAmountOutFromDeposit(q.amountOut)
         setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
       })
-    } else {
-      const fee = getUSDCPoolFee(network)
-      getExactIn(usdc, weth, fromTokenAmount(depositAmountBN, USDC_DECIMALS), fee, slippage).then((usdcq) => {
-        setDepositEthAmount(toTokenAmount(usdcq.amountOut, WETH_DECIMALS))
-        calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.minAmountOut, WETH_DECIMALS), slippage).then((q) => {
-          setDepositPriceImpact(q.priceImpact)
-          setBorrowEth(q.ethBorrow)
-          setEthAmountOutFromDeposit(q.amountOut)
-          setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
-        })
-      })
-    }
-  }, [ready, depositAmountBN, slippage, useUsdc, network, usdc, weth])
+    })
+  }, [ready, depositAmountBN, slippage, network, usdc, weth])
 
   const recordAnalytics = useCallback(
     (events: string[]) => {
@@ -276,7 +260,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     transaction.analytics ? recordAnalytics(transaction.analytics) : null
     resetDepositAmount()
     resetTracking()
-    transaction.token === 'ETH' ? refetchWalletBalance() : refetchUsdcBalance()
+    refetchUsdcBalance()
     ongoingTransaction.current = undefined
   }, [
     usdcQueued,
@@ -285,7 +269,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     onTxnConfirm,
     resetDepositAmount,
     refetchUsdcBalance,
-    refetchWalletBalance,
     recordAnalytics,
     resetTracking,
   ])
@@ -305,15 +288,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         ongoingTransaction.current = {
           amount: depositAmountBN,
           queuedTransaction: useQueue,
-          token: useUsdc ? 'USDC' : 'ETH',
+          token: 'USDC',
           analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
         }
         if (useQueue) {
           await queueUSDC(depositAmountBN, onTxnConfirmed)
-        } else if (useUsdc) {
-          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed)
         } else {
-          await flashDeposit(depositAmountBN, slippage, onTxnConfirmed)
+          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed)
         }
       }
     } catch (e) {
@@ -324,20 +305,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     setTxLoading(false)
   }
 
-  const handleTokenChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setUseUsdc(event.target.checked)
-      resetDepositAmount()
-    },
-    [resetDepositAmount],
-  )
-
   const setDepositMax = () => {
-    if (!useUsdc) setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
-    else setDepositAmount(usdcBalance.toString())
+    setDepositAmount(usdcBalance.toString())
   }
-
-  const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : 'ETH'), [useUsdc, useQueue])
 
   // Update deposit step
   useEffect(() => {
@@ -347,22 +317,20 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       } else {
         setDepositStep(DepositSteps.DEPOSIT)
       }
-    } else if (useUsdc) {
+    } else {
       if (usdcAllowance.lt(depositAmountBN)) {
         setDepositStep(DepositSteps.APPROVE)
       } else {
         setDepositStep(DepositSteps.DEPOSIT)
       }
-    } else {
-      setDepositStep(DepositSteps.DEPOSIT)
     }
-  }, [useUsdc, usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
+  }, [usdcAllowance, depositAmountBN, useQueue, usdcQueueAllowance])
 
   const minUSDCAmount = toTokenAmount(minUSDCAmountValue, USDC_DECIMALS)
   const isDepositAmountLessThanMinAllowed = depositAmountBN.lt(minUSDCAmount)
 
   useEffect(() => {
-    if (!useUsdc || isDepositAmountLessThanMinAllowed) {
+    if (isDepositAmountLessThanMinAllowed) {
       setQueueOptionAvailable(false)
       setUseQueue(false)
       return
@@ -375,7 +343,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [depositPriceImpact, useUsdc, isDepositAmountLessThanMinAllowed])
+  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed])
 
   const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
 
@@ -394,19 +362,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         <Typography variant="h4" className={classes.subtitle}>
           Strategy Deposit
         </Typography>
-
-        <Box className={classes.tokenSelectBox}>
-          <Typography variant="caption" className={classes.tokenChoice}>
-            ETH
-          </Typography>
-          <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" />
-          <Typography variant="caption" className={classes.tokenChoice}>
-            USDC
-          </Typography>
-        </Box>
       </Box>
 
-      <Box display="flex" alignItems="center" gridGap="12px" marginTop="12px">
+      <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
           variant="outlined"
           size="small"
@@ -435,13 +393,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
       <div className={classes.tradeContainer}>
         <InputToken
-          id="crab-deposit-eth-input"
+          id="crab-deposit-usdc-input"
           value={depositAmount}
           onInputChange={onInputChange}
-          balance={useUsdc ? usdcBalance : toTokenAmount(balance ?? BIG_ZERO, 18)}
-          logo={useUsdc ? usdcLogo : ethLogo}
-          symbol={depositToken}
-          usdPrice={useUsdc ? new BigNumber(1) : ethIndexPrice}
+          balance={usdcBalance}
+          logo={usdcLogo}
+          symbol={'USDC'}
+          usdPrice={new BigNumber(1)}
           onBalanceClick={setDepositMax}
           error={!!depositError}
           helperText={depositError}
