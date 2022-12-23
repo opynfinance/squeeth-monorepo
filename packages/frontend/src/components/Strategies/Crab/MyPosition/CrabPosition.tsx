@@ -36,7 +36,9 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
         My Crab Position
       </Typography>
 
-      <Typography className={classes.heading}>{formatCurrency(currentPositionValue.toNumber())}</Typography>
+      <Typography className={clsx(classes.heading, classes.textMonospace)}>
+        {formatCurrency(currentPositionValue.toNumber())}
+      </Typography>
 
       {pnl.isFinite() && (
         <Box display="flex" alignItems="center" gridGap="8px">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Typography, CircularProgress } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
+import clsx from 'clsx'
 
 import { formatCurrency } from '@utils/formatter'
 import useStyles from '@components/Strategies/Crab/useStyles'
@@ -39,7 +40,7 @@ const DepositQueued: React.FC = () => {
       </Typography>
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
-        <Typography className={classes.heading}>
+        <Typography className={clsx(classes.heading, classes.textMonospace)}>
           {formatCurrency(Number(toTokenAmount(usdcQueued, USDC_DECIMALS)))}
         </Typography>
         {!isNettingAuctionLive && (
@@ -81,7 +82,7 @@ const WithdrawQueued: React.FC = () => {
       </Typography>
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
-        <Typography className={classes.heading}>
+        <Typography className={clsx(classes.heading, classes.textMonospace)}>
           {formatCurrency(
             Number(
               toTokenAmount(crabQueued, CRAB_TOKEN_DECIMALS).times(toTokenAmount(crabUsdValue, CRAB_TOKEN_DECIMALS)),
