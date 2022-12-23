@@ -168,7 +168,7 @@ const StrategyPerformance: React.FC = () => {
   }, [historicalReturns, numberOfDays])
 
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const tvl = vaultCollateral.multipliedBy(ethPrice).integerValue()
+  const tvl = vaultCollateral.div(2).multipliedBy(ethPrice).integerValue()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
