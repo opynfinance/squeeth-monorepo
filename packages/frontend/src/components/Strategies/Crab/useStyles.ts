@@ -47,6 +47,13 @@ const useStyles = makeStyles((theme) =>
     textMonospace: {
       fontFamily: 'DM Mono',
     },
+    divider: {
+      width: '15px',
+      backgroundColor: '#8C8D8D',
+      height: '1.5px',
+      position: 'relative',
+      top: '6px',
+    },
   }),
 )
 
