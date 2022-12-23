@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import DateFnsUtils from '@date-io/date-fns'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
+import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 
 import useStyles from '@components/Strategies/Crab/useStyles'
 import {
@@ -28,7 +29,7 @@ import {
 } from '@state/crab/atoms'
 import { BIG_ZERO, CRABV2_START_DATE } from '@constants/index'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { formatCurrency } from '@utils/formatter'
+import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
 
@@ -99,7 +100,7 @@ const PerformanceMetric: React.FC<{ label: string; value: number }> = ({ label, 
           )}
         >
           {value >= 0 && '+'}
-          {value}%
+          {formatNumber(value)}%
         </Typography>
       </Box>
     </Box>
@@ -156,11 +157,18 @@ const StrategyPerformance: React.FC = () => {
 
   const classes = useStyles()
 
+  const isLoadingChartData = typeof crabUsdPnlSeries === 'undefined'
+  const numberOfDays = differenceInCalendarDays(endDate, startDate)
+  const hasData = isLoadingChartData ? false : crabUsdPnlSeries.length > 0
+
+  const historicalReturns = hasData ? crabUsdPnlSeries[crabUsdPnlSeries.length - 1][1] : 0
+  const annualizedReturns = useMemo(() => {
+    // compounded annually
+    return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
+  }, [historicalReturns, numberOfDays])
+
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
   const tvl = vaultCollateral.multipliedBy(ethPrice).integerValue()
-
-  const historicalPerformance = 7.3
-  const annualizedPerformance = 20.3
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
@@ -173,16 +181,16 @@ const StrategyPerformance: React.FC = () => {
           className={clsx(
             classes.heading,
             classes.textMonospace,
-            annualizedPerformance >= 0 ? classes.colorSuccess : classes.colorError,
+            annualizedReturns >= 0 ? classes.colorSuccess : classes.colorError,
           )}
         >
-          {annualizedPerformance >= 0 && '+'}
-          {annualizedPerformance}%
+          {annualizedReturns >= 0 && '+'}
+          {formatNumber(annualizedReturns)}%
         </Typography>
         <Typography className={classes.description}>Annual USD Return</Typography>
 
         <Box position="relative" top="3px">
-          <Tooltip title={`historical returns, selected dates`}>
+          <Tooltip title={`Historical returns, selected dates`}>
             <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
           </Tooltip>
         </Box>
@@ -233,8 +241,8 @@ const StrategyPerformance: React.FC = () => {
         </div>
 
         <Box display="flex" flexDirection="column" gridGap="4px">
-          <PerformanceMetric label="Historical Returns" value={historicalPerformance} />
-          <PerformanceMetric label="Annualized" value={annualizedPerformance} />
+          <PerformanceMetric label="Historical Returns" value={historicalReturns} />
+          <PerformanceMetric label="Annualized" value={annualizedReturns} />
         </Box>
       </Box>
 
