@@ -195,7 +195,7 @@ const StrategyPerformance: React.FC = () => {
         <Typography className={classes.description}>TVL</Typography>
       </Box>
 
-      <Box display="flex" justifyContent="space-between" alignItems="flex-end">
+      <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
         <div>
           <MuiPickersUtilsProvider utils={DateFnsUtils}>
             <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
