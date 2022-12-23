@@ -59,7 +59,7 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
 
   const ethPrice = useOnChainETHPrice()
-  const eth2Price = toTokenAmount(ethPrice, 18)
+  const eth2Price = ethPrice.exponentiatedBy(2)
   const markPrice = toTokenAmount(mark, 18)
   const impliedVolPercent = impliedVol * 100
   const currentImpliedPremium =
