@@ -209,8 +209,8 @@ const StrategyPerformance: React.FC = () => {
         {crabUsdPnlSeries ? (
           <HighchartsReact highcharts={Highcharts} options={chartOptions} />
         ) : (
-          <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
-            <CircularProgress size={40} color="secondary" />
+          <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">
+            <CircularProgress size={40} className={classes.loadingSpinner} />
           </Box>
         )}
       </Box>
