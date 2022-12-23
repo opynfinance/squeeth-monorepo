@@ -395,14 +395,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           <Typography variant="caption" className={classes.tokenChoice}>
             ETH
           </Typography>
-          <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" />
+          <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" size="small" />
           <Typography variant="caption" className={classes.tokenChoice}>
             USDC
           </Typography>
         </Box>
       </Box>
 
-      <Box display="flex" alignItems="center" gridGap="12px" marginTop="12px">
+      <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
           variant="outlined"
           size="small"
@@ -444,7 +444,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </div>
 
         <InputToken
-          id="crab-withdraw-eth-input"
+          id="crab-withdraw-input"
           value={withdrawAmount}
           onInputChange={onInputChange}
           balance={useUsdc ? currentUsdcValue : currentEthValue}
