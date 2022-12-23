@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
-import { Box, useTheme, Fade } from '@material-ui/core'
+import { Box, useTheme, Fade, CircularProgress } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
@@ -9,6 +9,7 @@ import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import { formatNumber } from '@utils/formatter'
+import useStyles from '@components/Strategies/Crab/useStyles'
 
 const CandyBar = (props: any) => {
   const { x, y, width, height, fill, stroke } = props
@@ -211,9 +212,14 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 
 function ChartWrapper() {
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const classes = useStyles()
 
-  if (currentImpliedFunding === 0) {
-    return <></>
+  if (currentImpliedFunding == 0) {
+    return (
+      <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+        <CircularProgress size={40} className={classes.loadingSpinner} />
+      </Box>
+    )
   }
   return <Chart currentImpliedFunding={currentImpliedFunding} />
 }
