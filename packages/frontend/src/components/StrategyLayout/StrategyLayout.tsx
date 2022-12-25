@@ -6,9 +6,9 @@ import { useRouter } from 'next/router'
 
 import Nav from '@components/Nav'
 import { Vaults, VaultSubtitle } from '@constants/enums'
-import Emoji from '@components/Emoji'
-import ethLogo from 'public/images/eth-logo.svg'
-import usdcLogo from 'public/images/usdc-logo.svg'
+import crabStrategyImg from 'public/images/crab_strategy.svg'
+import bearStrategyImg from 'public/images/bear_strategy.svg'
+import bullStrategyImg from 'public/images/bull_strategy.png'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -71,23 +71,12 @@ const useTabStyles = makeStyles((theme) =>
         fontSize: '13px',
       },
     },
-    strategyIconContainer: {
-      position: 'relative',
-    },
-    strategyEmoji: {
-      fontSize: '20px',
-    },
-    strategyTokenLogoContainer: {
-      position: 'absolute',
-      bottom: 16,
-      left: 0,
-      right: 0,
+    strategyImgContainer: {
       width: '20px',
       height: '20px',
-      zIndex: -10,
-      margin: 'auto',
     },
-    strategyTokenLogo: {
+
+    strategyImg: {
       width: '100%',
     },
   }),
@@ -118,26 +107,17 @@ const StrategyLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ 
   )
 }
 
-interface StrategyIconProps {
-  emoji: string
-  emojiLabel?: string
-  tokenLogo?: string
-  tokenLabel?: string
+interface StrategyImageProps {
+  img: StaticImageData
+  imgAlt?: string
 }
 
-const StrategyIcon: React.FC<StrategyIconProps> = ({ emoji, emojiLabel, tokenLogo, tokenLabel }) => {
+const StrategyImage: React.FC<StrategyImageProps> = ({ img, imgAlt }) => {
   const classes = useTabStyles()
 
   return (
-    <div className={classes.strategyIconContainer}>
-      <Emoji className={classes.strategyEmoji} aria-label={emojiLabel}>
-        {emoji}
-      </Emoji>
-      {tokenLogo && (
-        <div className={classes.strategyTokenLogoContainer}>
-          <Image className={classes.strategyTokenLogo} src={tokenLogo} alt={tokenLabel ?? ''} />
-        </div>
-      )}
+    <div className={classes.strategyImgContainer}>
+      <Image className={classes.strategyImg} src={img} alt={imgAlt ?? ''} />
     </div>
   )
 }
@@ -177,18 +157,18 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
         <Tab
           classes={{ root: tabClasses.tabRoot }}
           label={<StrategyLabel title={Vaults.ETHBear} subtitle={VaultSubtitle.ETHBear} />}
-          icon={<StrategyIcon emoji="🐻" emojiLabel="bear" />}
+          icon={<StrategyImage img={bearStrategyImg} imgAlt="Bear strategy" />}
           disabled
         />
         <Tab
           classes={{ root: tabClasses.tabRoot }}
           label={<StrategyLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}
-          icon={<StrategyIcon emoji="🦀" emojiLabel="crab" tokenLogo={usdcLogo} tokenLabel="USDC" />}
+          icon={<StrategyImage img={crabStrategyImg} imgAlt="Crab USDC strategy" />}
         />
         <Tab
           classes={{ root: tabClasses.tabRoot }}
           label={<StrategyLabel title={Vaults.ETHZenBull} subtitle={VaultSubtitle.ETHZenBull} />}
-          icon={<StrategyIcon emoji="🧘🐂" emojiLabel="zen bull" tokenLogo={ethLogo} tokenLabel="ETH" />}
+          icon={<StrategyImage img={bullStrategyImg} imgAlt="Zen Bull ETH strategy" />}
         />
       </Tabs>
 

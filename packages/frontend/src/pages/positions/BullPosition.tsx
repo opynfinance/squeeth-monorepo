@@ -13,7 +13,7 @@ import {
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
 } from '@state/bull/atoms'
-import bullEmoji from 'public/images/bull_emoji.png'
+import bullStrategyImg from 'public/images/bull_strategy.png'
 
 const BullPosition: React.FC = () => {
   const classes = useStyles()
@@ -35,7 +35,7 @@ const BullPosition: React.FC = () => {
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div className={classes.emoji}>
-            <Image src={bullEmoji} width="100%" alt="zen bull" />
+            <Image src={bullStrategyImg} width="100%" alt="zen bull" />
           </div>
           <Typography style={{ marginLeft: '8px' }}>Zen Bull</Typography>
         </div>
