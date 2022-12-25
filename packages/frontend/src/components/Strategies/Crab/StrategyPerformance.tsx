@@ -29,6 +29,7 @@ import {
 } from '@state/crab/atoms'
 import { BIG_ZERO, CRABV2_START_DATE } from '@constants/index'
 import { useETHPrice } from '@hooks/useETHPrice'
+import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
@@ -113,6 +114,7 @@ const StrategyPerformance: React.FC = () => {
 
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const ethPrice = useETHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
   const query = useCrabPnLV2ChartData()
 
   const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
@@ -168,7 +170,11 @@ const StrategyPerformance: React.FC = () => {
   }, [historicalReturns, numberOfDays])
 
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const tvl = vaultCollateral.div(2).multipliedBy(ethPrice).integerValue()
+  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
+
+  const collateralValue = vaultCollateral.multipliedBy(ethPrice)
+  const debtValue = vaultDebt.multipliedBy(osqthPrice)
+  const tvl = collateralValue.minus(debtValue).integerValue()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
