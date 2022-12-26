@@ -1,15 +1,67 @@
 import React, { useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceDot, ReferenceArea, Label } from 'recharts'
-import { Box, useTheme, Fade, CircularProgress } from '@material-ui/core'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  ReferenceDot,
+  ReferenceArea,
+  Label,
+  Tooltip,
+  TooltipProps,
+} from 'recharts'
+import { Box, useTheme, Fade, CircularProgress, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
+import { makeStyles } from '@material-ui/core/styles'
 
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-import { formatNumber } from '@utils/formatter'
+import { formatNumber, formatCurrency } from '@utils/formatter'
 import useStyles from '@components/Strategies/Crab/useStyles'
+
+const useTooltipStyles = makeStyles(() => ({
+  root: {
+    backgroundColor: 'rgba(247,247,247,0.85)',
+    padding: '4px 8px',
+  },
+  label: {
+    fontSize: '12px',
+    fontFamily: 'DM Mono',
+    color: 'rgb(51, 51, 51)',
+  },
+  value: {
+    fontSize: '12px',
+    fontFamily: 'DM Mono',
+    color: 'rgb(51, 51, 51)',
+  },
+}))
+
+const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload }) => {
+  const classes = useTooltipStyles()
+
+  if (active && payload && payload.length) {
+    const crabReturn = payload[0].payload.crabReturn
+    const ethPrice = payload[0].payload.ethPrice
+
+    return (
+      <div className={classes.root}>
+        <Typography className={classes.label}>
+          <b>{formatCurrency(ethPrice)}</b> {`ETH/USD`}
+        </Typography>
+        <Typography className={classes.value}>
+          {`Crab return: `}
+          <b>{formatNumber(crabReturn)}%</b>
+        </Typography>
+      </div>
+    )
+  }
+
+  return null
+}
 
 const CandyBar = (props: any) => {
   const { x, y, width, height, fill, stroke } = props
@@ -33,7 +85,7 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
   const dataPoints = []
 
   const starting = new BigNumber(-percentRange)
-  const increment = new BigNumber(0.1)
+  const increment = new BigNumber(0.05)
   const ending = new BigNumber(percentRange)
 
   let current = starting
@@ -147,6 +199,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
+              activeDot={{ strokeWidth: 0, r: 5 }}
             />
             <Line
               type="monotone"
@@ -155,6 +208,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
+              activeDot={{ strokeWidth: 0, r: 5 }}
             />
 
             <ReferenceArea
@@ -203,6 +257,12 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
                 filter="url(#removebackground)"
               />
             </ReferenceDot>
+
+            <Tooltip
+              wrapperStyle={{ outline: 'none' }}
+              cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
+              content={<CustomTooltip />}
+            />
           </LineChart>
         </ResponsiveContainer>
       </Box>
