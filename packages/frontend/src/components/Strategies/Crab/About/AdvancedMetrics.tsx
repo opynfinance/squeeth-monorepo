@@ -42,7 +42,7 @@ const AdvancedMetrics: React.FC = () => {
     <div>
       <TextButton className={classes.button} onClick={() => setShowAdvanced(!showAdvanced)}>
         <Typography className={classes.buttonText}>Advanced</Typography>{' '}
-        {showAdvanced ? <KeyboardArrowDownIcon /> : <KeyboardArrowUpIcon />}
+        {showAdvanced ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
       </TextButton>
 
       <Fade in={showAdvanced}>
