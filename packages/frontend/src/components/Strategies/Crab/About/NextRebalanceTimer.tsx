@@ -59,6 +59,7 @@ const useStyles = makeStyles(() =>
       color: 'rgba(255, 255, 255, 1)',
       fontWeight: 500,
       fontFamily: 'DM Mono',
+      textAlign: 'right',
     },
   }),
 )

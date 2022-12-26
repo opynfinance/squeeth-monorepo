@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipProps,
 } from 'recharts'
-import { Box, useTheme, Fade, CircularProgress, Typography } from '@material-ui/core'
+import { Box, useTheme, Fade, CircularProgress, Typography, Hidden, useMediaQuery } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -134,6 +134,8 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const successColor = theme.palette.success.main
   const errorColor = theme.palette.error.main
 
+  const isMobileBreakpoint = useMediaQuery(theme.breakpoints.down('xs'))
+
   const currentCrabReturn = getCrabReturn(currentEthPrice)
 
   return (
@@ -161,7 +163,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               height={1}
               type="number"
               dataKey="ethPrice"
-              domain={['dataMin - 40', 'dataMax + 200']}
+              domain={isMobileBreakpoint ? ['dataMin - 20', 'dataMax + 20'] : ['dataMin - 40', 'dataMax + 200']}
               tick={false}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
@@ -182,14 +184,19 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               type="number"
               dataKey="crabReturn"
               tick={false}
-              domain={['dataMin - 0.5', 'dataMax + 0.5']}
+              domain={isMobileBreakpoint ? ['dataMin - 1.25', 'dataMax + 1.25'] : ['dataMin - 0.5', 'dataMax + 0.5']}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
               stroke="#fff"
               markerStart="url(#arrowhead)"
               yAxisId="0"
             >
-              <Label value="Crab Strategy" position="insideTopLeft" offset={14} fill="#ffffff80" />
+              <Label
+                value={isMobileBreakpoint ? 'Crab' : 'Crab Strategy'}
+                position="insideTopLeft"
+                offset={14}
+                fill="#ffffff80"
+              />
             </YAxis>
 
             <Line

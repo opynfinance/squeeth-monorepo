@@ -46,28 +46,32 @@ const AdvancedMetrics: React.FC = () => {
       </TextButton>
 
       <Fade in={showAdvanced}>
-        <Box display="flex" justifyContent="space-between" gridGap="12px" marginTop="16px">
-          <Metric
-            label={
-              <MetricLabel
-                label="Daily Premium"
-                tooltipTitle={`Daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
-              />
-            }
-            gridGap="4px"
-            value={historicalDailyPremium}
-          />
-          <Metric
-            label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
-            gridGap="4px"
-            value={`${formatNumber(impliedVolPercent)}%`}
-          />
-          <Metric
-            label={<MetricLabel label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
-            gridGap="4px"
-            value={`${formatNumber(osqthRefVol)}%`}
-          />
-        </Box>
+        {showAdvanced ? (
+          <Box display="flex" justifyContent="space-between" gridGap="12px" marginTop="16px" flexWrap="wrap">
+            <Metric
+              label={
+                <MetricLabel
+                  label="Daily Premium"
+                  tooltipTitle={`Daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
+                />
+              }
+              gridGap="4px"
+              value={historicalDailyPremium}
+            />
+            <Metric
+              label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
+              gridGap="4px"
+              value={`${formatNumber(impliedVolPercent)}%`}
+            />
+            <Metric
+              label={<MetricLabel label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
+              gridGap="4px"
+              value={`${formatNumber(osqthRefVol)}%`}
+            />
+          </Box>
+        ) : (
+          <div></div>
+        )}
       </Fade>
     </div>
   )

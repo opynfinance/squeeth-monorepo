@@ -181,7 +181,7 @@ const StrategyPerformance: React.FC = () => {
       <Typography variant="h3" className={classes.sectionTitle}>
         Strategy Performance
       </Typography>
-      <Box display="flex" alignItems="baseline" gridGap="12px">
+      <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
         <Typography
           variant="h2"
           className={clsx(
@@ -193,12 +193,15 @@ const StrategyPerformance: React.FC = () => {
           {annualizedReturns >= 0 && '+'}
           {formatNumber(annualizedReturns)}%
         </Typography>
-        <Typography className={classes.description}>Annualized USDC Return</Typography>
 
-        <Box position="relative" top="3px">
-          <Tooltip title={`Historical returns, selected dates`}>
-            <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
-          </Tooltip>
+        <Box display="flex" alignItems="baseline" gridGap="12px">
+          <Typography className={classes.description}>Annualized USDC Return</Typography>
+
+          <Box position="relative" top="3px">
+            <Tooltip title="Historical returns, selected dates">
+              <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </Box>
         </Box>
       </Box>
 
@@ -246,7 +249,7 @@ const StrategyPerformance: React.FC = () => {
           </MuiPickersUtilsProvider>
         </div>
 
-        <Box display="flex" flexDirection="column" gridGap="4px">
+        <Box display="flex" flexDirection="column" gridGap="4px" flex="1" flexBasis="200px">
           <PerformanceMetric label="Historical Returns" value={historicalReturns} />
           <PerformanceMetric label="Annualized" value={annualizedReturns} />
         </Box>

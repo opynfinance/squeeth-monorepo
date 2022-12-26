@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Typography } from '@material-ui/core'
 import clsx from 'clsx'
+import { makeStyles, createStyles } from '@material-ui/core/styles'
 
 import NextRebalanceTimer from './NextRebalanceTimer'
 import ProfitabilityChart from './ProfitabilityChart'
@@ -8,8 +9,26 @@ import AdvancedMetrics from './AdvancedMetrics'
 import useStyles from '@components/Strategies/Crab/useStyles'
 import { LinkWrapper } from '@components/LinkWrapper'
 
+const useAboutStyles = makeStyles((theme) =>
+  createStyles({
+    timerContainer: {
+      position: 'absolute',
+      top: '10px',
+      right: '0',
+
+      [theme.breakpoints.down('sm')]: {
+        position: 'relative',
+        top: '0px',
+        right: '0',
+        marginBottom: '16px',
+      },
+    },
+  }),
+)
+
 const About: React.FC = () => {
   const classes = useStyles()
+  const aboutClasses = useAboutStyles()
 
   return (
     <div>
@@ -29,9 +48,9 @@ const About: React.FC = () => {
       </Box>
 
       <Box position="relative" marginTop="32px">
-        <Box position="absolute" top="10px" right="0px">
+        <div className={aboutClasses.timerContainer}>
           <NextRebalanceTimer />
-        </Box>
+        </div>
         <ProfitabilityChart />
       </Box>
 
