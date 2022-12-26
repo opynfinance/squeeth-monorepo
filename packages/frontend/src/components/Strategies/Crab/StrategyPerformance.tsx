@@ -121,7 +121,7 @@ const StrategyPerformance: React.FC = () => {
 
   const series = [
     {
-      name: 'Crab/USD 🦀  % Return',
+      name: 'Crab/USDC 🦀  % Return',
       yAxis: 0,
       data: crabUsdPnlSeries,
       tooltip: {
@@ -193,7 +193,7 @@ const StrategyPerformance: React.FC = () => {
           {annualizedReturns >= 0 && '+'}
           {formatNumber(annualizedReturns)}%
         </Typography>
-        <Typography className={classes.description}>Annual USD Return</Typography>
+        <Typography className={classes.description}>Annualized USDC Return</Typography>
 
         <Box position="relative" top="3px">
           <Tooltip title={`Historical returns, selected dates`}>

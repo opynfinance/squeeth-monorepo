@@ -50,7 +50,7 @@ const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload }) =>
     return (
       <div className={classes.root}>
         <Typography className={classes.label}>
-          <b>{formatCurrency(ethPrice)}</b> {`ETH/USD`}
+          <b>{formatCurrency(ethPrice)}</b> {`ETH/USDC`}
         </Typography>
         <Typography className={classes.value}>
           {`Crab return: `}

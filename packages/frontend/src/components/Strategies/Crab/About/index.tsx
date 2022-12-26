@@ -6,6 +6,7 @@ import NextRebalanceTimer from './NextRebalanceTimer'
 import ProfitabilityChart from './ProfitabilityChart'
 import AdvancedMetrics from './AdvancedMetrics'
 import useStyles from '@components/Strategies/Crab/useStyles'
+import { LinkWrapper } from '@components/LinkWrapper'
 
 const About: React.FC = () => {
   const classes = useStyles()
@@ -17,12 +18,13 @@ const About: React.FC = () => {
           About Crab
         </Typography>
         <Typography variant="h2" className={classes.heading}>
-          Stack USDC when ETH is flat
+          Stack USDC when ETH is calm
         </Typography>
 
         <Typography className={clsx(classes.text, classes.textMargin)}>
           In general, Crab earns USDC returns except when there is high ETH volatility in the market, when it may draw
-          down. The strategy stacks USDC if ETH is within the below bands at the next hedge.
+          down. Most often, the strategy stacks USDC if ETH is within the below bands at the next hedge.{' '}
+          <LinkWrapper href="https://opyn.gitbook.io/squeeth/resources/crab-strategy">Learn more</LinkWrapper>
         </Typography>
       </Box>
 
