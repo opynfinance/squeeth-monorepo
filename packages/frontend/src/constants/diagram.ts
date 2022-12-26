@@ -47,9 +47,9 @@ export const pnlGraphOptions = {
     backgroundColor: 'none',
     zoomType: 'xy',
     height: '346',
-    marginLeft: '32',
+    marginLeft: '36',
     style: {
-      fontFamily: 'DM Sans',
+      fontFamily: 'DM Mono',
     },
   },
   title: {
@@ -82,7 +82,7 @@ export const pnlGraphOptions = {
     shared: true,
     borderColor: 'none',
     style: {
-      fontFamily: 'DM Sans',
+      fontFamily: 'DM Mono',
     },
   },
   credits: {
