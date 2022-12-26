@@ -4,6 +4,7 @@ import clsx from 'clsx'
 
 import NextRebalanceTimer from './NextRebalanceTimer'
 import ProfitabilityChart from './ProfitabilityChart'
+import AdvancedMetrics from './AdvancedMetrics'
 import useStyles from '@components/Strategies/Crab/useStyles'
 
 const About: React.FC = () => {
@@ -30,6 +31,10 @@ const About: React.FC = () => {
           <NextRebalanceTimer />
         </Box>
         <ProfitabilityChart />
+      </Box>
+
+      <Box marginTop="16px">
+        <AdvancedMetrics />
       </Box>
     </div>
   )

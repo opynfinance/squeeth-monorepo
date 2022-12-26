@@ -16,7 +16,7 @@ const useStyles = makeStyles((theme) =>
       maxWidth: '1280px',
       width: '80%',
       margin: '0 auto',
-      padding: theme.spacing(1, 5, 10, 5),
+      padding: theme.spacing(1, 5, 7, 5),
 
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
@@ -26,10 +26,10 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(1, 4, 8, 4),
+        padding: theme.spacing(1, 4, 5, 4),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(1, 3, 6, 3),
+        padding: theme.spacing(1, 3, 4, 3),
       },
     },
   }),
