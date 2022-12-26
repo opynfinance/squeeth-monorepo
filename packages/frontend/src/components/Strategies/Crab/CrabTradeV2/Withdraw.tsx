@@ -4,6 +4,10 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useDebounce } from 'use-debounce'
 import InfoIcon from '@material-ui/icons/Info'
+import { usePrevious } from 'react-use'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
+
 import { PrimaryButtonNew, RoundedButton } from '@components/Button'
 import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
@@ -30,7 +34,6 @@ import {
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { usePrevious } from 'react-use'
 import { dailyHistoricalFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import { userMigratedSharesETHAtom } from '@state/crabMigration/atom'
@@ -55,13 +58,12 @@ import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculati
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import usdcLogo from 'public/images/usdc-logo.svg'
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
+import useAppEffect from '@hooks/useAppEffect'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -91,6 +93,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
   const [useQueue, setUseQueue] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
+  const [showTokenToggle, setShowTokenToggle] = useState(false)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
   const minCrabAmountValue = useAtomValue(minCrabAmountAtom)
@@ -161,6 +164,13 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     },
     [track],
   )
+
+  useAppEffect(() => {
+    // show token toggle only if the user has deposited before 28th December 00:00 UTC, the launch date of new design
+    const launchDate = new Date('2022-12-28T00:00:00.000Z').getTime() / 1000
+    const isLegacyUser = data?.some((tx) => tx.type === 'FLASH_DEPOSIT' && tx.timestamp < launchDate) ?? false
+    setShowTokenToggle(isLegacyUser)
+  }, [data])
 
   useEffect(() => {
     if (confirmed && prevCrabTxData?.length === data?.length) {
@@ -391,15 +401,17 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           Strategy Withdraw
         </Typography>
 
-        <Box className={classes.tokenSelectBox}>
-          <Typography variant="caption" className={classes.tokenChoice}>
-            ETH
-          </Typography>
-          <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" size="small" />
-          <Typography variant="caption" className={classes.tokenChoice}>
-            USDC
-          </Typography>
-        </Box>
+        {showTokenToggle && (
+          <Box className={classes.tokenSelectBox}>
+            <Typography variant="caption" className={classes.tokenChoice}>
+              ETH
+            </Typography>
+            <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" size="small" />
+            <Typography variant="caption" className={classes.tokenChoice}>
+              USDC
+            </Typography>
+          </Box>
+        )}
       </Box>
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
