@@ -43,7 +43,7 @@ const InputNumber = React.forwardRef<any, InputNumberProps>(
         onChange={(event) => handleChange(event.target.value)}
         placeholder="0"
         autoComplete="false"
-        inputProps={{ inputmode: 'numeric', pattern: '[0-9]*', ...inputProps }}
+        inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', ...inputProps }}
         {...props}
       />
     )
