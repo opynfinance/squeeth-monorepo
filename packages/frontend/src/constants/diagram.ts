@@ -47,7 +47,7 @@ export const pnlGraphOptions = {
     backgroundColor: 'none',
     zoomType: 'xy',
     height: '346',
-    marginLeft: '36',
+    marginLeft: '48',
     style: {
       fontFamily: 'DM Mono',
     },
