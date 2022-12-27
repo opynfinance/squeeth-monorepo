@@ -198,7 +198,7 @@ const StrategyPerformance: React.FC = () => {
           <Typography className={classes.description}>Annualized USDC Return</Typography>
 
           <Box position="relative" top="3px">
-            <Tooltip title="Historical returns, selected dates">
+            <Tooltip title="Annualized return based on selected dates">
               <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
           </Box>
