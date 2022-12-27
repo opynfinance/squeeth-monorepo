@@ -188,7 +188,7 @@ const CrabPosition: React.FC = () => {
               }
             />
           ) : null}
-          {pnl.isFinite() && (
+          {pnl.isFinite() && !currentCrabPositionValue.isZero() && (
             <Metric
               label="PnL"
               value={
