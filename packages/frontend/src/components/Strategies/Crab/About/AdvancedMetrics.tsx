@@ -7,7 +7,7 @@ import { useAtomValue } from 'jotai'
 
 import Metric, { MetricLabel } from '@components/Metric'
 import { TextButton } from '@components/Button'
-import { impliedVolAtom, osqthRefVolAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
+import { impliedVolAtom, osqthRefVolAtom, currentImpliedFundingAtom } from '@state/controller/atoms'
 import { formatNumber } from '@utils/formatter'
 import { Tooltips } from '@constants/enums'
 
@@ -30,13 +30,11 @@ const AdvancedMetrics: React.FC = () => {
 
   const impliedVol = useAtomValue(impliedVolAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
 
   const classes = useStyles()
 
   const impliedVolPercent = impliedVol * 100
-  const historicalDailyPremium =
-    dailyHistoricalFunding.funding === 0 ? 'loading' : formatNumber(dailyHistoricalFunding.funding * 100) + '%'
 
   return (
     <div>
@@ -52,11 +50,11 @@ const AdvancedMetrics: React.FC = () => {
               label={
                 <MetricLabel
                   label="Daily Premium"
-                  tooltipTitle={`Daily premium based on the last ${dailyHistoricalFunding.period} hours. Calculated using a ${dailyHistoricalFunding.period} hour TWAP of Mark - Index`}
+                  tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                 />
               }
               gridGap="4px"
-              value={historicalDailyPremium}
+              value={formatNumber(currentImpliedFunding * 100) + '%'}
             />
             <Metric
               label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
