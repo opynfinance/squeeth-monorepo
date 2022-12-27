@@ -47,7 +47,7 @@ const InputBase = React.forwardRef<any, InputBaseProps>(
 
     return (
       <TextField
-        ref={ref}
+        inputRef={ref}
         InputLabelProps={{
           classes: {
             root: clsx(classes.labelRoot, textClasses.lightestFontColor),
