@@ -58,7 +58,8 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
               isPnlPositive ? classes.colorSuccess : classes.colorError,
             )}
           >
-            ({isPnlPositive && '+' + formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
+            ({isPnlPositive && '+'}
+            {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
           </Typography>
           <Typography className={classes.description}>since deposit</Typography>
         </Box>
