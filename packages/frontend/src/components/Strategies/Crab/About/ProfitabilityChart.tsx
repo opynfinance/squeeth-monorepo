@@ -63,6 +63,15 @@ const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload }) =>
   return null
 }
 
+const CustomActiveDot = (props: any) => {
+  const { cx, cy, value, fill } = props
+
+  if (!value) {
+    return null
+  }
+  return <rect x={cx - 1.5} y={cy - 7} width={3} height={14} strokeWidth={0} fill={fill} />
+}
+
 const CandyBar = (props: any) => {
   const { x, y, width, height, fill, stroke } = props
 
@@ -199,6 +208,20 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               />
             </YAxis>
 
+            <ReferenceArea
+              shape={<CandyBar />}
+              x1={lowerPriceBandForProfitability}
+              x2={upperPriceBandForProfitability}
+              fill={successColor + '16'}
+              stroke={successColor}
+            />
+
+            <Tooltip
+              wrapperStyle={{ outline: 'none' }}
+              cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
+              content={<CustomTooltip />}
+            />
+
             <Line
               type="monotone"
               dataKey="crabReturnNegative"
@@ -206,7 +229,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
-              activeDot={{ strokeWidth: 0 }}
+              activeDot={<CustomActiveDot />}
             />
             <Line
               type="monotone"
@@ -215,15 +238,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
-              activeDot={{ strokeWidth: 0 }}
-            />
-
-            <ReferenceArea
-              shape={<CandyBar />}
-              x1={lowerPriceBandForProfitability}
-              x2={upperPriceBandForProfitability}
-              fill={successColor + '16'}
-              stroke={successColor}
+              activeDot={<CustomActiveDot />}
             />
 
             <ReferenceDot x={lowerPriceBandForProfitability} y={getCrabReturn(lowerPriceBandForProfitability)} r={0}>
@@ -264,12 +279,6 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
                 filter="url(#removebackground)"
               />
             </ReferenceDot>
-
-            <Tooltip
-              wrapperStyle={{ outline: 'none' }}
-              cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
-              content={<CustomTooltip />}
-            />
           </LineChart>
         </ResponsiveContainer>
       </Box>
