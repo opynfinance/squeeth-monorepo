@@ -44,7 +44,7 @@ export const SqueethTabsNew = withStyles((theme) => {
     },
     indicator: {
       height: '100%',
-      borderRadius: theme.spacing(0.7),
+      borderRadius: theme.spacing(1),
       background: theme.palette.primary.main,
     },
   }

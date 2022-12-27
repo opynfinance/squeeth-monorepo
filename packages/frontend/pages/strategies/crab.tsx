@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme) =>
     tradeSection: {
       border: '1px solid #242728',
       boxShadow: '0px 4px 40px rgba(0, 0, 0, 0.25)',
-      borderRadius: theme.spacing(0.7),
+      borderRadius: theme.spacing(1),
       padding: '32px 24px',
     },
   }),
