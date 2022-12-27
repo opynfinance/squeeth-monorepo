@@ -206,7 +206,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
-              activeDot={{ strokeWidth: 0, r: 5 }}
+              activeDot={{ strokeWidth: 0 }}
             />
             <Line
               type="monotone"
@@ -215,7 +215,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               strokeWidth={1}
               dot={false}
               isAnimationActive={false}
-              activeDot={{ strokeWidth: 0, r: 5 }}
+              activeDot={{ strokeWidth: 0 }}
             />
 
             <ReferenceArea
