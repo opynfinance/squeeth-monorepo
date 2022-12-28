@@ -21,7 +21,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useMemo, useRef, useState, useEffect, useCallback } from 'react'
+import { useMemo, useRef, useState, useCallback } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
@@ -30,8 +30,6 @@ import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
 import { BullTradeType, BullTransactionConfirmation } from './index'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
-import useStateWithReset from '@hooks/useStateWithReset'
-import { useCalculateETHtoBorrowFromUniswapV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
 import { BULL_EVENTS } from '@utils/amplitude'
@@ -217,8 +215,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           helperText={depositError}
           balanceLabel="Balance"
           onBalanceClick={setDepositMax}
-          isLoading={quoteLoading}
-          loadingMessage="Fetching best price"
         />
 
         {negativeReturnsError ? (
@@ -324,7 +320,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               onClick={onDepositClick}
               disabled={quoteLoading || txLoading || depositAmount === '0' || !!depositError}
             >
-              {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
+              {!txLoading && !quoteLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
             </PrimaryButtonNew>
           )}
         </Box>

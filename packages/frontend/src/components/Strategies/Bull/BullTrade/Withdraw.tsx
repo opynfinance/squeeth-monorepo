@@ -21,7 +21,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
-import { useCallback, useRef, useState, useEffect, useMemo } from 'react'
+import { useCallback, useRef, useState, useMemo } from 'react'
 import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
 import InfoIcon from '@material-ui/icons/Info'
@@ -34,9 +34,7 @@ import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
 import { BullTradeType, BullTransactionConfirmation } from './index'
-import useStateWithReset from '@hooks/useStateWithReset'
 import useAppMemo from '@hooks/useAppMemo'
-import { useCalculateEthWillingToPayV2 } from '@state/crab/hooks'
 import useAmplitude from '@hooks/useAmplitude'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
@@ -205,8 +203,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           error={!!withdrawError}
           helperText={withdrawError}
           balanceLabel="Balance"
-          isLoading={quoteLoading}
-          loadingMessage="Fetching best price"
           onBalanceClick={setWithdrawMax}
         />
 
@@ -336,7 +332,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               onClick={onWithdrawClick}
               disabled={quoteLoading || txLoading || !!withdrawError}
             >
-              {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
+              {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
           )}
         </Box>
