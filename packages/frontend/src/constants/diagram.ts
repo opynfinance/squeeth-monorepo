@@ -46,12 +46,17 @@ export const pnlGraphOptions = {
   chart: {
     backgroundColor: 'none',
     zoomType: 'xy',
+    height: '346',
+    marginLeft: '48',
+    style: {
+      fontFamily: 'DM Mono',
+    },
   },
   title: {
     text: '',
   },
   legend: {
-    enabled: true,
+    enabled: false,
     backgroundColor: '#343738',
     borderRadius: 10,
     itemStyle: {
@@ -75,6 +80,10 @@ export const pnlGraphOptions = {
   },
   tooltip: {
     shared: true,
+    borderColor: 'none',
+    style: {
+      fontFamily: 'DM Mono',
+    },
   },
   credits: {
     enabled: false,

@@ -39,9 +39,11 @@ export const useStyles = makeStyles((theme) =>
     tokenSelectBox: {
       display: 'flex',
       alignItems: 'center',
+      gridGap: theme.spacing(0.5),
     },
     tokenChoice: {
       fontWeight: 500,
+      fontSize: '14px',
     },
     subtitle: {
       fontSize: '20px',
