@@ -59,7 +59,7 @@ import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
-import { SellQuoteType, useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
+import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
@@ -234,6 +234,7 @@ export const useCalculateEthWillingToPayV2 = () => {
         priceImpact: '0',
         squeethDebt: new BigNumber(0),
         ethToGet: new BigNumber(0),
+        poolFee: '0',
       }
       if (!vault) return emptyState
 

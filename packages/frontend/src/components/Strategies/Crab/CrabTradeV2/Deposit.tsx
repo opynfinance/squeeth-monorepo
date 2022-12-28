@@ -78,7 +78,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const [txLoading, setTxLoading] = useState(false)
   const [depositPriceImpact, setDepositPriceImpact, resetDepositPriceImpact] = useStateWithReset('0')
   const [borrowEth, setBorrowEth, resetBorrowEth] = useStateWithReset(new BigNumber(0))
-  const [swapFee, setSwapFee, resetSwapFee] = useStateWithReset('0')
+  const [uniswapFee, setUniswapFee, resetUniswapFee] = useStateWithReset('0')
   const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit, resetSqueethAmountInFromDeposit] =
     useStateWithReset(new BigNumber(0))
   const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit, resetEthAmountOutFromDeposit] = useStateWithReset(
@@ -213,7 +213,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
     if (depositAmountBN.isZero()) {
       resetDepositPriceImpact()
-      resetSwapFee()
+      resetUniswapFee()
       resetBorrowEth()
       resetEthAmountOutFromDeposit()
       resetSqueethAmountInFromDeposit()
@@ -228,12 +228,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         setEthAmountOutFromDeposit(q.amountOut)
         setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
         let quotePriceImpact = q.priceImpact
+        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toString()
 
-        if (q.poolFee) {
-          quotePriceImpact = Number(q.priceImpact) - Number(q.poolFee)
-        }
         setDepositPriceImpact(quotePriceImpact)
-        setSwapFee(q.poolFee)
+        setUniswapFee(q.poolFee)
       })
     })
   }, [ready, depositAmountBN, slippage, network, usdc, weth])
@@ -449,7 +447,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             {!useQueue && (
               <Metric
                 label="Uniswap Fee"
-                value={formatNumber(Number(swapFee)) + '%'}
+                value={formatNumber(Number(uniswapFee)) + '%'}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"

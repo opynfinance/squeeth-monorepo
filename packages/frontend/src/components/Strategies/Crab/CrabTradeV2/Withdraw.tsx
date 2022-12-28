@@ -81,6 +81,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const ongoingTransaction = useRef<OngoingTransaction | undefined>()
   const [txLoading, setTxLoading] = useState(false)
   const [withdrawPriceImpact, setWithdrawPriceImpact, resetWithdrawPriceImpact] = useStateWithReset('0')
+  const [uniswapFee, setUniswapFee, resetUniswapFee] = useStateWithReset('0')
   const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
     new BigNumber(0),
   )
@@ -245,6 +246,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
     if (withdrawCrabAmount.isZero()) {
       resetWithdrawPriceImpact()
+      resetUniswapFee()
       resetEthAmountInFromWithdraw()
       resetSqueethAmountOutFromWithdraw()
       resetUSDCAmountOutFromWithdraw()
@@ -262,7 +264,11 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       calculateEthWillingToPay(withdrawCrabAmount, slippage).then(async (q) => {
         const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(q.ethToGet, 18), fee, slippage)
         setUSDCAmountOutFromWithdraw(toTokenAmount(minAmountOut, USDC_DECIMALS))
-        setWithdrawPriceImpact(q.priceImpact)
+        let quotePriceImpact = q.priceImpact
+        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toString()
+
+        setUniswapFee(q.poolFee)
+        setWithdrawPriceImpact(quotePriceImpact)
         setEthAmountInFromWithdraw(q.amountIn)
         setSqueethAmountOutFromWithdraw(q.squeethDebt)
       })
@@ -518,8 +524,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             {!useQueue && (
               <Metric
-                label="Slippage"
-                value={formatNumber(slippage) + '%'}
+                label="Uniswap Fee"
+                value={formatNumber(Number(uniswapFee)) + '%'}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"
