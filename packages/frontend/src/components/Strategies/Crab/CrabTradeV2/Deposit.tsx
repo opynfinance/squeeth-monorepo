@@ -228,7 +228,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         setEthAmountOutFromDeposit(q.amountOut)
         setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
         let quotePriceImpact = q.priceImpact
-        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toString()
+        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
 
         setDepositPriceImpact(quotePriceImpact)
         setUniswapFee(q.poolFee)

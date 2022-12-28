@@ -265,7 +265,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(q.ethToGet, 18), fee, slippage)
         setUSDCAmountOutFromWithdraw(toTokenAmount(minAmountOut, USDC_DECIMALS))
         let quotePriceImpact = q.priceImpact
-        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toString()
+        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
 
         setUniswapFee(q.poolFee)
         setWithdrawPriceImpact(quotePriceImpact)
