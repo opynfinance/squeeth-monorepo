@@ -9,7 +9,7 @@ import { networkIdAtom } from 'src/state/wallet/atoms'
 import { useAtomValue } from 'jotai'
 import useAppMemo from './useAppMemo'
 import { getHistoricEthPrices } from './useETHPrice'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.FLASH_DEPOSIT) return 'Flash Deposit'
@@ -18,8 +18,8 @@ const getTxTitle = (type: string) => {
 
 export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
-  const [ethUsdPriceMap, setEthUsdPriceMap] = useState()
-  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(true)
+  const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
+  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
   const { data, loading, startPolling, stopPolling } = useQuery<userBullTxes, userBullTxesVariables>(
     USER_BULL_TX_QUERY,
     {
@@ -32,45 +32,44 @@ export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
     },
   )
 
+  const bullUserTxes = useAppMemo(() => data?.bullUserTxes ?? [], [data])
+
   //get all timestamps found in the user's history once
   useEffect(() => {
-    let timestampsArr: any[] = []
-    timestampsArr = data?.bullUserTxes ? data?.bullUserTxes.map((tx) => tx.timestamp * 1000) : []
-    if (timestampsArr.length > 0) {
-      getHistoricEthPrices(timestampsArr).then((result) => {
+    const timestampsArr = bullUserTxes.map((tx) => tx.timestamp * 1000)
+
+    setEthUsdPriceMap(undefined)
+    setEthUsdPriceMapLoading(true)
+
+    getHistoricEthPrices(timestampsArr)
+      .then((result) => {
         setEthUsdPriceMap(result ?? undefined)
+      })
+      .finally(() => {
         setEthUsdPriceMapLoading(false)
       })
-    } else {
-      setEthUsdPriceMapLoading(false)
+  }, [bullUserTxes])
+
+  const uiData = useAppMemo(() => {
+    if (!ethUsdPriceMap) {
+      return []
     }
-  }, [data?.bullUserTxes])
 
-  const getEthPrice = useCallback(
-    (timestamp) => {
-      return ethUsdPriceMap ? ethUsdPriceMap![Number(timestamp) * 1000] : 0
-    },
-    [ethUsdPriceMap],
-  )
+    return bullUserTxes.map((tx) => {
+      const ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
+      const ethUsdValue = ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
 
-  const uiData = useAppMemo(
-    () =>
-      data?.bullUserTxes.map((tx) => {
-        const ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
-        const ethUsdValue = ethAmount.multipliedBy(getEthPrice(tx.timestamp))
+      const bullAmount = toTokenAmount(tx.bullAmount, WETH_DECIMALS)
 
-        const bullAmount = toTokenAmount(tx.bullAmount, WETH_DECIMALS)
-
-        return {
-          ...tx,
-          ethAmount,
-          bullAmount,
-          ethUsdValue,
-          txTitle: getTxTitle(tx.type),
-        }
-      }),
-    [data?.bullUserTxes, getEthPrice],
-  )
+      return {
+        ...tx,
+        ethAmount,
+        bullAmount,
+        ethUsdValue,
+        txTitle: getTxTitle(tx.type),
+      }
+    })
+  }, [bullUserTxes, ethUsdPriceMap])
 
   return {
     loading: loading || ethUsdPriceMapLoading,
