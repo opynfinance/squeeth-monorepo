@@ -189,11 +189,11 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     const impliedVolDiffLowVol = new BigNumber(-VOL_PERCENT_FIXED)
     // const dailyHistoricalImpliedVol = new BigNumber(dailyHistoricalFunding.funding).times(YEAR).sqrt()
     const threshold = BigNumber.max(
-      new BigNumber(osqthRefVol).times(new BigNumber(1).plus(impliedVolDiff)),
-      new BigNumber(osqthRefVol).plus(impliedVolDiffLowVol),
+      new BigNumber(osqthRefVol / 100).times(new BigNumber(1).plus(impliedVolDiff)),
+      new BigNumber(osqthRefVol / 100).plus(impliedVolDiffLowVol),
     )
 
-    const showFundingWarning = new BigNumber(impliedVol).lt(threshold.div(100)) ? true : false
+    const showFundingWarning = new BigNumber(impliedVol).lt(threshold) ? true : false
     return showFundingWarning
   }, [osqthRefVol, impliedVol])
 
@@ -441,7 +441,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              High price impact. Try smaller amount or use USDC to queue deposit.
+              High price impact. Multiple smaller deposits or a standard deposit may reduce price impact
             </Typography>
           </div>
         )}
