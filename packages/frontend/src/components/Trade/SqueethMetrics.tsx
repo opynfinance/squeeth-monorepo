@@ -7,7 +7,6 @@ import InfoIcon from '@material-ui/icons/InfoOutlined'
 import {
   normFactorAtom,
   impliedVolAtom,
-  indexAtom,
   markAtom,
   osqthRefVolAtom,
   dailyHistoricalFundingAtom,
@@ -17,6 +16,7 @@ import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import Metric from '@components/Metric'
 import { Tooltips } from '@constants/enums'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -51,7 +51,6 @@ const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, toolt
 }
 
 const SqueethMetrics: React.FC<BoxProps> = (props) => {
-  const index = useAtomValue(indexAtom)
   const mark = useAtomValue(markAtom)
   const impliedVol = useAtomValue(impliedVolAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
@@ -59,8 +58,8 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
 
-  const eth2Price = toTokenAmount(index, 18)
-  const ethPrice = eth2Price.sqrt()
+  const ethPrice = useOnChainETHPrice()
+  const eth2Price = ethPrice.exponentiatedBy(2)
   const markPrice = toTokenAmount(mark, 18)
   const impliedVolPercent = impliedVol * 100
   const currentImpliedPremium =

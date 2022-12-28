@@ -11,6 +11,7 @@ import {
   indexAtom,
   normFactorAtom,
   osqthRefVolAtom,
+  ethPriceAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -28,7 +29,9 @@ import {
 } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
-import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { SQUEETH_UNI_POOL, ETH_USDC_POOL } from '@constants/address'
+import useAppEffect from '@hooks/useAppEffect'
+import useInterval from '@hooks/useInterval'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -279,8 +282,6 @@ export const useGetCollatRatioAndLiqPrice = () => {
       const debt = await getDebtAmount(shortAmount)
 
       if (debt && !debt.isZero() && debt.isPositive()) {
-
-        
         const collateralPercent = Number(effectiveCollat.div(debt).times(100).toFixed(1))
         const rSqueeth = normFactor.multipliedBy(new BigNumber(shortAmount)).dividedBy(10000)
         if (!uniId) liquidationPrice = effectiveCollat.div(rSqueeth.multipliedBy(1.5))
@@ -394,6 +395,28 @@ const useIndex = () => {
   return index
 }
 
+export const useUpdateEthPrice = () => {
+  const { getTwapSafe } = useOracle()
+  const [ethPrice, setEthPrice] = useAtom(ethPriceAtom)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+
+  const getTwapEth = () => {
+    if (ethUsdcPool && weth && usdc) {
+      getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
+        setEthPrice(quote)
+      })
+    }
+  }
+
+  useInterval(getTwapEth, 15000)
+
+  useAppEffect(() => {
+    getTwapEth()
+  }, [getTwapSafe])
+
+  return ethPrice
+}
+
 const useDailyHistoricalFunding = () => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
@@ -454,18 +477,19 @@ const useMark = () => {
   return mark
 }
 
-const useOsqthRefVol =  async () : Promise<number> =>  {
+const useOsqthRefVol = async (): Promise<number> => {
   const address = useAtomValue(addressAtom)
   const networkId = useAtomValue(networkIdAtom)
   const [OsqthRefVol, setOsqthRefVol] = useAtom(osqthRefVolAtom)
   useEffect(() => {
     getOsqthRefVol().then(setOsqthRefVol)
-  }, [address,networkId])
+  }, [address, networkId])
   return OsqthRefVol
 }
 
 export const useInitController = () => {
   useIndex()
+  useUpdateEthPrice()
   useMark()
   useCurrentImpliedFunding()
   useDailyHistoricalFunding()
