@@ -67,6 +67,10 @@ export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber
 }
 
 export const getHistoricEthPrices = async (timestamps: number[]) => {
+  if (timestamps.length === 0) {
+    return
+  }
+
   const timestampStr = timestamps.join(',')
   const pair = 'ETH/USD'
 

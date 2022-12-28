@@ -34,8 +34,8 @@ const getTxTitle = (type: string) => {
 export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
   const { usdc } = useAtomValue(addressesAtom)
-  const [ethUsdPriceMap, setEthUsdPriceMap] = useState()
-  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(true)
+  const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
+  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
   const { data, loading, startPolling, stopPolling } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
     USER_CRAB_V2_TX_QUERY,
     {
@@ -48,83 +48,81 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
     },
   )
 
+  const crabUserTxes = useAppMemo(() => data?.crabUserTxes ?? [], [data])
+
   //get all timestamps found in the user's history once
   useEffect(() => {
-    let timestampsArr: any[] = []
-    timestampsArr = data?.crabUserTxes ? data?.crabUserTxes.map((tx) => tx.timestamp * 1000) : []
-    if (timestampsArr.length > 0) {
-      getHistoricEthPrices(timestampsArr)
-        .then((result) => {
-          setEthUsdPriceMap(result ?? undefined)
-        })
-        .finally(() => {
-          setEthUsdPriceMapLoading(false)
-        })
-    } else {
-      setEthUsdPriceMapLoading(false)
+    const timestampsArr = crabUserTxes.map((tx) => tx.timestamp * 1000)
+
+    setEthUsdPriceMap(undefined)
+    setEthUsdPriceMapLoading(true)
+
+    getHistoricEthPrices(timestampsArr)
+      .then((result) => {
+        setEthUsdPriceMap(result ?? undefined)
+      })
+      .finally(() => {
+        setEthUsdPriceMapLoading(false)
+      })
+  }, [crabUserTxes])
+
+  const uiData = useAppMemo(() => {
+    if (!ethUsdPriceMap) {
+      return []
     }
-  }, [data?.crabUserTxes, usdc])
 
-  const uiData = useAppMemo(
-    () =>
-      ethUsdPriceMap
-        ? data?.crabUserTxes.map((tx) => {
-            let ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
-            let ethUsdValue = ethUsdPriceMap ? ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000]) : 0
+    return crabUserTxes.map((tx) => {
+      let ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
+      let ethUsdValue = ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
 
-            if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
-              const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
-              const oSqthMigrated = new BigNumber(V2_MIGRATION_OSQTH_AMOUNT)
+      if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
+        const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
+        const oSqthMigrated = new BigNumber(V2_MIGRATION_OSQTH_AMOUNT)
 
-              ethAmount = ethMigrated
-                .minus(oSqthMigrated.times(V2_MIGRATION_OSQTH_PRICE))
-                .times(toTokenAmount(tx.lpAmount, WETH_DECIMALS))
-                .div(V2_MIGRATION_SUPPLY)
+        ethAmount = ethMigrated
+          .minus(oSqthMigrated.times(V2_MIGRATION_OSQTH_PRICE))
+          .times(toTokenAmount(tx.lpAmount, WETH_DECIMALS))
+          .div(V2_MIGRATION_SUPPLY)
 
-              ethUsdValue = ethAmount.times(V2_MIGRATION_ETH_PRICE)
-            }
-            if (
-              tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW &&
-              usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
-            ) {
-              ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS)
-            } else if (
-              tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT &&
-              usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
-            ) {
-              ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-                ethUsdPriceMap
-                  ? toTokenAmount(tx.excessEth, 18).multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
-                  : 0,
-              )
-            }
-            if (tx.type === CrabStrategyV2TxType.OTC_DEPOSIT || tx.type === CrabStrategyV2TxType.OTC_WITHDRAW) {
-              ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-                toTokenAmount(tx.ethAmount, 18).multipliedBy(
-                  ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0,
-                ),
-              )
-              ethAmount = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(
-                toTokenAmount(BIG_ONE, 18).multipliedBy(
-                  ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0,
-                ),
-              )
-            }
-            const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
-            const oSqueethAmount = toTokenAmount(tx.wSqueethAmount, OSQUEETH_DECIMALS)
+        ethUsdValue = ethAmount.times(V2_MIGRATION_ETH_PRICE)
+      }
+      if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW && usdc.toLowerCase() === tx.erc20Token?.toLowerCase()) {
+        ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS)
+      } else if (
+        tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT &&
+        usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
+      ) {
+        ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
+          ethUsdPriceMap
+            ? toTokenAmount(tx.excessEth, 18).multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
+            : 0,
+        )
+      }
 
-            return {
-              ...tx,
-              ethAmount,
-              lpAmount,
-              oSqueethAmount,
-              ethUsdValue,
-              txTitle: getTxTitle(tx.type),
-            }
-          })
-        : [],
-    [data?.crabUserTxes, usdc, ethUsdPriceMap],
-  )
+      if (tx.type === CrabStrategyV2TxType.OTC_DEPOSIT || tx.type === CrabStrategyV2TxType.OTC_WITHDRAW) {
+        ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
+          toTokenAmount(tx.ethAmount, 18).multipliedBy(
+            ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0,
+          ),
+        )
+        ethAmount = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(
+          toTokenAmount(BIG_ONE, 18).multipliedBy(ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0),
+        )
+      }
+
+      const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
+      const oSqueethAmount = toTokenAmount(tx.wSqueethAmount, OSQUEETH_DECIMALS)
+
+      return {
+        ...tx,
+        ethAmount,
+        lpAmount,
+        oSqueethAmount,
+        ethUsdValue,
+        txTitle: getTxTitle(tx.type),
+      }
+    })
+  }, [crabUserTxes, usdc, ethUsdPriceMap])
 
   return {
     loading: loading || ethUsdPriceMapLoading,
