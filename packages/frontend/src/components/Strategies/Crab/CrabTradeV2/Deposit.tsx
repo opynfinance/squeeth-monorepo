@@ -28,7 +28,13 @@ import {
 import { readyAtom } from '@state/squeethPool/atoms'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
-import { dailyHistoricalFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
+import {
+  dailyHistoricalFundingAtom,
+  impliedVolAtom,
+  indexAtom,
+  normFactorAtom,
+  osqthRefVolAtom,
+} from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -130,6 +136,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
+  const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const { track } = useAmplitude()
 
   const trackUserEnteredDepositAmount = useCallback(
@@ -180,15 +187,15 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const depositFundingWarning = useAppMemo(() => {
     const impliedVolDiff = new BigNumber(-VOL_PERCENT_SCALAR)
     const impliedVolDiffLowVol = new BigNumber(-VOL_PERCENT_FIXED)
-    const dailyHistoricalImpliedVol = new BigNumber(dailyHistoricalFunding.funding).times(YEAR).sqrt()
+    // const dailyHistoricalImpliedVol = new BigNumber(dailyHistoricalFunding.funding).times(YEAR).sqrt()
     const threshold = BigNumber.max(
-      dailyHistoricalImpliedVol.times(new BigNumber(1).plus(impliedVolDiff)),
-      dailyHistoricalImpliedVol.plus(impliedVolDiffLowVol),
+      new BigNumber(osqthRefVol).times(new BigNumber(1).plus(impliedVolDiff)),
+      new BigNumber(osqthRefVol).plus(impliedVolDiffLowVol),
     )
 
-    const showFundingWarning = new BigNumber(impliedVol).lt(threshold) ? true : false
+    const showFundingWarning = new BigNumber(impliedVol).lt(threshold.div(100)) ? true : false
     return showFundingWarning
-  }, [dailyHistoricalFunding.funding, impliedVol])
+  }, [osqthRefVol, impliedVol])
 
   const depositError = useAppMemo(() => {
     let inputError
