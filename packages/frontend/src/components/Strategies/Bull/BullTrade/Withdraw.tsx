@@ -205,8 +205,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           error={!!withdrawError}
           helperText={withdrawError}
           balanceLabel="Balance"
-          isLoading={quoteLoading}
-          loadingMessage="Fetching best price"
           onBalanceClick={setWithdrawMax}
         />
 
@@ -336,7 +334,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               onClick={onWithdrawClick}
               disabled={quoteLoading || txLoading || !!withdrawError}
             >
-              {!txLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
+              {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
           )}
         </Box>

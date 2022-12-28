@@ -217,8 +217,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           helperText={depositError}
           balanceLabel="Balance"
           onBalanceClick={setDepositMax}
-          isLoading={quoteLoading}
-          loadingMessage="Fetching best price"
         />
 
         {negativeReturnsError ? (
@@ -324,7 +322,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               onClick={onDepositClick}
               disabled={quoteLoading || txLoading || depositAmount === '0' || !!depositError}
             >
-              {!txLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
+              {!txLoading && !quoteLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
             </PrimaryButtonNew>
           )}
         </Box>
