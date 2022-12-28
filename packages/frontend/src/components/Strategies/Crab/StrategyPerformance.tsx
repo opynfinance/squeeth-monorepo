@@ -108,6 +108,14 @@ const PerformanceMetric: React.FC<{ label: string; value: number }> = ({ label, 
   )
 }
 
+const TooltipTitle = () => (
+  <>
+    {'Annualized return based on selected dates.'}
+    <br />
+    {'Past performance does not indicate future returns.'}
+  </>
+)
+
 const StrategyPerformance: React.FC = () => {
   const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
@@ -198,7 +206,7 @@ const StrategyPerformance: React.FC = () => {
           <Typography className={classes.description}>Annualized USDC Return</Typography>
 
           <Box position="relative" top="3px">
-            <Tooltip title="Annualized return based on selected dates">
+            <Tooltip title={<TooltipTitle />}>
               <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
             </Tooltip>
           </Box>
