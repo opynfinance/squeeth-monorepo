@@ -59,7 +59,7 @@ import { useGetCollatRatioAndLiqPrice, useGetVault } from '../controller/hooks'
 import db from '@utils/firestore'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import BigNumber from 'bignumber.js'
-import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
+import { SellQuoteType, useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
@@ -486,10 +486,11 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
 
   const calculateETHtoBorrowFromUniswap = useCallback(
     async (ethDeposit: BigNumber, slippage: number) => {
-      const emptyState = {
+      const emptyState: any = {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        poolFee: '0',
         ethBorrow: new BigNumber(0),
         initialWSqueethDebt: new BigNumber(0),
       }

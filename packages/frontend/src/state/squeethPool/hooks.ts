@@ -544,13 +544,24 @@ export const useAutoRoutedGetSellQuote = () => {
   return getSellQuote
 }
 
+export interface SellQuoteType {
+  amountOut: BigNumber
+  minimumAmountOut: BigNumber
+  priceImpact: string
+  poolFee?: string
+  pools: Array<any>
+}
+
 export const useGetSellQuote = () => {
   const pool = useAtomValue(poolAtom)
   const squeethToken = useAtomValue(squeethTokenAtom)
   const wethToken = useAtomValue(wethTokenAtom)
   //I input an exact amount of squeeth I want to sell, tells me how much ETH I'd receive
   const getSellQuote = useAppCallback(
-    async (squeethAmount: BigNumber, slippageAmount = new BigNumber(DEFAULT_SLIPPAGE)) => {
+    async (
+      squeethAmount: BigNumber,
+      slippageAmount = new BigNumber(DEFAULT_SLIPPAGE),
+    ): Promise<SellQuoteType> => {
       const emptyState = {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
@@ -573,6 +584,7 @@ export const useGetSellQuote = () => {
         }
 
         const trade = await Trade.exactIn(route, rawAmount)
+        const feePercent = new BigNumber(pool.fee).div(10000)
 
         //the amount of ETH I'm receiving
         return {
@@ -581,6 +593,7 @@ export const useGetSellQuote = () => {
             trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
           ),
           priceImpact: trade.priceImpact.toFixed(2),
+          poolFee: feePercent.toFixed(2),
           pools: [],
         }
       } catch (e) {
