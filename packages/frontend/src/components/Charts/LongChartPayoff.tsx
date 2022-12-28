@@ -1,4 +1,12 @@
-import { Box, createStyles, makeStyles, CircularProgress } from '@material-ui/core'
+import {
+  Box,
+  createStyles,
+  makeStyles,
+  CircularProgress,
+  InputLabel,
+  TextFieldProps,
+  TextField,
+} from '@material-ui/core'
 import dynamic from 'next/dynamic'
 import { useAtom } from 'jotai'
 import React, { memo } from 'react'
@@ -53,6 +61,52 @@ const useStyles = makeStyles((theme) =>
     },
   }),
 )
+
+const useTextFieldStyles = makeStyles((theme) =>
+  createStyles({
+    labelRoot: {
+      color: '#8C8D8D',
+      fontSize: '14px',
+      fontWeight: 500,
+    },
+    inputRoot: {
+      padding: '10px 16px',
+      fontSize: '15px',
+      fontWeight: 500,
+      fontFamily: 'DM Mono',
+      width: '14ch',
+      border: '2px solid #303436',
+      borderRadius: '12px',
+    },
+    inputFocused: {
+      borderColor: theme.palette.primary.main,
+    },
+  }),
+)
+
+const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps, id, variant, ...props }) => {
+  const classes = useTextFieldStyles()
+
+  return (
+    <Box display="flex" flexDirection="column" gridGap="4px">
+      <InputLabel htmlFor={id} classes={{ root: classes.labelRoot }}>
+        {label}
+      </InputLabel>
+      <TextField
+        id={id}
+        InputProps={{
+          classes: {
+            root: classes.inputRoot,
+            focused: classes.inputFocused,
+          },
+          disableUnderline: true,
+          ...InputProps,
+        }}
+        {...props}
+      />
+    </Box>
+  )
+}
 
 function LongChartPayoff() {
   const [startDate, setStartDate] = useAtom(longPayoffFilterStartDateAtom)
@@ -133,6 +187,7 @@ function LongChartPayoff() {
             animateYearScrolling={false}
             autoOk={true}
             clearable
+            TextFieldComponent={CustomTextField}
           />
 
           <DatePicker
@@ -145,6 +200,7 @@ function LongChartPayoff() {
             animateYearScrolling={false}
             autoOk={true}
             clearable
+            TextFieldComponent={CustomTextField}
           />
         </Grid>
       </MuiPickersUtilsProvider>
