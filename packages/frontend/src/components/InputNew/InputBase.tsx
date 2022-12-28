@@ -1,6 +1,7 @@
 import { TextField, StandardTextFieldProps } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
+import React from 'react'
 
 import useTextStyles from '@styles/useTextStyles'
 
@@ -39,38 +40,36 @@ interface InputBaseCustomProps {
 }
 export type InputBaseProps = StandardTextFieldProps & InputBaseCustomProps
 
-const InputBase: React.FC<InputBaseProps> = ({
-  InputProps,
-  InputLabelProps,
-  hasBorder = true,
-  readOnly = false,
-  ...props
-}) => {
-  const classes = useInputBaseStyles()
-  const textClasses = useTextStyles()
+const InputBase = React.forwardRef<any, InputBaseProps>(
+  ({ InputProps, InputLabelProps, hasBorder = true, readOnly = false, ...props }, ref) => {
+    const classes = useInputBaseStyles()
+    const textClasses = useTextStyles()
 
-  return (
-    <TextField
-      InputLabelProps={{
-        classes: {
-          root: clsx(classes.labelRoot, textClasses.lightestFontColor),
-          focused: clsx(classes.labelFocused, textClasses.lightFontColor),
-        },
-        ...InputLabelProps,
-      }}
-      InputProps={{
-        disableUnderline: true,
-        readOnly,
-        classes: {
-          root: clsx(classes.inputRoot, hasBorder && classes.inputBorder),
-          focused: classes.inputFocused,
-          error: classes.inputError,
-        },
-        ...InputProps,
-      }}
-      {...props}
-    />
-  )
-}
+    return (
+      <TextField
+        inputRef={ref}
+        InputLabelProps={{
+          classes: {
+            root: clsx(classes.labelRoot, textClasses.lightestFontColor),
+            focused: clsx(classes.labelFocused, textClasses.lightFontColor),
+          },
+          ...InputLabelProps,
+        }}
+        InputProps={{
+          disableUnderline: true,
+          readOnly,
+          classes: {
+            root: clsx(classes.inputRoot, hasBorder && classes.inputBorder),
+            focused: classes.inputFocused,
+            error: classes.inputError,
+          },
+          ...InputProps,
+        }}
+        {...props}
+      />
+    )
+  },
+)
+InputBase.displayName = 'InputBase'
 
 export default InputBase
