@@ -516,7 +516,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   symbol="ETH"
                   usdPrice={ethPrice}
                   onBalanceClick={() => handleEthChange(balance.toString())}
-                  isLoading={inputQuoteLoading}
                   error={!!openError}
                   helperText={openError}
                 />
@@ -529,7 +528,6 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   symbol="oSQTH"
                   usdPrice={osqthPrice}
                   showMaxAction={false}
-                  isLoading={inputQuoteLoading}
                 />
               </Box>
 
@@ -624,7 +622,8 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                       transactionInProgress ||
                       !!openError ||
                       !!existingShortError ||
-                      sqthTradeAmount === '0'
+                      sqthTradeAmount === '0' ||
+                      inputQuoteLoading
                     }
                     style={
                       longOpenPriceImpactErrorState || !!highVolError
@@ -635,7 +634,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0 }) => {
                   >
                     {!supportedNetwork ? (
                       'Unsupported Network'
-                    ) : buyLoading || transactionInProgress ? (
+                    ) : buyLoading || transactionInProgress || inputQuoteLoading ? (
                       <CircularProgress color="primary" size="1.5rem" />
                     ) : longOpenPriceImpactErrorState ? (
                       'Buy oSQTH Anyway'
@@ -892,7 +891,6 @@ const CloseLong: React.FC<BuyProps> = () => {
               symbol="oSQTH"
               usdPrice={osqthPrice}
               onBalanceClick={() => handleSqthChange(squeethAmount.toString())}
-              isLoading={inputQuoteLoading}
               error={!!closeError}
               helperText={closeError}
             />
@@ -906,7 +904,6 @@ const CloseLong: React.FC<BuyProps> = () => {
               symbol="ETH"
               usdPrice={ethPrice}
               showMaxAction={false}
-              isLoading={inputQuoteLoading}
             />
           </Box>
 
@@ -982,7 +979,8 @@ const CloseLong: React.FC<BuyProps> = () => {
                   !!closeError ||
                   !!existingShortError ||
                   squeethAmount.isZero() ||
-                  sqthTradeAmount === '0'
+                  sqthTradeAmount === '0' ||
+                  inputQuoteLoading
                 }
                 style={
                   longClosePriceImpactErrorState
@@ -993,7 +991,7 @@ const CloseLong: React.FC<BuyProps> = () => {
               >
                 {!supportedNetwork ? (
                   'Unsupported Network'
-                ) : sellLoading || transactionInProgress ? (
+                ) : sellLoading || transactionInProgress || inputQuoteLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
