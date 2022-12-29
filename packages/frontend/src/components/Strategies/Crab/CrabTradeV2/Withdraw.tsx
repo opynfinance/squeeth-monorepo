@@ -584,13 +584,13 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </Box>
 
         <div className={classes.ctaSection}>
-          {useQueue && (
+          {/* {useQueue && (
             <div className={classes.queueNotice}>
               <Typography variant="subtitle2" color="primary">
                 To reduce price impact, your withdrawal may take up until Tuesday to enter the strategy
               </Typography>
             </div>
-          )}
+          )} */}
 
           {isRestricted && <RestrictionInfo marginTop="24px" />}
 
