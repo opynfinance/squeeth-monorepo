@@ -1,6 +1,8 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 
+import { useInitBullStrategy } from '@state/bull/hooks'
+import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import MyPosition from './MyPosition'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
@@ -46,7 +48,15 @@ const useStyles = makeStyles((theme) =>
 )
 
 const Bull: React.FC = () => {
+  const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
+
+  useCurrentCrabPositionValueV2()
+  useInitBullStrategy()
+
+  useEffect(() => {
+    setStrategyDataV2()
+  }, [setStrategyDataV2])
 
   return (
     <div className={classes.container}>

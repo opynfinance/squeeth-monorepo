@@ -1,9 +1,9 @@
 import { Typography, Box, CircularProgress } from '@material-ui/core'
-import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React, { memo } from 'react'
 import clsx from 'clsx'
+import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 
-import Metric from '@components/Metric'
 import { useAtomValue } from 'jotai'
 import {
   bullCurrentETHPositionAtom,
@@ -13,54 +13,14 @@ import {
   bullPositionLoadedAtom,
   isBullPositionRefetchingAtom,
 } from '@state/bull/atoms'
-import { indexAtom } from '@state/controller/atoms'
-import { toTokenAmount } from '@utils/calculations'
-
-const useStyles = makeStyles((theme) =>
-  createStyles({
-    subtitle: {
-      fontSize: '20px',
-      fontWeight: 700,
-      letterSpacing: '-0.01em',
-    },
-    green: {
-      color: theme.palette.success.main,
-    },
-    red: {
-      color: theme.palette.error.main,
-    },
-    white: {
-      color: 'rgba(255, 255, 255)',
-    },
-    offWhite: {
-      color: 'rgba(255,255,255,0.6)',
-    },
-    metricValue: {
-      fontSize: '20px',
-      fontWeight: 500,
-      width: 'max-content',
-      fontFamily: 'DM Mono',
-    },
-    metricSubValue: {
-      fontSize: '18px',
-      fontWeight: 500,
-      width: 'max-content',
-      fontFamily: 'DM Mono',
-    },
-    metricCaptionValue: {
-      fontSize: '16px',
-      fontWeight: 400,
-      fontFamily: 'DM Mono',
-    },
-  }),
-)
+import useStyles from '@components/Strategies/styles'
+import { formatCurrency, formatNumber } from '@utils/formatter'
 
 const BullPosition: React.FC = () => {
   const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const bullEthPnL = useAtomValue(bullEthPnlAtom)
   const bullEthPnlPerct = useAtomValue(bullEthPnlPerctAtom)
-  const ethPrice = toTokenAmount(useAtomValue(indexAtom), 18).sqrt()
   const classes = useStyles()
 
   const loading = !useAtomValue(bullPositionLoadedAtom)
@@ -70,54 +30,67 @@ const BullPosition: React.FC = () => {
     return null
   }
 
+  if (loading || isPositionRefetching) {
+    return (
+      <Box display="flex" alignItems="flex-start" marginTop="8px" height="98px">
+        <Box display="flex" alignItems="center" gridGap="20px">
+          <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
+          <Typography className={classes.text}>Fetching current position...</Typography>
+        </Box>
+      </Box>
+    )
+  }
+
+  const isPnlPositive = bullEthPnL.isGreaterThanOrEqualTo(0)
+
   return (
-    <Box>
-      <Typography variant="h4" className={classes.subtitle}>
-        My Position
+    <Box display="flex" flexDirection="column" gridGap="8px">
+      <Typography variant="h4" className={classes.sectionTitle}>
+        My Zen Bull Position
       </Typography>
 
-      {loading || isPositionRefetching ? (
-        <Box mt={2} display="flex" alignItems="center" gridGap="20px" height={94}>
-          <CircularProgress color="primary" size="1rem" />
-          <Typography>Fetching current position...</Typography>
+      <Box display="flex" gridGap="12px" alignItems="baseline">
+        <Typography className={clsx(classes.heading, classes.textMonospace)}>
+          {formatNumber(bullPosition.toNumber(), 4) + ' ETH'}
+        </Typography>
+        <Typography className={clsx(classes.description, classes.textMonospace)}>
+          {formatCurrency(bullUsdcPosition.toNumber())}
+        </Typography>
+      </Box>
+
+      <Box display="flex" alignItems="center" gridGap="8px">
+        <Box display="flex" marginLeft="-6px">
+          {isPnlPositive ? (
+            <ArrowDropUpIcon className={classes.colorSuccess} />
+          ) : (
+            <ArrowDropDownIcon className={classes.colorError} />
+          )}
+
+          <Typography
+            className={clsx(
+              classes.description,
+              classes.textSemibold,
+              classes.textMonospace,
+              isPnlPositive ? classes.colorSuccess : classes.colorError,
+            )}
+          >
+            {formatNumber(bullEthPnlPerct.toNumber()) + '%'}
+          </Typography>
         </Box>
-      ) : (
-        <Box display="flex" alignItems="center" gridGap="20px" marginTop="16px" flexWrap="wrap">
-          <Metric
-            label="Position value"
-            value={
-              <div>
-                <Typography className={clsx(classes.metricValue, classes.white)}>
-                  {bullPosition.toFixed(6)} ETH
-                </Typography>
-                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>
-                  ${bullUsdcPosition.toFixed(2)}
-                </Typography>
-              </div>
-            }
-          />
-          <Metric
-            label="PnL"
-            value={
-              <div>
-                <Box display="flex" alignItems="center" gridGap="12px">
-                  <Typography className={clsx(classes.metricValue, classes.white)}>
-                    {bullEthPnL.toFixed(6)} ETH
-                  </Typography>
-                  <Typography
-                    className={clsx(classes.metricSubValue, bullEthPnlPerct.isPositive() ? classes.green : classes.red)}
-                  >
-                    {bullEthPnlPerct.toFixed(2)}%
-                  </Typography>
-                </Box>
-                <Typography className={clsx(classes.metricCaptionValue, classes.offWhite)}>
-                  ${bullEthPnL.times(ethPrice).toFixed(2)}
-                </Typography>
-              </div>
-            }
-          />
-        </Box>
-      )}
+
+        <Typography
+          className={clsx(
+            classes.description,
+            classes.textSemibold,
+            classes.textMonospace,
+            isPnlPositive ? classes.colorSuccess : classes.colorError,
+          )}
+        >
+          ({isPnlPositive && '+'}
+          {formatNumber(bullEthPnL.toNumber(), 4) + ' ETH'})
+        </Typography>
+        <Typography className={classes.description}>since deposit</Typography>
+      </Box>
     </Box>
   )
 }
