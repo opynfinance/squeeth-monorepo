@@ -17,6 +17,9 @@ import {
   minUSDCAmountAtom,
   maxCapAtomV2,
   crabStrategyVaultAtomV2,
+  totalUsdcQueuedAtom,
+  totalCrabQueuedAtom,
+  totalCrabQueueInUsddAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -44,6 +47,7 @@ import {
   WETH_DECIMALS,
   YEAR,
   AVERAGE_AUCTION_PRICE_IMPACT,
+  NETTING_PRICE_IMPACT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -348,7 +352,27 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     }
   }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee])
 
-  const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
+  const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
+  const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
+
+  const depositPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) return Number(depositPriceImpact)
+
+    const totalWithdraws = totalWithdrawsQueued.minus(totalDepositsQueued).isNegative()
+      ? new BigNumber(0)
+      : totalWithdrawsQueued.minus(totalDepositsQueued)
+
+    const nettingDepositAmount = totalWithdraws.gt(depositAmountBN) ? depositAmountBN : totalWithdraws
+    const remainingDeposit = depositAmountBN.minus(nettingDepositAmount)
+
+    const priceImpact = nettingDepositAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingDeposit.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(depositAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [depositAmountBN, depositPriceImpact, totalDepositsQueued, totalWithdrawsQueued, useQueue])
 
   const depositBtnVariant =
     depositPriceImpactNumber > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
@@ -444,29 +468,21 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
         <Box marginTop="24px">
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-            {!useQueue && (
-              <Metric
-                label="Uniswap Fee"
-                value={formatNumber(Number(uniswapFee)) + '%'}
-                isSmall
-                flexDirection="row"
-                justifyContent="space-between"
-                gridGap="8px"
-              />
-            )}
+            <Metric
+              label="Uniswap Fee"
+              value={useQueue ? '0 %' : formatNumber(Number(uniswapFee)) + '%'}
+              isSmall
+              flexDirection="row"
+              justifyContent="space-between"
+              gridGap="8px"
+            />
 
             <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
                 label={
                   <MetricLabel
                     label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
-                    tooltipTitle={
-                      useQueue
-                        ? `For standard deposit, the average price impact is ${formatNumber(
-                            depositPriceImpactNumber,
-                          )}% based on historical auctions`
-                        : undefined
-                    }
+                    tooltipTitle={useQueue ? 'Average price impact based on historical standard deposits' : undefined}
                   />
                 }
                 value={formatNumber(depositPriceImpactNumber) + '%'}

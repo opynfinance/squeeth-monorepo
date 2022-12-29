@@ -22,6 +22,8 @@ import {
   isNettingAuctionLiveAtom,
   crabQueuedAtom,
   minCrabAmountAtom,
+  totalUsdcQueuedAtom,
+  totalCrabQueueInUsddAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -52,6 +54,7 @@ import {
   YEAR,
   AVERAGE_AUCTION_PRICE_IMPACT,
   CRAB_TOKEN_DECIMALS,
+  NETTING_PRICE_IMPACT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -389,7 +392,27 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     }
   }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed])
 
-  const withdrawPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(withdrawPriceImpact)
+  const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
+  const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
+
+  const withdrawPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) return Number(withdrawPriceImpact)
+
+    const totalDeposits = totalDepositsQueued.minus(totalWithdrawsQueued).isNegative()
+      ? new BigNumber(0)
+      : totalDepositsQueued.minus(totalWithdrawsQueued)
+
+    const nettingWithdrawAmount = totalDeposits.gt(withdrawAmountBN) ? withdrawAmountBN : totalDeposits
+    const remainingWithdraw = withdrawAmountBN.minus(nettingWithdrawAmount)
+
+    const priceImpact = nettingWithdrawAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingWithdraw.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(withdrawAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [totalDepositsQueued, totalWithdrawsQueued, useQueue, withdrawAmountBN, withdrawPriceImpact])
 
   const withdrawBtnVariant =
     withdrawPriceImpactNumber > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'
@@ -522,16 +545,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           ) : null}
 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-            {!useQueue && (
-              <Metric
-                label="Uniswap Fee"
-                value={formatNumber(Number(uniswapFee)) + '%'}
-                isSmall
-                flexDirection="row"
-                justifyContent="space-between"
-                gridGap="8px"
-              />
-            )}
+            <Metric
+              label="Uniswap Fee"
+              value={useQueue ? '0 %' : formatNumber(Number(uniswapFee)) + '%'}
+              isSmall
+              flexDirection="row"
+              justifyContent="space-between"
+              gridGap="8px"
+            />
 
             <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric

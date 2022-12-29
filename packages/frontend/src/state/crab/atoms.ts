@@ -6,6 +6,7 @@ import { readyAtom } from '../squeethPool/atoms'
 import { CRABV2_START_DATE } from '@constants/index'
 import { getCrabPnlV2ChartData } from '@utils/pricer'
 import { useQuery } from 'react-query'
+import { toTokenAmount } from '@utils/calculations'
 
 export const maxCapAtom = atom(BIG_ZERO)
 export const crabStrategyVaultAtom = atom<Vault | null>(null)
@@ -52,6 +53,14 @@ export const crabQueuedInEthAtom = atom(BIG_ZERO)
 export const crabQueuedInUsdAtom = atom(BIG_ZERO)
 export const crabUSDValueAtom = atom(BIG_ZERO)
 
+export const totalUsdcQueuedAtom = atom(BIG_ZERO)
+export const totalCrabQueuedAtom = atom(BIG_ZERO)
+export const totalCrabQueueInUsddAtom = atom((get) => {
+  const crabQueued = get(totalCrabQueuedAtom)
+  const crabUSDValue = get(crabUSDValueAtom)
+  return crabQueued.multipliedBy(toTokenAmount(crabUSDValue, 18))
+})
+
 export const isNettingAuctionLiveAtom = atom(false)
 export const minUSDCAmountAtom = atom(BIG_ZERO)
 export const minCrabAmountAtom = atom(BIG_ZERO)
@@ -73,7 +82,6 @@ export const crabLoadingAtomV2 = atom((get) => {
 export const crabv2StrategyFilterStartDateAtom = atom<Date>(new Date(CRABV2_START_DATE))
 export const crabv2StrategyFilterEndDateAtom = atom<Date>(new Date())
 
-
 export const useCrabPnLV2ChartData = () => {
   const startDate = useAtomValue(crabv2StrategyFilterStartDateAtom)
   const endDate = useAtomValue(crabv2StrategyFilterEndDateAtom)
@@ -91,5 +99,3 @@ export const useCrabPnLV2ChartData = () => {
     },
   )
 }
-
-
