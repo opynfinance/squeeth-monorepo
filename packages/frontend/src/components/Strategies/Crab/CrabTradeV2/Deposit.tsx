@@ -339,14 +339,14 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       return
     }
 
-    if (Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+    if (Number(depositPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
       setUseQueue(true)
     } else {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed])
+  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee])
 
   const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
 
