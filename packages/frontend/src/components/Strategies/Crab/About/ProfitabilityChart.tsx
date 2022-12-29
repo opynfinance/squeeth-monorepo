@@ -12,7 +12,7 @@ import {
   Tooltip,
   TooltipProps,
 } from 'recharts'
-import { Box, useTheme, Fade, CircularProgress, Typography, Hidden, useMediaQuery } from '@material-ui/core'
+import { Box, useTheme, Fade, CircularProgress, Typography, useMediaQuery } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { makeStyles } from '@material-ui/core/styles'
 
@@ -21,7 +21,7 @@ import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import { formatNumber, formatCurrency } from '@utils/formatter'
-import useStyles from '@components/Strategies/Crab/useStyles'
+import useStyles from '@components/Strategies/styles'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {

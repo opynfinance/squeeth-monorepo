@@ -20,7 +20,7 @@ import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 
-import useStyles from '@components/Strategies/Crab/useStyles'
+import useStyles from '@components/Strategies/styles'
 import {
   crabStrategyVaultAtomV2,
   useCrabPnLV2ChartData,

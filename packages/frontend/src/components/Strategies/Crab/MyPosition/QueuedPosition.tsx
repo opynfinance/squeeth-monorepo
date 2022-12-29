@@ -4,7 +4,7 @@ import { useAtom, useAtomValue } from 'jotai'
 import clsx from 'clsx'
 
 import { formatCurrency } from '@utils/formatter'
-import useStyles from '@components/Strategies/Crab/useStyles'
+import useStyles from '@components/Strategies/styles'
 import { BIG_ZERO, USDC_DECIMALS, CRAB_TOKEN_DECIMALS } from '@constants/index'
 import { crabQueuedAtom, crabUSDValueAtom, usdcQueuedAtom, isNettingAuctionLiveAtom } from '@state/crab/atoms'
 import { useDeQueueDepositUSDC, useDeQueueWithdrawCrab } from '@state/crab/hooks'

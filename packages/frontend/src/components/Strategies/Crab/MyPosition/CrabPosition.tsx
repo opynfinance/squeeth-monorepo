@@ -6,7 +6,7 @@ import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import useStyles from '@components/Strategies/Crab/useStyles'
+import useStyles from '@components/Strategies/styles'
 
 interface CrabPositionProps {
   depositedUsd: BigNumber

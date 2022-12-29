@@ -6,7 +6,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import NextRebalanceTimer from './NextRebalanceTimer'
 import ProfitabilityChart from './ProfitabilityChart'
 import AdvancedMetrics from './AdvancedMetrics'
-import useStyles from '@components/Strategies/Crab/useStyles'
+import useStyles from '@components/Strategies/styles'
 import { LinkWrapper } from '@components/LinkWrapper'
 
 const useAboutStyles = makeStyles((theme) =>
