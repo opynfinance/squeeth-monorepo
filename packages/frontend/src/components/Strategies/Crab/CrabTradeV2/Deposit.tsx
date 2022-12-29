@@ -363,9 +363,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       : totalWithdrawsQueued.minus(totalDepositsQueued)
 
     const nettingDepositAmount = totalWithdraws.gt(depositAmountBN) ? depositAmountBN : totalWithdraws
-    const remainingDeposit = depositAmountBN.minus(totalWithdraws).lt(0)
-      ? new BigNumber(0)
-      : depositAmountBN.minus(totalWithdraws)
+    const remainingDeposit = depositAmountBN.minus(nettingDepositAmount)
 
     const priceImpact = nettingDepositAmount
       .times(NETTING_PRICE_IMPACT)
@@ -470,16 +468,14 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
         <Box marginTop="24px">
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-            {!useQueue && (
-              <Metric
-                label="Uniswap Fee"
-                value={formatNumber(Number(uniswapFee)) + '%'}
-                isSmall
-                flexDirection="row"
-                justifyContent="space-between"
-                gridGap="8px"
-              />
-            )}
+            <Metric
+              label="Uniswap Fee"
+              value={useQueue ? '0 %' : formatNumber(Number(uniswapFee)) + '%'}
+              isSmall
+              flexDirection="row"
+              justifyContent="space-between"
+              gridGap="8px"
+            />
 
             <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
@@ -487,11 +483,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
                   <MetricLabel
                     label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
                     tooltipTitle={
-                      useQueue
-                        ? `For standard deposit, the average price impact is ${formatNumber(
-                            depositPriceImpactNumber,
-                          )}% based on historical auctions`
-                        : undefined
+                      useQueue ? 'average price impact based on historical standard [deposits / withdraws]' : undefined
                     }
                   />
                 }
