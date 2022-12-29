@@ -40,6 +40,8 @@ import {
   minUSDCAmountAtom,
   minCrabAmountAtom,
   crabTotalSupplyV2Atom,
+  totalUsdcQueuedAtom,
+  totalCrabQueuedAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -1023,6 +1025,8 @@ export const useQueuedCrabPositionAndStatus = () => {
   const setNettingAuctionLive = useSetAtom(isNettingAuctionLiveAtom)
   const setMinUSDCAmount = useSetAtom(minUSDCAmountAtom)
   const setMinCrabAmount = useSetAtom(minCrabAmountAtom)
+  const setTotalDeposits = useSetAtom(totalUsdcQueuedAtom)
+  const setTotalWithdrawals = useSetAtom(totalCrabQueuedAtom)
 
   const fetchAndStoreQueuedPosition = async () => {
     if (!contract || !address) return
@@ -1032,19 +1036,25 @@ export const useQueuedCrabPositionAndStatus = () => {
     const auctionStatusPromise = contract.methods.isAuctionLive().call()
     const minUSDCAmountPromise = contract.methods.minUSDCAmount().call()
     const minCrabAmountPromise = contract.methods.minCrabAmount().call()
+    const totalDepositsPromise = contract.methods.depositsQueued().call()
+    const totalWithdrawalsPromise = contract.methods.withdrawsQueued().call()
 
-    const [usdcQueued, crabQueued, auctionStatus, minUSDCAmount, minCrabAmount] = await Promise.all([
+    const [usdcQueued, crabQueued, auctionStatus, minUSDCAmount, minCrabAmount, totalDeposits, totalWithdrawals] = await Promise.all([
       usdcPromise,
       crabPromise,
       auctionStatusPromise,
       minUSDCAmountPromise,
       minCrabAmountPromise,
+      totalDepositsPromise,
+      totalWithdrawalsPromise,
     ])
     setUsdcQueued(new BigNumber(usdcQueued))
     setCrabQueued(new BigNumber(crabQueued))
     setNettingAuctionLive(auctionStatus)
     setMinUSDCAmount(new BigNumber(minUSDCAmount))
     setMinCrabAmount(new BigNumber(minCrabAmount))
+    setTotalDeposits(toTokenAmount(totalDeposits, USDC_DECIMALS))
+    setTotalWithdrawals(toTokenAmount(totalWithdrawals, WETH_DECIMALS))
   }
 
   return fetchAndStoreQueuedPosition

@@ -25,6 +25,8 @@ export const VOL_PERCENT_SCALAR = 0.1
 
 export const AVERAGE_AUCTION_PRICE_IMPACT = 0.79
 
+export const NETTING_PRICE_IMPACT = 0.2
+
 //7min, 420 seconds
 export const TWAP_PERIOD = 420
 

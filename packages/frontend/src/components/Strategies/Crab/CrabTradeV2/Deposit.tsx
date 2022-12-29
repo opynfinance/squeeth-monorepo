@@ -17,6 +17,9 @@ import {
   minUSDCAmountAtom,
   maxCapAtomV2,
   crabStrategyVaultAtomV2,
+  totalUsdcQueuedAtom,
+  totalCrabQueuedAtom,
+  totalCrabQueueInUsddAtom,
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
@@ -44,6 +47,7 @@ import {
   WETH_DECIMALS,
   YEAR,
   AVERAGE_AUCTION_PRICE_IMPACT,
+  NETTING_PRICE_IMPACT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -348,7 +352,29 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     }
   }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee])
 
-  const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
+  const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
+  const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
+
+  const depositPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) return Number(depositPriceImpact)
+
+    const totalWithdraws = totalWithdrawsQueued.minus(totalDepositsQueued).isNegative()
+      ? new BigNumber(0)
+      : totalWithdrawsQueued.minus(totalDepositsQueued)
+
+    const nettingDepositAmount = totalWithdraws.gt(depositAmountBN) ? depositAmountBN : totalWithdraws
+    const remainingDeposit = depositAmountBN.minus(totalWithdraws).lt(0)
+      ? new BigNumber(0)
+      : depositAmountBN.minus(totalWithdraws)
+
+    const priceImpact = nettingDepositAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingDeposit.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(depositAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [depositAmountBN, depositPriceImpact, totalDepositsQueued, totalWithdrawsQueued, useQueue])
 
   const depositBtnVariant =
     depositPriceImpactNumber > 3 || depositFundingWarning || depositPriceImpactWarning ? 'outlined' : 'contained'
