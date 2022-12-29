@@ -234,6 +234,7 @@ export const useCalculateEthWillingToPayV2 = () => {
         priceImpact: '0',
         squeethDebt: new BigNumber(0),
         ethToGet: new BigNumber(0),
+        poolFee: '0',
       }
       if (!vault) return emptyState
 
@@ -486,10 +487,11 @@ export const useCalculateETHtoBorrowFromUniswapV2 = () => {
 
   const calculateETHtoBorrowFromUniswap = useCallback(
     async (ethDeposit: BigNumber, slippage: number) => {
-      const emptyState = {
+      const emptyState: any = {
         amountOut: new BigNumber(0),
         minimumAmountOut: new BigNumber(0),
         priceImpact: '0',
+        poolFee: '0',
         ethBorrow: new BigNumber(0),
         initialWSqueethDebt: new BigNumber(0),
       }

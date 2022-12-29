@@ -20,7 +20,6 @@ import {
 } from '@state/crab/atoms'
 import {
   useSetStrategyDataV2,
-  useFlashDepositV2,
   useCalculateETHtoBorrowFromUniswapV2,
   useFlashDepositUSDC,
   useQueueDepositUSDC,
@@ -28,13 +27,7 @@ import {
 import { readyAtom } from '@state/squeethPool/atoms'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
 import { usePrevious } from 'react-use'
-import {
-  dailyHistoricalFundingAtom,
-  impliedVolAtom,
-  indexAtom,
-  normFactorAtom,
-  osqthRefVolAtom,
-} from '@state/controller/atoms'
+import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -85,6 +78,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const [txLoading, setTxLoading] = useState(false)
   const [depositPriceImpact, setDepositPriceImpact, resetDepositPriceImpact] = useStateWithReset('0')
   const [borrowEth, setBorrowEth, resetBorrowEth] = useStateWithReset(new BigNumber(0))
+  const [uniswapFee, setUniswapFee, resetUniswapFee] = useStateWithReset('0')
   const [squeethAmountInFromDeposit, setSqueethAmountInFromDeposit, resetSqueethAmountInFromDeposit] =
     useStateWithReset(new BigNumber(0))
   const [ethAmountOutFromDeposit, setEthAmountOutFromDeposit, resetEthAmountOutFromDeposit] = useStateWithReset(
@@ -118,8 +112,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
-
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
 
   const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
@@ -221,6 +213,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
     if (depositAmountBN.isZero()) {
       resetDepositPriceImpact()
+      resetUniswapFee()
       resetBorrowEth()
       resetEthAmountOutFromDeposit()
       resetSqueethAmountInFromDeposit()
@@ -231,10 +224,14 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     getExactIn(usdc, weth, fromTokenAmount(depositAmountBN, USDC_DECIMALS), fee, slippage).then((usdcq) => {
       setDepositEthAmount(toTokenAmount(usdcq.amountOut, WETH_DECIMALS))
       calculateETHtoBorrowFromUniswap(toTokenAmount(usdcq.minAmountOut, WETH_DECIMALS), slippage).then((q) => {
-        setDepositPriceImpact(q.priceImpact)
         setBorrowEth(q.ethBorrow)
         setEthAmountOutFromDeposit(q.amountOut)
         setSqueethAmountInFromDeposit(q.initialWSqueethDebt)
+        let quotePriceImpact = q.priceImpact
+        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
+
+        setDepositPriceImpact(quotePriceImpact)
+        setUniswapFee(q.poolFee)
       })
     })
   }, [ready, depositAmountBN, slippage, network, usdc, weth])
@@ -342,14 +339,14 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       return
     }
 
-    if (Number(depositPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+    if (Number(depositPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
       setUseQueue(true)
     } else {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed])
+  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee])
 
   const depositPriceImpactNumber = useQueue ? AVERAGE_AUCTION_PRICE_IMPACT : Number(depositPriceImpact)
 
@@ -449,8 +446,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             {!useQueue && (
               <Metric
-                label="Slippage"
-                value={formatNumber(slippage) + '%'}
+                label="Uniswap Fee"
+                value={formatNumber(Number(uniswapFee)) + '%'}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"

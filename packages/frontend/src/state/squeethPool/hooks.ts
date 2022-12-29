@@ -262,6 +262,7 @@ export const useGetBuyQuote = () => {
         amountIn: new BigNumber(0),
         maximumAmountIn: new BigNumber(0),
         priceImpact: '0',
+        poolFee: '0',
       }
 
       if (!squeethAmount || !pool) return emptyState
@@ -280,6 +281,7 @@ export const useGetBuyQuote = () => {
         }
 
         const trade = await Trade.exactOut(route, rawAmount)
+        const feePercent = new BigNumber(pool.fee).div(10000)
 
         //the amount of ETH I need to put in
         return {
@@ -288,6 +290,7 @@ export const useGetBuyQuote = () => {
             trade.maximumAmountIn(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
           ),
           priceImpact: trade.priceImpact.toFixed(2),
+          poolFee: feePercent.toFixed(2),
         }
       } catch (e) {
         console.log(e)
@@ -573,6 +576,7 @@ export const useGetSellQuote = () => {
         }
 
         const trade = await Trade.exactIn(route, rawAmount)
+        const feePercent = new BigNumber(pool.fee).div(10000)
 
         //the amount of ETH I'm receiving
         return {
@@ -581,6 +585,7 @@ export const useGetSellQuote = () => {
             trade.minimumAmountOut(parseSlippageInput(slippageAmount.toString())).toSignificant(18),
           ),
           priceImpact: trade.priceImpact.toFixed(2),
+          poolFee: feePercent.toFixed(2),
           pools: [],
         }
       } catch (e) {
