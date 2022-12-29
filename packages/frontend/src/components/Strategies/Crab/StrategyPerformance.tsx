@@ -158,13 +158,18 @@ const StrategyPerformance: React.FC = () => {
   }
 
   const chartOptions = useAppMemo(() => {
+    const { chart, ...restOptions } = pnlGraphOptions
+
     return {
-      ...pnlGraphOptions,
-      series: series,
+      ...restOptions,
       ...axes,
+      chart: {
+        ...chart,
+        marginLeft: '40',
+      },
+      series: series,
     }
   })
-
   const classes = useStyles()
 
   const isLoadingChartData = typeof crabUsdPnlSeries === 'undefined'
@@ -213,7 +218,7 @@ const StrategyPerformance: React.FC = () => {
         </Box>
       </Box>
 
-      <Box display="flex" gridGap="8px">
+      <Box display="flex" gridGap="12px">
         <Typography className={clsx(classes.description, classes.textMonospace)}>
           {formatCurrency(tvl.toNumber(), 0)}
         </Typography>
