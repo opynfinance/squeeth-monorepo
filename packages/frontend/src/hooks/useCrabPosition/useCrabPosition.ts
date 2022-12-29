@@ -123,8 +123,10 @@ export const useCrabPositionV2 = (user: string) => {
 
   const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
     console.log(txHistoryData, 'Crab')
-    if (txHistoryLoading || !txHistoryData || txHistoryData.length === 0)
+    if (txHistoryLoading || !txHistoryData || txHistoryData.length === 0) {
       return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
+    }
+
     const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
         if (
@@ -175,7 +177,10 @@ export const useCrabPositionV2 = (user: string) => {
   }, [currentEthValue, currentQueuedCrabEth, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
-    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) return
+    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) {
+      return
+    }
+
     calculateCurrentValue()
   }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
 
