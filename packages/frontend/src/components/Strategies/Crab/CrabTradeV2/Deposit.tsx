@@ -482,9 +482,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
                 label={
                   <MetricLabel
                     label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
-                    tooltipTitle={
-                      useQueue ? 'average price impact based on historical standard [deposits / withdraws]' : undefined
-                    }
+                    tooltipTitle={useQueue ? 'average price impact based on historical standard deposits' : undefined}
                   />
                 }
                 value={formatNumber(depositPriceImpactNumber) + '%'}
