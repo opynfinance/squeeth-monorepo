@@ -1029,32 +1029,41 @@ export const useQueuedCrabPositionAndStatus = () => {
   const setTotalWithdrawals = useSetAtom(totalCrabQueuedAtom)
 
   const fetchAndStoreQueuedPosition = async () => {
-    if (!contract || !address) return
+    if (!contract) return
 
-    const usdcPromise = contract.methods.usdBalance(address).call()
-    const crabPromise = contract.methods.crabBalance(address).call()
-    const auctionStatusPromise = contract.methods.isAuctionLive().call()
     const minUSDCAmountPromise = contract.methods.minUSDCAmount().call()
     const minCrabAmountPromise = contract.methods.minCrabAmount().call()
     const totalDepositsPromise = contract.methods.depositsQueued().call()
     const totalWithdrawalsPromise = contract.methods.withdrawsQueued().call()
 
-    const [usdcQueued, crabQueued, auctionStatus, minUSDCAmount, minCrabAmount, totalDeposits, totalWithdrawals] = await Promise.all([
-      usdcPromise,
-      crabPromise,
-      auctionStatusPromise,
+    const [minUSDCAmount, minCrabAmount, totalDeposits, totalWithdrawals] = await Promise.all([
       minUSDCAmountPromise,
       minCrabAmountPromise,
       totalDepositsPromise,
       totalWithdrawalsPromise,
     ])
+
+    setTotalDeposits(toTokenAmount(totalDeposits, USDC_DECIMALS))
+    setTotalWithdrawals(toTokenAmount(totalWithdrawals, WETH_DECIMALS))
+    setMinUSDCAmount(new BigNumber(minUSDCAmount))
+    setMinCrabAmount(new BigNumber(minCrabAmount))
+
+    if (!contract || !address) return
+
+    const usdcPromise = contract.methods.usdBalance(address).call()
+    const crabPromise = contract.methods.crabBalance(address).call()
+    const auctionStatusPromise = contract.methods.isAuctionLive().call()
+  
+    
+
+    const [usdcQueued, crabQueued, auctionStatus ] = await Promise.all([
+      usdcPromise,
+      crabPromise,
+      auctionStatusPromise,
+    ])
     setUsdcQueued(new BigNumber(usdcQueued))
     setCrabQueued(new BigNumber(crabQueued))
     setNettingAuctionLive(auctionStatus)
-    setMinUSDCAmount(new BigNumber(minUSDCAmount))
-    setMinCrabAmount(new BigNumber(minCrabAmount))
-    setTotalDeposits(toTokenAmount(totalDeposits, USDC_DECIMALS))
-    setTotalWithdrawals(toTokenAmount(totalWithdrawals, WETH_DECIMALS))
   }
 
   return fetchAndStoreQueuedPosition
