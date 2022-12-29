@@ -16,11 +16,11 @@ import { Box, useTheme, Fade, CircularProgress, Typography, useMediaQuery } from
 import BigNumber from 'bignumber.js'
 import { makeStyles } from '@material-ui/core/styles'
 
-import { currentImpliedFundingAtom } from '@state/controller/atoms'
+import { bullCurrentFundingAtom } from '@state/bull/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
-import { formatNumber, formatCurrency } from '@utils/formatter'
+import { formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
 
 const useTooltipStyles = makeStyles(() => ({
@@ -40,21 +40,28 @@ const useTooltipStyles = makeStyles(() => ({
   },
 }))
 
-const CustomTooltip: React.FC<TooltipProps<any, any>> = ({ active, payload }) => {
+interface CustomTooltipCustomProps {
+  ethPriceAtLastHedge: number
+}
+type CustomTooltipProps = TooltipProps<any, any> & CustomTooltipCustomProps
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, ethPriceAtLastHedge }) => {
   const classes = useTooltipStyles()
 
   if (active && payload && payload.length) {
-    const crabReturn = payload[0].payload.crabReturn
+    const strategyReturn = payload[0].payload.strategyReturn
     const ethPrice = payload[0].payload.ethPrice
+    const ethReturn = (ethPrice - ethPriceAtLastHedge) / ethPriceAtLastHedge
 
     return (
       <div className={classes.root}>
         <Typography className={classes.label}>
-          <b>{formatCurrency(ethPrice)}</b> {`ETH/USDC`}
+          {`ETH return: `}
+          <b>{formatNumber(ethReturn)}%</b>
         </Typography>
         <Typography className={classes.value}>
-          {`Crab return: `}
-          <b>{formatNumber(crabReturn)}%</b>
+          {`Zen Bull return: `}
+          <b>{formatNumber(strategyReturn)}%</b>
         </Typography>
       </div>
     )
@@ -89,6 +96,10 @@ const CandyBar = (props: any) => {
   )
 }
 
+function getStrategyReturn(funding: number, ethReturn: number) {
+  return (funding - Math.pow(ethReturn, 2)) * 100
+}
+
 // generate data from -percentRange to +percentRange
 const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRange: number) => {
   const dataPoints = []
@@ -101,15 +112,15 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
   while (current.lte(ending)) {
     const ethReturn = current.div(100).toNumber()
 
-    const crabReturn = (funding - Math.pow(ethReturn, 2)) * 100
-    const crabReturnPositive = crabReturn >= 0 ? crabReturn : null
-    const crabReturnNegative = crabReturn < 0 ? crabReturn : null
+    const strategyReturn = getStrategyReturn(funding, ethReturn)
+    const strategyReturnPositive = strategyReturn >= 0 ? strategyReturn : null
+    const strategyReturnNegative = strategyReturn < 0 ? strategyReturn : null
 
     dataPoints.push({
       ethPrice: ethPriceAtLastHedge + ethReturn * ethPriceAtLastHedge,
-      crabReturn,
-      crabReturnPositive,
-      crabReturnNegative,
+      strategyReturn,
+      strategyReturnPositive,
+      strategyReturnNegative,
     })
 
     current = current.plus(increment)
@@ -118,25 +129,26 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
   return dataPoints
 }
 
-const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFunding }) => {
+const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
 
-  const funding = 2 * currentImpliedFunding // for 2 days
+  const impliedFunding = 2 * currentFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
   const currentEthPrice = Number(ethPrice)
-  const profitableBoundsPercent = Math.sqrt(funding)
+
+  const profitableBoundsPercent = Math.sqrt(impliedFunding)
   const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableBoundsPercent * ethPriceAtLastHedge
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
 
   const data = useMemo(() => {
     const percentRange = profitableBoundsPercent * 4 * 100 // 4x the profitable move percent
-    return getDataPoints(funding, ethPriceAtLastHedge, percentRange)
-  }, [funding, ethPriceAtLastHedge, profitableBoundsPercent])
+    return getDataPoints(impliedFunding, ethPriceAtLastHedge, percentRange)
+  }, [impliedFunding, ethPriceAtLastHedge, profitableBoundsPercent])
 
-  const getCrabReturn = (ethPriceVal: number) => {
-    const ethReturn = (ethPriceVal - ethPriceAtLastHedge) / ethPriceAtLastHedge
-    return (funding - Math.pow(ethReturn, 2)) * 100
+  const getStrategyReturnForETHPrice = (ethPriceValue: number) => {
+    const ethReturn = (ethPriceValue - ethPriceAtLastHedge) / ethPriceAtLastHedge
+    return getStrategyReturn(impliedFunding, ethReturn)
   }
 
   const theme = useTheme()
@@ -144,8 +156,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const errorColor = theme.palette.error.main
 
   const isMobileBreakpoint = useMediaQuery(theme.breakpoints.down('xs'))
-
-  const currentCrabReturn = getCrabReturn(currentEthPrice)
+  const currentStrategyReturn = getStrategyReturnForETHPrice(currentEthPrice)
 
   return (
     <Fade in={true}>
@@ -181,7 +192,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               markerStart="url(#dot)"
             >
               <Label
-                value="ETH Price"
+                value="ETH Return"
                 position="insideBottomRight"
                 offset={14}
                 fill="#ffffff80"
@@ -191,7 +202,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             <YAxis
               width={1}
               type="number"
-              dataKey="crabReturn"
+              dataKey="strategyReturn"
               tick={false}
               domain={isMobileBreakpoint ? ['dataMin - 1.25', 'dataMax + 1.25'] : ['dataMin - 0.5', 'dataMax + 0.5']}
               strokeDasharray="5,5"
@@ -201,7 +212,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               yAxisId="0"
             >
               <Label
-                value={isMobileBreakpoint ? 'Crab' : 'Crab Strategy'}
+                value={isMobileBreakpoint ? 'Zen Bull' : 'Zen Bull Strategy'}
                 position="insideTopLeft"
                 offset={14}
                 fill="#ffffff80"
@@ -219,12 +230,12 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             <Tooltip
               wrapperStyle={{ outline: 'none' }}
               cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
-              content={<CustomTooltip />}
+              content={<CustomTooltip ethPriceAtLastHedge={ethPriceAtLastHedge} />}
             />
 
             <Line
               type="monotone"
-              dataKey="crabReturnNegative"
+              dataKey="strategyReturnNegative"
               stroke={errorColor}
               strokeWidth={1}
               dot={false}
@@ -233,7 +244,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             />
             <Line
               type="monotone"
-              dataKey="crabReturnPositive"
+              dataKey="strategyReturnPositive"
               stroke={successColor}
               strokeWidth={1}
               dot={false}
@@ -241,7 +252,11 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               activeDot={<CustomActiveDot />}
             />
 
-            <ReferenceDot x={lowerPriceBandForProfitability} y={getCrabReturn(lowerPriceBandForProfitability)} r={0}>
+            <ReferenceDot
+              x={lowerPriceBandForProfitability}
+              y={getStrategyReturnForETHPrice(lowerPriceBandForProfitability)}
+              r={0}
+            >
               <Label
                 fontFamily={'DM Mono'}
                 fontWeight={500}
@@ -251,7 +266,11 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
                 fill="#ffffffcc"
               />
             </ReferenceDot>
-            <ReferenceDot x={upperPriceBandForProfitability} y={getCrabReturn(upperPriceBandForProfitability)} r={0}>
+            <ReferenceDot
+              x={upperPriceBandForProfitability}
+              y={getStrategyReturnForETHPrice(upperPriceBandForProfitability)}
+              r={0}
+            >
               <Label
                 fontFamily={'DM Mono'}
                 fontWeight={500}
@@ -264,9 +283,9 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 
             <ReferenceDot
               x={currentEthPrice}
-              y={currentCrabReturn}
+              y={currentStrategyReturn}
               r={5}
-              fill={currentCrabReturn < 0 ? errorColor : successColor}
+              fill={currentStrategyReturn < 0 ? errorColor : successColor}
               strokeWidth={0}
             >
               <Label
@@ -275,7 +294,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
                 value={'$' + formatNumber(currentEthPrice, 0)}
                 position="insideTop"
                 offset={20}
-                fill={currentCrabReturn < 0 ? errorColor : successColor}
+                fill={currentStrategyReturn < 0 ? errorColor : successColor}
                 filter="url(#removebackground)"
               />
             </ReferenceDot>
@@ -287,17 +306,19 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 }
 
 function ChartWrapper() {
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentFunding = useAtomValue(bullCurrentFundingAtom)
   const classes = useStyles()
 
-  if (currentImpliedFunding == 0) {
+  const isLoading = currentFunding === 0 || isNaN(currentFunding) || !isFinite(currentFunding)
+  if (isLoading) {
     return (
       <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
         <CircularProgress size={40} className={classes.loadingSpinner} />
       </Box>
     )
   }
-  return <Chart currentImpliedFunding={currentImpliedFunding} />
+
+  return <Chart currentFunding={currentFunding} />
 }
 
 export default ChartWrapper
