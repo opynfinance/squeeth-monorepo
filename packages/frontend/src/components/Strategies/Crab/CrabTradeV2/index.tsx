@@ -1,8 +1,7 @@
 import { Box } from '@material-ui/core'
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 
-import { useSetStrategyDataV2 } from '@state/crab/hooks'
 import Deposit from './Deposit'
 import Withdraw from './Withdraw'
 import { useTransactionStatus } from '@state/wallet/hooks'
@@ -14,7 +13,6 @@ import { CrabTransactionConfirmation, CrabTradeType, CrabTradeTransactionType } 
 const CrabTradeV2: React.FC = () => {
   const [depositOption, setDepositOption] = useState(0)
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<CrabTransactionConfirmation | undefined>()
-  const setStrategyData = useSetStrategyDataV2()
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
 
   const confirmationMessage = useAppMemo(() => {
@@ -36,10 +34,6 @@ const CrabTradeV2: React.FC = () => {
     setConfirmedTransactionData(undefined)
     resetTransactionData()
   }, [resetTransactionData, setConfirmedTransactionData])
-
-  useEffect(() => {
-    setStrategyData()
-  }, [setStrategyData])
 
   if (confirmed && confirmedTransactionData?.status) {
     return (
