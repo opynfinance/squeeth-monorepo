@@ -5,7 +5,8 @@ import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
 import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
-import { useSetStrategyDataV2 } from '@state/crab/hooks'
+import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
+import { useInitCrabMigration } from '@state/crabMigration/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -49,6 +50,9 @@ const useStyles = makeStyles((theme) =>
 const Crab: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
+
+  useCurrentCrabPositionValueV2()
+  useInitCrabMigration()
 
   useEffect(() => {
     setStrategyDataV2()
