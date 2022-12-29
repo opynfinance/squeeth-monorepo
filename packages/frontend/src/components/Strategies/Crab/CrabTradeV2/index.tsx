@@ -1,5 +1,6 @@
 import { Box } from '@material-ui/core'
 import React, { useState, useCallback } from 'react'
+import { useAtomValue } from 'jotai'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 
 import Deposit from './Deposit'
@@ -9,11 +10,15 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import useAppMemo from '@hooks/useAppMemo'
 import { PrimaryButtonNew } from '@components/Button'
 import { CrabTransactionConfirmation, CrabTradeType, CrabTradeTransactionType } from './types'
+import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
+import { addressAtom } from '@state/wallet/atoms'
 
 const CrabTradeV2: React.FC = () => {
+  const address = useAtomValue(addressAtom)
   const [depositOption, setDepositOption] = useState(0)
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<CrabTransactionConfirmation | undefined>()
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
+  const { pollForNewTx } = useCrabPositionV2(address ?? '')
 
   const confirmationMessage = useAppMemo(() => {
     if (!confirmedTransactionData?.status) return ``
@@ -34,6 +39,14 @@ const CrabTradeV2: React.FC = () => {
     setConfirmedTransactionData(undefined)
     resetTransactionData()
   }, [resetTransactionData, setConfirmedTransactionData])
+
+  const onTxnConfirm = useCallback(
+    (confirm?: CrabTransactionConfirmation) => {
+      setConfirmedTransactionData(confirm)
+      confirm?.id ? pollForNewTx(confirm?.id) : null
+    },
+    [setConfirmedTransactionData, pollForNewTx],
+  )
 
   if (confirmed && confirmedTransactionData?.status) {
     return (
@@ -64,11 +77,7 @@ const CrabTradeV2: React.FC = () => {
       </SqueethTabsNew>
 
       <Box marginTop="32px">
-        {depositOption === 0 ? (
-          <Deposit onTxnConfirm={setConfirmedTransactionData} />
-        ) : (
-          <Withdraw onTxnConfirm={setConfirmedTransactionData} />
-        )}
+        {depositOption === 0 ? <Deposit onTxnConfirm={onTxnConfirm} /> : <Withdraw onTxnConfirm={onTxnConfirm} />}
       </Box>
     </>
   )

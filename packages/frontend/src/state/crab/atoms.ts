@@ -79,6 +79,8 @@ export const crabLoadingAtomV2 = atom((get) => {
   return loading || !ready || currentEthLoading
 })
 
+export const crabPositionRefetchingAtom = atom(false)
+
 export const crabv2StrategyFilterStartDateAtom = atom<Date>(new Date(CRABV2_START_DATE))
 export const crabv2StrategyFilterEndDateAtom = atom<Date>(new Date())
 

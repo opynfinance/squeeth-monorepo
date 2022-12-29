@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { useDebounce } from 'use-debounce'
 import InfoIcon from '@material-ui/icons/Info'
-import { usePrevious } from 'react-use'
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 
@@ -139,9 +138,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const address = useAtomValue(addressAtom)
   const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
   const { allowance: crabQueueAllowance, approve: approveQueueCrab } = useUserAllowance(crabStrategy2, crabNetting)
-  const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
-
-  const prevCrabTxData = usePrevious(data)
+  const { data } = useUserCrabV2TxHistory(address ?? '')
 
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
@@ -187,14 +184,6 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
     setShowTokenToggle(isLegacyUser)
   }, [data])
-
-  useEffect(() => {
-    if (confirmed && prevCrabTxData?.length === data?.length) {
-      startPolling(500)
-    } else {
-      stopPolling()
-    }
-  }, [confirmed, prevCrabTxData?.length, data?.length])
 
   const withdrawPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false
@@ -290,25 +279,29 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     }
   }, [ready, withdrawCrabAmount.toString(), slippage, network, useUsdc, usdc, weth])
 
-  const onTxnConfirmed = useCallback(() => {
-    if (!ongoingTransaction.current) return
-    const transaction = ongoingTransaction.current
-    if (transaction.queuedTransaction)
-      setCrabQueued(crabQueued.plus(fromTokenAmount(transaction.amount, CRAB_TOKEN_DECIMALS)))
-    onTxnConfirm({
-      status: true,
-      amount: transaction.amount,
-      tradeType: CrabTradeType.Withdraw,
-      transactionType: transaction.queuedTransaction
-        ? CrabTradeTransactionType.Queued
-        : CrabTradeTransactionType.Instant,
-      token: transaction.token,
-    })
-    transaction.analytics ? recordAnalytics(transaction.analytics) : null
-    onInputChange('0')
-    resetTracking()
-    ongoingTransaction.current = undefined
-  }, [setCrabQueued, crabQueued, onTxnConfirm, onInputChange, recordAnalytics, resetTracking])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      if (!ongoingTransaction.current) return
+      const transaction = ongoingTransaction.current
+      if (transaction.queuedTransaction)
+        setCrabQueued(crabQueued.plus(fromTokenAmount(transaction.amount, CRAB_TOKEN_DECIMALS)))
+      onTxnConfirm({
+        status: true,
+        amount: transaction.amount,
+        tradeType: CrabTradeType.Withdraw,
+        transactionType: transaction.queuedTransaction
+          ? CrabTradeTransactionType.Queued
+          : CrabTradeTransactionType.Instant,
+        token: transaction.token,
+        id,
+      })
+      transaction.analytics ? recordAnalytics(transaction.analytics) : null
+      onInputChange('0')
+      resetTracking()
+      ongoingTransaction.current = undefined
+    },
+    [setCrabQueued, crabQueued, onTxnConfirm, onInputChange, recordAnalytics, resetTracking],
+  )
 
   const withdraw = async () => {
     setTxLoading(true)
