@@ -78,6 +78,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     usdcPoolFee: 0,
     priceImpact: 0,
     wethToLend: BIG_ZERO,
+    poolFee: 0,
   })
 
   const { data: balance } = useWalletBalance()
@@ -98,7 +99,11 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     getFlashBullDepositParams(new BigNumber(ethToDeposit))
       .then((_quote) => {
         console.log('', ethToDeposit.toString(), depositAmountRef.current)
-        if (ethToDeposit === depositAmountRef.current) setQuote(_quote)
+        if (ethToDeposit === depositAmountRef.current) {
+          let quotePriceImpact = _quote.priceImpact
+          if (_quote.poolFee) quotePriceImpact = _quote.priceImpact - _quote.poolFee
+          setQuote({ ..._quote, priceImpact: quotePriceImpact })
+        }
       })
       .finally(() => {
         if (ethToDeposit === depositAmountRef.current) setQuoteLoading(false)
@@ -260,8 +265,8 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             className={classes.slippageContainer}
           >
             <Metric
-              label="Slippage"
-              value={formatNumber(slippage) + '%'}
+              label="Uniswap Fee"
+              value={formatNumber(quote.poolFee) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
