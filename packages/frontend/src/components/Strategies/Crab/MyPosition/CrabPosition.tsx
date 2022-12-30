@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Typography } from '@material-ui/core'
+import { Box, Typography, CircularProgress } from '@material-ui/core'
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import BigNumber from 'bignumber.js'
@@ -29,14 +29,27 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
         {formatCurrency(currentPosition.toNumber())}
       </Typography>
 
-      {pnl.isFinite() && (
-        <Box display="flex" alignItems="center" gridGap="8px">
-          <Box display="flex" marginLeft="-6px">
-            {isPnlPositive ? (
-              <ArrowDropUpIcon className={classes.colorSuccess} />
-            ) : (
-              <ArrowDropDownIcon className={classes.colorError} />
-            )}
+      <Box display="flex" alignItems="center" gridGap="8px">
+        {pnl.isFinite() ? (
+          <>
+            <Box display="flex" marginLeft="-6px">
+              {isPnlPositive ? (
+                <ArrowDropUpIcon className={classes.colorSuccess} />
+              ) : (
+                <ArrowDropDownIcon className={classes.colorError} />
+              )}
+
+              <Typography
+                className={clsx(
+                  classes.description,
+                  classes.textSemibold,
+                  classes.textMonospace,
+                  isPnlPositive ? classes.colorSuccess : classes.colorError,
+                )}
+              >
+                {formatNumber(pnl.toNumber()) + '%'}
+              </Typography>
+            </Box>
 
             <Typography
               className={clsx(
@@ -46,24 +59,18 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
                 isPnlPositive ? classes.colorSuccess : classes.colorError,
               )}
             >
-              {formatNumber(pnl.toNumber()) + '%'}
+              ({isPnlPositive && '+'}
+              {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
             </Typography>
+            <Typography className={classes.description}>since deposit</Typography>
+          </>
+        ) : (
+          <Box display="flex" alignItems="center" gridGap="12px">
+            <CircularProgress size="1rem" className={classes.loadingSpinner} />
+            <Typography className={classes.text}>fetching pnl...</Typography>
           </Box>
-
-          <Typography
-            className={clsx(
-              classes.description,
-              classes.textSemibold,
-              classes.textMonospace,
-              isPnlPositive ? classes.colorSuccess : classes.colorError,
-            )}
-          >
-            ({isPnlPositive && '+'}
-            {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
-          </Typography>
-          <Typography className={classes.description}>since deposit</Typography>
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   )
 }
