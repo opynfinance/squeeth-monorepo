@@ -67,6 +67,7 @@ import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAppEffect from '@hooks/useAppEffect'
+import { CrabStrategyV2TxType, CrabStrategyTxType } from 'src/types'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -172,7 +173,18 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   useAppEffect(() => {
     // show token toggle only if the user has deposited before 28th December 00:00 UTC, the launch date of new design
     const launchDate = new Date('2022-12-28T00:00:00.000Z').getTime() / 1000
-    const isLegacyUser = data?.some((tx) => tx.type === 'FLASH_DEPOSIT' && tx.timestamp < launchDate) ?? false
+    const isLegacyUser =
+      data?.some((tx) => {
+        const isDepositTx =
+          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
+          tx.type === CrabStrategyTxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
+
+        return isDepositTx && tx.timestamp < launchDate
+      }) ?? false
+
     setShowTokenToggle(isLegacyUser)
   }, [data])
 
