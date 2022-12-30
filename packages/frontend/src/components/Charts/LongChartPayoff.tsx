@@ -6,6 +6,7 @@ import {
   InputLabel,
   TextFieldProps,
   TextField,
+  Divider,
 } from '@material-ui/core'
 import dynamic from 'next/dynamic'
 import { useAtom } from 'jotai'
@@ -58,6 +59,13 @@ const useStyles = makeStyles((theme) =>
       columnGap: '24px',
       marginRight: 'auto',
       padding: theme.spacing(1),
+    },
+    divider: {
+      width: '15px',
+      backgroundColor: '#8C8D8D',
+      height: '1.5px',
+      position: 'relative',
+      top: '6px',
     },
   }),
 )
@@ -176,7 +184,7 @@ function LongChartPayoff() {
   return (
     <>
       <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <Grid container className={classes.grid}>
+        <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
           <DatePicker
             label="Start Date"
             placeholder="MM/DD/YYYY"
@@ -189,7 +197,7 @@ function LongChartPayoff() {
             clearable
             TextFieldComponent={CustomTextField}
           />
-
+          <Divider orientation="horizontal" className={classes.divider} />
           <DatePicker
             label="End Date"
             placeholder="MM/DD/YYYY"
@@ -202,7 +210,7 @@ function LongChartPayoff() {
             clearable
             TextFieldComponent={CustomTextField}
           />
-        </Grid>
+        </Box>
       </MuiPickersUtilsProvider>
 
       <div className={classes.payoffContainer}>
