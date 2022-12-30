@@ -1,3 +1,10 @@
+import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
+import BigNumber from 'bignumber.js'
+import { useAtom, useAtomValue } from 'jotai'
+import { useCallback, useRef, useState, useMemo } from 'react'
+import InfoIcon from '@material-ui/icons/Info'
+import debounce from 'lodash/debounce'
+
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import { LinkWrapper } from '@components/LinkWrapper'
@@ -13,19 +20,12 @@ import {
   WETH_DECIMALS,
   YEAR,
 } from '@constants/index'
-import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
 import { useGetFlashWithdrawParams, useBullFlashWithdraw } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
-import BigNumber from 'bignumber.js'
-import { useAtom, useAtomValue } from 'jotai'
-import { useCallback, useRef, useState, useMemo } from 'react'
-import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
-import InfoIcon from '@material-ui/icons/Info'
-import debounce from 'lodash/debounce'
 import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from '@state/positions/atoms'
@@ -33,11 +33,13 @@ import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
-import { BullTradeType, BullTransactionConfirmation } from './index'
 import useAppMemo from '@hooks/useAppMemo'
+import useAppCallback from '@hooks/useAppCallback'
 import useAmplitude from '@hooks/useAmplitude'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
+import { useZenBullStyles } from './styles'
+import { BullTradeType, BullTransactionConfirmation } from './index'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -108,7 +110,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     return showPriceImpactWarning
   }, [quote.ethInForSqth, quote.oSqthOut, normFactor, ethIndexPrice, impliedVol])
 
-  const debouncedDepositQuote = debounce(async (bullToWithdraw: string) => {
+  const debouncedWithdrawQuote = debounce(async (bullToWithdraw: string) => {
     setQuoteLoading(true)
     getFlashBullWithdrawParams(new BigNumber(bullToWithdraw))
       .then((_quote) => {
@@ -119,14 +121,17 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       })
   }, 500)
 
-  const onInputChange = (ethToWithdraw: string) => {
-    const withdrawEthBN = new BigNumber(ethToWithdraw)
-    withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
-    const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
-    setWithdrawAmount(ethToWithdraw)
-    withdrawAmountRef.current = _bullToWithdraw.toString()
-    debouncedDepositQuote(_bullToWithdraw.toString())
-  }
+  const onInputChange = useAppCallback(
+    (ethToWithdraw: string) => {
+      const withdrawEthBN = new BigNumber(ethToWithdraw)
+      withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
+      const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
+      setWithdrawAmount(ethToWithdraw)
+      withdrawAmountRef.current = _bullToWithdraw.toString()
+      debouncedWithdrawQuote(_bullToWithdraw.toString())
+    },
+    [trackWithdrawAmountEnteredOnce, debouncedWithdrawQuote, bullBalance, bullPositionValueInEth],
+  )
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
@@ -140,7 +145,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm, resetTracking],
+    [onTxnConfirm, resetTracking, onInputChange],
   )
 
   const onWithdrawClick = async () => {
