@@ -10,7 +10,7 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
-import { useTransactionStatus, useWalletBalance, useSelectWallet } from '@state/wallet/hooks'
+import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
   crabStrategySlippageAtomV2,
   usdcQueuedAtom,
@@ -18,7 +18,6 @@ import {
   maxCapAtomV2,
   crabStrategyVaultAtomV2,
   totalUsdcQueuedAtom,
-  totalCrabQueuedAtom,
   totalCrabQueueInUsddAtom,
 } from '@state/crab/atoms'
 import {
@@ -74,7 +73,7 @@ const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPA
 
 const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const classes = useStyles()
-  const [depositAmount, setDepositAmount, resetDepositAmount] = useStateWithReset('0')
+  const [depositAmount, setDepositAmount] = useState('0')
   const [debouncedDepositAmount] = useDebounce(depositAmount, 500)
   const ongoingTransaction = useRef<OngoingTransaction | undefined>()
   const depositAmountBN = useMemo(() => new BigNumber(debouncedDepositAmount), [debouncedDepositAmount])
@@ -265,7 +264,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
       token: transaction.token,
     })
     transaction.analytics ? recordAnalytics(transaction.analytics) : null
-    resetDepositAmount()
+    onInputChange('0')
     resetTracking()
     refetchUsdcBalance()
     ongoingTransaction.current = undefined
@@ -274,7 +273,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     setUsdcQueued,
     setStrategyData,
     onTxnConfirm,
-    resetDepositAmount,
+    onInputChange,
     refetchUsdcBalance,
     recordAnalytics,
     resetTracking,
@@ -313,7 +312,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   }
 
   const setDepositMax = () => {
-    setDepositAmount(usdcBalance.toString())
+    onInputChange(usdcBalance.toString())
   }
 
   // Update deposit step

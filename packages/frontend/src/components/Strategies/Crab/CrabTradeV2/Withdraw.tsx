@@ -79,7 +79,7 @@ console.log(OTC_PRICE_IMPACT_THRESHOLD)
 
 const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useStyles()
-  const [withdrawAmount, setWithdrawAmount, resetWithdrawAmount] = useStateWithReset('0')
+  const [withdrawAmount, setWithdrawAmount] = useState('0')
   const [debouncedWithdrawAmount] = useDebounce(withdrawAmount, 500)
   const withdrawAmountBN = useMemo(() => new BigNumber(debouncedWithdrawAmount), [debouncedWithdrawAmount])
   const ongoingTransaction = useRef<OngoingTransaction | undefined>()
@@ -305,10 +305,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       token: transaction.token,
     })
     transaction.analytics ? recordAnalytics(transaction.analytics) : null
-    resetWithdrawAmount()
+    onInputChange('0')
     resetTracking()
     ongoingTransaction.current = undefined
-  }, [setCrabQueued, crabQueued, onTxnConfirm, resetWithdrawAmount, recordAnalytics, resetTracking])
+  }, [setCrabQueued, crabQueued, onTxnConfirm, onInputChange, recordAnalytics, resetTracking])
 
   const withdraw = async () => {
     setTxLoading(true)
@@ -354,14 +354,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const handleTokenChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setUseUsdc(event.target.checked)
-      resetWithdrawAmount()
+      onInputChange('0')
     },
-    [resetWithdrawAmount],
+    [onInputChange],
   )
 
   const setWithdrawMax = () => {
-    if (!useUsdc) setWithdrawAmount(currentEthValue.toString())
-    else setWithdrawAmount(currentUsdcValue.toString())
+    if (!useUsdc) onInputChange(currentEthValue.toString())
+    else onInputChange(currentUsdcValue.toString())
   }
 
   const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : 'ETH'), [useUsdc, useQueue])
