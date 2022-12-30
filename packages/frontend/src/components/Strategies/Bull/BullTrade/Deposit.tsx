@@ -191,7 +191,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   ])
 
   const setDepositMax = () => {
-    setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
+    onInputChange(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
   }
 
   return (

@@ -313,7 +313,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   }
 
   const setDepositMax = () => {
-    setDepositAmount(usdcBalance.toString())
+    onInputChange(usdcBalance.toString())
   }
 
   // Update deposit step
