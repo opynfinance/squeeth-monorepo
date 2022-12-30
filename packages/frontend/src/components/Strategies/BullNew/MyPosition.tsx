@@ -59,37 +59,46 @@ const BullPosition: React.FC = () => {
       </Box>
 
       <Box display="flex" alignItems="center" gridGap="8px">
-        <Box display="flex" marginLeft="-6px">
-          {isPnlPositive ? (
-            <ArrowDropUpIcon className={classes.colorSuccess} />
-          ) : (
-            <ArrowDropDownIcon className={classes.colorError} />
-          )}
+        {bullEthPnL.isFinite() ? (
+          <>
+            <Box display="flex" marginLeft="-6px">
+              {isPnlPositive ? (
+                <ArrowDropUpIcon className={classes.colorSuccess} />
+              ) : (
+                <ArrowDropDownIcon className={classes.colorError} />
+              )}
 
-          <Typography
-            className={clsx(
-              classes.description,
-              classes.textSemibold,
-              classes.textMonospace,
-              isPnlPositive ? classes.colorSuccess : classes.colorError,
-            )}
-          >
-            {formatNumber(bullEthPnlPerct.toNumber()) + '%'}
-          </Typography>
-        </Box>
+              <Typography
+                className={clsx(
+                  classes.description,
+                  classes.textSemibold,
+                  classes.textMonospace,
+                  isPnlPositive ? classes.colorSuccess : classes.colorError,
+                )}
+              >
+                {formatNumber(bullEthPnlPerct.toNumber()) + '%'}
+              </Typography>
+            </Box>
 
-        <Typography
-          className={clsx(
-            classes.description,
-            classes.textSemibold,
-            classes.textMonospace,
-            isPnlPositive ? classes.colorSuccess : classes.colorError,
-          )}
-        >
-          ({isPnlPositive && '+'}
-          {formatNumber(bullEthPnL.toNumber(), 4) + ' ETH'})
-        </Typography>
-        <Typography className={classes.description}>since deposit</Typography>
+            <Typography
+              className={clsx(
+                classes.description,
+                classes.textSemibold,
+                classes.textMonospace,
+                isPnlPositive ? classes.colorSuccess : classes.colorError,
+              )}
+            >
+              ({isPnlPositive && '+'}
+              {formatNumber(bullEthPnL.toNumber(), 4) + ' ETH'})
+            </Typography>
+            <Typography className={classes.description}>since deposit</Typography>
+          </>
+        ) : (
+          <Box display="flex" alignItems="center" gridGap="12px">
+            <CircularProgress size="1rem" className={classes.loadingSpinner} />
+            <Typography className={classes.text}>fetching pnl...</Typography>
+          </Box>
+        )}
       </Box>
     </Box>
   )
