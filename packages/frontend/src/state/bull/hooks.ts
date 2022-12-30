@@ -497,12 +497,15 @@ export const useGetFlashWithdrawParams = () => {
     const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethPrice))
     const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
+    const squeethSpot = wPowerPerpToRedeem.times(sqthPrice)
+    const usdcSpot = usdcToRepay.div(ethPrice)
+
     // cumulative uniswap fees
 
-    const poolFee = toTokenAmount(oSqthProceeds, 18)
+    const poolFee = squeethSpot
       .times(UNI_POOL_FEES)
-      .plus(toTokenAmount(usdcProceeds, 18).times(getUSDCPoolFee(network)))
-      .div(executionPrice)
+      .plus(usdcSpot.times(getUSDCPoolFee(network)))
+      .div(cumulativeSpotPrice)
 
     const priceImpact = (executionPrice.div(cumulativeSpotPrice).toNumber() - 1) * 100
 
