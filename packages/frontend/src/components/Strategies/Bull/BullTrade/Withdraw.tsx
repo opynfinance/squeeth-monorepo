@@ -180,7 +180,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [bullPositionValueInEth, withdrawAmountBN])
 
   const setWithdrawMax = () => {
-    setWithdrawAmount(bullPositionValueInEth.toString())
+    onInputChange(bullPositionValueInEth.toString())
   }
 
   return (
