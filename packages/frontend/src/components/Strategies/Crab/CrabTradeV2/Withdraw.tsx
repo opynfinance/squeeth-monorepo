@@ -538,8 +538,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              High price impact. Try smaller amount or{' '}
-              {isNettingAuctionLive ? 'wait for auction to be over.' : 'use USDC to queue withdrawal.'}
+              High price impact. Try multiple smaller transactions or{' '}
+              {isNettingAuctionLive ? 'wait for auction to be over.' : 'standard withdraw'}
             </Typography>
           </div>
         ) : null}

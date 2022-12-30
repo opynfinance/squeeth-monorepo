@@ -241,7 +241,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              High price impact. Try smaller amount or contact us through{' '}
+              High price impact. Try multiple smaller transactions or contact us through{' '}
               <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
             </Typography>
           </div>

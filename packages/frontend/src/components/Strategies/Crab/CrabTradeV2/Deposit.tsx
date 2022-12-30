@@ -460,7 +460,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              High price impact. Multiple smaller deposits or a standard deposit may reduce price impact
+              High price impact. Try multiple smaller transactions or standard deposit
             </Typography>
           </div>
         )}
