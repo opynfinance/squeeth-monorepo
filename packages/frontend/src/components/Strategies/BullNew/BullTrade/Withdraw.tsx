@@ -34,6 +34,7 @@ import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
 import useAppMemo from '@hooks/useAppMemo'
+import useAppCallback from '@hooks/useAppCallback'
 import useAmplitude from '@hooks/useAmplitude'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
@@ -109,7 +110,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     return showPriceImpactWarning
   }, [quote.ethInForSqth, quote.oSqthOut, normFactor, ethIndexPrice, impliedVol])
 
-  const debouncedDepositQuote = debounce(async (bullToWithdraw: string) => {
+  const debouncedWithdrawQuote = debounce(async (bullToWithdraw: string) => {
     setQuoteLoading(true)
     getFlashBullWithdrawParams(new BigNumber(bullToWithdraw))
       .then((_quote) => {
@@ -120,19 +121,22 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       })
   }, 500)
 
-  const onInputChange = (ethToWithdraw: string) => {
-    const withdrawEthBN = new BigNumber(ethToWithdraw)
-    withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
-    const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
-    setWithdrawAmount(ethToWithdraw)
-    withdrawAmountRef.current = _bullToWithdraw.toString()
-    debouncedDepositQuote(_bullToWithdraw.toString())
-  }
+  const onInputChange = useAppCallback(
+    (ethToWithdraw: string) => {
+      const withdrawEthBN = new BigNumber(ethToWithdraw)
+      withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
+      const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
+      setWithdrawAmount(ethToWithdraw)
+      withdrawAmountRef.current = _bullToWithdraw.toString()
+      debouncedWithdrawQuote(_bullToWithdraw.toString())
+    },
+    [trackWithdrawAmountEnteredOnce, debouncedWithdrawQuote, bullBalance, bullPositionValueInEth],
+  )
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      withdrawAmountRef.current = '0'
-      setWithdrawAmount('0')
+      onInputChange('0')
+
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionAmountRef.current,
@@ -142,7 +146,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm, resetTracking],
+    [onTxnConfirm, resetTracking, onInputChange],
   )
 
   const onWithdrawClick = async () => {
@@ -181,7 +185,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [bullPositionValueInEth, withdrawAmountBN])
 
   const setWithdrawMax = () => {
-    setWithdrawAmount(bullPositionValueInEth.toString())
+    onInputChange(bullPositionValueInEth.toString())
   }
 
   return (

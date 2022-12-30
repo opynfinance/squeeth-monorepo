@@ -105,18 +105,21 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       })
   }, 500)
 
-  const onInputChange = (ethToDeposit: string) => {
-    const depositEthBN = new BigNumber(ethToDeposit)
-    depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
-    setDepositAmount(ethToDeposit)
-    depositAmountRef.current = ethToDeposit
-    debouncedDepositQuote(ethToDeposit)
-  }
+  const onInputChange = useCallback(
+    (ethToDeposit: string) => {
+      const depositEthBN = new BigNumber(ethToDeposit)
+      depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
+      setDepositAmount(ethToDeposit)
+      depositAmountRef.current = ethToDeposit
+      debouncedDepositQuote(ethToDeposit)
+    },
+    [trackDepositAmountEnteredOnce, debouncedDepositQuote],
+  )
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      depositAmountRef.current = '0'
-      setDepositAmount('0')
+      onInputChange('0')
+
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionAmountRef.current,
@@ -126,7 +129,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm, resetTracking],
+    [onTxnConfirm, resetTracking, onInputChange],
   )
 
   const onDepositClick = useCallback(async () => {
@@ -192,7 +195,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   ])
 
   const setDepositMax = () => {
-    setDepositAmount(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
+    onInputChange(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
   }
 
   return (
