@@ -270,14 +270,17 @@ export const useGetCollatRatioAndLiqPrice = () => {
       if (uniId) {
         const { collateral: uniCollat, position } = await getUniNFTCollatDetail(uniId)
         effectiveCollat = effectiveCollat.plus(uniCollat)
-        liquidationPrice = calculateLiquidationPriceForLP(
-          collateralAmount,
-          shortAmount,
-          position!,
-          isWethToken0,
-          normFactor,
-          impliedVol,
-        )
+
+        if (position) {
+          liquidationPrice = calculateLiquidationPriceForLP(
+            collateralAmount,
+            shortAmount,
+            position,
+            isWethToken0,
+            normFactor,
+            impliedVol,
+          )
+        }
       }
       const debt = await getDebtAmount(shortAmount)
 
