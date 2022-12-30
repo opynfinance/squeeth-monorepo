@@ -114,8 +114,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      depositAmountRef.current = '0'
-      setDepositAmount('0')
+      onInputChange('0')
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionAmountRef.current,

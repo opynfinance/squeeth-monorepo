@@ -130,8 +130,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      withdrawAmountRef.current = '0'
-      setWithdrawAmount('0')
+      onInputChange('0')
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionAmountRef.current,
@@ -180,7 +179,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [bullPositionValueInEth, withdrawAmountBN])
 
   const setWithdrawMax = () => {
-    setWithdrawAmount(bullPositionValueInEth.toString())
+    onInputChange(bullPositionValueInEth.toString())
   }
 
   return (
