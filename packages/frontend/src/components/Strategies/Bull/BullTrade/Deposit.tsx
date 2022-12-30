@@ -276,7 +276,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             <Box display="flex" alignItems="center" gridGap="12px" flex="1">
               <Metric
                 label="Price Impact"
-                value={formatNumber(quote.priceImpact) + '%'}
+                value={formatNumber(quote.priceImpact < 0 ? 0 : quote.priceImpact) + '%'}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"
