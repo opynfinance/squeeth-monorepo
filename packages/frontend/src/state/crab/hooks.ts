@@ -424,7 +424,11 @@ export const useCurrentCrabPositionValueV2 = () => {
     crabQueuedShares,
   ])
 
-  return { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading }
+  return {
+    currentCrabPositionValue,
+    currentCrabPositionValueInETH,
+    isCrabPositionValueLoading: balLoading || isCrabPositionValueLoading,
+  }
 }
 
 export const useCalculateETHtoBorrowFromUniswap = () => {

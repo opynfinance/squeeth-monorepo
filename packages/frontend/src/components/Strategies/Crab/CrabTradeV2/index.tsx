@@ -12,13 +12,17 @@ import { PrimaryButtonNew } from '@components/Button'
 import { CrabTransactionConfirmation, CrabTradeType, CrabTradeTransactionType } from './types'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import { addressAtom } from '@state/wallet/atoms'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { addressesAtom } from '@state/positions/atoms'
 
 const CrabTradeV2: React.FC = () => {
+  const { crabStrategy2 } = useAtomValue(addressesAtom)
   const address = useAtomValue(addressAtom)
   const [depositOption, setDepositOption] = useState(0)
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<CrabTransactionConfirmation | undefined>()
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
   const { pollForNewTx } = useCrabPositionV2(address ?? '')
+  const { refetch } = useTokenBalance(crabStrategy2, 15, 18)
 
   const confirmationMessage = useAppMemo(() => {
     if (!confirmedTransactionData?.status) return ``
@@ -44,8 +48,9 @@ const CrabTradeV2: React.FC = () => {
     (confirm?: CrabTransactionConfirmation) => {
       setConfirmedTransactionData(confirm)
       confirm?.id ? pollForNewTx(confirm?.id) : null
+      refetch()
     },
-    [setConfirmedTransactionData, pollForNewTx],
+    [setConfirmedTransactionData, pollForNewTx, refetch],
   )
 
   if (confirmed && confirmedTransactionData?.status) {
