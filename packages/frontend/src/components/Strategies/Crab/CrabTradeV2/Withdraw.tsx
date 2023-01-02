@@ -509,7 +509,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           helperText={withdrawError}
         />
 
-        {withdrawFundingWarning ? (
+        {withdrawFundingWarning && !useQueue ? (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
               <Tooltip
