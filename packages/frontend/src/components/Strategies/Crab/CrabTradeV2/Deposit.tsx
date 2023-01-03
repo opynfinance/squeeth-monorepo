@@ -27,8 +27,6 @@ import {
   useQueueDepositUSDC,
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { usePrevious } from 'react-use'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import useAppMemo from '@hooks/useAppMemo'
@@ -111,12 +109,11 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-  const { confirmed, resetTransactionData } = useTransactionStatus()
+  const { resetTransactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(
     usdc,
