@@ -81,6 +81,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     ethInForUsdc: BIG_ZERO,
     oSqthOut: BIG_ZERO,
     usdcOut: BIG_ZERO,
+    poolFee: 0,
   })
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
@@ -114,7 +115,11 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     setQuoteLoading(true)
     getFlashBullWithdrawParams(new BigNumber(bullToWithdraw))
       .then((_quote) => {
-        if (bullToWithdraw === withdrawAmountRef.current) setQuote(_quote)
+        if (bullToWithdraw === withdrawAmountRef.current) {
+          let quotePriceImpact = _quote.priceImpact
+          if (_quote.poolFee) quotePriceImpact = _quote.priceImpact - _quote.poolFee
+          setQuote({ ..._quote, priceImpact: quotePriceImpact })
+        }
       })
       .finally(() => {
         if (bullToWithdraw === withdrawAmountRef.current) setQuoteLoading(false)
@@ -263,8 +268,8 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
             className={classes.slippageContainer}
           >
             <Metric
-              label="Slippage"
-              value={formatNumber(slippage) + '%'}
+              label="Uniswap Fee"
+              value={formatNumber(quote.poolFee) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
