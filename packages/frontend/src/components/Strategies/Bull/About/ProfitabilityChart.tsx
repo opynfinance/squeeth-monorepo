@@ -57,7 +57,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, ethPrice
       <div className={classes.root}>
         <Typography className={classes.label}>
           {`ETH return: `}
-          <b>{formatNumber(ethReturn)}%</b>
+          <b>{formatNumber(ethReturn * 100)}%</b>
         </Typography>
         <Typography className={classes.value}>
           {`Zen Bull return: `}
