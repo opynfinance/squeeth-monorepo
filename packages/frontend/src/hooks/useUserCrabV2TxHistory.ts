@@ -67,7 +67,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
   }, [crabUserTxes])
 
   const isEthUsdPriceMapValid = useMemo(
-    () => ethUsdPriceMap && crabUserTxes.map((tx) => !!ethUsdPriceMap![Number(tx.timestamp) * 1000]),
+    () => ethUsdPriceMap && crabUserTxes.every((tx) => !!ethUsdPriceMap![Number(tx.timestamp) * 1000]),
     [crabUserTxes, ethUsdPriceMap],
   )
 
