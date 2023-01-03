@@ -26,11 +26,16 @@ import {
   bullStrategyFilterStartDateAtom,
   useBullPnLChartData,
   bullDepositedEthInEulerAtom,
+  bullCrabBalanceAtom,
+  bullEulerUSDCDebtAtom,
 } from '@state/bull/atoms'
+import { crabUSDValueAtom } from '@state/crab/atoms'
 import { BULL_START_DATE } from '@constants/index'
 import { formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { toTokenAmount } from '@utils/calculations'
 
 const useTextFieldStyles = makeStyles((theme) =>
   createStyles({
@@ -116,6 +121,11 @@ const TooltipTitle = () => (
 
 const StrategyPerformance: React.FC = () => {
   const ethDepositedInEuler = useAtomValue(bullDepositedEthInEulerAtom)
+  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
+  const crabUSDValue = useAtomValue(crabUSDValueAtom)
+  const ethPrice = useOnChainETHPrice()
+
   const [startDate, setStartDate] = useAtom(bullStrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(bullStrategyFilterEndDateAtom)
 
@@ -176,7 +186,18 @@ const StrategyPerformance: React.FC = () => {
     return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
   }, [historicalReturns, numberOfDays])
 
-  const tvl = ethDepositedInEuler.integerValue().toNumber()
+  // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
+  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
+  const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
+  const debtValue = eulerUSDCDebt.div(ethPrice)
+
+  const isLoadingTVL =
+    ethDepositedInEuler.isZero() ||
+    bullCrabBalance.isZero() ||
+    crabUSDValue.isZero() ||
+    eulerUSDCDebt.isZero() ||
+    ethPrice.isZero()
+  const tvl = isLoadingTVL ? 0 : collateralValue.minus(debtValue).integerValue().toNumber()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
