@@ -97,7 +97,7 @@ const CandyBar = (props: any) => {
 }
 
 function getStrategyReturn(funding: number, ethReturn: number) {
-  return (funding - Math.pow(ethReturn, 2)) * 100
+  return (funding - Math.pow(ethReturn, 2)) * 100 * 0.5
 }
 
 // generate data from -percentRange to +percentRange
