@@ -34,16 +34,16 @@ const About: React.FC = () => {
     <div>
       <Box display="flex" flexDirection="column" gridGap="8px">
         <Typography variant="h3" className={classes.sectionTitle}>
-          About Crab
+          About Zen Bull
         </Typography>
         <Typography variant="h2" className={classes.heading}>
-          Stack USDC when ETH is calm
+          Stack ETH when ETH increases slow and steady
         </Typography>
 
         <Typography className={clsx(classes.text, classes.textMargin)}>
-          In general, Crab earns USDC returns except when there is high ETH volatility in the market, when it may draw
-          down. Most often, the strategy stacks USDC if ETH is within the below bands at the next hedge.{' '}
-          <LinkWrapper href="https://opyn.gitbook.io/squeeth/resources/crab-strategy">Learn more</LinkWrapper>
+          Zen bull makes money when ETH goes up, slow and steady. It stacks ETH if ETH is within the below bands at the
+          next rebalance.{' '}
+          <LinkWrapper href="https://opyn.gitbook.io/squeeth/resources/zen-bull">Learn more</LinkWrapper>
         </Typography>
       </Box>
 

@@ -56,11 +56,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-type BullTrade = {
-  maxCap: BigNumber
-  depositedAmount: BigNumber
-}
-
 export enum BullTradeType {
   Deposit = 'Deposit',
   Withdraw = 'Withdraw',
@@ -73,7 +68,7 @@ export interface BullTransactionConfirmation {
   txId?: string
 }
 
-const BullTrade: React.FC<BullTrade> = () => {
+const BullTrade: React.FC = () => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
   const isDeposit = tradeType === BullTradeType.Deposit
   const tabValue = tradeType === BullTradeType.Deposit ? 0 : 1

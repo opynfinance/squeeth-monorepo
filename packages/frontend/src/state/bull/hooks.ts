@@ -212,6 +212,7 @@ export const useGetFlashBulldepositParams = () => {
       usdcPoolFee: getUSDCPoolFee(network),
       priceImpact: 0,
       wethToLend: BIG_ZERO,
+      poolFee: 0,
     }),
     [network],
   )
@@ -267,6 +268,16 @@ export const useGetFlashBulldepositParams = () => {
         const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethPrice))
         const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
+        const squeethSpot = oSqthToMint.times(sqthPrice)
+        const usdcSpot = usdcToBorrow.div(ethPrice)
+
+        // cumulative uniswap fees
+
+        const poolFee = squeethSpot
+          .times(UNI_POOL_FEES)
+          .plus(usdcSpot.times(getUSDCPoolFee(network)))
+          .div(cumulativeSpotPrice)
+
         const priceImpact = (1 - executionPrice.div(cumulativeSpotPrice).toNumber()) * 100
 
         prevState = {
@@ -280,6 +291,7 @@ export const useGetFlashBulldepositParams = () => {
           ethOutForUsdc: toTokenAmount(usdcProceeds, 18),
           usdcIn: usdcToBorrow,
           oSqthIn: oSqthToMint,
+          poolFee: poolFee.div(10000).toNumber(),
         }
 
         const totalToBull = ethToCrab.plus(wethToLend).minus(minEthFromSqth).minus(minEthFromUsdc)
@@ -441,6 +453,7 @@ export const useGetFlashWithdrawParams = () => {
     ethInForUsdc: BIG_ZERO,
     oSqthOut: BIG_ZERO,
     usdcOut: BIG_ZERO,
+    poolFee: 0,
   }
 
   const getFlashWithdrawParams = async (bullToFlashWithdraw: BigNumber) => {
@@ -484,6 +497,16 @@ export const useGetFlashWithdrawParams = () => {
     const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethPrice))
     const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
+    const squeethSpot = wPowerPerpToRedeem.times(sqthPrice)
+    const usdcSpot = usdcToRepay.div(ethPrice)
+
+    // cumulative uniswap fees
+
+    const poolFee = squeethSpot
+      .times(UNI_POOL_FEES)
+      .plus(usdcSpot.times(getUSDCPoolFee(network)))
+      .div(cumulativeSpotPrice)
+
     const priceImpact = (executionPrice.div(cumulativeSpotPrice).toNumber() - 1) * 100
 
     return {
@@ -495,6 +518,7 @@ export const useGetFlashWithdrawParams = () => {
       ethInForUsdc: toTokenAmount(usdcProceeds, 18),
       usdcOut: usdcToRepay,
       oSqthOut: wPowerPerpToRedeem,
+      poolFee: poolFee.div(10000).toNumber(),
     }
   }
 

@@ -22,17 +22,20 @@ import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
 
 import useStyles from '@components/Strategies/styles'
 import {
-  crabStrategyVaultAtomV2,
-  useCrabPnLV2ChartData,
-  crabv2StrategyFilterEndDateAtom,
-  crabv2StrategyFilterStartDateAtom,
-} from '@state/crab/atoms'
-import { BIG_ZERO, CRABV2_START_DATE } from '@constants/index'
-import { useETHPrice } from '@hooks/useETHPrice'
-import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import { formatCurrency, formatNumber } from '@utils/formatter'
+  bullStrategyFilterEndDateAtom,
+  bullStrategyFilterStartDateAtom,
+  useBullPnLChartData,
+  bullDepositedEthInEulerAtom,
+  bullCrabBalanceAtom,
+  bullEulerUSDCDebtAtom,
+} from '@state/bull/atoms'
+import { crabUSDValueAtom } from '@state/crab/atoms'
+import { BULL_START_DATE } from '@constants/index'
+import { formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
+import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { toTokenAmount } from '@utils/calculations'
 
 const useTextFieldStyles = makeStyles((theme) =>
   createStyles({
@@ -58,7 +61,7 @@ const useTextFieldStyles = makeStyles((theme) =>
 
 export type ChartDataInfo = {
   timestamp: number
-  crabPnL: number
+  bullEthPnl: number
 }
 
 const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps, id, variant, ...props }) => {
@@ -117,21 +120,23 @@ const TooltipTitle = () => (
 )
 
 const StrategyPerformance: React.FC = () => {
-  const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
-  const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
+  const ethDepositedInEuler = useAtomValue(bullDepositedEthInEulerAtom)
+  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
+  const crabUSDValue = useAtomValue(crabUSDValueAtom)
+  const ethPrice = useOnChainETHPrice()
 
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useETHPrice()
-  const { data: osqthPrice } = useOSQTHPrice()
-  const query = useCrabPnLV2ChartData()
+  const [startDate, setStartDate] = useAtom(bullStrategyFilterStartDateAtom)
+  const [endDate, setEndDate] = useAtom(bullStrategyFilterEndDateAtom)
 
-  const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
+  const query = useBullPnLChartData()
+  const bullEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
 
   const series = [
     {
-      name: 'Crab/USDC 🦀  % Return',
+      name: 'Bull/ETH 🧘🐂 % Return',
       yAxis: 0,
-      data: crabUsdPnlSeries,
+      data: bullEthPnlSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
@@ -165,29 +170,34 @@ const StrategyPerformance: React.FC = () => {
       ...axes,
       chart: {
         ...chart,
-        marginLeft: '40',
+        marginLeft: '48',
       },
       series: series,
     }
   })
+
   const classes = useStyles()
 
-  const isLoadingChartData = typeof crabUsdPnlSeries === 'undefined'
   const numberOfDays = differenceInCalendarDays(endDate, startDate)
-  const hasData = isLoadingChartData ? false : crabUsdPnlSeries.length > 0
+  const hasData = bullEthPnlSeries?.length > 0 ?? false
 
-  const historicalReturns = hasData ? crabUsdPnlSeries[crabUsdPnlSeries.length - 1][1] : 0
+  const historicalReturns = hasData ? bullEthPnlSeries[bullEthPnlSeries.length - 1][1] : 0
   const annualizedReturns = useMemo(() => {
-    // compounded annually
     return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
   }, [historicalReturns, numberOfDays])
 
-  const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
+  // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
+  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
+  const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
+  const debtValue = eulerUSDCDebt.div(ethPrice)
 
-  const collateralValue = vaultCollateral.multipliedBy(ethPrice)
-  const debtValue = vaultDebt.multipliedBy(osqthPrice)
-  const tvl = collateralValue.minus(debtValue).integerValue()
+  const isLoadingTVL =
+    ethDepositedInEuler.isZero() ||
+    bullCrabBalance.isZero() ||
+    crabUSDValue.isZero() ||
+    eulerUSDCDebt.isZero() ||
+    ethPrice.isZero()
+  const tvl = isLoadingTVL ? 0 : collateralValue.minus(debtValue).integerValue().toNumber()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
@@ -208,7 +218,7 @@ const StrategyPerformance: React.FC = () => {
         </Typography>
 
         <Box display="flex" alignItems="baseline" gridGap="12px">
-          <Typography className={classes.description}>Annualized USDC Return</Typography>
+          <Typography className={classes.description}>Annualized ETH Return</Typography>
 
           <Box position="relative" top="3px">
             <Tooltip title={<TooltipTitle />}>
@@ -220,7 +230,7 @@ const StrategyPerformance: React.FC = () => {
 
       <Box display="flex" gridGap="12px">
         <Typography className={clsx(classes.description, classes.textMonospace)}>
-          {formatCurrency(tvl.toNumber(), 0)}
+          {formatNumber(tvl, 0) + ' ETH'}
         </Typography>
         <Typography className={classes.description}>TVL</Typography>
       </Box>
@@ -235,7 +245,7 @@ const StrategyPerformance: React.FC = () => {
                 placeholder="MM/DD/YYYY"
                 format={'MM/dd/yyyy'}
                 value={startDate}
-                minDate={CRABV2_START_DATE}
+                minDate={BULL_START_DATE}
                 onChange={(d) => setStartDate(d || new Date())}
                 animateYearScrolling={false}
                 autoOk={true}
@@ -269,7 +279,7 @@ const StrategyPerformance: React.FC = () => {
       </Box>
 
       <Box marginTop="12px">
-        {crabUsdPnlSeries ? (
+        {bullEthPnlSeries ? (
           <HighchartsReact highcharts={Highcharts} options={chartOptions} />
         ) : (
           <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">

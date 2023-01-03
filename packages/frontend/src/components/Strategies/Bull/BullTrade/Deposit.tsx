@@ -1,3 +1,10 @@
+import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
+import BigNumber from 'bignumber.js'
+import { useAtom, useAtomValue } from 'jotai'
+import { useMemo, useRef, useState, useCallback } from 'react'
+import InfoIcon from '@material-ui/icons/Info'
+import debounce from 'lodash/debounce'
+
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import { LinkWrapper } from '@components/LinkWrapper'
@@ -13,28 +20,22 @@ import {
   YEAR,
   WETH_DECIMALS,
 } from '@constants/index'
-import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
-import BigNumber from 'bignumber.js'
-import { useAtom, useAtomValue } from 'jotai'
-import { useMemo, useRef, useState, useCallback } from 'react'
-import { useZenBullStyles } from './styles'
 import ethLogo from 'public/images/eth-logo.svg'
-import InfoIcon from '@material-ui/icons/Info'
-import debounce from 'lodash/debounce'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
-import { BullTradeType, BullTransactionConfirmation } from './index'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
+import { useZenBullStyles } from './styles'
+import { BullTradeType, BullTransactionConfirmation } from './index'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -77,6 +78,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     usdcPoolFee: 0,
     priceImpact: 0,
     wethToLend: BIG_ZERO,
+    poolFee: 0,
   })
 
   const { data: balance } = useWalletBalance()
@@ -97,20 +99,27 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     getFlashBullDepositParams(new BigNumber(ethToDeposit))
       .then((_quote) => {
         console.log('', ethToDeposit.toString(), depositAmountRef.current)
-        if (ethToDeposit === depositAmountRef.current) setQuote(_quote)
+        if (ethToDeposit === depositAmountRef.current) {
+          let quotePriceImpact = _quote.priceImpact
+          if (_quote.poolFee) quotePriceImpact = _quote.priceImpact - _quote.poolFee
+          setQuote({ ..._quote, priceImpact: quotePriceImpact })
+        }
       })
       .finally(() => {
         if (ethToDeposit === depositAmountRef.current) setQuoteLoading(false)
       })
   }, 500)
 
-  const onInputChange = (ethToDeposit: string) => {
-    const depositEthBN = new BigNumber(ethToDeposit)
-    depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
-    setDepositAmount(ethToDeposit)
-    depositAmountRef.current = ethToDeposit
-    debouncedDepositQuote(ethToDeposit)
-  }
+  const onInputChange = useCallback(
+    (ethToDeposit: string) => {
+      const depositEthBN = new BigNumber(ethToDeposit)
+      depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
+      setDepositAmount(ethToDeposit)
+      depositAmountRef.current = ethToDeposit
+      debouncedDepositQuote(ethToDeposit)
+    },
+    [trackDepositAmountEnteredOnce, debouncedDepositQuote],
+  )
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
@@ -124,7 +133,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       resetTracking()
       ongoingTransactionAmountRef.current = new BigNumber(0)
     },
-    [onTxnConfirm, resetTracking],
+    [onTxnConfirm, resetTracking, onInputChange],
   )
 
   const onDepositClick = useCallback(async () => {
@@ -256,8 +265,8 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             className={classes.slippageContainer}
           >
             <Metric
-              label="Slippage"
-              value={formatNumber(slippage) + '%'}
+              label="Uniswap Fee"
+              value={formatNumber(quote.poolFee) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
@@ -267,7 +276,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             <Box display="flex" alignItems="center" gridGap="12px" flex="1">
               <Metric
                 label="Price Impact"
-                value={formatNumber(quote.priceImpact) + '%'}
+                value={formatNumber(quote.priceImpact < 0 ? 0 : quote.priceImpact) + '%'}
                 isSmall
                 flexDirection="row"
                 justifyContent="space-between"
