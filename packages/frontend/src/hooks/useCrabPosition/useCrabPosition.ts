@@ -11,7 +11,6 @@ import useAppMemo from '../useAppMemo'
 import {
   crabLoadingAtom,
   crabLoadingAtomV2,
-  crabPositionRefetchingAtom,
   crabPositionValueLoadingAtom,
   crabPositionValueLoadingAtomV2,
   crabQueuedInEthAtom,
@@ -108,7 +107,7 @@ export const useCrabPosition = (user: string) => {
 */
 export const useCrabPositionV2 = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtomV2)
-  const [crabPositionRefetching, setCrabPositionRefetching] = useAtom(crabPositionRefetchingAtom)
+  const [crabPositionRefetching, setCrabPositionRefetching] = useState(false)
   const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtomV2)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
   const [txToSearch, setTxToSearch] = useState<string | undefined>(undefined)
