@@ -67,6 +67,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAppEffect from '@hooks/useAppEffect'
 import { CrabStrategyV2TxType, CrabStrategyTxType } from 'src/types'
+import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -129,6 +130,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const { confirmed, resetTransactionData } = useTransactionStatus()
+  const logAndRunTransaction = useTrackTransactionFlow()
 
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
@@ -312,9 +314,13 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       } else {
         if (withdrawStep === WithdrawSteps.APPROVE) {
           if (useQueue) {
-            await approveQueueCrab(() => resetTransactionData())
+            logAndRunTransaction(async () => {
+              await approveQueueCrab(() => resetTransactionData())
+            }, CRAB_EVENTS.APPROVE_WITHDRAW_STN_CRAB_USDC)
           } else {
-            await approveCrab(() => resetTransactionData())
+            logAndRunTransaction(async () => {
+              await approveCrab(() => resetTransactionData())
+            }, CRAB_EVENTS.APPROVE_WITHDRAW_CRAB_USDC)
           }
         } else {
           const userForceInstantAnalytics = queueOptionAvailable && !useQueue

@@ -57,6 +57,7 @@ import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, O
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
+import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 
 type CrabDepositProps = {
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
@@ -134,6 +135,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   )
 
   const [trackDepositAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredDepositAmount)
+  const logAndRunTransaction = useTrackTransactionFlow()
 
   const onInputChange = useCallback(
     (amount: string) => {
@@ -275,9 +277,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     try {
       if (depositStep === DepositSteps.APPROVE) {
         if (useQueue) {
-          await approveQueueUsdc(() => resetTransactionData())
+          await logAndRunTransaction(async () => {
+            await approveQueueUsdc(() => resetTransactionData())
+          }, CRAB_EVENTS.APPROVE_DEPOSIT_STN_CRAB_USDC)
         } else {
-          await approveUsdc(() => resetTransactionData())
+          await logAndRunTransaction(async () => {
+            await approveUsdc(() => resetTransactionData())
+          }, CRAB_EVENTS.APPROVE_DEPOSIT_CRAB_USDC)
         }
       } else {
         const userForceInstantAnalytics = queueOptionAvailable && !useQueue

@@ -40,6 +40,7 @@ import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
+import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -87,6 +88,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
   const bullFlashWithdraw = useBullFlashWithdraw()
   const { track } = useAmplitude()
+  const logAndRunTransaction = useTrackTransactionFlow()
 
   const trackUserEnteredWithdrawAmount = useCallback(
     (amount: BigNumber) => track(BULL_EVENTS.WITHDRAW_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
@@ -175,7 +177,9 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const onApproveClick = async () => {
     setTxLoading(true)
     try {
-      await approveBull(() => console.log('Approved'))
+      await logAndRunTransaction(async () => {
+        await approveBull(() => console.log('Approved'))
+      }, BULL_EVENTS.APPROVE_WITHDRAW_BULL)
     } catch (e) {
       console.log(e)
     }
