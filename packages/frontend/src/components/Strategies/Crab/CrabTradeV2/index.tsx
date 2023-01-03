@@ -22,7 +22,7 @@ const CrabTradeV2: React.FC = () => {
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<CrabTransactionConfirmation | undefined>()
   const { confirmed, resetTransactionData, transactionData } = useTransactionStatus()
   const { pollForNewTx } = useCrabPositionV2(address ?? '')
-  const { refetch } = useTokenBalance(crabStrategy2, 15, 18)
+  const { refetch: refetchBalance } = useTokenBalance(crabStrategy2, 15, 18)
 
   const confirmationMessage = useAppMemo(() => {
     if (!confirmedTransactionData?.status) return ``
@@ -48,9 +48,9 @@ const CrabTradeV2: React.FC = () => {
     (confirm?: CrabTransactionConfirmation) => {
       setConfirmedTransactionData(confirm)
       confirm?.id ? pollForNewTx(confirm?.id) : null
-      refetch()
+      refetchBalance()
     },
-    [setConfirmedTransactionData, pollForNewTx, refetch],
+    [setConfirmedTransactionData, pollForNewTx, refetchBalance],
   )
 
   if (confirmed && confirmedTransactionData?.status) {
