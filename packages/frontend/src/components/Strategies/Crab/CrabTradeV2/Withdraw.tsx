@@ -395,14 +395,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       return
     }
 
-    if (Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+    if (Number(withdrawPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
       setUseQueue(true)
     } else {
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed])
+  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed, uniswapFee])
 
   const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
@@ -559,7 +559,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
               label="Uniswap Fee"
-              value={useQueue ? '0 %' : formatNumber(Number(uniswapFee)) + '%'}
+              value={useQueue ? '0%' : formatNumber(Number(uniswapFee)) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
