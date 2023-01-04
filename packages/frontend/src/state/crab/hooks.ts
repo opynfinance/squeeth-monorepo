@@ -1053,14 +1053,8 @@ export const useQueuedCrabPositionAndStatus = () => {
     const usdcPromise = contract.methods.usdBalance(address).call()
     const crabPromise = contract.methods.crabBalance(address).call()
     const auctionStatusPromise = contract.methods.isAuctionLive().call()
-  
-    
 
-    const [usdcQueued, crabQueued, auctionStatus ] = await Promise.all([
-      usdcPromise,
-      crabPromise,
-      auctionStatusPromise,
-    ])
+    const [usdcQueued, crabQueued, auctionStatus] = await Promise.all([usdcPromise, crabPromise, auctionStatusPromise])
     setUsdcQueued(new BigNumber(usdcQueued))
     setCrabQueued(new BigNumber(crabQueued))
     setNettingAuctionLive(auctionStatus)
@@ -1073,17 +1067,26 @@ export const useDeQueueDepositUSDC = () => {
   const contract = useAtomValue(crabNettingContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
 
   const deQueueUSDC = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
 
-      return await handleTransaction(
-        contract.methods.withdrawUSDC(amount.toString(), false).send({
-          from: address,
-        }),
-        onTxConfirmed,
-      )
+      try {
+        track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_CLICK)
+        await handleTransaction(
+          contract.methods.withdrawUSDC(amount.toString(), false).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_REJECT) : null
+        track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_FAILED, { code: e?.code })
+        console.log(e)
+      }
     },
     [contract, address, handleTransaction],
   )
@@ -1095,17 +1098,26 @@ export const useDeQueueWithdrawCrab = () => {
   const contract = useAtomValue(crabNettingContractAtom)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
 
   const queueWithdraw = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
 
-      return await handleTransaction(
-        contract.methods.dequeueCrab(amount.toFixed(0), false).send({
-          from: address,
-        }),
-        onTxConfirmed,
-      )
+      try {
+        track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_CLICK)
+        await handleTransaction(
+          contract.methods.dequeueCrab(amount.toFixed(0), false).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_REJECT) : null
+        track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_FAILED, { code: e?.code })
+        console.log(e)
+      }
     },
     [contract, address, handleTransaction],
   )
