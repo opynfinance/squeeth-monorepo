@@ -324,7 +324,11 @@ export const useCurrentCrabPositionValueV2 = () => {
   const [isCrabPositionValueLoading, setIsCrabPositionValueLoading] = useAtom(crabPositionValueLoadingAtomV2)
   const [currentCrabPositionValue, setCurrentCrabPositionValue] = useAtom(currentCrabPositionValueAtomV2)
   const [currentCrabPositionValueInETH, setCurrentCrabPositionValueInETH] = useAtom(currentCrabPositionValueInETHAtomV2)
-  const { value: userCrabBalance, loading: balLoading } = useTokenBalance(crabStrategy2, 15, 18)
+  const {
+    value: userCrabBalance,
+    loading: balLoading,
+    refetch: refetchCrabTokenBalance,
+  } = useTokenBalance(crabStrategy2, 15, 18)
   const userMigratedShares = useAtomValue(userMigratedSharesAtom)
   const crabQueuedShares = useAtomValue(crabQueuedAtom)
   const setUserMigratedSharesETH = useUpdateAtom(userMigratedSharesETHAtom)
@@ -428,6 +432,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     currentCrabPositionValue,
     currentCrabPositionValueInETH,
     isCrabPositionValueLoading: balLoading || isCrabPositionValueLoading,
+    refetchCrabTokenBalance,
   }
 }
 
