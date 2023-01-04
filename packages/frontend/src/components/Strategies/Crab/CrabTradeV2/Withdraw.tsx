@@ -559,7 +559,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
               label="Uniswap Fee"
-              value={useQueue ? '0 %' : formatNumber(Number(uniswapFee)) + '%'}
+              value={useQueue ? '0%' : formatNumber(Number(uniswapFee)) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
