@@ -588,15 +588,14 @@ export function getMintAndLpPayoffGraph(ethPrice: number) {
   return { leveragePayout, ethPercents, lpPayout }
 }
 
-export const getLongChartData = async (days: number, collatRatio: number, volMultiplier: number) => {
-  const url = `/api/charts/longchart?days=${days}&collatRatio=${collatRatio}&volMultiplier=${volMultiplier}`
+export const getLongChartData = async (fromTs: number, toTs: number, collatRatio: number, volMultiplier: number) => {
+  const url = `/api/charts/longchart?fromTs=${fromTs}&toTs=${toTs}&collatRatio=${collatRatio}&volMultiplier=${volMultiplier}`
   const response = await fetch(url)
   const data = await response.json()
   return data
 }
 
 export const getCrabPnlV2ChartData = async (startDateTimestamp: number, endDateTimestamp: number) => {
-
   const domain = omdbBaseUrl
   const base_url = `${domain}/metrics/crabv2?start_timestamp=${startDateTimestamp}&end_timestamp=${endDateTimestamp}`
   const url = `${base_url}`
@@ -606,8 +605,7 @@ export const getCrabPnlV2ChartData = async (startDateTimestamp: number, endDateT
   return data
 }
 
-export const getEthPriceAtHedge = async() => {
-
+export const getEthPriceAtHedge = async () => {
   const url = `/api/auction/lastHedgeAuction`
   const response = await fetch(url)
   const data = await response.json()
