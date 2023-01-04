@@ -402,7 +402,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       setQueueOptionAvailable(false)
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed])
+  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed, uniswapFee])
 
   const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
