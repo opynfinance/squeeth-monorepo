@@ -395,7 +395,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       return
     }
 
-    if (Number(withdrawPriceImpact) > OTC_PRICE_IMPACT_THRESHOLD) {
+    if (Number(withdrawPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
       setUseQueue(true)
     } else {
