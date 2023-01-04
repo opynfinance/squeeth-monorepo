@@ -1053,14 +1053,8 @@ export const useQueuedCrabPositionAndStatus = () => {
     const usdcPromise = contract.methods.usdBalance(address).call()
     const crabPromise = contract.methods.crabBalance(address).call()
     const auctionStatusPromise = contract.methods.isAuctionLive().call()
-  
-    
 
-    const [usdcQueued, crabQueued, auctionStatus ] = await Promise.all([
-      usdcPromise,
-      crabPromise,
-      auctionStatusPromise,
-    ])
+    const [usdcQueued, crabQueued, auctionStatus] = await Promise.all([usdcPromise, crabPromise, auctionStatusPromise])
     setUsdcQueued(new BigNumber(usdcQueued))
     setCrabQueued(new BigNumber(crabQueued))
     setNettingAuctionLive(auctionStatus)
@@ -1089,7 +1083,7 @@ export const useDeQueueDepositUSDC = () => {
         )
         track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
       } catch (e: any) {
-        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_REVERT) : null
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_REJECT) : null
         track(CRAB_EVENTS.CANCEL_DEPOSIT_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
@@ -1120,7 +1114,7 @@ export const useDeQueueWithdrawCrab = () => {
         )
         track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
       } catch (e: any) {
-        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_REVERT) : null
+        e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_REJECT) : null
         track(CRAB_EVENTS.CANCEL_WITHDRAW_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
