@@ -431,7 +431,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           helperText={depositError}
         />
 
-        {depositFundingWarning && (
+        {depositFundingWarning && !useQueue && (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
               <Tooltip
