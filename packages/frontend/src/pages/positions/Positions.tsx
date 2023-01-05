@@ -125,7 +125,7 @@ export default function Positions() {
       <div className={classes.container}>
         <div className={classes.header}>
           <Typography color="primary" variant="h6">
-            Your Positions
+            Yours Truly Positions
           </Typography>
           <div style={{ display: 'flex' }}>
             <Typography component="span" color="textSecondary">
