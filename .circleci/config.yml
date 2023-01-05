@@ -46,9 +46,18 @@ workflows:
       - coverage-zen-bull-vault:
           requires:
             - test-zen-bull-vault
+  crab-netting:
+    jobs:
+      - lint-crab-netting
+      - compile-crab-netting:
+          requires:
+            - lint-crab-netting
+      - test-crab-netting:
+          requires:
+            - compile-crab-netting
 
 jobs:
-  # hardhat jobs
+  ################ hardhat jobs
   checkout-and-install-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -167,7 +176,7 @@ jobs:
           name: Mainnet E2E Test 
           command: yarn test:e2e
   
-  # frontend jobs
+  ################ frontend jobs
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
@@ -202,7 +211,7 @@ jobs:
           name: Unit tests
           command: yarn test:ci
 
-  # zen-bull-vault jobs
+  ################ zen-bull-vault jobs
   lint-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
@@ -250,6 +259,31 @@ jobs:
       - checkout
       - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=coverage forge coverage
 
+  ################ crab-netting jobs
+  lint-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint crab-netting
+          command: cd packages/crab-netting && FOUNDRY_PROFILE=fmt forge fmt --check
 
+  compile-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Build crab-netting
+          command: cd packages/crab-netting && forge build --force
 
-
+  test-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/crab-netting && forge test -vv --gas-report
