@@ -57,6 +57,9 @@ const useInputTokenProps = makeStyles((theme) =>
       height: '18px',
       marginRight: theme.spacing(1),
     },
+    textMonospace: {
+      fontFamily: 'DM Mono',
+    },
   }),
 )
 
@@ -144,9 +147,10 @@ export const InputToken: React.FC<InputTokenProps> = ({
         </Typography>
 
         <Box display="flex" alignItems="center" gridGap="4px">
-          <Typography variant="body2">
-            {formatBalance(balance.toNumber())} {symbol}
+          <Typography variant="body2" className={classes.textMonospace}>
+            {formatBalance(balance.toNumber())}
           </Typography>
+          <Typography variant="body2">{` ${symbol}`}</Typography>
 
           {showMaxAction && (
             <ButtonBase onClick={onBalanceClick}>
