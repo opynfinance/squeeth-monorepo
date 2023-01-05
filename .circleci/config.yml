@@ -40,18 +40,12 @@ workflows:
       - test-zen-bull-vault:
           requires:
             - compile-zen-bull-vault
-          context: 
-            - squeeth-monorepo-zen-bull-vault
       - fuzzing-zen-bull-vault:
           requires:
             - compile-zen-bull-vault
-          context: 
-            - squeeth-monorepo-zen-bull-vault
       - coverage-zen-bull-vault:
           requires:
             - test-zen-bull-vault
-          context: 
-            - squeeth-monorepo-zen-bull-vault
 
 jobs:
   # hardhat jobs
