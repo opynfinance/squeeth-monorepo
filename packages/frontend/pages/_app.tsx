@@ -7,6 +7,12 @@ import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
+import '@rainbow-me/rainbowkit/styles.css'
+import { getDefaultWallets, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
+import { configureChains, createClient, WagmiConfig, useSigner, useAccount } from 'wagmi'
+import { mainnet, goerli } from 'wagmi/chains'
+import { infuraProvider } from 'wagmi/providers/infura'
+import { publicProvider } from 'wagmi/providers/public'
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
@@ -15,7 +21,7 @@ import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard } from 'src/state/wallet/hooks'
-import { addressAtom, networkIdAtom, onboardAddressAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom, networkIdAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
@@ -34,6 +40,22 @@ import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 
 const CrispWithNoSSR = dynamic(() => import('../src/components/CrispChat/CrispChat'), { ssr: false })
+const infuraId = process.env.NEXT_PUBLIC_INFURA_API_KEY
+
+// Chains for connectors to support
+const { chains, provider } = configureChains([goerli], [infuraProvider({ infuraId }), publicProvider()])
+
+//Set up connectors
+const { connectors } = getDefaultWallets({
+  appName: 'Squeeth',
+  chains,
+})
+
+const wagmiClient = createClient({
+  autoConnect: false,
+  connectors: [...connectors()],
+  provider,
+})
 
 initializeAmplitude()
 
@@ -97,7 +119,22 @@ function MyApp({ Component, pageProps }: any) {
     <RestrictUserProvider>
       <QueryClientProvider client={queryClient}>
         <ApolloProvider client={client}>
-          <TradeApp Component={Component} pageProps={pageProps} />
+          <WagmiConfig client={wagmiClient}>
+            <RainbowKitProvider
+              coolMode
+              chains={chains}
+              theme={darkTheme({
+                accentColor: 'rgba(26, 232, 255)',
+                accentColorForeground: 'black',
+              })}
+              appInfo={{
+                appName: 'Squeeth',
+              }}
+              showRecentTransactions
+            >
+              <TradeApp Component={Component} pageProps={pageProps} />
+            </RainbowKitProvider>
+          </WagmiConfig>
         </ApolloProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
@@ -106,22 +143,27 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
+  const { address } = useAccount()
+  const networkId = useAtomValue(networkIdAtom)
+  const setConnectedWallet = useUpdateAtom(connectedWalletAtom)
   const setAddress = useUpdateAtom(addressAtom)
-  const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const firstAddressCheck = useRef(true)
   const { track } = useAmplitude()
 
+  console.log('ADDRESS connected', address)
+
   useAppEffect(() => {
-    if (!onboardAddress) {
-      return
+    if (!address) {
+      return setConnectedWallet(false)
     }
 
-    checkIsValidAddress(onboardAddress).then((valid) => {
+    checkIsValidAddress(address).then((valid) => {
       if (valid) {
-        setAddress(onboardAddress)
-        setUserId(onboardAddress)
-        track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
+        setAddress(address)
+        setUserId(address)
+        setConnectedWallet(!!(address && networkId))
+        track(WALLET_EVENTS.WALLET_CONNECTED, { address })
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
@@ -130,7 +172,7 @@ const Init = () => {
         }
       }
     })
-  }, [onboardAddress, setAddress, setWalletFailVisible, track])
+  }, [address, setAddress, setWalletFailVisible, setConnectedWallet, track, networkId])
 
   useOnboard()
   useUpdateSqueethPrices()

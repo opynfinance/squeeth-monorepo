@@ -5,6 +5,7 @@ import Notify from 'bnc-notify'
 import Onboard from 'bnc-onboard'
 import Web3 from 'web3'
 import { ethers } from 'ethers'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { useQuery, useQueryClient } from 'react-query'
 
 import {
@@ -30,38 +31,11 @@ import { checkIsValidAddress } from './apis'
 import { setUserId } from '@amplitude/analytics-browser'
 import { WALLET_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
+import { useAccount } from 'wagmi'
 
 export const useSelectWallet = () => {
-  const [onboard] = useAtom(onboardAtom)
-  const setAddress = useUpdateAtom(addressAtom)
-  const onboardAddress = useAtomValue(onboardAddressAtom)
-  const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
-  const { track } = useAmplitude()
-
-  const onWalletSelect = async () => {
-    if (!onboard) return
-    onboard.walletSelect().then(async (success) => {
-      if (success) {
-        // if onboard address is invalid
-        if (onboardAddress) {
-          checkIsValidAddress(onboardAddress).then((valid) => {
-            if (valid) {
-              setAddress(onboardAddress)
-              // Analytics
-              setUserId(onboardAddress)
-              track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
-            } else {
-              setWalletFailVisible(true)
-            }
-          })
-        }
-
-        await onboard.walletCheck()
-      }
-    })
-  }
-
-  return onWalletSelect
+  const { openConnectModal } = useConnectModal()
+  return openConnectModal
 }
 
 export const useDiscconectWallet = () => {

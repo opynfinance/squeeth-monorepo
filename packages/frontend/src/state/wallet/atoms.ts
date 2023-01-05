@@ -43,11 +43,7 @@ export const notifyAtom = atom<NotifyAPI | null>(null)
 export const signerAtom = atom<any>(null)
 export const supportedNetworkAtom = atom<boolean>(false)
 
-export const connectedWalletAtom = atom((get) => {
-  const address = get(addressAtom)
-  const networkId = get(networkIdAtom)
-  return Boolean(address && networkId)
-})
+export const connectedWalletAtom = atom(false)
 
 export const isTransactionFirstStepAtom = atom(false)
 export const onboardAddressAtom = atom<string | null>(null)
