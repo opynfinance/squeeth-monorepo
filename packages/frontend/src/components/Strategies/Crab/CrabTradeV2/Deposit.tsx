@@ -27,8 +27,6 @@ import {
   useQueueDepositUSDC,
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { usePrevious } from 'react-use'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import useAppMemo from '@hooks/useAppMemo'
@@ -111,21 +109,17 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-  const { confirmed, resetTransactionData } = useTransactionStatus()
+  const { resetTransactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
   const { isRestricted } = useRestrictUser()
 
-  const address = useAtomValue(addressAtom)
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(
     usdc,
     crabNetting,
     USDC_DECIMALS,
   )
-  const { data, startPolling, stopPolling } = useUserCrabV2TxHistory(address ?? '')
-
-  const prevCrabTxData = usePrevious(data)
 
   const maxCap = useAtomValue(maxCapAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
@@ -149,14 +143,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     },
     [setDepositAmount, trackDepositAmountEnteredOnce],
   )
-
-  useEffect(() => {
-    if (confirmed && prevCrabTxData?.length === data?.length) {
-      startPolling(500)
-    } else {
-      stopPolling()
-    }
-  }, [confirmed, prevCrabTxData?.length, data?.length])
 
   const depositedAmount = vault?.collateralAmount ?? BIG_ZERO
 
@@ -246,38 +232,42 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     [track],
   )
 
-  const onTxnConfirmed = useCallback(() => {
-    if (!ongoingTransaction.current) return
-    const transaction = ongoingTransaction.current
-    if (transaction.queuedTransaction)
-      setUsdcQueued(usdcQueued.plus(fromTokenAmount(transaction.amount, USDC_DECIMALS)))
-    else {
-      setStrategyData()
-    }
-    onTxnConfirm({
-      status: true,
-      amount: transaction.amount,
-      tradeType: CrabTradeType.Deposit,
-      transactionType: transaction.queuedTransaction
-        ? CrabTradeTransactionType.Queued
-        : CrabTradeTransactionType.Instant,
-      token: transaction.token,
-    })
-    transaction.analytics ? recordAnalytics(transaction.analytics) : null
-    onInputChange('0')
-    resetTracking()
-    refetchUsdcBalance()
-    ongoingTransaction.current = undefined
-  }, [
-    usdcQueued,
-    setUsdcQueued,
-    setStrategyData,
-    onTxnConfirm,
-    onInputChange,
-    refetchUsdcBalance,
-    recordAnalytics,
-    resetTracking,
-  ])
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      if (!ongoingTransaction.current) return
+      const transaction = ongoingTransaction.current
+      if (transaction.queuedTransaction)
+        setUsdcQueued(usdcQueued.plus(fromTokenAmount(transaction.amount, USDC_DECIMALS)))
+      else {
+        setStrategyData()
+      }
+      onTxnConfirm({
+        status: true,
+        amount: transaction.amount,
+        tradeType: CrabTradeType.Deposit,
+        transactionType: transaction.queuedTransaction
+          ? CrabTradeTransactionType.Queued
+          : CrabTradeTransactionType.Instant,
+        token: transaction.token,
+        id,
+      })
+      transaction.analytics ? recordAnalytics(transaction.analytics) : null
+      onInputChange('0')
+      resetTracking()
+      refetchUsdcBalance()
+      ongoingTransaction.current = undefined
+    },
+    [
+      usdcQueued,
+      setUsdcQueued,
+      setStrategyData,
+      onTxnConfirm,
+      onInputChange,
+      refetchUsdcBalance,
+      recordAnalytics,
+      resetTracking,
+    ],
+  )
 
   const depositTX = async () => {
     setTxLoading(true)

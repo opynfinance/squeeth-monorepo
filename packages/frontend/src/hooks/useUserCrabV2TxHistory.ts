@@ -21,7 +21,7 @@ import useAppMemo from './useAppMemo'
 import BigNumber from 'bignumber.js'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { getHistoricEthPrices } from './useETHPrice'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.DEPOSIT) return 'Deposit'
@@ -66,8 +66,13 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
       })
   }, [crabUserTxes])
 
+  const isEthUsdPriceMapValid = useMemo(
+    () => ethUsdPriceMap && crabUserTxes.every((tx) => !!ethUsdPriceMap![Number(tx.timestamp) * 1000]),
+    [crabUserTxes, ethUsdPriceMap],
+  )
+
   const uiData = useAppMemo(() => {
-    if (!ethUsdPriceMap) {
+    if (!isEthUsdPriceMapValid) {
       return []
     }
 
@@ -122,7 +127,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         txTitle: getTxTitle(tx.type),
       }
     })
-  }, [crabUserTxes, usdc, ethUsdPriceMap])
+  }, [crabUserTxes, usdc, ethUsdPriceMap, isEthUsdPriceMapValid])
 
   return {
     loading: loading || ethUsdPriceMapLoading,

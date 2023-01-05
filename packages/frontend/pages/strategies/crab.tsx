@@ -50,8 +50,9 @@ const useStyles = makeStyles((theme) =>
 const Crab: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
+  const { currentCrabPositionValue, isCrabPositionValueLoading, refetchCrabTokenBalance } =
+    useCurrentCrabPositionValueV2()
 
-  useCurrentCrabPositionValueV2()
   useInitCrabMigration()
 
   useEffect(() => {
@@ -62,14 +63,17 @@ const Crab: React.FC = () => {
     <div className={classes.container}>
       <div className={classes.leftColumn}>
         <div className={classes.infoContainer}>
-          <MyPosition />
+          <MyPosition
+            currentCrabPositionValue={currentCrabPositionValue}
+            isCrabPositionValueLoading={isCrabPositionValueLoading}
+          />
           <StrategyPerformance />
           <About />
         </div>
       </div>
       <div className={classes.rightColumn}>
         <div className={classes.tradeSection}>
-          <CrabTradeV2 />
+          <CrabTradeV2 refetchCrabTokenBalance={refetchCrabTokenBalance} />
         </div>
       </div>
     </div>

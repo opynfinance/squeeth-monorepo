@@ -12,13 +12,16 @@ import useStyles from '@components/Strategies/styles'
 import { BIG_ZERO } from '@constants/index'
 import CrabPosition from './CrabPosition'
 import QueuedPosition from './QueuedPosition'
+import BigNumber from 'bignumber.js'
 
-const MyPosition: React.FC = () => {
+const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPositionValueLoading: boolean }> = ({
+  currentCrabPositionValue,
+  isCrabPositionValueLoading,
+}) => {
   const usdcQueued = useAtomValue(usdcQueuedAtom)
   const crabQueued = useAtomValue(crabQueuedAtom)
   const address = useAtomValue(addressAtom)
   const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
-  const { currentCrabPositionValue, isCrabPositionValueLoading } = useCurrentCrabPositionValueV2()
 
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
 

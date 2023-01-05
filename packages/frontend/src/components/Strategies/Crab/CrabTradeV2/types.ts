@@ -16,6 +16,7 @@ export interface CrabTransactionConfirmation {
   tradeType: CrabTradeType
   transactionType: CrabTradeTransactionType
   token: 'USDC' | 'ETH'
+  id?: string
 }
 
 export interface OngoingTransaction {

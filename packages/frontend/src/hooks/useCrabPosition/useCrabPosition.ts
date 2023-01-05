@@ -4,7 +4,7 @@ import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
 import { useUserCrabV2TxHistory } from '../useUserCrabV2TxHistory'
 import { CrabStrategyTxType, CrabStrategyV2TxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
@@ -107,11 +107,13 @@ export const useCrabPosition = (user: string) => {
 */
 export const useCrabPositionV2 = (user: string) => {
   const crabLoading = useAtomValue(crabLoadingAtomV2)
+  const [crabPositionRefetching, setCrabPositionRefetching] = useState(false)
   const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtomV2)
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const [txToSearch, setTxToSearch] = useState<string | undefined>(undefined)
   const currentQueuedCrabEth = useAtomValue(crabQueuedInEthAtom)
 
-  const { loading: txHistoryLoading, data: txHistoryData } = useUserCrabV2TxHistory(user)
+  const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserCrabV2TxHistory(user)
 
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
@@ -177,12 +179,30 @@ export const useCrabPositionV2 = (user: string) => {
   }, [currentEthValue, currentQueuedCrabEth, depositedUsd, ethIndexPrice])
 
   useEffect(() => {
-    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading) {
+    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading || crabPositionRefetching) {
       return
     }
 
     calculateCurrentValue()
   }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
+
+  useEffect(() => {
+    if (!txToSearch) stopPolling()
+    const match = txHistoryData?.find((tx) => tx.id.toLowerCase() === txToSearch)
+    if (match) {
+      setCrabPositionRefetching(false)
+      setTxToSearch(undefined)
+    }
+  }, [setCrabPositionRefetching, stopPolling, txHistoryData, txToSearch])
+
+  const pollForNewTx = useAppCallback(
+    (tx: string) => {
+      setCrabPositionRefetching(true)
+      setTxToSearch(tx)
+      startPolling(500)
+    },
+    [setCrabPositionRefetching, startPolling],
+  )
 
   return {
     depositedEth,
@@ -191,7 +211,8 @@ export const useCrabPositionV2 = (user: string) => {
     minCurrentUsd,
     minPnL,
     minPnlUsd,
-    loading: crabLoading || txHistoryLoading,
+    loading: crabLoading || txHistoryLoading || crabPositionRefetching,
+    pollForNewTx,
   }
 }
 
