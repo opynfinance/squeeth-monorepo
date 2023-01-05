@@ -238,8 +238,8 @@ jobs:
     steps:
       - checkout
       - run:
-        name: Set Env Variables
-        command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
+          name: Set Env Variables
+          command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
       - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
       
   coverage-zen-bull-vault:
