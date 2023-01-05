@@ -440,7 +440,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
-        <Typography variant="h4" className={classes.subtitle}>
+        <Typography variant="h3" className={classes.subtitle}>
           Strategy Withdraw
         </Typography>
 

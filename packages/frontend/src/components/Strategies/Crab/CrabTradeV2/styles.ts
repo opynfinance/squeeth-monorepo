@@ -46,9 +46,10 @@ export const useStyles = makeStyles((theme) =>
       fontSize: '14px',
     },
     subtitle: {
-      fontSize: '20px',
+      fontSize: '18px',
       fontWeight: 700,
       letterSpacing: '-0.01em',
+      lineHeight: '130%',
     },
     infoText: {
       fontWeight: 500,
