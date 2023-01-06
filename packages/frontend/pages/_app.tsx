@@ -6,6 +6,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
+import dynamic from 'next/dynamic'
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
@@ -31,6 +32,8 @@ import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
+
+const CrispWithNoSSR = dynamic(() => import('../src/components/CrispChat/CrispChat'), { ssr: false })
 
 initializeAmplitude()
 
@@ -165,6 +168,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ComputeSwapsProvider>
           <WalletFailModal />
           <StrategyLayout>
+            <CrispWithNoSSR />
             <Component {...pageProps} />
           </StrategyLayout>
         </ComputeSwapsProvider>
