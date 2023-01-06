@@ -58,6 +58,7 @@ import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import useToggleCrispChat from '@hooks/useToggleCrispChat'
 
 type CrabDepositProps = {
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
@@ -136,14 +137,16 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const [trackDepositAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredDepositAmount)
   const logAndRunTransaction = useTrackTransactionFlow()
+  const { show: showCrispChat } = useToggleCrispChat()
 
   const onInputChange = useCallback(
     (amount: string) => {
+      showCrispChat()
       setDepositAmount(amount)
       const deposit = new BigNumber(amount)
       deposit.isGreaterThan(0) ? trackDepositAmountEnteredOnce(deposit) : null
     },
-    [setDepositAmount, trackDepositAmountEnteredOnce],
+    [setDepositAmount, trackDepositAmountEnteredOnce, showCrispChat],
   )
 
   const depositedAmount = vault?.collateralAmount ?? BIG_ZERO
