@@ -384,7 +384,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   return (
     <>
       <Box display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
-        <Typography variant="h4" className={classes.subtitle}>
+        <Typography variant="h3" className={classes.subtitle}>
           Strategy Deposit
         </Typography>
       </Box>
