@@ -36,6 +36,7 @@ import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
+import useToggleCrispChat from '@hooks/useToggleCrispChat'
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -110,15 +111,18 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       })
   }, 500)
 
+  const { show: showCrispChat } = useToggleCrispChat()
+
   const onInputChange = useCallback(
     (ethToDeposit: string) => {
+      showCrispChat()
       const depositEthBN = new BigNumber(ethToDeposit)
       depositEthBN.isGreaterThan(0) ? trackDepositAmountEnteredOnce(depositEthBN) : null
       setDepositAmount(ethToDeposit)
       depositAmountRef.current = ethToDeposit
       debouncedDepositQuote(ethToDeposit)
     },
-    [trackDepositAmountEnteredOnce, debouncedDepositQuote],
+    [trackDepositAmountEnteredOnce, debouncedDepositQuote, showCrispChat],
   )
 
   const onTxnConfirmed = useCallback(

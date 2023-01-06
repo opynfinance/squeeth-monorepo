@@ -68,6 +68,7 @@ import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAppEffect from '@hooks/useAppEffect'
 import { CrabStrategyV2TxType, CrabStrategyTxType } from 'src/types'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import useToggleCrispChat from '@hooks/useToggleCrispChat'
 
 enum WithdrawSteps {
   APPROVE = 'Approve CRAB',
@@ -152,14 +153,16 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     [track],
   )
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
+  const { show: showCrispChat } = useToggleCrispChat()
 
   const onInputChange = useCallback(
     (amount: string) => {
+      showCrispChat()
       setWithdrawAmount(amount)
       const withdraw = new BigNumber(amount)
       withdraw.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdraw) : null
     },
-    [setWithdrawAmount, trackWithdrawAmountEnteredOnce],
+    [setWithdrawAmount, trackWithdrawAmountEnteredOnce, showCrispChat],
   )
 
   const recordAnalytics = useCallback(
