@@ -162,12 +162,18 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     setTxLoading(true)
     try {
       ongoingTransactionAmountRef.current = new BigNumber(withdrawAmount)
+      const dataToTrack = {
+        amount: new BigNumber(withdrawAmountRef.current).toNumber(),
+        isPriceImpactHigh: showPriceImpactWarning,
+        priceImpact: quote.poolFee + quote.priceImpact,
+      }
       await bullFlashWithdraw(
         new BigNumber(withdrawAmountRef.current),
         quote.maxEthForWPowerPerp,
         quote.maxEthForUsdc,
         quote.wPowerPerpPoolFee,
         quote.usdcPoolFee,
+        dataToTrack,
         onTxnConfirmed,
       )
     } catch (e) {
