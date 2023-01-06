@@ -373,10 +373,11 @@ export const useBullFlashDeposit = () => {
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
     ethToSend: BigNumber,
+    dataToTrack?: any,
     onTxConfirmed?: (id?: string) => void,
   ) => {
     if (!flashBullContract) return
-    track(BULL_EVENTS.DEPOSIT_BULL_CLICK)
+    track(BULL_EVENTS.DEPOSIT_BULL_CLICK, dataToTrack)
     try {
       try {
         const gasEstimate = await flashBullContract.methods
@@ -416,12 +417,16 @@ export const useBullFlashDeposit = () => {
           }),
         onTxConfirmed,
       )
-      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, { amount: ethToSend.toNumber() })
+      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, dataToTrack)
     } catch (e: any) {
       if (e?.code === 4001) {
-        track(BULL_EVENTS.DEPOSIT_BULL_REVERT)
+        track(BULL_EVENTS.DEPOSIT_BULL_REVERT, dataToTrack)
       }
-      track(BULL_EVENTS.DEPOSIT_BULL_FAILED, { code: e?.code, message: e?.message })
+      track(BULL_EVENTS.DEPOSIT_BULL_FAILED, {
+        code: e?.code,
+        message: e?.message,
+        ...(dataToTrack ?? {}),
+      })
       console.log(e)
     }
   }
@@ -567,10 +572,11 @@ export const useBullFlashWithdraw = () => {
     maxEthForUsdc: BigNumber,
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
+    dataToTrack?: any,
     onTxConfirmed?: () => void,
   ) => {
     if (!flashBullContract) return
-    track(BULL_EVENTS.WITHDRAW_BULL_CLICK)
+    track(BULL_EVENTS.WITHDRAW_BULL_CLICK, dataToTrack)
     try {
       try {
         const gasEstimate = await flashBullContract.methods
@@ -607,12 +613,16 @@ export const useBullFlashWithdraw = () => {
           }),
         onTxConfirmed,
       )
-      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, { amount: bullAmount.toNumber() })
+      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, dataToTrack)
     } catch (e: any) {
       if (e?.code === 4001) {
-        track(BULL_EVENTS.WITHDRAW_BULL_REVERT)
+        track(BULL_EVENTS.WITHDRAW_BULL_REVERT, dataToTrack)
       }
-      track(BULL_EVENTS.WITHDRAW_BULL_FAILED, { code: e?.code, message: e?.message })
+      track(BULL_EVENTS.WITHDRAW_BULL_FAILED, {
+        code: e?.code,
+        message: e?.message,
+        ...(dataToTrack ?? {}),
+      })
       console.log(e)
     }
   }

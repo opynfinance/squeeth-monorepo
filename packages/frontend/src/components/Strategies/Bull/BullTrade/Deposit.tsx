@@ -140,35 +140,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     [onTxnConfirm, resetTracking, onInputChange],
   )
 
-  const onDepositClick = useCallback(async () => {
-    setTxLoading(true)
-    try {
-      ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
-      await bullFlashDeposit(
-        quote.ethToCrab,
-        quote.minEthFromSqth,
-        quote.minEthFromUsdc,
-        quote.wPowerPerpPoolFee,
-        quote.usdcPoolFee,
-        new BigNumber(depositAmountRef.current),
-        onTxnConfirmed,
-      )
-    } catch (e) {
-      resetTracking()
-      console.log(e)
-    }
-    setTxLoading(false)
-  }, [
-    bullFlashDeposit,
-    quote.ethToCrab,
-    quote.minEthFromSqth,
-    quote.minEthFromUsdc,
-    quote.wPowerPerpPoolFee,
-    quote.usdcPoolFee,
-    onTxnConfirmed,
-    resetTracking,
-  ])
-
   const depositPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn)
     const scalingFactor = new BigNumber(INDEX_SCALE)
@@ -200,6 +171,44 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     depositAmountBN,
     quote.ethToCrab,
     quote.wethToLend,
+  ])
+
+  const onDepositClick = useCallback(async () => {
+    setTxLoading(true)
+    try {
+      ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
+      const dataToTrack = {
+        priceImpact: quote.poolFee + quote.priceImpact,
+        isPriceImpactHigh: depositPriceImpactWarning,
+        amount: new BigNumber(depositAmountRef.current).toNumber(),
+      }
+      await bullFlashDeposit(
+        quote.ethToCrab,
+        quote.minEthFromSqth,
+        quote.minEthFromUsdc,
+        quote.wPowerPerpPoolFee,
+        quote.usdcPoolFee,
+        new BigNumber(depositAmountRef.current),
+        dataToTrack,
+        onTxnConfirmed,
+      )
+    } catch (e) {
+      resetTracking()
+      console.log(e)
+    }
+    setTxLoading(false)
+  }, [
+    bullFlashDeposit,
+    quote.ethToCrab,
+    quote.minEthFromSqth,
+    quote.minEthFromUsdc,
+    quote.wPowerPerpPoolFee,
+    quote.usdcPoolFee,
+    quote.poolFee,
+    quote.priceImpact,
+    onTxnConfirmed,
+    resetTracking,
+    depositPriceImpactWarning,
   ])
 
   const setDepositMax = () => {
