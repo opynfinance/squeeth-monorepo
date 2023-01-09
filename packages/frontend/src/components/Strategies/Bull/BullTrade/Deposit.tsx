@@ -234,7 +234,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           usdPrice={ethIndexPrice}
           error={!!depositError}
           helperText={depositError}
-          balanceLabel="Balance"
           onBalanceClick={setDepositMax}
         />
 

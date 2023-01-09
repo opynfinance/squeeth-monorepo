@@ -224,7 +224,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           usdPrice={ethIndexPrice}
           error={!!withdrawError}
           helperText={withdrawError}
-          balanceLabel="Balance"
           onBalanceClick={setWithdrawMax}
         />
 
