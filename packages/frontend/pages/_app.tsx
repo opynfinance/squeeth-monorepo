@@ -9,10 +9,10 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 import '@rainbow-me/rainbowkit/styles.css'
 import { getDefaultWallets, RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
-import { configureChains, createClient, WagmiConfig, useSigner, useAccount } from 'wagmi'
+import { configureChains, createClient, WagmiConfig, useAccount, useNetwork } from 'wagmi'
 import { mainnet, goerli } from 'wagmi/chains'
-import { infuraProvider } from 'wagmi/providers/infura'
-import { publicProvider } from 'wagmi/providers/public'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
+
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
@@ -40,10 +40,10 @@ import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 
 const CrispWithNoSSR = dynamic(() => import('../src/components/CrispChat/CrispChat'), { ssr: false })
-const infuraId = process.env.NEXT_PUBLIC_INFURA_API_KEY
+const alchemyId = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY
 
 // Chains for connectors to support
-const { chains, provider } = configureChains([goerli], [infuraProvider({ infuraId }), publicProvider()])
+const { chains, provider } = configureChains([goerli, mainnet], [alchemyProvider({ alchemyId })])
 
 //Set up connectors
 const { connectors } = getDefaultWallets({
@@ -52,7 +52,7 @@ const { connectors } = getDefaultWallets({
 })
 
 const wagmiClient = createClient({
-  autoConnect: false,
+  autoConnect: true,
   connectors: [...connectors()],
   provider,
 })
@@ -144,6 +144,7 @@ function MyApp({ Component, pageProps }: any) {
 
 const Init = () => {
   const { address } = useAccount()
+  const { chain } = useNetwork()
   const networkId = useAtomValue(networkIdAtom)
   const setConnectedWallet = useUpdateAtom(connectedWalletAtom)
   const setAddress = useUpdateAtom(addressAtom)
@@ -151,7 +152,7 @@ const Init = () => {
   const firstAddressCheck = useRef(true)
   const { track } = useAmplitude()
 
-  console.log('ADDRESS connected', address)
+  console.log('ADDRESS connected', chain)
 
   useAppEffect(() => {
     if (!address) {

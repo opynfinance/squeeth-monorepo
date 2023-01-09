@@ -31,7 +31,7 @@ import { checkIsValidAddress } from './apis'
 import { setUserId } from '@amplitude/analytics-browser'
 import { WALLET_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
-import { useAccount } from 'wagmi'
+import { useAccount, useNetwork, useSigner } from 'wagmi'
 
 export const useSelectWallet = () => {
   const { openConnectModal } = useConnectModal()
@@ -140,6 +140,8 @@ export const useWalletBalance = () => {
 }
 
 export const useOnboard = () => {
+  const { chain } = useNetwork()
+  const { data: signer } = useSigner()
   const setSupportedNetwork = useUpdateAtom(supportedNetworkAtom)
   const [networkId, setNetworkId] = useAtom(networkIdAtom)
   const [onboard, setOnboard] = useAtom(onboardAtom)
@@ -178,6 +180,11 @@ export const useOnboard = () => {
     [setNetworkId, setSupportedNetwork, queryClient, apolloClient, refetchWalletBalance, onboard, address],
   )
 
+  useEffect(() => {
+    if (!chain?.id) return
+    onNetworkChange(chain?.id)
+  }, [chain])
+
   const onWalletUpdate = useAppCallback(
     (wallet: any) => {
       if (wallet.provider) {
@@ -191,28 +198,32 @@ export const useOnboard = () => {
     [setSigner, setWeb3],
   )
 
-  useAppEffect(() => {
-    const onboard = initOnboard(
-      {
-        address: setOnboardAddress,
-        network: onNetworkChange,
-        wallet: onWalletUpdate,
-      },
-      networkId,
-    )
+  useEffect(() => {
+    setSigner(signer)
+  }, [signer])
 
-    setOnboard(onboard)
-    setNotify(initNotify(networkId))
+  // useAppEffect(() => {
+  //   const onboard = initOnboard(
+  //     {
+  //       address: setOnboardAddress,
+  //       network: onNetworkChange,
+  //       wallet: onWalletUpdate,
+  //     },
+  //     networkId,
+  //   )
 
-    // removed it for whitelist checking
-    const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+  //   setOnboard(onboard)
+  //   setNotify(initNotify(networkId))
 
-    if (previouslySelectedWallet && onboard) {
-      onboard.walletSelect(previouslySelectedWallet).then((success) => {
-        console.log('Connected to wallet', success)
-      })
-    }
-  }, [networkId])
+  //   // removed it for whitelist checking
+  //   const previouslySelectedWallet = window.localStorage.getItem('selectedWallet')
+
+  //   if (previouslySelectedWallet && onboard) {
+  //     onboard.walletSelect(previouslySelectedWallet).then((success) => {
+  //       console.log('Connected to wallet', success)
+  //     })
+  //   }
+  // }, [networkId])
 }
 const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
 const usePokt = process.env.NEXT_PUBLIC_USE_POKT
