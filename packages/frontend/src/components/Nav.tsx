@@ -223,7 +223,11 @@ const Nav: React.FC = () => {
                 )}
               </Button>
               <NavLink path="/" name="Trade" />
-              <NavLink path="/strategies" name="Strategies" />
+              <NavLink
+                highlightForPaths={['/strategies/crab', '/strategies/bull']}
+                path="/strategies/crab"
+                name="Strategies"
+              />
               <NavLink path="/positions" name="Positions" />
               <NavLink path="/lp" name="LP" />
               <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
