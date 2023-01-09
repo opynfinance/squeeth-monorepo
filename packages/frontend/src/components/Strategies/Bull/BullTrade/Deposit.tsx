@@ -154,7 +154,10 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, [osqthRefVol, impliedVol])
 
   const depositPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn)
+    const squeethPrice = quote.ethOutForSqth
+      .div(quote.oSqthIn)
+      .plus(quote.ethOutForSqth.div(quote.oSqthIn).times(quote.poolFee).div(100))
+
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const log = Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())
