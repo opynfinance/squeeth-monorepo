@@ -35,7 +35,13 @@ import {
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
 import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import { dailyHistoricalFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
+import {
+  dailyHistoricalFundingAtom,
+  impliedVolAtom,
+  indexAtom,
+  normFactorAtom,
+  osqthRefVolAtom,
+} from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import { userMigratedSharesETHAtom } from '@state/crabMigration/atom'
 import { useUpdateSharesData } from '@state/crabMigration/hooks'
@@ -111,6 +117,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
   const network = useAtomValue(networkIdAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
+  const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const selectWallet = useSelectWallet()
 
   const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
@@ -212,15 +219,15 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const withdrawFundingWarning = useAppMemo(() => {
     const impliedVolDiff = new BigNumber(VOL_PERCENT_SCALAR)
     const impliedVolDiffLowVol = new BigNumber(VOL_PERCENT_FIXED)
-    const dailyHistoricalImpliedVol = new BigNumber(dailyHistoricalFunding.funding).times(YEAR).sqrt()
+
     const threshold = BigNumber.max(
-      dailyHistoricalImpliedVol.times(new BigNumber(1).plus(impliedVolDiff)),
-      dailyHistoricalImpliedVol.plus(impliedVolDiffLowVol),
+      new BigNumber(osqthRefVol / 100).times(new BigNumber(1).plus(impliedVolDiff)),
+      new BigNumber(osqthRefVol / 100).plus(impliedVolDiffLowVol),
     )
 
     const fundingWarning = new BigNumber(impliedVol).gt(threshold) ? true : false
     return fundingWarning
-  }, [dailyHistoricalFunding.funding, impliedVol])
+  }, [impliedVol, osqthRefVol])
 
   const withdrawError = useAppMemo(() => {
     let withdrawError: string | undefined
