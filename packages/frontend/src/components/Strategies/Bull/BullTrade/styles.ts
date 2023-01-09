@@ -8,6 +8,7 @@ export const useZenBullStyles = makeStyles((theme) =>
     tradeContainer: {
       display: 'flex',
       flexDirection: 'column',
+      marginTop: theme.spacing(2),
     },
     tabBackGround: {
       position: 'sticky',

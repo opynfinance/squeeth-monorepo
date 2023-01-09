@@ -223,7 +223,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
         <Typography variant="h3" className={classes.subtitle}>
-          Strategy withdraw
+          Strategy Withdraw
         </Typography>
       </Box>
 

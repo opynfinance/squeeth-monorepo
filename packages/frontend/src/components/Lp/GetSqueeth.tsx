@@ -1,4 +1,4 @@
-import { Typography, Box } from '@material-ui/core'
+import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { motion } from 'framer-motion'
 import React from 'react'
