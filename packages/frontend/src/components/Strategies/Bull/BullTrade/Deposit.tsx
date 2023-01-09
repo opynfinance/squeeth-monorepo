@@ -21,7 +21,7 @@ import {
   WETH_DECIMALS,
 } from '@constants/index'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
-import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
+import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
@@ -66,6 +66,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const bullDepositedEth = useAtomValue(bullDepositedEthInEulerAtom)
   const crabCap = useAtomValue(maxCapAtomV2)
   const crabDepositedEth = useAtomValue(crabStrategyVaultAtomV2)?.collateralAmount || BIG_ZERO
+  const osqthRefVol = useAtomValue(osqthRefVolAtom)
 
   const [quote, setQuote] = useState({
     ethToCrab: BIG_ZERO,
@@ -139,6 +140,18 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     },
     [onTxnConfirm, resetTracking, onInputChange],
   )
+
+  const depositFundingWarning = useAppMemo(() => {
+    const impliedVolDiff = new BigNumber(-VOL_PERCENT_SCALAR)
+    const impliedVolDiffLowVol = new BigNumber(-VOL_PERCENT_FIXED)
+    const threshold = BigNumber.max(
+      new BigNumber(osqthRefVol / 100).times(new BigNumber(1).plus(impliedVolDiff)),
+      new BigNumber(osqthRefVol / 100).plus(impliedVolDiffLowVol),
+    )
+
+    const showFundingWarning = new BigNumber(impliedVol).lt(threshold) ? true : false
+    return showFundingWarning
+  }, [osqthRefVol, impliedVol])
 
   const depositPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn)
@@ -246,6 +259,23 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             </div>
             <Typography variant="caption" className={classes.infoText}>
               Negative returns warning
+            </Typography>
+          </div>
+        ) : null}
+
+        {depositFundingWarning ? (
+          <div className={classes.notice}>
+            <div className={classes.infoIcon}>
+              <Tooltip
+                title={
+                  'The strategy sells squeeth to earn premium. Premium is currently lower than usual. You can still deposit, but you may be more likely to have negative returns.'
+                }
+              >
+                <InfoIcon fontSize="medium" />
+              </Tooltip>
+            </div>
+            <Typography variant="caption" className={classes.infoText}>
+              Zen bull premium is currently lower than usual. Consider depositing later.
             </Typography>
           </div>
         ) : null}

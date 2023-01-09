@@ -21,7 +21,7 @@ import {
   YEAR,
 } from '@constants/index'
 import { useGetFlashWithdrawParams, useBullFlashWithdraw } from '@state/bull/hooks'
-import { impliedVolAtom, indexAtom, normFactorAtom } from '@state/controller/atoms'
+import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
@@ -61,6 +61,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const bullPositionValueInEth = useAtomValue(bullCurrentETHPositionAtom)
+  const osqthRefVol = useAtomValue(osqthRefVolAtom)
 
   const selectWallet = useSelectWallet()
 
@@ -113,6 +114,19 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
     return showPriceImpactWarning
   }, [quote.ethInForSqth, quote.oSqthOut, normFactor, ethIndexPrice, impliedVol])
+
+  const withdrawFundingWarning = useAppMemo(() => {
+    const impliedVolDiff = new BigNumber(VOL_PERCENT_SCALAR)
+    const impliedVolDiffLowVol = new BigNumber(VOL_PERCENT_FIXED)
+
+    const threshold = BigNumber.max(
+      new BigNumber(osqthRefVol / 100).times(new BigNumber(1).plus(impliedVolDiff)),
+      new BigNumber(osqthRefVol / 100).plus(impliedVolDiffLowVol),
+    )
+
+    const fundingWarning = new BigNumber(impliedVol).gt(threshold) ? true : false
+    return fundingWarning
+  }, [impliedVol, osqthRefVol])
 
   const debouncedWithdrawQuote = debounce(async (bullToWithdraw: string) => {
     setQuoteLoading(true)
@@ -239,16 +253,19 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
             </Typography>
           </div>
         ) : null}
-        {highDepositWarning ? (
+        {withdrawFundingWarning ? (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
-              <Tooltip title={'Too high deposit warning'}>
+              <Tooltip
+                title={
+                  'Squeeth is currently more expensive than usual. The strategy buys back squeeth to withdraw. You can still withdraw, but you will pay more.'
+                }
+              >
                 <InfoIcon fontSize="medium" />
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              Too high deposit warning
-              <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
+              It is currently costly to withdraw. Consider withdrawing later.
             </Typography>
           </div>
         ) : null}
