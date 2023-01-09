@@ -204,89 +204,100 @@ const StrategyPerformance: React.FC = () => {
       <Typography variant="h3" className={classes.sectionTitle}>
         Strategy Performance
       </Typography>
-      <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
-        <Typography
-          variant="h2"
-          className={clsx(
-            classes.heading,
-            classes.textMonospace,
-            annualizedReturns >= 0 ? classes.colorSuccess : classes.colorError,
-          )}
-        >
-          {annualizedReturns >= 0 && '+'}
-          {formatNumber(annualizedReturns)}%
-        </Typography>
+      {bullEthPnlSeries ? (
+        <>
+          <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
+            <Typography
+              variant="h2"
+              className={clsx(
+                classes.heading,
+                classes.textMonospace,
+                annualizedReturns >= 0 ? classes.colorSuccess : classes.colorError,
+              )}
+            >
+              {annualizedReturns >= 0 && '+'}
+              {formatNumber(annualizedReturns)}%
+            </Typography>
 
-        <Box display="flex" alignItems="baseline" gridGap="12px">
-          <Typography className={classes.description}>Annualized ETH Return</Typography>
+            <Box display="flex" alignItems="baseline" gridGap="12px">
+              <Typography className={classes.description}>Annualized ETH Return</Typography>
 
-          <Box position="relative" top="3px">
-            <Tooltip title={<TooltipTitle />}>
-              <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box display="flex" gridGap="12px">
-        <Typography className={clsx(classes.description, classes.textMonospace)}>
-          {formatNumber(tvl, 0) + ' ETH'}
-        </Typography>
-        <Typography className={classes.description}>TVL</Typography>
-      </Box>
-
-      <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
-        <div>
-          <MuiPickersUtilsProvider utils={DateFnsUtils}>
-            <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
-              <DatePicker
-                id="start-date-strategy-performance"
-                label="Start Date"
-                placeholder="MM/DD/YYYY"
-                format={'MM/dd/yyyy'}
-                value={startDate}
-                minDate={BULL_START_DATE}
-                onChange={(d) => setStartDate(d || new Date())}
-                animateYearScrolling={false}
-                autoOk={true}
-                clearable
-                TextFieldComponent={CustomTextField}
-              />
-
-              <Divider orientation="horizontal" className={classes.divider} />
-
-              <DatePicker
-                id="end-date-strategy-performance"
-                label="End Date"
-                placeholder="MM/DD/YYYY"
-                format={'MM/dd/yyyy'}
-                value={endDate}
-                minDate={startDate}
-                onChange={(d) => setEndDate(d || new Date())}
-                animateYearScrolling={false}
-                autoOk={true}
-                clearable
-                TextFieldComponent={CustomTextField}
-              />
+              <Box position="relative" top="3px">
+                <Tooltip title={<TooltipTitle />}>
+                  <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
+                </Tooltip>
+              </Box>
             </Box>
-          </MuiPickersUtilsProvider>
-        </div>
-
-        <Box display="flex" flexDirection="column" gridGap="4px" flex="1" flexBasis="200px">
-          <PerformanceMetric label="Historical Returns" value={historicalReturns} />
-          <PerformanceMetric label="Annualized" value={annualizedReturns} />
-        </Box>
-      </Box>
-
-      <Box marginTop="12px">
-        {bullEthPnlSeries ? (
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-        ) : (
-          <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">
-            <CircularProgress size={40} className={classes.loadingSpinner} />
           </Box>
-        )}
-      </Box>
+
+          <Box display="flex" gridGap="12px">
+            <Typography className={clsx(classes.description, classes.textMonospace)}>
+              {formatNumber(tvl, 0) + ' ETH'}
+            </Typography>
+            <Typography className={classes.description}>TVL</Typography>
+          </Box>
+
+          <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
+            <div>
+              <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
+                  <DatePicker
+                    id="start-date-strategy-performance"
+                    label="Start Date"
+                    placeholder="MM/DD/YYYY"
+                    format={'MM/dd/yyyy'}
+                    value={startDate}
+                    minDate={BULL_START_DATE}
+                    onChange={(d) => setStartDate(d || new Date())}
+                    animateYearScrolling={false}
+                    autoOk={true}
+                    clearable
+                    TextFieldComponent={CustomTextField}
+                  />
+
+                  <Divider orientation="horizontal" className={classes.divider} />
+
+                  <DatePicker
+                    id="end-date-strategy-performance"
+                    label="End Date"
+                    placeholder="MM/DD/YYYY"
+                    format={'MM/dd/yyyy'}
+                    value={endDate}
+                    minDate={startDate}
+                    onChange={(d) => setEndDate(d || new Date())}
+                    animateYearScrolling={false}
+                    autoOk={true}
+                    clearable
+                    TextFieldComponent={CustomTextField}
+                  />
+                </Box>
+              </MuiPickersUtilsProvider>
+            </div>
+
+            <Box display="flex" flexDirection="column" gridGap="4px" flex="1" flexBasis="200px">
+              <PerformanceMetric label="Historical Returns" value={historicalReturns} />
+              <PerformanceMetric label="Annualized" value={annualizedReturns} />
+            </Box>
+          </Box>
+
+          <Box marginTop="12px">
+            {bullEthPnlSeries ? (
+              <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+            ) : (
+              <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">
+                <CircularProgress size={40} className={classes.loadingSpinner} />
+              </Box>
+            )}
+          </Box>
+        </>
+      ) : (
+        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
+          <Box display="flex" alignItems="center" gridGap="15px">
+            <CircularProgress size={15} className={classes.loadingSpinner} />
+            <Typography className={classes.text}>Fetching strategy performance...</Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   )
 }
