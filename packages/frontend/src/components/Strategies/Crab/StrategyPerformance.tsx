@@ -116,22 +116,20 @@ const TooltipTitle = () => (
   </>
 )
 
-const StrategyPerformance: React.FC = () => {
+interface StrategyPerformanceProps {
+  strategyPnLSeries: Array<[number, number]>
+  tvl: number
+}
+
+const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSeries, tvl }) => {
   const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
-
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useETHPrice()
-  const { data: osqthPrice } = useOSQTHPrice()
-  const query = useCrabPnLV2ChartData()
-
-  const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
 
   const series = [
     {
       name: 'Crab/USDC 🦀  % Return',
       yAxis: 0,
-      data: crabUsdPnlSeries,
+      data: strategyPnLSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
@@ -172,28 +170,17 @@ const StrategyPerformance: React.FC = () => {
   })
   const classes = useStyles()
 
-  const isLoadingChartData = typeof crabUsdPnlSeries === 'undefined'
   const numberOfDays = differenceInCalendarDays(endDate, startDate)
-  const hasData = isLoadingChartData ? false : crabUsdPnlSeries.length > 0
+  const hasData = strategyPnLSeries.length > 0
 
-  const historicalReturns = hasData ? crabUsdPnlSeries[crabUsdPnlSeries.length - 1][1] : 0
+  const historicalReturns = hasData ? strategyPnLSeries[strategyPnLSeries.length - 1][1] : 0
   const annualizedReturns = useMemo(() => {
     // compounded annually
     return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
   }, [historicalReturns, numberOfDays])
 
-  const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
-
-  const collateralValue = vaultCollateral.multipliedBy(ethPrice)
-  const debtValue = vaultDebt.multipliedBy(osqthPrice)
-  const tvl = collateralValue.minus(debtValue).integerValue()
-
   return (
-    <Box display="flex" flexDirection="column" gridGap="8px">
-      <Typography variant="h3" className={classes.sectionTitle}>
-        Strategy Performance
-      </Typography>
+    <>
       <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
         <Typography
           variant="h2"
@@ -219,9 +206,7 @@ const StrategyPerformance: React.FC = () => {
       </Box>
 
       <Box display="flex" gridGap="12px">
-        <Typography className={clsx(classes.description, classes.textMonospace)}>
-          {formatCurrency(tvl.toNumber(), 0)}
-        </Typography>
+        <Typography className={clsx(classes.description, classes.textMonospace)}>{formatCurrency(tvl, 0)}</Typography>
         <Typography className={classes.description}>TVL</Typography>
       </Box>
 
@@ -269,16 +254,51 @@ const StrategyPerformance: React.FC = () => {
       </Box>
 
       <Box marginTop="12px">
-        {crabUsdPnlSeries ? (
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-        ) : (
-          <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">
-            <CircularProgress size={40} className={classes.loadingSpinner} />
-          </Box>
-        )}
+        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
       </Box>
+    </>
+  )
+}
+
+const Wrapper: React.FC = () => {
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const ethPrice = useETHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
+  const query = useCrabPnLV2ChartData()
+
+  const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
+  const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
+
+  const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
+  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
+
+  const collateralValue = vaultCollateral.multipliedBy(ethPrice)
+  const debtValue = vaultDebt.multipliedBy(osqthPrice)
+  const tvl = collateralValue.minus(debtValue).integerValue()
+  const isLoadingTVL = tvl.isZero()
+
+  const isLoading = isLoadingPnLSeries || isLoadingTVL
+
+  const classes = useStyles()
+
+  return (
+    <Box display="flex" flexDirection="column" gridGap="8px">
+      <Typography variant="h3" className={classes.sectionTitle}>
+        Strategy Performance
+      </Typography>
+
+      {isLoading ? (
+        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
+          <Box display="flex" alignItems="center" gridGap="15px">
+            <CircularProgress size={15} className={classes.loadingSpinner} />
+            <Typography className={classes.text}>Fetching strategy performance...</Typography>
+          </Box>
+        </Box>
+      ) : (
+        <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
+      )}
     </Box>
   )
 }
 
-export default StrategyPerformance
+export default Wrapper

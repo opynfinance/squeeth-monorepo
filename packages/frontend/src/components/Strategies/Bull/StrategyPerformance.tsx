@@ -119,24 +119,20 @@ const TooltipTitle = () => (
   </>
 )
 
-const StrategyPerformance: React.FC = () => {
-  const ethDepositedInEuler = useAtomValue(bullDepositedEthInEulerAtom)
-  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
-  const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
-  const crabUSDValue = useAtomValue(crabUSDValueAtom)
-  const ethPrice = useOnChainETHPrice()
+interface StrategyPerformanceProps {
+  strategyPnLSeries: Array<[number, number]>
+  tvl: number
+}
 
+const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSeries, tvl }) => {
   const [startDate, setStartDate] = useAtom(bullStrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(bullStrategyFilterEndDateAtom)
-
-  const query = useBullPnLChartData()
-  const bullEthPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
 
   const series = [
     {
       name: 'Bull/ETH 🧘🐂 % Return',
       yAxis: 0,
-      data: bullEthPnlSeries,
+      data: strategyPnLSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
@@ -179,31 +175,15 @@ const StrategyPerformance: React.FC = () => {
   const classes = useStyles()
 
   const numberOfDays = differenceInCalendarDays(endDate, startDate)
-  const hasData = bullEthPnlSeries?.length > 0 ?? false
+  const hasData = strategyPnLSeries?.length > 0
 
-  const historicalReturns = hasData ? bullEthPnlSeries[bullEthPnlSeries.length - 1][1] : 0
+  const historicalReturns = hasData ? strategyPnLSeries[strategyPnLSeries.length - 1][1] : 0
   const annualizedReturns = useMemo(() => {
     return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
   }, [historicalReturns, numberOfDays])
 
-  // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
-  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
-  const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
-  const debtValue = eulerUSDCDebt.div(ethPrice)
-
-  const isLoadingTVL =
-    ethDepositedInEuler.isZero() ||
-    bullCrabBalance.isZero() ||
-    crabUSDValue.isZero() ||
-    eulerUSDCDebt.isZero() ||
-    ethPrice.isZero()
-  const tvl = isLoadingTVL ? 0 : collateralValue.minus(debtValue).integerValue().toNumber()
-
   return (
-    <Box display="flex" flexDirection="column" gridGap="8px">
-      <Typography variant="h3" className={classes.sectionTitle}>
-        Strategy Performance
-      </Typography>
+    <>
       <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
         <Typography
           variant="h2"
@@ -279,16 +259,57 @@ const StrategyPerformance: React.FC = () => {
       </Box>
 
       <Box marginTop="12px">
-        {bullEthPnlSeries ? (
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-        ) : (
-          <Box display="flex" height="346px" width={1} alignItems="center" justifyContent="center">
-            <CircularProgress size={40} className={classes.loadingSpinner} />
-          </Box>
-        )}
+        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
       </Box>
+    </>
+  )
+}
+
+const Wrapper: React.FC = () => {
+  const ethDepositedInEuler = useAtomValue(bullDepositedEthInEulerAtom)
+  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
+  const crabUSDValue = useAtomValue(crabUSDValueAtom)
+  const ethPrice = useOnChainETHPrice()
+  const query = useBullPnLChartData()
+
+  const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
+  const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
+
+  // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
+  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
+  const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
+  const debtValue = eulerUSDCDebt.div(ethPrice)
+  const tvl = collateralValue.minus(debtValue).integerValue()
+  const isLoadingTVL =
+    ethDepositedInEuler.isZero() ||
+    bullCrabBalance.isZero() ||
+    crabUSDValue.isZero() ||
+    eulerUSDCDebt.isZero() ||
+    ethPrice.isZero()
+
+  const isLoading = isLoadingPnLSeries || isLoadingTVL
+
+  const classes = useStyles()
+
+  return (
+    <Box display="flex" flexDirection="column" gridGap="8px">
+      <Typography variant="h3" className={classes.sectionTitle}>
+        Strategy Performance
+      </Typography>
+
+      {isLoading ? (
+        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
+          <Box display="flex" alignItems="center" gridGap="15px">
+            <CircularProgress size={15} className={classes.loadingSpinner} />
+            <Typography className={classes.text}>Fetching strategy performance...</Typography>
+          </Box>
+        </Box>
+      ) : (
+        <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
+      )}
     </Box>
   )
 }
 
-export default StrategyPerformance
+export default Wrapper
