@@ -116,22 +116,20 @@ const TooltipTitle = () => (
   </>
 )
 
-const StrategyPerformance: React.FC = () => {
+interface StrategyPerformanceProps {
+  strategyPnLSeries: Array<[number, number]>
+  tvl: number
+}
+
+const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSeries, tvl }) => {
   const [startDate, setStartDate] = useAtom(crabv2StrategyFilterStartDateAtom)
   const [endDate, setEndDate] = useAtom(crabv2StrategyFilterEndDateAtom)
-
-  const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useETHPrice()
-  const { data: osqthPrice } = useOSQTHPrice()
-  const query = useCrabPnLV2ChartData()
-
-  const crabUsdPnlSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
 
   const series = [
     {
       name: 'Crab/USDC 🦀  % Return',
       yAxis: 0,
-      data: crabUsdPnlSeries,
+      data: strategyPnLSeries,
       tooltip: {
         valueDecimals: 2,
         valueSuffix: '%',
@@ -172,15 +170,104 @@ const StrategyPerformance: React.FC = () => {
   })
   const classes = useStyles()
 
-  const isLoadingChartData = typeof crabUsdPnlSeries === 'undefined'
   const numberOfDays = differenceInCalendarDays(endDate, startDate)
-  const hasData = isLoadingChartData ? false : crabUsdPnlSeries.length > 0
+  const hasData = strategyPnLSeries.length > 0
 
-  const historicalReturns = hasData ? crabUsdPnlSeries[crabUsdPnlSeries.length - 1][1] : 0
+  const historicalReturns = hasData ? strategyPnLSeries[strategyPnLSeries.length - 1][1] : 0
   const annualizedReturns = useMemo(() => {
     // compounded annually
     return (Math.pow(1 + historicalReturns / 100, 365 / numberOfDays) - 1) * 100
   }, [historicalReturns, numberOfDays])
+
+  return (
+    <>
+      <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
+        <Typography
+          variant="h2"
+          className={clsx(
+            classes.heading,
+            classes.textMonospace,
+            annualizedReturns >= 0 ? classes.colorSuccess : classes.colorError,
+          )}
+        >
+          {annualizedReturns >= 0 && '+'}
+          {formatNumber(annualizedReturns)}%
+        </Typography>
+
+        <Box display="flex" alignItems="baseline" gridGap="12px">
+          <Typography className={classes.description}>Annualized USDC Return</Typography>
+
+          <Box position="relative" top="3px">
+            <Tooltip title={<TooltipTitle />}>
+              <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
+          </Box>
+        </Box>
+      </Box>
+
+      <Box display="flex" gridGap="12px">
+        <Typography className={clsx(classes.description, classes.textMonospace)}>{formatCurrency(tvl, 0)}</Typography>
+        <Typography className={classes.description}>TVL</Typography>
+      </Box>
+
+      <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
+        <div>
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+            <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
+              <DatePicker
+                id="start-date-strategy-performance"
+                label="Start Date"
+                placeholder="MM/DD/YYYY"
+                format={'MM/dd/yyyy'}
+                value={startDate}
+                minDate={CRABV2_START_DATE}
+                onChange={(d) => setStartDate(d || new Date())}
+                animateYearScrolling={false}
+                autoOk={true}
+                clearable
+                TextFieldComponent={CustomTextField}
+              />
+
+              <Divider orientation="horizontal" className={classes.divider} />
+
+              <DatePicker
+                id="end-date-strategy-performance"
+                label="End Date"
+                placeholder="MM/DD/YYYY"
+                format={'MM/dd/yyyy'}
+                value={endDate}
+                minDate={startDate}
+                onChange={(d) => setEndDate(d || new Date())}
+                animateYearScrolling={false}
+                autoOk={true}
+                clearable
+                TextFieldComponent={CustomTextField}
+              />
+            </Box>
+          </MuiPickersUtilsProvider>
+        </div>
+
+        <Box display="flex" flexDirection="column" gridGap="4px" flex="1" flexBasis="200px">
+          <PerformanceMetric label="Historical Returns" value={historicalReturns} />
+          <PerformanceMetric label="Annualized" value={annualizedReturns} />
+        </Box>
+      </Box>
+
+      <Box marginTop="12px">
+        <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+      </Box>
+    </>
+  )
+}
+
+const Wrapper: React.FC = () => {
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const ethPrice = useETHPrice()
+  const { data: osqthPrice } = useOSQTHPrice()
+  const query = useCrabPnLV2ChartData()
+
+  const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
+  const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
 
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
   const vaultDebt = vault?.shortAmount ?? BIG_ZERO
@@ -188,102 +275,30 @@ const StrategyPerformance: React.FC = () => {
   const collateralValue = vaultCollateral.multipliedBy(ethPrice)
   const debtValue = vaultDebt.multipliedBy(osqthPrice)
   const tvl = collateralValue.minus(debtValue).integerValue()
+  const isLoadingTVL = tvl.isZero()
+
+  const isLoading = isLoadingPnLSeries || isLoadingTVL
+
+  const classes = useStyles()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
       <Typography variant="h3" className={classes.sectionTitle}>
         Strategy Performance
       </Typography>
-      {crabUsdPnlSeries ? (
-        <>
-          <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="4px" flexWrap="wrap">
-            <Typography
-              variant="h2"
-              className={clsx(
-                classes.heading,
-                classes.textMonospace,
-                annualizedReturns >= 0 ? classes.colorSuccess : classes.colorError,
-              )}
-            >
-              {annualizedReturns >= 0 && '+'}
-              {formatNumber(annualizedReturns)}%
-            </Typography>
 
-            <Box display="flex" alignItems="baseline" gridGap="12px">
-              <Typography className={classes.description}>Annualized USDC Return</Typography>
-
-              <Box position="relative" top="3px">
-                <Tooltip title={<TooltipTitle />}>
-                  <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
-                </Tooltip>
-              </Box>
-            </Box>
-          </Box>
-
-          <Box display="flex" gridGap="12px">
-            <Typography className={clsx(classes.description, classes.textMonospace)}>
-              {formatCurrency(tvl.toNumber(), 0)}
-            </Typography>
-            <Typography className={classes.description}>TVL</Typography>
-          </Box>
-
-          <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
-            <div>
-              <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                <Box display="flex" alignItems="center" gridGap="16px" marginTop="16px">
-                  <DatePicker
-                    id="start-date-strategy-performance"
-                    label="Start Date"
-                    placeholder="MM/DD/YYYY"
-                    format={'MM/dd/yyyy'}
-                    value={startDate}
-                    minDate={CRABV2_START_DATE}
-                    onChange={(d) => setStartDate(d || new Date())}
-                    animateYearScrolling={false}
-                    autoOk={true}
-                    clearable
-                    TextFieldComponent={CustomTextField}
-                  />
-
-                  <Divider orientation="horizontal" className={classes.divider} />
-
-                  <DatePicker
-                    id="end-date-strategy-performance"
-                    label="End Date"
-                    placeholder="MM/DD/YYYY"
-                    format={'MM/dd/yyyy'}
-                    value={endDate}
-                    minDate={startDate}
-                    onChange={(d) => setEndDate(d || new Date())}
-                    animateYearScrolling={false}
-                    autoOk={true}
-                    clearable
-                    TextFieldComponent={CustomTextField}
-                  />
-                </Box>
-              </MuiPickersUtilsProvider>
-            </div>
-
-            <Box display="flex" flexDirection="column" gridGap="4px" flex="1" flexBasis="200px">
-              <PerformanceMetric label="Historical Returns" value={historicalReturns} />
-              <PerformanceMetric label="Annualized" value={annualizedReturns} />
-            </Box>
-          </Box>
-
-          <Box marginTop="12px">
-            <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-          </Box>
-        </>
-      ) : (
+      {isLoading ? (
         <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
           <Box display="flex" alignItems="center" gridGap="15px">
             <CircularProgress size={15} className={classes.loadingSpinner} />
             <Typography className={classes.text}>Fetching strategy performance...</Typography>
           </Box>
         </Box>
+      ) : (
+        <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}
     </Box>
   )
 }
 
-export default StrategyPerformance
+export default Wrapper
