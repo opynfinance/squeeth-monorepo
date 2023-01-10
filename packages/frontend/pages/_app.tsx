@@ -32,6 +32,7 @@ import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
+import useTrackSiteReload from '@hooks/useTrackSiteReload'
 
 const CrispWithNoSSR = dynamic(() => import('../src/components/CrispChat/CrispChat'), { ssr: false })
 
@@ -133,6 +134,7 @@ const Init = () => {
   }, [onboardAddress, setAddress, setWalletFailVisible, track])
 
   useOnboard()
+  useTrackSiteReload()
   useUpdateSqueethPrices()
   useUpdateSqueethPoolData()
   useInitController()
