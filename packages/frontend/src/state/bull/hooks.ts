@@ -378,9 +378,10 @@ export const useBullFlashDeposit = () => {
   ) => {
     if (!flashBullContract) return
     track(BULL_EVENTS.DEPOSIT_BULL_CLICK, dataToTrack)
+    let gasEstimate
     try {
       try {
-        const gasEstimate = await flashBullContract.methods
+        gasEstimate = await flashBullContract.methods
           .flashDeposit({
             ethToCrab: fromTokenAmount(ethToCrab, 18).toFixed(0),
             minEthFromSqth: fromTokenAmount(minEthFromSqth, 18).toFixed(0),
@@ -414,6 +415,7 @@ export const useBullFlashDeposit = () => {
           .send({
             from: address,
             value: fromTokenAmount(ethToSend, 18).toFixed(0),
+            gas: gasEstimate ? gasEstimate * 1.2 : undefined,
           }),
         onTxConfirmed,
       )
@@ -577,9 +579,10 @@ export const useBullFlashWithdraw = () => {
   ) => {
     if (!flashBullContract) return
     track(BULL_EVENTS.WITHDRAW_BULL_CLICK, dataToTrack)
+    let gasEstimate
     try {
       try {
-        const gasEstimate = await flashBullContract.methods
+        gasEstimate = await flashBullContract.methods
           .flashWithdraw({
             bullAmount: fromTokenAmount(bullAmount, 18).toFixed(0),
             maxEthForWPowerPerp: fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0),
@@ -610,6 +613,7 @@ export const useBullFlashWithdraw = () => {
           })
           .send({
             from: address,
+            gas: gasEstimate ? gasEstimate * 1.2 : undefined,
           }),
         onTxConfirmed,
       )
