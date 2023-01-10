@@ -4,8 +4,6 @@ import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 
-import { formatNumber } from '@utils/formatter'
-
 const useStyles = makeStyles((theme) =>
   createStyles({
     buttonRoot: {
@@ -26,18 +24,18 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const SharePnL: React.FC<{ pnlPercent: number }> = ({ pnlPercent }) => {
+interface SharePnLProps {
+  text: string
+  url: string
+}
+
+const SharePnL: React.FC<SharePnLProps> = ({ text, url }) => {
   const classes = useStyles()
 
-  const pnl = formatNumber(pnlPercent)
-  const pnlText = pnlPercent > 0 ? `+${pnl}%` : `${pnl}%`
-
-  const url = 'squeeth.com/strategies/bull'
-  const text = `I’m earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
-
-  const tweetText = encodeURIComponent(`${text} at ${url} 🧘🐂`)
-  const telegramText = encodeURIComponent(`${text} 🧘🐂`)
+  const tweetText = encodeURIComponent(`${text} at ${url} 🦀`)
   const tweetHref = `https://twitter.com/intent/tweet?text=${tweetText}`
+
+  const telegramText = encodeURIComponent(`${text} 🦀`)
   const telegramHref = `https://t.me/share/url?url=https://${url}&text=${telegramText}`
 
   return (

@@ -4,18 +4,21 @@ import clsx from 'clsx'
 import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import { useAtomValue } from 'jotai'
+import BigNumber from 'bignumber.js'
 
 import { bullEthPnlAtom, bullEthPnlPerctAtom } from '@state/bull/atoms'
 import useStyles from '@components/Strategies/styles'
-import { formatNumber } from '@utils/formatter'
 import SharePnL from '@components/Strategies/SharePnL'
+import { formatNumber, formatCurrency } from '@utils/formatter'
 
-const PnL: React.FC = () => {
-  const bullEthPnL = useAtomValue(bullEthPnlAtom)
-  const bullEthPnlPerct = useAtomValue(bullEthPnlPerctAtom)
+interface PnLProps {
+  depositedUsd: BigNumber
+  pnl: BigNumber
+}
+
+const PnL: React.FC<PnLProps> = ({ depositedUsd, pnl }) => {
   const classes = useStyles()
-
-  const isPnlLoading = !bullEthPnL.isFinite()
+  const isPnlLoading = !pnl.isFinite()
 
   if (isPnlLoading) {
     return (
@@ -26,14 +29,14 @@ const PnL: React.FC = () => {
     )
   }
 
-  const pnlPercent = bullEthPnlPerct.toNumber()
+  const pnlPercent = pnl.toNumber()
   const pnlFormatted = formatNumber(pnlPercent)
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
-  const sharePnLText = `I’m earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
-  const sharePnLUrl = 'squeeth.com/strategies/bull'
+  const sharePnLText = `I’m earning ${pnlText} USDC with the Opyn Crab Strategy`
+  const sharePnLUrl = 'squeeth.com/strategies'
 
-  const isPnlPositive = bullEthPnL.isGreaterThanOrEqualTo(0)
+  const isPnlPositive = pnl.isGreaterThanOrEqualTo(0)
 
   return (
     <Box display="flex" flexDirection="column" gridGap="12px">
@@ -53,7 +56,7 @@ const PnL: React.FC = () => {
               isPnlPositive ? classes.colorSuccess : classes.colorError,
             )}
           >
-            {formatNumber(bullEthPnlPerct.toNumber()) + '%'}
+            {formatNumber(pnl.toNumber()) + '%'}
           </Typography>
         </Box>
 
@@ -66,7 +69,7 @@ const PnL: React.FC = () => {
           )}
         >
           ({isPnlPositive && '+'}
-          {formatNumber(bullEthPnL.toNumber(), 4) + ' ETH'})
+          {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
         </Typography>
         <Typography className={classes.description}>since deposit</Typography>
       </Box>
