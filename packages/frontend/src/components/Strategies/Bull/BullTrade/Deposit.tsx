@@ -166,18 +166,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const log = Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())
     const executionVol = new BigNumber(log).div(fundingPeriod).sqrt()
-    console.log(
-      'ethOut',
-      quote.ethOutForSqth.toString(),
-      'osqthin',
-      quote.oSqthIn.toString(),
-      'executionVol',
-      executionVol
-        .minus(impliedVol)
-        .abs()
-        .minus(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
-        .toNumber(),
-    )
+
     const showPriceImpactWarning =
       log < 0 ||
       executionVol
