@@ -268,8 +268,8 @@ export const useGetFlashBulldepositParams = () => {
         const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethPrice))
         const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
-        const squeethSpot = oSqthToMint.times(sqthPrice)
-        const usdcSpot = usdcToBorrow.div(ethPrice)
+        const squeethSpot = oSqthToMint.times(sqthPrice) // eth from sqth trade
+        const usdcSpot = usdcToBorrow.div(ethPrice) // eth from usdc trade
 
         // cumulative uniswap fees
 
