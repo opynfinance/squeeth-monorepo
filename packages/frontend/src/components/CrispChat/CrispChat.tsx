@@ -1,8 +1,6 @@
-import useToggleCrispChat from '@hooks/useToggleCrispChat'
 import { useEffect } from 'react'
 
 export function CrispChat() {
-  const { hide } = useToggleCrispChat()
   useEffect(() => {
     if (typeof window === 'undefined') return
     const windowObj: any = window
@@ -16,7 +14,6 @@ export function CrispChat() {
       s.async = 1
       d.getElementsByTagName('head')[0].appendChild(s)
     })()
-    hide()
   }, [])
   return null
 }
