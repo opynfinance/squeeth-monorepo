@@ -20,6 +20,11 @@ html {
   background: 'none';
 }
 
+sup {
+  vertical-align: top;
+  font-size: 0.6em;
+}
+
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -54,46 +59,45 @@ a {
 
 @-webkit-keyframes AnimationName {
   0% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 
   50% {
-    background-position: 100% 55%
+    background-position: 100% 55%;
   }
 
   100% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 }
 
 @-moz-keyframes AnimationName {
   0% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 
   50% {
-    background-position: 100% 55%
+    background-position: 100% 55%;
   }
 
   100% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 }
 
 @keyframes AnimationName {
   0% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 
   50% {
-    background-position: 100% 55%
+    background-position: 100% 55%;
   }
 
   100% {
-    background-position: 0% 46%
+    background-position: 0% 46%;
   }
 }
-
 
 #rain-front {
   position: absolute;

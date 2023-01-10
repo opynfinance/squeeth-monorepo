@@ -8,7 +8,7 @@ export const useStyles = makeStyles((theme) =>
     tradeContainer: {
       display: 'flex',
       flexDirection: 'column',
-      marginTop: '12px',
+      marginTop: theme.spacing(3),
     },
     notice: {
       marginTop: theme.spacing(2.5),

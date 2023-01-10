@@ -40,9 +40,9 @@ const Trade: React.FC<BoxProps> = (props) => {
         <SqueethTabNew label="Close" id="close-btn" />
       </SqueethTabsNew>
 
-      <div>
+      <Box marginTop="32px">
         {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
-      </div>
+      </Box>
     </Box>
   )
 }
