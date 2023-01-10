@@ -42,9 +42,16 @@ const useSharePnLStyles = makeStyles((theme) =>
 const SharePnL: React.FC<{ pnlPercent: number }> = ({ pnlPercent }) => {
   const classes = useSharePnLStyles()
 
+  const pnl = formatNumber(pnlPercent)
+  const pnlText = pnlPercent > 0 ? `+${pnl}%` : `${pnl}%`
+  const tweetText = encodeURIComponent(
+    `I’m earning ${pnlText} stacking USDC with the Opyn Crab Strategy at squeeth.com/strategies 🦀`,
+  )
+  const postTweetHref = `https://twitter.com/intent/tweet?text=${tweetText}`
+
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
-      <ButtonBase classes={{ root: classes.buttonRoot }}>
+      <ButtonBase classes={{ root: classes.buttonRoot }} href={postTweetHref} target="_blank">
         <TwitterIcon className={classes.icon} />
       </ButtonBase>
 
