@@ -25,12 +25,17 @@ const useStyles = makeStyles((theme) =>
 )
 
 interface SharePnLProps {
+  isPnlLoading: Boolean
   text: string
   url: string
 }
 
-const SharePnL: React.FC<SharePnLProps> = ({ text, url }) => {
+const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, text, url }) => {
   const classes = useStyles()
+
+  if (isPnlLoading) {
+    return null
+  }
 
   const tweetText = encodeURIComponent(`${text} at ${url} 🦀`)
   const tweetHref = `https://twitter.com/intent/tweet?text=${tweetText}`
