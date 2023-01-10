@@ -254,7 +254,7 @@ jobs:
   coverage-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
     steps:
       - checkout
       - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=coverage forge coverage
