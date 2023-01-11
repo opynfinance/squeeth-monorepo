@@ -108,7 +108,7 @@ const StrategyLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ 
 }
 
 interface StrategyImageProps {
-  img: StaticImageData
+  img: any
   imgAlt?: string
 }
 
