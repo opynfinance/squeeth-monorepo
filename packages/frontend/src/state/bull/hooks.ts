@@ -415,7 +415,7 @@ export const useBullFlashDeposit = () => {
           .send({
             from: address,
             value: fromTokenAmount(ethToSend, 18).toFixed(0),
-            gas: gasEstimate ? gasEstimate * 1.2 : undefined,
+            gas: gasEstimate ? Number((gasEstimate * 1.2).toFixed(0)) : undefined,
           }),
         onTxConfirmed,
       )
@@ -613,7 +613,7 @@ export const useBullFlashWithdraw = () => {
           })
           .send({
             from: address,
-            gas: gasEstimate ? gasEstimate * 1.2 : undefined,
+            gas: gasEstimate ? Number((gasEstimate * 1.2).toFixed(0)) : undefined,
           }),
         onTxConfirmed,
       )
