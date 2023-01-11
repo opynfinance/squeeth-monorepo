@@ -13,8 +13,12 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(400).json({ status: 'error', message: 'Array params is not supported' })
     return
   }
+  if (!interval) {
+    res.status(400).json({ status: 'error', message: 'Interval param is required' })
+    return
+  }
 
-  const timestampArr = timestamps.split(',')
+  const timestampArr = timestamps?.split(',') ?? []
   const methods = generateMethodData(timestampArr, interval)
 
   const resp = await fetch(`${TWELVE_DATA_API}/complex_data?apikey=${process.env.NEXT_PUBLIC_TWELVEDATA_APIKEY}`, {
