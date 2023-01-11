@@ -41,7 +41,6 @@ import useExecuteOnce from '@hooks/useExecuteOnce'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
-import useToggleCrispChat from '@hooks/useToggleCrispChat'
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -142,11 +141,9 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         if (bullToWithdraw === withdrawAmountRef.current) setQuoteLoading(false)
       })
   }, 500)
-  const { show: showCrispChat } = useToggleCrispChat()
 
   const onInputChange = useAppCallback(
     (ethToWithdraw: string) => {
-      showCrispChat()
       const withdrawEthBN = new BigNumber(ethToWithdraw)
       withdrawEthBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdrawEthBN) : null
       const _bullToWithdraw = new BigNumber(ethToWithdraw).div(bullPositionValueInEth).times(bullBalance)
@@ -154,7 +151,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
       withdrawAmountRef.current = _bullToWithdraw.toString()
       debouncedWithdrawQuote(_bullToWithdraw.toString())
     },
-    [trackWithdrawAmountEnteredOnce, debouncedWithdrawQuote, bullBalance, bullPositionValueInEth, showCrispChat],
+    [trackWithdrawAmountEnteredOnce, debouncedWithdrawQuote, bullBalance, bullPositionValueInEth],
   )
 
   const onTxnConfirmed = useCallback(
