@@ -100,7 +100,13 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     setQuoteLoading(true)
     getFlashBullDepositParams(new BigNumber(ethToDeposit))
       .then((_quote) => {
-        console.log('', ethToDeposit.toString(), depositAmountRef.current)
+        console.log(
+          '',
+          ethToDeposit.toString(),
+          depositAmountRef.current,
+          _quote.ethOutForSqth.toString(),
+          _quote.ethOutForUsdc.toString(),
+        )
         if (ethToDeposit === depositAmountRef.current) {
           let quotePriceImpact = _quote.priceImpact
           if (_quote.poolFee) quotePriceImpact = _quote.priceImpact - _quote.poolFee
@@ -154,11 +160,13 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   }, [osqthRefVol, impliedVol])
 
   const depositPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn)
+    const squeethPrice = quote.ethOutForSqth.div(quote.oSqthIn).times(1.003) // Adding Fee
+
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const log = Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber())
     const executionVol = new BigNumber(log).div(fundingPeriod).sqrt()
+
     const showPriceImpactWarning =
       log < 0 ||
       executionVol
