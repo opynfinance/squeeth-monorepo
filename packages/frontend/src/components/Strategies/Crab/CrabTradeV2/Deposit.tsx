@@ -406,7 +406,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         </RoundedButton>
         <Box className={classes.infoIconGray} display="flex" alignItems="center">
           <Tooltip
-            title={`Standard deposit helps large deposits reduce price impact. Standard deposits get into the strategy in 24 hours on average, but could take up to Tuesday at the longest. Instant deposits get into the strategy immediately.`}
+            title={`Standard reduces price impact and gas costs, getting into the strategy in 24hr on avg or Tuesday latest. Instant gets in immediately.`}
           >
             <HelpOutlineIcon fontSize="medium" />
           </Tooltip>
