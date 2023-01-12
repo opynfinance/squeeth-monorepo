@@ -129,7 +129,6 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
   const classes = useStyles()
   const tabClasses = useTabStyles()
 
-  console.log({ pathname: router.pathname })
   useEffect(() => {
     setSelectedIdx(routeMap[router.pathname])
   }, [router.pathname])
