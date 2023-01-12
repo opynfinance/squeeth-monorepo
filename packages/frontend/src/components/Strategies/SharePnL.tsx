@@ -1,5 +1,5 @@
 import { Box, ButtonBase } from '@material-ui/core'
-import React, { memo } from 'react'
+import React from 'react'
 import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -7,6 +7,9 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 const useStyles = makeStyles((theme) =>
   createStyles({
     buttonRoot: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       border: '1px solid #fff',
       borderRadius: '100%',
       width: '26px',
@@ -18,8 +21,8 @@ const useStyles = makeStyles((theme) =>
       transition: 'background-color 0.1s ease-in',
     },
     icon: {
-      width: '14px',
-      height: '14px',
+      width: '13px',
+      height: '13px',
     },
   }),
 )
