@@ -379,6 +379,7 @@ export const useBullFlashDeposit = () => {
     if (!flashBullContract) return
     track(BULL_EVENTS.DEPOSIT_BULL_CLICK, dataToTrack)
     let gasEstimate
+    let gas
     try {
       try {
         gasEstimate = await flashBullContract.methods
@@ -403,6 +404,8 @@ export const useBullFlashDeposit = () => {
         throw e
       }
 
+      gas = Number((gasEstimate * 1.2).toFixed(0))
+
       await handleTransaction(
         flashBullContract.methods
           .flashDeposit({
@@ -415,19 +418,20 @@ export const useBullFlashDeposit = () => {
           .send({
             from: address,
             value: fromTokenAmount(ethToSend, 18).toFixed(0),
-            gas: gasEstimate ? Number((gasEstimate * 1.2).toFixed(0)) : undefined,
+            gas: gasEstimate ? gas : undefined,
           }),
         onTxConfirmed,
       )
-      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, dataToTrack)
+      track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
     } catch (e: any) {
+      const trackingData = { ...(dataToTrack ?? {}), gas }
       if (e?.code === 4001) {
-        track(BULL_EVENTS.DEPOSIT_BULL_REVERT, dataToTrack)
+        track(BULL_EVENTS.DEPOSIT_BULL_REVERT, trackingData)
       }
       track(BULL_EVENTS.DEPOSIT_BULL_FAILED, {
         code: e?.code,
         message: e?.message,
-        ...(dataToTrack ?? {}),
+        ...trackingData,
       })
       console.log(e)
     }
@@ -580,6 +584,7 @@ export const useBullFlashWithdraw = () => {
     if (!flashBullContract) return
     track(BULL_EVENTS.WITHDRAW_BULL_CLICK, dataToTrack)
     let gasEstimate
+    let gas
     try {
       try {
         gasEstimate = await flashBullContract.methods
@@ -602,6 +607,7 @@ export const useBullFlashWithdraw = () => {
         alert('Error occurred, please refresh and try again')
         throw e
       }
+      gas = Number((gasEstimate * 1.2).toFixed(0))
       await handleTransaction(
         flashBullContract.methods
           .flashWithdraw({
@@ -617,15 +623,18 @@ export const useBullFlashWithdraw = () => {
           }),
         onTxConfirmed,
       )
-      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, dataToTrack)
+
+      track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
     } catch (e: any) {
+      const trackingData = { ...(dataToTrack ?? {}), gas }
       if (e?.code === 4001) {
-        track(BULL_EVENTS.WITHDRAW_BULL_REVERT, dataToTrack)
+        track(BULL_EVENTS.WITHDRAW_BULL_REVERT, trackingData)
       }
+
       track(BULL_EVENTS.WITHDRAW_BULL_FAILED, {
         code: e?.code,
         message: e?.message,
-        ...(dataToTrack ?? {}),
+        ...trackingData,
       })
       console.log(e)
     }
