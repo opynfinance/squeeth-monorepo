@@ -1,18 +1,26 @@
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
-import Image from 'next/image'
 import React from 'react'
+import intervalToDuration from 'date-fns/intervalToDuration'
+import formatDuration from 'date-fns/formatDuration'
 
-import { getCrabPnlV2ChartData } from '@utils/pricer'
-import logo from '../../public/images/logo.svg'
+import { formatNumber } from '@utils/formatter'
 
 export const config = {
   runtime: 'experimental-edge',
 }
 
-// default timestamp = 1672901127170
-
 const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
+  const date = new Date(depositTimestamp)
+  const strategyDuration = intervalToDuration({ start: new Date(), end: date })
+  const formattedDuration = formatDuration(strategyDuration, {
+    format: ['days', 'hours'],
+    delimiter: ' & ',
+  })
+
+  const pnl = 2.5
+  const pnlColor = pnl > 0 ? '#49D273' : '#EC7987'
+
   return (
     <div
       style={{
@@ -21,50 +29,69 @@ const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#191B1C',
-        padding: '50px 200px',
+        padding: '50px 100px',
       }}
     >
-      <div tw="flex text-4xl text-white font-bold">Crabber - Stacking USDC</div>
+      <div tw="flex items-baseline">
+        <div tw="flex text-4xl">🦀</div>
+        <div tw="flex text-4xl text-white font-bold ml-4">Crabber - Stacking USDC</div>
+      </div>
 
-      <img
-        alt="logo"
-        width="256"
-        src={'https://squeeth.opyn.co/images/logo.svg'}
-        style={{
-          borderRadius: 128,
-        }}
-      />
+      <div tw="flex flex-col mt-10">
+        <div tw="flex text-2xl text-white">My Crab Position</div>
+        <div tw="flex items-baseline mt-2">
+          <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
+            {pnl > 0 && '+'}
+            {formatNumber(pnl) + '%'}
+          </div>
 
-      <div tw="flex text-4xl text-white font-regular">{depositTimestamp}</div>
+          <div tw="flex text-2xl text-gray-400 ml-5">USD return</div>
+        </div>
+      </div>
+
+      <div tw="flex flex-col mt-10">
+        <div tw="flex text-2xl text-white">In Crab since</div>
+        <div tw="flex text-2xl text-white font-bold mt-2">{formattedDuration}</div>
+      </div>
     </div>
   )
 }
 
+const font = fetch(new URL('../../public/fonts/DMMono-Regular.ttf', import.meta.url)).then((res) => res.arrayBuffer())
+const fontMedium = fetch(new URL('../../public/fonts/DMMono-Medium.ttf', import.meta.url)).then((res) =>
+  res.arrayBuffer(),
+)
 export default async function handler(req: NextRequest) {
   try {
+    const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
+
     const { searchParams } = new URL(req.url)
 
-    const depositTimestamp = searchParams.get('depositTimestamp')
+    const depositTimestamp = searchParams.get('depositedAt')
     if (!depositTimestamp) {
       return new Response(`Missing "depositTimestamp" query param`, {
         status: 400,
       })
     }
 
-    const depositDate = new Date(depositTimestamp)
-    const today = new Date()
-
-    const data = await getCrabPnlV2ChartData(
-      Number(depositDate.valueOf().toString().slice(0, -3)),
-      Number(today.valueOf().toString().slice(0, -3)),
-    )
-
-    console.log({ data })
-
     return new ImageResponse(<UI depositTimestamp={Number(depositTimestamp)} />, {
       width: 1200,
       height: 630,
-      emoji: 'twemoji',
+      fonts: [
+        {
+          name: 'DMMono',
+          data: fontData,
+          style: 'normal',
+          weight: 400,
+        },
+        {
+          name: 'DMMono',
+          data: fontMediumData,
+          style: 'normal',
+          weight: 500,
+        },
+      ],
+      emoji: 'noto',
     })
   } catch (e: any) {
     console.log(`${e.message}`)
