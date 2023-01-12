@@ -60,6 +60,7 @@ import {
   AVERAGE_AUCTION_PRICE_IMPACT,
   CRAB_TOKEN_DECIMALS,
   NETTING_PRICE_IMPACT,
+  STRATEGY_DEPOSIT_LIMIT,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -463,6 +464,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
+          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT}
           variant="outlined"
           size="small"
           onClick={() => setUseQueue(false)}
