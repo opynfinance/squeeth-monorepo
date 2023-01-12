@@ -99,6 +99,7 @@ export const RoundedButton = withStyles((theme) => ({
       color: 'rgba(255, 255, 255, 0.1)',
       backgroundColor: 'rgba(36, 39, 40, 0.6)',
       opacity: 1,
+      border: '2px solid rgba(255, 255, 255, 0.1)',
     },
     textTransform: 'initial',
     borderRadius: '20px',
