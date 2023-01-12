@@ -21,7 +21,9 @@ import {
   MAINNET_BULL_STRATEGY_ADDR,
   GOERLI_BULL_STRATEGY_ADDR,
   GOERLI_AUCTION_BULL_ADDR,
-  MAINNET_AUCTION_BULL_ADDR
+  MAINNET_AUCTION_BULL_ADDR,
+  MAINNET_WETH_ADDR,
+  GOERLI_WETH_ADDR
 } from "./constants";
 
 export function getShortHelperAddr(networkName: string): Address {
@@ -99,6 +101,15 @@ export function getAuctionBullAddr(networkName: string): Address {
     addr = GOERLI_AUCTION_BULL_ADDR
   } else if (networkName == "goerli") {
     addr = GOERLI_AUCTION_BULL_ADDR
+  }
+
+  return addr;
+}
+
+export function getWethAddr(networkName: string): Address {
+  let addr = MAINNET_WETH_ADDR;
+  if (networkName == "goerli") {
+    addr = GOERLI_WETH_ADDR;
   }
 
   return addr;

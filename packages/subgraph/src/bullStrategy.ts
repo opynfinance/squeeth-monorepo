@@ -36,11 +36,12 @@ import {
     Strategy,
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
+import * as WETH9 from "../generated/Weth/Weth"
+import { Address, BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import { loadOrCreateStrategy } from "./util"
-import { AUCTION_BULL } from "./constants"
+import { AUCTION_BULL, FLASH_BULL_ADDR, WETH } from "./constants"
 
-function loadOrCreateTx(id: string): BullUserTxSchema {
+export function loadOrCreateTx(id: string): BullUserTxSchema {
   let userTx = BullUserTx.load(id)
   if (userTx) return userTx
 
@@ -253,7 +254,7 @@ export function handleFullRebalance(event: FullRebalance): void {
 
 export function handleFlashDeposit(event: FlashDeposit): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
-  userTx.ethAmount = event.params.ethDeposited
+  userTx.ethAmount = findFlashBullEthDeposited(event)
   userTx.crabAmount = event.params.crabAmount
   userTx.user = event.transaction.from
   userTx.wethLentAmount = event.params.wethToLend
@@ -279,4 +280,43 @@ export function handleTransfer(event: Transfer): void {
   const userTx = loadOrCreateTx(event.transaction.hash.toHex())
   userTx.bullAmount = event.params.value
   userTx.save()
+}
+
+function findFlashBullEthDeposited(event: FlashDeposit): BigInt {
+  let returnedAmount = event.params.ethDeposited
+  if (!event.receipt) return returnedAmount
+
+  const allEvents = (event.receipt as ethereum.TransactionReceipt).logs as Array<ethereum.Log>
+  if (!allEvents) return returnedAmount
+
+  for (let i = 0; i < allEvents.length; i++) {
+    const e = allEvents[i]
+    if (!e) continue
+
+    if (e.topics[0].toHexString().toLowerCase() == '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'.toLowerCase() && WETH.equals(e.address)) { // Transfer event (should add)
+      const dec = ethereum.decode('(uint256)', Bytes.fromHexString(e.data.toHexString()))
+      const dec2 = ethereum.decode('(address)', Bytes.fromHexString(e.topics[2].toHexString()))
+      if (dec2) {
+        const decodedTopics = dec2.toTuple()
+        if (dec && FLASH_BULL_ADDR.equals(decodedTopics[0].toAddress())) { // If the event is a transfer to the flash bull
+          const decoded = dec.toTuple()
+          returnedAmount = returnedAmount.plus(decoded[0].toBigInt())
+        }
+      }
+    } else if (e.topics[0].toHexString() == '0x3ca13b7aab12bad7472691fe558faa6b25e99099824a0070a88bd5aa84be610f') { // Deposit colat (should subtract)
+      const dec = ethereum.decode('(address,uint256,uint256)', Bytes.fromHexString(e.data.toHexString()))
+      if (dec) {
+        const decoded = dec.toTuple()
+        returnedAmount = returnedAmount.minus(decoded[2].toBigInt())
+      }
+    } else if (e.topics[0].toHexString() == '0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c') { // Wrap deposit event (should subtract)
+      const dec = ethereum.decode('(uint256)', Bytes.fromHexString(e.data.toHexString()))
+      if (dec) {
+        const decoded = dec.toTuple()
+        returnedAmount = returnedAmount.minus(decoded[0].toBigInt())
+      }
+    }
+  }
+
+  return event.params.ethDeposited.minus(returnedAmount)
 }

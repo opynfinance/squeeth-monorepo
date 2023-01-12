@@ -1,4 +1,4 @@
-specVersion: 0.0.4
+specVersion: 0.0.6
 schema:
   file: ./schema.graphql
 dataSources:
@@ -11,7 +11,7 @@ dataSources:
       startBlock: {{Controller-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - BurnShort
@@ -85,7 +85,7 @@ dataSources:
       startBlock: {{CrabStrategyDeployment-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Deposit
@@ -137,7 +137,7 @@ dataSources:
       startBlock: {{CrabStrategyV2-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - SetHedgeTimeThreshold
@@ -187,7 +187,7 @@ dataSources:
       startBlock: {{Timelock-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - TimeLockTx
@@ -209,7 +209,7 @@ dataSources:
       startBlock: {{CrabMigration-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Strategy
@@ -229,7 +229,7 @@ dataSources:
       startBlock: {{CrabHelper-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Strategy
@@ -251,7 +251,7 @@ dataSources:
       startBlock: {{CrabNetting-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Strategy
@@ -273,7 +273,7 @@ dataSources:
       startBlock: {{ZenBullStrategy-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Deposit
@@ -318,7 +318,7 @@ dataSources:
       startBlock: {{ZenAuction-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Strategy
@@ -350,7 +350,7 @@ dataSources:
       startBlock: {{FlashZen-start-block}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Strategy
@@ -362,4 +362,5 @@ dataSources:
           handler: handleFlashWithdraw
         - event: FlashDeposit(indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleFlashDeposit
+          receipt: true
       file: ./src/bullStrategy.ts
