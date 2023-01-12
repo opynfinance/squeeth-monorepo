@@ -1,9 +1,13 @@
 import Head from 'next/head'
 import { Box, Typography } from '@material-ui/core'
+import { useRouter } from 'next/router'
 
-const BASE_URL = 'https://continuouscall-git-feat-share-pnl-opynfinance.vercel.app'
+const BASE_URL = 'https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app'
 
 const SharePnl = () => {
+  const router = useRouter()
+  const depositedAt = router.query.depositedAt
+
   return (
     <>
       <Head>
@@ -14,8 +18,8 @@ const SharePnl = () => {
           name="twitter:description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
-        <meta name="twitter:image" content={`${BASE_URL}/api/pnl?title=my-post-title`} />
-        <meta property="og:image" content={`${BASE_URL}/api/pnl?title=my-post-title`} />
+        <meta name="twitter:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}`} />
+        <meta property="og:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}`} />
       </Head>
 
       <Box marginTop="20px" marginLeft="20px">
