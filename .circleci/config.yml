@@ -4,41 +4,64 @@ orbs:
   node: circleci/node@1.1.6
 
 workflows:
-  build-test-report:
+  hardhat:
     jobs:
-      - checkout-and-install
-      - compile:
+      - checkout-and-install-hardhat
+      - compile-hardhat:
           requires:
-            - checkout-and-install
-      - lint:
+            - checkout-and-install-hardhat
+      - lint-hardhat:
           requires:
-            - compile
-      - unit-test-contracts:
+            - compile-hardhat
+      - unit-test-hardhat:
           requires:
-            - compile
-      - coverage:
+            - compile-hardhat
+      - integration-test-hardhat:
           requires:
-            - e2e-test
-          context: BUILD_KEYS
-      - contract-size:
+            - compile-hardhat
+      - contract-size-hardhat:
           requires:
-            - compile
-      - deploy-test:
+            - compile-hardhat
+      - e2e-test-hardhat:
           requires:
-            - compile
-      - e2e-test:
-          requires:
-            - unit-test-contracts
+            - compile-hardhat
+  frontend:
+    jobs:
       - checkout-and-install-frontend
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
+  zen-bull-vault:
+    jobs:
+      - lint-zen-bull-vault
+      - compile-zen-bull-vault:
+          requires:
+            - lint-zen-bull-vault
+      - test-zen-bull-vault:
+          requires:
+            - compile-zen-bull-vault
+      - fuzzing-zen-bull-vault:
+          requires:
+            - compile-zen-bull-vault
+      - coverage-zen-bull-vault:
+          requires:
+            - test-zen-bull-vault
+  crab-netting:
+    jobs:
+      - lint-crab-netting
+      - compile-crab-netting:
+          requires:
+            - lint-crab-netting
+      - test-crab-netting:
+          requires:
+            - compile-crab-netting
 
 jobs:
-  checkout-and-install:
+  ################ hardhat jobs
+  checkout-and-install-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -56,10 +79,10 @@ jobs:
           paths:
             - ~/squeeth
 
-  compile:
+  compile-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -77,10 +100,10 @@ jobs:
          paths:
            - artifacts
 
-  lint:
+  lint-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -92,10 +115,10 @@ jobs:
           name: Lint
           command: yarn lint:check
   
-  unit-test-contracts:
+  unit-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -105,27 +128,12 @@ jobs:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
           name: Unit tests
-          command: yarn test 
-    
-  deploy-test:
+          command: yarn test:crab-unit
+  
+  integration-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
-    steps:
-      - checkout:
-          path: ~/squeeth
-      - restore_cache:
-          key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
-      - restore_cache:
-          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run:
-          name: Deploy
-          command: npx hardhat deploy --network hardhat
-
-  coverage:
-    working_directory: ~/squeeth/packages/hardhat
-    docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -134,19 +142,13 @@ jobs:
       - restore_cache:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run: 
-          name: Coverage
-          command: yarn coverage 
-      - coveralls/upload:
-          path_to_lcov: ./coverage/lcov.info
-      - store_artifacts:
-          path: /coverage
-      - store_artifacts:
-          path: /coverage.json
-
-  contract-size:
+          name: Integration tests
+          command: yarn test:crab-integration
+    
+  contract-size-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -158,10 +160,10 @@ jobs:
           name: Check Contracts Size
           command: npx hardhat size-contracts
 
-  e2e-test:
-    working_directory:  ~/squeeth/packages/hardhat
+  e2e-test-hardhat:
+    working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
@@ -169,16 +171,16 @@ jobs:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
       - run:
           name: Set Env Variables
-          command: echo "export INFURA_KEY=${INFURA_KEY}" >> $BASH_ENV
+          command: echo "export ALCHEMY_KEY=${ALCHEMY_KEY}" >> $BASH_ENV
       - run:
           name: Mainnet E2E Test 
-          command: |
-            ./ci/e2e.sh	
-
+          command: yarn test:e2e
+  
+  ################ frontend jobs
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -199,7 +201,7 @@ jobs:
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: circleci/node:16.6.0
+      - image: cimg/node:16.6.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -208,3 +210,80 @@ jobs:
       - run: 
           name: Unit tests
           command: yarn test:ci
+
+  ################ zen-bull-vault jobs
+  lint-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint zen-bull-vault
+          command: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  compile-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Build zen-bull-vault
+          command: cd packages/zen-bull-vault && forge build --force
+
+  test-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
+
+  fuzzing-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run:
+          name: Set Env Variables
+          command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
+      
+  coverage-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
+    steps:
+      - checkout
+      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=coverage forge coverage
+
+  ################ crab-netting jobs
+  lint-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint crab-netting
+          command: cd packages/crab-netting && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  compile-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Build crab-netting
+          command: cd packages/crab-netting && forge build --force
+
+  test-crab-netting:
+    working_directory: ~/squeeth/packages/crab-netting
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/crab-netting && forge test -vv --gas-report

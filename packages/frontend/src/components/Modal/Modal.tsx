@@ -41,7 +41,7 @@ export const Modal: React.FC<ModalProps> = ({ open, handleClose, title, children
   return (
     <Dialog
       PaperProps={{
-        style: { borderRadius: 20 },
+        style: { borderRadius: 20, maxWidth: 600 },
       }}
       BackdropProps={{
         style: { backdropFilter: 'blur(20px)' },
@@ -51,6 +51,7 @@ export const Modal: React.FC<ModalProps> = ({ open, handleClose, title, children
       onClose={handleClose}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
+      style={{ maxWidth: '500' }}
     >
       <DialogTitle className={classes.dialogTitle} id="alert-dialog-title">
         {title}

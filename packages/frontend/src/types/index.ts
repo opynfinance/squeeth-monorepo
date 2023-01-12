@@ -26,6 +26,7 @@ declare module '@material-ui/core/Typography' {
 export enum Networks {
   MAINNET = 1,
   ROPSTEN = 3,
+  GOERLI = 5,
   ARBITRUM_RINKEBY = 421611,
   LOCAL = 31337,
 }
@@ -82,4 +83,32 @@ export enum CrabStrategyTxType {
   FLASH_WITHDRAW = 'FLASH_WITHDRAW',
   HEDGE_ON_UNISWAP = 'HEDGE_ON_UNISWAP',
   HEDGE = 'HEDGE',
+}
+
+export enum CrabStrategyV2TxType {
+  DEPOSIT = 'DEPOSIT',
+  WITHDRAW = 'WITHDRAW',
+  WITHDRAW_SHUTDOWN = 'WITHDRAW_SHUTDOWN',
+  FLASH_DEPOSIT = 'FLASH_DEPOSIT',
+  FLASH_WITHDRAW = 'FLASH_WITHDRAW',
+  FLASH_DEPOSIT_CALLBACK = 'FLASH_DEPOSIT_CALLBACK',
+  FLASH_WITHDRAW_CALLBACK = 'FLASH_WITHDRAW_CALLBACK',
+  DEPOSIT_V1 = 'DEPOSIT_V1',
+  OTC_DEPOSIT = 'OTC_DEPOSIT',
+  OTC_WITHDRAW = 'OTC_WITHDRAW',
+}
+
+export enum BullStrategyTxType {
+  FLASH_DEPOSIT = 'FLASH_DEPOSIT',
+  FLASH_WITHDRAW = 'FLASH_WITHDRAW',
+}
+
+export enum BullRebalanceType {
+  LEVERAGE_REBALANCE = 'Leverage Rebalance',
+  FULL_REBALANCE = 'Full Rebalance',
+}
+
+export default class ChartDataInfo {
+  time!: number
+  value!: number
 }

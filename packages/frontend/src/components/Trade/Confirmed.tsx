@@ -3,15 +3,18 @@ import Image from 'next/image'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 
-import { EtherscanPrefix } from '../../constants'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { EtherscanPrefix } from '@constants/index'
+import { networkIdAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
+    container: {
+      textAlign: 'center',
+      marginBottom: theme.spacing(4),
+    },
     etherscan: {
       color: theme.palette.primary.main,
       marginTop: theme.spacing(1),
-      marginBotton: theme.spacing(3),
     },
     thirdHeading: {
       marginTop: theme.spacing(3),
@@ -20,10 +23,6 @@ const useStyles = makeStyles((theme) =>
     },
     confMsg: {
       marginTop: theme.spacing(1),
-    },
-    squeethCat: {
-      marginTop: theme.spacing(6),
-      marginBottom: theme.spacing(6),
     },
     uniswapLink: {
       marginTop: theme.spacing(6),
@@ -34,12 +33,19 @@ const useStyles = makeStyles((theme) =>
     uniLP: {
       color: '#FF007A',
       marginLeft: theme.spacing(3),
-      // textDecoration: 'underline',
     },
     infoIcon: {
       fontSize: '1rem',
       marginLeft: theme.spacing(0.5),
       marginTop: '2px',
+    },
+  }),
+)
+
+const useConfirmGraphicStyles = makeStyles((theme) =>
+  createStyles({
+    graphic: {
+      marginTop: theme.spacing(4),
     },
     img: {
       borderRadius: theme.spacing(2),
@@ -47,9 +53,61 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const ConfirmGraphic: React.FC<{ type?: ConfirmType }> = ({ type }) => {
+  const classes = useConfirmGraphicStyles()
+  if (type === ConfirmType.CRAB)
+    return (
+      <div className={classes.graphic}>
+        <Image
+          src="https://media.giphy.com/media/ukLCGEh7kXDJ5wNWT7/giphy.gif"
+          alt="squeeth crab cat"
+          width={120}
+          height={120}
+          className={classes.img}
+        />
+        <Typography variant="body1" component="div">
+          Stay Crabby!
+        </Typography>
+      </div>
+    )
+  if (type === ConfirmType.TRADE)
+    return (
+      <div className={classes.graphic}>
+        <Image
+          src="https://media.giphy.com/media/eYU60NpFPCONDEItBa/giphy.gif"
+          alt="squeeth cat"
+          width={120}
+          height={120}
+          className={classes.img}
+        />
+        <Typography variant="body1" component="div">
+          Stay Squeethy!
+        </Typography>
+      </div>
+    )
+
+  if (type === ConfirmType.BULL)
+    return (
+      <div className={classes.graphic}>
+        <Image
+          src="https://media.giphy.com/media/j2VvomNXigtS1MfeT8/giphy.gif"
+          alt="squeeth bull cat"
+          width={120}
+          height={120}
+          className={classes.img}
+        />
+        <Typography variant="body1" component="div">
+          Stay Bullish!
+        </Typography>
+      </div>
+    )
+  return <></>
+}
+
 export enum ConfirmType {
   TRADE,
   CRAB,
+  BULL,
 }
 
 type ConfirmedProps = {
@@ -63,7 +121,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, con
   const networkId = useAtomValue(networkIdAtom)
 
   return (
-    <div>
+    <div className={classes.container}>
       <div>
         <Typography variant="body1" className={classes.confMsg} id="conf-msg">
           {' '}
@@ -79,33 +137,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, con
           View on Etherscan{' '}
         </a>
       </div>
-      {confirmType === ConfirmType.CRAB ? (
-        <div className={classes.squeethCat}>
-          <Image
-            src="https://media.giphy.com/media/ukLCGEh7kXDJ5wNWT7/giphy.gif"
-            alt="squeeth crab cat"
-            width={120}
-            height={120}
-            className={classes.img}
-          />
-          <Typography variant="body1" component="div">
-            Stay Crabby!
-          </Typography>
-        </div>
-      ) : (
-        <div className={classes.squeethCat}>
-          <Image
-            src="https://media.giphy.com/media/eYU60NpFPCONDEItBa/giphy.gif"
-            alt="squeeth cat"
-            width={120}
-            height={120}
-            className={classes.img}
-          />
-          <Typography variant="body1" component="div">
-            Stay Squeethy!
-          </Typography>
-        </div>
-      )}
+      <ConfirmGraphic type={confirmType} />
     </div>
   )
 }

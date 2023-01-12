@@ -9,91 +9,112 @@ import { useRouter } from 'next/router'
 import React, { useState } from 'react'
 import { useAtomValue } from 'jotai'
 
-import logo from '../../public/images/SqueethLogo.svg'
 import useCopyClipboard from '@hooks/useCopyClipboard'
+import { useWalletBalance } from '@state/wallet/hooks'
+import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { BIG_ZERO } from '@constants/index'
+import logo from 'public/images/OpynLogo.svg'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
-import { useWalletBalance } from 'src/state/wallet/hooks'
-import { BIG_ZERO } from '../constants/'
-import { addressesAtom } from 'src/state/positions/atoms'
 
 const useStyles = makeStyles((theme) =>
-  createStyles({
-    nav: {
-      height: '64px',
-      display: 'flex',
-      alignItems: 'center',
-      position: 'sticky',
-      top: '0px',
-      zIndex: 30,
-      //background: theme.palette.background.default,
-      borderBottom: `1px solid ${theme.palette.background.stone}`,
-      backdropFilter: 'blur(30px)',
-    },
-    logo: {
-      marginRight: 'auto',
-      marginTop: theme.spacing(1),
-      marginLeft: theme.spacing(2),
-    },
-    navDiv: {
-      display: 'flex',
-      alignItems: 'center',
-      position: 'absolute',
-      marginLeft: theme.spacing(20),
-      [theme.breakpoints.down(1042)]: {
-        marginLeft: theme.spacing(18),
+    createStyles({
+      root: {
+        borderBottom: `1px solid ${theme.palette.background.stone}`,
+        position: 'sticky',
+        top: '0px',
+        backdropFilter: 'blur(30px)',
+        zIndex: theme.zIndex.appBar,
       },
-    },
-    navLink: {
-      margin: theme.spacing(0, 3),
-      textDecoration: 'none',
-      cursor: 'pointer',
-      color: theme.palette.text.secondary,
-      fontWeight: 400,
-      [theme.breakpoints.down('md')]: {
-        margin: theme.spacing(1, 2, 1),
+      content: {
+        maxWidth: '1280px',
+        width: '80%',
+        padding: theme.spacing(0, 2.5),
+        margin: '0 auto',
+        height: '64px',
+        display: 'flex',
+        alignItems: 'center',
+        [theme.breakpoints.down('lg')]: {
+          maxWidth: 'none',
+          width: '90%',
+        },
+        [theme.breakpoints.down('md')]: {
+          width: '100%',
+        },
+        [theme.breakpoints.down('sm')]: {
+          padding: theme.spacing(0, 2),
+        },
+        [theme.breakpoints.down('xs')]: {
+          padding: theme.spacing(0, 1),
+        },
       },
-      [theme.breakpoints.down(1042)]: {
-        margin: theme.spacing(1, 1, 1),
+      logo: {
+        marginRight: 'auto',
+        marginTop: theme.spacing(1.75),
+        marginLeft: theme.spacing(-1),
       },
-      [theme.breakpoints.down('sm')]: {
-        margin: theme.spacing(1, 0),
+      navDiv: {
+        display: 'flex',
+        alignItems: 'center',
+        position: 'absolute',
+        marginLeft: theme.spacing(12),
+        [theme.breakpoints.down(1042)]: {
+          marginLeft: theme.spacing(18),
+        },
       },
-    },
-    navActive: {
-      color: theme.palette.primary.main,
-    },
-    wallet: {
-      display: 'flex',
-      marginRight: theme.spacing(2),
-    },
-    navDrawer: {
-      padding: theme.spacing(2, 4),
-      '& > *': {
-        marginBottom: theme.spacing(1),
+      navLink: {
+        margin: theme.spacing(0, 2),
+        textDecoration: 'none',
+        cursor: 'pointer',
+        color: theme.palette.text.secondary,
+        fontWeight: 400,
+        letterSpacing: '-0.02em',
+        [theme.breakpoints.down('md')]: {
+          margin: theme.spacing(1, 1.5, 1),
+        },
+        [theme.breakpoints.down(1042)]: {
+          margin: theme.spacing(1, 1, 1),
+        },
+        [theme.breakpoints.down('sm')]: {
+          margin: theme.spacing(1, 0),
+        },
       },
-    },
-    contractAddress: {
-      width: '200px',
-      [theme.breakpoints.down('md')]: {
-        width: '50px',
+      navActive: {
+        color: theme.palette.primary.main,
       },
-    },
-  }),
+      wallet: {
+        display: 'flex',
+        marginRight: theme.spacing(2),
+      },
+      navDrawer: {
+        padding: theme.spacing(2, 4),
+        '& > *': {
+          marginBottom: theme.spacing(1),
+        },
+      },
+    }),
 )
 
-export const NavLink: React.FC<{ path: string; name: string }> = ({ path, name }) => {
+export const NavLink: React.FC<{ path: string; name: string; highlightForPaths?: string[] }> = ({
+                                                                                                  path,
+                                                                                                  name,
+                                                                                                  highlightForPaths,
+                                                                                                }) => {
   const classes = useStyles()
   const router = useRouter()
 
   return (
-    <Typography
-      className={router.pathname === path ? `${classes.navLink} ${classes.navActive}` : classes.navLink}
-      variant="h6"
-    >
-      <Link href={path}>{name}</Link>
-    </Typography>
+      <Typography
+          className={
+            router.pathname === path || highlightForPaths?.includes(router.pathname)
+                ? `${classes.navLink} ${classes.navActive}`
+                : classes.navLink
+          }
+          variant="h6"
+      >
+        <Link href={path}>{name}</Link>
+      </Typography>
   )
 }
 
@@ -106,30 +127,35 @@ const Nav: React.FC = () => {
   const [isCopied, setCopied] = useCopyClipboard()
 
   return (
-    <div className={classes.nav}>
-      <div className={classes.logo}>
-        <a href="https://squeeth.opyn.co/">
-          <Image src={logo} alt="logo" width={127} height={55} />
-        </a>
-      </div>
-      {/*For Desktop view*/}
-      <Hidden smDown>
-        <div className={classes.navDiv}>
-          <div style={{ display: 'flex' }}>
-            <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies" name="Strategies" />
-            {/* <NavLink path="/trade" name="Trade 1" /> */}
-            <NavLink path="/positions" name="Positions" />
-            <NavLink path="/lp" name="LP" />
-            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
-              <Typography className={classes.navLink} variant="h6">
-                FAQ
-              </Typography>
+      <div className={classes.root}>
+        <div className={classes.content}>
+          <div className={classes.logo}>
+            <a href="https://squeeth.opyn.co/">
+              <Image src={logo} alt="logo" width={102} height={44} />
             </a>
           </div>
-        </div>
-        <div className={classes.wallet}>
-          {/* <Button
+          {/*For Desktop view*/}
+          <Hidden smDown>
+            <div className={classes.navDiv}>
+              <div style={{ display: 'flex' }}>
+                <NavLink path="/" name="Trade" />
+                <NavLink
+                    highlightForPaths={['/strategies/crab', '/strategies/bull']}
+                    path="/strategies/crab"
+                    name="Strategies"
+                />
+                {/* <NavLink path="/trade" name="Trade 1" /> */}
+                <NavLink path="/positions" name="Positions" />
+                <NavLink path="/lp" name="LP" />
+                <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+                  <Typography className={classes.navLink} variant="h6">
+                    FAQ
+                  </Typography>
+                </a>
+              </div>
+            </div>
+            <div className={classes.wallet}>
+              {/* <Button
             variant="contained"
             onClick={(e) => {
               e.preventDefault()
@@ -143,73 +169,77 @@ const Nav: React.FC = () => {
           >
             Share Feedback
           </Button> */}
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => {
-              setCopied(oSqueeth)
-            }}
-            className={classes.contractAddress}
-          >
-            {isCopied ? (
-              <>Copied</>
-            ) : (
-              <>
-                <span style={{ textTransform: 'none' }}>oSQTH</span>
-                <Hidden mdDown>
-                  : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
-                </Hidden>
-              </>
-            )}
-          </Button>
-          <WalletButton />
-          <SettingMenu />
-        </div>
-      </Hidden>
-      <Hidden mdUp>
-        <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
-        <IconButton onClick={() => setNavOpen(true)}>
-          <MenuIcon />
-        </IconButton>
-        <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
-          <div className={classes.navDrawer}>
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    setCopied(oSqueeth)
+                  }}
+              >
+                {isCopied ? (
+                    <>Copied</>
+                ) : (
+                    <>
+                      <span style={{ textTransform: 'none' }}>oSQTH</span>
+                      <Hidden mdDown>
+                        : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
+                      </Hidden>
+                    </>
+                )}
+              </Button>
               <WalletButton />
               <SettingMenu />
             </div>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => {
-                setCopied(oSqueeth)
-              }}
-              style={{
-                marginTop: '8px',
-                width: '200px',
-              }}
-            >
-              {isCopied ? (
-                <>Copied</>
-              ) : (
-                <>
-                  <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
-                  {oSqueeth?.substring(oSqueeth.length - 4)}
-                </>
-              )}
-            </Button>
-            <NavLink path="/" name="Trade" />
-            <NavLink path="/strategies" name="Strategies" />
-            <NavLink path="/positions" name="Positions" />
-            <NavLink path="/lp" name="LP" />
-            <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
-              <Typography className={classes.navLink} variant="h6">
-                FAQ
-              </Typography>
-            </a>
-          </div>
-        </Drawer>
-      </Hidden>
-    </div>
+          </Hidden>
+          <Hidden mdUp>
+            <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
+            <IconButton onClick={() => setNavOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+            <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
+              <div className={classes.navDrawer}>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <WalletButton />
+                  <SettingMenu />
+                </div>
+                <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                      setCopied(oSqueeth)
+                    }}
+                    style={{
+                      marginTop: '8px',
+                      width: '200px',
+                    }}
+                >
+                  {isCopied ? (
+                      <>Copied</>
+                  ) : (
+                      <>
+                        <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                        {oSqueeth?.substring(oSqueeth.length - 4)}
+                      </>
+                  )}
+                </Button>
+                <NavLink path="/" name="Trade" />
+                <NavLink
+                    highlightForPaths={['/strategies/crab', '/strategies/bull']}
+                    path="/strategies/crab"
+                    name="Strategies"
+                />
+                <NavLink path="/positions" name="Positions" />
+                <NavLink path="/lp" name="LP" />
+                <a href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq" target="_blank" rel="noreferrer">
+                  <Typography className={classes.navLink} variant="h6">
+                    FAQ
+                  </Typography>
+                </a>
+              </div>
+            </Drawer>
+          </Hidden>
+        </div>
+      </div>
   )
 }
 

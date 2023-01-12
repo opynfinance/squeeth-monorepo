@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/mocks/OpynWETH9.sol": {
+      "content": "// SPDX-License-Identifier: GPL-3.0-or-later\n\npragma solidity =0.7.6;\n\ncontract OpynWETH9 {\n    address owner;\n\n    string public name = \"Wrapped Opyn Ether\";\n    string public symbol = \"OpynWETH\";\n    uint8 public decimals = 18;\n\n    event Approval(address indexed src, address indexed guy, uint256 wad);\n    event Transfer(address indexed src, address indexed dst, uint256 wad);\n    event Deposit(address indexed dst, uint256 wad);\n    event Withdrawal(address indexed src, uint256 wad);\n    event MinterWhitelisted(address indexed account);\n    event MinterBlacklisted(address indexed account);\n\n    mapping(address => uint256) public balanceOf;\n    mapping(address => mapping(address => uint256)) public allowance;\n    mapping(address => bool) internal whitelistedMinters;\n   \n   /**\n     * @notice check if the sender is whitelistd\n     */\n    modifier onlyWhitelisted() {\n        require(\n            whitelistedMinters[msg.sender] || msg.sender == owner,\n            \"Address not a whitelisted minter\"\n        );\n        _;\n    }\n\n    constructor() {\n        owner = msg.sender;\n    }\n\n    receive() external payable {\n        deposit();\n    }\n\n    function mint(address _to, uint256 _amount) public onlyWhitelisted {\n\n        balanceOf[_to] += _amount;\n        emit Deposit(_to, _amount);\n    }\n\n    function burn(address _from, uint256 _amount) public onlyWhitelisted {\n\n        balanceOf[_from] -= _amount;\n        emit Withdrawal(_from, _amount);\n    }\n\n    function deposit() public payable {\n        balanceOf[msg.sender] += msg.value;\n        emit Deposit(msg.sender, msg.value);\n    }\n\n    function withdraw(uint256 wad) public {\n        require(balanceOf[msg.sender] >= wad);\n        balanceOf[msg.sender] -= wad;\n        msg.sender.transfer(wad);\n        emit Withdrawal(msg.sender, wad);\n    }\n\n    function totalSupply() public view returns (uint256) {\n        return address(this).balance;\n    }\n\n    function approve(address guy, uint256 wad) public returns (bool) {\n        allowance[msg.sender][guy] = wad;\n        emit Approval(msg.sender, guy, wad);\n        return true;\n    }\n\n    function transfer(address dst, uint256 wad) public returns (bool) {\n        return transferFrom(msg.sender, dst, wad);\n    }\n\n    function transferFrom(\n        address src,\n        address dst,\n        uint256 wad\n    ) public returns (bool) {\n        require(balanceOf[src] >= wad);\n\n        if (src != msg.sender && allowance[src][msg.sender] != uint256(-1)) {\n            require(allowance[src][msg.sender] >= wad);\n            allowance[src][msg.sender] -= wad;\n        }\n\n        balanceOf[src] -= wad;\n        balanceOf[dst] += wad;\n\n        emit Transfer(src, dst, wad);\n\n        return true;\n    }\n\n    /**\n     * @notice check if a minter is whitelisted\n     * @param _account address of minter\n     * @return boolean, True if address is a whitelisted minter\n     */\n    function isWhitelistedMinter(address _account) external view returns (bool) {\n        return whitelistedMinters[_account];\n    }\n\n    /**\n     * @notice allows the minter to whitelist other minters\n     * @param _account address of minter to be whitelisted\n     */\n    function whitelistMinter(address _account) external onlyWhitelisted {\n        whitelistedMinters[_account] = true;\n\n        emit MinterWhitelisted(_account);\n    }\n\n    /**\n     * @notice allow the minter to blacklist other minters\n     * @param _account address of minter to be blacklisted\n     */\n    function blacklistMinter(address _account) external onlyWhitelisted {\n        whitelistedMinters[_account] = false;\n\n        emit MinterBlacklisted(_account);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 800
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

@@ -6,7 +6,6 @@ import BigNumber from 'bignumber.js'
 import { isWethToken0Atom } from '../positions/atoms'
 import { BIG_ZERO } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
-
 export const poolAtom = atom<Pool | null>(null)
 export const wethTokenAtom = atom<Token | null>(null)
 export const squeethTokenAtom = atom<Token | null>(null)
@@ -19,5 +18,6 @@ export const wethPriceAtom = atom((get) => {
   )
 })
 export const squeethInitialPriceAtom = atom(BIG_ZERO)
-export const squeethPriceeAtom = atom(BIG_ZERO)
+export const squeethInitialPriceErrorAtom = atom('')
+export const squeethPriceeAtom = atom(BIG_ZERO) // not being used
 export const readyAtom = atom(false)

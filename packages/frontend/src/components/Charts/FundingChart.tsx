@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { createStyles, makeStyles, Tooltip } from '@material-ui/core'
+import { Box, CircularProgress, createStyles, makeStyles, Tooltip } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import React, { useState } from 'react'
@@ -40,7 +40,7 @@ const FundingChart = () => {
   const classes = useStyles()
 
   const fundingTypes = [
-    { id: 'funding', text: 'Funding' },
+    { id: 'funding', text: 'Premium' },
     {
       id: 'vol',
       text: 'VOL',
@@ -91,7 +91,7 @@ const FundingChart = () => {
   const [fundingType, setFundingType] = useState<SwitchItem>(fundingTypes[0])
   const [fundingDuration, setFundingDuration] = useState<SwitchItem>(fundingDurations[0])
 
-  const normFactors: NormHistory[] = useNormHistory()
+  const { normHistory: normFactors, fetchingComplete } = useNormHistory()
   const graphData = normFactors.map((item) => {
     const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
     const deltaT = secondsElapsed / (420 * 60 * 60)
@@ -108,8 +108,9 @@ const FundingChart = () => {
         : fundingDuration.id === 'month'
         ? monthFunding
         : yearFunding) * 100
-    return { time: Number(item.timestamp), value }
+    return { time: Number(item.timestamp), value: parseFloat(value.toFixed(4)) }
   })
+
   const chartOptions = {
     ...graphOptions,
     localization: {
@@ -122,10 +123,10 @@ const FundingChart = () => {
     fundingType.id === 'vol'
       ? 'Annual Vol'
       : fundingDuration.id === 'day'
-      ? 'Daily Funding'
+      ? 'Daily Premium'
       : fundingDuration.id === 'month'
-      ? 'Monthly Funding'
-      : 'Annual Funding'
+      ? 'Monthly Premium'
+      : 'Annual Premium'
 
   return (
     <>
@@ -136,25 +137,29 @@ const FundingChart = () => {
             <CustomSwitch items={fundingDurations} value={fundingDuration} onChange={setFundingDuration} />
           )}
         </div>
-        {graphData && graphData.length > 0 && (
+        {fetchingComplete ? (
           <>
             <Chart
               from={startTimestamp}
               to={endTimestamp}
               legend=""
               options={chartOptions}
-              lineSeries={[{ data: graphData, legend: `${legendText} (%) ` }]}
+              lineSeries={[{ data: graphData, legend: `${legendText} (%) `, options: { color: '#70E3F6' } }]}
               autoWidth
               height={300}
               darkTheme
             />
             <div className={classes.legendBox}>
               <div className={classes.legendContainer}>
-                <div style={{ width: '20px', height: '20px', backgroundColor: '#018FFB' }}></div>
+                <div style={{ width: '20px', height: '20px', backgroundColor: '#70E3F6' }}></div>
                 <div>{legendText}</div>
               </div>
             </div>
           </>
+        ) : (
+          <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
+            <CircularProgress size={40} color="secondary" />
+          </Box>
         )}
       </div>
     </>

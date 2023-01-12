@@ -1,0 +1,206 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_bull",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_factory",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "from",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "crabAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethDeposited",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wPowerPerpToMint",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "usdcToBorrow",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "wethToLend",
+        "type": "uint256"
+      }
+    ],
+    "name": "FlashDeposit",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "to",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "bullAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "ethReturned",
+        "type": "uint256"
+      }
+    ],
+    "name": "FlashWithdraw",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "bullStrategy",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "ethToCrab",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minEthFromSqth",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minEthFromUsdc",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint24",
+            "name": "wPowerPerpPoolFee",
+            "type": "uint24"
+          },
+          {
+            "internalType": "uint24",
+            "name": "usdcPoolFee",
+            "type": "uint24"
+          }
+        ],
+        "internalType": "struct FlashZen.FlashDepositParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashDeposit",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "bullAmount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxEthForWPowerPerp",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxEthForUsdc",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint24",
+            "name": "wPowerPerpPoolFee",
+            "type": "uint24"
+          },
+          {
+            "internalType": "uint24",
+            "name": "usdcPoolFee",
+            "type": "uint24"
+          }
+        ],
+        "internalType": "struct FlashZen.FlashWithdrawParams",
+        "name": "_params",
+        "type": "tuple"
+      }
+    ],
+    "name": "flashWithdraw",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int256",
+        "name": "amount0Delta",
+        "type": "int256"
+      },
+      {
+        "internalType": "int256",
+        "name": "amount1Delta",
+        "type": "int256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "uniswapV3SwapCallback",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "stateMutability": "payable",
+    "type": "receive"
+  }
+]

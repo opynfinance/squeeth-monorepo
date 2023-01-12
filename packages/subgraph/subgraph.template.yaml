@@ -100,6 +100,7 @@ dataSources:
         - FlashWithdrawCallback
         - ExecuteSellAuction
         - ExecuteBuyAuction
+        - Strategy
       abis:
         - name: CrabStrategy
           file: ./abis/CrabStrategyDeployment.json
@@ -127,3 +128,238 @@ dataSources:
         - event: ExecuteBuyAuction(indexed address,uint256,uint256,bool)
           handler: handleExecuteBuyAuction 
       file: ./src/crabstrategy.ts
+  - kind: ethereum/contract
+    name: CrabStrategyV2
+    network: {{network}}
+    source:
+      address: "{{CrabStrategyV2}}"
+      abi: CrabStrategyV2
+      startBlock: {{CrabStrategyV2-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - SetHedgeTimeThreshold
+      abis:
+        - name: CrabStrategyV2
+          file: ./abis/CrabStrategyV2.json
+      eventHandlers:
+        - event: SetHedgeTimeThreshold(uint256)
+          handler: handleSetHedgeTimeThreshold
+        - event: HedgeOTC(uint256,uint256,bool,uint256)
+          handler: handleHedgeOTC
+        - event: HedgeOTCSingle(address,uint256,uint256,uint256,bool,uint256)
+          handler: handleHedgeOTCSingle
+        - event: SetStrategyCap(uint256)
+          handler: handleSetStrategyCap
+        - event: SetHedgingTwapPeriod(uint32)
+          handler: handleSetHedgingTwapPeriod
+        - event: SetHedgePriceThreshold(uint256)
+          handler: handleSetHedgePriceThreshold
+        - event: SetOTCPriceTolerance(uint256)
+          handler: handleSetOTCPriceTolerance
+        - event: VaultTransferred(indexed address,uint256)
+          handler: handleVaultTransferred
+        - event: Deposit(indexed address,uint256,uint256)
+          handler: handleDeposit
+        - event: Withdraw(indexed address,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdrawShutdown
+        - event: FlashDeposit(indexed address,uint256,uint256)
+          handler: handleFlashDeposit
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: FlashDepositCallback(indexed address,uint256,uint256)
+          handler: handleFlashDepositCallback
+        - event: FlashWithdrawCallback(indexed address,uint256,uint256)
+          handler: handleFlashWithdrawCallback 
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: Timelock
+    network: {{network}}
+    source:
+      address: "{{Timelock}}"
+      abi: Timelock
+      startBlock: {{Timelock-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TimeLockTx
+      abis:
+        - name: Timelock
+          file: ./abis/Timelock.json
+      eventHandlers:
+        - event: QueueTransaction(indexed bytes32,indexed address,uint256,string,bytes,uint256)
+          handler: handleQueueTransaction
+        - event: ExecuteTransaction(indexed bytes32,indexed address,uint256,string,bytes,uint256)
+          handler: handleExecuteTransaction
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabMigration
+    network: {{network}}
+    source:
+      address: "{{CrabMigration}}"
+      abi: CrabMigration
+      startBlock: {{CrabMigration-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabMigration
+          file: ./abis/CrabMigration.json
+      eventHandlers:
+        - event: DepositV1Shares(indexed address,uint256)
+          handler: handleDepositV1Shares
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabHelper
+    network: {{network}}
+    source:
+      address: "{{CrabHelper}}"
+      abi: CrabHelper
+      startBlock: {{CrabHelper-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabHelper
+          file: ./abis/CrabHelper.json
+      eventHandlers:
+        - event: FlashDepositERC20(indexed address,address,uint256,uint256,uint256,uint256)
+          handler: handleFlashDepositERC20
+        - event: FlashWithdrawERC20(indexed address,address,uint256,uint256,uint256)
+          handler: handleFlashWithdrawERC20
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: CrabNetting
+    network: {{network}}
+    source:
+      address: "{{CrabNetting}}"
+      abi: CrabNetting
+      startBlock: {{CrabNetting-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: CrabNetting
+          file: ./abis/CrabNetting.json
+      eventHandlers:
+        - event: USDCDeposited(indexed address,uint256,uint256,indexed uint256,uint256)
+          handler: handleNettingDeposit
+        - event: CrabWithdrawn(indexed address,uint256,uint256,indexed uint256)
+          handler: handleNettingWithdraw
+      file: ./src/crabV2.ts
+  - kind: ethereum/contract
+    name: ZenBullStrategy
+    network: {{network}}
+    source:
+      address: "{{ZenBullStrategy}}"
+      abi: ZenBullStrategy
+      startBlock: {{ZenBullStrategy-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Deposit
+        - Withdraw
+        - WithdrawShutdown
+        - Strategy
+      abis:
+        - name: ZenBullStrategy
+          file: ./abis/ZenBullStrategy.json
+      eventHandlers:
+        - event: Withdraw(indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleWithdraw
+        - event: Deposit(indexed address,uint256,uint256,uint256)
+          handler: handleDeposit
+        - event: SetCap(uint256,uint256)
+          handler: handleSetCap
+        - event: RedeemCrabAndWithdrawEth(indexed uint256,uint256,uint256)
+          handler: handleRedeemCrabAndWithdrawEth
+        - event: SetShutdownContract(address,address)
+          handler: handleSetShutdownContract
+        - event: ShutdownRepayAndWithdraw(uint256,uint256,uint256)
+          handler: handleShutdownRepayAndWithdraw
+        - event: Farm(indexed address,indexed address)
+          handler: handleFarm
+        - event: DepositEthIntoCrab(uint256)
+          handler: handleDepositEthIntoCrab
+        - event: WithdrawShutdown(indexed address,uint256,uint256)
+          handler: handleWithdrawShutdown
+        - event: AuctionRepayAndWithdrawFromLeverage(indexed address,uint256,uint256)
+          handler: handleAuctionRepayAndWithdrawFromLeverage
+        - event: SetAuction(address,address)
+          handler: handleSetAuction
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+      file: ./src/bullStrategy.ts
+  - kind: ethereum/contract
+    name: ZenAuction
+    network: {{network}}
+    source:
+      address: "{{ZenAuction}}"
+      abi: ZenAuction
+      startBlock: {{ZenAuction-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: ZenAuction
+          file: ./abis/ZenAuction.json
+      eventHandlers:
+        - event: SetCrUpperAndLower(uint256,uint256,uint256,uint256)
+          handler: handleSetCrUpperAndLower
+        - event: SetDeltaUpperAndLower(uint256,uint256,uint256,uint256)
+          handler: handleSetDeltaUpperAndLower
+        - event: LeverageRebalance(bool,uint256,uint256)
+          handler: handleLeverageRebalance
+        - event: FullRebalance(uint256,uint256,bool,uint256,uint256)
+          handler: handleFullRebalance
+        - event: SetFullRebalanceClearingPriceTolerance(uint256,uint256)
+          handler: handleSetFullRebalanceClearingPriceTolerance
+        - event: SetRebalanceWethLimitPriceTolerance(uint256,uint256)
+          handler: handleSetRebalanceWethLimitPriceTolerance
+        - event: SetAuctionManager(address,address)
+          handler: handleSetAuctionManager
+      file: ./src/bullStrategy.ts
+  - kind: ethereum/contract
+    name: FlashZen
+    network: {{network}}
+    source:
+      address: "{{FlashZen}}"
+      abi: FlashZen
+      startBlock: {{FlashZen-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: FlashZen
+          file: ./abis/FlashZen.json
+      eventHandlers:
+        - event: FlashWithdraw(indexed address,uint256,uint256)
+          handler: handleFlashWithdraw
+        - event: FlashDeposit(indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleFlashDeposit
+      file: ./src/bullStrategy.ts

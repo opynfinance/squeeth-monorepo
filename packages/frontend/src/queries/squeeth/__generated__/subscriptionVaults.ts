@@ -28,5 +28,4 @@ export interface subscriptionVaults {
 
 export interface subscriptionVaultsVariables {
   ownerId: string;
-  vaultID?: string | null;
 }

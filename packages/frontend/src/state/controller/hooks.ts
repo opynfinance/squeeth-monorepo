@@ -10,6 +10,8 @@ import {
   impliedVolAtom,
   indexAtom,
   normFactorAtom,
+  osqthRefVolAtom,
+  ethPriceAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -23,10 +25,13 @@ import {
   getDailyHistoricalFunding,
   getIndex,
   getMark,
+  getOsqthRefVol,
 } from './utils'
 import { useGetETHandOSQTHAmount } from '../nftmanager/hooks'
 import { controllerContractAtom } from '../contracts/atoms'
-import { ETH_USDC_POOL, SQUEETH_UNI_POOL } from '@constants/address'
+import { SQUEETH_UNI_POOL, ETH_USDC_POOL } from '@constants/address'
+import useAppEffect from '@hooks/useAppEffect'
+import useInterval from '@hooks/useInterval'
 
 export const useOpenDepositAndMint = () => {
   const address = useAtomValue(addressAtom)
@@ -257,7 +262,7 @@ export const useGetCollatRatioAndLiqPrice = () => {
         collateralPercent: 0,
         liquidationPrice: new BigNumber(0),
       }
-      if (!contract) return emptyState
+      if (!contract || !normFactor) return emptyState
 
       let effectiveCollat = collateralAmount
       let liquidationPrice = new BigNumber(0)
@@ -265,14 +270,17 @@ export const useGetCollatRatioAndLiqPrice = () => {
       if (uniId) {
         const { collateral: uniCollat, position } = await getUniNFTCollatDetail(uniId)
         effectiveCollat = effectiveCollat.plus(uniCollat)
-        liquidationPrice = calculateLiquidationPriceForLP(
-          collateralAmount,
-          shortAmount,
-          position!,
-          isWethToken0,
-          normFactor,
-          impliedVol,
-        )
+
+        if (position) {
+          liquidationPrice = calculateLiquidationPriceForLP(
+            collateralAmount,
+            shortAmount,
+            position,
+            isWethToken0,
+            normFactor,
+            impliedVol,
+          )
+        }
       }
       const debt = await getDebtAmount(shortAmount)
 
@@ -378,7 +386,7 @@ const useIndex = () => {
         topics: [SWAP_EVENT_TOPIC],
       },
       () => {
-        getIndex(3, contract).then(setIndex)
+        getIndex(1, contract).then(setIndex)
       },
     )
 
@@ -388,6 +396,28 @@ const useIndex = () => {
   }, [contract, web3, networkId])
 
   return index
+}
+
+export const useUpdateEthPrice = () => {
+  const { getTwapSafe } = useOracle()
+  const [ethPrice, setEthPrice] = useAtom(ethPriceAtom)
+  const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
+
+  const getTwapEth = () => {
+    if (ethUsdcPool && weth && usdc) {
+      getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
+        setEthPrice(quote)
+      })
+    }
+  }
+
+  useInterval(getTwapEth, 15000)
+
+  useAppEffect(() => {
+    getTwapEth()
+  }, [getTwapSafe])
+
+  return ethPrice
 }
 
 const useDailyHistoricalFunding = () => {
@@ -450,10 +480,22 @@ const useMark = () => {
   return mark
 }
 
+const useOsqthRefVol = async (): Promise<number> => {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [OsqthRefVol, setOsqthRefVol] = useAtom(osqthRefVolAtom)
+  useEffect(() => {
+    getOsqthRefVol().then(setOsqthRefVol)
+  }, [address, networkId])
+  return OsqthRefVol
+}
+
 export const useInitController = () => {
   useIndex()
+  useUpdateEthPrice()
   useMark()
   useCurrentImpliedFunding()
   useDailyHistoricalFunding()
   useNormFactor()
+  useOsqthRefVol()
 }

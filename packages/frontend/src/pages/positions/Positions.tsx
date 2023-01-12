@@ -8,7 +8,7 @@ import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
 import History from '@pages/positions/History'
 import { PositionType } from '../../types'
-import { Tooltips } from '../../constants'
+import { BIG_ZERO, Tooltips } from '../../constants'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
@@ -27,14 +27,26 @@ import { indexAtom } from 'src/state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
+import CrabPositionV2 from './CrabPositionV2'
 import YourVaults from './YourVaults'
 import LongSqueeth from './LongSqueeth'
 import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import { useCurrentCrabPositionValue } from 'src/state/crab/hooks'
-import { pnl, pnlInPerct } from 'src/lib/pnl'
+import {
+  useCurrentCrabPositionValue,
+  useCurrentCrabPositionValueV2,
+  useSetStrategyData,
+  useSetStrategyDataV2,
+} from 'src/state/crab/hooks'
+import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
+import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
+import useAppEffect from '@hooks/useAppEffect'
+import { crabQueuedInEthAtom, crabQueuedInUsdAtom } from '@state/crab/atoms'
+import { useBullPosition } from '@hooks/useBullPosition'
+import BullPosition from './BullPosition'
+import { useInitBullStrategy } from '@state/bull/hooks'
 
 export default function Positions() {
   const classes = useStyles()
@@ -49,14 +61,40 @@ export default function Positions() {
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
   const index = useAtomValue(indexAtom)
+  const setStrategyDataV2 = useSetStrategyDataV2()
+  const setStrategyData = useSetStrategyData()
+  const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
+  useInitBullStrategy()
+  useBullPosition(address ?? '')
+
+  useAppEffect(() => {
+    setStrategyDataV2()
+    setStrategyData()
+  }, [setStrategyData, setStrategyDataV2])
+
   usePositionsAndFeesComputation()
   const { depositedEth, depositedUsd, loading: isCrabPositonLoading } = useCrabPosition(address || '')
   const { currentCrabPositionValue, currentCrabPositionValueInETH, isCrabPositionValueLoading } =
     useCurrentCrabPositionValue()
 
+  const {
+    depositedEth: depositedEthV2,
+    depositedUsd: depositedUsdV2,
+    loading: isCrabPositonLoadingV2,
+  } = useCrabPositionV2(address || '')
+  const {
+    currentCrabPositionValue: currentCrabPositionValueV2,
+    currentCrabPositionValueInETH: currentCrabPositionValueInETHV2,
+    isCrabPositionValueLoading: isCrabPositionValueLoadingV2,
+  } = useCurrentCrabPositionValueV2()
+
   const isCrabloading = useAppMemo(() => {
     return isCrabPositonLoading || isCrabPositionValueLoading
   }, [isCrabPositonLoading, isCrabPositionValueLoading])
+
+  const isCrabV2loading = useAppMemo(() => {
+    return isCrabPositonLoadingV2 || isCrabPositionValueLoadingV2
+  }, [isCrabPositonLoadingV2, isCrabPositionValueLoadingV2])
 
   const pnlWMidPriceInUSD = useAppMemo(() => {
     return pnl(currentCrabPositionValue, depositedUsd)
@@ -64,6 +102,12 @@ export default function Positions() {
   const pnlWMidPriceInPerct = useAppMemo(() => {
     return pnlInPerct(currentCrabPositionValue, depositedUsd)
   }, [currentCrabPositionValue, depositedUsd])
+  const pnlWMidPriceInUSDV2 = useAppMemo(() => {
+    return pnlv2(currentCrabPositionValueV2.plus(crabV2QueuedInUsd), depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2, crabV2QueuedInUsd])
+  const pnlWMidPriceInPerctV2 = useAppMemo(() => {
+    return pnlInPerctv2(currentCrabPositionValueV2.plus(crabV2QueuedInUsd), depositedUsdV2)
+  }, [currentCrabPositionValueV2, depositedUsdV2, crabV2QueuedInUsd])
 
   const vaultExists = useAppMemo(() => {
     return Boolean(vault && vault.collateralAmount?.isGreaterThan(0))
@@ -98,10 +142,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-        depositedEth.isZero() &&
-        squeethAmount.isZero() &&
-        mintedDebt.isZero() &&
-        lpedSqueeth.isZero() ? (
+          depositedEth.isZero() &&
+          depositedEthV2.isZero() &&
+          squeethAmount.isZero() &&
+          mintedDebt.isZero() &&
+          lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -117,7 +162,7 @@ export default function Positions() {
 
         {liquidations.length > 0 && <ShortSqueethLiquidated />}
 
-        {!!address && depositedEth.isGreaterThan(0) && (
+        {!!address && currentCrabPositionValueInETH.isGreaterThan(0) && (
           <CrabPosition
             depositedEth={depositedEth}
             depositedUsd={depositedUsd}
@@ -126,8 +171,24 @@ export default function Positions() {
             pnlWMidPriceInPerct={pnlWMidPriceInPerct}
             currentCrabPositionValue={currentCrabPositionValue}
             currentCrabPositionValueInETH={currentCrabPositionValueInETH}
+            version="Crab Strategy V1"
           />
         )}
+
+        {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
+          <CrabPositionV2
+            depositedEth={depositedEthV2}
+            depositedUsd={depositedUsdV2}
+            loading={isCrabV2loading}
+            pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
+            pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
+            currentCrabPositionValue={currentCrabPositionValueV2}
+            currentCrabPositionValueInETH={currentCrabPositionValueInETHV2}
+            version="Crab Strategy V2"
+          />
+        )}
+
+        {!!address ? <BullPosition /> : null}
 
         {activePositions?.length > 0 && (
           <>

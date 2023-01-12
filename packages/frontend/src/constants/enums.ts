@@ -6,11 +6,17 @@ export enum TradeMode {
 }
 
 export enum Vaults {
-  ETHBear = 'Bear Strategy', // long 1 eth + short squeeth
-  CrabVault = 'Crab Strategy', // long 2 eth + short squeeth
-  ETHBull = 'Bull Strategy', // long 3 eth + short squeeth
+  ETHBear = 'Bear', // long 1 eth + short squeeth
+  CrabVault = 'Crab USDC', // long 2 eth + short squeeth
+  ETHZenBull = 'Zen Bull ETH', // long 3 eth + short squeeth
   Custom = 'Custom Strategy', // long x eth + short squeeth
   Short = 'Short Squeeth', //pure short squeeth
+}
+
+export enum VaultSubtitle {
+  ETHBear = 'Coming Soon',
+  CrabVault = 'Stack USDC',
+  ETHZenBull = 'Stack ETH',
 }
 
 export enum TransactionType {
@@ -20,8 +26,16 @@ export enum TransactionType {
   BURN_SHORT = 'Bought back and burned',
   ADD_LIQUIDITY = 'Added Liquidity',
   REMOVE_LIQUIDITY = 'Removed Liquidity',
-  CRAB_FLASH_DEPOSIT = 'Flash deposit in crab',
-  CRAB_FLASH_WITHDRAW = 'Flash withdraw in crab',
+  CRAB_FLASH_DEPOSIT = 'Deposit in crab',
+  CRAB_FLASH_WITHDRAW = 'Withdraw from crab',
+  CRAB_V2_FLASH_DEPOSIT = 'Deposit to crab V2',
+  CRAB_V2_FLASH_WITHDRAW = 'Withdraw from crab V2',
+  CRAB_V2_USDC_FLASH_DEPOSIT = 'Deposit USDC to crab V2',
+  CRAB_V2_USDC_FLASH_WITHDRAW = 'Withdraw USDC from crab V2',
+  OTC_DEPOSIT = 'Deposit USDC to crab v2',
+  OTC_WITHDRAW = 'Withdraw USDC from crab V2',
+  BULL_FLASH_DEPOSIT = 'Deposit in bull',
+  BULL_FLASH_WITHDRAW = 'Withdraw from bull',
 }
 
 export enum CloseType {
@@ -38,13 +52,13 @@ export enum Tooltips {
   ImplVol = 'Implied Volatility (IV) is a market forecast of ETH price movement implied by squeeth',
   UnrealizedPnL = 'Total profit / loss if you were to fully close your position at the current oSQTH price on Uniswap. Resets if you close your position or change position sides (long to short, or vice versa)',
   RealizedPnL = 'Total realized profit / loss for this position through partial closes. Resets if you fully close your position or change position sides (long to short, or vice versa)',
-  PnLExplanation = 'Squeeth performance is affected by implied volatility, funding, ETH price, and price impact.',
+  PnLExplanation = 'Squeeth performance is affected by implied volatility, premiums, ETH price, and price impact.',
   ShortCollateral = 'Takes ETH collateral into account.',
   Mark = 'The price squeeth is trading at. Because squeeth has convexity, Mark should be greater than ETH^2',
-  Last30MinAvgFunding = 'Historical daily funding based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
-  CurrentImplFunding = 'Expected daily funding based on current price, calculated using current Mark - Index',
-  FundingPayments = 'Funding happens every time the contract is touched',
-  NormFactor = 'The variable that adjusts the value of your position based on funding',
+  Last30MinAvgFunding = 'Historical daily premium based on the last 30min. Calculated using a 30min TWAP of Mark - Index',
+  CurrentImplFunding = 'Expected daily premium based on current price, calculated using current Mark - Index',
+  FundingPayments = 'Premiums are paid / received every time the contract is touched',
+  NormFactor = 'The variable that adjusts the value of your position based on premiums',
   oSQTHPrice = 'Price of oSQTH on Uniswap',
   LPPnL = 'PnL = Value of current LP underlying tokens including uncollected fees - Value of tokens deposited (at current price)',
   UniswapLoading = 'When you click the Uniswap link, the Uniswap LP page may take a few moments to load. Please wait for it to fully load so it can prefill LP token data.',
@@ -65,18 +79,25 @@ export enum Tooltips {
   ShortDebt = 'This is squeeth that you acquired and sold',
   TotalDebt = 'Debt of the vault',
   VaultLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
-  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position.',
+  CrabPnL = 'Expected total profit/ loss if you were to fully withdraw from the Crab Strategy. Includes price impact from trading on uniswap. Resets if you close your position. Note that if you migrated from v1, your PnL is reset with the migrated amount as your initial crab v2 deposit.',
+  CrabMigratedDeposit = 'Your current share ratio of the total amount deposited in strategy. Note that if you migrated from v1, your PnL is reset with your initial deposited amount as the amount migrated from v1.',
   StrategyLiquidations = 'The strategy is subject to liquidations if it goes below 150% collateral, but rebalancing based on large ETH price changes helps prevent a liquidation from occurring.',
   StrategyShort = 'The amount of oSQTH the whole strategy is short',
   StrategyCollRatio = 'The collateralization ratio for the whole strategy',
-  StrategyEarnFunding = 'You earn funding by depositing into the strategy',
-  StrategyProfitThreshold = 'Based on current funding, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction each day.',
+  StrategyEarnFunding = 'You earn premiums by depositing into the strategy',
+  StrategyProfitThreshold = 'Based on current premiums, crab strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge. This profitable price range is based on the current premium and will change continuously as the premium changes',
+  BullStrategyProfitThreshold = 'Based on current premiums, zen bull strategy would be unprofitable if ETH moves more than approximately the profit threshold in either direction before the next hedge. This profitable price range is based on the current premium and will change continuously as the premium changes',
   FullcloseInput = 'Select partial close to edit input',
-  FundingVol = 'VOL is calculated as "sqrt(Daily Funding * 365)"',
-  FundingDaily = 'Daily funding is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
-  FundingMonthly = 'Monthly Funding is calculated as (Daily Funding * 30)',
-  FundingAnnual = 'Annual Funding is calculated as (Daily Funding * 365.25)',
+  FundingVol = 'VOL is calculated as "sqrt(Daily Premium * 365)"',
+  FundingDaily = 'Daily premium is calculated as ln(mark / index) * 17.5. Mark and Index spot values are taken at points in the past and scaled to one day.',
+  FundingMonthly = 'Monthly premium is calculated as (Daily Premium * 30)',
+  FundingAnnual = 'Annual Premium is calculated as (Daily Premium * 365.25)',
   VaultCollatRatio = `You'll be adjusting the collateral ratio for the whole vault and not just this trade.`,
+  osqthRefVol = 'Squeeth reference volatility based on deribit options and squeeth replicating portfolio. Squeeth ref vol is calculated/refreshed every 5 minutes.',
+  ETHUp2x = 'The value of your position if ETH goes up 2x, not including premiums',
+  ETHDown50 = 'The value of your position if ETH goes down 50%, not including premiums',
+  InitiatedDeposit = 'Your deposit has been initiated and will be submitted via auction to reduce price impact. This may take up until Tuesday',
+  InitiatedWithdrawal = 'Your withdrawal has been initiated and will be submitted via auction to reduce price impact. This may take up until Tuesday',
 }
 
 export enum Links {
@@ -84,11 +105,13 @@ export enum Links {
   GitBook = 'https://opyn.gitbook.io/squeeth/',
   UniswapSwap = 'https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B',
   CrabFAQ = 'https://opyn.gitbook.io/squeeth/resources/squeeth-strategies-faq',
+  AutoRouter = 'https://uniswap.org/blog/auto-router',
 }
 
 export const UniswapIFrameOpen = {
   1: `https://app.uniswap.org/#/add/ETH/${OSQUEETH[1]}/3000`,
   3: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[3]}/3000`,
+  5: `https://squeeth-uniswap.netlify.app/#/add/ETH/${OSQUEETH[5]}/3000`,
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }
@@ -96,6 +119,7 @@ export const UniswapIFrameOpen = {
 export const UniswapIFrameClose = {
   1: 'https://app.uniswap.org/#/pool',
   3: 'https://squeeth-uniswap.netlify.app/#/pool',
+  5: 'https://squeeth-uniswap.netlify.app/#/pool',
   31337: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
   421611: 'https://app.uniswap.org/#/add/ETH/0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B/3000', // Should be replaced with arbitrum subgraph
 }

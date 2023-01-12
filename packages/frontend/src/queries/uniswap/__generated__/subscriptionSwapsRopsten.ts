@@ -53,5 +53,5 @@ export interface subscriptionSwapsRopstenVariables {
   recipients: string[];
   origin: any;
   orderDirection: string;
-  recipient_not: any;
+  recipient_not_in: any[];
 }

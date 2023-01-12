@@ -34,7 +34,9 @@ build
 
 # misc
 .DS_Store
-.env*
+.env
+
+packages/hardhat/.env*
 
 # debug
 npm-debug.log*
@@ -51,3 +53,15 @@ yarn-error.log*
 
 # asdf config
 **/.tool-versions
+
+
+
+packages/bull-vault/out
+packages/bull-vault/cache
+
+packages/crab-netting/out
+packages/crab-netting/cache
+
+
+soljson*
+lcov.info

@@ -1,0 +1,7 @@
+[defaults]
+url = https://sentry.io/
+org = opyn-zp
+project = nextjs
+
+[auth]
+token = 32311123f1b64463ad09b3e6413831d049185e50a2414847be1068653bd9ef60

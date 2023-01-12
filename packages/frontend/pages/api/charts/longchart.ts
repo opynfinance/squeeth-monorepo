@@ -1,14 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getCoingeckoETHPrices as getETHPrices } from '@utils/ethPriceCharts'
+import { getCoingeckoETHPricesBetweenTimestamps as getETHPricesBetweenTs } from '@utils/ethPriceCharts'
 import { getLiveVolMap, getSqueethChartWithFunding, getVolForTimestampOrDefault, getVolMap } from '@utils/pricer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const collatRatio = Number(req.query.collatRatio)
-  const days = Number(req.query.days)
+  const fromTs = Number(req.query.fromTs)
+  const toTs = Number(req.query.toTs)
   const volMultiplier = Number(req.query.volMultiplier)
+  const oneDay = 24 * 60 * 60 * 1000
+  const days = (toTs - fromTs) / oneDay
 
   try {
-    const ethPrices = await getETHPrices(days)
+    const ethPrices = await getETHPricesBetweenTs(fromTs, toTs)
 
     const ethSqueethPNLSeriesPromise = getETHSqueethPNLCompounding(ethPrices, volMultiplier, days)
     const squeethSeriesPromise = getSqueethChartWithFunding(ethPrices, volMultiplier, collatRatio)

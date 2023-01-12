@@ -6,3 +6,33 @@
 	path = packages/services/optimism
 	url = https://github.com/ethereum-optimism/optimism
 	branch = regenesis/0.4.0
+[submodule "packages/zen-bull-vault/lib/squeeth-monorepo"]
+	path = packages/zen-bull-vault/lib/squeeth-monorepo
+	url = https://github.com/opynfinance/squeeth-monorepo
+[submodule "packages/zen-bull-vault/lib/openzeppelin-contracts"]
+	path = packages/zen-bull-vault/lib/openzeppelin-contracts
+	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "packages/zen-bull-vault/lib/v3-core"]
+	path = packages/zen-bull-vault/lib/v3-core
+	url = https://github.com/Uniswap/v3-core
+[submodule "packages/zen-bull-vault/lib/v3-periphery"]
+	path = packages/zen-bull-vault/lib/v3-periphery
+	url = https://github.com/Uniswap/v3-periphery
+[submodule "packages/crab-netting/lib/forge-std"]
+	path = packages/crab-netting/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
+[submodule "packages/crab-netting/lib/squeeth-monorepo"]
+	path = packages/crab-netting/lib/squeeth-monorepo
+	url = https://github.com/opynfinance/squeeth-monorepo/
+[submodule "packages/crab-netting/lib/openzeppelin-contracts"]
+	path = packages/crab-netting/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/crab-netting/lib/v3-periphery"]
+	path = packages/crab-netting/lib/v3-periphery
+	url = https://github.com/uniswap/v3-periphery
+[submodule "packages/crab-netting/lib/v3-core"]
+	path = packages/crab-netting/lib/v3-core
+	url = https://github.com/uniswap/v3-core
+[submodule "packages/zen-bull-vault/lib/forge-std"]
+	path = packages/zen-bull-vault/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std

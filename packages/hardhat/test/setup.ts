@@ -223,6 +223,7 @@ export const addSqueethLiquidity = async(
 
     let wsqueethBalance = await squeeth.balanceOf(deployer)
     let wethBalance = await weth.balanceOf(deployer)
+    const is3000Fee = feeTier===3000 
 
     if (wethBalance.lt(liquidityWethAmount)) {
       await weth.deposit({value: liquidityWethAmount, from: deployer})
@@ -244,8 +245,8 @@ export const addSqueethLiquidity = async(
       token0,
       token1,
       fee: feeTier,
-      tickLower: -887220,// int24 min tick used when selecting full range
-      tickUpper: 887220,// int24 max tick used when selecting full range
+      tickLower: is3000Fee ? -887220: -887200,// int24 min tick used when selecting full range
+      tickUpper: is3000Fee ? 887220: 887200,// int24 max tick used when selecting full range
       amount0Desired: isWethToken0 ? liquidityWethAmount : liquidityWSqueethAmount,
       amount1Desired: isWethToken0 ? liquidityWSqueethAmount : liquidityWethAmount,
       amount0Min: 1,

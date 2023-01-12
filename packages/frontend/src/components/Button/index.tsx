@@ -71,3 +71,53 @@ export const GreyButton = withStyles((theme) => ({
     },
   },
 }))(Button)
+
+export const PrimaryButtonNew = withStyles((theme) => ({
+  root: {
+    color: theme.palette.background.default,
+    backgroundColor: theme.palette.primary.main,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.dark,
+    },
+    '&:disabled': {
+      color: 'rgba(255, 255, 255, 0.4)',
+      backgroundColor: theme.palette.background.lightStone,
+    },
+    minHeight: '2rem',
+    minWidth: '300px',
+    padding: '8px',
+    fontSize: '18px',
+    fontWeight: 700,
+    textTransform: 'initial',
+  },
+}))(Button)
+
+export const RoundedButton = withStyles((theme) => ({
+  root: {
+    backgroundColor: theme.palette.background.stone,
+    '&:disabled': {
+      color: 'rgba(255, 255, 255, 0.1)',
+      backgroundColor: 'rgba(36, 39, 40, 0.6)',
+      opacity: 1,
+    },
+    textTransform: 'initial',
+    borderRadius: '20px',
+    padding: '4px 24px',
+    fontSize: '16px',
+    fontWeight: 700,
+  },
+}))(Button)
+
+export const TextButton = withStyles((theme) => ({
+  root: {
+    color: theme.palette.primary.main,
+    backgroundColor: 'transparent',
+    '&:hover': {
+      backgroundColor: 'transparent',
+    },
+    textTransform: 'initial',
+    padding: '0',
+    fontSize: '16px',
+    fontWeight: 400,
+  },
+}))(Button)

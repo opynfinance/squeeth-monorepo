@@ -50,3 +50,5 @@ export const connectedWalletAtom = atom((get) => {
 })
 
 export const isTransactionFirstStepAtom = atom(false)
+export const onboardAddressAtom = atom<string | null>(null)
+export const walletFailVisibleAtom = atom(false)

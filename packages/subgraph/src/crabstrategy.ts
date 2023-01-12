@@ -13,13 +13,21 @@ import {
   ExecuteSellAuction,
   ExecuteBuyAuction
 } from "../generated/CrabStrategy/CrabStrategy"
-import { CrabAuction, CrabStrategyTx } from "../generated/schema"
+import { CrabStrategyV2 } from "../generated/CrabStrategyV2/CrabStrategyV2"
+import { CrabAuction, CrabStrategyTx, Strategy } from "../generated/schema"
+import { CRAB_V1_ADDR } from "./constants"
+import { loadOrCreateStrategy } from "./util"
 
 function loadOrCreateTx(id: string): CrabStrategyTx {
-  const strategy = CrabStrategyTx.load(id)
+  let strategy = CrabStrategyTx.load(id)
   if (strategy) return strategy
 
-  return new CrabStrategyTx(id)
+  strategy = new CrabStrategyTx(id)
+  strategy.type = "Transfer"
+  strategy.lpAmount = BigInt.zero()
+  strategy.ethAmount = BigInt.zero()
+  strategy.timestamp = BigInt.zero()
+  return strategy
 }
 
 export function handleDeposit(event: Deposit): void {
@@ -103,11 +111,24 @@ export function handleFlashWithdrawCallback(event: FlashWithdrawCallback): void 
 
 export function handleTransfer(event: Transfer): void {
   const strategyTx = loadOrCreateTx(event.transaction.hash.toHex())
-  log.info("Handling transfer {}, value {}", [event.params.from.toHex(), (event.params.from.toHex().toLowerCase() == '0x0000000000000000000000000000000000000000').toString()])
+  const strategy = loadOrCreateStrategy(CRAB_V1_ADDR.toHex())
+
+  let contract = CrabStrategy.bind(event.address)
+  const vaultId = contract.vaultId()
+  strategy.vaultId = vaultId
+
+
+  // Minting token
   if (event.params.from.toHex().toLowerCase() == '0x0000000000000000000000000000000000000000') {
-    log.info("Transferring data from: {} to: {} value: {}", [event.params.from.toHex(), event.params.to.toHex(), event.params.value.toString()])
     strategyTx.lpAmount = event.params.value
     strategyTx.save()
+    strategy.totalSupply = strategy.totalSupply.plus(event.params.value)
+    strategy.save()
+  }
+  // Burning token
+  if (event.params.to.toHex().toLowerCase() == '0x0000000000000000000000000000000000000000') {
+    strategy.totalSupply = strategy.totalSupply.minus(event.params.value)
+    strategy.save()
   }
 }
 
@@ -118,6 +139,7 @@ export function handleExecuteSellAuction(event: ExecuteSellAuction): void {
   auction.isSellingSqueeth = true
   auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
   auction.timestamp = event.block.timestamp
+  auction.owner = event.transaction.from
   auction.save()
 }
 
@@ -128,5 +150,6 @@ export function handleExecuteBuyAuction(event: ExecuteBuyAuction): void {
   auction.isSellingSqueeth = false
   auction.isHedgingOnUniswap = event.params.isHedgingOnUniswap
   auction.timestamp = event.block.timestamp
+  auction.owner = event.transaction.from
   auction.save()
 }

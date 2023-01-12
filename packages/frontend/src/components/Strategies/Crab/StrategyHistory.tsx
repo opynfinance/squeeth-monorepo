@@ -17,6 +17,7 @@ import { addressAtom, networkIdAtom } from 'src/state/wallet/atoms'
 const useStyles = makeStyles((theme) =>
   createStyles({
     container: {
+      marginTop: theme.spacing(10),
       marginBottom: theme.spacing(10),
     },
     txItem: {
@@ -30,9 +31,13 @@ const useStyles = makeStyles((theme) =>
       width: '37%',
     },
     txSubItem: {
+      display: 'flex',
+      alignItems: 'center',
       width: '30%',
     },
     txLink: {
+      display: 'flex',
+      alignItems: 'center',
       width: '3%',
     },
     green: {

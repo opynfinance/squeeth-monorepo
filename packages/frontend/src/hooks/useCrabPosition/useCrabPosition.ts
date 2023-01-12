@@ -1,13 +1,23 @@
 import { BIG_ZERO } from '../../constants'
 import { useEffect, useState } from 'react'
 import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
-import { CrabStrategyTxType } from '../../types'
+import { useUserCrabV2TxHistory } from '../useUserCrabV2TxHistory'
+import { CrabStrategyTxType, CrabStrategyV2TxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
-import { useAtomValue } from 'jotai'
+import { useAtom, useAtomValue } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
-import { crabLoadingAtom, crabPositionValueLoadingAtom, currentCrabPositionValueInETHAtom } from 'src/state/crab/atoms'
+import {
+  crabLoadingAtom,
+  crabLoadingAtomV2,
+  crabPositionValueLoadingAtom,
+  crabPositionValueLoadingAtomV2,
+  crabQueuedInEthAtom,
+  currentCrabPositionValueInETHAtom,
+  currentCrabPositionValueInETHAtomV2,
+} from 'src/state/crab/atoms'
+import BigNumber from 'bignumber.js'
 
 /*
   depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
@@ -84,6 +94,125 @@ export const useCrabPosition = (user: string) => {
     minPnL,
     minPnlUsd,
     loading: crabLoading || txHistoryLoading,
+  }
+}
+
+/*
+  depositedEth = Sum of deposited ethAmount - Sum of withdrawn ethAmount
+  depositedUsd = Sum of deposited ethUsed - Sum of withdrawn ethUsd
+  minCurrentEth = currentEth 
+  minCurrentUsd = currentEth * indexPrice
+  minPnlUsd = minCurrentUsd - depositedUsd
+  minPnL = minPnlUsd / depositedUsd * 100
+*/
+export const useCrabPositionV2 = (user: string) => {
+  const crabLoading = useAtomValue(crabLoadingAtomV2)
+  const [crabPositionRefetching, setCrabPositionRefetching] = useState(false)
+  const isCrabPositionValueLoading = useAtomValue(crabPositionValueLoadingAtomV2)
+  const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
+  const [txToSearch, setTxToSearch] = useState<string | undefined>(undefined)
+  const currentQueuedCrabEth = useAtomValue(crabQueuedInEthAtom)
+
+  const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserCrabV2TxHistory(user)
+
+  const index = useAtomValue(indexAtom)
+  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+
+  const [minCurrentEth, setMinCurrentEth] = useState(BIG_ZERO)
+  const [minCurrentUsd, setMinCurrentUsd] = useState(BIG_ZERO)
+  const [minPnlUsd, setMinPnlUsd] = useState(BIG_ZERO)
+  const [minPnL, setMinPnL] = useState(BIG_ZERO)
+
+  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
+    console.log(txHistoryData, 'Crab')
+    if (txHistoryLoading || !txHistoryData || txHistoryData.length === 0) {
+      return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
+    }
+
+    const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
+      (acc, tx) => {
+        if (
+          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
+          tx.type === CrabStrategyTxType.DEPOSIT ||
+          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
+        ) {
+          acc.totalSharesDeposited = acc.totalSharesDeposited.plus(tx.lpAmount)
+          acc.totalUSDDeposit = acc.totalUSDDeposit.plus(tx.ethUsdValue)
+          acc.totalETHDeposit = acc.totalETHDeposit.plus(tx.ethAmount)
+        } else if (
+          tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.WITHDRAW ||
+          tx.type === CrabStrategyV2TxType.OTC_WITHDRAW
+        ) {
+          acc.totalSharesWithdrawn = acc.totalSharesWithdrawn.plus(tx.lpAmount)
+        }
+
+        return acc
+      },
+      {
+        totalSharesDeposited: BIG_ZERO,
+        totalSharesWithdrawn: BIG_ZERO,
+        totalUSDDeposit: BIG_ZERO,
+        totalETHDeposit: BIG_ZERO,
+      },
+    )
+
+    const remainingShares = new BigNumber(1).minus(totalSharesWithdrawn.div(totalSharesDeposited))
+    const remainingDepositUsd = remainingShares.multipliedBy(totalUSDDeposit)
+    const remainingDepositEth = remainingShares.multipliedBy(totalETHDeposit)
+
+    return { remainingDepositUsd, remainingDepositEth }
+  }, [txHistoryData, txHistoryLoading])
+
+  const calculateCurrentValue = useAppCallback(async () => {
+    const ethValue = currentEthValue.plus(currentQueuedCrabEth)
+    const minCurrentUsd = ethValue.times(ethIndexPrice)
+    const minPnlUsd = minCurrentUsd.minus(depositedUsd)
+
+    setMinCurrentEth(ethValue)
+    setMinCurrentUsd(minCurrentUsd)
+
+    setMinPnlUsd(minPnlUsd)
+    setMinPnL(minPnlUsd.div(depositedUsd).times(100))
+  }, [currentEthValue, currentQueuedCrabEth, depositedUsd, ethIndexPrice])
+
+  useEffect(() => {
+    if (crabLoading || txHistoryLoading || isCrabPositionValueLoading || crabPositionRefetching) {
+      return
+    }
+
+    calculateCurrentValue()
+  }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
+
+  useEffect(() => {
+    if (!txToSearch) stopPolling()
+    const match = txHistoryData?.find((tx) => tx.id.toLowerCase() === txToSearch)
+    if (match) {
+      setCrabPositionRefetching(false)
+      setTxToSearch(undefined)
+    }
+  }, [setCrabPositionRefetching, stopPolling, txHistoryData, txToSearch])
+
+  const pollForNewTx = useAppCallback(
+    (tx: string) => {
+      setCrabPositionRefetching(true)
+      setTxToSearch(tx)
+      startPolling(500)
+    },
+    [setCrabPositionRefetching, startPolling],
+  )
+
+  return {
+    depositedEth,
+    depositedUsd,
+    minCurrentEth,
+    minCurrentUsd,
+    minPnL,
+    minPnlUsd,
+    loading: crabLoading || txHistoryLoading || crabPositionRefetching,
+    pollForNewTx,
   }
 }
 
