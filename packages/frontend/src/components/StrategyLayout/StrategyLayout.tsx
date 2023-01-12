@@ -129,6 +129,7 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
   const classes = useStyles()
   const tabClasses = useTabStyles()
 
+  console.log({ pathname: router.pathname })
   useEffect(() => {
     setSelectedIdx(routeMap[router.pathname])
   }, [router.pathname])
@@ -148,9 +149,9 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
         indicatorColor="primary"
         textColor="primary"
         onChange={(_, value) => {
-          if (routeMap[BEAR_PATH] === value) router.push(BEAR_PATH, undefined, { shallow: true })
-          if (routeMap[BULL_PATH] === value) router.push(BULL_PATH, undefined, { shallow: true })
-          if (routeMap[CRAB_PATH] === value) router.push(CRAB_PATH, undefined, { shallow: true })
+          if (routeMap[BEAR_PATH] === value) router.push(BEAR_PATH)
+          if (routeMap[BULL_PATH] === value) router.push(BULL_PATH)
+          if (routeMap[CRAB_PATH] === value) router.push(CRAB_PATH)
         }}
         aria-label="strategy tabs"
       >
