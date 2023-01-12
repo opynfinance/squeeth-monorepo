@@ -481,7 +481,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </RoundedButton>
         <Box className={classes.infoIconGray} display="flex" alignItems="center">
           <Tooltip
-            title={`Standard withdraw helps large withdraws reduce price impact. Standard withdraws leave the strategy in 24 hours on average, but could take up to Tuesday at the longest. Instant withdraws leave the strategy immediately.`}
+            title={`Standard reduces price impact and gas costs, exiting the strategy in 24hr on avg or Tuesday latest. Instant exits immediately.`}
           >
             <HelpOutlineIcon fontSize="medium" />
           </Tooltip>
