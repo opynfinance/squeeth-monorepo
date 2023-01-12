@@ -4,8 +4,6 @@ import React from 'react'
 import intervalToDuration from 'date-fns/intervalToDuration'
 import formatDuration from 'date-fns/formatDuration'
 
-import { formatNumber } from '@utils/formatter'
-
 export const config = {
   runtime: 'experimental-edge',
 }
@@ -42,7 +40,7 @@ const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
         <div tw="flex items-baseline mt-2">
           <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
             {pnl > 0 && '+'}
-            {formatNumber(pnl) + '%'}
+            {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'}
           </div>
 
           <div tw="flex text-2xl text-gray-400 ml-5">USD return</div>
@@ -57,10 +55,13 @@ const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
   )
 }
 
-const font = fetch(new URL('../../public/fonts/DMMono-Regular.ttf', import.meta.url)).then((res) => res.arrayBuffer())
-const fontMedium = fetch(new URL('../../public/fonts/DMMono-Medium.ttf', import.meta.url)).then((res) =>
+const font = fetch(new URL('../../public/fonts/DMMono-Regular.ttf', import.meta.url).toString()).then((res) =>
   res.arrayBuffer(),
 )
+const fontMedium = fetch(new URL('../../public/fonts/DMMono-Medium.ttf', import.meta.url).toString()).then((res) =>
+  res.arrayBuffer(),
+)
+
 export default async function handler(req: NextRequest) {
   try {
     const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
