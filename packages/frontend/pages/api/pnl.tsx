@@ -1,9 +1,7 @@
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
 import React from 'react'
-import intervalToDuration from 'date-fns/intervalToDuration'
-import formatDuration from 'date-fns/formatDuration'
-import isFuture from 'date-fns/isFuture'
+import { Duration, isFuture, intervalToDuration } from 'date-fns'
 
 const omdbBaseUrl = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
@@ -19,13 +17,34 @@ interface UIProps {
   pnlData: PnLDataPoint[]
 }
 
+const formatDuration = (duration: Duration) => {
+  const { years, months, days, hours } = duration
+
+  const formattedDuration = []
+
+  if (years) {
+    formattedDuration.push(`${years}y`)
+  }
+
+  if (months) {
+    formattedDuration.push(`${months}m`)
+  }
+
+  if (days) {
+    formattedDuration.push(`${days}d`)
+  }
+
+  if (hours) {
+    formattedDuration.push(`and ${hours}h`)
+  }
+
+  return formattedDuration.join(' ')
+}
+
 const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
   const date = new Date(depositTimestamp * 1000)
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
-  const formattedDuration = formatDuration(strategyDuration, {
-    format: ['months', 'days', 'hours'],
-    delimiter: ' & ',
-  })
+  const formattedDuration = formatDuration(strategyDuration)
 
   const pnlColor = pnl > 0 ? '#49D273' : '#EC7987'
 
