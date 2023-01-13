@@ -3,21 +3,33 @@ import { NextRequest } from 'next/server'
 import React from 'react'
 import intervalToDuration from 'date-fns/intervalToDuration'
 import formatDuration from 'date-fns/formatDuration'
+import isFuture from 'date-fns/isFuture'
+
+const omdbBaseUrl = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
 export const config = {
   runtime: 'experimental-edge',
 }
 
-const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
-  const date = new Date(depositTimestamp)
+type PnLDataPoint = [number, number]
+
+interface UIProps {
+  depositTimestamp: number
+  pnl: number
+  pnlData: PnLDataPoint[]
+}
+
+const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
+  const date = new Date(depositTimestamp * 1000)
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
   const formattedDuration = formatDuration(strategyDuration, {
-    format: ['days', 'hours'],
+    format: ['months', 'days', 'hours'],
     delimiter: ' & ',
   })
 
-  const pnl = 2.5
   const pnlColor = pnl > 0 ? '#49D273' : '#EC7987'
+
+  console.log({ pnl: pnlData[pnlData.length - 1][1] })
 
   return (
     <div
@@ -33,6 +45,7 @@ const UI: React.FC<{ depositTimestamp: number }> = ({ depositTimestamp }) => {
       <div tw="flex items-baseline">
         <div tw="flex text-4xl">🦀</div>
         <div tw="flex text-4xl text-white font-bold ml-4">Crabber - Stacking USDC</div>
+        <div tw="flex text-2xl text-gray-400 ml-5">Powered by Opyn</div>
       </div>
 
       <div tw="flex flex-col mt-10">
@@ -69,13 +82,30 @@ export default async function handler(req: NextRequest) {
     const { searchParams } = new URL(req.url)
 
     const depositTimestamp = searchParams.get('depositedAt')
-    if (!depositTimestamp) {
-      return new Response(`Missing "depositTimestamp" query param`, {
+    const pnl = searchParams.get('pnl')
+    if (!depositTimestamp || !pnl) {
+      return new Response(`Missing "depositTimestamp" or "pnl" query param`, {
         status: 400,
       })
     }
 
-    return new ImageResponse(<UI depositTimestamp={Number(depositTimestamp)} />, {
+    const depositDate = new Date(Number(depositTimestamp) * 1000)
+    if (isFuture(depositDate)) {
+      return new Response(`Deposit date is in future`, {
+        status: 400,
+      })
+    }
+
+    const startTimestamp = Number(depositTimestamp)
+    const endTimestamp = Math.round(new Date().getTime() / 1000)
+    console.log({ startTimestamp, endTimestamp })
+
+    const response = await fetch(
+      `${omdbBaseUrl}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
+    ).then((res) => res.json())
+    const pnlData = response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.crabPnL * 100])
+
+    return new ImageResponse(<UI depositTimestamp={Number(depositTimestamp)} pnl={Number(pnl)} pnlData={pnlData} />, {
       width: 1200,
       height: 630,
       fonts: [

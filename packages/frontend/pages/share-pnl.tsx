@@ -7,6 +7,7 @@ const BASE_URL = 'https://continuouscall-git-share-pnl-with-og-opynfinance.verce
 const SharePnl = () => {
   const router = useRouter()
   const depositedAt = router.query.depositedAt
+  const pnl = router.query.pnl
 
   return (
     <>
@@ -18,8 +19,8 @@ const SharePnl = () => {
           name="twitter:description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
-        <meta name="twitter:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}`} />
-        <meta property="og:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}`} />
+        <meta name="twitter:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}&pnl=${pnl}`} />
+        <meta property="og:image" content={`${BASE_URL}/api/pnl?depositedAt=${depositedAt}&pnl=${pnl}`} />
       </Head>
 
       <Box marginTop="20px" marginLeft="20px">
