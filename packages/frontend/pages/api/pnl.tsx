@@ -48,7 +48,20 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
 
   const pnlColor = pnl > 0 ? '#49D273' : '#EC7987'
 
-  console.log({ pnl: pnlData[pnlData.length - 1][1] })
+  const xMax = Math.max(...pnlData.map(([x]) => x))
+  const xMin = Math.min(...pnlData.map(([x]) => x))
+  const yMax = Math.max(...pnlData.map(([, y]) => y))
+  const yMin = Math.min(...pnlData.map(([, y]) => y))
+
+  const yRange = yMax - yMin
+  const xRange = xMax - xMin
+
+  const offsetX = xMin
+  const offsetY = yMin
+
+  const points = pnlData
+    .map(([x, y]) => `${((x - offsetX) / xRange) * 1000},${200 - ((y - offsetY) / yRange) * 200}`)
+    .join(' ')
 
   return (
     <div
@@ -68,7 +81,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
       </div>
 
       <div tw="flex flex-col mt-10">
-        <div tw="flex text-2xl text-white">My Crab Position</div>
+        <div tw="flex text-xl text-white">My Crab Position</div>
         <div tw="flex items-baseline mt-2">
           <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
             {pnl > 0 && '+'}
@@ -82,6 +95,12 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
       <div tw="flex flex-col mt-10">
         <div tw="flex text-2xl text-white">In Crab since</div>
         <div tw="flex text-2xl text-white font-bold mt-2">{formattedDuration}</div>
+      </div>
+
+      <div tw="flex mt-10">
+        <svg viewBox="0 0 1000 200">
+          <polyline fill="none" stroke="#0074d9" strokeWidth="3" points={points} />
+        </svg>
       </div>
     </div>
   )
@@ -117,7 +136,6 @@ export default async function handler(req: NextRequest) {
 
     const startTimestamp = Number(depositTimestamp)
     const endTimestamp = Math.round(new Date().getTime() / 1000)
-    console.log({ startTimestamp, endTimestamp })
 
     const response = await fetch(
       `${omdbBaseUrl}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
