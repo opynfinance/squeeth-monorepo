@@ -55,6 +55,21 @@ workflows:
       - test-crab-netting:
           requires:
             - compile-crab-netting
+  zen-bull-netting:
+    jobs:
+      - lint-zen-bull-netting
+      - compile-zen-bull-netting:
+          requires:
+            - lint-zen-bull-netting
+      - test-zen-bull-netting:
+          requires:
+            - compile-zen-bull-netting
+      - fuzzing-zen-bull-netting:
+          requires:
+            - compile-zen-bull-netting
+      - coverage-zen-bull-netting:
+          requires:
+            - test-zen-bull-netting
 
 jobs:
   ################ hardhat jobs
@@ -287,3 +302,51 @@ jobs:
     steps:
       - checkout
       - run: cd packages/crab-netting && forge test -vv --gas-report
+
+  ################ zen-bull-netting jobs
+  lint-zen-bull-netting:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Lint zen-bull-netting
+          command: cd packages/zen-bull-netting && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  compile-zen-bull-netting:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: 
+          name: Build zen-bull-netting
+          command: cd packages/zen-bull-netting && forge build --force
+
+  test-zen-bull-netting:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=test forge test -vv --gas-report
+
+  fuzzing-zen-bull-netting:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run:
+          name: Set Env Variables
+          command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
+      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=fuzz forge test -vv
+      
+  coverage-zen-bull-netting:
+    working_directory: ~/squeeth/packages/zen-bull
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
+    steps:
+      - checkout
+      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=coverage forge coverage
