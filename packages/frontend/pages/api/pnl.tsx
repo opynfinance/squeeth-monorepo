@@ -89,7 +89,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         </div>
       </div>
 
-      <div tw="flex flex-col mt-10">
+      <div tw="flex flex-col mt-8">
         <div tw="flex text-xl text-white">My Crab Position</div>
         <div tw="flex items-baseline mt-2">
           <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
@@ -101,12 +101,12 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         </div>
       </div>
 
-      <div tw="flex flex-col mt-10">
+      <div tw="flex flex-col mt-8">
         <div tw="flex text-2xl text-white">In Crab since</div>
         <div tw="flex text-2xl text-white font-bold mt-2">{formattedDuration}</div>
       </div>
 
-      <div tw="flex mt-10">
+      <div tw="flex mt-8">
         <svg viewBox="0 0 1000 200">
           <polyline fill="none" stroke="#70E3F6" strokeWidth="3" points={points} />
           <g>
