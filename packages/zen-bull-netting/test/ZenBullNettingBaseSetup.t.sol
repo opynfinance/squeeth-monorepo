@@ -38,4 +38,6 @@ contract ZenBullNettingBaseSetup is Test {
         vm.label(owner, "Owner");
         vm.label(address(zenBullNetting), "ZenBullNetting");
     }
+
+    function testIgnoreCoverageReport() public { }
 }

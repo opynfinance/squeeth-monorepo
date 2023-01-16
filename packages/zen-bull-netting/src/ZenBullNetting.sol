@@ -87,8 +87,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice set minCrabAmount
-     * @param _amount the number to be set as minCrab
+     * @notice set minBullAmount
+     * @param _amount the number to be set as minBullAmount
      */
     function setMinBullAmount(uint256 _amount) external onlyOwner {
         emit SetMinBullAmount(minBullAmount, _amount);
@@ -121,7 +121,7 @@ contract ZenBullNetting is Ownable, EIP712 {
      * @param _auctionTwapPeriod the twap period, in seconds
      */
     function setAuctionTwapPeriod(uint32 _auctionTwapPeriod) external onlyOwner {
-        require(_auctionTwapPeriod >= MIN_AUCTION_TWAP, "N18");
+        require(_auctionTwapPeriod >= MIN_AUCTION_TWAP, "ZBN01");
 
         emit SetAuctionTwapPeriod(auctionTwapPeriod, _auctionTwapPeriod);
 
@@ -134,7 +134,7 @@ contract ZenBullNetting is Ownable, EIP712 {
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "N19");
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "ZBN02");
 
         emit SetOTCPriceTolerance(otcPriceTolerance, _otcPriceTolerance);
 
