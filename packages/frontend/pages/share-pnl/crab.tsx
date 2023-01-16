@@ -2,7 +2,7 @@ import Head from 'next/head'
 import { Box, Typography } from '@material-ui/core'
 import { useRouter } from 'next/router'
 
-import { squeethBaseUrl } from '@constants/index'
+import { SQUEETH_BASE_URL } from '@constants/index'
 
 const SharePnl = () => {
   const router = useRouter()
@@ -10,7 +10,7 @@ const SharePnl = () => {
   const pnl = router.query.pnl
   const strategy = 'crab'
 
-  const ogImageUrl = `${squeethBaseUrl}/api/pnl?strategy=${strategy}&depositedAt=${depositedAt}&pnl=${pnl}`
+  const ogImageUrl = `${SQUEETH_BASE_URL}/api/pnl?strategy=${strategy}&depositedAt=${depositedAt}&pnl=${pnl}`
 
   return (
     <>
