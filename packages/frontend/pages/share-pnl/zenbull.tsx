@@ -8,19 +8,19 @@ const SharePnl = () => {
   const router = useRouter()
   const depositedAt = router.query.depositedAt
   const pnl = router.query.pnl
+  const strategy = 'zenbull'
+
+  const ogImageUrl = `${squeethBaseUrl}/api/pnl?strategy=${strategy}&depositedAt=${depositedAt}&pnl=${pnl}`
 
   return (
     <>
       <Head>
-        <title>The post title</title>
+        <title>Opyn Zen Bull Strategy - Stack ETH</title>
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Squeeth" />
-        <meta
-          name="twitter:description"
-          content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
-        />
-        <meta name="twitter:image" content={`${squeethBaseUrl}/api/pnl?depositedAt=${depositedAt}&pnl=${pnl}`} />
-        <meta property="og:image" content={`${squeethBaseUrl}/api/pnl?depositedAt=${depositedAt}&pnl=${pnl}`} />
+        <meta name="twitter:title" content="Opyn Zen Bull Strategy - Stack ETH" />
+        <meta name="twitter:description" content="Stack ETH when ETH increases slow and steady" />
+        <meta name="twitter:image" content={ogImageUrl} />
+        <meta property="og:image" content={ogImageUrl} />
       </Head>
 
       <Box marginTop="20px" marginLeft="20px">
