@@ -1,7 +1,7 @@
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
 import React from 'react'
-import { Duration, isFuture, intervalToDuration } from 'date-fns'
+import { Duration, isFuture, intervalToDuration, format } from 'date-fns'
 
 const omdbBaseUrl = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
@@ -60,7 +60,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
   const offsetY = yMin
 
   const points = pnlData
-    .map(([x, y]) => `${((x - offsetX) / xRange) * 1000},${200 - ((y - offsetY) / yRange) * 200}`)
+    .map(([x, y]) => `${4 + ((x - offsetX) / xRange) * 996},${180 - ((y - offsetY) / yRange) * 160}`)
     .join(' ')
 
   return (
@@ -74,10 +74,19 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         padding: '50px 100px',
       }}
     >
-      <div tw="flex items-baseline">
-        <div tw="flex text-4xl">🦀</div>
-        <div tw="flex text-4xl text-white font-bold ml-4">Crabber - Stacking USDC</div>
-        <div tw="flex text-2xl text-gray-400 ml-5">Powered by Opyn</div>
+      <div tw="flex items-baseline justify-between w-full">
+        <div tw="flex items-baseline">
+          <div tw="flex text-4xl">🦀</div>
+          <div tw="flex text-4xl text-white font-bold ml-4">Crabber - Stacking USDC</div>
+        </div>
+        <div tw="flex text-2xl text-white text-opacity-60 ml-5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app/images/logo.png"
+            alt="opyn logo"
+            height="36px"
+          />
+        </div>
       </div>
 
       <div tw="flex flex-col mt-10">
@@ -88,7 +97,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
             {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'}
           </div>
 
-          <div tw="flex text-2xl text-gray-400 ml-5">USD return</div>
+          <div tw="flex text-2xl text-white text-opacity-60 ml-5">USD return</div>
         </div>
       </div>
 
@@ -99,9 +108,14 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
 
       <div tw="flex mt-10">
         <svg viewBox="0 0 1000 200">
-          <polyline fill="none" stroke="#0074d9" strokeWidth="3" points={points} />
+          <polyline fill="none" stroke="#70E3F6" strokeWidth="3" points={points} />
+          <g>
+            <line x1="0" x2="1000" y1="200" y2="200" stroke="#fff" strokeOpacity="0.6"></line>
+          </g>
         </svg>
       </div>
+
+      <div tw="flex text-white text-opacity-60 mt-2">{format(date, 'MM/dd/yy')}</div>
     </div>
   )
 }
