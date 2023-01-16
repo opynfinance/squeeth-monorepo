@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export default function middleware(request: NextRequest) {
-  const country = request.geo?.country
-  const url = request.nextUrl
-
   const cloudfareCountry = request.headers.get('cf-ipcountry')
+  const country = cloudfareCountry ?? request.geo?.country
+  const url = request.nextUrl
 
   console.log('country', cloudfareCountry, country)
 
