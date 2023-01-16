@@ -2,9 +2,9 @@
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
 import React from 'react'
-import { Duration, isFuture, intervalToDuration, format } from 'date-fns'
+import { Duration, isFuture, intervalToDuration, format, isBefore } from 'date-fns'
 
-import { squeethBaseUrl } from '@constants/index'
+import { squeethBaseUrl, CRABV2_START_DATE, BULL_START_DATE } from '@constants/index'
 
 const OMDB_BASE_URL = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
@@ -98,7 +98,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
       }}
     >
       <div tw="flex items-center justify-between w-full">
-        <div tw="flex items-baseline">
+        <div tw="flex items-center">
           <div tw="flex text-4xl">
             {strategy === 'crab' && (
               <img src={`${squeethBaseUrl}/images/crab-logo.png`} alt="opyn crab logo" height="32px" />
@@ -210,23 +210,33 @@ export default async function handler(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const strategy = searchParams.get('strategy') as StrategyType
-    const depositTimestamp = searchParams.get('depositedAt')
+    const depositedAt = searchParams.get('depositedAt')
     const pnl = searchParams.get('pnl')
 
-    if (!strategy || !depositTimestamp || !pnl) {
-      return new Response(`Missing "strategy", "depositTimestamp" or "pnl" query param`, {
+    if (!strategy || !depositedAt || !pnl) {
+      return new Response(`Missing "strategy", "depositedAt" or "pnl" query param`, {
         status: 400,
       })
     }
 
-    const depositDate = new Date(Number(depositTimestamp) * 1000)
+    const depositDate = new Date(Number(depositedAt) * 1000)
     if (isFuture(depositDate)) {
       return new Response(`Deposit date is in future`, {
         status: 400,
       })
     }
 
-    const startTimestamp = Number(depositTimestamp)
+    const crabV2LaunchDate = new Date(CRABV2_START_DATE)
+    const zenBullLaunchDate = new Date(BULL_START_DATE)
+
+    let startDate = depositDate
+    if (strategy === 'crab' && isBefore(depositDate, crabV2LaunchDate)) {
+      startDate = crabV2LaunchDate
+    } else if (strategy === 'zenbull' && isBefore(depositDate, zenBullLaunchDate)) {
+      startDate = zenBullLaunchDate
+    }
+
+    const startTimestamp = startDate.getTime() / 1000
     const endTimestamp = Math.round(new Date().getTime() / 1000)
     const pnlData = await fetchPnlData(strategy, startTimestamp, endTimestamp)
 
