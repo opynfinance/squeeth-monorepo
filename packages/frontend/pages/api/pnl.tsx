@@ -3,18 +3,12 @@ import { NextRequest } from 'next/server'
 import React from 'react'
 import { Duration, isFuture, intervalToDuration, format } from 'date-fns'
 
-const omdbBaseUrl = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
+import { squeethBaseUrl } from '@constants/index'
+
+const OMDB_BASE_URL = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
 export const config = {
   runtime: 'experimental-edge',
-}
-
-type PnLDataPoint = [number, number]
-
-interface UIProps {
-  depositTimestamp: number
-  pnl: number
-  pnlData: PnLDataPoint[]
 }
 
 const formatDuration = (duration: Duration) => {
@@ -50,6 +44,14 @@ const Y_AXIS_WIDTH = 5
 const PADDING_X = 3
 const PADDING_Y = 36
 
+type PnLDataPoint = [number, number]
+
+interface UIProps {
+  depositTimestamp: number
+  pnl: number
+  pnlData: PnLDataPoint[]
+}
+
 const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
   const date = new Date(depositTimestamp * 1000)
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
@@ -67,15 +69,19 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
   const offsetX = xMin
   const offsetY = yMin
 
+  const chartXPadding = Y_AXIS_WIDTH + PADDING_X
+  const chartYPadding = X_AXIS_WIDTH + PADDING_Y
+
+  const availableChartWidth = CHART_WIDTH - 2 * chartXPadding
+  const availableChartHeight = CHART_HEIGHT - 2 * chartYPadding
+
   const points = pnlData
-    .map(
-      ([x, y]) =>
-        `${Y_AXIS_WIDTH + PADDING_X + ((x - offsetX) / xRange) * (CHART_WIDTH - (Y_AXIS_WIDTH + PADDING_X))},${
-          CHART_HEIGHT -
-          (X_AXIS_WIDTH + PADDING_Y) -
-          ((y - offsetY) / yRange) * (CHART_HEIGHT - 2 * (X_AXIS_WIDTH + PADDING_Y))
-        }`,
-    )
+    .map(([x, y]) => {
+      const pointX = chartXPadding + ((x - offsetX) / xRange) * availableChartWidth
+      const pointY = CHART_HEIGHT - chartYPadding - ((y - offsetY) / yRange) * availableChartHeight
+
+      return `${pointX},${pointY}`
+    })
     .join(' ')
 
   return (
@@ -96,11 +102,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         </div>
         <div tw="flex text-2xl text-white text-opacity-60 ml-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app/images/logo.png"
-            alt="opyn logo"
-            height="68px"
-          />
+          <img src={`${squeethBaseUrl}/images/logo.png`} alt="opyn logo" height="68px" />
         </div>
       </div>
 
@@ -194,7 +196,7 @@ export default async function handler(req: NextRequest) {
     const endTimestamp = Math.round(new Date().getTime() / 1000)
 
     const response = await fetch(
-      `${omdbBaseUrl}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
+      `${OMDB_BASE_URL}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
     ).then((res) => res.json())
     const pnlData = response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.crabPnL * 100])
 
