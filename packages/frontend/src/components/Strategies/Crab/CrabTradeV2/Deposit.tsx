@@ -9,7 +9,7 @@ import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
-import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
+import { connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
   crabStrategySlippageAtomV2,
@@ -59,6 +59,8 @@ import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import usePopup, { PopupConfig } from '@hooks/usePopup'
+import { sendCrispChatMessage, openCrispChat } from '@utils/crisp-chat'
 
 type CrabDepositProps = {
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
@@ -67,6 +69,24 @@ type CrabDepositProps = {
 enum DepositSteps {
   APPROVE = 'Approve USDC',
   DEPOSIT = 'Deposit',
+}
+
+const depositErrorPopupConfig: PopupConfig = {
+  text: 'Seems like you are having trouble depositing, would you like to speak to our support team ?',
+  actions: [
+    {
+      label: 'Yes',
+      closeAfterAction: true,
+      onClick: () => {
+        sendCrispChatMessage('Hi, I am having trouble depositing into crab, need help!')
+        openCrispChat()
+      },
+    },
+    {
+      label: 'No Thanks',
+      isClosingAction: true,
+    },
+  ],
 }
 
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
@@ -129,6 +149,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const normFactor = useAtomValue(normFactorAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(depositErrorPopupConfig)
 
   const trackUserEnteredDepositAmount = useCallback(
     (amount: BigNumber) => track(CRAB_EVENTS.DEPOSIT_CRAB_AMOUNT_ENTERED, { amount: amount.toNumber() }),
@@ -274,7 +295,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const depositTX = async () => {
     setTxLoading(true)
-
     try {
       if (depositStep === DepositSteps.APPROVE) {
         if (useQueue) {
@@ -295,9 +315,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
         }
         if (useQueue) {
-          await queueUSDC(depositAmountBN, onTxnConfirmed)
+          await queueUSDC(depositAmountBN, onTxnConfirmed, showErrorFeedbackPopup)
         } else {
-          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed)
+          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed, showErrorFeedbackPopup)
         }
       }
     } catch (e) {
@@ -437,7 +457,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           error={!!depositError}
           helperText={depositError}
         />
-
         {depositFundingWarning && !useQueue && (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
@@ -454,7 +473,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Typography>
           </div>
         )}
-
         {depositPriceImpactWarning && (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
@@ -471,7 +489,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Typography>
           </div>
         )}
-
         <Box marginTop="24px">
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
@@ -503,7 +520,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Box>
           </Box>
         </Box>
-
         <div className={classes.ctaSection}>
           {/* {useQueue && (
             <div className={classes.queueNotice}>
