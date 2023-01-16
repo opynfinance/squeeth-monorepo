@@ -10,7 +10,6 @@ import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.sol";
  * Unit tests
  */
 contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
-
     uint256 public user1Pk;
     address public user1;
 
