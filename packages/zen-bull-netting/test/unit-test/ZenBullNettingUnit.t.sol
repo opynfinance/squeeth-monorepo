@@ -114,9 +114,10 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     }
 
     function testSetAuctionTwapPeriodWhenPeriodLessThanMinimum() public {
+        uint32 minAuctionTwap = zenBullNetting.MIN_AUCTION_TWAP();
         vm.prank(owner);
         vm.expectRevert(bytes("ZBN01"));
-        zenBullNetting.setAuctionTwapPeriod(zenBullNetting.MIN_AUCTION_TWAP() - 1);
+        zenBullNetting.setAuctionTwapPeriod(minAuctionTwap - 1);
     }
 
     function testSetOTCPriceTolerance() public {
@@ -133,8 +134,9 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     }
 
     function testSetOTCPriceToleranceWhenPeriodLessThanMinimum() public {
+        uint256 maxOtcPriceTolerance = zenBullNetting.MAX_OTC_PRICE_TOLERANCE();
         vm.prank(owner);
         vm.expectRevert(bytes("ZBN02"));
-        zenBullNetting.setOTCPriceTolerance(zenBullNetting.MAX_OTC_PRICE_TOLERANCE() + 1);
+        zenBullNetting.setOTCPriceTolerance(maxOtcPriceTolerance + 1);
     }
 }
