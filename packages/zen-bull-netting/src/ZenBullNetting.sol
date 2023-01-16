@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
-// interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
@@ -30,9 +28,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     bytes32 private constant _ZENBULL_NETTING_TYPEHASH = keccak256(
         "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
     );
-    /// @dev OTC price tolerance cannot exceed 20%
+    // @dev OTC price tolerance cannot exceed 20%
     uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
-    /// @dev min auction TWAP
     uint32 public constant MIN_AUCTION_TWAP = 180 seconds;
 
     /// @dev owner sets to true when starting auction
@@ -183,7 +180,7 @@ contract ZenBullNetting is Ownable, EIP712 {
      * @param _auctionTwapPeriod the twap period, in seconds
      */
     function setAuctionTwapPeriod(uint32 _auctionTwapPeriod) external onlyOwner {
-        require(_auctionTwapPeriod >= MIN_AUCTION_TWAP, "ZBN01");
+        require(_auctionTwapPeriod >= MIN_AUCTION_TWAP, "N18");
 
         emit SetAuctionTwapPeriod(auctionTwapPeriod, _auctionTwapPeriod);
 
@@ -196,7 +193,7 @@ contract ZenBullNetting is Ownable, EIP712 {
      */
     function setOTCPriceTolerance(uint256 _otcPriceTolerance) external onlyOwner {
         // Tolerance cannot be more than 20%
-        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "ZBN02");
+        require(_otcPriceTolerance <= MAX_OTC_PRICE_TOLERANCE, "N19");
 
         emit SetOTCPriceTolerance(otcPriceTolerance, _otcPriceTolerance);
 
