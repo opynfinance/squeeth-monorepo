@@ -229,8 +229,20 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   ])
 
   const setDepositMax = () => {
+    track(BULL_EVENTS.DEPOSIT_BULL_SET_AMOUNT_MAX, {
+      amount: toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toNumber(),
+    })
     onInputChange(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
   }
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(BULL_EVENTS.DEPOSIT_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+      onInputChange(depositAmount)
+    },
+    [track, setSlippage, depositAmount, onInputChange],
+  )
 
   return (
     <>
@@ -328,13 +340,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
                 justifyContent="space-between"
                 gridGap="12px"
               />
-              <TradeSettings
-                setSlippage={(amt) => {
-                  setSlippage(amt.toNumber())
-                  onInputChange(depositAmount)
-                }}
-                slippage={new BigNumber(slippage)}
-              />
+              <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
             </Box>
           </Box>
         </Box>
