@@ -1,0 +1,8 @@
+abis
+public
+node_modules
+.next
+cypress
+*.json
+*.md
+*.test.ts

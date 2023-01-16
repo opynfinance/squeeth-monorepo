@@ -31,6 +31,7 @@ workflows:
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
+      - run-prettier
   zen-bull-vault:
     jobs:
       - lint-zen-bull-vault
@@ -197,6 +198,31 @@ jobs:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - ~/squeeth
+
+  run-prettier:
+    name: Run Prettier
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 14
+
+      - name: Run eslint - frontend
+        run: yarn prettier
+        working-directory: ~/squeeth/packages/frontend
+
+      - name: Commit lint fixes changes if any
+        uses: EndBug/add-and-commit@v7
+        with:
+          author_name: github-actions-squeeth-monorepo
+          author_email: bot+github-actions-squeeth-monorepo@users.noreply.github.com
+          message: 'Fix prettier issues'
+          push: '--set-upstream origin'
   
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
