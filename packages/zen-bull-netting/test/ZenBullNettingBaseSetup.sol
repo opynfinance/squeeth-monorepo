@@ -13,7 +13,6 @@ import { ZenBullNetting } from "../src/ZenBullNetting.sol";
  * Unit tests
  */
 contract ZenBullNettingBaseSetup is Test {
-
     ZenBullNetting internal zenBullNetting;
 
     uint256 public deployerPk;
@@ -31,7 +30,7 @@ contract ZenBullNettingBaseSetup is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
-        zenBullNetting= new ZenBullNetting();
+        zenBullNetting = new ZenBullNetting();
         zenBullNetting.transferOwnership(owner);
         vm.stopPrank();
 
