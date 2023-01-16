@@ -84,7 +84,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
           <img
             src="https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app/images/logo.png"
             alt="opyn logo"
-            height="36px"
+            height="80px"
           />
         </div>
       </div>
