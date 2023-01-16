@@ -47,7 +47,7 @@ const CHART_HEIGHT = 280
 const X_AXIS_WIDTH = 5
 const Y_AXIS_WIDTH = 5
 
-const PADDING_X = 4
+const PADDING_X = 3
 const PADDING_Y = 36
 
 const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
@@ -86,7 +86,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#191B1C',
-        padding: '35px 100px',
+        padding: '44px 100px',
       }}
     >
       <div tw="flex items-center justify-between w-full">
@@ -99,7 +99,7 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
           <img
             src="https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app/images/logo.png"
             alt="opyn logo"
-            height="72px"
+            height="68px"
           />
         </div>
       </div>
