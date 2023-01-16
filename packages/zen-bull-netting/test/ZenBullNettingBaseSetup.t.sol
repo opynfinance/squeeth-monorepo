@@ -5,18 +5,15 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
-//interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+
 // contracts
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
 
 /**
- * ZenBull Netting Setup
+ * Unit tests
  */
 contract ZenBullNettingBaseSetup is Test {
     ZenBullNetting internal zenBullNetting;
-
-    address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     uint256 public deployerPk;
     uint256 public ownerPk;
@@ -33,7 +30,7 @@ contract ZenBullNettingBaseSetup is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
-        zenBullNetting = new ZenBullNetting(WETH);
+        zenBullNetting = new ZenBullNetting();
         zenBullNetting.transferOwnership(owner);
         vm.stopPrank();
 
@@ -43,11 +40,4 @@ contract ZenBullNettingBaseSetup is Test {
     }
 
     function testIgnoreCoverageReport() public { }
-
-    function _queueWeth(address _user, uint256 _amount) internal {
-        vm.startPrank(_user);
-        IERC20(WETH).approve(address(zenBullNetting), _amount);
-        zenBullNetting.queueWeth(_amount);
-        vm.stopPrank();
-    }
 }
