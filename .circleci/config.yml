@@ -189,7 +189,7 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - prettier:
+      - run:
           name: Run Prettier
           command: yarn prettier:commit
       - save_cache: 
