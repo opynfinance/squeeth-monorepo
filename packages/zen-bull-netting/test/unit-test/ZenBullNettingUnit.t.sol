@@ -4,7 +4,7 @@ pragma abicoder v2;
 
 // test dependency
 import { console } from "forge-std/console.sol";
-import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.sol";
+import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
 
 /**
  * Unit tests
