@@ -41,6 +41,15 @@ const formatDuration = (duration: Duration) => {
   return formattedDuration.join(' ')
 }
 
+const CHART_WIDTH = 1000
+const CHART_HEIGHT = 280
+
+const X_AXIS_WIDTH = 5
+const Y_AXIS_WIDTH = 5
+
+const PADDING_X = 4
+const PADDING_Y = 36
+
 const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
   const date = new Date(depositTimestamp * 1000)
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
@@ -55,12 +64,18 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
 
   const yRange = yMax - yMin
   const xRange = xMax - xMin
-
   const offsetX = xMin
   const offsetY = yMin
 
   const points = pnlData
-    .map(([x, y]) => `${4 + ((x - offsetX) / xRange) * 996},${180 - ((y - offsetY) / yRange) * 160}`)
+    .map(
+      ([x, y]) =>
+        `${Y_AXIS_WIDTH + PADDING_X + ((x - offsetX) / xRange) * (CHART_WIDTH - (Y_AXIS_WIDTH + PADDING_X))},${
+          CHART_HEIGHT -
+          (X_AXIS_WIDTH + PADDING_Y) -
+          ((y - offsetY) / yRange) * (CHART_HEIGHT - 2 * (X_AXIS_WIDTH + PADDING_Y))
+        }`,
+    )
     .join(' ')
 
   return (
@@ -71,10 +86,10 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#191B1C',
-        padding: '50px 100px',
+        padding: '35px 100px',
       }}
     >
-      <div tw="flex items-baseline justify-between w-full">
+      <div tw="flex items-center justify-between w-full">
         <div tw="flex items-baseline">
           <div tw="flex text-4xl">🦀</div>
           <div tw="flex text-4xl text-white font-bold ml-4">Crabber - Stacking USDC</div>
@@ -84,46 +99,73 @@ const UI: React.FC<UIProps> = ({ depositTimestamp, pnl, pnlData }) => {
           <img
             src="https://continuouscall-git-share-pnl-with-og-opynfinance.vercel.app/images/logo.png"
             alt="opyn logo"
-            height="80px"
+            height="72px"
           />
         </div>
       </div>
 
-      <div tw="flex flex-col mt-8">
-        <div tw="flex text-xl text-white">My Crab Position</div>
+      <div tw="flex flex-col mt-6">
+        <div tw="flex text-xl text-white font-bold">My Crab Position</div>
         <div tw="flex items-baseline mt-2">
           <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
             {pnl > 0 && '+'}
             {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'}
           </div>
 
-          <div tw="flex text-2xl text-white text-opacity-60 ml-5">USD return</div>
+          <div tw="flex text-2xl text-white text-opacity-60 ml-4">USD return</div>
         </div>
       </div>
 
-      <div tw="flex flex-col mt-8">
-        <div tw="flex text-2xl text-white">In Crab since</div>
-        <div tw="flex text-2xl text-white font-bold mt-2">{formattedDuration}</div>
-      </div>
+      <div tw="flex mt-9">
+        <div tw="flex absolute ml-4 text-white text-opacity-60  text-sm">Crab Strategy</div>
 
-      <div tw="flex mt-8">
-        <svg viewBox="0 0 1000 200">
+        <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+              <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
+            </marker>
+          </defs>
+
           <polyline fill="none" stroke="#70E3F6" strokeWidth="3" points={points} />
           <g>
-            <line x1="0" x2="1000" y1="200" y2="200" stroke="#fff" strokeOpacity="0.6"></line>
+            <line
+              x1={Y_AXIS_WIDTH}
+              x2={CHART_WIDTH - Y_AXIS_WIDTH}
+              y1={CHART_HEIGHT - X_AXIS_WIDTH}
+              y2={CHART_HEIGHT - X_AXIS_WIDTH}
+              stroke="#fff"
+              strokeOpacity="0.6"
+              markerEnd="url(#arrowhead)"
+              strokeDasharray="5,5"
+            ></line>
+          </g>
+          <g>
+            {/* y-axis */}
+            <line
+              x1={Y_AXIS_WIDTH}
+              x2={Y_AXIS_WIDTH}
+              y1={CHART_HEIGHT - X_AXIS_WIDTH}
+              y2={X_AXIS_WIDTH}
+              stroke="#fff"
+              strokeOpacity="0.6"
+              markerEnd="url(#arrowhead)"
+              strokeDasharray="5,5"
+            ></line>
           </g>
         </svg>
       </div>
 
-      <div tw="flex text-white text-opacity-60 mt-2">{format(date, 'MM/dd/yy')}</div>
+      <div tw="flex text-white text-opacity-60 mt-2">
+        {format(date, 'MM/dd/yy')} (since {formattedDuration})
+      </div>
     </div>
   )
 }
 
-const font = fetch(new URL('../../public/fonts/DMMono-Regular.ttf', import.meta.url).toString()).then((res) =>
+const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
   res.arrayBuffer(),
 )
-const fontMedium = fetch(new URL('../../public/fonts/DMMono-Medium.ttf', import.meta.url).toString()).then((res) =>
+const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.meta.url).toString()).then((res) =>
   res.arrayBuffer(),
 )
 
@@ -161,13 +203,13 @@ export default async function handler(req: NextRequest) {
       height: 630,
       fonts: [
         {
-          name: 'DMMono',
+          name: 'DMSans',
           data: fontData,
           style: 'normal',
           weight: 400,
         },
         {
-          name: 'DMMono',
+          name: 'DMSans',
           data: fontMediumData,
           style: 'normal',
           weight: 500,
