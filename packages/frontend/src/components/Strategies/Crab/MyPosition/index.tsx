@@ -20,7 +20,7 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
   const usdcQueued = useAtomValue(usdcQueuedAtom)
   const crabQueued = useAtomValue(crabQueuedAtom)
   const address = useAtomValue(addressAtom)
-  const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
+  const { loading: isCrabPositionLoading, depositedUsd, firstDepositTimestamp } = useCrabPositionV2(address || '')
 
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
 
@@ -53,7 +53,12 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   return (
     <Box display="flex" flexDirection="column" gridGap="40px">
-      <CrabPosition depositedUsd={depositedUsd} currentPosition={currentPositionValue} pnl={pnl} />
+      <CrabPosition
+        depositedUsd={depositedUsd}
+        currentPosition={currentPositionValue}
+        pnl={pnl}
+        firstDepositTimestamp={firstDepositTimestamp}
+      />
       <QueuedPosition />
     </Box>
   )

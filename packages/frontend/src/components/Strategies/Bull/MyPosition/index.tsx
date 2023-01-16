@@ -10,7 +10,9 @@ import {
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
   isBullPositionRefetchingAtom,
+  bullFirstDepositTimestampAtom,
 } from '@state/bull/atoms'
+import { squeethBaseUrl } from '@constants/index'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import SharePnL from '@components/Strategies/SharePnL'
 import PnL from './PnL'
@@ -21,6 +23,7 @@ const BullPosition: React.FC = () => {
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const bullEthPnL = useAtomValue(bullEthPnlAtom)
   const bullEthPnlPerct = useAtomValue(bullEthPnlPerctAtom)
+  const firstDepositTimestamp = useAtomValue(bullFirstDepositTimestampAtom)
 
   const classes = useStyles()
 
@@ -46,8 +49,8 @@ const BullPosition: React.FC = () => {
   const pnlFormatted = formatNumber(pnlPercent)
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
-  const sharePnLText = `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
-  const sharePnLUrl = 'squeeth.com/strategies/bull'
+  const sharePnlText = `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
+  const sharePnlPageUrl = `${squeethBaseUrl}/share-pnl/zenbull?pnl=${pnlFormatted}&depositedAt=${firstDepositTimestamp}`
 
   const isPnlLoading = !bullEthPnL.isFinite()
 
@@ -71,7 +74,12 @@ const BullPosition: React.FC = () => {
         </Box>
       </div>
 
-      <SharePnL isPnlLoading={isPnlLoading} text={sharePnLText} url={sharePnLUrl} />
+      <SharePnL
+        isPnlLoading={isPnlLoading}
+        strategyName="zenbull"
+        text={sharePnlText}
+        sharePnlPageUrl={sharePnlPageUrl}
+      />
     </Box>
   )
 }

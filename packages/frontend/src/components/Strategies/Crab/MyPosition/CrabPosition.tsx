@@ -6,23 +6,25 @@ import clsx from 'clsx'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
 import SharePnL from '@components/Strategies/SharePnL'
+import { squeethBaseUrl } from '@constants/index'
 import PnL from './PnL'
 
 interface CrabPositionProps {
   depositedUsd: BigNumber
   currentPosition: BigNumber
   pnl: BigNumber
+  firstDepositTimestamp: number
 }
 
-const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl }) => {
+const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl, firstDepositTimestamp }) => {
   const classes = useStyles()
 
   const pnlPercent = pnl.toNumber()
   const pnlFormatted = formatNumber(pnlPercent)
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
-  const sharePnLText = `I'm earning ${pnlText} USDC with the Opyn Crab Strategy`
-  const sharePnLUrl = 'squeeth.com/strategies'
+  const sharePnlText = `I'm earning ${pnlText} USDC with the Opyn Crab Strategy`
+  const sharePnlPageUrl = `${squeethBaseUrl}/share-pnl/crab?pnl=${pnlFormatted}&depositedAt=${firstDepositTimestamp}`
 
   const isPnlLoading = !pnl.isFinite()
 
@@ -42,7 +44,7 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
         </Box>
       </div>
 
-      <SharePnL isPnlLoading={isPnlLoading} text={sharePnLText} url={sharePnLUrl} />
+      <SharePnL isPnlLoading={isPnlLoading} strategyName="crab" text={sharePnlText} sharePnlPageUrl={sharePnlPageUrl} />
     </Box>
   )
 }
