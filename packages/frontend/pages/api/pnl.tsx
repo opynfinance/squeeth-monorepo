@@ -59,7 +59,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
   const formattedDuration = formatDuration(strategyDuration)
 
-  const pnlColor = pnl > 0 ? '#49D273' : '#EC7987'
+  const pnlColor = pnl > 0 ? '#67fabf' : '#FA7B67'
 
   const xMax = Math.max(...pnlData.map(([x]) => x))
   const xMin = Math.min(...pnlData.map(([x]) => x))
