@@ -5,7 +5,8 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
-
+//interface
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contracts
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
 
