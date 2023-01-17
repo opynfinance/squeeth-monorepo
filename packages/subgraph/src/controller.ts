@@ -34,6 +34,7 @@ import {
   HourStatSnapshot,
   DayStatSnapshot,
   VaultHistory,
+  BullUserTx,
 } from "../generated/schema";
 import { loadOrCreateAccount } from "./util";
 
@@ -43,6 +44,8 @@ import {
   SHORT_HELPER_ADDR,
   EMPTY_ADDR,
 } from "./constants";
+
+import * as bull from './bullStrategy'
 
 // Note: If a handler doesn't require existing field values, it is faster
 // _not_ to load the entity from the store. Instead, create it fresh with
@@ -119,6 +122,8 @@ export function handleBurnShort(event: BurnShort): void {
     BIGINT_ZERO
   );
   vaultTransaction.save();
+
+  
 }
 
 export function handleDepositCollateral(event: DepositCollateral): void {
