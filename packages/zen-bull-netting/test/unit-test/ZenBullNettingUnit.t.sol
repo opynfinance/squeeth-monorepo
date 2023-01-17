@@ -152,10 +152,7 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
         uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
 
-        vm.startPrank(user1);
-        IERC20(WETH).approve(address(zenBullNetting), amount);
-        zenBullNetting.queueWeth(amount);
-        vm.stopPrank();
+        _queueWeth(user1, amount);
 
         assertEq(zenBullNetting.wethBalance(user1), amount);
         assertEq(
@@ -180,5 +177,12 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     function _setMinWethAmount() internal {
         vm.prank(owner);
         zenBullNetting.setMinWethAmount(minWeth);
+    }
+
+    function _queueWeth(address _user, uint256 _amount) internal {
+        vm.startPrank(_user);
+        IERC20(WETH).approve(address(zenBullNetting), _amount);
+        zenBullNetting.queueWeth(_amount);
+        vm.stopPrank();
     }
 }
