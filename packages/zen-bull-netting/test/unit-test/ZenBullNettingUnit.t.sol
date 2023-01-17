@@ -158,7 +158,10 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(zenBullNetting.wethBalance(user1), amount);
-        assertEq(IERC20(WETH).balanceOf(address(zenBullNetting)) - zenBullNettingWethBalanceBefore, amount);
+        assertEq(
+            IERC20(WETH).balanceOf(address(zenBullNetting)) - zenBullNettingWethBalanceBefore,
+            amount
+        );
         assertEq(IERC20(WETH).balanceOf(user1) + amount, user1WethBalanceBefore);
         assertEq(zenBullNetting.depositsQueued(), amount);
     }
