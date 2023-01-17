@@ -1,13 +1,7 @@
 {
   "parser": "@typescript-eslint/parser",
   "plugins": ["prettier", "@typescript-eslint", "simple-import-sort"],
-  "extends": [
-    "plugin:@typescript-eslint/recommended",
-    "plugin:prettier/recommended",
-    "prettier",
-    "next",
-    "next/core-web-vitals"
-  ],
+  "extends": ["plugin:@typescript-eslint/recommended", "plugin:prettier/recommended", "prettier", "next"],
   "env": {
     "browser": true,
     "jest": true

@@ -81,6 +81,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.16.7",
+    "@next/eslint-plugin-next": "^13.1.2",
     "@sentry/nextjs": "^7.10.0",
     "@synthetixio/synpress": "^1.1.1",
     "@testing-library/dom": "^8.11.3",

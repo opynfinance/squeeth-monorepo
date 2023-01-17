@@ -81,149 +81,149 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   //   })
   //   .join(' ')
 
-  // return (
-  //   <div
-  //     style={{
-  //       backgroundColor: 'black',
-  //       backgroundSize: '150px 150px',
-  //       height: '100%',
-  //       width: '100%',
-  //       display: 'flex',
-  //       textAlign: 'center',
-  //       alignItems: 'center',
-  //       justifyContent: 'center',
-  //       flexDirection: 'column',
-  //       flexWrap: 'nowrap',
-  //     }}
-  //   >
-  //     <div
-  //       style={{
-  //         display: 'flex',
-  //         alignItems: 'center',
-  //         justifyContent: 'center',
-  //         justifyItems: 'center',
-  //       }}
-  //     >
-  //       <img
-  //         alt="Vercel"
-  //         height={200}
-  //         src="data:image/svg+xml,%3Csvg width='116' height='100' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M57.5 0L115 100H0L57.5 0z' /%3E%3C/svg%3E"
-  //         style={{ margin: '0 30px' }}
-  //         width={232}
-  //       />
-  //     </div>
-  //     <div
-  //       style={{
-  //         fontSize: 60,
-  //         fontStyle: 'normal',
-  //         letterSpacing: '-0.025em',
-  //         color: 'white',
-  //         marginTop: 30,
-  //         padding: '0 120px',
-  //         lineHeight: 1.4,
-  //         whiteSpace: 'pre-wrap',
-  //       }}
-  //     >
-  //       {'squeeth is coool'}
-  //     </div>
-  //   </div>
-  // )
-
   return (
     <div
       style={{
+        backgroundColor: 'black',
+        backgroundSize: '150px 150px',
         height: '100%',
         width: '100%',
         display: 'flex',
+        textAlign: 'center',
+        alignItems: 'center',
+        justifyContent: 'center',
         flexDirection: 'column',
-        backgroundColor: '#191B1C',
-        padding: '44px 100px',
+        flexWrap: 'nowrap',
       }}
     >
-      <div tw="flex items-center justify-between w-full">
-        <div tw="flex items-center">
-          {/* <div tw="flex text-4xl">
-            {strategy === 'crab' && (
-              <img src={`${SQUEETH_BASE_URL}/images/crab-logo.png`} alt="opyn crab logo" height="32px" />
-            )}
-            {strategy === 'zenbull' && (
-              <img src={`${SQUEETH_BASE_URL}/images/zenbull-logo.png`} alt="opyn zenbull logo" height="32px" />
-            )}
-          </div> */}
-          <div tw="flex text-4xl text-white font-bold ml-4">
-            {strategy === 'crab' && 'Crabber - Stacking USDC'}
-            {strategy === 'zenbull' && 'Zen Bull - Stacking ETH'}
-          </div>
-        </div>
-        {/* <div tw="flex text-2xl text-white text-opacity-60 ml-5">
-          <img src={`${SQUEETH_BASE_URL}/images/logo.png`} alt="opyn logo" height="68px" />
-        </div> */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          justifyItems: 'center',
+        }}
+      >
+        <img
+          alt="Vercel"
+          height={200}
+          src="data:image/svg+xml,%3Csvg width='116' height='100' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M57.5 0L115 100H0L57.5 0z' /%3E%3C/svg%3E"
+          style={{ margin: '0 30px' }}
+          width={232}
+        />
       </div>
-
-      <div tw="flex flex-col mt-6">
-        <div tw="flex text-xl text-white font-bold">
-          {strategy === 'crab' && 'My Crab Position'}
-          {strategy === 'zenbull' && 'My Zen Bull Position'}
-        </div>
-        <div tw="flex items-baseline mt-2">
-          <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
-            {pnl > 0 && '+'}
-            {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'}
-          </div>
-
-          <div tw="flex text-2xl text-white text-opacity-60 ml-4">
-            {strategy === 'crab' && 'USD return'}
-            {strategy === 'zenbull' && 'ETH return'}
-          </div>
-        </div>
+      <div
+        style={{
+          fontSize: 60,
+          fontStyle: 'normal',
+          letterSpacing: '-0.025em',
+          color: 'white',
+          marginTop: 30,
+          padding: '0 120px',
+          lineHeight: 1.4,
+          whiteSpace: 'pre-wrap',
+        }}
+      >
+        {'squeeth is coool'}
       </div>
-
-      {/* <div tw="flex mt-9">
-        <div tw="flex absolute ml-5 text-white text-opacity-60 text-sm">
-          {strategy === 'crab' && 'Crab Strategy'}
-          {strategy === 'zenbull' && 'Zen Bull Strategy'}
-        </div>
-
-        <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
-          <defs>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
-              <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
-            </marker>
-          </defs>
-
-          <polyline fill="none" stroke="#70E3F6" strokeWidth="3" points={points} />
-          <g>
-            <line
-              x1={Y_AXIS_WIDTH}
-              x2={CHART_WIDTH - Y_AXIS_WIDTH}
-              y1={CHART_HEIGHT - X_AXIS_WIDTH}
-              y2={CHART_HEIGHT - X_AXIS_WIDTH}
-              stroke="#fff"
-              strokeOpacity="0.6"
-              markerEnd="url(#arrowhead)"
-              strokeDasharray="5,5"
-            ></line>
-          </g>
-          <g>
-            <line
-              x1={Y_AXIS_WIDTH}
-              x2={Y_AXIS_WIDTH}
-              y1={CHART_HEIGHT - X_AXIS_WIDTH}
-              y2={X_AXIS_WIDTH}
-              stroke="#fff"
-              strokeOpacity="0.6"
-              markerEnd="url(#arrowhead)"
-              strokeDasharray="5,5"
-            ></line>
-          </g>
-        </svg>
-      </div> */}
-
-      {/* <div tw="flex text-white text-opacity-60 mt-2">
-        {format(date, 'MM/dd/yy')} (deposited {formattedDuration} ago)
-      </div> */}
     </div>
   )
+
+  // return (
+  //   <div
+  //     style={{
+  //       height: '100%',
+  //       width: '100%',
+  //       display: 'flex',
+  //       flexDirection: 'column',
+  //       backgroundColor: '#191B1C',
+  //       padding: '44px 100px',
+  //     }}
+  //   >
+  //     <div tw="flex items-center justify-between w-full">
+  //       <div tw="flex items-center">
+  //         {/* <div tw="flex text-4xl">
+  //           {strategy === 'crab' && (
+  //             <img src={`${SQUEETH_BASE_URL}/images/crab-logo.png`} alt="opyn crab logo" height="32px" />
+  //           )}
+  //           {strategy === 'zenbull' && (
+  //             <img src={`${SQUEETH_BASE_URL}/images/zenbull-logo.png`} alt="opyn zenbull logo" height="32px" />
+  //           )}
+  //         </div> */}
+  //         <div tw="flex text-4xl text-white font-bold ml-4">
+  //           {strategy === 'crab' && 'Crabber - Stacking USDC'}
+  //           {strategy === 'zenbull' && 'Zen Bull - Stacking ETH'}
+  //         </div>
+  //       </div>
+  //       {/* <div tw="flex text-2xl text-white text-opacity-60 ml-5">
+  //         <img src={`${SQUEETH_BASE_URL}/images/logo.png`} alt="opyn logo" height="68px" />
+  //       </div> */}
+  //     </div>
+
+  //     <div tw="flex flex-col mt-6">
+  //       <div tw="flex text-xl text-white font-bold">
+  //         {strategy === 'crab' && 'My Crab Position'}
+  //         {strategy === 'zenbull' && 'My Zen Bull Position'}
+  //       </div>
+  //       <div tw="flex items-baseline mt-2">
+  //         <div tw="flex text-4xl text-white font-bold" style={{ color: pnlColor }}>
+  //           {pnl > 0 && '+'}
+  //           {pnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%'}
+  //         </div>
+
+  //         <div tw="flex text-2xl text-white text-opacity-60 ml-4">
+  //           {strategy === 'crab' && 'USD return'}
+  //           {strategy === 'zenbull' && 'ETH return'}
+  //         </div>
+  //       </div>
+  //     </div>
+
+  //     {/* <div tw="flex mt-9">
+  //       <div tw="flex absolute ml-5 text-white text-opacity-60 text-sm">
+  //         {strategy === 'crab' && 'Crab Strategy'}
+  //         {strategy === 'zenbull' && 'Zen Bull Strategy'}
+  //       </div>
+
+  //       <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
+  //         <defs>
+  //           <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+  //             <polygon points="0 0, 10 5, 0 10" fill="#fff" opacity="0.5" />
+  //           </marker>
+  //         </defs>
+
+  //         <polyline fill="none" stroke="#70E3F6" strokeWidth="3" points={points} />
+  //         <g>
+  //           <line
+  //             x1={Y_AXIS_WIDTH}
+  //             x2={CHART_WIDTH - Y_AXIS_WIDTH}
+  //             y1={CHART_HEIGHT - X_AXIS_WIDTH}
+  //             y2={CHART_HEIGHT - X_AXIS_WIDTH}
+  //             stroke="#fff"
+  //             strokeOpacity="0.6"
+  //             markerEnd="url(#arrowhead)"
+  //             strokeDasharray="5,5"
+  //           ></line>
+  //         </g>
+  //         <g>
+  //           <line
+  //             x1={Y_AXIS_WIDTH}
+  //             x2={Y_AXIS_WIDTH}
+  //             y1={CHART_HEIGHT - X_AXIS_WIDTH}
+  //             y2={X_AXIS_WIDTH}
+  //             stroke="#fff"
+  //             strokeOpacity="0.6"
+  //             markerEnd="url(#arrowhead)"
+  //             strokeDasharray="5,5"
+  //           ></line>
+  //         </g>
+  //       </svg>
+  //     </div> */}
+
+  //     {/* <div tw="flex text-white text-opacity-60 mt-2">
+  //       {format(date, 'MM/dd/yy')} (deposited {formattedDuration} ago)
+  //     </div> */}
+  //   </div>
+  // )
 }
 
 const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
