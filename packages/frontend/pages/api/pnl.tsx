@@ -46,12 +46,12 @@ const PADDING_X = 3
 const PADDING_Y = 36
 
 type StrategyType = 'crab' | 'zenbull'
-type PnLDataPoint = [number, number]
+
 interface UserPnlProps {
   strategy: StrategyType
   depositTimestamp: number
   pnl: number
-  pnlData: PnLDataPoint[]
+  pnlData: number[][]
 }
 
 const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlData }) => {
@@ -135,7 +135,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
         </div>
       </div>
 
-      <div tw="flex mt-9">
+      {/* <div tw="flex mt-9">
         <div tw="flex absolute ml-5 text-white text-opacity-60 text-sm">
           {strategy === 'crab' && 'Crab Strategy'}
           {strategy === 'zenbull' && 'Zen Bull Strategy'}
@@ -162,7 +162,6 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
             ></line>
           </g>
           <g>
-            {/* y-axis */}
             <line
               x1={Y_AXIS_WIDTH}
               x2={Y_AXIS_WIDTH}
@@ -175,7 +174,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
             ></line>
           </g>
         </svg>
-      </div>
+      </div> */}
 
       <div tw="flex text-white text-opacity-60 mt-2">
         {format(date, 'MM/dd/yy')} (deposited {formattedDuration} ago)
@@ -248,7 +247,8 @@ export default async function handler(req: NextRequest) {
 
     const startTimestamp = startDate.getTime() / 1000
     const endTimestamp = Math.round(new Date().getTime() / 1000)
-    const pnlData = await fetchPnlData(strategy, startTimestamp, endTimestamp)
+    // const pnlData = await fetchPnlData(strategy, startTimestamp, endTimestamp)
+    const pnlData = [[0, 0]]
 
     return new ImageResponse(
       <UserPnl strategy={strategy} depositTimestamp={startTimestamp} pnl={Number(pnl)} pnlData={pnlData} />,
