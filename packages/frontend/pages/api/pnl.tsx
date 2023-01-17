@@ -14,21 +14,17 @@ export const config = {
 
 const formatDuration = (duration: Duration) => {
   const { years, months, days, hours } = duration
-
   const formattedDuration = []
 
   if (years) {
     formattedDuration.push(`${years}y`)
   }
-
   if (months) {
     formattedDuration.push(`${months}m`)
   }
-
   if (days) {
     formattedDuration.push(`${days}d`)
   }
-
   if (hours) {
     formattedDuration.push(`${hours}h`)
   }
@@ -198,14 +194,12 @@ const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endT
     const response = await fetch(
       `${OMDB_BASE_URL}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
     ).then((res) => res.json())
-    console.log('response: crab', response)
 
     return response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.crabPnL * 100])
   } else if (strategy === 'zenbull') {
     const response = await fetch(`${OMDB_BASE_URL}/metrics/zenbull/pnl/${startTimestamp}/${endTimestamp}`).then((res) =>
       res.json(),
     )
-    console.log('response: zenbull', response)
 
     return response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.bullEthPnl])
   }
@@ -269,7 +263,6 @@ export default async function handler(req: NextRequest) {
             weight: 500,
           },
         ],
-        emoji: 'noto',
       },
     )
   } catch (e: any) {
