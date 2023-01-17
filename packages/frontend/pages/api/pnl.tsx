@@ -192,19 +192,25 @@ const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.
 )
 
 const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endTimestamp: number) => {
+  console.log('fetching pnl data', strategy, startTimestamp, endTimestamp)
+
   if (strategy === 'crab') {
     const response = await fetch(
       `${OMDB_BASE_URL}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
     ).then((res) => res.json())
+    console.log('response: crab', response)
 
     return response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.crabPnL * 100])
-  } else {
+  } else if (strategy === 'zenbull') {
     const response = await fetch(`${OMDB_BASE_URL}/metrics/zenbull/pnl/${startTimestamp}/${endTimestamp}`).then((res) =>
       res.json(),
     )
+    console.log('response: zenbull', response)
 
     return response.data.map((x: Record<string, number>) => [x.timestamp * 1000, x.bullEthPnl])
   }
+
+  throw new Error('Invalid strategy')
 }
 
 export default async function handler(req: NextRequest) {
@@ -215,6 +221,7 @@ export default async function handler(req: NextRequest) {
     const strategy = searchParams.get('strategy') as StrategyType
     const depositedAt = searchParams.get('depositedAt')
     const pnl = searchParams.get('pnl')
+    console.log('query params', strategy, depositedAt, pnl)
 
     if (!strategy || !depositedAt || !pnl) {
       return new Response(`Missing "strategy", "depositedAt" or "pnl" query param`, {
