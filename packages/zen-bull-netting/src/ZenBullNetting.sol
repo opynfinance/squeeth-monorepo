@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
 
+// interface
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
@@ -35,6 +37,17 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev twap period to use for auction calculations
     uint32 public auctionTwapPeriod;
 
+    /// @dev WETH token address
+    address private weth;
+
+    /// @dev array of deposit receipts
+    Receipt[] public deposits;
+
+    /// @dev WEth amount to deposit for an address
+    mapping(address => uint256) public wethBalance;
+    /// @dev indexes of deposit receipts of an address
+    mapping(address => uint256[]) public userDepositsIndex;
+
     /// @dev order struct for a signed order from market maker
     struct Order {
         uint256 bidId;
@@ -49,6 +62,16 @@ contract ZenBullNetting is Ownable, EIP712 {
         bytes32 s;
     }
 
+    /// @dev receipt used to store deposits and withdraws
+    struct Receipt {
+        /// @dev address of the depositor or withdrawer
+        address sender;
+        /// @dev usdc amount to queue for deposit or crab amount to queue for withdrawal
+        uint256 amount;
+        /// @dev time of deposit
+        uint256 timestamp;
+    }
+
     event SetMinBullAmount(uint256 oldAmount, uint256 newAmount);
     event SetMinWethAmount(uint256 oldAmount, uint256 newAmount);
     event SetDepositsIndex(uint256 oldDepositsIndex, uint256 newDepositsIndex);
@@ -56,10 +79,18 @@ contract ZenBullNetting is Ownable, EIP712 {
     event SetAuctionTwapPeriod(uint32 previousTwap, uint32 newTwap);
     event SetOTCPriceTolerance(uint256 previousTolerance, uint256 newOtcPriceTolerance);
     event ToggledAuctionLive(bool isAuctionLive);
+    event QueueWeth(
+        address indexed depositor,
+        uint256 amount,
+        uint256 depositorsBalance,
+        uint256 indexed receiptIndex
+    );
 
-    constructor() EIP712("ZenBullNetting", "1") {
+    constructor(address _weth) EIP712("ZenBullNetting", "1") {
         otcPriceTolerance = 5e16; // 5%
         auctionTwapPeriod = 420 seconds;
+
+        weth = _weth;
     }
 
     /**
@@ -140,4 +171,36 @@ contract ZenBullNetting is Ownable, EIP712 {
 
         otcPriceTolerance = _otcPriceTolerance;
     }
+
+    /**
+     * @notice queue USDC for deposit into crab strategy
+     * @param _amount USDC amount to deposit
+     */
+    function queueWeth(uint256 _amount) external {
+        require(_amount >= minWethAmount, "ZBN03");
+
+        IERC20(weth).transferFrom(msg.sender, address(this), _amount);
+
+        // update weth balance of user, add their receipt, and receipt index to user deposits index
+        wethBalance[msg.sender] = wethBalance[msg.sender] + _amount;
+        deposits.push(Receipt(msg.sender, _amount, block.timestamp));
+        userDepositsIndex[msg.sender].push(deposits.length - 1);
+
+        emit QueueWeth(msg.sender, _amount, wethBalance[msg.sender], deposits.length - 1);
+    }
+
+    /**
+     * @notice get the sum of queued WETH
+     * @return sum WETH amount in queue
+     */
+    function depositsQueued() external view returns (uint256) {
+        uint256 j = depositsIndex;
+        uint256 sum;
+        while (j < deposits.length) {
+            sum = sum + deposits[j].amount;
+            j++;
+        }
+        return sum;
+    }
+
 }
