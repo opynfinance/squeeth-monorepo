@@ -14,25 +14,20 @@ export const config = {
 
 const formatDuration = (duration: Duration) => {
   const { years, months, days, hours } = duration
-
   const formattedDuration = []
 
   if (years) {
     formattedDuration.push(`${years}y`)
   }
-
   if (months) {
     formattedDuration.push(`${months}m`)
   }
-
   if (days) {
     formattedDuration.push(`${days}d`)
   }
-
   if (hours) {
     formattedDuration.push(`${hours}h`)
   }
-
   return formattedDuration.join(' ')
 }
 
@@ -77,14 +72,62 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   const availableChartWidth = CHART_WIDTH - 2 * chartXPadding
   const availableChartHeight = CHART_HEIGHT - 2 * chartYPadding
 
-  const points = pnlData
-    .map(([x, y]) => {
-      const pointX = chartXPadding + ((x - offsetX) / xRange) * availableChartWidth
-      const pointY = CHART_HEIGHT - chartYPadding - ((y - offsetY) / yRange) * availableChartHeight
+  // const points = pnlData
+  //   .map(([x, y]) => {
+  //     const pointX = chartXPadding + ((x - offsetX) / xRange) * availableChartWidth
+  //     const pointY = CHART_HEIGHT - chartYPadding - ((y - offsetY) / yRange) * availableChartHeight
 
-      return `${pointX},${pointY}`
-    })
-    .join(' ')
+  //     return `${pointX},${pointY}`
+  //   })
+  //   .join(' ')
+
+  // return (
+  //   <div
+  //     style={{
+  //       backgroundColor: 'black',
+  //       backgroundSize: '150px 150px',
+  //       height: '100%',
+  //       width: '100%',
+  //       display: 'flex',
+  //       textAlign: 'center',
+  //       alignItems: 'center',
+  //       justifyContent: 'center',
+  //       flexDirection: 'column',
+  //       flexWrap: 'nowrap',
+  //     }}
+  //   >
+  //     <div
+  //       style={{
+  //         display: 'flex',
+  //         alignItems: 'center',
+  //         justifyContent: 'center',
+  //         justifyItems: 'center',
+  //       }}
+  //     >
+  //       <img
+  //         alt="Vercel"
+  //         height={200}
+  //         src="data:image/svg+xml,%3Csvg width='116' height='100' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M57.5 0L115 100H0L57.5 0z' /%3E%3C/svg%3E"
+  //         style={{ margin: '0 30px' }}
+  //         width={232}
+  //       />
+  //     </div>
+  //     <div
+  //       style={{
+  //         fontSize: 60,
+  //         fontStyle: 'normal',
+  //         letterSpacing: '-0.025em',
+  //         color: 'white',
+  //         marginTop: 30,
+  //         padding: '0 120px',
+  //         lineHeight: 1.4,
+  //         whiteSpace: 'pre-wrap',
+  //       }}
+  //     >
+  //       {'squeeth is coool'}
+  //     </div>
+  //   </div>
+  // )
 
   return (
     <div
@@ -99,22 +142,22 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
     >
       <div tw="flex items-center justify-between w-full">
         <div tw="flex items-center">
-          <div tw="flex text-4xl">
+          {/* <div tw="flex text-4xl">
             {strategy === 'crab' && (
               <img src={`${SQUEETH_BASE_URL}/images/crab-logo.png`} alt="opyn crab logo" height="32px" />
             )}
             {strategy === 'zenbull' && (
               <img src={`${SQUEETH_BASE_URL}/images/zenbull-logo.png`} alt="opyn zenbull logo" height="32px" />
             )}
-          </div>
+          </div> */}
           <div tw="flex text-4xl text-white font-bold ml-4">
             {strategy === 'crab' && 'Crabber - Stacking USDC'}
             {strategy === 'zenbull' && 'Zen Bull - Stacking ETH'}
           </div>
         </div>
-        <div tw="flex text-2xl text-white text-opacity-60 ml-5">
+        {/* <div tw="flex text-2xl text-white text-opacity-60 ml-5">
           <img src={`${SQUEETH_BASE_URL}/images/logo.png`} alt="opyn logo" height="68px" />
-        </div>
+        </div> */}
       </div>
 
       <div tw="flex flex-col mt-6">
@@ -176,9 +219,9 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
         </svg>
       </div> */}
 
-      <div tw="flex text-white text-opacity-60 mt-2">
+      {/* <div tw="flex text-white text-opacity-60 mt-2">
         {format(date, 'MM/dd/yy')} (deposited {formattedDuration} ago)
-      </div>
+      </div> */}
     </div>
   )
 }
@@ -214,7 +257,7 @@ const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endT
 
 export default async function handler(req: NextRequest) {
   try {
-    const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
+    // const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
 
     const { searchParams } = new URL(req.url)
     const strategy = searchParams.get('strategy') as StrategyType
@@ -252,24 +295,25 @@ export default async function handler(req: NextRequest) {
 
     return new ImageResponse(
       <UserPnl strategy={strategy} depositTimestamp={startTimestamp} pnl={Number(pnl)} pnlData={pnlData} />,
+
       {
         width: 1200,
         height: 630,
-        fonts: [
-          {
-            name: 'DMSans',
-            data: fontData,
-            style: 'normal',
-            weight: 400,
-          },
-          {
-            name: 'DMSans',
-            data: fontMediumData,
-            style: 'normal',
-            weight: 500,
-          },
-        ],
-        emoji: 'noto',
+        // fonts: [
+        //   {
+        //     name: 'DMSans',
+        //     data: fontData,
+        //     style: 'normal',
+        //     weight: 400,
+        //   },
+        //   {
+        //     name: 'DMSans',
+        //     data: fontMediumData,
+        //     style: 'normal',
+        //     weight: 500,
+        //   },
+        // ],
+        // emoji: 'noto',
       },
     )
   } catch (e: any) {
