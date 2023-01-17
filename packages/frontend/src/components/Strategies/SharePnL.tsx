@@ -45,9 +45,10 @@ const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, strategyName, text, s
   }
 
   const postText = encodeURIComponent(`${text} at ${strategyUrl} ${strategyEmoji}`)
+  const encodedUrl = encodeURIComponent(sharePnlPageUrl)
 
-  const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${sharePnlPageUrl}`
-  const telegramHref = `https://t.me/share/url?text=${postText}&url=${sharePnlPageUrl}`
+  const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${encodedUrl}`
+  const telegramHref = `https://t.me/share/url?text=${postText}&url=${encodedUrl}`
 
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
