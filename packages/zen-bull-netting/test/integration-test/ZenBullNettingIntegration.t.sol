@@ -136,11 +136,4 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
             IERC20(WETH).balanceOf(address(zenBullNetting))
         );
     }
-
-    function _queueWeth(address _user, uint256 _amount) internal {
-        vm.startPrank(_user);
-        IERC20(WETH).approve(address(zenBullNetting), _amount);
-        zenBullNetting.queueWeth(_amount);
-        vm.stopPrank();
-    }
 }

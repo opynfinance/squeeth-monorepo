@@ -5,7 +5,6 @@ pragma abicoder v2;
 // test dependency
 import { console } from "forge-std/console.sol";
 import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
-
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 
@@ -177,12 +176,5 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     function _setMinWethAmount() internal {
         vm.prank(owner);
         zenBullNetting.setMinWethAmount(minWeth);
-    }
-
-    function _queueWeth(address _user, uint256 _amount) internal {
-        vm.startPrank(_user);
-        IERC20(WETH).approve(address(zenBullNetting), _amount);
-        zenBullNetting.queueWeth(_amount);
-        vm.stopPrank();
     }
 }
