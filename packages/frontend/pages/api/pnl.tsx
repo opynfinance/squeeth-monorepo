@@ -30,7 +30,7 @@ const formatDuration = (duration: Duration) => {
   }
 
   if (hours) {
-    formattedDuration.push(`and ${hours}h`)
+    formattedDuration.push(`${hours}h`)
   }
 
   return formattedDuration.join(' ')
@@ -136,7 +136,10 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
       </div>
 
       <div tw="flex mt-9">
-        <div tw="flex absolute ml-4 text-white text-opacity-60  text-sm">Crab Strategy</div>
+        <div tw="flex absolute ml-5 text-white text-opacity-60 text-sm">
+          {strategy === 'crab' && 'Crab Strategy'}
+          {strategy === 'zenbull' && 'Zen Bull Strategy'}
+        </div>
 
         <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
           <defs>
@@ -175,7 +178,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
       </div>
 
       <div tw="flex text-white text-opacity-60 mt-2">
-        {format(date, 'MM/dd/yy')} (since {formattedDuration})
+        {format(date, 'MM/dd/yy')} (deposited {formattedDuration} ago)
       </div>
     </div>
   )
