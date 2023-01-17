@@ -50,5 +50,4 @@ contract ZenBullNettingBaseSetup is Test {
         zenBullNetting.queueWeth(_amount);
         vm.stopPrank();
     }
-
 }
