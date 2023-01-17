@@ -10,7 +10,7 @@ import { console } from "forge-std/console.sol";
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
 
 /**
- * Unit tests
+ * ZenBull Netting Setup
  */
 contract ZenBullNettingBaseSetup is Test {
     ZenBullNetting internal zenBullNetting;
