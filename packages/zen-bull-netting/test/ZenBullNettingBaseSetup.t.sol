@@ -5,7 +5,8 @@ pragma abicoder v2;
 // test dependency
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
-
+//interface
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contracts
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
 
@@ -42,4 +43,12 @@ contract ZenBullNettingBaseSetup is Test {
     }
 
     function testIgnoreCoverageReport() public { }
+
+    function _queueWeth(address _user, uint256 _amount) internal {
+        vm.startPrank(_user);
+        IERC20(WETH).approve(address(zenBullNetting), _amount);
+        zenBullNetting.queueWeth(_amount);
+        vm.stopPrank();
+    }
+
 }
