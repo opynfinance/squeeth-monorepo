@@ -69,6 +69,7 @@ const UniswapData: React.FC<UniswapDataType> = ({
       pools && pools?.length > 1
         ? pools.map((poolInfo, index) => (
             <TradeInfoItem
+              key={index}
               label={poolInfo[2] + '% in ' + poolInfo[0] + ' Pool ' + (index + 1)}
               value={poolInfo[1] / 10000}
               unit="%"
@@ -78,6 +79,7 @@ const UniswapData: React.FC<UniswapDataType> = ({
         : pools
         ? pools.map((poolInfo, index) => (
             <TradeInfoItem
+              key={index}
               label={'LP Fee (' + poolInfo[0] + ')'}
               value={poolInfo[1] / 10000}
               unit="%"

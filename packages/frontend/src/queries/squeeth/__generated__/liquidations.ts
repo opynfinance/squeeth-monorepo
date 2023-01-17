@@ -8,18 +8,18 @@
 // ====================================================
 
 export interface liquidations_liquidations {
-  __typename: "Liquidation";
-  id: string;
-  debtAmount: any;
-  liquidator: any;
-  vaultId: any;
-  collateralPaid: any;
+  __typename: 'Liquidation'
+  id: string
+  debtAmount: any
+  liquidator: any
+  vaultId: any
+  collateralPaid: any
 }
 
 export interface liquidations {
-  liquidations: liquidations_liquidations[];
+  liquidations: liquidations_liquidations[]
 }
 
 export interface liquidationsVariables {
-  vaultId: any;
+  vaultId: any
 }

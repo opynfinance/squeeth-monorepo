@@ -8,16 +8,16 @@
 // ====================================================
 
 export interface YourVaults_vaults {
-  __typename: "Vault";
-  id: string;
-  shortAmount: any;
-  collateralAmount: any;
+  __typename: 'Vault'
+  id: string
+  shortAmount: any
+  collateralAmount: any
 }
 
 export interface YourVaults {
-  vaults: YourVaults_vaults[];
+  vaults: YourVaults_vaults[]
 }
 
 export interface YourVaultsVariables {
-  ownerId: string;
+  ownerId: string
 }

@@ -8,20 +8,20 @@
 // ====================================================
 
 export interface userBullTxes_bullUserTxes {
-  __typename: "BullUserTx";
-  id: string;
-  owner: any;
-  bullAmount: any;
-  ethAmount: any;
-  type: string;
-  timestamp: any;
+  __typename: 'BullUserTx'
+  id: string
+  owner: any
+  bullAmount: any
+  ethAmount: any
+  type: string
+  timestamp: any
 }
 
 export interface userBullTxes {
-  bullUserTxes: userBullTxes_bullUserTxes[];
+  bullUserTxes: userBullTxes_bullUserTxes[]
 }
 
 export interface userBullTxesVariables {
-  ownerId: string;
-  orderDirection: string;
+  ownerId: string
+  orderDirection: string
 }

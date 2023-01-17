@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Typography, Tab, Tabs } from '@material-ui/core'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useRouter } from 'next/router'
 

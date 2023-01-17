@@ -37,8 +37,8 @@ const RestrictionInfo: React.FC<BoxProps> = (props) => {
         This app is not available in {userLocation ? restrictedCountries[String(userLocation)] : 'your country'}. More
         details can be found in our{' '}
         <Typography className={clsx(classes.text, classes.link)} component="span">
-          <Link href="/terms-of-service">
-            <a target="_blank"> Terms of service. </a>
+          <Link href="/terms-of-service" target="_blank">
+            Terms of service.
           </Link>
         </Typography>
       </Typography>

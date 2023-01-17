@@ -1,5 +1,5 @@
 import { createStyles, makeStyles, Typography } from '@material-ui/core'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import React from 'react'
 import { useAtomValue } from 'jotai'
 

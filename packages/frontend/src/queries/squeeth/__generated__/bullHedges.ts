@@ -8,23 +8,23 @@
 // ====================================================
 
 export interface bullHedges_fullRebalances {
-  __typename: "FullRebalance";
-  id: string;
-  wPowerPerpAmount: any | null;
-  isDepositingInCrab: boolean | null;
-  timestamp: any;
-  wethTargetInEuler: any | null;
+  __typename: 'FullRebalance'
+  id: string
+  wPowerPerpAmount: any | null
+  isDepositingInCrab: boolean | null
+  timestamp: any
+  wethTargetInEuler: any | null
 }
 
 export interface bullHedges_leverageRebalances {
-  __typename: "LeverageRebalance";
-  id: string;
-  isSellingUsdc: boolean | null;
-  usdcAmount: any;
-  timestamp: any;
+  __typename: 'LeverageRebalance'
+  id: string
+  isSellingUsdc: boolean | null
+  usdcAmount: any
+  timestamp: any
 }
 
 export interface bullHedges {
-  fullRebalances: bullHedges_fullRebalances[];
-  leverageRebalances: bullHedges_leverageRebalances[];
+  fullRebalances: bullHedges_fullRebalances[]
+  leverageRebalances: bullHedges_leverageRebalances[]
 }

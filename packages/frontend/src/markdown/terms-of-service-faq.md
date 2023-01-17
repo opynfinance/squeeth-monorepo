@@ -8,16 +8,15 @@
 
 &nbsp;
 
-
 #### Q. What are the major changes in the August 25, 2022 Updated Terms of Service?
 
-#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct  that attempt to interact with [squeeth.opyn.co](https://squeeth.opyn.co/).
+#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct that attempt to interact with [squeeth.opyn.co](https://squeeth.opyn.co/).
 
 &nbsp;
 
 #### Q. What kind of risk are you hoping to assess and how?
 
-#### A. We use [Chainalysis](https://demo.chainalysis.com/request-a-demo/?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_term=chainalysis&utm_content=558401973804&gclid=CjwKCAjwrNmWBhA4EiwAHbjEQCpNwFS8fzEmA-hBxxpdLQaX1jgTU4ZsiPPLZ8MZSeTWA_wLHg_LthoCLIgQAvD_BwE), a blockchain intelligence service provider. Chainalysis combines on-chain data and real-world investigations to identify financial crime and other high-risk activities. Opyn applies an industry-wide standard of risk categories (e.g., sanctions, ransomware, child exploitation, stolen funds). Addresses that fall into a risk category are blocked from accessing the Squeeth App. 
+#### A. We use [Chainalysis](https://demo.chainalysis.com/request-a-demo/?utm_source=google&utm_medium=cpc&utm_campaign={campaign}&utm_term=chainalysis&utm_content=558401973804&gclid=CjwKCAjwrNmWBhA4EiwAHbjEQCpNwFS8fzEmA-hBxxpdLQaX1jgTU4ZsiPPLZ8MZSeTWA_wLHg_LthoCLIgQAvD_BwE), a blockchain intelligence service provider. Chainalysis combines on-chain data and real-world investigations to identify financial crime and other high-risk activities. Opyn applies an industry-wide standard of risk categories (e.g., sanctions, ransomware, child exploitation, stolen funds). Addresses that fall into a risk category are blocked from accessing the Squeeth App.
 
 &nbsp;
 
@@ -35,12 +34,12 @@
 
 #### Q. What other APIs/data services does the Squeeth Interface use?
 
-#### A. The Squeeth app also uses the Alchemy API, The Graph API, Fathom Analytics, and Sentry. Alchemy fetches on-chain data and constructs contract calls with the Alchemy API. The Graph API is used to obtain market data such as liquidity distribution of a pool. Fathom Analytics is used to learn more about user behavior and improve the user experience through anonymized data. We do not use cookies for Fathom Analytics. Sentry is used to record blocked address events that occur through the Chainalysis API. 
+#### A. The Squeeth app also uses the Alchemy API, The Graph API, Fathom Analytics, and Sentry. Alchemy fetches on-chain data and constructs contract calls with the Alchemy API. The Graph API is used to obtain market data such as liquidity distribution of a pool. Fathom Analytics is used to learn more about user behavior and improve the user experience through anonymized data. We do not use cookies for Fathom Analytics. Sentry is used to record blocked address events that occur through the Chainalysis API.
 
-#### For more information on our API and data collection policies see Opyn’s Privacy Policy. 
+#### For more information on our API and data collection policies see Opyn’s Privacy Policy.
 
 &nbsp;
 
-#### Q. My address was incorrectly blocked. How can I remedy this? 
+#### Q. My address was incorrectly blocked. How can I remedy this?
 
 #### A. If you believe your address has been incorrectly flagged, please contact legal@opyn.co.

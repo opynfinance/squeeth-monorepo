@@ -85,7 +85,7 @@ function CrabStrategyV2PnLChart() {
         valueSuffix: '%',
       },
       color: '#70E3F6',
-    }
+    },
   ]
 
   const axes = {
@@ -101,7 +101,7 @@ function CrabStrategyV2PnLChart() {
           },
         },
         gridLineColor: 'rgba(221,221,221,0.1)',
-      }
+      },
     ],
   }
 

@@ -1,7 +1,7 @@
 import { Typography, Box } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { motion } from 'framer-motion'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import React from 'react'
 
 import Logo from '../../../public/images/mint-squeeth.svg'

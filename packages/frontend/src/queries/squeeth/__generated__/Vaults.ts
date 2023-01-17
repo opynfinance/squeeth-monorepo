@@ -8,24 +8,24 @@
 // ====================================================
 
 export interface Vaults_vaults_owner {
-  __typename: "Account";
-  id: string;
+  __typename: 'Account'
+  id: string
 }
 
 export interface Vaults_vaults {
-  __typename: "Vault";
-  id: string;
-  shortAmount: any;
-  collateralAmount: any;
-  NftCollateralId: any | null;
-  owner: Vaults_vaults_owner;
-  operator: any | null;
+  __typename: 'Vault'
+  id: string
+  shortAmount: any
+  collateralAmount: any
+  NftCollateralId: any | null
+  owner: Vaults_vaults_owner
+  operator: any | null
 }
 
 export interface Vaults {
-  vaults: Vaults_vaults[];
+  vaults: Vaults_vaults[]
 }
 
 export interface VaultsVariables {
-  ownerId: string;
+  ownerId: string
 }

@@ -9,7 +9,7 @@ import { SQUEETH_BASE_URL, CRABV2_START_DATE, BULL_START_DATE } from '@constants
 const OMDB_BASE_URL = process.env.NEXT_PUBLIC_OMDB_BASE_URL as string
 
 export const config = {
-  runtime: 'experimental-edge',
+  runtime: 'edge',
 }
 
 const formatDuration = (duration: Duration) => {

@@ -20,9 +20,8 @@ Users utilizing Opyn’s gamma protocol infra also do not need to do anything.
 
 The Merge will occur around ETH mainnet block height of 15,540,293, which, at the time of writing, is [estimated to happen between Thu Sep 15 2:23 UTC & Thu Sep 15 3:33 UTC](https://bordel.wtf/). If The Merge delays and occurs within 1 hour of 8:00 UTC on Fri Sep 16, it’s possible that gamma contracts will be paused to ensure accurate oracle pricing for option expiration.
 
-*Note: Trading digital assets confers high risk due to large price fluctuations. Before trading, please have a full understanding of all the risks associated with investing in digital assets.*
+_Note: Trading digital assets confers high risk due to large price fluctuations. Before trading, please have a full understanding of all the risks associated with investing in digital assets._
 
-*It is your responsibility to understand the implications of the Merge. Opyn is not liable for any losses incurred.*
+_It is your responsibility to understand the implications of the Merge. Opyn is not liable for any losses incurred._
 
 We are looking forward to The Merge! Please reach out in [Discord](http://discord.gg/opyn) if you have any questions.
-

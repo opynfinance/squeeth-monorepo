@@ -15,7 +15,6 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { canStoreCookies, CookieNames, setCookie } from '@utils/cookies'
 
-
 const useStyles = makeStyles((theme) =>
   createStyles({
     navMenuStyle: {
@@ -64,7 +63,7 @@ const SettingMenu = () => {
   const [currentlyOver, setCurrentlyOver] = useState('')
   const [openModal, setOpenModal] = useState(false)
   const [openCookieModal, setOpenCookieModal] = useState(false)
-  const [consent, setCookieConsent] = useState(canStoreCookies());
+  const [consent, setCookieConsent] = useState(canStoreCookies())
   const open = Boolean(anchorEl)
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
@@ -89,16 +88,14 @@ const SettingMenu = () => {
   }
 
   const acceptCookie = () => {
-    setCookieConsent(true);
+    setCookieConsent(true)
     setCookie(CookieNames.Consent, 'true')
-  
-};
+  }
 
   const handleCookieConsentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setCookieConsent(event.target.checked);
-      setCookie(CookieNames.Consent, (event.target.checked).toString())
-    
-  };
+    setCookieConsent(event.target.checked)
+    setCookie(CookieNames.Consent, event.target.checked.toString())
+  }
 
   return (
     <>
@@ -155,19 +152,12 @@ const SettingMenu = () => {
               <Typography style={{ display: 'flex', alignItems: 'center' }}>
                 <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
 
-                <Link href="/terms-of-service">
-                  <a
-                    target="_blank"
-                    style={{ textDecoration: isOver && currentlyOver === 'tos' ? 'underline' : 'none' }}
-                  >
-                    Squeeth User Terms of Service
-                  </a>
+                <Link href="/terms-of-service" target="_blank">
+                  Squeeth User Terms of Service
                 </Link>
               </Typography>
-              <Link href="/terms-of-service">
-                <a target="_blank">
-                  <NorthEastOutlinedIcon />
-                </a>
+              <Link href="/terms-of-service" target="_blank">
+                <NorthEastOutlinedIcon />
               </Link>
             </ListItem>
             <ListItem
@@ -178,19 +168,12 @@ const SettingMenu = () => {
             >
               <Typography style={{ display: 'flex', alignItems: 'center' }}>
                 <InfoOutlinedIcon style={{ marginRight: '.25em' }} />
-                <Link href="/privacy-policy">
-                  <a
-                    target="_blank"
-                    style={{ textDecoration: isOver && currentlyOver === 'pp' ? 'underline' : 'none' }}
-                  >
-                    Opyn Privacy Policy
-                  </a>
+                <Link href="/privacy-policy" target="_blank">
+                  Opyn Privacy Policy
                 </Link>
               </Typography>
-              <Link href="/privacy-policy">
-                <a target="_blank">
-                  <NorthEastOutlinedIcon />
-                </a>
+              <Link href="/privacy-policy" target="_blank">
+                <NorthEastOutlinedIcon />
               </Link>
             </ListItem>
           </List>
@@ -241,7 +224,6 @@ const SettingMenu = () => {
         </Box>
       </Modal>
 
-
       <Modal
         open={openCookieModal}
         onClose={handleCookieModal}
@@ -252,31 +234,25 @@ const SettingMenu = () => {
           <Typography style={{ marginBottom: '1em' }} id="modal-modal-title" variant="h6" component="h2">
             Cookies Settings
           </Typography>
-          <Typography style={{marginBottom: '.75em', fontSize: '13px' }}>We use cookies to support technical features that enhance your user experience and analyze frontend traffic. 
-        To learn more about these methods, including how to disable them, view our {" "}
-                <MatLink href={`${location.origin}/privacy-policy`} target="_blank">
-                 Privacy Policy.
-                </MatLink>
+          <Typography style={{ marginBottom: '.75em', fontSize: '13px' }}>
+            We use cookies to support technical features that enhance your user experience and analyze frontend traffic.
+            To learn more about these methods, including how to disable them, view our{' '}
+            <MatLink href={`${location.origin}/privacy-policy`} target="_blank">
+              Privacy Policy.
+            </MatLink>
           </Typography>
 
-
           {consent ? (
-          <Switch
+            <Switch
               checked={consent}
               onChange={handleCookieConsentChange}
               inputProps={{ 'aria-label': 'controlled' }}
             />
-            ) : (
-
-           <Button
-            variant="outlined"
-            color="primary"
-            onClick={acceptCookie}
-          >
-            I Accept Cookies
-          </Button>
-             )}
-          
+          ) : (
+            <Button variant="outlined" color="primary" onClick={acceptCookie}>
+              I Accept Cookies
+            </Button>
+          )}
         </Box>
       </Modal>
     </>

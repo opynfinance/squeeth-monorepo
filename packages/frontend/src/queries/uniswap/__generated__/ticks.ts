@@ -8,17 +8,17 @@
 // ====================================================
 
 export interface ticks_ticks {
-  __typename: "Tick";
-  id: string;
-  tickIdx: any;
-  liquidityNet: any;
-  liquidityGross: any;
+  __typename: 'Tick'
+  id: string
+  tickIdx: any
+  liquidityNet: any
+  liquidityGross: any
 }
 
 export interface ticks {
-  ticks: ticks_ticks[];
+  ticks: ticks_ticks[]
 }
 
 export interface ticksVariables {
-  poolAddress: string;
+  poolAddress: string
 }

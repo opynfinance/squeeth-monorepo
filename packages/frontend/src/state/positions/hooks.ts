@@ -76,7 +76,7 @@ export const useSwaps = () => {
       variables: {
         origin: address || '',
         orderDirection: 'asc',
-        recipient_not_in: [crabStrategy, crabStrategy2,  flashBull, bullStrategy],
+        recipient_not_in: [crabStrategy, crabStrategy2, flashBull, bullStrategy],
         ...(networkId === Networks.MAINNET
           ? {
               tokenAddress: oSqueeth,

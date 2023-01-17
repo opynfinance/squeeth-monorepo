@@ -81,9 +81,9 @@ function BullStrategyPerformanceChart() {
         valueDecimals: 2,
         valueSuffix: '%',
       },
-    
+
       color: '#70E3F6',
-    }
+    },
   ]
 
   const axes = {

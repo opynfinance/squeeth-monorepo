@@ -1,7 +1,7 @@
 import { Tooltip, Typography, makeStyles } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import useStyles from './useStyles'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import { Tooltips } from '../../constants'
 import { useAtomValue } from 'jotai'
 import {
@@ -35,7 +35,7 @@ const BullPosition: React.FC = () => {
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <div className={classes.emoji}>
-            <Image src={bullStrategyImg} width="100%" alt="zen bull" />
+            <Image src={bullStrategyImg} alt="zen bull" layout="fill" />
           </div>
           <Typography style={{ marginLeft: '8px' }}>Zen Bull</Typography>
         </div>

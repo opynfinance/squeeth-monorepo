@@ -1,7 +1,7 @@
 import { Typography, InputAdornment, Box, ButtonBase, CircularProgress, Tooltip } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import clsx from 'clsx'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import BigNumber from 'bignumber.js'
 
 import { formatBalance, formatCurrency } from '@utils/formatter'
@@ -108,7 +108,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
                 <InputAdornment position="end">
                   <div className={classes.adornmentContainer}>
                     <div className={classes.logo}>
-                      <Image src={logo} alt="logo" width="100%" height="100%" />
+                      <Image src={logo} alt="logo" layout="fill" />
                     </div>
 
                     <Typography className={clsx(textClasses.lightestFontColor, textClasses.mediumBold)}>

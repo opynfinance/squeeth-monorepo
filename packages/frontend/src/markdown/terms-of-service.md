@@ -8,14 +8,13 @@
 
 #### 1. Introduction
 
-Welcome to https://squeeth.opyn.co, a website-hosted user interface, and any associated software or services (collectively the "Interface") provided by Opyn, Inc. (“Opyn”, "we", "our", or "us"). The Interface provides access to a decentralized protocol on the blockchain that allows users to transact certain digital assets through power perpetual contracts (the "Protocol"). The Opyn User Terms of Service is an agreement (“Agreement” or “Terms”) between Opyn, the owner and operator of the Interface, and you (“you”, “your” or “user(s)”), a user of the Interface. Where you enter into this Agreement on behalf of a legal entity or organization you represent and warrant that you have the authority to bind such legal entity or organization to this Agreement. 
+Welcome to https://squeeth.opyn.co, a website-hosted user interface, and any associated software or services (collectively the "Interface") provided by Opyn, Inc. (“Opyn”, "we", "our", or "us"). The Interface provides access to a decentralized protocol on the blockchain that allows users to transact certain digital assets through power perpetual contracts (the "Protocol"). The Opyn User Terms of Service is an agreement (“Agreement” or “Terms”) between Opyn, the owner and operator of the Interface, and you (“you”, “your” or “user(s)”), a user of the Interface. Where you enter into this Agreement on behalf of a legal entity or organization you represent and warrant that you have the authority to bind such legal entity or organization to this Agreement.
 
-PLEASE BE AWARE THAT THERE ARE ARBITRATION AND CLASS ACTION PROVISIONS THAT MAY AFFECT YOUR RIGHTS. 
+PLEASE BE AWARE THAT THERE ARE ARBITRATION AND CLASS ACTION PROVISIONS THAT MAY AFFECT YOUR RIGHTS.
 
 You must read this Agreement carefully. By accessing or using the Interface, you signify that you have read, understand, and agree to be bound by this Agreement in its entirety. If you do not agree to these Terms, you are not authorized to access or use the Interface.
 
 OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN THE UNITED STATES OF AMERICA (COLLECTIVELY, “US PERSONS”). MOREOVER, OUR INTERFACE IS NOT OFFERED TO PERSONS OR ENTITIES WHO RESIDE IN, ARE CITIZENS OF, ARE LOCATED IN, ARE INCORPORATED IN, OR HAVE A REGISTERED OFFICE IN ANY RESTRICTED TERRITORY, DEFINED BELOW (ANY SUCH PERSON OR ENTITY FROM A RESTRICTED TERRITORY, A “RESTRICTED PERSON”). WE DO NOT MAKE EXCEPTIONS; THEREFORE, IF YOU ARE A US PERSON OR RESTRICTED PERSON DO NOT ATTEMPT TO USE OUR PROTOCOL OR ACCESS OR ATTEMPT TO ACCESS THE INTERFACE. USE OF A VIRTUAL PRIVATE NETWORK (“VPN”) TO CIRCUMVENT THE RESTRICTIONS SET FORTH HEREIN IS PROHIBITED. WE RESERVE THE RIGHT TO RESTRICT ANY USER’S ACCESS TO THE INTERFACE SUBJECT TO ANY RESTRICTIONS WE MAY SET FORTH IN THIS AGREEMENT.
-
 
 #### 2. Use and Eligibility
 
@@ -41,7 +40,7 @@ You represent and warrant that you are at least the age of majority in your juri
 
 #### 4. Privacy
 
-We care about your privacy. Please note that when you use the Interface, you are interacting with Blockchain Technology, which provides transparency into your transactions. Opyn does not control and is not responsible for any information you make public on Blockchain Technology by either using the Interface or accessing the Protocol. 
+We care about your privacy. Please note that when you use the Interface, you are interacting with Blockchain Technology, which provides transparency into your transactions. Opyn does not control and is not responsible for any information you make public on Blockchain Technology by either using the Interface or accessing the Protocol.
 
 The only information we collect from you is your blockchain wallet address, completed transaction hashes, and the digital asset names, symbols, or other blockchain identifiers of the digital assets that you use for transactions. We do not collect any personal information from you (e.g., your name or other identifiers that can be linked to you). We do, however, use third-party service providers, like Alchemy and Fathom Analytics. We do not control how these third parties handle your data and you should review their privacy policies to understand how they collect, use, and share your personal information. For more information, please see our [Privacy Policy](https://squeeth.opyn.co/privacy-policy).
 
@@ -75,13 +74,11 @@ Any Digital Wallets connected to the Interface are non-custodial, meaning that O
 All information accessible through the Interface is for informational purposes only and should not be construed as investment, tax, or legal advice. You should not take, or refrain from taking, any action based on any information contained within the Interface or any other information that we make available at any time, including, without limitation, blog posts, articles, links to third-party content, discord content, news feeds, tutorials, tweets, and videos. Before you make any financial, legal, or other decisions involving the Interface, you should seek independent professional advice from an individual who is licensed and qualified in the area for which such advice would be appropriate.
 We are not your broker, intermediary, agent or advisor and have no fiduciary relationship or obligation with you when you use the Interface or Protocol. We have no liability for any of your activities or decisions made while using the Interface. This Agreement is not intended to, and does not, create or impose any fiduciary duties on us. To the fullest extent permitted by law, you acknowledge and agree that we owe no fiduciary duties or liabilities to you or any other party, and that to the extent any such duties or liabilities may exist at law or in equity, those duties and liabilities are hereby irrevocably disclaimed, waived, and eliminated. You further agree that the only duties and obligations that we owe you are those set out expressly in this Agreement.
 
-
 #### 9. Interface
 
 Use of the Interface, in particular for transactions involving Digital Assets, are highly volatile, experimental, and may carry financial risk. All transaction decisions are made solely by you. We accept no responsibility whatsoever for, and will in no circumstances be liable to you in connection with, your use of the Interface for performing Digital Asset transactions through the Protocol, including but not limited to you entering into any long short positions or trading Digital Assets.
 The Interface attempts to provide up-to-date information for all Digital Assets listed; however, due to the nature of Digital Assets some information may be out of date or inaccurate. As you control your own Digital Wallet you are solely responsible for verifying any information regarding the Digital Assets, the Interface, and the Protocol. No representation is made as to the accuracy, completeness, or appropriateness for any particular purpose of any information distributed via the Interface or otherwise encountered when using the Interface. We are not liable to you for any inaccurately quoted information including but not limited to Digital Asset rates or pricing rates for any Digital Assets.
 Our Interface cannot control the timing of any transactions, transaction times are based on your Digital Assets and the Blockchain Technology selected, and we are not liable or responsible for any delays or any issues due to untimeliness of any transactions initiated through the Interface. Use of the Interface is at your sole risk and liability.
-
 
 #### 10. Protocol
 
@@ -136,12 +133,13 @@ The name “Opyn,” “Opyn, Inc.”, the Opyn logo, any associated software, a
 #### 22. Assumption of Risk
 
 Transacting Digital Assets or using Blockchain Technology involves significant risks and potential for financial losses which may result in the theft or loss of some or all of your Digital Assets. Such risks include without limitation the following:
+
 - the Digital Assets and the Blockchain Technology are constantly under development making your Digital Assets vulnerable to hacking, breaches in security, flaws, errors, bugs, failures, loss, theft, and fraud (whether due to Opyn or otherwise);
 - Digital Assets may fail to operate, lose all value, or be changed in a manner including without limitation a fork or rollback of the underlying Blockchain Technology;
 - the Digital Assets may decrease in value or lose all of its value due to various factors including discovery of wrongful conduct, market manipulation, changes to the underlying Digital Asset or Blockchain Technology. Such factors could cause transaction costs to increase which may impact your use of the Interface;
 - suspension or cessation of support for an Digital Assets by Blockchain Technology service providers may result in a total loss or inability to transfer or access any Digital Assets; and
 - Digital Assets may lose value or functionality due to governmental action, laws, or regulation as there is uncertainty to the legal status and categorization of Digital Assets. Such actions could result in the loss of access to the Interface.
-You hereby assume and agree that Opyn will have no responsibility or liability for such risks. You hereby irrevocably waive, release, and discharge any and all claims, whether known or unknown to you, against Opyn, its affiliates and their respective shareholders, members, directors, officers, employees, contractors, agents, and representatives related to any of the risks set forth herein. You accept the risk of all use of the Digital Assets and are responsible for conducting your own independent analysis of the risks specific to the Digital Assets. You should not acquire any Digital Assets unless you have sufficient financial resources and can afford to lose all value of the Digital Assets.
+  You hereby assume and agree that Opyn will have no responsibility or liability for such risks. You hereby irrevocably waive, release, and discharge any and all claims, whether known or unknown to you, against Opyn, its affiliates and their respective shareholders, members, directors, officers, employees, contractors, agents, and representatives related to any of the risks set forth herein. You accept the risk of all use of the Digital Assets and are responsible for conducting your own independent analysis of the risks specific to the Digital Assets. You should not acquire any Digital Assets unless you have sufficient financial resources and can afford to lose all value of the Digital Assets.
 
 #### 23. Limitation of Liability
 

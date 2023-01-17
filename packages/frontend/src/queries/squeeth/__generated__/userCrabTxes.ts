@@ -8,20 +8,20 @@
 // ====================================================
 
 export interface userCrabTxes_crabStrategyTxes {
-  __typename: "CrabStrategyTx";
-  id: string;
-  type: string;
-  ethAmount: any;
-  wSqueethAmount: any | null;
-  lpAmount: any | null;
-  timestamp: any;
+  __typename: 'CrabStrategyTx'
+  id: string
+  type: string
+  ethAmount: any
+  wSqueethAmount: any | null
+  lpAmount: any | null
+  timestamp: any
 }
 
 export interface userCrabTxes {
-  crabStrategyTxes: userCrabTxes_crabStrategyTxes[];
+  crabStrategyTxes: userCrabTxes_crabStrategyTxes[]
 }
 
 export interface userCrabTxesVariables {
-  ownerId: string;
-  orderDirection: string;
+  ownerId: string
+  orderDirection: string
 }

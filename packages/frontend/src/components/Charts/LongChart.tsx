@@ -11,7 +11,7 @@ import {
 } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import { atom, useAtom, useAtomValue } from 'jotai'
 import React, { memo } from 'react'
 

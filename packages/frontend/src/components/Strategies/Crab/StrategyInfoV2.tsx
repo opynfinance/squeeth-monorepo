@@ -1,7 +1,7 @@
 import { Typography, Radio, RadioGroup, FormControl, FormControlLabel, FormLabel } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import React from 'react'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import clsx from 'clsx'
 
 import { Links } from '@constants/enums'

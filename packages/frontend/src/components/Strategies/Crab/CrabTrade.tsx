@@ -209,13 +209,13 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
     }
   }
 
-  if (isRestricted) {
-    return <RestrictionInfo />
-  }
-
   const isApprovalCall = useMemo(() => {
     return transactionData?.contractCall?.methodName === 'approve'
   }, [transactionData])
+
+  if (isRestricted) {
+    return <RestrictionInfo />
+  }
 
   if (currentEthValue.isZero()) {
     return null
@@ -271,12 +271,12 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
             {depositOption === 0 ? (
               !currentEthValue.isZero() ? (
                 <Typography variant="body2" color="textSecondary" style={{ marginTop: '20px' }}>
-                  Didn't migrate from Crab V1 during early access? Migration to V2 coming soon.
+                  Didn&apos;t migrate from Crab V1 during early access? Migration to V2 coming soon.
                 </Typography>
               ) : (
                 <>
                   <Typography variant="body2" color="textSecondary" style={{ marginTop: '8px' }}>
-                    You don't have a Crab v1 position to migrate
+                    You don&apos;t have a Crab v1 position to migrate
                   </Typography>
                 </>
               )
@@ -295,8 +295,8 @@ const CrabTrade: React.FC<CrabTradeType> = ({ maxCap, depositedAmount }) => {
                       depositError
                         ? depositError
                         : warning
-                          ? warning
-                          : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
+                        ? warning
+                        : `Balance ${toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(6)} ETH`
                     }
                     convertedValue={ethIndexPrice.times(ethAmount).toFixed(2)}
                     onActionClicked={() => setEthAmount(toTokenAmount(balance ?? BIG_ZERO, 18))}

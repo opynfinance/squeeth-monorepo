@@ -8,17 +8,17 @@
 // ====================================================
 
 export interface strategyQuery_strategy {
-  __typename: "Strategy";
-  id: string;
-  vaultId: any;
-  lastHedgeTx: string;
-  lastHedgeTimestamp: any;
+  __typename: 'Strategy'
+  id: string
+  vaultId: any
+  lastHedgeTx: string
+  lastHedgeTimestamp: any
 }
 
 export interface strategyQuery {
-  strategy: strategyQuery_strategy | null;
+  strategy: strategyQuery_strategy | null
 }
 
 export interface strategyQueryVariables {
-  strategyId: string;
+  strategyId: string
 }

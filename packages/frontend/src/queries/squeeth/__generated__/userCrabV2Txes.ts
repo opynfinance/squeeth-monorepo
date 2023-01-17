@@ -8,24 +8,24 @@
 // ====================================================
 
 export interface userCrabV2Txes_crabUserTxes {
-  __typename: "CrabUserTx";
-  id: string;
-  type: string;
-  ethAmount: any;
-  wSqueethAmount: any | null;
-  lpAmount: any | null;
-  timestamp: any;
-  excessEth: any | null;
-  erc20Token: string | null;
-  erc20Amount: any | null;
-  transaction: string;
+  __typename: 'CrabUserTx'
+  id: string
+  type: string
+  ethAmount: any
+  wSqueethAmount: any | null
+  lpAmount: any | null
+  timestamp: any
+  excessEth: any | null
+  erc20Token: string | null
+  erc20Amount: any | null
+  transaction: string
 }
 
 export interface userCrabV2Txes {
-  crabUserTxes: userCrabV2Txes_crabUserTxes[];
+  crabUserTxes: userCrabV2Txes_crabUserTxes[]
 }
 
 export interface userCrabV2TxesVariables {
-  ownerId: string;
-  orderDirection: string;
+  ownerId: string
+  orderDirection: string
 }

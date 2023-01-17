@@ -8,15 +8,15 @@
 // ====================================================
 
 export interface crabV2Auctions_hedgeOTCs {
-  __typename: "HedgeOTC";
-  id: string;
-  bidID: any;
-  quantity: any;
-  isBuying: boolean;
-  clearingPrice: any;
-  timestamp: any;
+  __typename: 'HedgeOTC'
+  id: string
+  bidID: any
+  quantity: any
+  isBuying: boolean
+  clearingPrice: any
+  timestamp: any
 }
 
 export interface crabV2Auctions {
-  hedgeOTCs: crabV2Auctions_hedgeOTCs[];
+  hedgeOTCs: crabV2Auctions_hedgeOTCs[]
 }

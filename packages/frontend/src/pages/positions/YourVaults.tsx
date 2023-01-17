@@ -22,30 +22,28 @@ const YourVaults: FC = () => {
     <>
       {vaults?.map((vault, index) => (
         <Link key={vault.id} href={`/vault/${vault.id}`} passHref>
-          <a>
-            <SqueethCard mt={index ? 2 : 0}>
-              <Grid container>
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="Id" />
-                  <Typography variant="body1">{vault.id}</Typography>
-                </Grid>
-
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="Short Amount" />
-                  <Typography variant="body1">
-                    {toTokenAmount(new BigNumber(vault.shortAmount), 18).toFixed(4)}&nbsp; oSQTH
-                  </Typography>
-                </Grid>
-
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="Collateral Amount" />
-                  <Typography variant="body1">
-                    {toTokenAmount(new BigNumber(vault.collateralAmount), 18).toFixed(4)}&nbsp; ETH
-                  </Typography>
-                </Grid>
+          <SqueethCard mt={index ? 2 : 0}>
+            <Grid container>
+              <Grid item md={4}>
+                <LabelWithTooltip labelVariant="caption" label="Id" />
+                <Typography variant="body1">{vault.id}</Typography>
               </Grid>
-            </SqueethCard>
-          </a>
+
+              <Grid item md={4}>
+                <LabelWithTooltip labelVariant="caption" label="Short Amount" />
+                <Typography variant="body1">
+                  {toTokenAmount(new BigNumber(vault.shortAmount), 18).toFixed(4)}&nbsp; oSQTH
+                </Typography>
+              </Grid>
+
+              <Grid item md={4}>
+                <LabelWithTooltip labelVariant="caption" label="Collateral Amount" />
+                <Typography variant="body1">
+                  {toTokenAmount(new BigNumber(vault.collateralAmount), 18).toFixed(4)}&nbsp; ETH
+                </Typography>
+              </Grid>
+            </Grid>
+          </SqueethCard>
         </Link>
       ))}
     </>

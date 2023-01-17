@@ -1,5 +1,5 @@
 import React from 'react'
-import Image from 'next/image'
+import Image from 'next/legacy/image'
 import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 
