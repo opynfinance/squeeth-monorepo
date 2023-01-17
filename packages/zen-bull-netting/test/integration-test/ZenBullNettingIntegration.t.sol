@@ -54,7 +54,10 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(user1WethBalanceBefore + amount, IERC20(WETH).balanceOf(user1));
-        assertEq(zenBullNettingWethBalanceBefore - amount, IERC20(WETH).balanceOf(address(zenBullNetting)));
+        assertEq(
+            zenBullNettingWethBalanceBefore - amount,
+            IERC20(WETH).balanceOf(address(zenBullNetting))
+        );
     }
 
     function testDequeueWethPartial() public {
@@ -69,10 +72,13 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         zenBullNetting.dequeueWeth(amountToDequeue, false);
         vm.stopPrank();
 
-        (address sender, uint256 amount, ) = zenBullNetting.getDepositReceipt(0);
+        (address sender, uint256 amount,) = zenBullNetting.getDepositReceipt(0);
 
         assertEq(user1WethBalanceBefore + amountToDequeue, IERC20(WETH).balanceOf(user1));
-        assertEq(zenBullNettingWethBalanceBefore - amountToDequeue, IERC20(WETH).balanceOf(address(zenBullNetting)));
+        assertEq(
+            zenBullNettingWethBalanceBefore - amountToDequeue,
+            IERC20(WETH).balanceOf(address(zenBullNetting))
+        );
         assertEq(sender, user1);
         assertEq(amount, amountToQueue - amountToDequeue);
     }
@@ -116,7 +122,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         zenBullNetting.toggleAuctionLive();
         assertEq(zenBullNetting.isAuctionLive(), true);
 
-        (, , uint256 receiptTimestamp) = zenBullNetting.getDepositReceipt(0);
+        (,, uint256 receiptTimestamp) = zenBullNetting.getDepositReceipt(0);
 
         vm.warp(receiptTimestamp + 1.1 weeks);
 
@@ -125,9 +131,11 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(user1WethBalanceBefore + amountToQueue, IERC20(WETH).balanceOf(user1));
-        assertEq(zenBullNettingWethBalanceBefore - amountToQueue, IERC20(WETH).balanceOf(address(zenBullNetting)));
+        assertEq(
+            zenBullNettingWethBalanceBefore - amountToQueue,
+            IERC20(WETH).balanceOf(address(zenBullNetting))
+        );
     }
-
 
     function _queueWeth(address _user, uint256 _amount) internal {
         vm.startPrank(_user);
