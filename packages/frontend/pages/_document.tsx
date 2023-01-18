@@ -7,13 +7,20 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+          <link rel="icon" href="/favicon.ico" />
+
+          {/*  preload fonts */}
           <link
             href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;300;400;500;700&display=swap"
-            rel="stylesheet"
+            rel="preload"
+            as="font"
+            crossOrigin="anonymous"
           />
           <link
             href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap"
-            rel="stylesheet"
+            rel="preload"
+            as="font"
+            crossOrigin="anonymous"
           />
         </Head>
         <body>
