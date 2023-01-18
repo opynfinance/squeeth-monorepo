@@ -13,8 +13,7 @@ interface SharePnlProps {
 }
 
 const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
-  console.log(strategy, depositedAt, pnl)
-  const url = 'https://squeeth.opyn.co'
+  const url = strategy === 'crab' ? 'https://squeeth.opyn.co/strategies' : 'https://squeeth.opyn.co/strategies/zenbull'
   const title = strategy === 'crab' ? 'Opyn Crab Strategy - Stack USDC' : 'Opyn Zen Bull Strategy - Stack ETH'
   const description =
     strategy === 'crab' ? 'Stack USDC when ETH is flat' : 'Stack ETH when ETH increases slow and steady'
@@ -50,8 +49,8 @@ const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { depositedAt, pnl } = context.query
-  return { props: { strategy: 'crab', depositedAt, pnl } }
+  const { strategy, depositedAt, pnl } = context.query
+  return { props: { strategy, depositedAt, pnl } }
 }
 
 export default SharePnl
