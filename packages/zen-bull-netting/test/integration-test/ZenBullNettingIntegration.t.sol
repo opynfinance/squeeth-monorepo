@@ -143,7 +143,9 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         );
     }
 
-    /********* as */
+    /**
+     * as
+     */
 
     function testDequeueZenBull() public {
         uint256 amount = 10e18;
