@@ -257,8 +257,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice queue Crab for withdraw from crab strategy
-     * @param _amount crab amount to withdraw
+     * @notice queue ZenBull token for withdraw from strategy
+     * @param _amount ZenBull amount to withdraw
      */
     function queueZenBull(uint256 _amount) external {
         require(_amount >= minZenBullAmount, "ZBN07");
