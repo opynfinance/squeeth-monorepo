@@ -45,10 +45,9 @@ contract ZenBullNettingBaseSetup is Test {
 
     function testIgnoreCoverageReport() public { }
 
-    function _queueWeth(address _user, uint256 _amount) internal {
+    function _queueEth(address _user, uint256 _amount) internal {
         vm.startPrank(_user);
-        IERC20(WETH).approve(address(zenBullNetting), _amount);
-        zenBullNetting.queueWeth(_amount);
+        zenBullNetting.queueEth{value: _amount}();
         vm.stopPrank();
     }
 

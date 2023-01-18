@@ -6,6 +6,8 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
+// lib
+import { Address } from "openzeppelin/utils/Address.sol";
 
 /**
  * Error codes
@@ -26,6 +28,8 @@ import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
  * @author Opyn team
  */
 contract ZenBullNetting is Ownable, EIP712 {
+    using Address for address payable;
+
     /// @dev typehash for signed orders
     bytes32 private constant _ZENBULL_NETTING_TYPEHASH = keccak256(
         "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
@@ -39,7 +43,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     bool public isAuctionLive;
 
     /// @dev min WETH amounts to withdraw or deposit via netting
-    uint256 public minWethAmount;
+    uint256 public minEthAmount;
     /// @dev min ZenBull amounts to withdraw or deposit via netting
     uint256 public minZenBullAmount;
     /// @dev array index of last processed deposits
@@ -62,7 +66,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     Receipt[] public withdraws;
 
     /// @dev WETH amount to deposit for an address
-    mapping(address => uint256) public wethBalance;
+    mapping(address => uint256) public ethBalance;
     /// @dev ZenBull amount to withdraw for an address
     mapping(address => uint256) public zenBullBalance;
     /// @dev indexes of deposit receipts of an address
@@ -95,7 +99,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     event SetMinZenBullAmount(uint256 oldAmount, uint256 newAmount);
-    event SetMinWethAmount(uint256 oldAmount, uint256 newAmount);
+    event SetMinEthAmount(uint256 oldAmount, uint256 newAmount);
     event SetDepositsIndex(uint256 oldDepositsIndex, uint256 newDepositsIndex);
     event SetWithdrawsIndex(uint256 oldWithdrawsIndex, uint256 newWithdrawsIndex);
     event SetAuctionTwapPeriod(uint32 previousTwap, uint32 newTwap);
@@ -107,7 +111,7 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 depositorsBalance,
         uint256 indexed receiptIndex
     );
-    event DequeueWeth(address indexed depositor, uint256 amount, uint256 depositorsBalance);
+    event DequeueEth(address indexed depositor, uint256 amount, uint256 depositorsBalance);
     event QueueZenBull(
         address indexed withdrawer,
         uint256 amount,
@@ -140,12 +144,12 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice set min Weth amount
-     * @param _amount the amount to be set as minWethAmount
+     * @notice set min ETH amount
+     * @param _amount the amount to be set as minEthAmount
      */
-    function setMinWethAmount(uint256 _amount) external onlyOwner {
-        emit SetMinWethAmount(minWethAmount, _amount);
-        minWethAmount = _amount;
+    function setMinEthAmount(uint256 _amount) external onlyOwner {
+        emit SetMinEthAmount(minEthAmount, _amount);
+        minEthAmount = _amount;
     }
 
     /**
@@ -205,19 +209,16 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /**
      * @notice queue WETH for deposit into ZenBull
-     * @param _amount WETH amount to deposit
      */
-    function queueWeth(uint256 _amount) external {
-        require(_amount >= minWethAmount, "ZBN03");
+    function queueEth() external payable {
+        require(msg.value >= minEthAmount, "ZBN03");
 
-        // update weth balance of user, add their receipt, and receipt index to user deposits index
-        wethBalance[msg.sender] = wethBalance[msg.sender] + _amount;
-        deposits.push(Receipt(msg.sender, _amount, block.timestamp));
+        // update eth balance of user, add their receipt, and receipt index to user deposits index
+        ethBalance[msg.sender] = ethBalance[msg.sender] + msg.value;
+        deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
 
-        IERC20(weth).transferFrom(msg.sender, address(this), _amount);
-
-        emit QueueWeth(msg.sender, _amount, wethBalance[msg.sender], deposits.length - 1);
+        emit QueueWeth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
     }
 
     /**
@@ -225,12 +226,12 @@ contract ZenBullNetting is Ownable, EIP712 {
      * @param _amount WETH amount to dequeue
      * @param _force forceWithdraw if deposited more than a week ago
      */
-    function dequeueWeth(uint256 _amount, bool _force) external {
+    function dequeueEth(uint256 _amount, bool _force) external {
         require(!isAuctionLive || _force, "ZBN04");
 
-        wethBalance[msg.sender] = wethBalance[msg.sender] - _amount;
+        ethBalance[msg.sender] = ethBalance[msg.sender] - _amount;
 
-        require(wethBalance[msg.sender] >= minWethAmount || wethBalance[msg.sender] == 0, "ZBN05");
+        require(ethBalance[msg.sender] >= minEthAmount || ethBalance[msg.sender] == 0, "ZBN05");
 
         // start withdrawing from the users last deposit
         uint256 toWithdraw = _amount;
@@ -251,9 +252,9 @@ contract ZenBullNetting is Ownable, EIP712 {
             }
         }
 
-        IERC20(weth).transfer(msg.sender, _amount);
+        payable(msg.sender).sendValue(_amount);
 
-        emit DequeueWeth(msg.sender, _amount, wethBalance[msg.sender]);
+        emit DequeueEth(msg.sender, _amount, ethBalance[msg.sender]);
     }
 
     /**
