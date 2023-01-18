@@ -27,14 +27,14 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-interface SharePnLProps {
+interface SharePnlProps {
   isPnlLoading: Boolean
   strategyName: 'crab' | 'zenbull'
   text: string
   sharePnlPageUrl: string
 }
 
-const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, strategyName, text, sharePnlPageUrl }) => {
+const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategyName, text, sharePnlPageUrl }) => {
   const classes = useStyles()
 
   const strategyUrl = strategyName === 'crab' ? 'squeeth.com/strategies' : 'squeeth.com/strategies/bull'
@@ -63,4 +63,4 @@ const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, strategyName, text, s
   )
 }
 
-export default SharePnL
+export default SharePnl
