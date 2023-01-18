@@ -1,20 +1,19 @@
 import Head from 'next/head'
 import { Box, Typography } from '@material-ui/core'
-import { useRouter } from 'next/router'
+import { GetServerSideProps } from 'next'
 
 import { SQUEETH_BASE_URL } from '@constants/index'
 
 type StrategyType = 'crab' | 'zenbull'
 
-const SharePnl = () => {
-  const router = useRouter()
-  const slug = (router.query.slug as string[]) || []
-  console.log(JSON.stringify(slug))
+interface SharePnlProps {
+  strategy: StrategyType
+  depositedAt: string
+  pnl: string
+}
 
-  const strategy = slug[0] as StrategyType
-  const depositedAt = slug[1]
-  const pnl = slug[2]
-
+const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
+  console.log(strategy, depositedAt, pnl)
   const url = 'https://squeeth.opyn.co'
   const title = strategy === 'crab' ? 'Opyn Crab Strategy - Stack USDC' : 'Opyn Zen Bull Strategy - Stack ETH'
   const description =
@@ -48,6 +47,16 @@ const SharePnl = () => {
       </Box>
     </>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const slug = (context.query.slug as string[]) || []
+  const strategy = slug[0] as StrategyType
+  const depositedAt = slug[1]
+  const pnl = slug[2]
+
+  // Pass data to the page via props
+  return { props: { strategy, depositedAt, pnl } }
 }
 
 export default SharePnl
