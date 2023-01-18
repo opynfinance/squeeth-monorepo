@@ -254,7 +254,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
         emit DequeueWeth(msg.sender, _amount, wethBalance[msg.sender]);
     }
-    
+
     /**
      * @notice queue Crab for withdraw from crab strategy
      * @param _amount crab amount to withdraw
