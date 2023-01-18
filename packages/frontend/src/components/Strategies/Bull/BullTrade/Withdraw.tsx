@@ -98,7 +98,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut)
+    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut).times(1.003)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(

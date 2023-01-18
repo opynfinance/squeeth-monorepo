@@ -198,7 +198,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const withdrawPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false
 
-    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw).times(1.003)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
