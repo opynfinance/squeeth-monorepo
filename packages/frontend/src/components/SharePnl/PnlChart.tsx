@@ -133,6 +133,10 @@ const useStyles = makeStyles((theme) =>
       lineHeight: '140%',
       fontFamily: 'DM Mono',
       marginLeft: '36px',
+      [theme.breakpoints.down('xs')]: {
+        marginLeft: '0px',
+        fontSize: '14px',
+      },
     },
   }),
 )
