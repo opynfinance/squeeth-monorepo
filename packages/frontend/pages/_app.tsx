@@ -145,7 +145,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
   return (
     <React.Fragment>
       <Head>
-        {/* <title>Squeeth</title>
+        <title>Squeeth</title>
         <meta
           name="description"
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
@@ -157,7 +157,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
           content="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
         />
         <meta name="twitter:image" content="https://squeeth.opyn.co/images/SqueethLogoMetadata-WhiteBg.png" />
-        <link rel="icon" href="/favicon.ico" /> */}
+        <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
 
