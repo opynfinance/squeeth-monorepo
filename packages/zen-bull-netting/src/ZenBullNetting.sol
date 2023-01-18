@@ -41,7 +41,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev WETH token address
     address private weth;
 
-    /// @dev array of deposit receipts
+    /// @dev array of WETH deposit receipts
     Receipt[] public deposits;
 
     /// @dev WEth amount to deposit for an address
@@ -86,6 +86,7 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 depositorsBalance,
         uint256 indexed receiptIndex
     );
+    event DequeueWeth(address indexed depositor, uint256 amount, uint256 depositorsBalance);
 
     constructor(address _weth) EIP712("ZenBullNetting", "1") {
         otcPriceTolerance = 5e16; // 5%
@@ -191,6 +192,42 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice withdraw WETH from queue
+     * @param _amount WETH amount to dequeue
+     * @param _force forceWithdraw if deposited more than a week ago
+     */
+    function dequeueWeth(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "ZBN04");
+
+        wethBalance[msg.sender] = wethBalance[msg.sender] - _amount;
+
+        require(wethBalance[msg.sender] >= minWethAmount || wethBalance[msg.sender] == 0, "ZBN05");
+
+        // start withdrawing from the users last deposit
+        uint256 toWithdraw = _amount;
+        uint256 lastDepositIndex = userDepositsIndex[msg.sender].length;
+        for (uint256 i = lastDepositIndex; i > 0; i--) {
+            Receipt storage receipt = deposits[userDepositsIndex[msg.sender][i - 1]];
+
+            if (_force) {
+                require(block.timestamp > receipt.timestamp + 1 weeks, "ZBN06");
+            }
+            if (receipt.amount > toWithdraw) {
+                receipt.amount -= toWithdraw;
+                break;
+            } else {
+                toWithdraw -= receipt.amount;
+                delete deposits[userDepositsIndex[msg.sender][i - 1]];
+                userDepositsIndex[msg.sender].pop();
+            }
+        }
+
+        IERC20(weth).transfer(msg.sender, _amount);
+
+        emit DequeueWeth(msg.sender, _amount, wethBalance[msg.sender]);
+    }
+
+    /**
      * @notice get the sum of queued WETH
      * @return sum WETH amount in queue
      */
@@ -202,5 +239,11 @@ contract ZenBullNetting is Ownable, EIP712 {
             j++;
         }
         return sum;
+    }
+
+    function getDepositReceipt(uint256 _index) external view returns (address, uint256, uint256) {
+        Receipt memory receipt = deposits[_index];
+
+        return (receipt.sender, receipt.amount, receipt.timestamp);
     }
 }

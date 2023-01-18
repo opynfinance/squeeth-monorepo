@@ -5,7 +5,6 @@ pragma abicoder v2;
 // test dependency
 import { console } from "forge-std/console.sol";
 import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
-
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 
@@ -152,10 +151,7 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
         uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
 
-        vm.startPrank(user1);
-        IERC20(WETH).approve(address(zenBullNetting), amount);
-        zenBullNetting.queueWeth(amount);
-        vm.stopPrank();
+        _queueWeth(user1, amount);
 
         assertEq(zenBullNetting.wethBalance(user1), amount);
         assertEq(
