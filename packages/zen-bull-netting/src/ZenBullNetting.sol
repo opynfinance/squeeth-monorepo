@@ -17,7 +17,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     );
     /// @dev OTC price tolerance cannot exceed 20%
     uint256 public constant MAX_OTC_PRICE_TOLERANCE = 2e17; // 20%
-    /// @dev min auction TWAP 
+    /// @dev min auction TWAP
     uint32 public constant MIN_AUCTION_TWAP = 180 seconds;
 
     /// @dev owner sets to true when starting auction
