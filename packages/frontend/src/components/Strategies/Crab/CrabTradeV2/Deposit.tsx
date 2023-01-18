@@ -72,13 +72,13 @@ enum DepositSteps {
 }
 
 const depositErrorPopupConfig: PopupConfig = {
-  text: 'Seems like you are having trouble depositing, would you like to speak to our support team ?',
+  text: 'Oops, something is not right on our side, would you like to speak to our support team ?',
   actions: [
     {
       label: 'Yes',
       closeAfterAction: true,
       onClick: () => {
-        sendCrispChatMessage('Hi, I am having trouble depositing into crab, need help!')
+        sendCrispChatMessage('Hi, I have encountered an issues with the site, need help!')
         openCrispChat()
       },
     },

@@ -46,7 +46,7 @@ export const useStyles = makeStyles((theme) =>
       cursor: 'pointer',
       transitionDuration: '200ms',
       '&:hover': {
-        backgroundColor: theme.palette.primary.main,
+        backgroundColor: theme.palette.background.default,
         color: '#000',
       },
     },
