@@ -10,6 +10,7 @@ optimizer_runs = 2000
 [profile.test]
 no_match_test = "Fuzzing"
 no_match_contract = "Fuzz"
+gas_reports = ["ZenBullNetting"]
 
 [profile.fuzz]
 runs = 2000
