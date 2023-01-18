@@ -12,10 +12,12 @@ import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
  * ZBN01: Auction TWAP is less than min value
  * ZBN02: OTC price tolerance is greater than max OTC tolerance price
  * ZBN03: Amount to queue for deposit is less than min amount
- * ZBN04: Can not dequeue deposited amount
- * ZBN05: Amount of deposit left in the queue is less than min amount
+ * ZBN04: Can not dequeue deposited amount because auction is already live and force dequeued not activated
+ * ZBN05: Amount of ETH to deposit left in the queue is less than min amount
  * ZBN06: Queued deposit is not longer than 1 week to force dequeue
  * ZBN07: Amount of ZenBull to queue for withdraw is less than min amount
+ * ZBN08: Amount of ZenBull to withdraw left in the queue is less than min amount
+ * ZBN09: Queued withdraw is not longer than 1 week to force dequeue
  */
 
 /**
@@ -61,7 +63,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /// @dev WETH amount to deposit for an address
     mapping(address => uint256) public wethBalance;
-    /// @dev crab amount to withdraw for an address
+    /// @dev ZenBull amount to withdraw for an address
     mapping(address => uint256) public zenBullBalance;
     /// @dev indexes of deposit receipts of an address
     mapping(address => uint256[]) public userDepositsIndex;
@@ -86,7 +88,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     struct Receipt {
         /// @dev address of the depositor or withdrawer
         address sender;
-        /// @dev usdc amount to queue for deposit or crab amount to queue for withdrawal
+        /// @dev ETH amount to queue for deposit or ZenBull amount to queue for withdrawal
         uint256 amount;
         /// @dev time of deposit
         uint256 timestamp;
@@ -112,6 +114,7 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 withdrawersBalance,
         uint256 indexed receiptIndex
     );
+    event DequeueZenBull(address indexed withdrawer, uint256 amount, uint256 withdrawersBalance);
 
     constructor(address _weth, address _zenBull) EIP712("ZenBullNetting", "1") {
         otcPriceTolerance = 5e16; // 5%
@@ -201,8 +204,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice queue USDC for deposit into crab strategy
-     * @param _amount USDC amount to deposit
+     * @notice queue WETH for deposit into ZenBull
+     * @param _amount WETH amount to deposit
      */
     function queueWeth(uint256 _amount) external {
         require(_amount >= minWethAmount, "ZBN03");
@@ -254,8 +257,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice queue Crab for withdraw from crab strategy
-     * @param _amount crab amount to withdraw
+     * @notice queue ZenBull token for withdraw from strategy
+     * @param _amount ZenBull amount to withdraw
      */
     function queueZenBull(uint256 _amount) external {
         require(_amount >= minZenBullAmount, "ZBN07");
@@ -267,6 +270,44 @@ contract ZenBullNetting is Ownable, EIP712 {
         IERC20(zenBull).transferFrom(msg.sender, address(this), _amount);
 
         emit QueueZenBull(msg.sender, _amount, zenBullBalance[msg.sender], withdraws.length - 1);
+    }
+
+    /**
+     * @notice withdraw ZenBull from queue
+     * @param _amount ZenBull amount to dequeue
+     * @param _force forceWithdraw if queued more than a week ago
+     */
+    function dequeueZenBull(uint256 _amount, bool _force) external {
+        require(!isAuctionLive || _force, "ZBN04");
+
+        zenBullBalance[msg.sender] = zenBullBalance[msg.sender] - _amount;
+
+        require(
+            zenBullBalance[msg.sender] >= minZenBullAmount || zenBullBalance[msg.sender] == 0,
+            "ZBN08"
+        );
+
+        // deQueue ZenBull from the last, last in first out
+        uint256 toRemove = _amount;
+        uint256 lastWithdrawIndex = userWithdrawsIndex[msg.sender].length;
+        for (uint256 i = lastWithdrawIndex; i > 0; i--) {
+            Receipt storage receipt = withdraws[userWithdrawsIndex[msg.sender][i - 1]];
+            if (_force) {
+                require(block.timestamp > receipt.timestamp + 1 weeks, "ZBN09");
+            }
+            if (receipt.amount > toRemove) {
+                receipt.amount -= toRemove;
+                break;
+            } else {
+                toRemove -= receipt.amount;
+                delete withdraws[userWithdrawsIndex[msg.sender][i - 1]];
+                userWithdrawsIndex[msg.sender].pop();
+            }
+        }
+
+        IERC20(zenBull).transfer(msg.sender, _amount);
+
+        emit DequeueZenBull(msg.sender, _amount, zenBullBalance[msg.sender]);
     }
 
     /**
@@ -291,7 +332,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /**
      * @notice get the sum of queued ZenBull
-     * @return sum crab amount in queue
+     * @return sum ZenBull amount in queue
      */
     function withdrawsQueued() external view returns (uint256) {
         uint256 j = withdrawsIndex;

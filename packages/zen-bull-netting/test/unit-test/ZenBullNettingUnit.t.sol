@@ -180,7 +180,8 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     function testQueueZenBull() public {
         uint256 amount = 5e18;
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
-        uint256 zenBullNettingZenhBalanceBefore = IERC20(ZEN_BULL).balanceOf(address(zenBullNetting));
+        uint256 zenBullNettingZenhBalanceBefore =
+            IERC20(ZEN_BULL).balanceOf(address(zenBullNetting));
 
         _queueZenBull(user1, amount);
 
