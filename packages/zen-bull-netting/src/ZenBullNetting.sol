@@ -42,7 +42,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev owner sets to true when starting auction
     bool public isAuctionLive;
 
-    /// @dev min WETH amounts to withdraw or deposit via netting
+    /// @dev min ETH amounts to withdraw or deposit via netting
     uint256 public minEthAmount;
     /// @dev min ZenBull amounts to withdraw or deposit via netting
     uint256 public minZenBullAmount;
@@ -60,12 +60,12 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev ZenBull token address
     address private zenBull;
 
-    /// @dev array of WETH deposit receipts
+    /// @dev array of ETH deposit receipts
     Receipt[] public deposits;
     /// @dev array of ZenBull withdrawal receipts
     Receipt[] public withdraws;
 
-    /// @dev WETH amount to deposit for an address
+    /// @dev ETH amount to deposit for an address
     mapping(address => uint256) public ethBalance;
     /// @dev ZenBull amount to withdraw for an address
     mapping(address => uint256) public zenBullBalance;
@@ -105,7 +105,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     event SetAuctionTwapPeriod(uint32 previousTwap, uint32 newTwap);
     event SetOTCPriceTolerance(uint256 previousTolerance, uint256 newOtcPriceTolerance);
     event ToggledAuctionLive(bool isAuctionLive);
-    event QueueWeth(
+    event QueueEth(
         address indexed depositor,
         uint256 amount,
         uint256 depositorsBalance,
@@ -208,7 +208,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice queue WETH for deposit into ZenBull
+     * @notice queue ETH for deposit into ZenBull
      */
     function queueEth() external payable {
         require(msg.value >= minEthAmount, "ZBN03");
@@ -218,12 +218,12 @@ contract ZenBullNetting is Ownable, EIP712 {
         deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
 
-        emit QueueWeth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
+        emit QueueEth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
     }
 
     /**
-     * @notice withdraw WETH from queue
-     * @param _amount WETH amount to dequeue
+     * @notice withdraw ETH from queue
+     * @param _amount ETH amount to dequeue
      * @param _force forceWithdraw if deposited more than a week ago
      */
     function dequeueEth(uint256 _amount, bool _force) external {
@@ -328,8 +328,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice get the sum of queued WETH
-     * @return sum WETH amount in queue
+     * @notice get the sum of queued ETH
+     * @return sum ETH amount in queue
      */
     function depositsQueued() external view returns (uint256) {
         uint256 j = depositsIndex;

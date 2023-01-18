@@ -166,7 +166,6 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         uint256 amount = zenBullNetting.minEthAmount() - 1;
 
         vm.startPrank(user1);
-        IERC20(WETH).approve(address(zenBullNetting), amount);
         vm.expectRevert(bytes("ZBN03"));
         zenBullNetting.queueEth{value: amount}();
         vm.stopPrank();
