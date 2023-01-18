@@ -180,12 +180,12 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   )
 }
 
-const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
-  res.arrayBuffer(),
-)
-const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.meta.url).toString()).then((res) =>
-  res.arrayBuffer(),
-)
+// const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
+//   res.arrayBuffer(),
+// )
+// const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.meta.url).toString()).then((res) =>
+//   res.arrayBuffer(),
+// )
 
 const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endTimestamp: number) => {
   console.log('fetching pnl data', strategy, startTimestamp, endTimestamp)
@@ -209,12 +209,17 @@ const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endT
 
 export default async function handler(req: NextRequest) {
   try {
-    const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
+    // const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
 
-    const { searchParams } = new URL(req.url)
-    const strategy = searchParams.get('strategy') as StrategyType
-    const depositedAt = searchParams.get('depositedAt')
-    const pnl = searchParams.get('pnl')
+    const { pathname, searchParams } = new URL(req.url)
+    const path = pathname.split('/').filter((x) => x)
+    const strategy = path[2] as StrategyType
+    const depositedAt = path[3]
+    const pnl = path[4]
+
+    // const strategy = searchParams.get('strategy') as StrategyType
+    // const depositedAt = searchParams.get('depositedAt')
+    // const pnl = searchParams.get('pnl')
     console.log('query params', strategy, depositedAt, pnl)
 
     if (!strategy || !depositedAt || !pnl) {
@@ -249,20 +254,20 @@ export default async function handler(req: NextRequest) {
       {
         width: 1200,
         height: 630,
-        fonts: [
-          {
-            name: 'DMSans',
-            data: fontData,
-            style: 'normal',
-            weight: 400,
-          },
-          {
-            name: 'DMSans',
-            data: fontMediumData,
-            style: 'normal',
-            weight: 500,
-          },
-        ],
+        // fonts: [
+        //   {
+        //     name: 'DMSans',
+        //     data: fontData,
+        //     style: 'normal',
+        //     weight: 400,
+        //   },
+        //   {
+        //     name: 'DMSans',
+        //     data: fontMediumData,
+        //     style: 'normal',
+        //     weight: 500,
+        //   },
+        // ],
       },
     )
   } catch (e: any) {

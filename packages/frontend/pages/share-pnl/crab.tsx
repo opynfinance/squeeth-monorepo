@@ -13,7 +13,7 @@ const SharePnl = () => {
   const url = 'https://squeeth.opyn.co'
   const title = `Opyn Crab Strategy - Stack USDC`
   const description = `Stack USDC when ETH is flat`
-  const ogImageUrl = SQUEETH_BASE_URL + '/api/pnl?strategy=' + strategy + '&depositedAt=' + depositedAt + '&pnl=' + pnl
+  const ogImageUrl = SQUEETH_BASE_URL + '/api/pnl/' + strategy + '/' + depositedAt + '/' + pnl
 
   return (
     <>
