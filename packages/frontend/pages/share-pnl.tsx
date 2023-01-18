@@ -25,6 +25,7 @@ const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
         description={description}
         canonical={SQUEETH_BASE_URL}
         openGraph={{
+          type: 'website',
           images: [
             {
               url: ogImageUrl,
