@@ -44,7 +44,7 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategyName, text, s
     return null
   }
 
-  const postText = encodeURIComponent(`${text} at ${strategyUrl} ${strategyEmoji}`)
+  const postText = encodeURIComponent(`${text} ${strategyEmoji}`)
   const encodedUrl = encodeURIComponent(sharePnlPageUrl)
 
   const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${encodedUrl}`
