@@ -55,7 +55,7 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   const strategyDuration = intervalToDuration({ start: new Date(), end: date })
   const formattedDuration = formatDuration(strategyDuration)
 
-  const pnlColor = pnl > 0 ? '#67fabf' : '#FA7B67'
+  const pnlColor = pnl >= 0 ? '#67fabf' : '#FA7B67'
 
   const xMax = Math.max(...pnlData.map(([x]) => x))
   const xMin = Math.min(...pnlData.map(([x]) => x))
@@ -180,16 +180,14 @@ const UserPnl: React.FC<UserPnlProps> = ({ strategy, depositTimestamp, pnl, pnlD
   )
 }
 
-// const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
-//   res.arrayBuffer(),
-// )
-// const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.meta.url).toString()).then((res) =>
-//   res.arrayBuffer(),
-// )
+const font = fetch(new URL('../../public/fonts/DMSans-Regular.ttf', import.meta.url).toString()).then((res) =>
+  res.arrayBuffer(),
+)
+const fontMedium = fetch(new URL('../../public/fonts/DMSans-Medium.ttf', import.meta.url).toString()).then((res) =>
+  res.arrayBuffer(),
+)
 
 const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endTimestamp: number) => {
-  console.log('fetching pnl data', strategy, startTimestamp, endTimestamp)
-
   if (strategy === 'crab') {
     const response = await fetch(
       `${OMDB_BASE_URL}/metrics/crabv2?start_timestamp=${startTimestamp}&end_timestamp=${endTimestamp}`,
@@ -209,13 +207,12 @@ const fetchPnlData = async (strategy: StrategyType, startTimestamp: number, endT
 
 export default async function handler(req: NextRequest) {
   try {
-    // const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
+    const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
 
     const { searchParams } = new URL(req.url)
     const strategy = searchParams.get('strategy') as StrategyType
     const depositedAt = searchParams.get('depositedAt')
     const pnl = searchParams.get('pnl')
-    console.log('query params', strategy, depositedAt, pnl)
 
     if (!strategy || !depositedAt || !pnl) {
       return new Response(`Missing "strategy", "depositedAt" or "pnl" query param`, {
@@ -249,20 +246,20 @@ export default async function handler(req: NextRequest) {
       {
         width: 1200,
         height: 630,
-        // fonts: [
-        //   {
-        //     name: 'DMSans',
-        //     data: fontData,
-        //     style: 'normal',
-        //     weight: 400,
-        //   },
-        //   {
-        //     name: 'DMSans',
-        //     data: fontMediumData,
-        //     style: 'normal',
-        //     weight: 500,
-        //   },
-        // ],
+        fonts: [
+          {
+            name: 'DMSans',
+            data: fontData,
+            style: 'normal',
+            weight: 400,
+          },
+          {
+            name: 'DMSans',
+            data: fontMediumData,
+            style: 'normal',
+            weight: 500,
+          },
+        ],
       },
     )
   } catch (e: any) {
