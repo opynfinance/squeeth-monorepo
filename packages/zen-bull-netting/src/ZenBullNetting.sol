@@ -95,7 +95,10 @@ contract ZenBullNetting is Ownable, EIP712 {
     );
     event DequeueWeth(address indexed depositor, uint256 amount, uint256 depositorsBalance);
     event QueueZenBull(
-        address indexed withdrawer, uint256 amount, uint256 withdrawersBalance, uint256 indexed receiptIndex
+        address indexed withdrawer,
+        uint256 amount,
+        uint256 withdrawersBalance,
+        uint256 indexed receiptIndex
     );
 
     constructor(address _weth, address _zenBull) EIP712("ZenBullNetting", "1") {
@@ -237,7 +240,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
         emit DequeueWeth(msg.sender, _amount, wethBalance[msg.sender]);
     }
-    
+
     /**
      * @notice queue Crab for withdraw from crab strategy
      * @param _amount crab amount to withdraw
