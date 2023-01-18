@@ -37,13 +37,14 @@ interface SharePnlProps {
 const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategyName, text, sharePnlPageUrl }) => {
   const classes = useStyles()
 
+  const strategyUrl = strategyName === 'crab' ? 'squeeth.com/strategies' : 'squeeth.com/strategies/bull'
   const strategyEmoji = strategyName === 'crab' ? '🦀' : '🧘🐂 '
 
   if (isPnlLoading) {
     return null
   }
 
-  const postText = encodeURIComponent(`${text} ${strategyEmoji}`)
+  const postText = encodeURIComponent(`${text} at ${strategyUrl} ${strategyEmoji}`)
   const encodedUrl = encodeURIComponent(sharePnlPageUrl)
 
   const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${encodedUrl}`
