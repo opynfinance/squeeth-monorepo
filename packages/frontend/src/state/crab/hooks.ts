@@ -93,6 +93,7 @@ import { getEthPriceAtHedge } from '@utils/pricer'
 import { squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
+import usePopup, { GenericErrorPopupConfig } from '@hooks/usePopup'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -643,6 +644,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const { getExactIn } = useUniswapQuoter()
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
 
   const usdcFee = getUSDCPoolFee(network)
 
@@ -712,6 +714,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
         return tx
       } catch (e: any) {
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
         track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
@@ -727,6 +730,7 @@ export const useQueueDepositUSDC = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
 
   const depositUSDC = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -743,6 +747,7 @@ export const useQueueDepositUSDC = () => {
         track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
       } catch (e: any) {
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
         track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
@@ -758,6 +763,7 @@ export const useQueueWithdrawCrab = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
 
   const queueWithdraw = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -775,6 +781,7 @@ export const useQueueWithdrawCrab = () => {
         track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
       } catch (e: any) {
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
         track(CRAB_EVENTS.WITHDRAW_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
       }
@@ -818,6 +825,7 @@ export const useFlashWithdrawV2 = () => {
   const { crabStrategy2 } = useAtomValue(addressesAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
 
   const flashWithdraw = useCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
@@ -857,6 +865,7 @@ export const useFlashWithdrawV2 = () => {
         return tx
       } catch (e: any) {
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.WITHDRAW_CRAB_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
         track(CRAB_EVENTS.WITHDRAW_CRAB_FAILED, { code: e?.code })
         throw e
       }
@@ -875,6 +884,7 @@ export const useFlashWithdrawV2USDC = () => {
   const { getExactIn } = useUniswapQuoter()
   const { track } = useAmplitude()
   const { usdc, weth, crabStrategy2 } = useAtomValue(addressesAtom)
+  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
   const network = useAtomValue(networkIdAtom)
 
   const usdcFee = getUSDCPoolFee(network)
@@ -935,6 +945,7 @@ export const useFlashWithdrawV2USDC = () => {
         e?.code === REVERTED_TRANSACTION_CODE
           ? track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_REVERT, { amount: amount.toNumber() })
           : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
         track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_FAILED, { code: e?.code, message: e?.message, amount: amount.toNumber() })
       }
     },

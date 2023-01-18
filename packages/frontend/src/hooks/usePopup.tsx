@@ -3,6 +3,8 @@ import Slide from '@material-ui/core/Slide'
 import ReactDOM from 'react-dom'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { openCrispChat, sendCrispChatMessage } from '@utils/crisp-chat'
+import useAmplitude from './useAmplitude'
+import { SITE_EVENTS } from '@utils/amplitude'
 
 export const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,6 +59,7 @@ export const useStyles = makeStyles((theme) =>
 interface PopupAction {
   label?: string
   closeAfterAction?: boolean
+  analyticsEvent?: string
   isClosingAction?: boolean
   onClick?: () => void
 }
@@ -73,11 +76,13 @@ interface PopupProps extends PopupConfig {
 
 const Popup = ({ text, actions = [], showPopup, hide }: PopupProps) => {
   const classes = useStyles()
+  const { track } = useAmplitude()
 
   const onClickAction = useCallback(
-    (action?: () => void, closeAfterAction?: boolean) => {
-      action?.()
-      closeAfterAction ? hide?.() : null
+    (action: PopupAction) => {
+      action.onClick?.()
+      action.analyticsEvent ? track(action.analyticsEvent, { action: action.label }) : null
+      action.closeAfterAction ? hide?.() : null
     },
     [hide],
   )
@@ -89,7 +94,7 @@ const Popup = ({ text, actions = [], showPopup, hide }: PopupProps) => {
           {actions.map((action) => (
             <button
               key={action.label}
-              onClick={() => onClickAction(action.onClick, action.closeAfterAction)}
+              onClick={() => onClickAction(action)}
               type="button"
               className={classes.popupAction}
             >
@@ -105,8 +110,13 @@ const popupRoot = typeof document !== 'undefined' ? document.getElementById('pop
 
 const usePopup = (config: PopupConfig) => {
   const [showPopup, setShowPopup] = useState(false)
+  const { track } = useAmplitude()
 
-  const show = () => setShowPopup(true)
+  const show = useCallback(() => {
+    setShowPopup(true)
+    track(SITE_EVENTS.SHOW_ERROR_FEEDBACK_POPUP, { title: config?.text })
+  }, [track, config?.text])
+
   const hide = () => setShowPopup(false)
 
   const actions = useMemo(() => {
@@ -134,6 +144,7 @@ export const GenericErrorPopupConfig: PopupConfig = {
     {
       label: 'Yes',
       closeAfterAction: true,
+      analyticsEvent: SITE_EVENTS.CLICK_ERROR_FEEDBACK_ACTION,
       onClick: () => {
         sendCrispChatMessage('Hi, I have encountered an issues with the site, need help!')
         openCrispChat()
@@ -141,6 +152,7 @@ export const GenericErrorPopupConfig: PopupConfig = {
     },
     {
       label: 'No Thanks',
+      analyticsEvent: SITE_EVENTS.CLICK_ERROR_FEEDBACK_ACTION,
       isClosingAction: true,
     },
   ],
