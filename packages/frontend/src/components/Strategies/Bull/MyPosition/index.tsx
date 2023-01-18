@@ -10,9 +10,11 @@ import {
   bullEthPnlPerctAtom,
   bullPositionLoadedAtom,
   isBullPositionRefetchingAtom,
+  bullFirstDepositTimestampAtom,
 } from '@state/bull/atoms'
+import { SQUEETH_BASE_URL } from '@constants/index'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import SharePnL from '@components/Strategies/SharePnL'
+import SharePnl from '@components/Strategies/SharePnl'
 import PnL from './PnL'
 import useStyles from '@components/Strategies/styles'
 
@@ -21,6 +23,7 @@ const BullPosition: React.FC = () => {
   const bullUsdcPosition = useAtomValue(bullCurrentUSDCPositionAtom)
   const bullEthPnL = useAtomValue(bullEthPnlAtom)
   const bullEthPnlPerct = useAtomValue(bullEthPnlPerctAtom)
+  const firstDepositTimestamp = useAtomValue(bullFirstDepositTimestampAtom)
 
   const classes = useStyles()
 
@@ -33,7 +36,7 @@ const BullPosition: React.FC = () => {
 
   if (loading || isPositionRefetching) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="98px">
+      <Box display="flex" alignItems="flex-start" marginTop="8px" height="108px">
         <Box display="flex" alignItems="center" gridGap="20px">
           <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
           <Typography className={classes.text}>Fetching current position...</Typography>
@@ -46,8 +49,8 @@ const BullPosition: React.FC = () => {
   const pnlFormatted = formatNumber(pnlPercent)
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
-  const sharePnLText = `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
-  const sharePnLUrl = 'squeeth.com/strategies/bull'
+  const sharePnlText = `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
+  const sharePnlPageUrl = `${SQUEETH_BASE_URL}/share-pnl?strategy=zenbull&pnl=${pnlFormatted}&depositedAt=${firstDepositTimestamp}`
 
   const isPnlLoading = !bullEthPnL.isFinite()
 
@@ -71,7 +74,12 @@ const BullPosition: React.FC = () => {
         </Box>
       </div>
 
-      <SharePnL isPnlLoading={isPnlLoading} text={sharePnLText} url={sharePnLUrl} />
+      <SharePnl
+        isPnlLoading={isPnlLoading}
+        strategyName="zenbull"
+        text={sharePnlText}
+        sharePnlPageUrl={sharePnlPageUrl}
+      />
     </Box>
   )
 }
