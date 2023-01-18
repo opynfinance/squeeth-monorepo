@@ -8,6 +8,17 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 
 /**
+ * Error codes
+ * ZBN01: Auction TWAP is less than min value
+ * ZBN02: OTC price tolerance is greater than max OTC tolerance price
+ * ZBN03: Amount to queue for deposit is less than min amount
+ * ZBN04: Can not dequeue deposited amount
+ * ZBN05: Amount of deposit left in the queue is less than min amount
+ * ZBN06: Queued deposit is not longer than 1 week to force dequeue
+ * ZBN07: Amount of ZenBull to queue for withdraw is less than min amount
+ */
+
+/**
  * @dev ZenBullNetting contract
  * @notice Contract for Netting Deposits and Withdrawals in ZenBull
  * @author Opyn team
@@ -48,7 +59,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev array of ZenBull withdrawal receipts
     Receipt[] public withdraws;
 
-    /// @dev WEth amount to deposit for an address
+    /// @dev WETH amount to deposit for an address
     mapping(address => uint256) public wethBalance;
     /// @dev crab amount to withdraw for an address
     mapping(address => uint256) public zenBullBalance;
@@ -274,6 +285,26 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     function getDepositReceipt(uint256 _index) external view returns (address, uint256, uint256) {
         Receipt memory receipt = deposits[_index];
+
+        return (receipt.sender, receipt.amount, receipt.timestamp);
+    }
+
+    /**
+     * @notice get the sum of queued ZenBull
+     * @return sum crab amount in queue
+     */
+    function withdrawsQueued() external view returns (uint256) {
+        uint256 j = withdrawsIndex;
+        uint256 sum;
+        while (j < withdraws.length) {
+            sum = sum + withdraws[j].amount;
+            j++;
+        }
+        return sum;
+    }
+
+    function getWithdrawReceipt(uint256 _index) external view returns (address, uint256, uint256) {
+        Receipt memory receipt = withdraws[_index];
 
         return (receipt.sender, receipt.amount, receipt.timestamp);
     }
