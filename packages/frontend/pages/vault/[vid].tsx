@@ -21,6 +21,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
+import { NextSeo } from 'next-seo'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
@@ -30,7 +31,7 @@ import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
 import TradeInfoItem from '@components/TradeOld/TradeInfoItem'
 import { Tooltips } from '@constants/enums'
-import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS } from '../../src/constants'
+import { BIG_ZERO, MIN_COLLATERAL_AMOUNT, OSQUEETH_DECIMALS, SQUEETH_BASE_URL } from '../../src/constants'
 import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
@@ -1202,4 +1203,33 @@ const Main: React.FC = () => {
   return <Component />
 }
 
-export default Main
+const Page: React.FC = () => {
+  return (
+    <>
+      <NextSeo
+        title="Squeeth"
+        description="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        canonical={SQUEETH_BASE_URL}
+        openGraph={{
+          images: [
+            {
+              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
+              width: 1200,
+              height: 630,
+              alt: 'Squeeth',
+            },
+          ],
+        }}
+        twitter={{
+          handle: '@opyn_',
+          site: '@opyn_',
+          cardType: 'summary_large_image',
+        }}
+      />
+
+      <Main />
+    </>
+  )
+}
+
+export default Page

@@ -12,15 +12,11 @@ export default class MyDocument extends Document {
           {/*  preload fonts */}
           <link
             href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;300;400;500;700&display=swap"
-            rel="preload"
-            as="font"
-            crossOrigin="anonymous"
+            rel="stylesheet"
           />
           <link
             href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap"
-            rel="preload"
-            as="font"
-            crossOrigin="anonymous"
+            rel="stylesheet"
           />
         </Head>
         <body>
