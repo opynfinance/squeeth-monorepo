@@ -1,5 +1,5 @@
 import { Box, ButtonBase } from '@material-ui/core'
-import React, { memo } from 'react'
+import React from 'react'
 import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -7,6 +7,9 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 const useStyles = makeStyles((theme) =>
   createStyles({
     buttonRoot: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       border: '1px solid #fff',
       borderRadius: '100%',
       width: '26px',
@@ -18,30 +21,34 @@ const useStyles = makeStyles((theme) =>
       transition: 'background-color 0.1s ease-in',
     },
     icon: {
-      width: '14px',
-      height: '14px',
+      width: '13px',
+      height: '13px',
     },
   }),
 )
 
-interface SharePnLProps {
+interface SharePnlProps {
   isPnlLoading: Boolean
+  strategyName: 'crab' | 'zenbull'
   text: string
-  url: string
+  sharePnlPageUrl: string
 }
 
-const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, text, url }) => {
+const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategyName, text, sharePnlPageUrl }) => {
   const classes = useStyles()
+
+  const strategyUrl = strategyName === 'crab' ? 'squeeth.com/strategies' : 'squeeth.com/strategies/bull'
+  const strategyEmoji = strategyName === 'crab' ? '🦀' : '🧘🐂 '
 
   if (isPnlLoading) {
     return null
   }
 
-  const tweetText = encodeURIComponent(`${text} at ${url} 🦀`)
-  const tweetHref = `https://twitter.com/intent/tweet?text=${tweetText}`
+  const postText = encodeURIComponent(`${text} at ${strategyUrl} ${strategyEmoji}`)
+  const encodedUrl = encodeURIComponent(sharePnlPageUrl)
 
-  const telegramText = encodeURIComponent(`${text} 🦀`)
-  const telegramHref = `https://t.me/share/url?url=https://${url}&text=${telegramText}`
+  const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${encodedUrl}`
+  const telegramHref = `https://t.me/share/url?text=${postText}&url=${encodedUrl}`
 
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
@@ -56,4 +63,4 @@ const SharePnL: React.FC<SharePnLProps> = ({ isPnlLoading, text, url }) => {
   )
 }
 
-export default SharePnL
+export default SharePnl

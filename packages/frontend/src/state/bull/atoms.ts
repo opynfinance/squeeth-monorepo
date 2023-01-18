@@ -28,6 +28,8 @@ export const bullDepositedUSDCAtom = atom(new BigNumber(0))
 export const bullEthPnlAtom = atom(new BigNumber(0))
 export const bullEthPnlPerctAtom = atom(new BigNumber(0))
 
+export const bullFirstDepositTimestampAtom = atom(0)
+
 export const isBullReadyAtom = atom(false)
 export const bullPositionLoadedAtom = atom(false)
 export const isBullPositionRefetchingAtom = atom(false)
