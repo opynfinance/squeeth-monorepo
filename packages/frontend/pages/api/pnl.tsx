@@ -211,15 +211,10 @@ export default async function handler(req: NextRequest) {
   try {
     // const [fontData, fontMediumData] = await Promise.all([font, fontMedium])
 
-    const { pathname, searchParams } = new URL(req.url)
-    const path = pathname.split('/').filter((x) => x)
-    const strategy = path[2] as StrategyType
-    const depositedAt = path[3]
-    const pnl = path[4]
-
-    // const strategy = searchParams.get('strategy') as StrategyType
-    // const depositedAt = searchParams.get('depositedAt')
-    // const pnl = searchParams.get('pnl')
+    const { searchParams } = new URL(req.url)
+    const strategy = searchParams.get('strategy') as StrategyType
+    const depositedAt = searchParams.get('depositedAt')
+    const pnl = searchParams.get('pnl')
     console.log('query params', strategy, depositedAt, pnl)
 
     if (!strategy || !depositedAt || !pnl) {
