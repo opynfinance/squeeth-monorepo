@@ -50,13 +50,8 @@ const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const slug = (context.query.slug as string[]) || []
-  const strategy = slug[0] as StrategyType
-  const depositedAt = slug[1]
-  const pnl = slug[2]
-
-  // Pass data to the page via props
-  return { props: { strategy, depositedAt, pnl } }
+  const { depositedAt, pnl } = context.query
+  return { props: { strategy: 'crab', depositedAt, pnl } }
 }
 
 export default SharePnl
