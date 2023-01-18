@@ -27,7 +27,7 @@ contract ZenBullNetting is Ownable, EIP712 {
     /// @dev min WETH amounts to withdraw or deposit via netting
     uint256 public minWethAmount;
     /// @dev min ZenBull amounts to withdraw or deposit via netting
-    uint256 public minBullAmount;
+    uint256 public minZenBullAmount;
     /// @dev array index of last processed deposits
     uint256 public depositsIndex;
     /// @dev array index of last processed withdraws
@@ -39,14 +39,22 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /// @dev WETH token address
     address private weth;
+    /// @dev ZenBull token address
+    address private zenBull;
 
     /// @dev array of WETH deposit receipts
     Receipt[] public deposits;
+    /// @dev array of ZenBull withdrawal receipts
+    Receipt[] public withdraws;
 
     /// @dev WEth amount to deposit for an address
     mapping(address => uint256) public wethBalance;
+    /// @dev crab amount to withdraw for an address
+    mapping(address => uint256) public zenBullBalance;
     /// @dev indexes of deposit receipts of an address
     mapping(address => uint256[]) public userDepositsIndex;
+    /// @dev indexes of withdraw receipts of an address
+    mapping(address => uint256[]) public userWithdrawsIndex;
 
     /// @dev order struct for a signed order from market maker
     struct Order {
@@ -72,7 +80,7 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 timestamp;
     }
 
-    event SetMinBullAmount(uint256 oldAmount, uint256 newAmount);
+    event SetMinZenBullAmount(uint256 oldAmount, uint256 newAmount);
     event SetMinWethAmount(uint256 oldAmount, uint256 newAmount);
     event SetDepositsIndex(uint256 oldDepositsIndex, uint256 newDepositsIndex);
     event SetWithdrawsIndex(uint256 oldWithdrawsIndex, uint256 newWithdrawsIndex);
@@ -86,12 +94,16 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 indexed receiptIndex
     );
     event DequeueWeth(address indexed depositor, uint256 amount, uint256 depositorsBalance);
+    event QueueZenBull(
+        address indexed withdrawer, uint256 amount, uint256 withdrawersBalance, uint256 indexed receiptIndex
+    );
 
-    constructor(address _weth) EIP712("ZenBullNetting", "1") {
+    constructor(address _weth, address _zenBull) EIP712("ZenBullNetting", "1") {
         otcPriceTolerance = 5e16; // 5%
         auctionTwapPeriod = 420 seconds;
 
         weth = _weth;
+        zenBull = _zenBull;
     }
 
     /**
@@ -119,13 +131,13 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice set minBullAmount
-     * @param _amount the number to be set as minBullAmount
+     * @notice set minZenBullAmount
+     * @param _amount the number to be set as minZenBullAmount
      */
-    function setMinBullAmount(uint256 _amount) external onlyOwner {
-        emit SetMinBullAmount(minBullAmount, _amount);
+    function setMinZenBullAmount(uint256 _amount) external onlyOwner {
+        emit SetMinZenBullAmount(minZenBullAmount, _amount);
 
-        minBullAmount = _amount;
+        minZenBullAmount = _amount;
     }
 
     /**
@@ -180,12 +192,12 @@ contract ZenBullNetting is Ownable, EIP712 {
     function queueWeth(uint256 _amount) external {
         require(_amount >= minWethAmount, "ZBN03");
 
-        IERC20(weth).transferFrom(msg.sender, address(this), _amount);
-
         // update weth balance of user, add their receipt, and receipt index to user deposits index
         wethBalance[msg.sender] = wethBalance[msg.sender] + _amount;
         deposits.push(Receipt(msg.sender, _amount, block.timestamp));
         userDepositsIndex[msg.sender].push(deposits.length - 1);
+
+        IERC20(weth).transferFrom(msg.sender, address(this), _amount);
 
         emit QueueWeth(msg.sender, _amount, wethBalance[msg.sender], deposits.length - 1);
     }
@@ -224,6 +236,22 @@ contract ZenBullNetting is Ownable, EIP712 {
         IERC20(weth).transfer(msg.sender, _amount);
 
         emit DequeueWeth(msg.sender, _amount, wethBalance[msg.sender]);
+    }
+    
+    /**
+     * @notice queue Crab for withdraw from crab strategy
+     * @param _amount crab amount to withdraw
+     */
+    function queueZenBull(uint256 _amount) external {
+        require(_amount >= minZenBullAmount, "ZBN07");
+
+        zenBullBalance[msg.sender] = zenBullBalance[msg.sender] + _amount;
+        withdraws.push(Receipt(msg.sender, _amount, block.timestamp));
+        userWithdrawsIndex[msg.sender].push(withdraws.length - 1);
+
+        IERC20(zenBull).transferFrom(msg.sender, address(this), _amount);
+
+        emit QueueZenBull(msg.sender, _amount, zenBullBalance[msg.sender], withdraws.length - 1);
     }
 
     /**

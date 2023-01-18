@@ -17,6 +17,7 @@ contract ZenBullNettingBaseSetup is Test {
     ZenBullNetting internal zenBullNetting;
 
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant ZEN_BULL = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     uint256 public deployerPk;
     uint256 public ownerPk;
@@ -33,7 +34,7 @@ contract ZenBullNettingBaseSetup is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
-        zenBullNetting = new ZenBullNetting(WETH);
+        zenBullNetting = new ZenBullNetting(WETH, ZEN_BULL);
         zenBullNetting.transferOwnership(owner);
         vm.stopPrank();
 

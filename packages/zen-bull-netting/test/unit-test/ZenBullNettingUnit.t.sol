@@ -69,15 +69,15 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
 
     function testSetMinBullAmount() public {
         vm.prank(owner);
-        zenBullNetting.setMinBullAmount(3e18);
+        zenBullNetting.setMinZenBullAmount(3e18);
 
-        assertEq(zenBullNetting.minBullAmount(), 3e18);
+        assertEq(zenBullNetting.minZenBullAmount(), 3e18);
     }
 
     function testSetMinBullAmountWhenCallerNotOwner() public {
         vm.prank(user1);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        zenBullNetting.setMinBullAmount(3e18);
+        zenBullNetting.setMinZenBullAmount(3e18);
     }
 
     function testSetDepositsIndex() public {
