@@ -647,7 +647,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const usdcFee = getUSDCPoolFee(network)
 
   const flashDepositUSDC = useAppCallback(
-    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void, onTxFailure?: () => void) => {
+    async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
       if (!contract || !vault) return
 
       const usdcAmount = fromTokenAmount(amount, USDC_DECIMALS)
@@ -711,7 +711,6 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
         track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
         return tx
       } catch (e: any) {
-        onTxFailure?.()
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_REVERT) : null
         track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)
@@ -730,7 +729,7 @@ export const useQueueDepositUSDC = () => {
   const { track } = useAmplitude()
 
   const depositUSDC = useAppCallback(
-    async (amount: BigNumber, onTxConfirmed?: () => void, onTxFailure?: () => void) => {
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
       if (!contract) return
       track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_CLICK)
       try {
@@ -743,7 +742,6 @@ export const useQueueDepositUSDC = () => {
         )
         track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
       } catch (e: any) {
-        onTxFailure?.()
         e?.code === REVERTED_TRANSACTION_CODE ? track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_REVERT) : null
         track(CRAB_EVENTS.DEPOSIT_STN_CRAB_USDC_FAILED, { code: e?.code })
         console.log(e)

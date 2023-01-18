@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Slide from '@material-ui/core/Slide'
 import ReactDOM from 'react-dom'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { openCrispChat, sendCrispChatMessage } from '@utils/crisp-chat'
 
 export const useStyles = makeStyles((theme) =>
   createStyles({
@@ -126,3 +127,21 @@ const usePopup = (config: PopupConfig) => {
 }
 
 export default usePopup
+
+export const GenericErrorPopupConfig: PopupConfig = {
+  text: 'Oops, something is not right on our side, would you like to speak to our support team ?',
+  actions: [
+    {
+      label: 'Yes',
+      closeAfterAction: true,
+      onClick: () => {
+        sendCrispChatMessage('Hi, I have encountered an issues with the site, need help!')
+        openCrispChat()
+      },
+    },
+    {
+      label: 'No Thanks',
+      isClosingAction: true,
+    },
+  ],
+}

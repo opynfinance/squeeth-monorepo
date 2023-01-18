@@ -71,24 +71,6 @@ enum DepositSteps {
   DEPOSIT = 'Deposit',
 }
 
-const depositErrorPopupConfig: PopupConfig = {
-  text: 'Oops, something is not right on our side, would you like to speak to our support team ?',
-  actions: [
-    {
-      label: 'Yes',
-      closeAfterAction: true,
-      onClick: () => {
-        sendCrispChatMessage('Hi, I have encountered an issues with the site, need help!')
-        openCrispChat()
-      },
-    },
-    {
-      label: 'No Thanks',
-      isClosingAction: true,
-    },
-  ],
-}
-
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
 const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
@@ -149,7 +131,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const normFactor = useAtomValue(normFactorAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(depositErrorPopupConfig)
 
   const trackUserEnteredDepositAmount = useCallback(
     (amount: BigNumber) => track(CRAB_EVENTS.DEPOSIT_CRAB_AMOUNT_ENTERED, { amount: amount.toNumber() }),
@@ -315,9 +296,9 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_DEP_CRAB] : undefined,
         }
         if (useQueue) {
-          await queueUSDC(depositAmountBN, onTxnConfirmed, showErrorFeedbackPopup)
+          await queueUSDC(depositAmountBN, onTxnConfirmed)
         } else {
-          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed, showErrorFeedbackPopup)
+          await flashDepositUSDC(depositAmountBN, slippage, onTxnConfirmed)
         }
       }
     } catch (e) {
