@@ -189,6 +189,9 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
+      - run:
+          name: Run Prettier
+          command: yarn prettier:commit
       - save_cache: 
           key: dependency-frontend-cache-{{ checksum "package.json" }}
           paths:
