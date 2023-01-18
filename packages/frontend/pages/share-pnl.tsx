@@ -272,12 +272,12 @@ const PnlChart = ({ strategy, depositedAt }: { strategy: StrategyType; deposited
         gridLineWidth: 0,
         minorGridLineWidth: 0,
         title: {
-          text: 'Crab Strategy',
+          text: strategy === 'crab' ? 'Crab Strategy' : 'Zen Bull Strategy',
           align: 'high',
           offset: 0,
           rotation: 0,
           y: 10,
-          x: 126,
+          x: strategy === 'crab' ? 126 : 160,
           style: {
             color: '#BABBBB',
             fontSize: '14px',
@@ -322,6 +322,9 @@ const PnlChart = ({ strategy, depositedAt }: { strategy: StrategyType; deposited
 const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
   const classes = useStyles()
 
+  const isCrab = strategy === 'crab'
+  const title = isCrab ? 'Crabber - Stacking USDC' : 'Zen Bull - Stacking ETH'
+
   return (
     <>
       <Nav />
@@ -329,22 +332,26 @@ const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
       <div className={classes.container}>
         <div className={clsx(classes.flex, classes.justifyBetween, classes.alignCenter)}>
           <div className={clsx(classes.flex, classes.alignCenter)}>
-            <Image src={crabLogo} alt="opyn crab logo" height="32px" width="32px" />
+            <Image src={isCrab ? crabLogo : zenBullLogo} alt="opyn crab logo" height="32px" width="32px" />
             <Typography variant="h2" className={clsx(classes.title, classes.textMargin)}>
-              Crabber - Stacking USDC
+              {title}
             </Typography>
           </div>
           <Image src={opynLogo} alt="opyn logo" width="80px" height="62px" />
         </div>
 
         <Box mt={6}>
-          <Typography className={classes.positionLabel}>My Crab Position</Typography>
+          <Typography className={classes.positionLabel}>
+            {isCrab ? 'My Crab Position' : 'My Zen Bull Position'}
+          </Typography>
           <div className={clsx(classes.flex, classes.alignBaseline, classes.sectionYMargin)}>
             <Typography className={clsx(classes.position, pnl >= 0 ? classes.colorSuccess : classes.colorError)}>
               {pnl > 0 && '+'}
               {formatNumber(pnl) + '%'}
             </Typography>
-            <Typography className={clsx(classes.positionUnit, classes.textMargin)}>USD Return</Typography>
+            <Typography className={clsx(classes.positionUnit, classes.textMargin)}>
+              {isCrab ? 'USD Return' : 'ETH Return'}
+            </Typography>
           </div>
         </Box>
 
@@ -353,8 +360,13 @@ const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
         </Box>
 
         <Box mt={6}>
-          <Button variant="outlined" color="primary" className={classes.ctaButton} href="/strategies">
-            Try Crab
+          <Button
+            variant="outlined"
+            color="primary"
+            className={classes.ctaButton}
+            href={isCrab ? '/strategies' : '/strategies/zenbull'}
+          >
+            Try {isCrab ? 'Crab' : 'Zen Bull'}
           </Button>
         </Box>
       </div>
