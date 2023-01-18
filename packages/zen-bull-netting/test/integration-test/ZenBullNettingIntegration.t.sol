@@ -58,10 +58,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(user1EthBalanceBefore + amount, user1.balance);
-        assertEq(
-            zenBullNettingEthBalanceBefore - amount,
-            address(zenBullNetting).balance
-        );
+        assertEq(zenBullNettingEthBalanceBefore - amount, address(zenBullNetting).balance);
     }
 
     function testDequeueWethPartial() public {
@@ -79,10 +76,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         (address sender, uint256 amount,) = zenBullNetting.getDepositReceipt(0);
 
         assertEq(user1EthBalanceBefore + amountToDequeue, user1.balance);
-        assertEq(
-            zenBullNettingEthBalanceBefore - amountToDequeue,
-            address(zenBullNetting).balance
-        );
+        assertEq(zenBullNettingEthBalanceBefore - amountToDequeue, address(zenBullNetting).balance);
         assertEq(sender, user1);
         assertEq(amount, amountToQueue - amountToDequeue);
     }
@@ -135,10 +129,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(user1EthBalanceBefore + amountToQueue, user1.balance);
-        assertEq(
-            zenBullNettingEthBalanceBefore - amountToQueue,
-            address(zenBullNetting).balance
-        );
+        assertEq(zenBullNettingEthBalanceBefore - amountToQueue, address(zenBullNetting).balance);
     }
 
     function _queueWeth(address _user, uint256 _amount) internal {

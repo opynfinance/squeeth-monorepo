@@ -156,10 +156,7 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         _queueEth(user1, amount);
 
         assertEq(zenBullNetting.ethBalance(user1), amount);
-        assertEq(
-            address(zenBullNetting).balance - zenBullNettingEthBalanceBefore,
-            amount
-        );
+        assertEq(address(zenBullNetting).balance - zenBullNettingEthBalanceBefore, amount);
         assertEq(user1.balance + amount, user1EthBalanceBefore);
         assertEq(zenBullNetting.depositsQueued(), amount);
     }
