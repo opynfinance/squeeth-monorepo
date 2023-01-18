@@ -1,5 +1,6 @@
 // import { useNormHistoryFromTime } from '@hooks/useNormHistoryFromTime'
 import useAppEffect from '@hooks/useAppEffect'
+import { AuctionType } from '../types'
 import { useState } from 'react'
 import db from './firestore'
 
@@ -605,8 +606,8 @@ export const getCrabPnlV2ChartData = async (startDateTimestamp: number, endDateT
   return data
 }
 
-export const getEthPriceAtHedge = async () => {
-  const url = `/api/auction/lastHedgeAuction`
+export const getEthPriceAtHedge = async (type = AuctionType.CRAB_HEDGE) => {
+  const url = `/api/auction/lastHedgeAuction?type=${type}`
   const response = await fetch(url)
   const data = await response.json()
 
@@ -614,7 +615,6 @@ export const getEthPriceAtHedge = async () => {
 }
 
 export const getBullChartData = async (startDateTimestamp: number, endDateTimestamp: number) => {
-
   const domain = omdbBaseUrl
   const base_url = `${domain}/metrics/zenbull/pnl/${startDateTimestamp}/${endDateTimestamp}`
   const url = `${base_url}`
@@ -623,4 +623,3 @@ export const getBullChartData = async (startDateTimestamp: number, endDateTimest
   const data = await response.json()
   return data
 }
-

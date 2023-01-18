@@ -112,3 +112,9 @@ export default class ChartDataInfo {
   time!: number
   value!: number
 }
+
+export enum AuctionType {
+  CRAB_HEDGE,
+  NETTING,
+  CALM_BULL,
+}
