@@ -13,6 +13,8 @@ import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -352,14 +354,15 @@ contract ZenBullNetting is Ownable, EIP712 {
 
         uint256 zenBullQuantity = (_quantity * 1e18) / _price;
 
-        require(_quantity <= address(this).balance, "N7");
-        require(zenBullQuantity <= IERC20(zenBull).balanceOf(address(this)), "N8");
+        require(_quantity <= address(this).balance, "ZBN10");
+        require(zenBullQuantity <= IERC20(zenBull).balanceOf(address(this)), "ZBN11");
 
         // process deposits and send ZenBull
         uint256 i = depositsIndex;
         uint256 amountToSend;
         while (_quantity > 0) {
             Receipt memory deposit = deposits[i];
+            console.log("deposit.amount", deposit.amount);
             if (deposit.amount == 0) {
                 i++;
                 continue;
@@ -472,7 +475,18 @@ contract ZenBullNetting is Ownable, EIP712 {
         return (receipt.sender, receipt.amount, receipt.timestamp);
     }
 
+    function getZenBullPrice() external view returns (uint256) {
+        return _getZenBullPrice();
+    }
+
     function _checkZenBullPrice(uint256 _price) internal view {
+        uint256 zenBullFairPrice = _getZenBullPrice();
+
+        require(_price <= (zenBullFairPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN12");
+        require(_price >= (zenBullFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN13");
+    }
+
+    function _getZenBullPrice() internal view returns (uint256) {
         uint256 squeethEthPrice =
             IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
         uint256 ethUsdcPrice =
@@ -480,17 +494,17 @@ contract ZenBullNetting is Ownable, EIP712 {
         (uint256 crabCollateral, uint256 crabDebt) = IZenBullStrategy(zenBull).getCrabVaultDetails();
         uint256 crabFairPriceInEth = (crabCollateral - (crabDebt * squeethEthPrice / 1e18)) * 1e18
             / IERC20(IZenBullStrategy(zenBull).crab()).totalSupply();
+
         uint256 zenBullCrabBalance = IZenBullStrategy(zenBull).getCrabBalance();
         uint256 zenBullFairPrice = (
             IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull)
-                + (zenBullCrabBalance * crabFairPriceInEth)
+                + (zenBullCrabBalance * crabFairPriceInEth / 1e18)
                 - (
-                    IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) * 1e12 * 1e18
+                    (IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) * 1e12 * 1e18)
                         / ethUsdcPrice
                 )
         ) * 1e18 / IERC20(zenBull).totalSupply();
 
-        require(_price <= (zenBullFairPrice * (1e18 + otcPriceTolerance)) / 1e18);
-        require(_price >= (zenBullFairPrice * (1e18 - otcPriceTolerance)) / 1e18);
+        return zenBullFairPrice;
     }
 }
