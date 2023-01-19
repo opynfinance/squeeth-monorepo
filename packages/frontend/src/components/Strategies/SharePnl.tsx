@@ -40,8 +40,6 @@ interface SharePnlProps {
 const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstDepositTimestamp }) => {
   const classes = useStyles()
 
-  return <></>
-
   if (isPnlLoading) {
     return null
   }

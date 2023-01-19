@@ -42,7 +42,7 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   if (loading) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="72px">
+      <Box display="flex" alignItems="flex-start" marginTop="8px" height="108px">
         <Box display="flex" alignItems="center" gridGap="20px">
           <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
           <Typography className={classes.text}>Fetching current position...</Typography>
