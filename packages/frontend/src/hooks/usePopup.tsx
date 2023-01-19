@@ -138,7 +138,7 @@ const usePopup = (config: PopupConfig) => {
 
 export default usePopup
 
-export const GenericErrorPopupConfig: PopupConfig = {
+export const GenericErrorPopupConfig: (userMessage: string) => PopupConfig = (userMessage: string) => ({
   text: 'Oops, something is not right on our side, would you like to speak to our support team ?',
   actions: [
     {
@@ -146,7 +146,7 @@ export const GenericErrorPopupConfig: PopupConfig = {
       closeAfterAction: true,
       analyticsEvent: SITE_EVENTS.CLICK_ERROR_FEEDBACK_ACTION,
       onClick: () => {
-        sendCrispChatMessage('Hi, I have encountered an issues with the site, need help!')
+        sendCrispChatMessage(userMessage)
         openCrispChat()
       },
     },
@@ -156,4 +156,4 @@ export const GenericErrorPopupConfig: PopupConfig = {
       isClosingAction: true,
     },
   ],
-}
+})

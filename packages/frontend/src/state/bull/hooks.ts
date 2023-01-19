@@ -373,7 +373,9 @@ export const useBullFlashDeposit = () => {
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into bull.'),
+  )
 
   const flashDepositToBull = async (
     ethToCrab: BigNumber,
@@ -579,7 +581,9 @@ export const useBullFlashWithdraw = () => {
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.'),
+  )
 
   const flashWithdrawFromBull = async (
     bullAmount: BigNumber,

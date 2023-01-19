@@ -644,7 +644,9 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const { getExactIn } = useUniswapQuoter()
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.'),
+  )
 
   const usdcFee = getUSDCPoolFee(network)
 
@@ -730,7 +732,9 @@ export const useQueueDepositUSDC = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.'),
+  )
 
   const depositUSDC = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -763,7 +767,9 @@ export const useQueueWithdrawCrab = () => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+  )
 
   const queueWithdraw = useAppCallback(
     async (amount: BigNumber, onTxConfirmed?: () => void) => {
@@ -825,7 +831,9 @@ export const useFlashWithdrawV2 = () => {
   const { crabStrategy2 } = useAtomValue(addressesAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+  )
 
   const flashWithdraw = useCallback(
     async (amount: BigNumber, slippage: number, onTxConfirmed?: () => void) => {
@@ -884,7 +892,9 @@ export const useFlashWithdrawV2USDC = () => {
   const { getExactIn } = useUniswapQuoter()
   const { track } = useAmplitude()
   const { usdc, weth, crabStrategy2 } = useAtomValue(addressesAtom)
-  const { show: showErrorFeedbackPopup } = usePopup(GenericErrorPopupConfig)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+  )
   const network = useAtomValue(networkIdAtom)
 
   const usdcFee = getUSDCPoolFee(network)
