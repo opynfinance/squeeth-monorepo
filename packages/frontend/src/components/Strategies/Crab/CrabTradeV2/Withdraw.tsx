@@ -61,6 +61,7 @@ import {
   CRAB_TOKEN_DECIMALS,
   NETTING_PRICE_IMPACT,
   STRATEGY_DEPOSIT_LIMIT,
+  UNI_POOL_FEES,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -198,7 +199,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const withdrawPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false
 
-    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw).times(1 - UNI_POOL_FEES / 1000_000)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(

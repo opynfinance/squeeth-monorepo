@@ -15,6 +15,7 @@ import {
   BIG_ZERO,
   FUNDING_PERIOD,
   INDEX_SCALE,
+  UNI_POOL_FEES,
   VOL_PERCENT_FIXED,
   VOL_PERCENT_SCALAR,
   WETH_DECIMALS,
@@ -98,7 +99,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut)
+    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut).times(1 - UNI_POOL_FEES / 1000_000)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
