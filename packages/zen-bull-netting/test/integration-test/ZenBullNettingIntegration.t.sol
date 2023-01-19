@@ -132,17 +132,6 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         assertEq(zenBullNettingEthBalanceBefore - amountToQueue, address(zenBullNetting).balance);
     }
 
-    function _queueWeth(address _user, uint256 _amount) internal {
-        vm.startPrank(_user);
-        IERC20(WETH).approve(address(zenBullNetting), _amount);
-        zenBullNetting.queueWeth(_amount);
-        vm.stopPrank();
-    }
-
-    /**
-     * as
-     */
-
     function testDequeueZenBull() public {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);

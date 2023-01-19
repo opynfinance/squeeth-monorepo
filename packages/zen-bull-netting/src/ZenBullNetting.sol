@@ -274,22 +274,6 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
-     * @notice queue ZenBull token for withdraw from strategy
-     * @param _amount ZenBull amount to withdraw
-     */
-    function queueZenBull(uint256 _amount) external {
-        require(_amount >= minZenBullAmount, "ZBN07");
-
-        zenBullBalance[msg.sender] = zenBullBalance[msg.sender] + _amount;
-        withdraws.push(Receipt(msg.sender, _amount, block.timestamp));
-        userWithdrawsIndex[msg.sender].push(withdraws.length - 1);
-
-        IERC20(zenBull).transferFrom(msg.sender, address(this), _amount);
-
-        emit QueueZenBull(msg.sender, _amount, zenBullBalance[msg.sender], withdraws.length - 1);
-    }
-
-    /**
      * @notice withdraw ZenBull from queue
      * @param _amount ZenBull amount to dequeue
      * @param _force forceWithdraw if queued more than a week ago
