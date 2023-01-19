@@ -67,17 +67,17 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstD
 
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
-      <ButtonBase classes={{ root: classes.buttonRoot }} href={tweetHref} target="_blank">
-        <Tooltip title="Share your PnL on Twitter" placement="top">
+      <Tooltip title="Share your PnL on Twitter" placement="bottom">
+        <ButtonBase classes={{ root: classes.buttonRoot }} href={tweetHref} target="_blank">
           <TwitterIcon className={classes.icon} />
-        </Tooltip>
-      </ButtonBase>
+        </ButtonBase>
+      </Tooltip>
 
-      <ButtonBase classes={{ root: classes.buttonRoot }} href={telegramHref} target="_blank">
-        <Tooltip title="Share your PnL on Telegram" placement="top">
+      <Tooltip title="Share your PnL on Telegram" placement="bottom">
+        <ButtonBase classes={{ root: classes.buttonRoot }} href={telegramHref} target="_blank">
           <TelegramIcon className={classes.icon} />
-        </Tooltip>
-      </ButtonBase>
+        </ButtonBase>
+      </Tooltip>
     </Box>
   )
 }
