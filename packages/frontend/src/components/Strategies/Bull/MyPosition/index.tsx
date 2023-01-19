@@ -50,7 +50,7 @@ const BullPosition: React.FC = () => {
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
   const sharePnlText = `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
-  const sharePnlPageUrl = `${SQUEETH_BASE_URL}/share-pnl?strategy=zenbull&pnl=${pnlFormatted}&depositedAt=${firstDepositTimestamp}`
+  const sharePnlPageUrl = `${SQUEETH_BASE_URL}/share-pnl/zenbull/${firstDepositTimestamp}/${pnlFormatted}`
 
   const isPnlLoading = !bullEthPnL.isFinite()
 

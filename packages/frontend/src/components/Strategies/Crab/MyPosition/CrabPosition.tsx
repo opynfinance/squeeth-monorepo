@@ -24,7 +24,7 @@ const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPositi
   const pnlText = pnlPercent > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
   const sharePnlText = `I'm earning ${pnlText} USDC with the Opyn Crab Strategy`
-  const sharePnlPageUrl = `${SQUEETH_BASE_URL}/share-pnl?strategy=crab&pnl=${pnlFormatted}&depositedAt=${firstDepositTimestamp}`
+  const sharePnlPageUrl = `${SQUEETH_BASE_URL}/share-pnl/crab/${firstDepositTimestamp}/${pnlFormatted}`
 
   const isPnlLoading = !pnl.isFinite()
 

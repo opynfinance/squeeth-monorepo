@@ -227,7 +227,12 @@ const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { strategy, depositedAt, pnl } = context.query
+  const slug = (context.query.slug as string[]) || []
+
+  const strategy = slug[0] as StrategyType
+  const depositedAt = slug[1]
+  const pnl = slug[2]
+
   return { props: { strategy, depositedAt: Number(depositedAt), pnl: Number(pnl) } }
 }
 
