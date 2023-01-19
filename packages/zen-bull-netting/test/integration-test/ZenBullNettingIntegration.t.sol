@@ -23,6 +23,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.startPrank(owner);
         zenBullNetting.setMinEthAmount(minWeth);
         zenBullNetting.setMinZenBullAmount(minZenBull);
+        // zenBullNetting.setOTCPriceTolerance(2e16);
         vm.stopPrank();
 
         (user1, user1Pk) = makeAddrAndKey("User1");
