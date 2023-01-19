@@ -1,4 +1,4 @@
-import { Box, ButtonBase } from '@material-ui/core'
+import { Box, ButtonBase, Tooltip } from '@material-ui/core'
 import React from 'react'
 import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
@@ -68,11 +68,15 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstD
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
       <ButtonBase classes={{ root: classes.buttonRoot }} href={tweetHref} target="_blank">
-        <TwitterIcon className={classes.icon} />
+        <Tooltip title="Share your PnL on Twitter" placement="top">
+          <TwitterIcon className={classes.icon} />
+        </Tooltip>
       </ButtonBase>
 
       <ButtonBase classes={{ root: classes.buttonRoot }} href={telegramHref} target="_blank">
-        <TelegramIcon className={classes.icon} />
+        <Tooltip title="Share your PnL on Telegram" placement="top">
+          <TelegramIcon className={classes.icon} />
+        </Tooltip>
       </ButtonBase>
     </Box>
   )
