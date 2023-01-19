@@ -4,6 +4,9 @@ import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 
+import { formatNumber } from '@utils/formatter'
+import { SQUEETH_BASE_URL } from '@constants/index'
+
 const useStyles = makeStyles((theme) =>
   createStyles({
     buttonRoot: {
@@ -29,25 +32,37 @@ const useStyles = makeStyles((theme) =>
 
 interface SharePnlProps {
   isPnlLoading: Boolean
-  strategyName: 'crab' | 'zenbull'
-  text: string
-  sharePnlPageUrl: string
+  strategy: 'crab' | 'zenbull'
+  pnl: number
+  firstDepositTimestamp: number
 }
 
-const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategyName, text, sharePnlPageUrl }) => {
+const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstDepositTimestamp }) => {
   const classes = useStyles()
-
-  const strategyUrl = strategyName === 'crab' ? 'squeeth.com/strategies' : 'squeeth.com/strategies/bull'
-  const strategyEmoji = strategyName === 'crab' ? '🦀' : '🧘🐂 '
 
   if (isPnlLoading) {
     return null
   }
 
-  const postText = encodeURIComponent(`${text} at ${strategyUrl} ${strategyEmoji}`)
-  const encodedUrl = encodeURIComponent(sharePnlPageUrl)
+  const pnlFormatted = formatNumber(pnl)
+  const pnlText = pnl > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
 
-  const tweetHref = `https://twitter.com/intent/tweet?text=${postText}&url=${encodedUrl}`
+  const isCrab = strategy === 'crab'
+
+  const strategyEmoji = isCrab ? '🦀' : '🧘🐂 '
+  const text = isCrab
+    ? `I'm earning ${pnlText} USDC with the Opyn Crab Strategy`
+    : `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
+  const twitterText = isCrab
+    ? `I'm earning ${pnlText} USDC with the @opyn_ Crab Strategy`
+    : `I'm earning ${pnlText} stacking ETH with the @opyn_ Zen Bull Strategy`
+  const pageUrl = `${SQUEETH_BASE_URL}/share-pnl/${strategy}/${firstDepositTimestamp}/${pnlFormatted}`
+
+  const postText = encodeURIComponent(`${text} ${strategyEmoji}`)
+  const tweetText = encodeURIComponent(`${twitterText} ${strategyEmoji}`)
+  const encodedUrl = encodeURIComponent(pageUrl)
+
+  const tweetHref = `https://twitter.com/intent/tweet?text=${tweetText}&url=${encodedUrl}`
   const telegramHref = `https://t.me/share/url?text=${postText}&url=${encodedUrl}`
 
   return (
