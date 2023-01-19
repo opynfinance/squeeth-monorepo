@@ -66,12 +66,12 @@ const BullPosition: React.FC = () => {
         </Box>
       </div>
 
-      <SharePnl
+      {/* <SharePnl
         isPnlLoading={isPnlLoading}
         strategy="zenbull"
         pnl={bullEthPnlPerct.toNumber()}
         firstDepositTimestamp={firstDepositTimestamp}
-      />
+      /> */}
     </Box>
   )
 }
