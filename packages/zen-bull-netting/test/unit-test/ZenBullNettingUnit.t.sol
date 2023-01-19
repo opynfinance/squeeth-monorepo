@@ -26,9 +26,7 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
 
         vm.label(user1, "User1");
 
-        // some WETH rich address
-        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(WETH).transfer(user1, 5000e18);
+        vm.deal(user1, 5000e18);
         // some ZenBUll rich address
         vm.prank(0xaae102ca930508e6dA30924Bf0374F0F247729d5);
         IERC20(ZEN_BULL).transfer(user1, 30e18);
@@ -62,13 +60,13 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
 
     function testSetMinWethAmount() public {
         _setMinWethAmount();
-        assertEq(zenBullNetting.minWethAmount(), minWeth);
+        assertEq(zenBullNetting.minEthAmount(), minWeth);
     }
 
     function testSetMinWethAmountWhenCallerNotOwner() public {
         vm.prank(user1);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        zenBullNetting.setMinWethAmount(minWeth);
+        zenBullNetting.setMinEthAmount(minWeth);
     }
 
     function testSetMinBullAmount() public {
@@ -150,30 +148,26 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         zenBullNetting.setOTCPriceTolerance(maxOtcPriceTolerance + 1);
     }
 
-    function testQueueWeth() public {
+    function testQueueEth() public {
         uint256 amount = 100e18;
-        uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
-        uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
 
-        _queueWeth(user1, amount);
+        _queueEth(user1, amount);
 
-        assertEq(zenBullNetting.wethBalance(user1), amount);
-        assertEq(
-            IERC20(WETH).balanceOf(address(zenBullNetting)) - zenBullNettingWethBalanceBefore,
-            amount
-        );
-        assertEq(IERC20(WETH).balanceOf(user1) + amount, user1WethBalanceBefore);
+        assertEq(zenBullNetting.ethBalance(user1), amount);
+        assertEq(address(zenBullNetting).balance - zenBullNettingEthBalanceBefore, amount);
+        assertEq(user1.balance + amount, user1EthBalanceBefore);
         assertEq(zenBullNetting.depositsQueued(), amount);
     }
 
-    function testQueueWethWhenAmountLessThanMinAmount() public {
+    function testQueueEthWhenAmountLessThanMinAmount() public {
         _setMinWethAmount();
-        uint256 amount = zenBullNetting.minWethAmount() - 1;
+        uint256 amount = zenBullNetting.minEthAmount() - 1;
 
         vm.startPrank(user1);
-        IERC20(WETH).approve(address(zenBullNetting), amount);
         vm.expectRevert(bytes("ZBN03"));
-        zenBullNetting.queueWeth(amount);
+        zenBullNetting.queueEth{value: amount}();
         vm.stopPrank();
     }
 
@@ -207,7 +201,7 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
 
     function _setMinWethAmount() internal {
         vm.prank(owner);
-        zenBullNetting.setMinWethAmount(minWeth);
+        zenBullNetting.setMinEthAmount(minWeth);
     }
 
     function _setMinZenBullAmount() internal {

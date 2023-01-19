@@ -24,7 +24,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         ZenBullNettingBaseSetup.setUp();
 
         vm.startPrank(owner);
-        zenBullNetting.setMinWethAmount(minWeth);
+        zenBullNetting.setMinEthAmount(minWeth);
         zenBullNetting.setMinZenBullAmount(minZenBull);
         vm.stopPrank();
 
@@ -33,9 +33,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
 
         vm.label(user1, "User1");
 
-        // some WETH rich address
-        vm.prank(0x57757E3D981446D585Af0D9Ae4d7DF6D64647806);
-        IERC20(WETH).transfer(user1, 5000e18);
+        vm.deal(user1, 5000e18);
         // some ZenBUll rich address
         vm.prank(0xaae102ca930508e6dA30924Bf0374F0F247729d5);
         IERC20(ZEN_BULL).transfer(user1, 30e18);
@@ -50,48 +48,42 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
 
     function testDequeueWeth() public {
         uint256 amount = 100e18;
-        _queueWeth(user1, amount);
+        _queueEth(user1, amount);
 
-        uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
-        uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
 
         vm.startPrank(user1);
-        zenBullNetting.dequeueWeth(amount, false);
+        zenBullNetting.dequeueEth(amount, false);
         vm.stopPrank();
 
-        assertEq(user1WethBalanceBefore + amount, IERC20(WETH).balanceOf(user1));
-        assertEq(
-            zenBullNettingWethBalanceBefore - amount,
-            IERC20(WETH).balanceOf(address(zenBullNetting))
-        );
+        assertEq(user1EthBalanceBefore + amount, user1.balance);
+        assertEq(zenBullNettingEthBalanceBefore - amount, address(zenBullNetting).balance);
     }
 
     function testDequeueWethPartial() public {
         uint256 amountToQueue = 100e18;
-        _queueWeth(user1, amountToQueue);
+        _queueEth(user1, amountToQueue);
 
-        uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
-        uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
         uint256 amountToDequeue = amountToQueue / 2;
 
         vm.startPrank(user1);
-        zenBullNetting.dequeueWeth(amountToDequeue, false);
+        zenBullNetting.dequeueEth(amountToDequeue, false);
         vm.stopPrank();
 
         (address sender, uint256 amount,) = zenBullNetting.getDepositReceipt(0);
 
-        assertEq(user1WethBalanceBefore + amountToDequeue, IERC20(WETH).balanceOf(user1));
-        assertEq(
-            zenBullNettingWethBalanceBefore - amountToDequeue,
-            IERC20(WETH).balanceOf(address(zenBullNetting))
-        );
+        assertEq(user1EthBalanceBefore + amountToDequeue, user1.balance);
+        assertEq(zenBullNettingEthBalanceBefore - amountToDequeue, address(zenBullNetting).balance);
         assertEq(sender, user1);
         assertEq(amount, amountToQueue - amountToDequeue);
     }
 
     function testDequeueWethWhenAuctionIsLive() public {
         uint256 amount = 100e18;
-        _queueWeth(user1, amount);
+        _queueEth(user1, amount);
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
@@ -99,13 +91,13 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("ZBN04"));
-        zenBullNetting.dequeueWeth(amount, false);
+        zenBullNetting.dequeueEth(amount, false);
         vm.stopPrank();
     }
 
     function testForceDequeueWethWhenAuctionIsLiveAndTimeLessThanOneWeek() public {
         uint256 amount = 100e18;
-        _queueWeth(user1, amount);
+        _queueEth(user1, amount);
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
@@ -113,16 +105,16 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("ZBN06"));
-        zenBullNetting.dequeueWeth(amount, true);
+        zenBullNetting.dequeueEth(amount, true);
         vm.stopPrank();
     }
 
     function testForceDequeueWethWhenAuctionIsLiveAndTimeMoreThanOneWeek() public {
         uint256 amountToQueue = 100e18;
-        _queueWeth(user1, amountToQueue);
+        _queueEth(user1, amountToQueue);
 
-        uint256 user1WethBalanceBefore = IERC20(WETH).balanceOf(user1);
-        uint256 zenBullNettingWethBalanceBefore = IERC20(WETH).balanceOf(address(zenBullNetting));
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
@@ -133,19 +125,12 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.warp(receiptTimestamp + 1.1 weeks);
 
         vm.startPrank(user1);
-        zenBullNetting.dequeueWeth(amountToQueue, true);
+        zenBullNetting.dequeueEth(amountToQueue, true);
         vm.stopPrank();
 
-        assertEq(user1WethBalanceBefore + amountToQueue, IERC20(WETH).balanceOf(user1));
-        assertEq(
-            zenBullNettingWethBalanceBefore - amountToQueue,
-            IERC20(WETH).balanceOf(address(zenBullNetting))
-        );
+        assertEq(user1EthBalanceBefore + amountToQueue, user1.balance);
+        assertEq(zenBullNettingEthBalanceBefore - amountToQueue, address(zenBullNetting).balance);
     }
-
-    /**
-     * as
-     */
 
     function testDequeueZenBull() public {
         uint256 amount = 10e18;
