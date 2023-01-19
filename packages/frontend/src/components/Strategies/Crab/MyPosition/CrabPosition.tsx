@@ -1,76 +1,47 @@
 import React from 'react'
-import { Box, Typography, CircularProgress } from '@material-ui/core'
-import ArrowDropUpIcon from '@material-ui/icons/ArrowDropUp'
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
+import { Box, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 
-import { formatCurrency, formatNumber } from '@utils/formatter'
+import { formatCurrency } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
+import SharePnl from '@components/Strategies/SharePnl'
+import PnL from './PnL'
 
 interface CrabPositionProps {
   depositedUsd: BigNumber
   currentPosition: BigNumber
   pnl: BigNumber
+  firstDepositTimestamp: number
 }
 
-const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl }) => {
+const CrabPosition: React.FC<CrabPositionProps> = ({ depositedUsd, currentPosition, pnl, firstDepositTimestamp }) => {
   const classes = useStyles()
 
-  const isPnlPositive = pnl.isGreaterThanOrEqualTo(0)
+  const isPnlLoading = !pnl.isFinite()
 
   return (
-    <Box display="flex" flexDirection="column" gridGap="8px">
-      <Typography variant="h4" className={classes.sectionTitle}>
-        My Crab Position
-      </Typography>
+    <Box display="flex" flexDirection="column" gridGap="12px">
+      <div>
+        <Typography variant="h4" className={classes.sectionTitle}>
+          My Crab Position
+        </Typography>
 
-      <Typography className={clsx(classes.heading, classes.textMonospace)}>
-        {formatCurrency(currentPosition.toNumber())}
-      </Typography>
+        <Box display="flex" alignItems="baseline" gridColumnGap="12px" gridRowGap="2px" flexWrap="wrap" marginTop="6px">
+          <Typography className={clsx(classes.heading, classes.textMonospace)}>
+            {formatCurrency(currentPosition.toNumber())}
+          </Typography>
 
-      <Box display="flex" alignItems="center" gridGap="8px">
-        {pnl.isFinite() ? (
-          <>
-            <Box display="flex" marginLeft="-6px">
-              {isPnlPositive ? (
-                <ArrowDropUpIcon className={classes.colorSuccess} />
-              ) : (
-                <ArrowDropDownIcon className={classes.colorError} />
-              )}
+          <PnL isPnlLoading={isPnlLoading} depositedUsd={depositedUsd} pnl={pnl} />
+        </Box>
+      </div>
 
-              <Typography
-                className={clsx(
-                  classes.description,
-                  classes.textSemibold,
-                  classes.textMonospace,
-                  isPnlPositive ? classes.colorSuccess : classes.colorError,
-                )}
-              >
-                {formatNumber(pnl.toNumber()) + '%'}
-              </Typography>
-            </Box>
-
-            <Typography
-              className={clsx(
-                classes.description,
-                classes.textSemibold,
-                classes.textMonospace,
-                isPnlPositive ? classes.colorSuccess : classes.colorError,
-              )}
-            >
-              ({isPnlPositive && '+'}
-              {formatCurrency(depositedUsd.times(pnl).div(100).toNumber())})
-            </Typography>
-            <Typography className={classes.description}>since deposit</Typography>
-          </>
-        ) : (
-          <Box display="flex" alignItems="center" gridGap="12px">
-            <CircularProgress size="1rem" className={classes.loadingSpinner} />
-            <Typography className={classes.text}>fetching pnl...</Typography>
-          </Box>
-        )}
-      </Box>
+      <SharePnl
+        isPnlLoading={isPnlLoading}
+        strategy="crab"
+        pnl={pnl.toNumber()}
+        firstDepositTimestamp={firstDepositTimestamp}
+      />
     </Box>
   )
 }
