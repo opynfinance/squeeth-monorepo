@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { NextSeo } from 'next-seo'
 
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
@@ -7,6 +8,7 @@ import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
+import { SQUEETH_BASE_URL } from '@constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -60,23 +62,46 @@ const Crab: React.FC = () => {
   }, [setStrategyDataV2])
 
   return (
-    <div className={classes.container}>
-      <div className={classes.leftColumn}>
-        <div className={classes.infoContainer}>
-          <MyPosition
-            currentCrabPositionValue={currentCrabPositionValue}
-            isCrabPositionValueLoading={isCrabPositionValueLoading}
-          />
-          <StrategyPerformance />
-          <About />
+    <>
+      <NextSeo
+        title="Squeeth"
+        description="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        canonical={SQUEETH_BASE_URL}
+        openGraph={{
+          images: [
+            {
+              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
+              width: 1200,
+              height: 630,
+              alt: 'Squeeth',
+            },
+          ],
+        }}
+        twitter={{
+          handle: '@opyn_',
+          site: '@opyn_',
+          cardType: 'summary_large_image',
+        }}
+      />
+
+      <div className={classes.container}>
+        <div className={classes.leftColumn}>
+          <div className={classes.infoContainer}>
+            <MyPosition
+              currentCrabPositionValue={currentCrabPositionValue}
+              isCrabPositionValueLoading={isCrabPositionValueLoading}
+            />
+            <StrategyPerformance />
+            <About />
+          </div>
+        </div>
+        <div className={classes.rightColumn}>
+          <div className={classes.tradeSection}>
+            <CrabTradeV2 refetchCrabTokenBalance={refetchCrabTokenBalance} />
+          </div>
         </div>
       </div>
-      <div className={classes.rightColumn}>
-        <div className={classes.tradeSection}>
-          <CrabTradeV2 refetchCrabTokenBalance={refetchCrabTokenBalance} />
-        </div>
-      </div>
-    </div>
+    </>
   )
 }
 
