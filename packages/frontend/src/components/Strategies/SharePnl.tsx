@@ -3,6 +3,7 @@ import React from 'react'
 import TwitterIcon from '@material-ui/icons/Twitter'
 import TelegramIcon from '@material-ui/icons/Telegram'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
+import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict'
 
 import { formatNumber } from '@utils/formatter'
 import { SQUEETH_BASE_URL } from '@constants/index'
@@ -46,16 +47,17 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstD
 
   const pnlFormatted = formatNumber(pnl)
   const pnlText = pnl > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
+  const timeframe = formatDistanceToNowStrict(firstDepositTimestamp * 1000)
 
   const isCrab = strategy === 'crab'
 
   const strategyEmoji = isCrab ? '🦀' : '🧘🐂 '
   const text = isCrab
-    ? `I'm earning ${pnlText} USDC with the Opyn Crab Strategy`
-    : `I'm earning ${pnlText} stacking ETH with the Opyn Zen Bull Strategy`
+    ? `I've earned ${pnlText} on my USDC in the past ${timeframe} with the Opyn's Crab Strategy!`
+    : `I've earned ${pnlText} on my ETH in the past ${timeframe} with the Opyn's Zen Bull Strategy!`
   const twitterText = isCrab
-    ? `I'm earning ${pnlText} USDC with the @opyn_ Crab Strategy`
-    : `I'm earning ${pnlText} stacking ETH with the @opyn_ Zen Bull Strategy`
+    ? `I've earned ${pnlText} on my USDC in the past ${timeframe} with the @opyn_'s Crab Strategy!`
+    : `I've earned ${pnlText} on my ETH in the past ${timeframe} with the @opyn_'s Zen Bull Strategy!`
   const pageUrl = `${SQUEETH_BASE_URL}/share-pnl/${strategy}/${firstDepositTimestamp}/${pnlFormatted}`
 
   const postText = encodeURIComponent(`${text} ${strategyEmoji}`)
