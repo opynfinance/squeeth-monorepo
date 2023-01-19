@@ -1,11 +1,9 @@
 import React from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { NextSeo } from 'next-seo'
 
 import MintSqueeth from '@components/Trade/Mint'
 import Nav from '@components/Nav'
-import { SQUEETH_BASE_URL } from '@constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -30,27 +28,6 @@ const MintPage: React.FC = () => {
 
   return (
     <>
-      <NextSeo
-        title="Squeeth"
-        description="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
-
       <Nav />
 
       <div className={classes.container}>

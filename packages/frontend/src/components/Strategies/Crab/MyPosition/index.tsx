@@ -3,6 +3,7 @@ import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
 
 import { addressAtom } from '@state/wallet/atoms'
+import { useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import useAppMemo from '@hooks/useAppMemo'
 import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
 import { pnlInPerctv2 } from 'src/lib/pnl'
@@ -20,7 +21,7 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
   const usdcQueued = useAtomValue(usdcQueuedAtom)
   const crabQueued = useAtomValue(crabQueuedAtom)
   const address = useAtomValue(addressAtom)
-  const { loading: isCrabPositionLoading, depositedUsd, firstDepositTimestamp } = useCrabPositionV2(address || '')
+  const { loading: isCrabPositionLoading, depositedUsd } = useCrabPositionV2(address || '')
 
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
 
@@ -42,7 +43,7 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   if (loading) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="108px">
+      <Box display="flex" alignItems="flex-start" marginTop="8px" height="98px">
         <Box display="flex" alignItems="center" gridGap="20px">
           <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
           <Typography className={classes.text}>Fetching current position...</Typography>
@@ -53,12 +54,7 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   return (
     <Box display="flex" flexDirection="column" gridGap="40px">
-      <CrabPosition
-        depositedUsd={depositedUsd}
-        currentPosition={currentPositionValue}
-        pnl={pnl}
-        firstDepositTimestamp={firstDepositTimestamp}
-      />
+      <CrabPosition depositedUsd={depositedUsd} currentPosition={currentPositionValue} pnl={pnl} />
       <QueuedPosition />
     </Box>
   )

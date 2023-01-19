@@ -1,7 +1,9 @@
 import { BIG_ZERO } from '../../constants'
 import { useEffect, useState } from 'react'
-import { CrabStrategyV2TxType } from '../../types'
+import { CrabStrategyTxType, CrabStrategyV2TxType } from '../../types'
+import { toTokenAmount } from '@utils/calculations'
 import { useAtomValue, useSetAtom } from 'jotai'
+import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
 import BigNumber from 'bignumber.js'
@@ -14,7 +16,6 @@ import {
   bullPositionLoadedAtom,
   isBullPositionRefetchingAtom,
   isBullReadyAtom,
-  bullFirstDepositTimestampAtom,
 } from '@state/bull/atoms'
 import { useUserBullTxHistory } from '@hooks/useUserBullTxHistory'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -43,15 +44,13 @@ export const useBullPosition = (user: string) => {
   const setDepositedUsdc = useSetAtom(bullDepositedUSDCAtom)
   const setPositionLoaded = useSetAtom(bullPositionLoadedAtom)
   const setIsPositionRefetching = useSetAtom(isBullPositionRefetchingAtom)
-  const setBullFirstDepositTimestamp = useSetAtom(bullFirstDepositTimestampAtom)
 
   const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserBullTxHistory(user, true)
 
-  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
-    if (txHistoryLoading || !txHistoryData) {
-      return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
-    }
+  const index = useAtomValue(indexAtom)
 
+  const { remainingDepositEth: depositedEth, remainingDepositUsd: depositedUsd } = useAppMemo(() => {
+    if (txHistoryLoading || !txHistoryData) return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
     const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
         if (tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT) {
@@ -86,9 +85,8 @@ export const useBullPosition = (user: string) => {
     setEthPnlPerct(_ethPnlInPerct)
     setDepositedEth(depositedEth)
     setDepositedUsdc(depositedUsd)
-    setBullFirstDepositTimestamp(txHistoryData[0]?.timestamp)
     setPositionLoaded(true)
-  }, [bullCurrentEthValue, depositedEth, depositedUsd, txHistoryData])
+  }, [bullCurrentEthValue, depositedEth, depositedUsd])
 
   useEffect(() => {
     if (!txToSearch) stopPolling()

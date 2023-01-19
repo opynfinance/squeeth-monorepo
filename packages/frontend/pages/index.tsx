@@ -5,7 +5,6 @@ import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
-import { NextSeo } from 'next-seo'
 
 import Nav from '@components/Nav'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
@@ -19,7 +18,6 @@ import Trade from '@components/Trade'
 import PositionCard from '@components/PositionCard'
 import { TradeType } from 'src/types'
 import { LinkWrapper } from '@components/LinkWrapper'
-import { SQUEETH_BASE_URL } from '@constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -218,27 +216,6 @@ function TradePage() {
 
   return (
     <>
-      <NextSeo
-        title="Squeeth"
-        description="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
-
       <div>
         <Nav />
 

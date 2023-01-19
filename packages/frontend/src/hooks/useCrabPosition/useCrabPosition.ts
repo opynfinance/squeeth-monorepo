@@ -184,7 +184,7 @@ export const useCrabPositionV2 = (user: string) => {
     }
 
     calculateCurrentValue()
-  }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading, crabPositionRefetching])
+  }, [calculateCurrentValue, crabLoading, isCrabPositionValueLoading, txHistoryLoading])
 
   useEffect(() => {
     if (!txToSearch) stopPolling()
@@ -213,7 +213,6 @@ export const useCrabPositionV2 = (user: string) => {
     minPnlUsd,
     loading: crabLoading || txHistoryLoading || crabPositionRefetching,
     pollForNewTx,
-    firstDepositTimestamp: txHistoryData?.[0]?.timestamp,
   }
 }
 

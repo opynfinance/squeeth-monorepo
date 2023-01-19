@@ -147,6 +147,19 @@ const TradeApp = ({ Component, pageProps }: any) => {
   return (
     <React.Fragment>
       <Head>
+        <title>Opyn</title>
+        <meta
+          name="description"
+          content="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liqudations"
+        />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Opyn" />
+        <meta
+          name="twitter:description"
+          content="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liqudations"
+        />
+        <meta name="twitter:image" content="https://squeeth.opyn.co/images/SqueethLogoMetadata-WhiteBg.png" />
+        <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="minimum-scale=1, initial-scale=1, width=device-width" />
       </Head>
 

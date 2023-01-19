@@ -636,7 +636,7 @@ export const useFlashDepositV2 = (calculateETHtoBorrowFromUniswap: any) => {
 export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const maxCap = useAtomValue(maxCapAtomV2)
   const address = useAtomValue(addressAtom)
-  const { usdc, weth, crabStrategy2 } = useAtomValue(addressesAtom)
+  const { usdc, weth } = useAtomValue(addressesAtom)
   const network = useAtomValue(networkIdAtom)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const contract = useAtomValue(crabHelperContractAtom)
@@ -669,29 +669,7 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
       const ethBorrow = fromTokenAmount(_ethBorrow, 18)
       const ethDeposit = ethAmount
       track(CRAB_EVENTS.DEPOSIT_CRAB_USDC_CLICK, { amount: amount.toString() })
-      let gasEstimate
       try {
-        try {
-          gasEstimate = await contract.methods
-            .flashDepositERC20(
-              ethBorrow.plus(ethDeposit).toFixed(0),
-              usdcAmount.toFixed(0),
-              ethDeposit.toFixed(0),
-              usdcFee,
-              UNI_POOL_FEES,
-              usdc,
-            )
-            .estimateGas({
-              to: crabStrategy2,
-              from: address,
-            })
-          if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
-        } catch (e) {
-          track(CRAB_EVENTS.DEPOSIT_CRAB_WRONG_GAS, { gas: gasEstimate })
-          alert('Error occurred, please refresh and try again')
-          throw e
-        }
-
         const tx = await handleTransaction(
           contract.methods
             .flashDepositERC20(
@@ -815,7 +793,6 @@ export const useFlashWithdrawV2 = () => {
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
-  const { crabStrategy2 } = useAtomValue(addressesAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const { track } = useAmplitude()
 
@@ -829,22 +806,7 @@ export const useFlashWithdrawV2 = () => {
       const crabAmount = fromTokenAmount(amount, 18)
       const poolFeePercent = 3000
       track(CRAB_EVENTS.WITHDRAW_CRAB_CLICK)
-      let gasEstimate
       try {
-        try {
-          gasEstimate = await contract.methods
-            .flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
-            .estimateGas({
-              to: crabStrategy2,
-              from: address,
-            })
-          if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
-        } catch (e) {
-          track(CRAB_EVENTS.WITHDRAW_CRAB_WRONG_GAS, { gas: gasEstimate })
-          alert('Error occurred, please refresh and try again')
-          throw e
-        }
-
         const tx = await handleTransaction(
           contract.methods
             .flashWithdraw(crabAmount.toFixed(0), ethWillingToPay.toFixed(0), poolFeePercent.toFixed(0))
@@ -873,8 +835,7 @@ export const useFlashWithdrawV2USDC = () => {
   const address = useAtomValue(addressAtom)
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const { getExactIn } = useUniswapQuoter()
-  const { track } = useAmplitude()
-  const { usdc, weth, crabStrategy2 } = useAtomValue(addressesAtom)
+  const { usdc, weth } = useAtomValue(addressesAtom)
   const network = useAtomValue(networkIdAtom)
 
   const usdcFee = getUSDCPoolFee(network)
@@ -890,53 +851,21 @@ export const useFlashWithdrawV2USDC = () => {
       const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(ethToGet, 18), usdcFee, slippage)
       console.log('Min amount out USDC', minAmountOut.toString())
       const poolFeePercent = 3000
-
-      track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_CLICK, { amount: amount.toNumber() })
-      let gasEstimate
-      try {
-        try {
-          gasEstimate = await contract.methods
-            .flashWithdrawERC20(
-              crabAmount.toFixed(0),
-              ethWillingToPay.toFixed(0),
-              usdc,
-              minAmountOut,
-              usdcFee,
-              poolFeePercent,
-            )
-            .estimateGas({
-              to: crabStrategy2,
-              from: address,
-            })
-          if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
-        } catch (e) {
-          track(CRAB_EVENTS.WITHDRAW_CRAB_WRONG_GAS, { gas: gasEstimate })
-          alert('Error occurred, please refresh and try again')
-          throw e
-        }
-
-        await handleTransaction(
-          contract.methods
-            .flashWithdrawERC20(
-              crabAmount.toFixed(0),
-              ethWillingToPay.toFixed(0),
-              usdc,
-              minAmountOut,
-              usdcFee,
-              poolFeePercent,
-            )
-            .send({
-              from: address,
-            }),
-          onTxConfirmed,
-        )
-        track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_SUCCESS, { amount: amount.toNumber() })
-      } catch (e: any) {
-        e?.code === REVERTED_TRANSACTION_CODE
-          ? track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_REVERT, { amount: amount.toNumber() })
-          : null
-        track(CRAB_EVENTS.WITHDRAW_CRAB_USDC_FAILED, { code: e?.code, message: e?.message, amount: amount.toNumber() })
-      }
+      return await handleTransaction(
+        contract.methods
+          .flashWithdrawERC20(
+            crabAmount.toFixed(0),
+            ethWillingToPay.toFixed(0),
+            usdc,
+            minAmountOut,
+            usdcFee,
+            poolFeePercent,
+          )
+          .send({
+            from: address,
+          }),
+        onTxConfirmed,
+      )
     },
     [contract, address, handleTransaction, calculateEthWillingToPay],
   )
