@@ -120,6 +120,20 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 timestamp;
     }
 
+    /// @dev params for withdraw auction
+    struct WithdrawAuctionParams {
+        /// @dev amont of bull to queue for withdrawal
+        uint256 withdrawsToProcess;
+        /// @dev orders that sell sqth to the auction
+        Order[] orders;
+        /// @dev price that the auction pays for the purchased sqth
+        uint256 clearingPrice;
+        /// @dev max WETH to pay for flashswapped USDC
+        uint256 maxWethForUsdc;
+        /// @dev uniswap fee for swapping eth to USD;
+        uint24 wethUsdcPoolFee;
+    }
+
     event SetMinZenBullAmount(uint256 oldAmount, uint256 newAmount);
     event SetMinEthAmount(uint256 oldAmount, uint256 newAmount);
     event SetDepositsIndex(uint256 oldDepositsIndex, uint256 newDepositsIndex);
@@ -431,6 +445,18 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice auction for queued withdraws
+     * @dev takes in orders from MM's to sell oSQTH
+     * @param _params Withdraw Params
+     */
+    function withdrawAuction(WithdrawAuctionParams calldata _params) public onlyOwner {
+        _checkOTCPrice(_p.clearingPrice, true);
+
+        uint256 initWethBalance = IERC20(weth).balanceOf(address(this));
+        uint256 initEthBalance = address(this).balance;
+
+    }
+    /**
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
@@ -522,5 +548,21 @@ contract ZenBullNetting is Ownable, EIP712 {
         ) * 1e18 / IERC20(zenBull).totalSupply();
 
         return zenBullFairPrice;
+    }
+
+    /**
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @param _price clearing price provided by manager
+     * @param _isAuctionBuying is auction buying or selling oSQTH
+     */
+    function _checkOTCPrice(uint256 _price, bool _isAuctionBuying) internal view {
+        // Get twap
+        uint256 squeethEthPrice = IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
+
+        if (_isAuctionBuying) {
+            require(_price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN14");
+        } else {
+            require(_price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN15");
+        }
     }
 }
