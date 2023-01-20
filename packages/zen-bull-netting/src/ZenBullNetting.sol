@@ -67,14 +67,19 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /// @dev WETH token address
     address private immutable weth;
+    /// @dev oSQTH token address
     address private immutable oSqth;
+    /// @dev USDC token address
     address private immutable usdc;
     /// @dev ZenBull token address
     address private immutable zenBull;
     /// @dev WPowerPerp Oracle address
     address private immutable oracle;
+    /// @dev ETH/oSQTH uniswap v3 pool address
     address private immutable ethSqueethPool;
+    /// @dev ETH/USDC uniswap v3 pool address
     address private immutable ethUsdcPool;
+    /// @dev Euler Simple Lens contract address
     address private immutable eulerLens;
 
     /// @dev array of ETH deposit receipts
@@ -475,10 +480,17 @@ contract ZenBullNetting is Ownable, EIP712 {
         return (receipt.sender, receipt.amount, receipt.timestamp);
     }
 
+    /**
+     * @notice get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
     function getZenBullPrice() external view returns (uint256) {
         return _getZenBullPrice();
     }
 
+    /**
+     * @dev check that the proposed ZenBull price is within a tolerance of the current Uniswap TWAP
+     */
     function _checkZenBullPrice(uint256 _price) internal view {
         uint256 zenBullFairPrice = _getZenBullPrice();
 
@@ -486,6 +498,10 @@ contract ZenBullNetting is Ownable, EIP712 {
         require(_price >= (zenBullFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN13");
     }
 
+    /**
+     * @dev get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
     function _getZenBullPrice() internal view returns (uint256) {
         uint256 squeethEthPrice =
             IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
