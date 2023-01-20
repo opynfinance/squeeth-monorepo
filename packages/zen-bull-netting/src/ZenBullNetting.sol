@@ -26,6 +26,10 @@ import { console } from "forge-std/console.sol";
  * ZBN07: Amount of ZenBull to queue for withdraw is less than min amount
  * ZBN08: Amount of ZenBull to withdraw left in the queue is less than min amount
  * ZBN09: Queued withdraw is not longer than 1 week to force dequeue
+ * ZBN10: ETH quantity to net is less than queued for deposits
+ * ZBN11: ZenBull quantity to net is less than queued for withdraws
+ * ZBN12: ZenBull Price too high
+ * ZBN13: ZenBull Price too low
  */
 
 /**
@@ -63,14 +67,19 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /// @dev WETH token address
     address private immutable weth;
+    /// @dev oSQTH token address
     address private immutable oSqth;
+    /// @dev USDC token address
     address private immutable usdc;
     /// @dev ZenBull token address
     address private immutable zenBull;
     /// @dev WPowerPerp Oracle address
     address private immutable oracle;
+    /// @dev ETH/oSQTH uniswap v3 pool address
     address private immutable ethSqueethPool;
+    /// @dev ETH/USDC uniswap v3 pool address
     address private immutable ethUsdcPool;
+    /// @dev Euler Simple Lens contract address
     address private immutable eulerLens;
 
     /// @dev array of ETH deposit receipts
@@ -237,6 +246,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /**
      * @notice queue ETH for deposit into ZenBull
+     * @dev payable function
      */
     function queueEth() external payable {
         require(msg.value >= minEthAmount, "ZBN03");
@@ -434,6 +444,11 @@ contract ZenBullNetting is Ownable, EIP712 {
         return sum;
     }
 
+    /**
+     * @notice get a deposit receipt by index
+     * @param _index deposit index in deposits array
+     * @return receipt sender, amount and timestamp
+     */
     function getDepositReceipt(uint256 _index) external view returns (address, uint256, uint256) {
         Receipt memory receipt = deposits[_index];
 
@@ -454,16 +469,28 @@ contract ZenBullNetting is Ownable, EIP712 {
         return sum;
     }
 
+    /**
+     * @notice get a withdraw receipt by index
+     * @param _index withdraw index in withdraws array
+     * @return receipt sender, amount and timestamp
+     */
     function getWithdrawReceipt(uint256 _index) external view returns (address, uint256, uint256) {
         Receipt memory receipt = withdraws[_index];
 
         return (receipt.sender, receipt.amount, receipt.timestamp);
     }
 
+    /**
+     * @notice get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
     function getZenBullPrice() external view returns (uint256) {
         return _getZenBullPrice();
     }
 
+    /**
+     * @dev check that the proposed ZenBull price is within a tolerance of the current Uniswap TWAP
+     */
     function _checkZenBullPrice(uint256 _price) internal view {
         uint256 zenBullFairPrice = _getZenBullPrice();
 
@@ -471,6 +498,10 @@ contract ZenBullNetting is Ownable, EIP712 {
         require(_price >= (zenBullFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN13");
     }
 
+    /**
+     * @dev get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
     function _getZenBullPrice() internal view returns (uint256) {
         uint256 squeethEthPrice =
             IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);

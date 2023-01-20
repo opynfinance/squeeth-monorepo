@@ -273,7 +273,6 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
             address(zenBullNetting).balance + ethToQueue, zenBullNettingEthBalanceBefore, 2
         );
         assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
-        assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
         assertApproxEqAbs(user2.balance - ethToQueue, user2EthBalanceBefore, 2);
         assertEq(withReceiptAmountBefore - zenBullToQueue, withReceiptAmountAfter);
         assertEq(depReceiptAmountBefore - ethToQueue, depReceiptAmountAfter);
@@ -377,7 +376,6 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
             address(zenBullNetting).balance + ethToQueue, zenBullNettingEthBalanceBefore, 2
         );
         assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
-        assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
         assertApproxEqAbs(user2.balance - ethToQueue, user2EthBalanceBefore, 2);
         assertEq(withReceiptAmountBefore - zenBullToQueue, withReceiptAmountAfter);
         assertEq(depReceiptAmountBefore - ethToQueue, depReceiptAmountAfter);
@@ -416,7 +414,6 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         assertApproxEqAbs(
             address(zenBullNetting).balance + ethToQueue, zenBullNettingEthBalanceBefore, 2
         );
-        assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
         assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
         assertApproxEqAbs(user2.balance - ethToQueue, user2EthBalanceBefore, 2);
         assertEq(withReceiptAmountBefore - zenBullToQueue, withReceiptAmountAfter);
