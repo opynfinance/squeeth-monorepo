@@ -454,12 +454,12 @@ contract ZenBullNetting is Ownable, EIP712 {
 
         uint256 initWethBalance = IERC20(weth).balanceOf(address(this));
         uint256 initEthBalance = address(this).balance;
-
     }
     /**
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
+
     function depositsQueued() external view returns (uint256) {
         uint256 j = depositsIndex;
         uint256 sum;
@@ -557,7 +557,8 @@ contract ZenBullNetting is Ownable, EIP712 {
      */
     function _checkOTCPrice(uint256 _price, bool _isAuctionBuying) internal view {
         // Get twap
-        uint256 squeethEthPrice = IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
+        uint256 squeethEthPrice =
+            IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
 
         if (_isAuctionBuying) {
             require(_price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN14");
