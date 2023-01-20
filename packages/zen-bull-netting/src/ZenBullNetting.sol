@@ -628,6 +628,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
+
     function depositsQueued() external view returns (uint256) {
         uint256 j = depositsIndex;
         uint256 sum;
