@@ -8,6 +8,8 @@ import ProfitabilityChart from './ProfitabilityChart'
 import AdvancedMetrics from './AdvancedMetrics'
 import useStyles from '@components/Strategies/styles'
 import { LinkWrapper } from '@components/LinkWrapper'
+import useAmplitude from '@hooks/useAmplitude'
+import { SITE_EVENTS } from '@utils/amplitude'
 
 const useAboutStyles = makeStyles((theme) =>
   createStyles({
@@ -26,9 +28,12 @@ const useAboutStyles = makeStyles((theme) =>
   }),
 )
 
+const gitBookLink = 'https://opyn.gitbook.io/squeeth/resources/zen-bull'
+
 const About: React.FC = () => {
   const classes = useStyles()
   const aboutClasses = useAboutStyles()
+  const { track } = useAmplitude()
 
   return (
     <div>
@@ -43,7 +48,12 @@ const About: React.FC = () => {
         <Typography className={clsx(classes.text, classes.textMargin)}>
           Zen bull makes money when ETH goes up, slow and steady. It stacks ETH if ETH is within the below bands at the
           next rebalance.{' '}
-          <LinkWrapper href="https://opyn.gitbook.io/squeeth/resources/zen-bull">Learn more</LinkWrapper>
+          <LinkWrapper
+            href={gitBookLink}
+            onClick={() => track(SITE_EVENTS.CLICK_LEARN_MORE_BULL, { link: gitBookLink })}
+          >
+            Learn more
+          </LinkWrapper>
         </Typography>
       </Box>
 

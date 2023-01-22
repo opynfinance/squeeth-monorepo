@@ -18,12 +18,13 @@ const useStyles = makeStyles((theme) =>
 
 interface LinkWrapperProps {
   href: string
+  onClick?: () => void
 }
 
-export const LinkWrapper: React.FC<LinkWrapperProps> = ({ href, children }) => {
+export const LinkWrapper: React.FC<LinkWrapperProps> = ({ href, children, onClick }) => {
   const classes = useStyles()
   return (
-    <a className={classes.linkWrap} href={href} target="_blank" rel="noopener noreferrer">
+    <a className={classes.linkWrap} href={href} target="_blank" rel="noopener noreferrer" onClick={onClick}>
       {children}
       <OpenInNewIcon style={{ width: '13px' }} />
     </a>

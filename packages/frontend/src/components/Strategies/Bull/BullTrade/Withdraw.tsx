@@ -214,8 +214,20 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [bullPositionValueInEth, withdrawAmountBN])
 
   const setWithdrawMax = () => {
+    track(BULL_EVENTS.WITHDRAW_BULL_SET_AMOUNT_MAX, {
+      amount: bullPositionValueInEth.toNumber(),
+    })
     onInputChange(bullPositionValueInEth.toString())
   }
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(BULL_EVENTS.WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+      onInputChange(withdrawAmount)
+    },
+    [withdrawAmount, setSlippage, onInputChange, track],
+  )
 
   return (
     <>
@@ -312,13 +324,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
                 justifyContent="space-between"
                 gridGap="12px"
               />
-              <TradeSettings
-                setSlippage={(amt) => {
-                  setSlippage(amt.toNumber())
-                  onInputChange(withdrawAmount)
-                }}
-                slippage={new BigNumber(slippage)}
-              />
+              <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
             </Box>
           </Box>
         </Box>

@@ -14,7 +14,8 @@ import ListItemText from '@material-ui/core/ListItemText'
 import Link from 'next/link'
 import { useState } from 'react'
 import { canStoreCookies, CookieNames, setCookie } from '@utils/cookies'
-
+import useAmplitude from '@hooks/useAmplitude'
+import { SITE_EVENTS } from '@utils/amplitude'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,6 +58,9 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
+const discordLink = 'https://tiny.cc/opyndiscord'
+const docsLink = 'https://opyn.gitbook.io/squeeth/'
+
 const SettingMenu = () => {
   const classes = useStyles()
   const [anchorEl, setAnchorEl] = useState(null)
@@ -64,7 +68,8 @@ const SettingMenu = () => {
   const [currentlyOver, setCurrentlyOver] = useState('')
   const [openModal, setOpenModal] = useState(false)
   const [openCookieModal, setOpenCookieModal] = useState(false)
-  const [consent, setCookieConsent] = useState(canStoreCookies());
+  const [consent, setCookieConsent] = useState(canStoreCookies())
+  const { track } = useAmplitude()
   const open = Boolean(anchorEl)
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
@@ -89,16 +94,15 @@ const SettingMenu = () => {
   }
 
   const acceptCookie = () => {
-    setCookieConsent(true);
+    setCookieConsent(true)
     setCookie(CookieNames.Consent, 'true')
-  
-};
+  }
 
   const handleCookieConsentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setCookieConsent(event.target.checked);
-      setCookie(CookieNames.Consent, (event.target.checked).toString())
-    
-  };
+    track(SITE_EVENTS.TOGGLE_COOKIE_CONSENT, { status: event.target.checked })
+    setCookieConsent(event.target.checked)
+    setCookie(CookieNames.Consent, event.target.checked.toString())
+  }
 
   return (
     <>
@@ -122,12 +126,24 @@ const SettingMenu = () => {
         }}
       >
         <MenuItem onClick={handleClose} key="discord">
-          <a href="https://tiny.cc/opyndiscord" target="_blank" rel="noopener noreferrer" className={classes.link}>
+          <a
+            href={discordLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={classes.link}
+            onClick={() => track(SITE_EVENTS.CLICK_DISCORD, { link: discordLink })}
+          >
             Discord
           </a>
         </MenuItem>
         <MenuItem onClick={handleClose}>
-          <a href="https://opyn.gitbook.io/squeeth/" target="_blank" rel="noopener noreferrer" className={classes.link}>
+          <a
+            href={docsLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={classes.link}
+            onClick={() => track(SITE_EVENTS.CLICK_DOCS, { link: docsLink })}
+          >
             Docs
           </a>
         </MenuItem>
@@ -159,13 +175,14 @@ const SettingMenu = () => {
                   <a
                     target="_blank"
                     style={{ textDecoration: isOver && currentlyOver === 'tos' ? 'underline' : 'none' }}
+                    onClick={() => track(SITE_EVENTS.CLICK_TERMS_OF_SERVICE)}
                   >
                     Squeeth User Terms of Service
                   </a>
                 </Link>
               </Typography>
               <Link href="/terms-of-service">
-                <a target="_blank">
+                <a target="_blank" onClick={() => track(SITE_EVENTS.CLICK_TERMS_OF_SERVICE)}>
                   <NorthEastOutlinedIcon />
                 </a>
               </Link>
@@ -182,13 +199,14 @@ const SettingMenu = () => {
                   <a
                     target="_blank"
                     style={{ textDecoration: isOver && currentlyOver === 'pp' ? 'underline' : 'none' }}
+                    onClick={() => track(SITE_EVENTS.CLICK_PRIVACY_POLICY)}
                   >
                     Opyn Privacy Policy
                   </a>
                 </Link>
               </Typography>
               <Link href="/privacy-policy">
-                <a target="_blank">
+                <a target="_blank" onClick={() => track(SITE_EVENTS.CLICK_PRIVACY_POLICY)}>
                   <NorthEastOutlinedIcon />
                 </a>
               </Link>
@@ -241,7 +259,6 @@ const SettingMenu = () => {
         </Box>
       </Modal>
 
-
       <Modal
         open={openCookieModal}
         onClose={handleCookieModal}
@@ -252,31 +269,25 @@ const SettingMenu = () => {
           <Typography style={{ marginBottom: '1em' }} id="modal-modal-title" variant="h6" component="h2">
             Cookies Settings
           </Typography>
-          <Typography style={{marginBottom: '.75em', fontSize: '13px' }}>We use cookies to support technical features that enhance your user experience and analyze frontend traffic. 
-        To learn more about these methods, including how to disable them, view our {" "}
-                <MatLink href={`${location.origin}/privacy-policy`} target="_blank">
-                 Privacy Policy.
-                </MatLink>
+          <Typography style={{ marginBottom: '.75em', fontSize: '13px' }}>
+            We use cookies to support technical features that enhance your user experience and analyze frontend traffic.
+            To learn more about these methods, including how to disable them, view our{' '}
+            <MatLink href={`${location.origin}/privacy-policy`} target="_blank">
+              Privacy Policy.
+            </MatLink>
           </Typography>
 
-
           {consent ? (
-          <Switch
+            <Switch
               checked={consent}
               onChange={handleCookieConsentChange}
               inputProps={{ 'aria-label': 'controlled' }}
             />
-            ) : (
-
-           <Button
-            variant="outlined"
-            color="primary"
-            onClick={acceptCookie}
-          >
-            I Accept Cookies
-          </Button>
-             )}
-          
+          ) : (
+            <Button variant="outlined" color="primary" onClick={acceptCookie}>
+              I Accept Cookies
+            </Button>
+          )}
         </Box>
       </Modal>
     </>
