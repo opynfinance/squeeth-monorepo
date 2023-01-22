@@ -47,7 +47,7 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstD
 
   const pnlFormatted = formatNumber(pnl)
   const pnlText = pnl > 0 ? `+${pnlFormatted}%` : `${pnlFormatted}%`
-  const timeframe = formatDistanceToNowStrict(firstDepositTimestamp * 1000)
+  const timeframe = firstDepositTimestamp ? formatDistanceToNowStrict(firstDepositTimestamp * 1000) : ''
 
   const isCrab = strategy === 'crab'
 
