@@ -166,9 +166,9 @@ export const useGetVault = () => {
   const contract = useAtomValue(controllerContractAtom)
 
   const getVault = useCallback(
-    async (vaultId: number) => {
+    async (vaultId: number, blockNumber?: number) => {
       if (!contract) return null
-      const vault = await contract.methods.vaults(vaultId).call()
+      const vault = await contract.methods.vaults(vaultId).call({}, blockNumber)
       const { NftCollateralId, collateralAmount, shortAmount, operator } = vault
 
       return {
