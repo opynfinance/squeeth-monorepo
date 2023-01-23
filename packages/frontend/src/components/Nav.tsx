@@ -151,7 +151,7 @@ const Nav: React.FC = () => {
               <NavLink path="/positions" name="Positions" />
               <NavLink path="/lp" name="LP" />
               <a
-                href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track(SITE_EVENTS.NAV_FAQ)}
