@@ -41,4 +41,12 @@
 	url = https://github.com/foundry-rs/forge-std
 [submodule "packages/zen-bull-netting/lib/openzeppelin-contracts"]
 	path = packages/zen-bull-netting/lib/openzeppelin-contracts
-	url = https://github.com/openzeppelin/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "packages/zen-bull-netting/lib/v3-core"]
+	path = packages/zen-bull-netting/lib/v3-core
+	url = https://github.com/Uniswap/v3-core
+	branch = 0.8
+[submodule "packages/zen-bull-netting/lib/v3-periphery"]
+	path = packages/zen-bull-netting/lib/v3-periphery
+	url = https://github.com/Uniswap/v3-periphery
+	branch = 0.8
