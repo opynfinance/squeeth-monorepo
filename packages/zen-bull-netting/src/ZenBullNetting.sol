@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.0;
 
 // interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IController } from "./interface/IController.sol";
 import { IOracle } from "./interface/IOracle.sol";
@@ -10,10 +10,10 @@ import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
+import {ECDSA} from "openzeppelin/utils/cryptography/ECDSA.sol";
+import {FlashSwap} from "./FlashSwap.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
-
-import { console } from "forge-std/console.sol";
 
 /**
  * Error codes
@@ -30,6 +30,13 @@ import { console } from "forge-std/console.sol";
  * ZBN11: ZenBull quantity to net is less than queued for withdraws
  * ZBN12: ZenBull Price too high
  * ZBN13: ZenBull Price too low
+ * ZBN14: Clearing price too high relative to Uniswap twap
+ * ZBN15: Clearing price too low relative to Uniswap twap
+ * ZBN16: Invalid order signer
+ * ZBN17: Order already expired
+ * ZBN18: Nonce already used
+ * ZBN19: auction order is not selling
+ * ZBN20: sell order price greater than clearing
  */
 
 /**
@@ -95,6 +102,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     mapping(address => uint256[]) public userDepositsIndex;
     /// @dev indexes of withdraw receipts of an address
     mapping(address => uint256[]) public userWithdrawsIndex;
+    /// @dev store the used flag for a nonce for each address
+    mapping(address => mapping(uint256 => bool)) public nonces;
 
     /// @dev order struct for a signed order from market maker
     struct Order {
@@ -124,9 +133,9 @@ contract ZenBullNetting is Ownable, EIP712 {
     struct WithdrawAuctionParams {
         /// @dev amont of bull to queue for withdrawal
         uint256 withdrawsToProcess;
-        /// @dev orders that sell sqth to the auction
+        /// @dev orders that sell oSqth to the auction
         Order[] orders;
-        /// @dev price that the auction pays for the purchased sqth
+        /// @dev price that the auction pays for the purchased oSqth
         uint256 clearingPrice;
         /// @dev max WETH to pay for flashswapped USDC
         uint256 maxWethForUsdc;
@@ -381,7 +390,6 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 amountToSend;
         while (_quantity > 0) {
             Receipt memory deposit = deposits[i];
-            console.log("deposit.amount", deposit.amount);
             if (deposit.amount == 0) {
                 i++;
                 continue;
@@ -450,16 +458,39 @@ contract ZenBullNetting is Ownable, EIP712 {
      * @param _params Withdraw Params
      */
     function withdrawAuction(WithdrawAuctionParams calldata _params) public onlyOwner {
-        _checkOTCPrice(_p.clearingPrice, true);
+        _checkOTCPrice(_params.clearingPrice, true);
 
-        uint256 initWethBalance = IERC20(weth).balanceOf(address(this));
-        uint256 initEthBalance = address(this).balance;
+        // uint256 initEthBalance = address(this).balance;
+        uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
+
+        uint256 crabAmount = _params.withdrawsToProcess * IZenBullStrategy(zenBull).getCrabBalance() / bullTotalSupply;
+        (, uint256 crabDebt) = IZenBullStrategy(zenBull).getCrabVaultDetails();
+        uint256 oSqthAmount = crabAmount * crabDebt / IERC20(IZenBullStrategy(zenBull).crab()).totalSupply();
+
+        // get oSQTH from market makers orders
+        for (uint256 i = 0; i < _params.orders.length && oSqthAmount > 0; i++) {
+            _checkOrder(_params.orders[i]);
+            _useNonce(_params.orders[i].trader, _params.orders[i].nonce);
+
+            require(!_params.orders[i].isBuying, "ZBN19");
+            require(_params.orders[i].price <= _params.clearingPrice, "ZBN20");
+
+            if (_params.orders[i].quantity < oSqthAmount) {
+                oSqthAmount -= _params.orders[i].quantity;
+                IERC20(oSqth).transferFrom(_params.orders[i].trader, address(this), _params.orders[i].quantity);
+            } else {
+                IERC20(oSqth).transferFrom(_params.orders[i].trader, address(this), oSqthAmount);
+                break;
+            }
+        }
+
+        uint256 usdcToRepay = _params.withdrawsToProcess * IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull) / bullTotalSupply;
     }
+
     /**
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
-
     function depositsQueued() external view returns (uint256) {
         uint256 j = depositsIndex;
         uint256 sum;
@@ -515,6 +546,25 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice checks the expiry nonce and signer of an order
+     * @param _order Order struct
+     */
+    function checkOrder(Order memory _order) external view {
+        return _checkOrder(_order);
+    }
+
+    /**
+     * @dev set nonce flag of the trader to true
+     * @param _trader address of the signer
+     * @param _nonce number that is to be traded only once
+     */
+    function _useNonce(address _trader, uint256 _nonce) internal {
+        require(!nonces[_trader][_nonce], "ZBN18");
+
+        nonces[_trader][_nonce] = true;
+    }
+
+    /**
      * @dev check that the proposed ZenBull price is within a tolerance of the current Uniswap TWAP
      */
     function _checkZenBullPrice(uint256 _price) internal view {
@@ -565,5 +615,29 @@ contract ZenBullNetting is Ownable, EIP712 {
         } else {
             require(_price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN15");
         }
+    }
+
+    /**
+     * @dev checks the expiry nonce and signer of an order
+     * @param _order Order struct
+     */
+    function _checkOrder(Order memory _order) internal view {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _ZENBULL_NETTING_TYPEHASH,
+                _order.bidId,
+                _order.trader,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
+                _order.expiry,
+                _order.nonce
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(offerSigner == _order.trader, "ZBN16");
+        require(_order.expiry >= block.timestamp, "ZBN17");
     }
 }
