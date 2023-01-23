@@ -17,8 +17,6 @@ import { FlashSwap } from "./FlashSwap.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -424,7 +422,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 amountToSend;
         while (_quantity > 0) {
             Receipt memory deposit = deposits[i];
-            console.log("deposit.amount", deposit.amount);
             if (deposit.amount == 0) {
                 i++;
                 continue;
