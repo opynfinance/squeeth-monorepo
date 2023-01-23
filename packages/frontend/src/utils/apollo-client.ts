@@ -1,6 +1,7 @@
-import { ApolloClient, InMemoryCache, split, HttpLink } from '@apollo/client'
+import { ApolloClient, InMemoryCache, split, HttpLink, ApolloLink, from } from '@apollo/client'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { WebSocketLink } from '@apollo/client/link/ws'
+import { SITE_EVENTS, trackEvent } from './amplitude'
 
 const httpLinkMN = new HttpLink({
   uri: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
@@ -24,6 +25,20 @@ const httpLinkMNSqueeth = new HttpLink({
 
 const httpLinkGLSqueeth = new HttpLink({
   uri: 'https://api.thegraph.com/subgraphs/name/haythem96/squeeth-temp-subgraph',
+})
+
+const metricsLink = new ApolloLink((operation, forward) => {
+  const { operationName } = operation
+  const startTime = new Date().getTime()
+  const observable = forward(operation)
+  observable.subscribe({
+    complete: () => {
+      const elapsed = new Date().getTime() - startTime
+      trackEvent(SITE_EVENTS.SUBGRAPH_QUERY_LOADED, { query: operationName, time: elapsed })
+    },
+  })
+
+  return observable
 })
 
 const wsLinkRP =
@@ -121,7 +136,7 @@ export const uniswapClient = {
 }
 
 const squeethMainnet = new ApolloClient({
-  link: typeof window !== 'undefined' ? splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth) : undefined,
+  link: typeof window !== 'undefined' ? from([metricsLink, splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth)]) : undefined,
   cache: new InMemoryCache(),
 })
 
