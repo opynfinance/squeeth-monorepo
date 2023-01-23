@@ -544,7 +544,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             } else {
                 oSqthQuantity = toExchange;
             }
-
             IERC20(weth).transfer(
                 _params.orders[i].trader, (oSqthQuantity * _params.clearingPrice) / 1e18
             );
