@@ -19,6 +19,7 @@ contract ZenBullNettingBaseSetup is Test {
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
     address public constant ZEN_BULL = 0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507;
     address public constant EULER_SIMPLE_LENS = 0x5077B7642abF198b4a5b7C4BdCE4f03016C7089C;
+    address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
 
     uint256 public deployerPk;
     uint256 public ownerPk;
@@ -35,7 +36,7 @@ contract ZenBullNettingBaseSetup is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
-        zenBullNetting = new ZenBullNetting(ZEN_BULL, EULER_SIMPLE_LENS);
+        zenBullNetting = new ZenBullNetting(ZEN_BULL, EULER_SIMPLE_LENS, UNI_FACTORY);
         zenBullNetting.transferOwnership(owner);
         vm.stopPrank();
 

@@ -8,4 +8,5 @@ interface IZenBullStrategy is IERC20 {
     function getCrabBalance() external view returns (uint256);
     function getCrabVaultDetails() external view returns (uint256, uint256);
     function crab() external view returns (address);
+    function withdraw(uint256 _bullAmount) external;
 }
