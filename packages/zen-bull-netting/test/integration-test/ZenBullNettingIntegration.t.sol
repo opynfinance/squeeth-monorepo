@@ -365,7 +365,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(1);
         (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
 
         assertEq(
@@ -405,7 +405,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
         (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(1);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,
