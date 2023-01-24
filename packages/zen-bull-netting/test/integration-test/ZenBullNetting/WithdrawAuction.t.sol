@@ -55,7 +55,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         vm.stopPrank();
     }
 
-    function testWithdrawAuction() public {
+    function testFullWithdrawAuction() public {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
@@ -118,10 +118,16 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
+        (, uint256 receiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        uint256 user1EthBalanceBefore = user1.balance;
+
         vm.startPrank(owner);
         zenBullNetting.withdrawAuction(params);
         vm.stopPrank();
 
+        (, uint256 receiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+
+        assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
         assertEq(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
@@ -132,6 +138,8 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             wethInEulerBefore,
             200
         );
+        uint256 user1EthBalanceAfter = user1.balance;
+        assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
     }
 
     function testPartialWithdrawAuction() public {

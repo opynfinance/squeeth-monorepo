@@ -27,6 +27,7 @@ contract ZenBullNettingBaseSetup is Test {
     address public constant ORACLE = 0x65D66c76447ccB45dAf1e8044e918fA786A483A1;
 
     address public ethSqueethPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
+    address public ethUsdcPool = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
 
     uint256 public deployerPk;
     uint256 public ownerPk;

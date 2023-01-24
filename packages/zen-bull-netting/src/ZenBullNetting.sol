@@ -17,6 +17,8 @@ import { FlashSwap } from "./FlashSwap.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -493,6 +495,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         _checkOTCPrice(_params.clearingPrice, true);
 
         uint256 initialEthBalance = address(this).balance;
+
+        console.log("eth remain", address(this).balance - initialEthBalance);
+        
         uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
         uint256 crabAmount = _params.withdrawsToProcess * IZenBullStrategy(zenBull).getCrabBalance()
             / bullTotalSupply;
@@ -535,6 +540,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         );
 
         // send WETH to market makers
+        console.log("eth remain", address(this).balance - initialEthBalance);
         IWETH(weth).deposit{value: address(this).balance - initialEthBalance}();
         toExchange = oSqthAmount;
         uint256 oSqthQuantity;
@@ -544,6 +550,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             } else {
                 oSqthQuantity = toExchange;
             }
+
             IERC20(weth).transfer(
                 _params.orders[i].trader, (oSqthQuantity * _params.clearingPrice) / 1e18
             );
@@ -558,7 +565,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         }
 
         // send ETH to withdrawers
-        uint256 ethToWithdrawers = address(this).balance - initialEthBalance;
+        uint256 ethToWithdrawers = IWETH(weth).balanceOf(address(this));
         IWETH(weth).withdraw(ethToWithdrawers);
 
         uint256 remainingWithdraws = _params.withdrawsToProcess;
@@ -618,6 +625,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             IZenBullStrategy(zenBull).withdraw(data.zenBullAmountToBurn);
             IWETH(weth).deposit{value: _uniFlashSwapData.amountToPay}();
             IWETH(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+
+            console.log("_uniFlashSwapData.amountToPay", _uniFlashSwapData.amountToPay);
         }
     }
 
