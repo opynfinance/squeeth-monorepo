@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.13;
+pragma abicoder v2;
 
 // interface
 import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
@@ -151,7 +152,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     struct WithdrawAuctionData {
         uint256 zenBullAmountToBurn;
         uint256 oSqthAmountToRepay;
-        uint256 usdcAmountToRepay;
+        uint256 ethAmountToRepay;
     }
 
     event SetMinZenBullAmount(uint256 oldAmount, uint256 newAmount);
@@ -185,6 +186,12 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     event WithdrawAuction(
         address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
     );
+    event ZenBullWithdrawn(
+        address indexed withdrawer,
+        uint256 crabAmount,
+        uint256 usdcAmount,
+        uint256 indexed receiptIndex
+    );
 
     constructor(address _zenBull, address _eulerSimpleLens, address _uniFactory)
         EIP712("ZenBullNetting", "1")
@@ -207,6 +214,11 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         IERC20(usdc).approve(_zenBull, type(uint256).max);
         IERC20(oSqth).approve(_zenBull, type(uint256).max);
     }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable {}
 
     /**
      * @dev view function to get the domain seperator used in signing
@@ -480,6 +492,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     function withdrawAuction(WithdrawAuctionParams calldata _params) public onlyOwner {
         _checkOTCPrice(_params.clearingPrice, true);
 
+        uint256 initialEthBalance = address(this).balance;
         uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
         uint256 crabAmount = _params.withdrawsToProcess * IZenBullStrategy(zenBull).getCrabBalance()
             / bullTotalSupply;
@@ -508,8 +521,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         }
 
         uint256 usdcToRepay = _params.withdrawsToProcess
-            * IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull) / bullTotalSupply;
-        uint256 initialEthBalance = address(this).balance;
+            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) / bullTotalSupply;
 
         // WETH-USDC swap
         _exactOutFlashSwap(
@@ -544,6 +556,53 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 _params.clearingPrice
                 );
         }
+
+        // send ETH to withdrawers
+        uint256 ethToWithdrawers = address(this).balance - initialEthBalance;
+        IWETH(weth).withdraw(ethToWithdrawers);
+
+        uint256 remainingWithdraws = _params.withdrawsToProcess;
+        uint256 j = withdrawsIndex;
+        uint256 ethAmount;
+
+        while (remainingWithdraws > 0) {
+            Receipt memory withdraw = withdraws[j];
+            if (withdraw.amount == 0) {
+                j++;
+                continue;
+            }
+            if (withdraw.amount <= remainingWithdraws) {
+                // full usage
+                remainingWithdraws -= withdraw.amount;
+                zenBullBalance[withdraw.sender] -= withdraw.amount;
+
+                // send proportional usdc
+                ethAmount = withdraw.amount * ethToWithdrawers / _params.withdrawsToProcess;
+
+                payable(withdraw.sender).sendValue(ethAmount);
+
+                delete withdraws[j];
+                j++;
+                
+                emit ZenBullWithdrawn(withdraw.sender, withdraw.amount, ethAmount, j);
+            } else {
+                withdraws[j].amount -= remainingWithdraws;
+                zenBullBalance[withdraw.sender] -= remainingWithdraws;
+
+                // send proportional usdc
+                ethAmount = remainingWithdraws * ethToWithdrawers / _params.withdrawsToProcess;
+
+                payable(withdraw.sender).sendValue(ethAmount);
+
+                emit ZenBullWithdrawn(withdraw.sender, remainingWithdraws, ethAmount, j);
+
+                remainingWithdraws = 0;
+                // break;
+            }
+        }
+
+        withdrawsIndex = j;
+        isAuctionLive = false;
     }
 
     /**
@@ -624,7 +683,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @notice checks the expiry nonce and signer of an order
      * @param _order Order struct
      */
-    function checkOrder(Order memory _order) external view {
+    function checkOrder(Order memory _order) external view returns (bool) {
         return _checkOrder(_order);
     }
 
@@ -696,7 +755,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @dev checks the expiry nonce and signer of an order
      * @param _order Order struct
      */
-    function _checkOrder(Order memory _order) internal view {
+    function _checkOrder(Order memory _order) internal view returns (bool) {
         bytes32 structHash = keccak256(
             abi.encode(
                 _ZENBULL_NETTING_TYPEHASH,
@@ -714,5 +773,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
         require(offerSigner == _order.trader, "ZBN16");
         require(_order.expiry >= block.timestamp, "ZBN17");
+
+        return true;
     }
 }

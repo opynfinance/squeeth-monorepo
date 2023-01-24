@@ -14,6 +14,8 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { UniOracle } from "./UniOracle.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * LB0: ETH sent is not at least ETH to deposit in Euler
@@ -264,6 +266,7 @@ contract LeverageZen is Ownable {
         uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 
+        console.log("wethToWithdraw", wethToWithdraw);
         IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
         IEulerDToken(dToken).repay(0, usdcToRepay);
         IEulerEToken(eToken).withdraw(0, wethToWithdraw);
