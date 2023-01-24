@@ -64,8 +64,8 @@ const Crab: React.FC = () => {
   return (
     <>
       <NextSeo
-        title="Squeeth"
-        description="Squeeth is a new financial primitive in DeFi that gives traders exposure to ETH²"
+        title="Opyn"
+        description="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liquidations"
         canonical={SQUEETH_BASE_URL}
         openGraph={{
           images: [

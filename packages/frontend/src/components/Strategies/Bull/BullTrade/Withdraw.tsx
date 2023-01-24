@@ -15,6 +15,7 @@ import {
   BIG_ZERO,
   FUNDING_PERIOD,
   INDEX_SCALE,
+  UNI_POOL_FEES,
   VOL_PERCENT_FIXED,
   VOL_PERCENT_SCALAR,
   WETH_DECIMALS,
@@ -98,7 +99,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
 
   const showPriceImpactWarning = useAppMemo(() => {
-    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut)
+    const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut).times(1 - UNI_POOL_FEES / 1000_000)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
@@ -213,8 +214,20 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [bullPositionValueInEth, withdrawAmountBN])
 
   const setWithdrawMax = () => {
+    track(BULL_EVENTS.WITHDRAW_BULL_SET_AMOUNT_MAX, {
+      amount: bullPositionValueInEth.toNumber(),
+    })
     onInputChange(bullPositionValueInEth.toString())
   }
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(BULL_EVENTS.WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+      onInputChange(withdrawAmount)
+    },
+    [withdrawAmount, setSlippage, onInputChange, track],
+  )
 
   return (
     <>
@@ -311,13 +324,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
                 justifyContent="space-between"
                 gridGap="12px"
               />
-              <TradeSettings
-                setSlippage={(amt) => {
-                  setSlippage(amt.toNumber())
-                  onInputChange(withdrawAmount)
-                }}
-                slippage={new BigNumber(slippage)}
-              />
+              <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
             </Box>
           </Box>
         </Box>

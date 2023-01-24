@@ -11,6 +11,8 @@ import { impliedVolAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { formatNumber } from '@utils/formatter'
 import { Tooltips } from '@constants/enums'
 import { bullCurrentFundingAtom } from '@state/bull/atoms'
+import useAmplitude from '@hooks/useAmplitude'
+import { SITE_EVENTS } from '@utils/amplitude'
 
 const useStyles = makeStyles(() =>
   createStyles({
@@ -32,6 +34,7 @@ const AdvancedMetrics: React.FC = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
   const currentImpliedFunding = useAtomValue(bullCurrentFundingAtom)
+  const { track } = useAmplitude()
 
   const classes = useStyles()
 
@@ -39,7 +42,13 @@ const AdvancedMetrics: React.FC = () => {
 
   return (
     <div>
-      <TextButton className={classes.button} onClick={() => setShowAdvanced(!showAdvanced)}>
+      <TextButton
+        className={classes.button}
+        onClick={() => {
+          setShowAdvanced(!showAdvanced)
+          !showAdvanced ? track(SITE_EVENTS.SEE_ADVANCED_METRICS_BULL) : null
+        }}
+      >
         <Typography className={classes.buttonText}>Advanced</Typography>{' '}
         {showAdvanced ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
       </TextButton>

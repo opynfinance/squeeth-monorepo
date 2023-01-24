@@ -61,6 +61,7 @@ import {
   CRAB_TOKEN_DECIMALS,
   NETTING_PRICE_IMPACT,
   STRATEGY_DEPOSIT_LIMIT,
+  UNI_POOL_FEES,
 } from '@constants/index'
 import { useRestrictUser } from '@context/restrict-user'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
@@ -198,7 +199,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const withdrawPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false
 
-    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw)
+    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw).times(1 - UNI_POOL_FEES / 1000_000)
     const scalingFactor = new BigNumber(INDEX_SCALE)
     const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
     const executionVol = new BigNumber(
@@ -367,6 +368,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   )
 
   const setWithdrawMax = () => {
+    track(CRAB_EVENTS.WITHDRAW_CRAB_SET_AMOUNT_MAX, {
+      amount: !useUsdc ? currentEthValue.toNumber() : currentUsdcValue.toNumber(),
+      usdc: useUsdc,
+    })
     if (!useUsdc) onInputChange(currentEthValue.toString())
     else onInputChange(currentUsdcValue.toString())
   }
@@ -441,6 +446,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       : withdrawFundingWarning || withdrawPriceImpactWarning
       ? classes.btnWarning
       : ''
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(CRAB_EVENTS.WITHDRAW_CRAB_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+    },
+    [track, setSlippage],
+  )
 
   return (
     <>
@@ -596,9 +609,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
                 gridGap="8px"
               />
 
-              {!useQueue && (
-                <TradeSettings setSlippage={(amt) => setSlippage(amt.toNumber())} slippage={new BigNumber(slippage)} />
-              )}
+              {!useQueue && <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />}
             </Box>
           </Box>
         </Box>
