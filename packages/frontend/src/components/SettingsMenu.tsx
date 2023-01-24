@@ -59,7 +59,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const discordLink = 'https://tiny.cc/opyndiscord'
-const docsLink = 'https://opyn.gitbook.io/squeeth/'
+const docsLink = 'https://opyn.gitbook.io/opyn-hub/'
 
 const SettingMenu = () => {
   const classes = useStyles()

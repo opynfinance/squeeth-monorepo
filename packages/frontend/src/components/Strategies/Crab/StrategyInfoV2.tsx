@@ -116,7 +116,12 @@ export const StrategyInfo: React.FC = () => {
         <br /> <br />
         If the Squeeth premium to ETH increases, the strategy will incur a loss because it will be more expensive to
         close the position. Crab aims to be profitable in USD terms.
-        <a className={classes.link} href={Links.CrabFAQ} target="_blank" rel="noreferrer">
+        <a
+          className={classes.link}
+          href="https://opyn.gitbook.io/opyn-strategies/crab-strategy/risks-and-fees"
+          target="_blank"
+          rel="noreferrer"
+        >
           {' '}
           Learn more.{' '}
         </a>
