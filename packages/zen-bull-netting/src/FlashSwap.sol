@@ -11,7 +11,8 @@ import "v3-core/libraries/TickMath.sol";
 import "v3-core/libraries/SafeCast.sol";
 
 library PoolAddress {
-    bytes32 internal constant POOL_INIT_CODE_HASH = 0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54;
+    bytes32 internal constant POOL_INIT_CODE_HASH =
+        0xe34f199b19b2b4f47f68442619d555527d244f78a3297ea89325f843f87b8b54;
 
     /// @notice The identifying key of the pool
     struct PoolKey {
@@ -25,11 +26,11 @@ library PoolAddress {
     /// @param tokenB The second token of a pool, unsorted
     /// @param fee The fee level of the pool
     /// @return Poolkey The pool details with ordered token0 and token1 assignments
-    function getPoolKey(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) internal pure returns (PoolKey memory) {
+    function getPoolKey(address tokenA, address tokenB, uint24 fee)
+        internal
+        pure
+        returns (PoolKey memory)
+    {
         if (tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
         return PoolKey({token0: tokenA, token1: tokenB, fee: fee});
     }
@@ -38,14 +39,18 @@ library PoolAddress {
     /// @param factory The Uniswap V3 factory contract address
     /// @param key The PoolKey
     /// @return pool The contract address of the V3 pool
-    function computeAddress(address factory, PoolKey memory key) internal pure returns (address pool) {
+    function computeAddress(address factory, PoolKey memory key)
+        internal
+        pure
+        returns (address pool)
+    {
         require(key.token0 < key.token1);
         pool = address(
             uint160(
                 uint256(
                     keccak256(
                         abi.encodePacked(
-                            hex'ff',
+                            hex"ff",
                             factory,
                             keccak256(abi.encode(key.token0, key.token1, key.fee)),
                             POOL_INIT_CODE_HASH
@@ -65,12 +70,11 @@ library CallbackValidation {
     /// @param tokenB The contract address of the other token
     /// @param fee The fee collected upon every swap in the pool, denominated in hundredths of a bip
     /// @return pool The V3 pool contract address
-    function verifyCallback(
-        address factory,
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) internal view returns (IUniswapV3Pool pool) {
+    function verifyCallback(address factory, address tokenA, address tokenB, uint24 fee)
+        internal
+        view
+        returns (IUniswapV3Pool pool)
+    {
         return verifyCallback(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
     }
 

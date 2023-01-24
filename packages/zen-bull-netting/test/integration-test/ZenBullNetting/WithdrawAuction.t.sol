@@ -111,10 +111,11 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
-        uint256 debtBalanceBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        uint256 usdcToRepay = amount
-            * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 debtBalanceBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
+        uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
         vm.startPrank(owner);
@@ -122,13 +123,20 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
-        assertEq(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay, debtBalanceBefore);
-        assertApproxEqAbs(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw, wethInEulerBefore, 200);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
+            debtBalanceBefore
+        );
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+            wethInEulerBefore,
+            200
+        );
     }
 
     function testPartialWithdrawAuction() public {
         uint256 amount = 5e18;
-        _queueZenBull(user1, amount*2);
+        _queueZenBull(user1, amount * 2);
 
         uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
             / IZenBullStrategy(ZEN_BULL).totalSupply();
@@ -182,10 +190,11 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
-        uint256 debtBalanceBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        uint256 usdcToRepay = amount
-            * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 debtBalanceBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
+        uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
         vm.startPrank(owner);
@@ -193,8 +202,15 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
-        assertEq(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay, debtBalanceBefore);
-        assertApproxEqAbs(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw, wethInEulerBefore, 200);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
+            debtBalanceBefore
+        );
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+            wethInEulerBefore,
+            200
+        );
     }
 
     function testWithdrawAuctionWithAnEmptyReceipt() public {
@@ -258,10 +274,11 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
-        uint256 debtBalanceBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        uint256 usdcToRepay = amount
-            * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 debtBalanceBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
+        uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
         vm.startPrank(owner);
@@ -269,8 +286,15 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         vm.stopPrank();
 
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
-        assertEq(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay, debtBalanceBefore);
-        assertApproxEqAbs(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw, wethInEulerBefore, 200);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
+            debtBalanceBefore
+        );
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+            wethInEulerBefore,
+            200
+        );
     }
 
     function testWithdrawAuctionWithMultipleOrders() public {
@@ -294,7 +318,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             SigUtil.Order memory orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -305,7 +329,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -320,7 +344,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -331,7 +355,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -352,26 +376,34 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         });
 
         vm.prank(mm1);
-        IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount/2);
+        IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount / 2);
         vm.prank(mm2);
-        IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount/2);
+        IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount / 2);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 mm2WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm2);
-        uint256 debtBalanceBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        uint256 usdcToRepay = amount
-            * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 debtBalanceBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
+        uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
         vm.startPrank(owner);
         zenBullNetting.withdrawAuction(params);
         vm.stopPrank();
 
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount/2, mm1WpowerPerpBalanceBefore);
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm2) + oSqthAmount/2, mm2WpowerPerpBalanceBefore);
-        assertEq(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay, debtBalanceBefore);
-        assertApproxEqAbs(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw, wethInEulerBefore, 200);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount / 2, mm1WpowerPerpBalanceBefore);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm2) + oSqthAmount / 2, mm2WpowerPerpBalanceBefore);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
+            debtBalanceBefore
+        );
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+            wethInEulerBefore,
+            200
+        );
     }
 
     function testWithdrawAuctionWhenPriceGreaterThanClearingPrice() public {
@@ -578,7 +610,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             SigUtil.Order memory orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -589,7 +621,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -604,7 +636,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             orderSig = SigUtil.Order({
                 bidId: 2,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -615,7 +647,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             orderData = ZenBullNetting.Order({
                 bidId: 2,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: false,
                 expiry: block.timestamp + 1000,
@@ -625,7 +657,6 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
                 s: s
             });
             orders[1] = orderData;
-
         }
 
         ZenBullNetting.WithdrawAuctionParams memory params = ZenBullNetting.WithdrawAuctionParams({

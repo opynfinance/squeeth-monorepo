@@ -218,7 +218,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
-    receive() external payable {}
+    receive() external payable { }
 
     /**
      * @dev view function to get the domain seperator used in signing
@@ -583,7 +583,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                 delete withdraws[j];
                 j++;
-                
+
                 emit ZenBullWithdrawn(withdraw.sender, withdraw.amount, ethAmount, j);
             } else {
                 withdraws[j].amount -= remainingWithdraws;
