@@ -14,8 +14,6 @@ import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 import { UniOracle } from "./UniOracle.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * LB0: ETH sent is not at least ETH to deposit in Euler
