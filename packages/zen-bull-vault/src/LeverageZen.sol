@@ -264,7 +264,6 @@ contract LeverageZen is Ownable {
         uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 
-        console.log("wethToWithdraw", wethToWithdraw);
         IERC20(usdc).transferFrom(msg.sender, address(this), usdcToRepay);
         IEulerDToken(dToken).repay(0, usdcToRepay);
         IEulerEToken(eToken).withdraw(0, wethToWithdraw);
