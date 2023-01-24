@@ -1,6 +1,6 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import {
   maxCapAtom,
@@ -67,6 +67,7 @@ import { useHandleTransaction } from '../wallet/hooks'
 import { addressAtom, networkIdAtom } from '../wallet/atoms'
 import { currentImpliedFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '../controller/atoms'
 import {
+  controllerContractAtom,
   crabHelperContractAtom,
   crabMigrationContractAtom,
   crabNettingContractAtom,
@@ -83,7 +84,7 @@ import {
   WETH_DECIMALS,
 } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import { useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
+import { getHistoricEthPrices, useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
@@ -94,6 +95,11 @@ import { squeethInitialPriceAtom } from '../squeethPool/atoms'
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import usePopup, { GenericErrorPopupConfig } from '@hooks/usePopup'
+import STRATEGY_QUERY from '@queries/squeeth/strategyQuery'
+import { useQuery } from '@apollo/client'
+import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__generated__/strategyQuery'
+import { squeethClient } from '@utils/apollo-client'
+import { useOracle } from '@hooks/contracts/useOracle'
 
 export const useSetStrategyData = () => {
   const setMaxCap = useUpdateAtom(maxCapAtom)
@@ -1223,4 +1229,65 @@ export const useDeQueueWithdrawCrab = () => {
   )
 
   return queueWithdraw
+}
+
+export const useCrabProfitData = () => {
+  const CRAB_VAULT = 286
+  const [profitData, setProfitData] = useState({
+    ethPriceAtHedge: 0,
+    nf: 0,
+    shortAmt: 0,
+    collat: 0,
+    oSqthPrice: 0,
+  })
+
+  const { crabStrategy2, squeethPool, oSqueeth, weth } = useAtomValue(addressesAtom)
+  const controller = useAtomValue(controllerContractAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const { data, loading, error } = useQuery<strategyQuery, strategyQueryVariables>(STRATEGY_QUERY, {
+    variables: { strategyId: crabStrategy2 },
+    fetchPolicy: 'cache-and-network',
+    client: squeethClient[networkId],
+  })
+
+  const getVault = useGetVault()
+  const { getTwapSafe } = useOracle()
+
+  const setData = async (blockNumber: number, timestamp: number) => {
+    if (!controller) return
+
+    const p1 = getVault(CRAB_VAULT, blockNumber)
+    const p2 = controller.methods.getExpectedNormalizationFactor().call({}, blockNumber)
+    const p3 = getTwapSafe(squeethPool, oSqueeth, weth, 1, blockNumber)
+    const p4 = getHistoricEthPrices([timestamp])
+
+    const [_vault, _nf, _osqthPrice, _ethPriceMap] = await Promise.all([p1, p2, p3, p4])
+
+
+    if (!_vault) return
+
+    console.log('Data', { 
+      ethPriceAtHedge: Number(_ethPriceMap[Number(timestamp)]),
+      nf: toTokenAmount(_nf, 18).toNumber(),
+      shortAmt: _vault.shortAmount.toNumber(),
+      collat: _vault.collateralAmount.toNumber(),
+      oSqthPrice: _osqthPrice.toNumber() 
+    })
+    setProfitData({ 
+      ethPriceAtHedge: Number(_ethPriceMap[Number(timestamp)]),
+      nf: toTokenAmount(_nf, 18).toNumber(),
+      shortAmt: _vault.shortAmount.toNumber(),
+      collat: _vault.collateralAmount.toNumber(),
+      oSqthPrice: _osqthPrice.toNumber() 
+    })
+  }
+
+
+  useEffect(() => {
+    if (!loading && data && data.strategy) {
+      setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
+    }
+  }, [loading, data])
+
+  return { profitData, loading }
 }

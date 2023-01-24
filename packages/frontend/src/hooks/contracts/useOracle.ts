@@ -20,10 +20,10 @@ export const useOracle = () => {
   }, [oracle, web3])
 
   const getTwapSafe = useCallback(
-    async (pool: string, base: string, quote: string, period = 300) => {
+    async (pool: string, base: string, quote: string, period = 300, blockNumber?: number) => {
       if (!contract) return new BigNumber(0)
 
-      const _price = await contract.methods.getTwap(pool, base, quote, period, true).call()
+      const _price = await contract.methods.getTwap(pool, base, quote, period, true).call({}, blockNumber)
       return toTokenAmount(_price, 18)
     },
     [contract],

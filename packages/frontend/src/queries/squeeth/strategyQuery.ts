@@ -7,6 +7,7 @@ export const STRATEGY_QUERY = gql`
       vaultId
       lastHedgeTx
       lastHedgeTimestamp
+      lastHedgeBlockNumber
     }
   }
 `

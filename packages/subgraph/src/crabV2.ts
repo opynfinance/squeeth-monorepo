@@ -54,6 +54,7 @@ function loadOrCreateTx(id: string): CrabUserTxSchema {
   userTx.type = "TRANSFER"
   userTx.timestamp = BigInt.zero()
   userTx.transaction = id
+  userTx.blockNumber = BigInt.zero()
 
   return userTx
 }
@@ -68,6 +69,7 @@ export function handleDeposit(event: Deposit): void {
   userTx.owner = event.transaction.from
   userTx.type = 'DEPOSIT'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -81,6 +83,7 @@ export function handleWithdraw(event: Withdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -115,6 +118,7 @@ export function handleFlashDeposit(event: FlashDeposit): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_DEPOSIT'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -130,6 +134,7 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -278,6 +283,7 @@ export function handleHedgeOTC(event: HedgeOTC): void {
 
   const strategy = loadOrCreateStrategy(CRAB_V2_ADDR.toHex())
   strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeBlockNumber = event.block.number
   strategy.lastHedgeTx = event.transaction.hash.toHex()
   strategy.save()
 }

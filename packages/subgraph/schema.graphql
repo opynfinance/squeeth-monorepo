@@ -178,6 +178,7 @@ type CrabUserTx @entity {
   erc20Amount: BigInt
   excessEth: BigInt
   transaction: String!
+  blockNumber: BigInt!
 }
 
 type Strategy @entity {
@@ -186,6 +187,7 @@ type Strategy @entity {
   vaultId: BigInt!
   lastHedgeTimestamp: BigInt!
   lastHedgeTx: String!
+  lastHedgeBlockNumber: BigInt!
 }
 
 type BullUserTx @entity {
@@ -203,6 +205,7 @@ type BullUserTx @entity {
   erc20Token: String
   erc20Amount: BigInt
   excessEth: BigInt
+  blockNumber: BigInt!
 }
 
 type SetAddress @entity {
