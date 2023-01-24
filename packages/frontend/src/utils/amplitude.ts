@@ -32,7 +32,7 @@ export const initializeAmplitude = () => {
 
 export const trackEvent = (eventName: string, eventProps?: Record<string, unknown>) => {
   if (!analyticsEnabled) {
-    //console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
+    console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return
   }
 
@@ -75,6 +75,7 @@ export enum SITE_EVENTS {
   CLICK_LEARN_MORE_BULL = 'CLICK_LEARN_MORE_BULL',
   SEE_ADVANCED_METRICS_CRAB = 'SEE_ADVANCED_METRICS_CRAB',
   SEE_ADVANCED_METRICS_BULL = 'SEE_ADVANCED_METRICS_BULL',
+  SUBGRAPH_QUERY_LOADED = 'SUBGRAPH_QUERY_LOADED',
 }
 
 export enum CRAB_EVENTS {
