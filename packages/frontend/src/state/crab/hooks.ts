@@ -1249,17 +1249,19 @@ export const useCrabProfitData = () => {
     fetchPolicy: 'cache-and-network',
     client: squeethClient[networkId],
   })
+  const crabPosition = useAtomValue(currentCrabPositionValueAtomV2)
+  const currentEthPrice = useOnChainETHPrice()
 
   const getVault = useGetVault()
   const { getTwapSafe } = useOracle()
 
-  const setData = async (blockNumber: number, timestamp: number) => {
+  const setData = async (blockNumber?: number, timestamp?: number) => {
     if (!controller) return
 
     const p1 = getVault(CRAB_VAULT, blockNumber)
     const p2 = controller.methods.getExpectedNormalizationFactor().call({}, blockNumber)
     const p3 = getTwapSafe(squeethPool, oSqueeth, weth, 1, blockNumber)
-    const p4 = getHistoricEthPrices([timestamp])
+    const p4 = timestamp ? getHistoricEthPrices([timestamp]) : currentEthPrice.toNumber()
 
     const [_vault, _nf, _osqthPrice, _ethPriceMap] = await Promise.all([p1, p2, p3, p4])
 
@@ -1267,14 +1269,14 @@ export const useCrabProfitData = () => {
     if (!_vault) return
 
     console.log('Data', { 
-      ethPriceAtHedge: Number(_ethPriceMap[Number(timestamp)]),
+      ethPriceAtHedge: timestamp ? Number(_ethPriceMap[Number(timestamp)]) : currentEthPrice.toNumber(),
       nf: toTokenAmount(_nf, 18).toNumber(),
       shortAmt: _vault.shortAmount.toNumber(),
       collat: _vault.collateralAmount.toNumber(),
       oSqthPrice: _osqthPrice.toNumber() 
     })
     setProfitData({ 
-      ethPriceAtHedge: Number(_ethPriceMap[Number(timestamp)]),
+      ethPriceAtHedge: timestamp ? Number(_ethPriceMap[Number(timestamp)]) : currentEthPrice.toNumber(),
       nf: toTokenAmount(_nf, 18).toNumber(),
       shortAmt: _vault.shortAmount.toNumber(),
       collat: _vault.collateralAmount.toNumber(),
@@ -1284,10 +1286,15 @@ export const useCrabProfitData = () => {
 
 
   useEffect(() => {
+    console.log('useEffect', crabPosition.toString())
     if (!loading && data && data.strategy) {
-      setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
+      if ( crabPosition.isGreaterThan(0)) {
+        setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
+      } else {
+        setData()
+      }
     }
-  }, [loading, data])
+  }, [loading, data, crabPosition])
 
   return { profitData, loading }
 }
