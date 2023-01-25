@@ -3,6 +3,10 @@ pragma solidity ^0.8.13;
 
 // interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
+import { IController } from "./interface/IController.sol";
+import { IOracle } from "./interface/IOracle.sol";
+import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
@@ -20,6 +24,10 @@ import { Address } from "openzeppelin/utils/Address.sol";
  * ZBN07: Amount of ZenBull to queue for withdraw is less than min amount
  * ZBN08: Amount of ZenBull to withdraw left in the queue is less than min amount
  * ZBN09: Queued withdraw is not longer than 1 week to force dequeue
+ * ZBN10: ETH quantity to net is less than queued for deposits
+ * ZBN11: ZenBull quantity to net is less than queued for withdraws
+ * ZBN12: ZenBull Price too high
+ * ZBN13: ZenBull Price too low
  */
 
 /**
@@ -56,9 +64,21 @@ contract ZenBullNetting is Ownable, EIP712 {
     uint32 public auctionTwapPeriod;
 
     /// @dev WETH token address
-    address private weth;
+    address private immutable weth;
+    /// @dev oSQTH token address
+    address private immutable oSqth;
+    /// @dev USDC token address
+    address private immutable usdc;
     /// @dev ZenBull token address
-    address private zenBull;
+    address private immutable zenBull;
+    /// @dev WPowerPerp Oracle address
+    address private immutable oracle;
+    /// @dev ETH/oSQTH uniswap v3 pool address
+    address private immutable ethSqueethPool;
+    /// @dev ETH/USDC uniswap v3 pool address
+    address private immutable ethUsdcPool;
+    /// @dev Euler Simple Lens contract address
+    address private immutable eulerLens;
 
     /// @dev array of ETH deposit receipts
     Receipt[] public deposits;
@@ -119,13 +139,28 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 indexed receiptIndex
     );
     event DequeueZenBull(address indexed withdrawer, uint256 amount, uint256 withdrawersBalance);
+    event NetAtPrice(
+        bool indexed isDeposit,
+        address indexed receiver,
+        uint256 amountQueuedProcessed,
+        uint256 amountReceived,
+        uint256 indexed index
+    );
 
-    constructor(address _weth, address _zenBull) EIP712("ZenBullNetting", "1") {
+    constructor(address _zenBull, address _eulerSimpleLens) EIP712("ZenBullNetting", "1") {
         otcPriceTolerance = 5e16; // 5%
         auctionTwapPeriod = 420 seconds;
 
-        weth = _weth;
         zenBull = _zenBull;
+        eulerLens = _eulerSimpleLens;
+        weth = IController(IZenBullStrategy(_zenBull).powerTokenController()).weth();
+        oracle = IController(IZenBullStrategy(_zenBull).powerTokenController()).oracle();
+        ethSqueethPool =
+            IController(IZenBullStrategy(_zenBull).powerTokenController()).wPowerPerpPool();
+        ethUsdcPool =
+            IController(IZenBullStrategy(_zenBull).powerTokenController()).ethQuoteCurrencyPool();
+        usdc = IController(IZenBullStrategy(_zenBull).powerTokenController()).quoteCurrency();
+        oSqth = IController(IZenBullStrategy(_zenBull).powerTokenController()).wPowerPerp();
     }
 
     /**
@@ -209,6 +244,7 @@ contract ZenBullNetting is Ownable, EIP712 {
 
     /**
      * @notice queue ETH for deposit into ZenBull
+     * @dev payable function
      */
     function queueEth() external payable {
         require(msg.value >= minEthAmount, "ZBN03");
@@ -312,6 +348,86 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice swaps quantity amount of ETH for ZenBull token at ZenBull/ETH price
+     * @param _price price of ZenBull in ETH
+     * @param _quantity amount of ETH to net
+     */
+    function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
+        _checkZenBullPrice(_price);
+
+        uint256 zenBullQuantity = (_quantity * 1e18) / _price;
+
+        require(_quantity <= address(this).balance, "ZBN10");
+        require(zenBullQuantity <= IERC20(zenBull).balanceOf(address(this)), "ZBN11");
+
+        // process deposits and send ZenBull
+        uint256 i = depositsIndex;
+        uint256 amountToSend;
+        while (_quantity > 0) {
+            Receipt memory deposit = deposits[i];
+            if (deposit.amount == 0) {
+                i++;
+                continue;
+            }
+            if (deposit.amount <= _quantity) {
+                // deposit amount is lesser than quantity use it fully
+                _quantity = _quantity - deposit.amount;
+                ethBalance[deposit.sender] -= deposit.amount;
+                amountToSend = (deposit.amount * 1e18) / _price;
+                IERC20(zenBull).transfer(deposit.sender, amountToSend);
+
+                emit NetAtPrice(true, deposit.sender, deposit.amount, amountToSend, i);
+                delete deposits[i];
+                i++;
+            } else {
+                // deposit amount is greater than quantity; use it partially
+                deposits[i].amount = deposit.amount - _quantity;
+                ethBalance[deposit.sender] -= _quantity;
+                amountToSend = (_quantity * 1e18) / _price;
+
+                IERC20(zenBull).transfer(deposit.sender, amountToSend);
+
+                emit NetAtPrice(true, deposit.sender, _quantity, amountToSend, i);
+                _quantity = 0;
+            }
+        }
+        depositsIndex = i;
+
+        // process withdraws and send usdc
+        i = withdrawsIndex;
+        while (zenBullQuantity > 0) {
+            Receipt memory withdraw = withdraws[i];
+            if (withdraw.amount == 0) {
+                i++;
+                continue;
+            }
+            if (withdraw.amount <= zenBullQuantity) {
+                zenBullQuantity = zenBullQuantity - withdraw.amount;
+                zenBullBalance[withdraw.sender] -= withdraw.amount;
+                amountToSend = (withdraw.amount * _price) / 1e18;
+
+                payable(withdraw.sender).sendValue(amountToSend);
+
+                emit NetAtPrice(false, withdraw.sender, withdraw.amount, amountToSend, i);
+
+                delete withdraws[i];
+                i++;
+            } else {
+                withdraws[i].amount = withdraw.amount - zenBullQuantity;
+                zenBullBalance[withdraw.sender] -= zenBullQuantity;
+                amountToSend = (zenBullQuantity * _price) / 1e18;
+
+                payable(withdraw.sender).sendValue(amountToSend);
+
+                emit NetAtPrice(false, withdraw.sender, zenBullQuantity, amountToSend, i);
+
+                zenBullQuantity = 0;
+            }
+        }
+        withdrawsIndex = i;
+    }
+
+    /**
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
@@ -325,6 +441,11 @@ contract ZenBullNetting is Ownable, EIP712 {
         return sum;
     }
 
+    /**
+     * @notice get a deposit receipt by index
+     * @param _index deposit index in deposits array
+     * @return receipt sender, amount and timestamp
+     */
     function getDepositReceipt(uint256 _index) external view returns (address, uint256, uint256) {
         Receipt memory receipt = deposits[_index];
 
@@ -345,9 +466,58 @@ contract ZenBullNetting is Ownable, EIP712 {
         return sum;
     }
 
+    /**
+     * @notice get a withdraw receipt by index
+     * @param _index withdraw index in withdraws array
+     * @return receipt sender, amount and timestamp
+     */
     function getWithdrawReceipt(uint256 _index) external view returns (address, uint256, uint256) {
         Receipt memory receipt = withdraws[_index];
 
         return (receipt.sender, receipt.amount, receipt.timestamp);
+    }
+
+    /**
+     * @notice get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
+    function getZenBullPrice() external view returns (uint256) {
+        return _getZenBullPrice();
+    }
+
+    /**
+     * @dev check that the proposed ZenBull price is within a tolerance of the current Uniswap TWAP
+     */
+    function _checkZenBullPrice(uint256 _price) internal view {
+        uint256 zenBullFairPrice = _getZenBullPrice();
+
+        require(_price <= (zenBullFairPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN12");
+        require(_price >= (zenBullFairPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN13");
+    }
+
+    /**
+     * @dev get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
+    function _getZenBullPrice() internal view returns (uint256) {
+        uint256 squeethEthPrice =
+            IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
+        uint256 ethUsdcPrice =
+            IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, auctionTwapPeriod, false);
+        (uint256 crabCollateral, uint256 crabDebt) = IZenBullStrategy(zenBull).getCrabVaultDetails();
+        uint256 crabFairPriceInEth = (crabCollateral - (crabDebt * squeethEthPrice / 1e18)) * 1e18
+            / IERC20(IZenBullStrategy(zenBull).crab()).totalSupply();
+
+        uint256 zenBullCrabBalance = IZenBullStrategy(zenBull).getCrabBalance();
+        uint256 zenBullFairPrice = (
+            IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull)
+                + (zenBullCrabBalance * crabFairPriceInEth / 1e18)
+                - (
+                    (IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) * 1e12 * 1e18)
+                        / ethUsdcPrice
+                )
+        ) * 1e18 / IERC20(zenBull).totalSupply();
+
+        return zenBullFairPrice;
     }
 }
