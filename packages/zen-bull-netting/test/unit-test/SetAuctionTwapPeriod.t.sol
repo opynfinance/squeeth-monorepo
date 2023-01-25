@@ -11,7 +11,7 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 /**
  * Unit tests
  */
-contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
+contract SetAuctionTwapPeriod is ZenBullNettingBaseSetup {
     uint256 public user1Pk;
     address public user1;
 
