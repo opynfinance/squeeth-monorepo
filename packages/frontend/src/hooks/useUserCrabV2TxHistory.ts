@@ -36,7 +36,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
   const { usdc } = useAtomValue(addressesAtom)
   const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
   const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
-  const { data, loading, startPolling, stopPolling } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
+  const { data, loading, startPolling, stopPolling, error } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
     USER_CRAB_V2_TX_QUERY,
     {
       fetchPolicy: 'cache-and-network',
