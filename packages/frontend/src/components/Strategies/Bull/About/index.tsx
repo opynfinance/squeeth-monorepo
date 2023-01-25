@@ -28,7 +28,7 @@ const useAboutStyles = makeStyles((theme) =>
   }),
 )
 
-const gitBookLink = 'https://opyn.gitbook.io/squeeth/resources/zen-bull'
+const gitBookLink = 'https://opyn.gitbook.io/opyn-strategies/zen-bull/introduction'
 
 const About: React.FC = () => {
   const classes = useStyles()

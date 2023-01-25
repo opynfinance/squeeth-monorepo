@@ -27,7 +27,7 @@ const useAboutStyles = makeStyles((theme) =>
     },
   }),
 )
-const gitBookLink = 'https://opyn.gitbook.io/squeeth/resources/crab-strategy'
+const gitBookLink = 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction'
 const About: React.FC = () => {
   const classes = useStyles()
   const aboutClasses = useAboutStyles()

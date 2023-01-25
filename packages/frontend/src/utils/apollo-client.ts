@@ -21,24 +21,23 @@ const httpLinkRPSqueeth = new HttpLink({
 
 const httpLinkMNSqueeth = new HttpLink({
   uri: 'https://subgraph.satsuma-prod.com/d32634a525f9/opyn/squeeth/api',
+  fetch: async (...pl) => {
+    const [_, options] = pl
+    if (options?.body) {
+      const body = JSON.parse(options.body.toString())
+      const startTime = new Date().getTime()
+      const res = await fetch(...pl)
+      const elapsed = new Date().getTime() - startTime
+      trackEvent(SITE_EVENTS.SUBGRAPH_QUERY_LOADED, { query: body.operationName, time: elapsed })
+      return res
+    }
+
+    return fetch(...pl)
+  },
 })
 
 const httpLinkGLSqueeth = new HttpLink({
   uri: 'https://api.thegraph.com/subgraphs/name/haythem96/squeeth-temp-subgraph',
-})
-
-const metricsLink = new ApolloLink((operation, forward) => {
-  const { operationName } = operation
-  const startTime = new Date().getTime()
-  const observable = forward(operation)
-  observable.subscribe({
-    complete: () => {
-      const elapsed = new Date().getTime() - startTime
-      trackEvent(SITE_EVENTS.SUBGRAPH_QUERY_LOADED, { query: operationName, time: elapsed })
-    },
-  })
-
-  return observable
 })
 
 const wsLinkRP =
@@ -136,7 +135,7 @@ export const uniswapClient = {
 }
 
 const squeethMainnet = new ApolloClient({
-  link: typeof window !== 'undefined' ? from([metricsLink, splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth)]) : undefined,
+  link: typeof window !== 'undefined' ? ApolloLink.from([splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth)]) : undefined,
   cache: new InMemoryCache(),
 })
 

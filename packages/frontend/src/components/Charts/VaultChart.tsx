@@ -221,7 +221,12 @@ export function VaultChart({
               position. You enter the position by putting down collateral, minting, and selling squeeth. You provide ETH
               collateral to mint squeeth, and your collateralization ratio determines your exposure. If you become
               undercollateralized, you could be liquidated.{' '}
-              <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
+              <a
+                className={classes.header}
+                href="https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq"
+                target="_blank"
+                rel="noreferrer"
+              >
                 {' '}
                 Learn more.{' '}
               </a>
@@ -278,7 +283,12 @@ export function VaultChart({
             <br /> <br />
             Squeeth smart contracts have been audited by Trail of Bits, Akira, and Sherlock. However, smart contracts
             are experimental technology and we encourage caution only risking funds you can afford to lose.
-            <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
+            <a
+              className={classes.header}
+              href="https://opyn.gitbook.io/squeeth-faq/squeeth/risks"
+              target="_blank"
+              rel="noreferrer"
+            >
               {' '}
               Learn more.{' '}
             </a>

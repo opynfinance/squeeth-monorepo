@@ -254,7 +254,12 @@ function LongChart() {
             liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
             goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay a premium for this
             position. Enter the position by purchasing an ERC20 token.{' '}
-            <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
+            <a
+              className={classes.header}
+              href="https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq"
+              target="_blank"
+              rel="noreferrer"
+            >
               {' '}
               Learn more.{' '}
             </a>
@@ -290,7 +295,12 @@ function LongChart() {
             premium of squeeth to ETH). If the squeeth premium to ETH decreases, without a change in ETH price, a long
             position will incur a loss because it is not worth as much ETH. If ETH goes down considerably, you may lose
             some or all of your initial investment.
-            <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
+            <a
+              className={classes.header}
+              href="https://opyn.gitbook.io/squeeth-faq/squeeth/risks"
+              target="_blank"
+              rel="noreferrer"
+            >
               {' '}
               Learn more.{' '}
             </a>
@@ -344,7 +354,12 @@ function LongChart() {
               liquidations. Compared to a 2x leveraged position, you make more when ETH goes up and lose less when ETH
               goes down (excluding premiums). Eg. If ETH goes up 5x, squeeth goes up 25x. You pay premiums for this
               position. Enter the position by purchasing an ERC20 token.{' '}
-              <a className={classes.header} href={Links.GitBook} target="_blank" rel="noreferrer">
+              <a
+                className={classes.header}
+                href="https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq"
+                target="_blank"
+                rel="noreferrer"
+              >
                 {' '}
                 Learn more.{' '}
               </a>
