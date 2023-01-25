@@ -50,5 +50,5 @@ contract SetOTCPriceTolerance is ZenBullNettingBaseSetup {
         vm.prank(owner);
         vm.expectRevert(bytes("ZBN02"));
         zenBullNetting.setOTCPriceTolerance(maxOtcPriceTolerance + 1);
-    }   
+    }
 }
