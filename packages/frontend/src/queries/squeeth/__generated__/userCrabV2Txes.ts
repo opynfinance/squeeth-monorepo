@@ -19,6 +19,7 @@ export interface userCrabV2Txes_crabUserTxes {
   erc20Token: string | null;
   erc20Amount: any | null;
   transaction: string;
+  blockNumber: any;
 }
 
 export interface userCrabV2Txes {

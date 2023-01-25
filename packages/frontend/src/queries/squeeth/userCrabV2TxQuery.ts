@@ -20,6 +20,7 @@ export const USER_CRAB_V2_TX_QUERY = gql`
       erc20Token
       erc20Amount
       transaction
+      blockNumber
     }
   }
 `

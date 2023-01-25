@@ -42,6 +42,8 @@ import {
   crabTotalSupplyV2Atom,
   totalUsdcQueuedAtom,
   totalCrabQueuedAtom,
+  firstDepositTimeAtom,
+  firstDepositBlockAtom,
 } from './atoms'
 import { addressesAtom } from '../positions/atoms'
 import {
@@ -1252,6 +1254,8 @@ export const useCrabProfitData = () => {
   })
   const crabPosition = useAtomValue(currentCrabPositionValueAtomV2)
   const currentEthPrice = useOnChainETHPrice()
+  const firstDepositTime = useAtomValue(firstDepositTimeAtom)
+  const firstDepositBlock = useAtomValue(firstDepositBlockAtom)
 
   const getVault = useGetVault()
   const { getTwapSafe } = useOracle()
@@ -1292,12 +1296,16 @@ export const useCrabProfitData = () => {
   useEffect(() => {
     if (!loading && data && data.strategy) {
       if ( crabPosition.isGreaterThan(0)) {
-        setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
+        if (data.strategy.lastHedgeBlockNumber < firstDepositBlock) {
+          setData(firstDepositBlock , firstDepositTime)
+        } else {
+          setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
+        }
       } else {
         setData()
       }
     }
-  }, [loading, data, crabPosition])
+  }, [loading, data, crabPosition, firstDepositBlock, firstDepositTime])
 
   return { profitData, loading }
 }
