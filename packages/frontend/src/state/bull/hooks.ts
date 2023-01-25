@@ -374,7 +374,7 @@ export const useBullFlashDeposit = () => {
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble depositing into bull.'),
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into bull.', 'deposit-bull'),
   )
 
   const flashDepositToBull = async (
@@ -582,7 +582,7 @@ export const useBullFlashWithdraw = () => {
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.'),
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.', 'withdraw-bull'),
   )
 
   const flashWithdrawFromBull = async (

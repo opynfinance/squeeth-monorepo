@@ -644,10 +644,9 @@ export const useFlashDepositUSDC = (calculateETHtoBorrowFromUniswap: any) => {
   const { getExactIn } = useUniswapQuoter()
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
-  const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.'),
+  const { show: showErrorFeedbackPopup, showPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.', 'deposit-crab'),
   )
-
   const usdcFee = getUSDCPoolFee(network)
 
   const flashDepositUSDC = useAppCallback(
@@ -733,7 +732,7 @@ export const useQueueDepositUSDC = () => {
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.'),
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into crab.', 'deposit-stn-crab'),
   )
 
   const depositUSDC = useAppCallback(
@@ -768,7 +767,7 @@ export const useQueueWithdrawCrab = () => {
   const address = useAtomValue(addressAtom)
   const { track } = useAmplitude()
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.', 'withdraw-stn-crab'),
   )
 
   const queueWithdraw = useAppCallback(
@@ -832,7 +831,7 @@ export const useFlashWithdrawV2 = () => {
   const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
   const { track } = useAmplitude()
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.', 'withdraw-crab'),
   )
 
   const flashWithdraw = useCallback(
@@ -893,7 +892,7 @@ export const useFlashWithdrawV2USDC = () => {
   const { track } = useAmplitude()
   const { usdc, weth, crabStrategy2 } = useAtomValue(addressesAtom)
   const { show: showErrorFeedbackPopup } = usePopup(
-    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.'),
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from crab.', 'withdraw-crab-usdc'),
   )
   const network = useAtomValue(networkIdAtom)
 

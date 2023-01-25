@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Slide from '@material-ui/core/Slide'
 import ReactDOM from 'react-dom'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -21,7 +21,7 @@ export const useStyles = makeStyles((theme) =>
       gap: '10px',
       backgroundColor: '#191B1C',
       [theme.breakpoints.down('lg')]: {
-        maxWidth: '20vw',
+        maxWidth: '30vw',
       },
       [theme.breakpoints.down('md')]: {
         maxWidth: '30vw',
@@ -65,6 +65,7 @@ interface PopupAction {
 }
 
 export interface PopupConfig {
+  id: string
   text?: string
   actions?: PopupAction[]
 }
@@ -84,7 +85,7 @@ const Popup = ({ text, actions = [], showPopup, hide }: PopupProps) => {
       action.analyticsEvent ? track(action.analyticsEvent, { action: action.label }) : null
       action.closeAfterAction ? hide?.() : null
     },
-    [hide],
+    [hide, track],
   )
   return (
     <Slide direction="left" in={showPopup} mountOnEnter unmountOnExit>
@@ -111,14 +112,23 @@ const popupRoot = typeof document !== 'undefined' ? document.getElementById('pop
 const usePopup = (config: PopupConfig) => {
   const [showPopup, setShowPopup] = useState(false)
   const { track } = useAmplitude()
+  const timeout = useRef<any>()
+  const nodeRef = useRef<HTMLElement | undefined>(
+    typeof document !== 'undefined' ? document.createElement('div') : undefined,
+  )
 
   const show = useCallback(() => {
     setShowPopup(true)
     track(SITE_EVENTS.SHOW_ERROR_FEEDBACK_POPUP, { title: config?.text })
+    clearTimeout(timeout.current)
+    timeout.current = setTimeout(() => {
+      setShowPopup(false)
+    }, 10000)
   }, [track, config?.text])
 
-  const hide = () => setShowPopup(false)
-
+  const hide = () => {
+    setShowPopup(false)
+  }
   const actions = useMemo(() => {
     return (config.actions ?? []).map((action) => ({
       ...action,
@@ -127,18 +137,29 @@ const usePopup = (config: PopupConfig) => {
   }, [config.actions])
 
   useEffect(() => {
-    ReactDOM.render(
-      <Popup hide={hide} showPopup={showPopup} text={config.text} actions={actions} />,
-      popupRoot as HTMLElement,
-    )
-  }, [showPopup, config.text, actions])
+    nodeRef.current?.setAttribute('id', config.id)
+    if (popupRoot?.querySelector(`#${config.id}`) != null) popupRoot?.querySelector(`#${config.id}`)?.remove()
+    popupRoot?.appendChild(nodeRef?.current as HTMLElement)
+  }, [config.id])
 
-  return { show, hide }
+  const popupElement = useMemo(() => {
+    return <Popup id={config.id} hide={hide} showPopup={showPopup} text={config.text} actions={actions} />
+  }, [showPopup, config, actions])
+
+  useEffect(() => {
+    ReactDOM.render(popupElement, nodeRef.current as HTMLElement)
+  }, [popupElement, showPopup])
+
+  return { show, hide, showPopup }
 }
 
 export default usePopup
 
-export const GenericErrorPopupConfig: (userMessage: string) => PopupConfig = (userMessage: string) => ({
+export const GenericErrorPopupConfig: (userMessage: string, id: string) => PopupConfig = (
+  userMessage: string,
+  id: string,
+) => ({
+  id,
   text: 'Oops, something is not right on our side, would you like to speak to our support team ?',
   actions: [
     {
@@ -154,6 +175,7 @@ export const GenericErrorPopupConfig: (userMessage: string) => PopupConfig = (us
       label: 'No Thanks',
       analyticsEvent: SITE_EVENTS.CLICK_ERROR_FEEDBACK_ACTION,
       isClosingAction: true,
+      closeAfterAction: true,
     },
   ],
 })
