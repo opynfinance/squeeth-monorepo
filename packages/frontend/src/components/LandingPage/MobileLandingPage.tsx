@@ -47,7 +47,6 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       position: '-webkit-sticky',
-      zIndex: 1400,
     },
     navMenu: {
       margin: `0 ${vwCalculator(10)}`,
