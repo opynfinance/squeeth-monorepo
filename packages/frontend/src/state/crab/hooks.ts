@@ -1239,6 +1239,7 @@ export const useCrabProfitData = () => {
     shortAmt: 0,
     collat: 0,
     oSqthPrice: 0,
+    time: 0,
   })
 
   const { crabStrategy2, squeethPool, oSqueeth, weth } = useAtomValue(addressesAtom)
@@ -1280,13 +1281,13 @@ export const useCrabProfitData = () => {
       nf: toTokenAmount(_nf, 18).toNumber(),
       shortAmt: _vault.shortAmount.toNumber(),
       collat: _vault.collateralAmount.toNumber(),
-      oSqthPrice: _osqthPrice.toNumber() 
+      oSqthPrice: _osqthPrice.toNumber(),
+      time: timestamp ?? Date.now() / 1000
     })
   }
 
 
   useEffect(() => {
-    console.log('useEffect', crabPosition.toString())
     if (!loading && data && data.strategy) {
       if ( crabPosition.isGreaterThan(0)) {
         setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)

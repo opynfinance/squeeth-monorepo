@@ -3,6 +3,7 @@ import BigNumber from 'bignumber.js'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { Vault } from '../../types'
 import { YEAR } from '../../constants'
+import { sortBy } from 'lodash'
 
 export const checkTimeHedge = async (contract: Contract | null) => {
   if (!contract) return null
@@ -85,4 +86,42 @@ export const setStrategyCap = async (amount: BigNumber, contract: Contract | nul
   return contract.methods.setStrategyCap(crabAmount.toFixed(0)).send({
     from: address,
   })
+}
+
+export const getNextHedgeDate = (now: Date): Date => {
+  // hedges every monday, wednesday, friday at 16:30 UTC
+
+  // next monday at 16:30 UTC
+  const nextMondayHedge = new Date(now)
+  nextMondayHedge.setUTCDate(nextMondayHedge.getUTCDate() + ((1 + 7 - nextMondayHedge.getUTCDay()) % 7 || 7))
+  nextMondayHedge.setUTCHours(16, 30, 0, 0)
+
+  // next wednesday at 16:30 UTC
+  const nextWednesdayHedge = new Date(now)
+  nextWednesdayHedge.setUTCDate(nextWednesdayHedge.getUTCDate() + ((3 + 7 - nextWednesdayHedge.getUTCDay()) % 7 || 7))
+  nextWednesdayHedge.setUTCHours(16, 30, 0, 0)
+
+  // next wednesday at 16:30 UTC
+  const nextFridayHedge = new Date(now)
+  nextFridayHedge.setUTCDate(nextFridayHedge.getUTCDate() + ((5 + 7 - nextFridayHedge.getUTCDay()) % 7 || 7))
+  nextFridayHedge.setUTCHours(16, 30, 0, 0)
+
+  // today at 16:30 UTC
+  const todayHedge = new Date(now)
+  todayHedge.setUTCDate(todayHedge.getUTCDate())
+  todayHedge.setUTCHours(16, 30, 0, 0)
+
+  const isMondayInUTC = now.getUTCDay() === 1
+  const isWednesdayInUTC = now.getUTCDay() === 3
+  const isFridayInUTC = now.getUTCDay() === 5
+  const hasHedgeTimePassedInUTC = now.getUTCHours() > 16 || (now.getUTCHours() === 16 && now.getUTCMinutes() >= 30)
+
+  // if today is monday, wednesday, friday and time is before 16:30 UTC, use today's hedge date
+  const comingMondayHedge = isMondayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextMondayHedge
+  const comingWednesdayHedge = isWednesdayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextWednesdayHedge
+  const comingFridayHedge = isFridayInUTC && !hasHedgeTimePassedInUTC ? todayHedge : nextFridayHedge
+
+  // find closest hedge date
+  const nextHedges = sortBy([comingMondayHedge, comingWednesdayHedge, comingFridayHedge], (date) => date.getTime())
+  return nextHedges[0]
 }

@@ -24,6 +24,7 @@ import { formatNumber, formatCurrency } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
 import { FUNDING_PERIOD } from '@constants/index'
 import { useCrabProfitData } from '@state/crab/hooks'
+import { getNextHedgeDate } from '@state/crab/utils'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {
@@ -129,6 +130,7 @@ const getNewProfitDataPoints = (
   oSqthPrice: number,
   percentRange: number,
   currentEthPrice: number,
+  time: number,
 ) => {
   const dataPoints: any = []
   const { deltaPortfolio, gammaPortfolio, vegaPortfolio, thetaPortfolio } = getGreeks(
@@ -138,8 +140,6 @@ const getNewProfitDataPoints = (
     collat,
     oSqthPrice,
   )
-  const time = 2
-
   const portfolioValueInETH = collat - shortAmt * oSqthPrice
   const portfolioValueInUSD = portfolioValueInETH * ethPriceAtHedge
 
@@ -195,8 +195,6 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
 
-  const funding = 2 * currentImpliedFunding // for 2 days
-  const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
   const currentEthPrice = Number(ethPrice)
   const { profitData, loading } = useCrabProfitData()
 
@@ -206,6 +204,9 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
     upperPriceBandForProfitability,
     currentProfit,
   } = useMemo(() => {
+    const nextHedgeTime = getNextHedgeDate(new Date(profitData.time * 1000)).getTime()
+    const timeUntilNextHedge = nextHedgeTime - new Date().getTime()
+    console.log('timeUntilNextHedge', timeUntilNextHedge)
     return getNewProfitDataPoints(
       profitData.ethPriceAtHedge,
       profitData.nf,
@@ -214,6 +215,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
       profitData.oSqthPrice,
       30,
       currentEthPrice,
+      timeUntilNextHedge / 1000 / 60 / 60 / 24,
     )
   }, [
     currentEthPrice,
@@ -222,6 +224,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
     profitData.nf,
     profitData.oSqthPrice,
     profitData.shortAmt,
+    profitData.time,
   ])
 
   const theme = useTheme()
