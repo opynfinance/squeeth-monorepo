@@ -205,7 +205,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
     currentProfit,
   } = useMemo(() => {
     const nextHedgeTime = getNextHedgeDate(new Date(profitData.time * 1000)).getTime()
-    const timeUntilNextHedge = nextHedgeTime - new Date().getTime()
+    const timeUntilNextHedge = nextHedgeTime - new Date(profitData.time * 1000).getTime()
     console.log('timeUntilNextHedge', timeUntilNextHedge)
     return getNewProfitDataPoints(
       profitData.ethPriceAtHedge,

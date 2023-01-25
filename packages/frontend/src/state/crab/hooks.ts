@@ -1242,7 +1242,7 @@ export const useCrabProfitData = () => {
     time: 0,
   })
 
-  const { crabStrategy2, squeethPool, oSqueeth, weth } = useAtomValue(addressesAtom)
+  const { crabStrategy2, squeethPool, oSqueeth, weth, usdc, ethUsdcPool } = useAtomValue(addressesAtom)
   const controller = useAtomValue(controllerContractAtom)
   const networkId = useAtomValue(networkIdAtom)
   const { data, loading, error } = useQuery<strategyQuery, strategyQueryVariables>(STRATEGY_QUERY, {
@@ -1262,27 +1262,29 @@ export const useCrabProfitData = () => {
     const p1 = getVault(CRAB_VAULT, blockNumber)
     const p2 = controller.methods.getExpectedNormalizationFactor().call({}, blockNumber)
     const p3 = getTwapSafe(squeethPool, oSqueeth, weth, 1, blockNumber)
-    const p4 = timestamp ? getHistoricEthPrices([timestamp]) : currentEthPrice.toNumber()
+    const p4 = getTwapSafe(ethUsdcPool, weth, usdc, 1, blockNumber)
 
-    const [_vault, _nf, _osqthPrice, _ethPriceMap] = await Promise.all([p1, p2, p3, p4])
+    const [_vault, _nf, _osqthPrice, _ethPrice] = await Promise.all([p1, p2, p3, p4])
 
 
     if (!_vault) return
 
     console.log('Data', { 
-      ethPriceAtHedge: timestamp ? Number(_ethPriceMap[Number(timestamp)]) : currentEthPrice.toNumber(),
-      nf: toTokenAmount(_nf, 18).toNumber(),
-      shortAmt: _vault.shortAmount.toNumber(),
-      collat: _vault.collateralAmount.toNumber(),
-      oSqthPrice: _osqthPrice.toNumber() 
-    })
-    setProfitData({ 
-      ethPriceAtHedge: timestamp ? Number(_ethPriceMap[Number(timestamp)]) : currentEthPrice.toNumber(),
+      ethPriceAtHedge: timestamp ? _ethPrice.toNumber() : currentEthPrice.toNumber(),
       nf: toTokenAmount(_nf, 18).toNumber(),
       shortAmt: _vault.shortAmount.toNumber(),
       collat: _vault.collateralAmount.toNumber(),
       oSqthPrice: _osqthPrice.toNumber(),
-      time: timestamp ?? Date.now() / 1000
+      time: timestamp ? Number(timestamp) : Date.now() / 1000
+
+    })
+    setProfitData({ 
+      ethPriceAtHedge: timestamp ? _ethPrice.toNumber() : currentEthPrice.toNumber(),
+      nf: toTokenAmount(_nf, 18).toNumber(),
+      shortAmt: _vault.shortAmount.toNumber(),
+      collat: _vault.collateralAmount.toNumber(),
+      oSqthPrice: _osqthPrice.toNumber(),
+      time: timestamp ? Number(timestamp) : Date.now() / 1000
     })
   }
 
