@@ -11,7 +11,7 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 /**
  * Unit tests
  */
-contract SetAuctionTwapPeriod is ZenBullNettingBaseSetup {
+contract SetOTCPriceTolerance is ZenBullNettingBaseSetup {
     uint256 public user1Pk;
     address public user1;
 
@@ -32,23 +32,23 @@ contract SetAuctionTwapPeriod is ZenBullNettingBaseSetup {
         IERC20(ZEN_BULL).transfer(user1, 30e18);
     }
 
-    function testSetAuctionTwapPeriod() public {
+    function testSetOTCPriceTolerance() public {
         vm.prank(owner);
-        zenBullNetting.setAuctionTwapPeriod(42069);
+        zenBullNetting.setOTCPriceTolerance(2e16);
 
-        assertEq(zenBullNetting.auctionTwapPeriod(), 42069);
+        assertEq(zenBullNetting.otcPriceTolerance(), 2e16);
     }
 
-    function testSetAuctionTwapPeriodWhenCallerNotOwner() public {
+    function testSetOTCPriceToleranceWhenCallerNotOwner() public {
         vm.prank(user1);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
-        zenBullNetting.setAuctionTwapPeriod(42069);
+        zenBullNetting.setOTCPriceTolerance(2e16);
     }
 
-    function testSetAuctionTwapPeriodWhenPeriodLessThanMinimum() public {
-        uint32 minAuctionTwap = zenBullNetting.MIN_AUCTION_TWAP();
+    function testSetOTCPriceToleranceWhenPeriodLessThanMinimum() public {
+        uint256 maxOtcPriceTolerance = zenBullNetting.MAX_OTC_PRICE_TOLERANCE();
         vm.prank(owner);
-        vm.expectRevert(bytes("ZBN01"));
-        zenBullNetting.setAuctionTwapPeriod(minAuctionTwap - 1);
-    }
+        vm.expectRevert(bytes("ZBN02"));
+        zenBullNetting.setOTCPriceTolerance(maxOtcPriceTolerance + 1);
+    }   
 }
