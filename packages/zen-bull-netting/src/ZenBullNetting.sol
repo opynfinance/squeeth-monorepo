@@ -584,7 +584,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                 delete withdraws[j];
                 j++;
-
                 emit ZenBullWithdrawn(withdraw.sender, withdraw.amount, ethAmount, j);
             } else {
                 withdraws[j].amount -= remainingWithdraws;

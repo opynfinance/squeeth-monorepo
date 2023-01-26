@@ -45,4 +45,8 @@ contract SigUtil {
     function getTypedDataHash(Order memory _order) public view returns (bytes32) {
         return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, getStructHash(_order)));
     }
+
+    function testAvoidCoverage() public pure {
+        return;
+    }
 }
