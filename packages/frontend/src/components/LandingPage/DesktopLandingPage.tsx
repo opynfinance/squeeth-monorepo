@@ -276,7 +276,7 @@ const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
   { label: 'Auction', link: 'https://squeethportal.xyz' },
-  { label: 'FAQ', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq' },
+  { label: 'FAQ', link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction' },
 ]
 
 const footerLinks = [
