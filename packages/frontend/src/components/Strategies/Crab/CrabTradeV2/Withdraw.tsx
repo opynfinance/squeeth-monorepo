@@ -419,7 +419,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed, uniswapFee])
+  }, [
+    withdrawPriceImpact,
+    useUsdc,
+    isNettingAuctionLive,
+    isWithdrawCrabAmountLessThanMinAllowed,
+    uniswapFee,
+    userOverrode,
+  ])
 
   const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
@@ -482,7 +489,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
-          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT}
+          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(withdrawAmount)}
           variant="outlined"
           size="small"
           onClick={() => {

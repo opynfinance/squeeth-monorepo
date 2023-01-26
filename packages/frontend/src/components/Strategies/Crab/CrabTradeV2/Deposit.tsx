@@ -402,7 +402,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
-          disabled={Number(depositAmount) >= STRATEGY_DEPOSIT_LIMIT}
+          disabled={Number(depositAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(depositAmount)}
           variant="outlined"
           size="small"
           onClick={() => {
