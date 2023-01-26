@@ -23,6 +23,7 @@ export default class MyDocument extends Document {
           <Main />
           <NextScript />
           <div id="rain"></div>
+          <div id="popup"></div>
           <div id="background-radial-gradient"></div>
         </body>
       </Html>
