@@ -4,14 +4,14 @@
 
 &nbsp;
 
-##### Periodically, we update our [Terms of Service](https://squeeth.opyn.co/terms-of-service) as we work to improve the Squeeth App user experience. We want our users to understand exactly what’s contained in updates and why we’ve made those updates.
+##### Periodically, we update our [Terms of Service](https://opyn.co/terms-of-service) as we work to improve the Squeeth App user experience. We want our users to understand exactly what’s contained in updates and why we’ve made those updates.
 
 &nbsp;
 
 
 #### Q. What are the major changes in the August 25, 2022 Updated Terms of Service?
 
-#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct  that attempt to interact with [squeeth.opyn.co](https://squeeth.opyn.co/).
+#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct  that attempt to interact with [opyn.co](https://opyn.co/).
 
 &nbsp;
 
@@ -29,7 +29,7 @@
 
 #### Q. Will this risk-assessment impact access to the Squeeth Protocol through other interfaces?
 
-#### A. No. Only the Ethereum addresses interacting with the Squeeth app interface will be cross-checked against standards for risk assessment. This includes [squeeth.opyn.co](https://squeeth.opyn.co/). We will not be cross-checking the addresses of those interacting with the underlying Uniswap Protocol or other protocols via other interfaces. Given the Protocol’s decentralized and open-source nature, we do not control users’ access to it via any portal other than our own app.
+#### A. No. Only the Ethereum addresses interacting with the Squeeth app interface will be cross-checked against standards for risk assessment. This includes [opyn.co](https://opyn.co/). We will not be cross-checking the addresses of those interacting with the underlying Uniswap Protocol or other protocols via other interfaces. Given the Protocol’s decentralized and open-source nature, we do not control users’ access to it via any portal other than our own app.
 
 &nbsp;
 

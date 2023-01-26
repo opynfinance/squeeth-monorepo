@@ -133,7 +133,7 @@ const Nav: React.FC = () => {
     <div className={classes.root}>
       <div className={classes.content}>
         <div className={classes.logo}>
-          <a href="https://squeeth.opyn.co/">
+          <a href="https://opyn.co/">
             <Image src={logo} alt="logo" width={102} height={44} />
           </a>
         </div>
