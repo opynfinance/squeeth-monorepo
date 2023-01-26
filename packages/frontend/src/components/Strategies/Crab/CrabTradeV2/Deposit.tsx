@@ -9,7 +9,7 @@ import { TradeSettings } from '@components/TradeSettings'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
 import Metric, { MetricLabel } from '@components/Metric'
-import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
+import { connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
   crabStrategySlippageAtomV2,
@@ -59,6 +59,8 @@ import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import usePopup, { PopupConfig } from '@hooks/usePopup'
+import { sendCrispChatMessage, openCrispChat } from '@utils/crisp-chat'
 
 type CrabDepositProps = {
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
@@ -274,7 +276,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
   const depositTX = async () => {
     setTxLoading(true)
-
     try {
       if (depositStep === DepositSteps.APPROVE) {
         if (useQueue) {
@@ -437,7 +438,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           error={!!depositError}
           helperText={depositError}
         />
-
         {depositFundingWarning && !useQueue && (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
@@ -454,7 +454,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Typography>
           </div>
         )}
-
         {depositPriceImpactWarning && (
           <div className={classes.notice}>
             <div className={classes.infoIcon}>
@@ -471,7 +470,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Typography>
           </div>
         )}
-
         <Box marginTop="24px">
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
@@ -503,7 +501,6 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </Box>
           </Box>
         </Box>
-
         <div className={classes.ctaSection}>
           {/* {useQueue && (
             <div className={classes.queueNotice}>

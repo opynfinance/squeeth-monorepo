@@ -1,10 +1,18 @@
 import { useQuery } from '@apollo/client'
-import { BIG_ONE, BIG_ZERO, UNI_POOL_FEES, USDC_DECIMALS, WETH_DECIMALS } from '@constants/index'
+import {
+  BIG_ONE,
+  BIG_ZERO,
+  REVERTED_TRANSACTION_CODE,
+  UNI_POOL_FEES,
+  USDC_DECIMALS,
+  WETH_DECIMALS,
+} from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import usePopup, { GenericErrorPopupConfig } from '@hooks/usePopup'
 import STRATEGY_QUERY from '@queries/squeeth/strategyQuery'
 import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__generated__/strategyQuery'
 import {
@@ -365,6 +373,9 @@ export const useBullFlashDeposit = () => {
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into bull.', 'deposit-bull'),
+  )
 
   const flashDepositToBull = async (
     ethToCrab: BigNumber,
@@ -425,9 +436,8 @@ export const useBullFlashDeposit = () => {
       track(BULL_EVENTS.DEPOSIT_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
     } catch (e: any) {
       const trackingData = { ...(dataToTrack ?? {}), gas }
-      if (e?.code === 4001) {
-        track(BULL_EVENTS.DEPOSIT_BULL_REVERT, trackingData)
-      }
+      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.DEPOSIT_BULL_REVERT, trackingData) : null
+      e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
       track(BULL_EVENTS.DEPOSIT_BULL_FAILED, {
         code: e?.code,
         message: e?.message,
@@ -571,6 +581,9 @@ export const useBullFlashWithdraw = () => {
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
   const { flashBull } = useAtomValue(addressesAtom)
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.', 'withdraw-bull'),
+  )
 
   const flashWithdrawFromBull = async (
     bullAmount: BigNumber,
@@ -627,9 +640,8 @@ export const useBullFlashWithdraw = () => {
       track(BULL_EVENTS.WITHDRAW_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
     } catch (e: any) {
       const trackingData = { ...(dataToTrack ?? {}), gas }
-      if (e?.code === 4001) {
-        track(BULL_EVENTS.WITHDRAW_BULL_REVERT, trackingData)
-      }
+      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_BULL_REVERT, trackingData) : null
+      e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
 
       track(BULL_EVENTS.WITHDRAW_BULL_FAILED, {
         code: e?.code,
