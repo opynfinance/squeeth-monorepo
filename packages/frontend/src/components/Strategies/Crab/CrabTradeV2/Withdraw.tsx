@@ -449,8 +449,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     withdrawPriceImpactNumber > 3
       ? classes.btnDanger
       : withdrawFundingWarning || withdrawPriceImpactWarning
-        ? classes.btnWarning
-        : ''
+      ? classes.btnWarning
+      : ''
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
@@ -606,8 +606,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
                     tooltipTitle={
                       useQueue
                         ? `For standard withdraw, the average price impact is ${formatNumber(
-                          withdrawPriceImpactNumber,
-                        )}% based on historical auctions`
+                            withdrawPriceImpactNumber,
+                          )}% based on historical auctions`
                         : undefined
                     }
                   />
@@ -661,7 +661,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
-                onClick={() => { }}
+                onClick={() => {}}
                 disabled={true}
                 id="crab-unsupported-network-btn"
               >

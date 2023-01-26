@@ -381,8 +381,8 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
     depositPriceImpactNumber > 3
       ? classes.btnDanger
       : depositFundingWarning || depositPriceImpactWarning
-        ? classes.btnWarning
-        : ''
+      ? classes.btnWarning
+      : ''
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
@@ -546,7 +546,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
-                onClick={() => { }}
+                onClick={() => {}}
                 disabled={true}
                 id="crab-unsupported-network-btn"
               >
