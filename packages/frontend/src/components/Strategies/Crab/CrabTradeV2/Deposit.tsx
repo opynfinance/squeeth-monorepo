@@ -93,6 +93,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
   const [useQueue, setUseQueue] = useState(false)
   const [depositStep, setDepositStep] = useState(DepositSteps.DEPOSIT)
+  const [userOverrode, setUserOverrode] = useState(false)
 
   const minUSDCAmountValue = useAtomValue(minUSDCAmountAtom)
 
@@ -343,12 +344,14 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
     if (Number(depositPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
+      if (userOverrode) return
       setUseQueue(true)
     } else {
       setQueueOptionAvailable(false)
+      if (userOverrode) return
       setUseQueue(false)
     }
-  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee])
+  }, [depositPriceImpact, isDepositAmountLessThanMinAllowed, uniswapFee, userOverrode])
 
   const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
@@ -399,10 +402,13 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
-          disabled={Number(depositAmount) >= STRATEGY_DEPOSIT_LIMIT}
+          disabled={Number(depositAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(depositAmount)}
           variant="outlined"
           size="small"
-          onClick={() => setUseQueue(false)}
+          onClick={() => {
+            setUseQueue(false)
+            setUserOverrode(true)
+          }}
           className={!useQueue ? classes.btnActive : classes.btnDefault}
         >
           Instant
@@ -411,7 +417,10 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
           disabled={!queueOptionAvailable}
           variant={!queueOptionAvailable ? 'contained' : 'outlined'}
           size="small"
-          onClick={() => setUseQueue(true)}
+          onClick={() => {
+            setUseQueue(true)
+            setUserOverrode(true)
+          }}
           className={useQueue ? classes.btnActive : classes.btnDefault}
         >
           Standard

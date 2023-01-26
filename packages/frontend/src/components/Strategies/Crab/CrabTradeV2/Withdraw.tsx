@@ -107,6 +107,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const [useQueue, setUseQueue] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
   const [showTokenToggle, setShowTokenToggle] = useState(false)
+  const [userOverrode, setUserOverrode] = useState(false)
 
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
   const minCrabAmountValue = useAtomValue(minCrabAmountAtom)
@@ -409,12 +410,23 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
     if (Number(withdrawPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
       setQueueOptionAvailable(true)
+      if (userOverrode) return
+
       setUseQueue(true)
     } else {
       setQueueOptionAvailable(false)
+      if (userOverrode) return
+
       setUseQueue(false)
     }
-  }, [withdrawPriceImpact, useUsdc, isNettingAuctionLive, isWithdrawCrabAmountLessThanMinAllowed, uniswapFee])
+  }, [
+    withdrawPriceImpact,
+    useUsdc,
+    isNettingAuctionLive,
+    isWithdrawCrabAmountLessThanMinAllowed,
+    uniswapFee,
+    userOverrode,
+  ])
 
   const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
@@ -477,10 +489,13 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
       <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
         <RoundedButton
-          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT}
+          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(withdrawAmount)}
           variant="outlined"
           size="small"
-          onClick={() => setUseQueue(false)}
+          onClick={() => {
+            setUseQueue(false)
+            setUserOverrode(true)
+          }}
           className={!useQueue ? classes.btnActive : classes.btnDefault}
         >
           Instant
@@ -489,7 +504,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           disabled={!queueOptionAvailable}
           variant={!queueOptionAvailable ? 'contained' : 'outlined'}
           size="small"
-          onClick={() => setUseQueue(true)}
+          onClick={() => {
+            setUseQueue(true)
+            setUserOverrode(true)
+          }}
           className={useQueue ? classes.btnActive : classes.btnDefault}
         >
           Standard
