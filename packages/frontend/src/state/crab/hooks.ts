@@ -1298,7 +1298,7 @@ export const useCrabProfitData = () => {
       if (firstDepositTime && firstDepositBlock && data.strategy.lastHedgeBlockNumber < firstDepositBlock) {
         setData(firstDepositBlock , firstDepositTime)
       } 
-      else if ( crabPosition.isGreaterThan(0)) {       
+      else if ( crabPosition.isGreaterThan(0) || (data.strategy.lastHedgeBlockNumber > firstDepositBlock && firstDepositBlock != 0)) {      
         setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
       } else {
         setData()

@@ -68,6 +68,7 @@ const useAboutStyles = makeStyles((theme) =>
       position: 'absolute',
       top: '10px',
       right: '0',
+      zIndex: 200,
 
       [theme.breakpoints.down('sm')]: {
         position: 'relative',
@@ -100,12 +101,12 @@ const DepositTimePicker: React.FC = () => {
 
   const onDepositDateChange = async (date: Date | null) => {
     if (date) {
+      setDate(date)
       setDepositTime(date.getTime() / 1000)
       const resp = await fetch(`/api/getBlockNumber?timestamp=${date.getTime() / 1000}`)
       const data = await resp.json()
       console.log(data)
       setDepositBlock(data.blockNumber)
-      setDate(date)
     }
   }
 
@@ -156,10 +157,9 @@ const About: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box className={aboutClasses.dateContainer}>{!address ? <DepositTimePicker /> : null}</Box>
-
       <Box position="relative" marginTop="32px">
         <div className={aboutClasses.timerContainer}>
+          <DepositTimePicker />
           <NextRebalanceTimer />
         </div>
         <ProfitabilityChart />

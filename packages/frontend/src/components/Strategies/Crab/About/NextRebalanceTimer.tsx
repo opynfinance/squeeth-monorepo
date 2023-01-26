@@ -17,7 +17,7 @@ const useStyles = makeStyles(() =>
       textAlign: 'right',
     },
     value: {
-      fontSize: '20px',
+      fontSize: '15px',
       color: 'rgba(255, 255, 255, 1)',
       fontWeight: 500,
       fontFamily: 'DM Mono',
@@ -49,7 +49,7 @@ const NextRebalanceTimer: React.FC = () => {
   }, [])
 
   return (
-    <div>
+    <div style={{ marginTop: '16px' }}>
       <Typography className={classes.label}>Next hedge in</Typography>
       <Typography className={classes.value} variant="subtitle2">
         {timeLeft}
