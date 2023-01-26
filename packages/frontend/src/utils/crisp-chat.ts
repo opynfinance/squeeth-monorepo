@@ -7,3 +7,11 @@ export function sendCrispChatMessage(text: string) {
 export function openCrispChat() {
   windowObj && windowObj?.$crisp.push(['do', 'chat:open'])
 }
+
+export function hideCrispChat() {
+  windowObj && windowObj?.$crisp.push(['do', 'chat:hide'])
+}
+
+export function showCrispChat() {
+  windowObj && windowObj?.$crisp.push(['do', 'chat:show'])
+}
