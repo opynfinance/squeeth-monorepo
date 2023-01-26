@@ -1,17 +1,17 @@
-const windowObj: any = typeof window !== 'undefined' ? window : undefined
+import { Crisp } from 'crisp-sdk-web'
 
 export function sendCrispChatMessage(text: string) {
-  windowObj && windowObj?.$crisp.push(['do', 'message:send', ['text', text]])
+  Crisp.message.send('text', text)
 }
 
 export function openCrispChat() {
-  windowObj && windowObj?.$crisp.push(['do', 'chat:open'])
+  Crisp.chat.open()
 }
 
 export function hideCrispChat() {
-  windowObj && windowObj?.$crisp.push(['do', 'chat:hide'])
+  Crisp.chat.hide()
 }
 
 export function showCrispChat() {
-  windowObj && windowObj?.$crisp.push(['do', 'chat:show'])
+  Crisp.chat.show()
 }

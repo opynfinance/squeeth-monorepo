@@ -141,7 +141,7 @@ const Nav: React.FC = () => {
         <Hidden smDown>
           <div className={classes.navDiv}>
             <div style={{ display: 'flex' }}>
-              <NavLink path="/" name="Trade" />
+              <NavLink path="/squeeth" name="Trade" />
               <NavLink
                 highlightForPaths={['/strategies/crab', '/strategies/bull']}
                 path="/strategies/crab"
@@ -230,7 +230,7 @@ const Nav: React.FC = () => {
                   </>
                 )}
               </Button>
-              <NavLink path="/" name="Trade" />
+              <NavLink path="/squeeth" name="Trade" />
               <NavLink
                 highlightForPaths={['/strategies/crab', '/strategies/bull']}
                 path="/strategies/crab"

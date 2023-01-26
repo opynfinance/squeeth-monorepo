@@ -83,7 +83,7 @@ const useStyles = makeStyles((theme) =>
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackground.src})`,
       height: `${vwCalculator(1400)}`,
-      width: '99vw',
+      width: '100vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right',
       backgroundSize: 'contain',

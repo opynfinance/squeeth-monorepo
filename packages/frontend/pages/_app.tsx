@@ -6,7 +6,7 @@ import { ThemeProvider } from '@material-ui/core/styles'
 import * as Fathom from 'fathom-client'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import dynamic from 'next/dynamic'
+import { Crisp } from 'crisp-sdk-web'
 import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
@@ -33,8 +33,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
-
-const CrispWithNoSSR = dynamic(() => import('../src/components/CrispChat/CrispChat'), { ssr: false })
+import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
 
 initializeAmplitude()
 
@@ -43,7 +42,6 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { refetchOnWind
 
 function MyApp({ Component, pageProps }: any) {
   useRenderCounter('9', '0')
-
   const router = useRouter()
   const { track } = useAmplitude()
   const networkId = useAtomValue(networkIdAtom)
@@ -93,6 +91,16 @@ function MyApp({ Component, pageProps }: any) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track])
+
+  useEffect(() => {
+    Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID as string)
+  }, [])
+
+  useEffect(() => {
+    if (router.pathname !== '/') {
+      showCrispChat()
+    } else hideCrispChat()
+  }, [router])
 
   return (
     <RestrictUserProvider>
@@ -157,7 +165,6 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <ComputeSwapsProvider>
           <WalletFailModal />
           <StrategyLayout>
-            <CrispWithNoSSR />
             <Component {...pageProps} />
           </StrategyLayout>
         </ComputeSwapsProvider>
