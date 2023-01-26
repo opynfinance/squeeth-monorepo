@@ -219,13 +219,13 @@ function TradePage() {
   return (
     <>
       <NextSeo
-        title="Opyn"
-        description="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liquidations"
+        title="Opyn Squeeth - Leverage without liquidations "
+        description="Bet on ETH with unlimited upside, protected downside, and no liquidations."
         canonical={SQUEETH_BASE_URL}
         openGraph={{
           images: [
             {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
+              url: SQUEETH_BASE_URL + '/images/previews/squeeth.png',
               width: 1200,
               height: 630,
               alt: 'Squeeth',

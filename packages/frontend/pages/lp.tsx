@@ -11,8 +11,7 @@ import Nav from '@components/Nav'
 import { LPProvider } from '@context/lp'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { NextSeo } from 'next-seo'
-import { SQUEETH_BASE_URL } from '@constants/index'
+import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -246,27 +245,7 @@ export function LPCalculator() {
 export function LPage() {
   return (
     <>
-      <NextSeo
-        title="Opyn"
-        description="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liquidations"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
-
+      <DefaultSiteSeo />
       <LPProvider>
         <LPCalculator />
       </LPProvider>
