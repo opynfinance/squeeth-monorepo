@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { Drawer } from '@material-ui/core'
+import { Drawer, Paper } from '@material-ui/core'
+import Hamburger from 'hamburger-react'
+import Collapse from '@material-ui/core/Collapse'
 import logo from 'public/images/OpynLogo.svg'
 import LandingPageBackgroundOne from 'public/images/landing/landing-page-first.svg'
 import LandingPageBackgroundTwo from 'public/images/landing/landing-page-second.svg'
@@ -50,7 +52,6 @@ const useStyles = makeStyles((theme) =>
     },
     navMenu: {
       margin: `0 ${vwCalculator(10)}`,
-      marginTop: '5px',
       position: 'absolute',
     },
     navLogo: { flex: 1, alignItems: 'center', justifyContent: 'center', display: 'flex' },
@@ -66,6 +67,15 @@ const useStyles = makeStyles((theme) =>
       flexDirection: 'column',
       gap: `${vwCalculator(15)}`,
       flex: 1,
+    },
+    drawer: {
+      position: 'absolute',
+      width: '100vw',
+      zIndex: 1,
+    },
+    drawerWrapper: {
+      backgroundColor: '#232526',
+      padding: '20px 20px',
     },
     navLink: {
       fontFamily: 'DM Sans',
@@ -321,8 +331,8 @@ function MobileLandingPage() {
   return (
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
-        <div className={classes.navMenu} onClick={() => setNavOpen(true)}>
-          <Image src={MenuIcon} alt="Menu Icon" />
+        <div className={classes.navMenu}>
+          <Hamburger size={20} toggled={navOpen} toggle={setNavOpen} />
         </div>
         <div className={classes.navLogo}>
           <Link href={'/'} passHref>
@@ -336,22 +346,21 @@ function MobileLandingPage() {
         </div>
       </div>
 
-      <Drawer
-        classes={{ paper: classes.navDrawerBackground, root: classes.backdrop }}
-        anchor="left"
-        open={navOpen}
-        onClose={() => setNavOpen(false)}
-      >
-        <div className={classes.navLinks}>
-          {navLinks.map((link) => (
-            <Typography variant="h3" className={classes.navLink} key={link.label}>
-              <Link href={link.link} passHref>
-                {link.label}
-              </Link>
-            </Typography>
-          ))}
-        </div>
-      </Drawer>
+      <div style={{ position: 'absolute', width: '100vw', zIndex: 1 }}>
+        <Collapse in={navOpen}>
+          <Paper className={classes.drawerWrapper} elevation={2}>
+            <div className={classes.navLinks}>
+              {navLinks.map((link) => (
+                <Typography variant="h3" className={classes.navLink} key={link.label}>
+                  <Link href={link.link} passHref>
+                    {link.label}
+                  </Link>
+                </Typography>
+              ))}
+            </div>
+          </Paper>
+        </Collapse>
+      </div>
 
       <div className={classes.background1} />
       <div className={classes.background2} />
