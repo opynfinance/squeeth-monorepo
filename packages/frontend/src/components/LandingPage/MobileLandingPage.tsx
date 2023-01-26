@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { Drawer, Paper } from '@material-ui/core'
+import { Paper } from '@material-ui/core'
 import Hamburger from 'hamburger-react'
 import Collapse from '@material-ui/core/Collapse'
 import logo from 'public/images/OpynLogo.svg'
@@ -15,8 +15,7 @@ import Link from 'next/link'
 import Twitter from 'public/images/landing/twitter.svg'
 import Discord from 'public/images/landing/discord.svg'
 import Github from 'public/images/landing/github.svg'
-import Market from 'public/images/landing/market.svg'
-import MenuIcon from 'public/images/landing/menu-icon.svg'
+import Medium from 'public/images/landing/medium.svg'
 import Image from 'next/image'
 import clsx from 'clsx'
 import { Button, Typography } from '@material-ui/core'
@@ -502,10 +501,18 @@ function MobileLandingPage() {
             ))}
           </div>
           <div className={classes.footerSocial}>
-            <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
-            <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
-            <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
-            <Image className={classes.socialIcon} src={Market} alt="Opyn Market" />
+            <Link href={'https://twitter.com/opyn_'} passHref>
+              <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
+            </Link>
+            <Link href={'https://tiny.cc/opyndiscord'} passHref>
+              <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
+            </Link>
+            <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
+              <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
+            </Link>
+            <Link href={'https://medium.com/opyn'} passHref>
+              <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
+            </Link>
           </div>
         </div>
       </div>
