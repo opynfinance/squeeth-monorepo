@@ -101,6 +101,9 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       padding: `${vwCalculator(120)}`,
       alignItems: 'center',
+      [theme.breakpoints.down('md')]: {
+        gap: '30px',
+      },
     },
     introSectionHeading: {
       fontFamily: 'DM Sans',
@@ -111,13 +114,7 @@ const useStyles = makeStyles((theme) =>
         fontSize: '64px',
       },
       [theme.breakpoints.down('md')]: {
-        fontSize: '64px',
-      },
-      [theme.breakpoints.down('sm')]: {
         fontSize: '50px',
-      },
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '40px',
       },
     },
     introSectionSubHeading: {
@@ -131,13 +128,7 @@ const useStyles = makeStyles((theme) =>
         fontSize: '42px',
       },
       [theme.breakpoints.down('md')]: {
-        fontSize: '42px',
-      },
-      [theme.breakpoints.down('sm')]: {
         fontSize: '30px',
-      },
-      [theme.breakpoints.down('xs')]: {
-        fontSize: '20px',
       },
     },
     imageSectionRight: {
@@ -181,6 +172,9 @@ const useStyles = makeStyles((theme) =>
       padding: `${vwCalculator(120)}`,
       alignItems: 'center',
       marginTop: '300px',
+      [theme.breakpoints.down('md')]: {
+        gap: '30px',
+      },
     },
     contentSectionHeader: {
       display: 'flex',
@@ -202,6 +196,9 @@ const useStyles = makeStyles((theme) =>
       fontWeight: 700,
       fontSize: '32px',
       lineHeight: '42px',
+      [theme.breakpoints.down('md')]: {
+        fontSize: '25px',
+      },
     },
     contentSectionSubTitle: {
       fontFamily: 'DM Sans',
@@ -209,6 +206,9 @@ const useStyles = makeStyles((theme) =>
       fontSize: '24px',
       lineHeight: '31px',
       color: '#BDBDBD',
+      [theme.breakpoints.down('md')]: {
+        fontSize: '20px',
+      },
     },
     contentSectionButton: {
       backgroundColor: theme.palette.primary.main,
@@ -232,6 +232,9 @@ const useStyles = makeStyles((theme) =>
       padding: `${vwCalculator(120)}`,
       alignItems: 'center',
       marginTop: '100px',
+      [theme.breakpoints.down('md')]: {
+        gap: '30px',
+      },
     },
     auctionSectionLeft: {
       flex: 1,
@@ -273,13 +276,13 @@ const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
   { label: 'Auction', link: 'https://squeethportal.xyz' },
-  { label: 'FAQ', link: 'https://opyn.gitbook.io/squeeth/squeeth/get-started' },
+  { label: 'FAQ', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq' },
 ]
 
 const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth/squeeth/contracts-documentation' },
+  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/' },
   { label: 'Blog', link: 'https://medium.com/opyn' },
-  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth/security/audits-and-insurance' },
+  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security' },
 ]
 
 function DesktopLandingPage() {

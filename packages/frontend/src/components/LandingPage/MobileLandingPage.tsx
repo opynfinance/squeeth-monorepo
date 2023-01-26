@@ -313,13 +313,13 @@ const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
   { label: 'Auction', link: 'https://squeethportal.xyz' },
-  { label: 'FAQ', link: 'https://opyn.gitbook.io/squeeth/squeeth/get-started' },
+  { label: 'FAQ', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq' },
 ]
 
 const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth/squeeth/contracts-documentation' },
+  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/' },
   { label: 'Blog', link: 'https://medium.com/opyn' },
-  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth/security/audits-and-insurance' },
+  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security' },
 ]
 
 function MobileLandingPage() {
