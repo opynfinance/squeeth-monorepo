@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.13;
+pragma abicoder v2;
 
 // interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IController } from "./interface/IController.sol";
 import { IOracle } from "./interface/IOracle.sol";
 import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
+import { IWETH } from "./interface/IWETH.sol";
 // contract
 import { Ownable } from "openzeppelin/access/Ownable.sol";
 import { EIP712 } from "openzeppelin/utils/cryptography/draft-EIP712.sol";
+import { ECDSA } from "openzeppelin/utils/cryptography/ECDSA.sol";
+import { FlashSwap } from "./FlashSwap.sol";
 // lib
 import { Address } from "openzeppelin/utils/Address.sol";
 
@@ -28,6 +32,13 @@ import { Address } from "openzeppelin/utils/Address.sol";
  * ZBN11: ZenBull quantity to net is less than queued for withdraws
  * ZBN12: ZenBull Price too high
  * ZBN13: ZenBull Price too low
+ * ZBN14: Clearing price too high relative to Uniswap twap
+ * ZBN15: Clearing price too low relative to Uniswap twap
+ * ZBN16: Invalid order signer
+ * ZBN17: Order already expired
+ * ZBN18: Nonce already used
+ * ZBN19: auction order is not selling
+ * ZBN20: sell order price greater than clearing
  */
 
 /**
@@ -35,8 +46,11 @@ import { Address } from "openzeppelin/utils/Address.sol";
  * @notice Contract for Netting Deposits and Withdrawals in ZenBull
  * @author Opyn team
  */
-contract ZenBullNetting is Ownable, EIP712 {
+contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     using Address for address payable;
+
+    /// @dev enum to differentiate between Uniswap swap callback function source
+    enum FLASH_SOURCE { WITHDRAW_AUCTION }
 
     /// @dev typehash for signed orders
     bytes32 private constant _ZENBULL_NETTING_TYPEHASH = keccak256(
@@ -93,6 +107,8 @@ contract ZenBullNetting is Ownable, EIP712 {
     mapping(address => uint256[]) public userDepositsIndex;
     /// @dev indexes of withdraw receipts of an address
     mapping(address => uint256[]) public userWithdrawsIndex;
+    /// @dev store the used flag for a nonce for each address
+    mapping(address => mapping(uint256 => bool)) public nonces;
 
     /// @dev order struct for a signed order from market maker
     struct Order {
@@ -116,6 +132,27 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 amount;
         /// @dev time of deposit
         uint256 timestamp;
+    }
+
+    /// @dev params for withdraw auction
+    struct WithdrawAuctionParams {
+        /// @dev amont of bull to queue for withdrawal
+        uint256 withdrawsToProcess;
+        /// @dev orders that sell oSqth to the auction
+        Order[] orders;
+        /// @dev price that the auction pays for the purchased oSqth
+        uint256 clearingPrice;
+        /// @dev max WETH to pay for flashswapped USDC
+        uint256 maxWethForUsdc;
+        /// @dev uniswap fee for swapping eth to USD;
+        uint24 wethUsdcPoolFee;
+    }
+
+    /// @dev data structs for Uni v3 callback
+    struct WithdrawAuctionData {
+        uint256 zenBullAmountToBurn;
+        uint256 oSqthAmountToRepay;
+        uint256 ethAmountToRepay;
     }
 
     event SetMinZenBullAmount(uint256 oldAmount, uint256 newAmount);
@@ -146,8 +183,20 @@ contract ZenBullNetting is Ownable, EIP712 {
         uint256 amountReceived,
         uint256 indexed index
     );
+    event WithdrawAuction(
+        address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
+    );
+    event ZenBullWithdrawn(
+        address indexed withdrawer,
+        uint256 crabAmount,
+        uint256 usdcAmount,
+        uint256 indexed receiptIndex
+    );
 
-    constructor(address _zenBull, address _eulerSimpleLens) EIP712("ZenBullNetting", "1") {
+    constructor(address _zenBull, address _eulerSimpleLens, address _uniFactory)
+        EIP712("ZenBullNetting", "1")
+        FlashSwap(_uniFactory)
+    {
         otcPriceTolerance = 5e16; // 5%
         auctionTwapPeriod = 420 seconds;
 
@@ -161,7 +210,15 @@ contract ZenBullNetting is Ownable, EIP712 {
             IController(IZenBullStrategy(_zenBull).powerTokenController()).ethQuoteCurrencyPool();
         usdc = IController(IZenBullStrategy(_zenBull).powerTokenController()).quoteCurrency();
         oSqth = IController(IZenBullStrategy(_zenBull).powerTokenController()).wPowerPerp();
+
+        IERC20(usdc).approve(_zenBull, type(uint256).max);
+        IERC20(oSqth).approve(_zenBull, type(uint256).max);
     }
+
+    /**
+     * @notice receive function to allow ETH transfer to this contract
+     */
+    receive() external payable { }
 
     /**
      * @dev view function to get the domain seperator used in signing
@@ -428,6 +485,143 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice auction for queued withdraws
+     * @dev takes in orders from MM's to sell oSQTH
+     * @param _params Withdraw Params
+     */
+    function withdrawAuction(WithdrawAuctionParams calldata _params) public onlyOwner {
+        _checkOTCPrice(_params.clearingPrice, true);
+
+        uint256 initialEthBalance = address(this).balance;
+        uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
+        uint256 crabAmount = _params.withdrawsToProcess * IZenBullStrategy(zenBull).getCrabBalance()
+            / bullTotalSupply;
+        (, uint256 crabDebt) = IZenBullStrategy(zenBull).getCrabVaultDetails();
+        uint256 oSqthAmount =
+            crabAmount * crabDebt / IERC20(IZenBullStrategy(zenBull).crab()).totalSupply();
+
+        // get oSQTH from market makers orders
+        uint256 toExchange = oSqthAmount;
+        for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
+            _checkOrder(_params.orders[i]);
+            _useNonce(_params.orders[i].trader, _params.orders[i].nonce);
+
+            require(!_params.orders[i].isBuying, "ZBN19");
+            require(_params.orders[i].price <= _params.clearingPrice, "ZBN20");
+
+            if (_params.orders[i].quantity < toExchange) {
+                toExchange -= _params.orders[i].quantity;
+                IERC20(oSqth).transferFrom(
+                    _params.orders[i].trader, address(this), _params.orders[i].quantity
+                );
+            } else {
+                IERC20(oSqth).transferFrom(_params.orders[i].trader, address(this), toExchange);
+                break;
+            }
+        }
+
+        uint256 usdcToRepay = _params.withdrawsToProcess
+            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) / bullTotalSupply;
+
+        // WETH-USDC swap
+        _exactOutFlashSwap(
+            weth,
+            usdc,
+            _params.wethUsdcPoolFee,
+            usdcToRepay,
+            _params.maxWethForUsdc,
+            uint8(FLASH_SOURCE.WITHDRAW_AUCTION),
+            abi.encodePacked(_params.withdrawsToProcess, oSqthAmount, usdcToRepay)
+        );
+
+        // send WETH to market makers
+        IWETH(weth).deposit{value: address(this).balance - initialEthBalance}();
+        toExchange = oSqthAmount;
+        uint256 oSqthQuantity;
+        for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
+            if (_params.orders[i].quantity < toExchange) {
+                oSqthQuantity = _params.orders[i].quantity;
+            } else {
+                oSqthQuantity = toExchange;
+            }
+
+            IERC20(weth).transfer(
+                _params.orders[i].trader, (oSqthQuantity * _params.clearingPrice) / 1e18
+            );
+            toExchange -= oSqthQuantity;
+
+            emit WithdrawAuction(
+                _params.orders[i].trader,
+                _params.orders[i].bidId,
+                oSqthQuantity,
+                _params.clearingPrice
+                );
+        }
+
+        // send ETH to withdrawers
+        uint256 ethToWithdrawers = IWETH(weth).balanceOf(address(this));
+        IWETH(weth).withdraw(ethToWithdrawers);
+
+        uint256 remainingWithdraws = _params.withdrawsToProcess;
+        uint256 j = withdrawsIndex;
+        uint256 ethAmount;
+
+        while (remainingWithdraws > 0) {
+            Receipt memory withdraw = withdraws[j];
+            if (withdraw.amount == 0) {
+                j++;
+                continue;
+            }
+            if (withdraw.amount <= remainingWithdraws) {
+                // full usage
+                remainingWithdraws -= withdraw.amount;
+                zenBullBalance[withdraw.sender] -= withdraw.amount;
+
+                // send proportional usdc
+                ethAmount = withdraw.amount * ethToWithdrawers / _params.withdrawsToProcess;
+
+                payable(withdraw.sender).sendValue(ethAmount);
+
+                delete withdraws[j];
+                j++;
+
+                emit ZenBullWithdrawn(withdraw.sender, withdraw.amount, ethAmount, j);
+            } else {
+                withdraws[j].amount -= remainingWithdraws;
+                zenBullBalance[withdraw.sender] -= remainingWithdraws;
+
+                // send proportional usdc
+                ethAmount = remainingWithdraws * ethToWithdrawers / _params.withdrawsToProcess;
+
+                payable(withdraw.sender).sendValue(ethAmount);
+
+                emit ZenBullWithdrawn(withdraw.sender, remainingWithdraws, ethAmount, j);
+
+                break;
+            }
+        }
+
+        withdrawsIndex = j;
+        isAuctionLive = false;
+    }
+
+    /**
+     * @notice uniswap flash swap callback function to handle different types of flashswaps
+     * @dev this function will be called by flashswap callback function uniswapV3SwapCallback()
+     * @param _uniFlashSwapData UniFlashswapCallbackData struct
+     */
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
+        if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.WITHDRAW_AUCTION) {
+            WithdrawAuctionData memory data =
+                abi.decode(_uniFlashSwapData.callData, (WithdrawAuctionData));
+
+            IZenBullStrategy(zenBull).withdraw(data.zenBullAmountToBurn);
+            IWETH(weth).deposit{value: _uniFlashSwapData.amountToPay}();
+            IWETH(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
+        }
+    }
+
+    /**
      * @notice get the sum of queued ETH
      * @return sum ETH amount in queue
      */
@@ -486,6 +680,25 @@ contract ZenBullNetting is Ownable, EIP712 {
     }
 
     /**
+     * @notice checks the expiry nonce and signer of an order
+     * @param _order Order struct
+     */
+    function checkOrder(Order memory _order) external view returns (bool) {
+        return _checkOrder(_order);
+    }
+
+    /**
+     * @dev set nonce flag of the trader to true
+     * @param _trader address of the signer
+     * @param _nonce number that is to be traded only once
+     */
+    function _useNonce(address _trader, uint256 _nonce) internal {
+        require(!nonces[_trader][_nonce], "ZBN18");
+
+        nonces[_trader][_nonce] = true;
+    }
+
+    /**
      * @dev check that the proposed ZenBull price is within a tolerance of the current Uniswap TWAP
      */
     function _checkZenBullPrice(uint256 _price) internal view {
@@ -519,5 +732,48 @@ contract ZenBullNetting is Ownable, EIP712 {
         ) * 1e18 / IERC20(zenBull).totalSupply();
 
         return zenBullFairPrice;
+    }
+
+    /**
+     * @notice check that the proposed sale price is within a tolerance of the current Uniswap twap
+     * @param _price clearing price provided by manager
+     * @param _isAuctionBuying is auction buying or selling oSQTH
+     */
+    function _checkOTCPrice(uint256 _price, bool _isAuctionBuying) internal view {
+        // Get twap
+        uint256 squeethEthPrice =
+            IOracle(oracle).getTwap(ethSqueethPool, oSqth, weth, auctionTwapPeriod, false);
+
+        if (_isAuctionBuying) {
+            require(_price <= (squeethEthPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN14");
+        } else {
+            require(_price >= (squeethEthPrice * (1e18 - otcPriceTolerance)) / 1e18, "ZBN15");
+        }
+    }
+
+    /**
+     * @dev checks the expiry nonce and signer of an order
+     * @param _order Order struct
+     */
+    function _checkOrder(Order memory _order) internal view returns (bool) {
+        bytes32 structHash = keccak256(
+            abi.encode(
+                _ZENBULL_NETTING_TYPEHASH,
+                _order.bidId,
+                _order.trader,
+                _order.quantity,
+                _order.price,
+                _order.isBuying,
+                _order.expiry,
+                _order.nonce
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address offerSigner = ECDSA.recover(hash, _order.v, _order.r, _order.s);
+        require(offerSigner == _order.trader, "ZBN16");
+        require(_order.expiry >= block.timestamp, "ZBN17");
+
+        return true;
     }
 }

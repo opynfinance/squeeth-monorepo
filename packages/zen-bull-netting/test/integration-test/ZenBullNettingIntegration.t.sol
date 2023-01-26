@@ -7,12 +7,7 @@ import { console } from "forge-std/console.sol";
 import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-// contracts
-import { ZenBullNetting } from "../../src/ZenBullNetting.sol";
 
-/**
- * Unit tests
- */
 contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
     uint256 public user1Pk;
     address public user1;
@@ -28,7 +23,6 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.startPrank(owner);
         zenBullNetting.setMinEthAmount(minWeth);
         zenBullNetting.setMinZenBullAmount(minZenBull);
-        // zenBullNetting.setOTCPriceTolerance(2e16);
         vm.stopPrank();
 
         (user1, user1Pk) = makeAddrAndKey("User1");
@@ -365,7 +359,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(1);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
         (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
 
         assertEq(
@@ -405,7 +399,7 @@ contract ZenBullNettingIntegration is ZenBullNettingBaseSetup {
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
         (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(1);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,

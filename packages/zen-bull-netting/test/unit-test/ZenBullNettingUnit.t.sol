@@ -41,6 +41,20 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
         assertEq(zenBullNetting.MIN_AUCTION_TWAP(), 180);
         assertEq(zenBullNetting.otcPriceTolerance(), 5e16);
         assertEq(zenBullNetting.auctionTwapPeriod(), 420);
+        assertEq(
+            zenBullNetting.DOMAIN_SEPARATOR(),
+            keccak256(
+                abi.encode(
+                    keccak256(
+                        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                    ),
+                    keccak256(bytes("ZenBullNetting")),
+                    keccak256(bytes("1")),
+                    block.chainid,
+                    address(zenBullNetting)
+                )
+            )
+        );
     }
 
     function testToggleAuctionLive() public {
