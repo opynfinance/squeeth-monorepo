@@ -61,7 +61,7 @@ export type ChartDataInfo = {
   crabPnL: number
 }
 
-const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps, id, variant, ...props }) => {
+export const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps, id, variant, ...props }) => {
   const classes = useTextFieldStyles()
 
   return (

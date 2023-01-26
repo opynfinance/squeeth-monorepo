@@ -1295,12 +1295,11 @@ export const useCrabProfitData = () => {
 
   useEffect(() => {
     if (!loading && data && data.strategy) {
-      if ( crabPosition.isGreaterThan(0)) {
-        if (data.strategy.lastHedgeBlockNumber < firstDepositBlock) {
-          setData(firstDepositBlock , firstDepositTime)
-        } else {
-          setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
-        }
+      if (firstDepositTime && firstDepositBlock && data.strategy.lastHedgeBlockNumber < firstDepositBlock) {
+        setData(firstDepositBlock , firstDepositTime)
+      } 
+      else if ( crabPosition.isGreaterThan(0)) {       
+        setData(data.strategy.lastHedgeBlockNumber , data.strategy.lastHedgeTimestamp)
       } else {
         setData()
       }
