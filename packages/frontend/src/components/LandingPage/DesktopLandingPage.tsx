@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import logo from 'public/images/OpynLogo.svg'
 import LandingPageBackground from 'public/images/landing-page-background.svg'
@@ -16,6 +16,8 @@ import Image from 'next/image'
 import clsx from 'clsx'
 import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
+import useAmplitude from '@hooks/useAmplitude'
+import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
 
 const designBaseWidth = 1512
 
@@ -125,7 +127,7 @@ const useStyles = makeStyles((theme) =>
       color: '#BDBDBD',
       margin: 0,
       [theme.breakpoints.down('lg')]: {
-        fontSize: '42px',
+        fontSize: '32px',
       },
       [theme.breakpoints.down('md')]: {
         fontSize: '30px',
@@ -275,19 +277,32 @@ const useStyles = makeStyles((theme) =>
 const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
-  { label: 'Auction', link: 'https://squeethportal.xyz' },
-  { label: 'FAQ', link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction' },
+  { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
+  {
+    label: 'FAQ',
+    link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction',
+    analyticsEvent: SITE_EVENTS.NAV_FAQ,
+  },
 ]
 
 const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/' },
-  { label: 'Blog', link: 'https://medium.com/opyn' },
-  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security' },
+  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/', analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
+  { label: 'Blog', link: 'https://medium.com/opyn', analyticsEvent: LANDING_EVENTS.NAV_BLOG },
+  {
+    label: 'Security',
+    link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security',
+    analyticsEvent: LANDING_EVENTS.NAV_SECURITY,
+  },
 ]
 
 function DesktopLandingPage() {
   const classes = useStyles()
   const tvl = useTVL()
+  const { track } = useAmplitude()
+
+  useEffect(() => {
+    track(LANDING_EVENTS.LANDING_VISIT_DESKTOP)
+  }, [track])
 
   return (
     <div className={classes.landing_page_container}>
@@ -299,7 +314,12 @@ function DesktopLandingPage() {
         </div>
         <div className={classes.navLinks}>
           {navLinks.map((link) => (
-            <Typography variant="h3" className={classes.navLink} key={link.label}>
+            <Typography
+              onClick={() => link.analyticsEvent && track(link.analyticsEvent)}
+              variant="h3"
+              className={classes.navLink}
+              key={link.label}
+            >
               <Link href={link.link} passHref>
                 {link.label}
               </Link>
@@ -307,7 +327,9 @@ function DesktopLandingPage() {
           ))}
           <div className={classes.navAction}>
             <Link href={'/strategies/crab'} passHref>
-              <Button className={classes.navStartEarningButton}>Start Earning</Button>
+              <Button onClick={() => track(LANDING_EVENTS.NAV_START_EARNING)} className={classes.navStartEarningButton}>
+                Start Earning
+              </Button>
             </Link>
           </div>
         </div>
@@ -332,7 +354,12 @@ function DesktopLandingPage() {
             </Typography>
             <div style={{ marginTop: '39px' }} />
             <Link href={'/strategies/crab'} passHref>
-              <Button className={classes.navStartEarningButton}>Start Earning</Button>
+              <Button
+                onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
+                className={classes.navStartEarningButton}
+              >
+                Start Earning
+              </Button>
             </Link>
           </div>
           <div className={classes.imageSectionRight}>
@@ -374,7 +401,9 @@ function DesktopLandingPage() {
             </Typography>
             <div style={{ marginTop: '41px' }} />
             <Link href={'/squeeth'} passHref>
-              <Button className={classes.contentSectionButton}>Trade Squeeth</Button>
+              <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
+                Trade Squeeth
+              </Button>
             </Link>
           </div>
           <div className={classes.imageSectionRight}>
@@ -406,7 +435,12 @@ function DesktopLandingPage() {
             </Typography>
             <div style={{ marginTop: '41px' }} />
             <Link href={'/strategies/crab'} passHref>
-              <Button className={classes.contentSectionButton}>Start Earning</Button>
+              <Button
+                onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
+                className={classes.contentSectionButton}
+              >
+                Start Earning
+              </Button>
             </Link>
           </div>
           <div className={classes.imageSectionRight}>
@@ -443,7 +477,9 @@ function DesktopLandingPage() {
             </Typography>
             <div style={{ marginTop: '41px' }} />
             <Link href={'https://squeethportal.xyz'} passHref>
-              <Button className={classes.contentSectionButton}>Try Auction</Button>
+              <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
+                Try Auction
+              </Button>
             </Link>
           </div>
         </div>
@@ -452,7 +488,12 @@ function DesktopLandingPage() {
       <div className={classes.footer}>
         <div className={classes.footerLinks}>
           {footerLinks.map((link) => (
-            <Typography key={link.label} variant="h4" className={classes.footerLink}>
+            <Typography
+              onClick={() => link.analyticsEvent && track(link.analyticsEvent)}
+              key={link.label}
+              variant="h4"
+              className={classes.footerLink}
+            >
               <Link href={link.link} passHref>
                 {link.label}
               </Link>
@@ -460,18 +501,26 @@ function DesktopLandingPage() {
           ))}
         </div>
         <div className={classes.footerSocial}>
-          <Link href={'https://twitter.com/opyn_'} passHref>
-            <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
-          </Link>
-          <Link href={'https://tiny.cc/opyndiscord'} passHref>
-            <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
-          </Link>
-          <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
-            <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
-          </Link>
-          <Link href={'https://medium.com/opyn'} passHref>
-            <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
-          </Link>
+          <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
+            <Link href={'https://twitter.com/opyn_'} passHref>
+              <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
+            </Link>
+          </div>
+          <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
+            <Link href={'https://tiny.cc/opyndiscord'} passHref>
+              <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
+            </Link>
+          </div>
+          <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
+            <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
+              <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
+            </Link>
+          </div>
+          <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
+            <Link href={'https://medium.com/opyn'} passHref>
+              <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
+            </Link>
+          </div>
         </div>
       </div>
     </div>

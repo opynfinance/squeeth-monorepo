@@ -1,15 +1,15 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { Paper } from '@material-ui/core'
 import Hamburger from 'hamburger-react'
 import Collapse from '@material-ui/core/Collapse'
 import logo from 'public/images/OpynLogo.svg'
-import LandingPageBackgroundOne from 'public/images/landing/landing-page-first.svg'
-import LandingPageBackgroundTwo from 'public/images/landing/landing-page-second.svg'
-import LandingPageBackgroundThree from 'public/images/landing/landing-page-third.svg'
-import LandingPageBackgroundFour from 'public/images/landing/landing-page-fourth.svg'
-import SqueethMobile from 'public/images/landing/squeeth-mobile.png'
-import StrategiesMobile from 'public/images/landing/strategies-mobile.png'
+import LandingPageBackgroundOne from 'public/images/landing/athena1.png'
+import LandingPageBackgroundTwo from 'public/images/landing/athena2.png'
+import LandingPageBackgroundThree from 'public/images/landing/athena3.png'
+import LandingPageBackgroundFour from 'public/images/landing/athena4.png'
+import SqueethMobile from 'public/images/landing/squeeth-mobile.svg'
+import StrategiesMobile from 'public/images/landing/strategies-mobile.svg'
 import AuctionMobile from 'public/images/landing/auction-mobile.png'
 import Link from 'next/link'
 import Twitter from 'public/images/landing/twitter.svg'
@@ -20,6 +20,8 @@ import Image from 'next/image'
 import clsx from 'clsx'
 import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
+import useAmplitude from '@hooks/useAmplitude'
+import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
 
 const designBaseWidth = 393
 
@@ -44,10 +46,10 @@ const useStyles = makeStyles((theme) =>
     },
     nav: {
       padding: `0px ${vwCalculator(10)}`,
-      borderBottom: '1px solid #333333',
       display: 'flex',
       alignItems: 'center',
-      position: '-webkit-sticky',
+      boxShadow: '0px 3px 4px rgba(0, 0, 0, 0.2)',
+      background: 'linear-gradient(180deg, #1A1C1D 0%, #191B1C 100%)',
     },
     navMenu: {
       margin: `0 ${vwCalculator(10)}`,
@@ -109,41 +111,22 @@ const useStyles = makeStyles((theme) =>
       padding: `20px ${vwCalculator(20)}`,
       fontSize: '20px',
     },
+    athenaGraphicAbsoluteContainer: { position: 'absolute', width: '100vw', zIndex: -1 },
     background1: {
-      position: 'absolute',
-      backgroundImage: `url(${LandingPageBackgroundOne.src})`,
-      height: `150vh`,
-      width: '99vw',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right',
-      backgroundSize: 'contain',
+      display: 'flex',
+      justifyContent: 'flex-end',
     },
     background2: {
-      position: 'absolute',
-      backgroundImage: `url(${LandingPageBackgroundTwo.src})`,
-      height: `75vh`,
-      width: '90vw',
-      marginTop: '60vh',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'left',
+      height: `100%`,
+      marginTop: '-15vh',
     },
     background3: {
-      position: 'absolute',
-      backgroundImage: `url(${LandingPageBackgroundThree.src})`,
-      height: `125vh`,
-      marginTop: '125vh',
-      width: '100vw',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      marginTop: '-3vh',
     },
     background4: {
-      position: 'absolute',
-      backgroundImage: `url(${LandingPageBackgroundFour.src})`,
-      height: `85vh`,
-      marginTop: '240vh',
-      width: '90vw',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'left',
+      marginTop: '20vh',
     },
     content: {},
     introSection: {
@@ -152,7 +135,7 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'center',
       alignItems: 'center',
       textAlign: 'center',
-      marginTop: '150px',
+      marginTop: '15vh',
     },
     introSectionHeading: {
       fontFamily: 'DM Sans',
@@ -182,7 +165,7 @@ const useStyles = makeStyles((theme) =>
     },
     verticalImage: {
       margin: 'auto',
-      width: '70vw',
+      width: '65vw',
     },
     imageSection: {
       maxWidth: `${vwCalculator(610)}`,
@@ -192,7 +175,7 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: `${vwCalculator(50)}`,
-      marginTop: '100px',
+      marginTop: '11vh',
     },
     statSectionItem: {
       display: 'flex',
@@ -220,7 +203,7 @@ const useStyles = makeStyles((theme) =>
       flexDirection: 'column',
 
       padding: '0 10vw',
-      marginTop: '30px',
+      marginTop: '3vh',
     },
     contentSectionHeader: {
       display: 'flex',
@@ -312,20 +295,33 @@ const useStyles = makeStyles((theme) =>
 const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
-  { label: 'Auction', link: 'https://squeethportal.xyz' },
-  { label: 'FAQ', link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction' },
+  { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
+  {
+    label: 'FAQ',
+    link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction',
+    analyticsEvent: SITE_EVENTS.NAV_FAQ,
+  },
 ]
 
 const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/' },
-  { label: 'Blog', link: 'https://medium.com/opyn' },
-  { label: 'Security', link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security' },
+  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/', analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
+  { label: 'Blog', link: 'https://medium.com/opyn', analyticsEvent: LANDING_EVENTS.NAV_BLOG },
+  {
+    label: 'Security',
+    link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security',
+    analyticsEvent: LANDING_EVENTS.NAV_SECURITY,
+  },
 ]
 
 function MobileLandingPage() {
   const [navOpen, setNavOpen] = useState(false)
   const classes = useStyles()
   const tvl = useTVL()
+  const { track } = useAmplitude()
+
+  useEffect(() => {
+    track(LANDING_EVENTS.LANDING_VISIT_MOBILE)
+  }, [track])
 
   return (
     <div className={classes.landing_page_container}>
@@ -340,7 +336,9 @@ function MobileLandingPage() {
         </div>
         <div className={classes.navAction}>
           <Link href={'/strategies/crab'} passHref>
-            <Button className={classes.navStartEarningButton}>Launch</Button>
+            <Button onClick={() => track(LANDING_EVENTS.NAV_START_EARNING)} className={classes.navStartEarningButton}>
+              Launch
+            </Button>
           </Link>
         </div>
       </div>
@@ -350,7 +348,12 @@ function MobileLandingPage() {
           <Paper className={classes.drawerWrapper} elevation={2}>
             <div className={classes.navLinks}>
               {navLinks.map((link) => (
-                <Typography variant="h3" className={classes.navLink} key={link.label}>
+                <Typography
+                  onClick={() => link.analyticsEvent && track(link.analyticsEvent)}
+                  variant="h3"
+                  className={classes.navLink}
+                  key={link.label}
+                >
                   <Link href={link.link} passHref>
                     {link.label}
                   </Link>
@@ -361,10 +364,22 @@ function MobileLandingPage() {
         </Collapse>
       </div>
 
-      <div className={classes.background1} />
-      <div className={classes.background2} />
-      <div className={classes.background3} />
-      <div className={classes.background4} />
+      <div className={classes.athenaGraphicAbsoluteContainer}>
+        <div>
+          <div className={classes.background1}>
+            <Image src={LandingPageBackgroundOne} alt="Athena 1" />
+          </div>
+          <div className={classes.background2}>
+            <Image src={LandingPageBackgroundTwo} alt="Athena 2" />
+          </div>
+          <div className={classes.background3}>
+            <Image src={LandingPageBackgroundThree} alt="Athena 3" />
+          </div>
+          <div className={classes.background4}>
+            <Image src={LandingPageBackgroundFour} alt="Athena 4" />
+          </div>
+        </div>
+      </div>
       <div className={classes.content}>
         <div className={classes.introSection}>
           <div>
@@ -383,7 +398,10 @@ function MobileLandingPage() {
             </Typography>
             <div style={{ marginTop: '20px' }} />
             <Link href={'/strategies/crab'} passHref>
-              <Button className={clsx([classes.navStartEarningButton, classes.introStartEarningButton])}>
+              <Button
+                onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
+                className={clsx([classes.navStartEarningButton, classes.introStartEarningButton])}
+              >
                 Start Earning
               </Button>
             </Link>
@@ -399,7 +417,7 @@ function MobileLandingPage() {
             <div className={classes.statSectionSubTitle}>Total Value Locked</div>
           </div>
         </div>
-        <div style={{ marginTop: '100px' }} />
+        <div style={{ marginTop: '11vh' }} />
         <div className={classes.verticalImage}>
           <Image src={SqueethMobile} alt="Squeeth" />
         </div>
@@ -425,10 +443,12 @@ function MobileLandingPage() {
           </Typography>
           <div style={{ marginTop: '15px' }} />
           <Link href={'/squeeth'} passHref>
-            <Button className={classes.contentSectionButton}>Trade Squeeth</Button>
+            <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
+              Trade Squeeth
+            </Button>
           </Link>
         </div>
-        <div style={{ marginTop: '100px' }} />
+        <div style={{ marginTop: '17vh' }} />
         <div className={classes.verticalImage}>
           <Image src={StrategiesMobile} alt="Strategies" />
         </div>
@@ -457,10 +477,15 @@ function MobileLandingPage() {
           </Typography>
           <div style={{ marginTop: '15px' }} />
           <Link href={'/strategies/crab'} passHref>
-            <Button className={classes.contentSectionButton}>Start Earning</Button>
+            <Button
+              onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
+              className={classes.contentSectionButton}
+            >
+              Start Earning
+            </Button>
           </Link>
         </div>
-        <div style={{ marginTop: '100px' }} />
+        <div style={{ marginTop: '19vh' }} />
         <div className={classes.verticalImage}>
           <Image src={AuctionMobile} alt="Auction" />
         </div>
@@ -486,14 +511,21 @@ function MobileLandingPage() {
           </Typography>
           <div style={{ marginTop: '15px' }} />
           <Link href={'https://squeethportal.xyz'} passHref>
-            <Button className={classes.contentSectionButton}>Try Auction</Button>
+            <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
+              Try Auction
+            </Button>
           </Link>
         </div>
-        <div style={{ marginTop: '35px' }} />
+        <div style={{ marginTop: '5vh' }} />
         <div className={classes.footer}>
           <div className={classes.footerLinks}>
             {footerLinks.map((link) => (
-              <Typography key={link.label} variant="h4" className={classes.footerLink}>
+              <Typography
+                onClick={() => link.analyticsEvent && track(link.analyticsEvent)}
+                key={link.label}
+                variant="h4"
+                className={classes.footerLink}
+              >
                 <Link href={link.link} passHref>
                   {link.label}
                 </Link>
@@ -501,18 +533,26 @@ function MobileLandingPage() {
             ))}
           </div>
           <div className={classes.footerSocial}>
-            <Link href={'https://twitter.com/opyn_'} passHref>
-              <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
-            </Link>
-            <Link href={'https://tiny.cc/opyndiscord'} passHref>
-              <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
-            </Link>
-            <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
-              <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
-            </Link>
-            <Link href={'https://medium.com/opyn'} passHref>
-              <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
-            </Link>
+            <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
+              <Link href={'https://twitter.com/opyn_'} passHref>
+                <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
+              </Link>
+            </div>
+            <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
+              <Link href={'https://tiny.cc/opyndiscord'} passHref>
+                <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
+              </Link>
+            </div>
+            <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
+              <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
+                <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
+              </Link>
+            </div>
+            <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
+              <Link href={'https://medium.com/opyn'} passHref>
+                <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>

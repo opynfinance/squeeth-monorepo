@@ -141,14 +141,23 @@ const Nav: React.FC = () => {
         <Hidden smDown>
           <div className={classes.navDiv}>
             <div style={{ display: 'flex' }}>
-              <NavLink path="/squeeth" name="Trade" />
               <NavLink
                 highlightForPaths={['/strategies/crab', '/strategies/bull']}
                 path="/strategies/crab"
                 name="Strategies"
               />
-              {/* <NavLink path="/trade" name="Trade 1" /> */}
+              <NavLink path="/squeeth" name="Squeeth" />
               <NavLink path="/positions" name="Positions" />
+              <a
+                href="https://squeethportal.xyz"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
+              >
+                <Typography className={classes.navLink} variant="h6">
+                  Auction
+                </Typography>
+              </a>
               <NavLink path="/lp" name="LP" />
               <a
                 href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
@@ -163,20 +172,6 @@ const Nav: React.FC = () => {
             </div>
           </div>
           <div className={classes.wallet}>
-            {/* <Button
-            variant="contained"
-            onClick={(e) => {
-              e.preventDefault()
-              window.open('https://opyn.canny.io/', '_blank')
-            }}
-            style={{
-              marginRight: '16px',
-              backgroundColor: '#1F8E98',
-              color: '#FFF',
-            }}
-          >
-            Share Feedback
-          </Button> */}
             <Button
               variant="outlined"
               color="primary"
@@ -230,13 +225,23 @@ const Nav: React.FC = () => {
                   </>
                 )}
               </Button>
-              <NavLink path="/squeeth" name="Trade" />
               <NavLink
                 highlightForPaths={['/strategies/crab', '/strategies/bull']}
                 path="/strategies/crab"
                 name="Strategies"
               />
+              <NavLink path="/squeeth" name="Squeeth" />
               <NavLink path="/positions" name="Positions" />
+              <a
+                href="https://squeethportal.xyz"
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
+              >
+                <Typography className={classes.navLink} variant="h6">
+                  Auction
+                </Typography>
+              </a>
               <NavLink path="/lp" name="LP" />
               <a
                 href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
