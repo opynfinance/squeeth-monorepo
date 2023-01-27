@@ -36,7 +36,6 @@ import {
     Strategy,
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import * as WETH9 from "../generated/Weth/Weth"
 import { Address, BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import { loadOrCreateStrategy } from "./util"
 import { AUCTION_BULL, FLASH_BULL_ADDR, WETH } from "./constants"
