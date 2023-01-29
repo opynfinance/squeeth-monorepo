@@ -20,7 +20,7 @@ const httpLinkRPSqueeth = new HttpLink({
 })
 
 const httpLinkMNSqueeth = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth',
+  uri: 'https://subgraph.satsuma-prod.com/d32634a525f9/opyn/squeeth/api',
   fetch: async (...pl) => {
     const [_, options] = pl
     if (options?.body) {
