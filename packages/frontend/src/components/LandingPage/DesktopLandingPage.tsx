@@ -107,6 +107,11 @@ const useStyles = makeStyles((theme) =>
         gap: '30px',
       },
     },
+    introSectionLeft: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+    },
     introSectionHeading: {
       fontFamily: 'DM Sans',
       fontWeight: 700,
@@ -136,7 +141,7 @@ const useStyles = makeStyles((theme) =>
     imageSectionRight: {
       flex: 1,
       display: 'flex',
-      justifyContent: 'flex-end',
+      justifyContent: 'center',
     },
     imageSection: {
       maxWidth: `${vwCalculator(610)}`,
@@ -149,7 +154,6 @@ const useStyles = makeStyles((theme) =>
       marginTop: '70px',
     },
     statSectionItem: {
-      maxWidth: `${vwCalculator(160)}`,
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
@@ -240,6 +244,13 @@ const useStyles = makeStyles((theme) =>
     },
     auctionSectionLeft: {
       flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
+    },
+    auctionSectionRight: {
+      flex: 1,
+      display: 'flex',
+      justifyContent: 'center',
     },
     footer: {
       display: 'flex',
@@ -338,29 +349,31 @@ function DesktopLandingPage() {
       <div className={classes.background2} />
       <div className={classes.content}>
         <div className={classes.introSection}>
-          <div>
-            <Typography variant="h1" className={clsx([classes.introSectionHeading, classes.gradientText])}>
-              Stack your ETH
-            </Typography>
-            <Typography variant="h1" className={clsx([classes.introSectionHeading, classes.gradientText])}>
-              & stables.
-            </Typography>
-            <div style={{ marginTop: '24px' }} />
-            <Typography variant="h2" className={classes.introSectionSubHeading}>
-              Investment strategies for DeFi.
-            </Typography>
-            <Typography variant="h2" className={classes.introSectionSubHeading}>
-              Powered by squeeth.
-            </Typography>
-            <div style={{ marginTop: '39px' }} />
-            <Link href={'/strategies/crab'} passHref>
-              <Button
-                onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
-                className={classes.navStartEarningButton}
-              >
-                Start Earning
-              </Button>
-            </Link>
+          <div className={classes.introSectionLeft}>
+            <div>
+              <Typography variant="h1" className={clsx([classes.introSectionHeading, classes.gradientText])}>
+                Stack your ETH
+              </Typography>
+              <Typography variant="h1" className={clsx([classes.introSectionHeading, classes.gradientText])}>
+                & stables.
+              </Typography>
+              <div style={{ marginTop: '24px' }} />
+              <Typography variant="h2" className={classes.introSectionSubHeading}>
+                Investment strategies for DeFi.
+              </Typography>
+              <Typography variant="h2" className={classes.introSectionSubHeading}>
+                Powered by squeeth.
+              </Typography>
+              <div style={{ marginTop: '39px' }} />
+              <Link href={'/strategies/crab'} passHref>
+                <Button
+                  onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
+                  className={classes.navStartEarningButton}
+                >
+                  Start Earning
+                </Button>
+              </Link>
+            </div>
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
@@ -371,40 +384,44 @@ function DesktopLandingPage() {
         <div className={classes.statSection}>
           <div className={classes.statSectionItem}>
             <div className={clsx([classes.statSectionTitle, classes.gradientText])}>$16b+</div>
-            <div className={classes.statSectionSubTitle}>Total Notional Volume</div>
+            <div className={classes.statSectionSubTitle}>Total Notional</div>
+            <div className={classes.statSectionSubTitle}>Volume</div>
           </div>
           <div className={classes.statSectionItem}>
             <div className={clsx([classes.statSectionTitle, classes.gradientText])}>${tvl}m+</div>
-            <div className={classes.statSectionSubTitle}>Total Value Locked</div>
+            <div className={classes.statSectionSubTitle}>Total Value</div>
+            <div className={classes.statSectionSubTitle}>Locked</div>
           </div>
         </div>
         <div className={classes.squeethSection}>
-          <div>
-            <div className={classes.contentSectionHeader}>
-              <div className={classes.contentSectionHeaderImage}>
-                <Image src={logo} alt="logo" width={97} height={75} />
+          <div className={classes.introSectionLeft}>
+            <div>
+              <div className={classes.contentSectionHeader}>
+                <div className={classes.contentSectionHeaderImage}>
+                  <Image src={logo} alt="logo" width={97} height={75} />
+                </div>
+                <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
+                  SQUEETH
+                </Typography>
               </div>
-              <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
-                SQUEETH
+              <div style={{ marginTop: '25px' }} />
+              <Typography variant="h3" className={classes.contentSectionTitle}>
+                Leverage without liquidations.
               </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                Bet on ETH with unlimited upside,
+              </Typography>
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                protected downside, and no liquidations.
+              </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Link href={'/squeeth'} passHref>
+                <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
+                  Trade Squeeth
+                </Button>
+              </Link>
             </div>
-            <div style={{ marginTop: '25px' }} />
-            <Typography variant="h3" className={classes.contentSectionTitle}>
-              Leverage without liquidations.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              Bet on ETH with unlimited upside,
-            </Typography>
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              protected downside, and no liquidations.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Link href={'/squeeth'} passHref>
-              <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
-                Trade Squeeth
-              </Button>
-            </Link>
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
@@ -413,35 +430,37 @@ function DesktopLandingPage() {
           </div>
         </div>
         <div className={classes.strategiesSection}>
-          <div>
-            <div className={classes.contentSectionHeader}>
-              <div className={classes.contentSectionHeaderImage}>
-                <Image src={logo} alt="logo" width={97} height={75} />
+          <div className={classes.introSectionLeft}>
+            <div>
+              <div className={classes.contentSectionHeader}>
+                <div className={classes.contentSectionHeaderImage}>
+                  <Image src={logo} alt="logo" width={97} height={75} />
+                </div>
+                <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
+                  STRATEGIES
+                </Typography>
               </div>
-              <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
-                STRATEGIES
+              <div style={{ marginTop: '25px' }} />
+              <Typography variant="h3" className={classes.contentSectionTitle}>
+                Earn returns on your crypto.
               </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                ETH and USDC strategies to
+              </Typography>
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                supercharge your portfolio.
+              </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Link href={'/strategies/crab'} passHref>
+                <Button
+                  onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
+                  className={classes.contentSectionButton}
+                >
+                  Start Earning
+                </Button>
+              </Link>
             </div>
-            <div style={{ marginTop: '25px' }} />
-            <Typography variant="h3" className={classes.contentSectionTitle}>
-              Earn returns on your crypto.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              ETH and USDC strategies to
-            </Typography>
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              supercharge your portfolio.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Link href={'/strategies/crab'} passHref>
-              <Button
-                onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
-                className={classes.contentSectionButton}
-              >
-                Start Earning
-              </Button>
-            </Link>
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
@@ -455,32 +474,34 @@ function DesktopLandingPage() {
               <Image src={Auction} alt="Auction Image" />
             </div>
           </div>
-          <div>
-            <div className={classes.contentSectionHeader}>
-              <div className={classes.contentSectionHeaderImage}>
-                <Image src={logo} alt="logo" width={97} height={75} />
+          <div className={classes.auctionSectionRight}>
+            <div>
+              <div className={classes.contentSectionHeader}>
+                <div className={classes.contentSectionHeaderImage}>
+                  <Image src={logo} alt="logo" width={97} height={75} />
+                </div>
+                <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
+                  AUCTION
+                </Typography>
               </div>
-              <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
-                AUCTION
+              <div style={{ marginTop: '25px' }} />
+              <Typography variant="h3" className={classes.contentSectionTitle}>
+                Trade squeeth in size.
               </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                Participate in large, regular auctions to trade
+              </Typography>
+              <Typography variant="h3" className={classes.contentSectionSubTitle}>
+                squeeth in size with low price impact.
+              </Typography>
+              <div style={{ marginTop: '41px' }} />
+              <Link href={'https://squeethportal.xyz'} passHref>
+                <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
+                  Try Auction
+                </Button>
+              </Link>
             </div>
-            <div style={{ marginTop: '25px' }} />
-            <Typography variant="h3" className={classes.contentSectionTitle}>
-              Trade squeeth in size.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              Participate in large, regular auctions to trade
-            </Typography>
-            <Typography variant="h3" className={classes.contentSectionSubTitle}>
-              squeeth in size with low price impact.
-            </Typography>
-            <div style={{ marginTop: '41px' }} />
-            <Link href={'https://squeethportal.xyz'} passHref>
-              <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
-                Try Auction
-              </Button>
-            </Link>
           </div>
         </div>
         <div style={{ marginTop: '100px' }} />

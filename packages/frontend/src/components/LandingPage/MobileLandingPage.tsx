@@ -8,8 +8,8 @@ import LandingPageBackgroundOne from 'public/images/landing/athena1.png'
 import LandingPageBackgroundTwo from 'public/images/landing/athena2.png'
 import LandingPageBackgroundThree from 'public/images/landing/athena3.png'
 import LandingPageBackgroundFour from 'public/images/landing/athena4.png'
-import SqueethMobile from 'public/images/landing/squeeth-mobile.svg'
-import StrategiesMobile from 'public/images/landing/strategies-mobile.svg'
+import SqueethMobile from 'public/images/landing/squeeth-mobile.png'
+import StrategiesMobile from 'public/images/landing/strategies-mobile.png'
 import AuctionMobile from 'public/images/landing/auction-mobile.png'
 import Link from 'next/link'
 import Twitter from 'public/images/landing/twitter.svg'
@@ -135,7 +135,7 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'center',
       alignItems: 'center',
       textAlign: 'center',
-      marginTop: '15vh',
+      marginTop: '12vh',
     },
     introSectionHeading: {
       fontFamily: 'DM Sans',
