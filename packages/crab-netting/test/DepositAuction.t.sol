@@ -61,6 +61,55 @@ contract DepositAuctionTest is BaseForkSetup {
         return (_collateral * _auctionedSqth) / _debt;
     }
 
+    function testFullDepositAuction() public {
+        DepositAuctionParams memory p;
+        uint256 sqthPriceLimit = (_getSqthPrice(1e18) * 988) / 1000;
+        (,, uint256 collateral, uint256 debt) = crab.getVaultDetails();
+        // Large first deposit. 10 & 40 as the deposit. 20 is the amount to net
+        vm.prank(depositor);
+        netting.depositUSDC(300000 * 1e6); //200+300 500k usdc deposited
+
+        p.depositsQueued = 300000 * 1e6;
+        p.minEth = (_convertUSDToETH(p.depositsQueued) * 9975) / 10000;
+
+        uint256 toMint;
+        (p.totalDeposit, toMint) = _findTotalDepositAndToMint(p.minEth, collateral, debt, sqthPriceLimit);
+        bool trade_works = _isEnough(p.minEth, toMint, sqthPriceLimit, p.totalDeposit);
+        require(trade_works, "depositing more than we have from sellling");
+        Order memory order =
+            Order(0, mm1, toMint, (sqthPriceLimit * 1005) / 1000, true, block.timestamp, 0, 1, 0x00, 0x00);
+
+        bytes32 digest = sig.getTypedDataHash(order);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(mm1Pk, digest);
+        order.v = v;
+        order.r = r;
+        order.s = s;
+
+        orders.push(order);
+        p.orders = orders;
+        vm.prank(mm1);
+        weth.approve(address(netting), 1e30);
+
+        p.clearingPrice = (sqthPriceLimit * 1005) / 1000;
+        uint256 excessEth = (toMint * (p.clearingPrice - sqthPriceLimit)) / 1e18;
+
+        p.ethUSDFee = 500;
+        p.flashDepositFee = 3000;
+
+        // Find the borrow ration for toFlash
+        uint256 mid = _findBorrow(excessEth, debt, collateral);
+        p.ethToFlashDeposit = (excessEth * mid) / 10 ** 7;
+        // ------------- //
+        uint256 depositorBalance = weth.balanceOf(depositor);
+        netting.depositAuction(p);
+
+        assertApproxEqAbs(ICrabStrategyV2(crab).balanceOf(depositor), 221e18, 1e18);
+        assertEq(netting.usdBalance(depositor), 200000e6);
+        assertEq(sqth.balanceOf(mm1), toMint);
+        assertEq(weth.balanceOf(address(netting)), 1);
+        assertApproxEqAbs(weth.balanceOf(depositor) - depositorBalance, 5e17, 1e17);
+    }
+
     function testDepositAuctionPartialFill() public {
         DepositAuctionParams memory p;
         uint256 sqthPriceLimit = (_getSqthPrice(1e18) * 988) / 1000;

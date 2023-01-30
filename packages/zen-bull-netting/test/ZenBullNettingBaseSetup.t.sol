@@ -25,6 +25,8 @@ contract ZenBullNettingBaseSetup is Test {
     address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant WPOWERPERP = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
     address public constant ORACLE = 0x65D66c76447ccB45dAf1e8044e918fA786A483A1;
+    address public constant CRAB = 0x3B960E47784150F5a63777201ee2B15253D713e8;
+    address public constant FLASH_ZEN = 0x11A56a3A7A6Eb768A9125798B1eABE9EBD9EcE02;
 
     address public ethSqueethPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
     address public ethUsdcPool = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
@@ -44,7 +46,7 @@ contract ZenBullNettingBaseSetup is Test {
         owner = vm.addr(ownerPk);
 
         vm.startPrank(deployer);
-        zenBullNetting = new ZenBullNetting(ZEN_BULL, EULER_SIMPLE_LENS, UNI_FACTORY);
+        zenBullNetting = new ZenBullNetting(ZEN_BULL, EULER_SIMPLE_LENS, FLASH_ZEN, UNI_FACTORY);
         zenBullNetting.transferOwnership(owner);
         sigUtil = new SigUtil(zenBullNetting.DOMAIN_SEPARATOR());
         vm.stopPrank();
