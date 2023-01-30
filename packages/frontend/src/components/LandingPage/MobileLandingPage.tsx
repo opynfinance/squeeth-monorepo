@@ -419,7 +419,7 @@ function MobileLandingPage() {
         </div>
         <div style={{ marginTop: '11vh' }} />
         <div className={classes.verticalImage}>
-          <Image src={SqueethMobile} alt="Squeeth" />
+          <Image src={SqueethMobile} alt="Squeeth" placeholder="blur" />
         </div>
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>
@@ -450,7 +450,7 @@ function MobileLandingPage() {
         </div>
         <div style={{ marginTop: '17vh' }} />
         <div className={classes.verticalImage}>
-          <Image src={StrategiesMobile} alt="Strategies" />
+          <Image src={StrategiesMobile} alt="Strategies" placeholder="blur" />
         </div>
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>
@@ -487,7 +487,7 @@ function MobileLandingPage() {
         </div>
         <div style={{ marginTop: '19vh' }} />
         <div className={classes.verticalImage}>
-          <Image src={AuctionMobile} alt="Auction" />
+          <Image src={AuctionMobile} alt="Auction" placeholder="blur" />
         </div>
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>

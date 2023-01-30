@@ -377,7 +377,7 @@ function DesktopLandingPage() {
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
-              <Image src={LandingTitle} alt="Title Image" />
+              <Image src={LandingTitle} alt="Title Image" placeholder="blur" />
             </div>
           </div>
         </div>
@@ -398,7 +398,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} />
+                  <Image src={logo} alt="logo" width={97} height={75} placeholder="blur" />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   SQUEETH
@@ -425,7 +425,7 @@ function DesktopLandingPage() {
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
-              <Image src={Squeeth} alt="Squeeth Image" />
+              <Image src={Squeeth} alt="Squeeth Image" placeholder="blur" />
             </div>
           </div>
         </div>
@@ -434,7 +434,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} />
+                  <Image src={logo} alt="logo" width={97} height={75} placeholder="blur" />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   STRATEGIES
@@ -464,14 +464,14 @@ function DesktopLandingPage() {
           </div>
           <div className={classes.imageSectionRight}>
             <div className={classes.imageSection}>
-              <Image src={Strategies} alt="Strategies Image" />
+              <Image src={Strategies} alt="Strategies Image" placeholder="blur" />
             </div>
           </div>
         </div>
         <div className={classes.auctionSection}>
           <div className={classes.auctionSectionLeft}>
             <div className={classes.imageSection}>
-              <Image src={Auction} alt="Auction Image" />
+              <Image src={Auction} alt="Auction Image" placeholder="blur" />
             </div>
           </div>
           <div className={classes.auctionSectionRight}>
