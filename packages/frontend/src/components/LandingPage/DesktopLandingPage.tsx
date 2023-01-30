@@ -30,6 +30,9 @@ const useStyles = makeStyles((theme) =>
     '*': {
       overflow: 'hidden',
     },
+    logo: {
+      cursor: 'pointer',
+    },
     gradientText: {
       background: `linear-gradient(180deg, #FFFFFF 0%, #C2C2C2 100%)`,
       WebkitBackgroundClip: 'text',
@@ -318,7 +321,7 @@ function DesktopLandingPage() {
   return (
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
-        <div>
+        <div className={classes.logo}>
           <Link href={'/'} passHref>
             <Image src={logo} alt="logo" width={97} height={75} />
           </Link>
