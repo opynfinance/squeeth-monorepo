@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import logo from 'public/images/OpynLogo.svg'
-import LandingPageBackground from 'public/images/landing-page-background.svg'
+import LandingPageBackground from 'public/images/landing/athena1-desktop.png'
 import LandingPageBackgroundDown from 'public/images/landing-page-background-down.svg'
 import LandingTitle from 'public/images/landing/landing-title.png'
 import Squeeth from 'public/images/landing/squeeth.png'
