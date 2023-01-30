@@ -133,9 +133,9 @@ const Nav: React.FC = () => {
     <div className={classes.root}>
       <div className={classes.content}>
         <div className={classes.logo}>
-          <a href="https://opyn.co/">
+          <Link href={'/'} passHref>
             <Image src={logo} alt="logo" width={102} height={44} />
-          </a>
+          </Link>
         </div>
         {/*For Desktop view*/}
         <Hidden smDown>

@@ -18,6 +18,7 @@ export default class MyDocument extends Document {
             href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@300;400;500&display=swap"
             rel="stylesheet"
           />
+          <link href="https://fonts.cdnfonts.com/css/avenir" rel="stylesheet" />
         </Head>
         <body>
           <Main />
