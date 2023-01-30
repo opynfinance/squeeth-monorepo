@@ -398,7 +398,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} placeholder="blur" />
+                  <Image src={logo} alt="logo" width={97} height={75} />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   SQUEETH
@@ -434,7 +434,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} placeholder="blur" />
+                  <Image src={logo} alt="logo" width={97} height={75} />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   STRATEGIES
