@@ -600,6 +600,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 / (IZenBullStrategy(zenBull).getCrabBalance() + _params.crabAmount);
             uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
             uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
+            console.log("bullToMint contract", bullToMint);
             wethToLend = bullToMint * IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull)
                 / bullTotalSupply;
             usdcToBorrow = bullToMint * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
@@ -685,7 +686,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         memVar.remainingEth =
             address(this).balance - (initialEthBalance - _params.depositsToProcess);
         console.log("before final balance", memVar.remainingEth);
-        // IWETH(weth).deposit{value: memVar.remainingEth}();
 
         while (memVar.remainingDeposits > 0) {
             Receipt memory depositReceipt = deposits[k];

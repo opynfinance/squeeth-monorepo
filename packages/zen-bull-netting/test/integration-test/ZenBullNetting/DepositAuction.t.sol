@@ -96,6 +96,15 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
         (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
+
+
+        uint256 share = crabAmount * 1e18
+                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
+        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
+        console.log("bullToMint", bullToMint);
+
+
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -150,15 +159,10 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
-        console.log("mm1WpowerPerpBalanceBefore", mm1WpowerPerpBalanceBefore);
         uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
-
-        // uint256 debtBalanceBefore =
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        // uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
-        // uint256 wethInEulerBefore =
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
-        // uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
 
         vm.startPrank(owner);
         zenBullNetting.depositAuction(params);
@@ -170,10 +174,236 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
-        // assertEq(
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
-        //     debtBalanceBefore
+        assertGt(user1.balance, user1EthBalanceBefore);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
+            wethToLend
+        );
+        // assertApproxEqAbs(
+        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+        //     wethInEulerBefore,
+        //     200
         // );
+        // uint256 user1EthBalanceAfter = user1.balance;
+        // assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
+    }
+
+    function testPartialDepositAuction() public {
+        uint256 amount = 10e18;
+        _queueEth(user1, amount * 2);
+
+        uint256 crabAmount = _calAuctionCrabAmount(amount);
+        uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
+        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
+
+
+        uint256 share = crabAmount * 1e18
+                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
+        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
+        console.log("bullToMint", bullToMint);
+
+
+        uint256 squeethEthPrice =
+            IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
+        ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
+
+        console.log("oSqthAmount", oSqthAmount);
+        {
+            // trader signature vars
+            uint8 v;
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(mm1Pk, bidDigest);
+            ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders[0] = orderData;
+        }
+
+        ZenBullNetting.DepositAuctionParams memory params = ZenBullNetting.DepositAuctionParams({
+            depositsToProcess: amount,
+            crabAmount: crabAmount,
+            orders: orders,
+            clearingPrice: squeethEthPrice * 99e16 / 1e18,
+            // flashDepositEthToCrab: 18e15,
+            flashDepositEthToCrab: 0,
+            flashDepositMinEthFromSqth: 0,
+            flashDepositMinEthFromUsdc: 0,
+            flashDepositWPowerPerpPoolFee: 3000,
+            wethUsdcPoolFee: 3000
+        });
+
+        vm.prank(mm1);
+        IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
+
+        uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
+        uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
+
+        vm.startPrank(owner);
+        zenBullNetting.depositAuction(params);
+        vm.stopPrank();
+
+        uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
+
+        console.log("IERC20(WPOWERPERP).balanceOf(mm1)", IERC20(WPOWERPERP).balanceOf(mm1));
+
+        // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
+        assertGt(user1.balance, user1EthBalanceBefore);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
+            wethToLend
+        );
+        // assertApproxEqAbs(
+        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
+        //     wethInEulerBefore,
+        //     200
+        // );
+        // uint256 user1EthBalanceAfter = user1.balance;
+        // assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
+    }
+
+    function testDepositAuctionWithMultipleOrders() public {
+        uint256 amount = 10e18;
+        _queueEth(user1, amount);
+
+        uint256 crabAmount = _calAuctionCrabAmount(amount);
+        uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
+        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
+
+
+        uint256 share = crabAmount * 1e18
+                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
+        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
+        console.log("bullToMint", bullToMint);
+
+
+        uint256 squeethEthPrice =
+            IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
+        ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](2);
+
+        console.log("oSqthAmount", oSqthAmount);
+        {
+            // trader signature vars
+            uint8 v;
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount/2,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(mm1Pk, bidDigest);
+            ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount/2,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders[0] = orderData;
+
+            // trader signing bid
+            orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: mm2,
+                quantity: oSqthAmount/2,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(mm1Pk, bidDigest);
+            orderData = ZenBullNetting.Order({
+                bidId: 1,
+                trader: mm2,
+                quantity: oSqthAmount,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders[1] = orderData;
+        }
+
+        ZenBullNetting.DepositAuctionParams memory params = ZenBullNetting.DepositAuctionParams({
+            depositsToProcess: amount,
+            crabAmount: crabAmount,
+            orders: orders,
+            clearingPrice: squeethEthPrice * 99e16 / 1e18,
+            flashDepositEthToCrab: 0,
+            flashDepositMinEthFromSqth: 0,
+            flashDepositMinEthFromUsdc: 0,
+            flashDepositWPowerPerpPoolFee: 3000,
+            wethUsdcPoolFee: 3000
+        });
+
+        vm.prank(mm1);
+        IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
+
+        uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
+        uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
+
+        vm.startPrank(owner);
+        zenBullNetting.depositAuction(params);
+        vm.stopPrank();
+
+        uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
+
+        console.log("IERC20(WPOWERPERP).balanceOf(mm1)", IERC20(WPOWERPERP).balanceOf(mm1));
+
+        // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
+        assertGt(user1.balance, user1EthBalanceBefore);
+        assertEq(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
+            wethToLend
+        );
         // assertApproxEqAbs(
         //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
         //     wethInEulerBefore,
