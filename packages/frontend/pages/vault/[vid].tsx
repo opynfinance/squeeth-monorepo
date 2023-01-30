@@ -21,11 +21,10 @@ import Image from 'next/image'
 import { useRouter } from 'next/router'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { NextSeo } from 'next-seo'
 
 import ethLogo from '../../public/images/ethereum-eth.svg'
 import squeethLogo from '../../public/images/Squeeth.svg'
-import { AddButton, PrimaryButton, RemoveButton } from '@components/Button'
+import { AddButton, RemoveButton } from '@components/Button'
 import CollatRange from '@components/CollatRange'
 import NumberInput from '@components/Input/NumberInput'
 import Nav from '@components/Nav'
@@ -36,7 +35,6 @@ import { PositionType } from '../../src/types'
 import { useRestrictUser } from '@context/restrict-user'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { CollateralStatus, Vault } from '../../src/types'
-import { squeethClient } from '@utils/apollo-client'
 import { getCollatPercentStatus, toTokenAmount } from '@utils/calculations'
 import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
@@ -65,11 +63,10 @@ import {
   useMintedDebt,
   useShortDebt,
   usePositionsAndFeesComputation,
-  useFirstValidVault,
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
-import { useVaultManager } from '@hooks/contracts/useVaultManager'
 import useVault from '@hooks/useVault'
+import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -1206,27 +1203,7 @@ const Main: React.FC = () => {
 const Page: React.FC = () => {
   return (
     <>
-      <NextSeo
-        title="Opyn"
-        description="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liquidations"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
-
+      <DefaultSiteSeo />
       <Main />
     </>
   )

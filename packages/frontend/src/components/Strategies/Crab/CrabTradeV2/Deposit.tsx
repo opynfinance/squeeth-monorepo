@@ -59,8 +59,6 @@ import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
-import usePopup, { PopupConfig } from '@hooks/usePopup'
-import { sendCrispChatMessage, openCrispChat } from '@utils/crisp-chat'
 
 type CrabDepositProps = {
   onTxnConfirm: (txn: CrabTransactionConfirmation) => void
