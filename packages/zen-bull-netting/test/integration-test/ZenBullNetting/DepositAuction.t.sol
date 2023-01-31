@@ -88,9 +88,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
 
-
-        uint256 share = crabAmount * 1e18
-                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 share =
+            crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
         uint256 squeethEthPrice =
@@ -147,7 +146,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
         uint256 user1EthBalanceBefore = user1.balance;
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
 
         vm.startPrank(owner);
@@ -156,7 +156,10 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
+        assertEq(
+            IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore,
+            wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore
+        );
         assertGt(user1.balance, user1EthBalanceBefore);
         assertApproxEqAbs(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
@@ -174,9 +177,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
 
-
-        uint256 share = crabAmount * 1e18
-                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 share =
+            crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
         uint256 squeethEthPrice =
@@ -234,7 +236,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
         uint256 user1EthBalanceBefore = user1.balance;
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
 
         vm.startPrank(owner);
@@ -243,8 +246,10 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
+        assertEq(
+            IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore,
+            wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore
+        );
         assertGt(user1.balance, user1EthBalanceBefore);
         assertApproxEqAbs(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
@@ -261,8 +266,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
         (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
-        uint256 share = crabAmount * 1e18
-                / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 share =
+            crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
         uint256 squeethEthPrice =
@@ -278,7 +283,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             SigUtil.Order memory orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
@@ -289,7 +294,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm1,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount / 2,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
@@ -304,7 +309,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount/2 + 1,
+                quantity: oSqthAmount / 2 + 1,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
@@ -315,7 +320,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount/2 + 1,
+                quantity: oSqthAmount / 2 + 1,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
@@ -340,14 +345,19 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         });
 
         vm.prank(mm1);
-        IERC20(WETH).approve(address(zenBullNetting), (oSqthAmount/2) * params.clearingPrice / 1e18);
+        IERC20(WETH).approve(
+            address(zenBullNetting), (oSqthAmount / 2) * params.clearingPrice / 1e18
+        );
         vm.prank(mm2);
-        IERC20(WETH).approve(address(zenBullNetting), (oSqthAmount/2) * params.clearingPrice / 1e18);
+        IERC20(WETH).approve(
+            address(zenBullNetting), (oSqthAmount / 2) * params.clearingPrice / 1e18
+        );
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
         uint256 user1EthBalanceBefore = user1.balance;
-        uint256 wethInEulerBefore = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
 
         vm.startPrank(owner);
@@ -356,8 +366,11 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, oSqthAmount/2);
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm2) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore - oSqthAmount/2);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, oSqthAmount / 2);
+        assertEq(
+            IERC20(WPOWERPERP).balanceOf(mm2) - mm1WpowerPerpBalanceBefore,
+            wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore - oSqthAmount / 2
+        );
         assertGt(user1.balance, user1EthBalanceBefore);
         assertApproxEqAbs(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
@@ -557,7 +570,9 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         });
 
         vm.prank(mm1);
-        IERC20(WETH).approve(address(zenBullNetting), (oSqthAmount - 100) * params.clearingPrice / 1e18);
+        IERC20(WETH).approve(
+            address(zenBullNetting), (oSqthAmount - 100) * params.clearingPrice / 1e18
+        );
 
         vm.startPrank(owner);
         vm.expectRevert(bytes("ZBN23"));

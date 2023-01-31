@@ -685,8 +685,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     memVar.remainingDeposits = memVar.remainingDeposits - depositReceipt.amount;
                     ethBalance[depositReceipt.sender] -= depositReceipt.amount;
 
-                    zenBullAmountToSend =
-                        depositReceipt.amount * memVar.currentZenBullBalance / _params.depositsToProcess;
+                    zenBullAmountToSend = depositReceipt.amount * memVar.currentZenBullBalance
+                        / _params.depositsToProcess;
 
                     IERC20(zenBull).transfer(deposits[k].sender, zenBullAmountToSend);
 
@@ -702,7 +702,11 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     }
 
                     emit EthDeposited(
-                        depositReceipt.sender, depositReceipt.amount, zenBullAmountToSend, k, wethAmountToSend
+                        depositReceipt.sender,
+                        depositReceipt.amount,
+                        zenBullAmountToSend,
+                        k,
+                        wethAmountToSend
                         );
                 } else {
                     ethBalance[depositReceipt.sender] -= memVar.remainingDeposits;
