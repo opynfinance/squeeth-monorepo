@@ -22,6 +22,8 @@ import {
   VOL_PERCENT_SCALAR,
   YEAR,
   WETH_DECIMALS,
+  NETTING_PRICE_IMPACT,
+  AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
@@ -282,6 +284,24 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     }
   }, [isDepositAmountLessThanMin, quote.priceImpact, quote.poolFee, userOverrode])
 
+  const depositPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) return quote.priceImpact
+
+    const withdrawalsLeft = totalWithdrawsQueued.minus(totalDepositsQueued)
+    const totalWithdraws = withdrawalsLeft.isNegative() ? new BigNumber(0) : withdrawalsLeft
+
+    const nettingDepositAmount = totalWithdraws.gt(depositAmountBN) ? depositAmountBN : totalWithdraws
+    const remainingDeposit = depositAmountBN.minus(nettingDepositAmount)
+
+    const priceImpact = nettingDepositAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingDeposit.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(depositAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [depositAmountBN, quote.priceImpact, totalDepositsQueued, totalWithdrawsQueued, useQueue])
+
   const isLoading = txLoading || quoteLoading
 
   return (
@@ -409,7 +429,8 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
                     tooltipTitle={useQueue ? 'Average price impact based on historical standard deposits' : undefined}
                   />
                 }
-                value={formatNumber(quote.priceImpact < 0 ? 0 : quote.priceImpact) + '%'}
+                value={formatNumber(depositPriceImpactNumber) + '%'}
+                textColor={depositPriceImpactNumber > 3 ? 'error' : undefined}
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="8px"
