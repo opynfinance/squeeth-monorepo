@@ -365,7 +365,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              Zen bull premium is currently lower than usual. Consider depositing later.
+              Zen Bull premium is currently lower than usual. Consider depositing later.
             </Typography>
           </div>
         ) : null}
