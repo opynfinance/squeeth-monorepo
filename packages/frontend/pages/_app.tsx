@@ -64,7 +64,7 @@ function MyApp({ Component, pageProps }: any) {
     //  - This must be an exact match of your domain.
     //  - If you're using www. for your domain, make sure you include that here.
     Fathom.load(siteID, {
-      includedDomains: ['opyn.co'],
+      includedDomains: ['opyn.co', 'www.opyn.co'],
     })
 
     function onRouteChangeComplete() {
