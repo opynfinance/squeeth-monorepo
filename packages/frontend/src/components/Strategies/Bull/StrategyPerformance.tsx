@@ -212,7 +212,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
         <Typography className={clsx(classes.description, classes.textMonospace)}>
           {formatNumber(tvl, 0) + ' ETH'}
         </Typography>
-        <Typography className={classes.description}>TVL</Typography>
+        <Typography className={classes.description}>Open Interest</Typography>
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
@@ -279,8 +279,7 @@ const Wrapper: React.FC = () => {
   // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
   const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
   const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
-  const debtValue = eulerUSDCDebt.div(ethPrice)
-  const tvl = collateralValue.minus(debtValue).integerValue()
+  const tvl = collateralValue.integerValue()
   const isLoadingTVL =
     ethDepositedInEuler.isZero() ||
     bullCrabBalance.isZero() ||
