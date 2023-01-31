@@ -55,6 +55,7 @@ const useStyles = makeStyles((theme) =>
       marginRight: 'auto',
       marginTop: theme.spacing(1.75),
       marginLeft: theme.spacing(-1),
+      cursor: 'pointer',
     },
     navDiv: {
       display: 'flex',

@@ -30,6 +30,9 @@ const useStyles = makeStyles((theme) =>
     '*': {
       overflow: 'hidden',
     },
+    logo: {
+      cursor: 'pointer',
+    },
     gradientText: {
       background: `linear-gradient(180deg, #FFFFFF 0%, #C2C2C2 100%)`,
       WebkitBackgroundClip: 'text',
@@ -84,7 +87,7 @@ const useStyles = makeStyles((theme) =>
     background1: {
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackground.src})`,
-      height: `${vwCalculator(1400)}`,
+      height: `${vwCalculator(1300)}`,
       width: '100%',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right',
@@ -93,7 +96,7 @@ const useStyles = makeStyles((theme) =>
     background2: {
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackgroundDown.src})`,
-      height: `${vwCalculator(2950)}`,
+      height: `${vwCalculator(2800)}`,
       width: '90vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'left',
@@ -101,7 +104,7 @@ const useStyles = makeStyles((theme) =>
     content: {},
     introSection: {
       display: 'flex',
-      padding: `${vwCalculator(120)}`,
+      padding: `80px ${vwCalculator(150)}`,
       alignItems: 'center',
       [theme.breakpoints.down('md')]: {
         gap: '30px',
@@ -110,7 +113,7 @@ const useStyles = makeStyles((theme) =>
     introSectionLeft: {
       flex: 1,
       display: 'flex',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
     },
     introSectionHeading: {
       fontFamily: 'DM Sans',
@@ -141,7 +144,7 @@ const useStyles = makeStyles((theme) =>
     imageSectionRight: {
       flex: 1,
       display: 'flex',
-      justifyContent: 'center',
+      justifyContent: 'flex-end',
     },
     imageSection: {
       maxWidth: `${vwCalculator(610)}`,
@@ -318,7 +321,7 @@ function DesktopLandingPage() {
   return (
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
-        <div>
+        <div className={classes.logo}>
           <Link href={'/'} passHref>
             <Image src={logo} alt="logo" width={97} height={75} />
           </Link>
