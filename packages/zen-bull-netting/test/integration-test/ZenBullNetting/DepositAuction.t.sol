@@ -45,16 +45,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         vm.deal(user2, 5000e18);
         vm.deal(mm1, 5000e18);
         vm.deal(mm2, 5000e18);
-        // // some ZenBUll rich address
-        // vm.startPrank(0xaae102ca930508e6dA30924Bf0374F0F247729d5);
-        // IERC20(ZEN_BULL).transfer(user1, 15e18);
-        // IERC20(ZEN_BULL).transfer(user2, 15e18);
-        // vm.stopPrank();
-        // // some oSQTH rich person
-        // vm.startPrank(0x0154d25120Ed20A516fE43991702e7463c5A6F6e);
-        // IERC20(WPOWERPERP).transfer(mm1, 1000e18);
-        // IERC20(WPOWERPERP).transfer(mm2, 1000e18);
-        // vm.stopPrank();
+
         vm.prank(user1);
         IWETH(WETH).deposit{value: 1000e18}();
         vm.prank(user2);
@@ -102,14 +93,9 @@ contract DepositAuction is ZenBullNettingBaseSetup {
                 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
-        console.log("bullToMint", bullToMint);
-
-
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
-
-        console.log("oSqthAmount", oSqthAmount);
         {
             // trader signature vars
             uint8 v;
@@ -170,22 +156,13 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-        console.log("IERC20(WPOWERPERP).balanceOf(mm1)", IERC20(WPOWERPERP).balanceOf(mm1));
-
-        // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
         assertGt(user1.balance, user1EthBalanceBefore);
-        assertEq(
-            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
-            wethToLend
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
+            wethToLend,
+            2000
         );
-        // assertApproxEqAbs(
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
-        //     wethInEulerBefore,
-        //     200
-        // );
-        // uint256 user1EthBalanceAfter = user1.balance;
-        // assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
     }
 
     function testPartialDepositAuction() public {
@@ -202,14 +179,10 @@ contract DepositAuction is ZenBullNettingBaseSetup {
                 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
-        console.log("bullToMint", bullToMint);
-
-
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
 
-        console.log("oSqthAmount", oSqthAmount);
         {
             // trader signature vars
             uint8 v;
@@ -270,22 +243,14 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-        console.log("IERC20(WPOWERPERP).balanceOf(mm1)", IERC20(WPOWERPERP).balanceOf(mm1));
 
-        // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
         assertGt(user1.balance, user1EthBalanceBefore);
-        assertEq(
-            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
-            wethToLend
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
+            wethToLend,
+            2000
         );
-        // assertApproxEqAbs(
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
-        //     wethInEulerBefore,
-        //     200
-        // );
-        // uint256 user1EthBalanceAfter = user1.balance;
-        // assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
     }
 
     function testDepositAuctionWithMultipleOrders() public {
@@ -296,20 +261,14 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
         (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
-
-
         uint256 share = crabAmount * 1e18
                 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
         uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
         uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
-        console.log("bullToMint", bullToMint);
-
-
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](2);
 
-        console.log("oSqthAmount", oSqthAmount);
         {
             // trader signature vars
             uint8 v;
@@ -345,18 +304,18 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             orderSig = SigUtil.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount/2,
+                quantity: oSqthAmount/2 + 1,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
                 nonce: 0
             });
             bidDigest = sigUtil.getTypedDataHash(orderSig);
-            (v, r, s) = vm.sign(mm1Pk, bidDigest);
+            (v, r, s) = vm.sign(mm2Pk, bidDigest);
             orderData = ZenBullNetting.Order({
                 bidId: 1,
                 trader: mm2,
-                quantity: oSqthAmount,
+                quantity: oSqthAmount/2 + 1,
                 price: squeethEthPrice,
                 isBuying: true,
                 expiry: block.timestamp + 1000,
@@ -381,7 +340,9 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         });
 
         vm.prank(mm1);
-        IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
+        IERC20(WETH).approve(address(zenBullNetting), (oSqthAmount/2) * params.clearingPrice / 1e18);
+        vm.prank(mm2);
+        IERC20(WETH).approve(address(zenBullNetting), (oSqthAmount/2) * params.clearingPrice / 1e18);
 
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
@@ -395,22 +356,14 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
 
-        console.log("IERC20(WPOWERPERP).balanceOf(mm1)", IERC20(WPOWERPERP).balanceOf(mm1));
-
-        // assertEq(receiptAmountBefore - amount, receiptAmountAfter);
-        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore, oSqthAmount/2);
+        assertEq(IERC20(WPOWERPERP).balanceOf(mm2) - mm1WpowerPerpBalanceBefore, wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore - oSqthAmount/2);
         assertGt(user1.balance, user1EthBalanceBefore);
-        assertEq(
-            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL),
-            wethToLend
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
+            wethToLend,
+            2000
         );
-        // assertApproxEqAbs(
-        //     IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) + wethToWithdraw,
-        //     wethInEulerBefore,
-        //     200
-        // );
-        // uint256 user1EthBalanceAfter = user1.balance;
-        // assertGt(user1EthBalanceAfter, user1EthBalanceBefore);
     }
 
     function testDepositAuctionWhenOrderIsSelling() public {
