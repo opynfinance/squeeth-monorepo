@@ -84,4 +84,8 @@ contract DeployScript is Script {
                 )
         );
     }
+
+    function testAvoidCoverage() public pure {
+        return;
+    }
 }
