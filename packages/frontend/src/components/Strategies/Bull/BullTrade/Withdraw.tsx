@@ -298,14 +298,8 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
           </div>
         ) : null}
 
-        <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            gridGap="12px"
-            className={classes.slippageContainer}
-          >
+        <Box marginTop="24px">
+          <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
               label="Uniswap Fee"
               value={formatNumber(quote.poolFee) + '%'}

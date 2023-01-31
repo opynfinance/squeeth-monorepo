@@ -70,6 +70,15 @@ export const bullTimeAtLastHedgeAtom = atom(0)
 export const bullStrategyFilterStartDateAtom = atom<Date>(new Date(BULL_START_DATE))
 export const bullStrategyFilterEndDateAtom = atom<Date>(new Date())
 
+export const isNettingAuctionLiveAtom = atom(false)
+export const minEthAmountAtom = atom(BIG_ZERO)
+export const minZenBullAmountAtom = atom(BIG_ZERO)
+export const totalEthQueuedAtom = atom(BIG_ZERO)
+export const totalZenBullQueuedAtom = atom(BIG_ZERO)
+
+export const ethQueuedAtom = atom(BIG_ZERO)
+export const zenBullQueuedAtom = atom(BIG_ZERO)
+
 export const useBullPnLChartData = () => {
   const startDate = useAtomValue(bullStrategyFilterStartDateAtom)
   const endDate = useAtomValue(bullStrategyFilterEndDateAtom)

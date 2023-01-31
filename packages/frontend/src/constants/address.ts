@@ -183,6 +183,14 @@ export const BULL_STRATEGY: Address = {
   31337: '',
 }
 
+export const BULL_NETTING: Address = {
+  1: '0x6E536adDB53d1b47d357cdca83BCF460194A395F',
+  3: '',
+  5: '0xa168df7B65093Cb54c88194eD070677cE34F551B',
+  421611: '',
+  31337: '',
+}
+
 export const WETH_E_TOKEN: Address = {
   1: '0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D',
   3: '',

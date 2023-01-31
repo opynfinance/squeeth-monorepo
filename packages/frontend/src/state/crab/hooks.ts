@@ -1148,7 +1148,7 @@ export const useQueuedCrabPositionAndStatus = () => {
     setMinUSDCAmount(new BigNumber(minUSDCAmount))
     setMinCrabAmount(new BigNumber(minCrabAmount))
 
-    if (!contract || !address) return
+    if (!address) return
 
     const usdcPromise = contract.methods.usdBalance(address).call()
     const crabPromise = contract.methods.crabBalance(address).call()

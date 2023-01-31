@@ -1,4 +1,11 @@
+import BigNumber from 'bignumber.js'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useUpdateAtom } from 'jotai/utils'
+import { useEffect, useMemo } from 'react'
+import { useQueryClient } from 'react-query'
+import { useMountedState } from 'react-use'
 import { useQuery } from '@apollo/client'
+
 import {
   BIG_ONE,
   BIG_ZERO,
@@ -6,6 +13,7 @@ import {
   UNI_POOL_FEES,
   USDC_DECIMALS,
   WETH_DECIMALS,
+  ZENBULL_TOKEN_DECIMALS,
 } from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
@@ -22,6 +30,7 @@ import {
   flashBullContractAtom,
   quoterContractAtom,
   wethETokenContractAtom,
+  bullNettingContractAtom,
 } from '@state/contracts/atoms'
 import { indexAtom } from '@state/controller/atoms'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
@@ -34,12 +43,6 @@ import { BULL_EVENTS } from '@utils/amplitude'
 import { squeethClient } from '@utils/apollo-client'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { getExactIn, getExactOut } from '@utils/quoter'
-import BigNumber from 'bignumber.js'
-import { useAtomValue, useSetAtom } from 'jotai'
-import { useUpdateAtom } from 'jotai/utils'
-import { useEffect, useMemo } from 'react'
-import { useQueryClient } from 'react-query'
-import { useMountedState } from 'react-use'
 import {
   bullCapAtom,
   bullCRAtom,
@@ -57,6 +60,13 @@ import {
   eulerETHLendRateAtom,
   bullTimeAtLastHedgeAtom,
   bullEulerUSDCDebtAtom,
+  isNettingAuctionLiveAtom,
+  minEthAmountAtom,
+  minZenBullAmountAtom,
+  totalEthQueuedAtom,
+  totalZenBullQueuedAtom,
+  ethQueuedAtom,
+  zenBullQueuedAtom,
 } from './atoms'
 import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
 
@@ -653,4 +663,189 @@ export const useBullFlashWithdraw = () => {
   }
 
   return flashWithdrawFromBull
+}
+
+export const useQueuedZenBullPositionAndStatus = () => {
+  const contract = useAtomValue(bullNettingContractAtom)
+  const address = useAtomValue(addressAtom)
+
+  const setNettingAuctionLive = useSetAtom(isNettingAuctionLiveAtom)
+  const setMinEthAmount = useSetAtom(minEthAmountAtom)
+  const setMinZenBullAmount = useSetAtom(minZenBullAmountAtom)
+  const setTotalDeposits = useSetAtom(totalEthQueuedAtom)
+  const setTotalWithdrawals = useSetAtom(totalZenBullQueuedAtom)
+  const setEthQueued = useSetAtom(ethQueuedAtom)
+  const setZenBullQueued = useSetAtom(zenBullQueuedAtom)
+
+  const fetchAndStoreQueuedPosition = async () => {
+    if (!contract) return
+
+    const minEthAmountPromise = contract.methods.mimnEthAmount().call()
+    const minZenBullAmountPromise = contract.methods.minZenBullAmount().call()
+    const totalDepositsPromise = contract.methods.depositsQueued().call()
+    const totalWithdrawalsPromise = contract.methods.withdrawsQueued().call()
+
+    const [minEthAmount, minZenBullAmount, totalDeposits, totalWithdrawals] = await Promise.all([
+      minEthAmountPromise,
+      minZenBullAmountPromise,
+      totalDepositsPromise,
+      totalWithdrawalsPromise,
+    ])
+
+    setMinEthAmount(new BigNumber(minEthAmount))
+    setMinZenBullAmount(new BigNumber(minZenBullAmount))
+    setTotalDeposits(toTokenAmount(totalDeposits, USDC_DECIMALS))
+    setTotalWithdrawals(toTokenAmount(totalWithdrawals, WETH_DECIMALS))
+
+    if (!address) return
+
+    const ethBalancePromise = contract.methods.ethBalance(address).call()
+    const zenBullBalancePromise = contract.methods.zenBullBalance(address).call()
+    const auctionStatusPromise = contract.methods.isAuctionLive().call()
+
+    const [ethQueued, zenBullQueued, auctionStatus] = await Promise.all([
+      ethBalancePromise,
+      zenBullBalancePromise,
+      auctionStatusPromise,
+    ])
+    setEthQueued(new BigNumber(ethQueued))
+    setZenBullQueued(new BigNumber(zenBullQueued))
+    setNettingAuctionLive(auctionStatus)
+  }
+
+  return fetchAndStoreQueuedPosition
+}
+
+export const useQueueDepositEth = () => {
+  const contract = useAtomValue(bullNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble depositing into zenbull.', 'deposit-stn-zenbull'),
+  )
+
+  const depositEth = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+      track(BULL_EVENTS.DEPOSIT_STN_BULL_CLICK)
+      try {
+        console.log('Queue:', fromTokenAmount(amount, WETH_DECIMALS).toString())
+        await handleTransaction(
+          contract.methods.queueEth().send({
+            from: address,
+            value: fromTokenAmount(amount, WETH_DECIMALS).toString(),
+          }),
+          onTxConfirmed,
+        )
+        track(BULL_EVENTS.DEPOSIT_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.DEPOSIT_STN_BULL_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
+        track(BULL_EVENTS.DEPOSIT_STN_BULL_FAILED, { code: e?.code })
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction, showErrorFeedbackPopup, track],
+  )
+
+  return depositEth
+}
+
+export const useQueueWithdrawZenBull = () => {
+  const contract = useAtomValue(bullNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from zenbull.', 'withdraw-stn-zenbull'),
+  )
+
+  const queueWithdraw = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      track(BULL_EVENTS.WITHDRAW_STN_BULL_CLICK)
+      console.log('Queue: withdraw', fromTokenAmount(amount, ZENBULL_TOKEN_DECIMALS).toString())
+      try {
+        await handleTransaction(
+          contract.methods.queueZenBull(fromTokenAmount(amount, ZENBULL_TOKEN_DECIMALS).toFixed(0)).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(BULL_EVENTS.WITHDRAW_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_STN_BULL_REVERT) : null
+        e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
+        track(BULL_EVENTS.WITHDRAW_STN_BULL_FAILED, { code: e?.code })
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction, showErrorFeedbackPopup, track],
+  )
+
+  return queueWithdraw
+}
+
+export const useDequeueDepositEth = () => {
+  const contract = useAtomValue(bullNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+
+  const dequeueEth = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      try {
+        track(BULL_EVENTS.CANCEL_DEPOSIT_STN_BULL_CLICK)
+        await handleTransaction(
+          contract.methods.dequeueEth(amount.toString(), false).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(BULL_EVENTS.CANCEL_DEPOSIT_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.CANCEL_DEPOSIT_STN_BULL_REJECT) : null
+        track(BULL_EVENTS.CANCEL_DEPOSIT_STN_BULL_FAILED, { code: e?.code })
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction, track],
+  )
+
+  return dequeueEth
+}
+
+export const useDequeueWithdrawZenBull = () => {
+  const contract = useAtomValue(bullNettingContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const { track } = useAmplitude()
+
+  const queueWithdraw = useAppCallback(
+    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      try {
+        track(BULL_EVENTS.CANCEL_WITHDRAW_STN_BULL_CLICK)
+        await handleTransaction(
+          contract.methods.dequeueZenBull(amount.toFixed(0), false).send({
+            from: address,
+          }),
+          onTxConfirmed,
+        )
+        track(BULL_EVENTS.CANCEL_WITHDRAW_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+      } catch (e: any) {
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.CANCEL_WITHDRAW_STN_BULL_REJECT) : null
+        track(BULL_EVENTS.CANCEL_WITHDRAW_STN_BULL_FAILED, { code: e?.code })
+        console.log(e)
+      }
+    },
+    [contract, address, handleTransaction, track],
+  )
+
+  return queueWithdraw
 }

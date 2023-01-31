@@ -14,6 +14,7 @@ import crabMigrationAbi from '../../abis/crabMigration.json'
 import quoterAbi from '../../abis/quoter.json'
 import crabHelperAbi from '../../abis/crabHelper.json'
 import crabNettingAbi from '../../abis/crabNetting.json'
+import bullNettingAbi from '../../abis/bullNetting.json'
 import flashBullAbi from '../../abis/flashBullStrategy.json'
 import bullStrategyAbi from '../../abis/bullStrategy.json'
 import eTokenAbi from '../../abis/eulerEToken.json'
@@ -146,4 +147,11 @@ export const eulerLensContractAtom = atom<Contract | null>((get) => {
   const { eulerSimpleLens } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, eulerSimpleLens, eulerSimpleLensAbi)
+})
+
+export const bullNettingContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { bullNetting } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, bullNetting, bullNettingAbi)
 })
