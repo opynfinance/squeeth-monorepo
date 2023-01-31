@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import { DeployScript } from "./Deploy.s.sol";
+import { DeployScript } from "./DeployScript.s.sol";
 
-contract GoerliDeploy is DeployScript {
+contract MainnetDeployScript is DeployScript {
     address public constant ownerAddress = 0xAfE66363c27EedB597a140c28B70b32F113fd5a8;
     address public constant zenBullAddress = 0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507;
     address public constant eulerSimpleLensAddress = 0xAF68CFba29D0e15490236A5631cA9497e035CD39;

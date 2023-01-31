@@ -64,10 +64,10 @@ For more information on foundry testing and use, see [Foundry Book installation 
 
 Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables.
 
-The deployment script for [Mainnet](/packages/zen-bull-netting/script/MainnetDeploy.s.sol) and [Goerli](/packages/zen-bull-netting/script/GoerliDeploy.s.sol) can be executed using the below command:
+The deployment script for [Mainnet](/packages/zen-bull-netting/script/MainnetDeployScript.s.sol) and [Goerli](/packages/zen-bull-netting/script/GoerliDeployScript.s.sol) can be executed using the below command:
 ```shell
 $ source .env
-$ forge script script/MainnetDeploy.s.sol:MainnetDeploy --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv
+$ forge script script/MainnetDeployScript.s.sol:MainnetDeployScript --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv
 ```
 
 ## Audits

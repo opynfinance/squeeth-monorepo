@@ -44,7 +44,7 @@ library NettingLib {
         uint256 ethUsdcPrice
     ) external view returns (uint256) {
         uint256 zenBullCrabBalance = IZenBullStrategy(zenBull).getCrabBalance();
-        uint256 zenBullFairPrice = (
+        return (
             IEulerSimpleLens(eulerLens).getETokenBalance(weth, zenBull)
                 + (zenBullCrabBalance * crabFairPriceInEth / 1e18)
                 - (
@@ -52,8 +52,6 @@ library NettingLib {
                         / ethUsdcPrice
                 )
         ) * 1e18 / IERC20(zenBull).totalSupply();
-
-        return zenBullFairPrice;
     }
 
     function calcOsqthToMintAndEthIntoCrab(address crab, address zenBull, uint256 crabAmount)
