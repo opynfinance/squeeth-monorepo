@@ -111,17 +111,6 @@ abstract contract FlashSwap is IUniswapV3SwapCallback {
         bytes callData;
     }
 
-    struct UniFlashswapCallbackData {
-        address pool;
-        address caller;
-        address tokenIn;
-        address tokenOut;
-        uint24 fee;
-        uint256 amountToPay;
-        bytes callData;
-        uint8 callSource;
-    }
-
     /**
      * @dev constructor
      * @param _factory uniswap factory address
