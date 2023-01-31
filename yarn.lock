@@ -21159,6 +21159,14 @@ react-resize-detector@^7.1.2:
   dependencies:
     lodash "^4.17.21"
 
+react-shimmer@^3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/react-shimmer/-/react-shimmer-3.2.0.tgz#f25e48dc3276822b2ed46a23c3c1c7e4bfd952f8"
+  integrity sha512-sLUYOulTt4Pf8/ezwRaDdVblEyrD0zkJEH1OsFvgNZbc0n5FTQa8anBrtAoCFCQthOOWgFmD89RPVeILyM9WjQ==
+  dependencies:
+    clsx "^1.1.0"
+    prop-types "^15.7.2"
+
 react-smooth@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/react-smooth/-/react-smooth-2.0.1.tgz#74c7309916d6ccca182c4b30c8992f179e6c5a05"

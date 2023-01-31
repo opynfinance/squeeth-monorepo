@@ -1,14 +1,5 @@
 import React, { useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Tooltip,
-  TextField,
-  InputLabel,
-  TextFieldProps,
-  Divider,
-  CircularProgress,
-} from '@material-ui/core'
+import { Box, Typography, Tooltip, TextField, InputLabel, TextFieldProps, Divider } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import clsx from 'clsx'
 import { useAtom } from 'jotai'
@@ -19,6 +10,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
+import { Breathing } from 'react-shimmer'
 
 import useStyles from '@components/Strategies/styles'
 import {
@@ -288,12 +280,15 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
-          <Box display="flex" alignItems="center" gridGap="15px">
-            <CircularProgress size={15} className={classes.loadingSpinner} />
-            <Typography className={classes.text}>Fetching strategy performance...</Typography>
-          </Box>
-        </Box>
+        <>
+          <Breathing className={classes.shimmer} height={30} width={500} />
+          <Breathing className={classes.shimmer} height={30} width={550} />
+          <Breathing className={classes.shimmer} height={30} width={600} />
+          <Breathing className={classes.shimmer} height={30} width={700} />
+          <Breathing className={classes.shimmer} height={30} width={600} />
+          <Breathing className={classes.shimmer} height={30} width={550} />
+          <Breathing className={classes.shimmer} height={30} width={500} />
+        </>
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}

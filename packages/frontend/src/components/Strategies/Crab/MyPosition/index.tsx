@@ -1,6 +1,7 @@
-import { Typography, Box, CircularProgress } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
 import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
+import { Breathing } from 'react-shimmer'
 
 import { addressAtom } from '@state/wallet/atoms'
 import useAppMemo from '@hooks/useAppMemo'
@@ -42,11 +43,15 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   if (loading) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="108px">
-        <Box display="flex" alignItems="center" gridGap="20px">
-          <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
-          <Typography className={classes.text}>Fetching current position...</Typography>
-        </Box>
+      <Box display="flex" flexDirection="column" gridGap="12px">
+        <div>
+          <Typography variant="h4" className={classes.sectionTitle}>
+            My Crab Position
+          </Typography>
+          <Breathing height={20} className={classes.shimmer} width={350} />
+          <Breathing height={20} className={classes.shimmer} width={250} />
+          <Breathing height={20} className={classes.shimmer} width={250} />
+        </div>
       </Box>
     )
   }

@@ -73,6 +73,7 @@
         "react-cookie-consent": "^8.0.1",
         "react-dom": "17.0.2",
         "react-query": "^3.34.0",
+        "react-shimmer": "^3.2.0",
         "react-use": "^17.3.2",
         "recharts": "^2.2.0",
         "set-interval-async": "^2.0.3",
