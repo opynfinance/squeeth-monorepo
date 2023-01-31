@@ -7,6 +7,8 @@ import formatDistanceToNowStrict from 'date-fns/formatDistanceToNowStrict'
 
 import { formatNumber } from '@utils/formatter'
 import { SQUEETH_BASE_URL } from '@constants/index'
+import useAmplitude from '@hooks/useAmplitude'
+import { SITE_EVENTS } from '@utils/amplitude'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -40,6 +42,7 @@ interface SharePnlProps {
 
 const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstDepositTimestamp }) => {
   const classes = useStyles()
+  const { track } = useAmplitude()
 
   if (isPnlLoading) {
     return null
@@ -70,13 +73,23 @@ const SharePnl: React.FC<SharePnlProps> = ({ isPnlLoading, strategy, pnl, firstD
   return (
     <Box display="flex" gridGap="8px" alignItems="center">
       <Tooltip title="Share your PnL on Twitter" placement="bottom">
-        <ButtonBase classes={{ root: classes.buttonRoot }} href={tweetHref} target="_blank">
+        <ButtonBase
+          classes={{ root: classes.buttonRoot }}
+          href={tweetHref}
+          target="_blank"
+          onClick={() => track(SITE_EVENTS.CLICK_SHARE_PNL, { platform: 'twitter', strategy })}
+        >
           <TwitterIcon className={classes.icon} />
         </ButtonBase>
       </Tooltip>
 
       <Tooltip title="Share your PnL on Telegram" placement="bottom">
-        <ButtonBase classes={{ root: classes.buttonRoot }} href={telegramHref} target="_blank">
+        <ButtonBase
+          classes={{ root: classes.buttonRoot }}
+          href={telegramHref}
+          target="_blank"
+          onClick={() => track(SITE_EVENTS.CLICK_SHARE_PNL, { platform: 'telegram', strategy })}
+        >
           <TelegramIcon className={classes.icon} />
         </ButtonBase>
       </Tooltip>
