@@ -92,15 +92,15 @@ function MyApp({ Component, pageProps }: any) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [track])
 
-  // useEffect(() => {
-  //   Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID as string)
-  // }, [])
+  useEffect(() => {
+    Crisp.configure(process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID as string)
+  }, [])
 
-  // useEffect(() => {
-  //   if (router.pathname !== '/') {
-  //     showCrispChat()
-  //   } else hideCrispChat()
-  // }, [router])
+  useEffect(() => {
+    if (router.pathname !== '/') {
+      showCrispChat()
+    } else hideCrispChat()
+  }, [router])
 
   return (
     <RestrictUserProvider>
