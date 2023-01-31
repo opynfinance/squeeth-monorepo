@@ -155,25 +155,19 @@ abstract contract FlashSwap is IUniswapV3SwapCallback {
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _uniFlashSwap(
-            UniFlashswapCallbackData(
-                pool,
-                data.caller,
-                tokenIn,
-                tokenOut,
-                fee,
-                amountToPay,
-                data.callData,
-                data.callSource
-            )
+            pool,
+            amountToPay,
+            data.callData,
+            data.callSource
         );
     }
 
-    /**
-     * @notice function to be called by uniswap callback.
-     * @dev this function should be overridden by the child contract
-     * @param _uniFlashSwapData UniFlashswapCallbackData struct
-     */
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual { }
+    // /**
+    //  * @notice function to be called by uniswap callback.
+    //  * @dev this function should be overridden by the child contract
+    //  * @param _uniFlashSwapData UniFlashswapCallbackData struct
+    //  */
+    function _uniFlashSwap(address pool, uint256 amountToPay, bytes memory callData, uint8 callSource) internal virtual { }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)

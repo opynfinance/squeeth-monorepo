@@ -10,6 +10,8 @@ import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 // contracts
 import { SigUtil } from "./util/SigUtil.sol";
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
+//lib
+import { NettingLib } from "../src/NettingLib.sol";
 
 /**
  * ZenBull Netting Setup
@@ -89,5 +91,27 @@ contract ZenBullNettingBaseSetup is Test {
         IERC20(ZEN_BULL).approve(address(zenBullNetting), _amount);
         zenBullNetting.queueZenBull(_amount);
         vm.stopPrank();
+    }
+
+    /**
+     * @dev get ZenBull token price using uniswap TWAP
+     * @return ZenBull price
+     */
+    function getZenBullPrice() internal view returns (uint256) {
+        (uint256 crabFairPriceInEth, uint256 ethUsdcPrice) = NettingLib.getCrabPrice(
+            ORACLE,
+            CRAB,
+            ethUsdcPool,
+            ethSqueethPool,
+            WPOWERPERP,
+            USDC,
+            WETH,
+            ZEN_BULL,
+            zenBullNetting.auctionTwapPeriod()
+        );
+
+        return NettingLib.getZenBullPrice(
+            ZEN_BULL, EULER_SIMPLE_LENS, USDC, WETH, crabFairPriceInEth, ethUsdcPrice
+        );
     }
 }

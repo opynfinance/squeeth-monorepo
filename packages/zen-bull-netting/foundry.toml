@@ -5,7 +5,7 @@ libs = ['lib']
 test = 'test'
 auto_detect_solc = true
 optimizer = true
-optimizer_runs = 2000
+optimizer_runs = 10
 
 [profile.test]
 no_match_test = "Fuzzing"
