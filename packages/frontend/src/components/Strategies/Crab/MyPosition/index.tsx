@@ -1,7 +1,7 @@
 import { Typography, Box } from '@material-ui/core'
+import { Skeleton } from '@material-ui/lab'
 import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
-import { Breathing } from 'react-shimmer'
 
 import { addressAtom } from '@state/wallet/atoms'
 import useAppMemo from '@hooks/useAppMemo'
@@ -43,15 +43,11 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   if (loading) {
     return (
-      <Box display="flex" flexDirection="column" gridGap="12px">
-        <div>
-          <Typography variant="h4" className={classes.sectionTitle}>
-            My Crab Position
-          </Typography>
-          <Breathing height={20} className={classes.shimmer} width={350} />
-          <Breathing height={20} className={classes.shimmer} width={250} />
-          <Breathing height={20} className={classes.shimmer} width={250} />
-        </div>
+      <Box display="flex" flexDirection="column" gridGap={'12px'}>
+        <Typography variant="h4" className={classes.sectionTitle}>
+          My Crab Position
+        </Typography>
+        <Skeleton width={'100%'} height={'80px'} style={{ transform: 'none' }} />
       </Box>
     )
   }

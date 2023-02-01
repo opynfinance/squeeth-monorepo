@@ -10,7 +10,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
-import { Breathing } from 'react-shimmer'
+import { Skeleton } from '@material-ui/lab'
 
 import useStyles from '@components/Strategies/styles'
 import {
@@ -280,15 +280,7 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <>
-          <Breathing className={classes.shimmer} height={30} width={500} />
-          <Breathing className={classes.shimmer} height={30} width={550} />
-          <Breathing className={classes.shimmer} height={30} width={600} />
-          <Breathing className={classes.shimmer} height={30} width={700} />
-          <Breathing className={classes.shimmer} height={30} width={600} />
-          <Breathing className={classes.shimmer} height={30} width={550} />
-          <Breathing className={classes.shimmer} height={30} width={500} />
-        </>
+        <Skeleton width={'100%'} height={500} style={{ transform: 'none' }} />
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}
