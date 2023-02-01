@@ -73,6 +73,8 @@ import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFro
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
   const setBullUserState = useSetBullUserState()
+  const setQueuedBullUserState = useSetQueuedBullUserState()
+
   const setBullTimeAtLastHedge = useSetAtom(bullTimeAtLastHedgeAtom)
   const { auctionBull } = useAtomValue(addressesAtom)
   const networkId = useAtomValue(networkIdAtom)
@@ -96,6 +98,10 @@ export const useInitBullStrategy = () => {
   useEffect(() => {
     setBullUserState()
   }, [setBullUserState])
+
+  useEffect(() => {
+    setQueuedBullUserState()
+  }, [setQueuedBullUserState])
 }
 
 export const useSetBullState = () => {
@@ -665,8 +671,8 @@ export const useBullFlashWithdraw = () => {
   return flashWithdrawFromBull
 }
 
-export const useQueuedZenBullPositionAndStatus = () => {
-  const contract = useAtomValue(bullNettingContractAtom)
+export const useSetQueuedBullUserState = () => {
+  const bullNettingContract = useAtomValue(bullNettingContractAtom)
   const address = useAtomValue(addressAtom)
 
   const setNettingAuctionLive = useSetAtom(isNettingAuctionLiveAtom)
@@ -677,13 +683,13 @@ export const useQueuedZenBullPositionAndStatus = () => {
   const setEthQueued = useSetAtom(ethQueuedAtom)
   const setZenBullQueued = useSetAtom(zenBullQueuedAtom)
 
-  const fetchAndStoreQueuedPosition = async () => {
-    if (!contract) return
+  const setQueuedBullUserState = useAppCallback(async () => {
+    if (!bullNettingContract) return null
 
-    const minEthAmountPromise = contract.methods.mimnEthAmount().call()
-    const minZenBullAmountPromise = contract.methods.minZenBullAmount().call()
-    const totalDepositsPromise = contract.methods.depositsQueued().call()
-    const totalWithdrawalsPromise = contract.methods.withdrawsQueued().call()
+    const minEthAmountPromise = bullNettingContract.methods.minEthAmount().call()
+    const minZenBullAmountPromise = bullNettingContract.methods.minZenBullAmount().call()
+    const totalDepositsPromise = bullNettingContract.methods.depositsQueued().call()
+    const totalWithdrawalsPromise = bullNettingContract.methods.withdrawsQueued().call()
 
     const [minEthAmount, minZenBullAmount, totalDeposits, totalWithdrawals] = await Promise.all([
       minEthAmountPromise,
@@ -697,11 +703,11 @@ export const useQueuedZenBullPositionAndStatus = () => {
     setTotalDeposits(toTokenAmount(totalDeposits, USDC_DECIMALS))
     setTotalWithdrawals(toTokenAmount(totalWithdrawals, WETH_DECIMALS))
 
-    if (!address) return
+    if (!address) return null
 
-    const ethBalancePromise = contract.methods.ethBalance(address).call()
-    const zenBullBalancePromise = contract.methods.zenBullBalance(address).call()
-    const auctionStatusPromise = contract.methods.isAuctionLive().call()
+    const ethBalancePromise = bullNettingContract.methods.ethBalance(address).call()
+    const zenBullBalancePromise = bullNettingContract.methods.zenBullBalance(address).call()
+    const auctionStatusPromise = bullNettingContract.methods.isAuctionLive().call()
 
     const [ethQueued, zenBullQueued, auctionStatus] = await Promise.all([
       ethBalancePromise,
@@ -711,9 +717,9 @@ export const useQueuedZenBullPositionAndStatus = () => {
     setEthQueued(new BigNumber(ethQueued))
     setZenBullQueued(new BigNumber(zenBullQueued))
     setNettingAuctionLive(auctionStatus)
-  }
+  }, [address, bullNettingContract])
 
-  return fetchAndStoreQueuedPosition
+  return setQueuedBullUserState
 }
 
 export const useQueueDepositEth = () => {
