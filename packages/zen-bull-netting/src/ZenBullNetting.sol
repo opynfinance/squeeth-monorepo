@@ -632,58 +632,59 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 k++;
                 continue;
             } else {
-                // uint256 zenBullAmountToSend;
+                uint256 zenBullAmountToSend;
+                uint256 wethAmountToSend;
                 if (depositReceipt.amount <= memVar.remainingDeposits) {
                     memVar.remainingDeposits = memVar.remainingDeposits - depositReceipt.amount;
                     ethBalance[depositReceipt.sender] -= depositReceipt.amount;
 
-                    // zenBullAmountToSend = depositReceipt.amount * memVar.currentZenBullBalance
-                    //     / _params.depositsToProcess;
+                    zenBullAmountToSend = depositReceipt.amount * memVar.currentZenBullBalance
+                        / _params.depositsToProcess;
 
                     IERC20(zenBull).transfer(
                         deposits[k].sender,
-                        depositReceipt.amount * memVar.currentZenBullBalance
-                            / _params.depositsToProcess
+                        zenBullAmountToSend
                     );
 
                     delete deposits[k];
                     k++;
 
+                    wethAmountToSend = depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess;
                     payable(depositReceipt.sender).sendValue(
-                        depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess
+                        wethAmountToSend
                     );
 
-                    // emit EthDeposited(
-                    //     depositReceipt.sender,
-                    //     depositReceipt.amount,
-                    //     zenBullAmountToSend,
-                    //     k,
-                    //     wethAmountToSend
-                    //     );
+                    emit EthDeposited(
+                        depositReceipt.sender,
+                        depositReceipt.amount,
+                        zenBullAmountToSend,
+                        k,
+                        wethAmountToSend
+                        );
                 } else {
                     ethBalance[depositReceipt.sender] -= memVar.remainingDeposits;
 
-                    // zenBullAmountToSend = memVar.remainingDeposits * memVar.currentZenBullBalance
-                    //     / _params.depositsToProcess;
+                    zenBullAmountToSend = memVar.remainingDeposits * memVar.currentZenBullBalance
+                        / _params.depositsToProcess;
                     IERC20(zenBull).transfer(
                         depositReceipt.sender,
-                        memVar.remainingDeposits * memVar.currentZenBullBalance
-                            / _params.depositsToProcess
+                        zenBullAmountToSend
                     );
 
                     deposits[k].amount -= memVar.remainingDeposits;
 
+                    wethAmountToSend = memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess;
                     payable(depositReceipt.sender).sendValue(
-                        memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess
+                        wethAmountToSend
                     );
 
-                    // emit EthDeposited(
-                    //     depositReceipt.sender,
-                    //     memVar.remainingDeposits,
-                    //     zenBullAmountToSend,
-                    //     k,
-                    //     wethAmountToSend
-                    //     );
+                    emit EthDeposited(
+                        depositReceipt.sender,
+                        memVar.remainingDeposits,
+                        zenBullAmountToSend,
+                        k,
+                        wethAmountToSend
+                        );
                     break;
                 }
             }
