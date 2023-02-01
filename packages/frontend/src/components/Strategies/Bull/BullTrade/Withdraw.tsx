@@ -460,10 +460,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               value={formatNumber(quote.poolFee) + '%'}
               flexDirection="row"
               justifyContent="space-between"
-              gridGap="12px"
+              gridGap="8px"
             />
 
-            <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+            <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
                 isSmall
                 label={
@@ -480,9 +480,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
                   />
                 }
                 value={formatNumber(quote.priceImpact) + '%'}
+                textColor={withdrawPriceImpactNumber > 3 ? 'error' : undefined}
                 flexDirection="row"
                 justifyContent="space-between"
-                gridGap="12px"
+                gridGap="8px"
               />
               <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
             </Box>
