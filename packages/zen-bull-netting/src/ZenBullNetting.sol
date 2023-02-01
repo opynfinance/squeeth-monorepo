@@ -20,8 +20,6 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value

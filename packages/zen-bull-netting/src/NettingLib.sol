@@ -1,32 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.0;
-// pragma abicoder v2;
 
 // interface
 import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
-import { IController } from "./interface/IController.sol";
 import { IOracle } from "./interface/IOracle.sol";
 import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
 import { IWETH } from "./interface/IWETH.sol";
-import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
-import { IFlashZen } from "./interface/IFlashZen.sol";
 
 library NettingLib {
     event DepositAuction(address indexed trader, uint256 indexed bidId, uint256 quantity);
     event WithdrawAuction(
         address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
     );
-
-    /**
-     *
-     */
-    /**
-     * Functions that change contract state through delegate call ********************************
-     */
-    /**
-     *
-     */
 
     function transferWethFromMarketMakers(
         address weth,
@@ -106,16 +92,6 @@ library NettingLib {
 
         return toExchange;
     }
-
-    /**
-     *
-     */
-    /**
-     * View that change contract state through delegate call ********************************
-     */
-    /**
-     *
-     */
 
     function getCrabPrice(
         address oracle,
