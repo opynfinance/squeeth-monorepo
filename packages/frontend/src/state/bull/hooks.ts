@@ -394,7 +394,7 @@ export const useBullFlashDeposit = () => {
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
     ethToSend: BigNumber,
-    dataToTrack?: any,
+    dataToTrack?: Record<string, unknown>,
     onTxConfirmed?: (id?: string) => void,
   ) => {
     if (!flashBullContract) return
@@ -601,7 +601,7 @@ export const useBullFlashWithdraw = () => {
     maxEthForUsdc: BigNumber,
     wPowerPerpPoolFee: number,
     usdcPoolFee: number,
-    dataToTrack?: any,
+    dataToTrack?: Record<string, unknown>,
     onTxConfirmed?: () => void,
   ) => {
     if (!flashBullContract) return
@@ -726,9 +726,10 @@ export const useQueueDepositEth = () => {
   )
 
   const depositEth = useAppCallback(
-    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+    async (amount: BigNumber, dataToTrack?: Record<string, unknown>, onTxConfirmed?: () => void) => {
       if (!contract) return
-      track(BULL_EVENTS.DEPOSIT_STN_BULL_CLICK)
+      track(BULL_EVENTS.DEPOSIT_STN_BULL_CLICK, dataToTrack)
+
       try {
         console.log('Queue:', fromTokenAmount(amount, WETH_DECIMALS).toString())
         await handleTransaction(
@@ -738,11 +739,11 @@ export const useQueueDepositEth = () => {
           }),
           onTxConfirmed,
         )
-        track(BULL_EVENTS.DEPOSIT_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+        track(BULL_EVENTS.DEPOSIT_STN_BULL_SUCCESS, dataToTrack)
       } catch (e: any) {
-        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.DEPOSIT_STN_BULL_REVERT) : null
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.DEPOSIT_STN_BULL_REVERT, dataToTrack) : null
         e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
-        track(BULL_EVENTS.DEPOSIT_STN_BULL_FAILED, { code: e?.code })
+        track(BULL_EVENTS.DEPOSIT_STN_BULL_FAILED, { code: e?.code, ...dataToTrack })
         console.log(e)
       }
     },
@@ -762,10 +763,10 @@ export const useQueueWithdrawZenBull = () => {
   )
 
   const queueWithdraw = useAppCallback(
-    async (amount: BigNumber, onTxConfirmed?: () => void) => {
+    async (amount: BigNumber, dataToTrack?: Record<string, unknown>, onTxConfirmed?: () => void) => {
       if (!contract) return
 
-      track(BULL_EVENTS.WITHDRAW_STN_BULL_CLICK)
+      track(BULL_EVENTS.WITHDRAW_STN_BULL_CLICK, dataToTrack)
       console.log('Queue: withdraw', fromTokenAmount(amount, ZENBULL_TOKEN_DECIMALS).toString())
       try {
         await handleTransaction(
@@ -774,11 +775,11 @@ export const useQueueWithdrawZenBull = () => {
           }),
           onTxConfirmed,
         )
-        track(BULL_EVENTS.WITHDRAW_STN_BULL_SUCCESS, { amount: amount.toNumber() })
+        track(BULL_EVENTS.WITHDRAW_STN_BULL_SUCCESS, dataToTrack)
       } catch (e: any) {
-        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_STN_BULL_REVERT) : null
+        e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_STN_BULL_REVERT, dataToTrack) : null
         e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
-        track(BULL_EVENTS.WITHDRAW_STN_BULL_FAILED, { code: e?.code })
+        track(BULL_EVENTS.WITHDRAW_STN_BULL_FAILED, { code: e?.code, ...dataToTrack })
         console.log(e)
       }
     },

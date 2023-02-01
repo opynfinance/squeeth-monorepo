@@ -31,7 +31,7 @@ import {
 import { useGetFlashWithdrawParams, useBullFlashWithdraw, useQueueWithdrawZenBull } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
-import { toTokenAmount } from '@utils/calculations'
+import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
@@ -46,15 +46,17 @@ import {
   minZenBullAmountAtom,
   totalEthQueuedAtom,
   totalZenBullQueuedAtom,
+  zenBullQueuedAtom,
 } from '@state/bull/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 import useAmplitude from '@hooks/useAmplitude'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
+import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
-import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import { OngoingTransaction } from './types'
 
 enum WithdrawSteps {
   APPROVE = 'Approve ZenBull',
@@ -67,12 +69,15 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const classes = useZenBullStyles()
 
   const withdrawAmountRef = useRef('0')
-  const ongoingTransactionAmountRef = useRef(new BigNumber(0))
+  const ongoingTransactionRef = useRef<OngoingTransaction | undefined>()
+
   const [withdrawAmount, setWithdrawAmount] = useState('0')
   const withdrawAmountBN = useMemo(() => new BigNumber(withdrawAmount), [withdrawAmount])
-  const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
+  const [zenBullQueued, setZenBullQueued] = useAtom(zenBullQueuedAtom)
+
+  const [txLoading, setTxLoading] = useState(false)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
   const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
@@ -186,17 +191,24 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      onInputChange('0')
+      if (!ongoingTransactionRef.current) return
+
+      const transaction = ongoingTransactionRef.current
+      if (transaction.queuedTransaction) {
+        setZenBullQueued(zenBullQueued.plus(fromTokenAmount(transaction.amount, ZENBULL_TOKEN_DECIMALS)))
+      }
+
       onTxnConfirm({
         status: true,
-        amount: ongoingTransactionAmountRef.current,
+        amount: transaction.amount,
         tradeType: BullTradeType.Withdraw,
         txId: id,
       })
+      onInputChange('0')
       resetTracking()
-      ongoingTransactionAmountRef.current = new BigNumber(0)
+      ongoingTransactionRef.current = undefined
     },
-    [onTxnConfirm, resetTracking, onInputChange],
+    [onTxnConfirm, resetTracking, onInputChange, zenBullQueued, setZenBullQueued],
   )
 
   const onApproveClick = async () => {
@@ -220,18 +232,22 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
-      ongoingTransactionAmountRef.current = new BigNumber(withdrawAmount)
+      const amount = new BigNumber(withdrawAmountRef.current)
+      ongoingTransactionRef.current = {
+        amount,
+        queuedTransaction: useQueue,
+      }
       const dataToTrack = {
-        amount: new BigNumber(withdrawAmountRef.current).toNumber(),
+        amount: amount.toNumber(),
         isPriceImpactHigh: showPriceImpactWarning,
         priceImpact: quote.poolFee + quote.priceImpact,
       }
 
       if (useQueue) {
-        await queueWithdrawZenBull(withdrawAmountBN, onTxnConfirmed)
+        await queueWithdrawZenBull(amount, dataToTrack, onTxnConfirmed)
       } else {
         await bullFlashWithdraw(
-          new BigNumber(withdrawAmountRef.current),
+          amount,
           quote.maxEthForWPowerPerp,
           quote.maxEthForUsdc,
           quote.wPowerPerpPoolFee,

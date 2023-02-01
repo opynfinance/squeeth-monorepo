@@ -25,10 +25,10 @@ import {
   NETTING_PRICE_IMPACT,
   AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
-import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
+import { useGetFlashBulldepositParams, useBullFlashDeposit, useQueueDepositEth } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
-import { toTokenAmount } from '@utils/calculations'
+import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
@@ -41,12 +41,14 @@ import {
   minEthAmountAtom,
   totalEthQueuedAtom,
   totalZenBullQueuedAtom,
+  ethQueuedAtom,
 } from '@state/bull/atoms'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
+import { OngoingTransaction } from './types'
 
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
@@ -57,10 +59,12 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const [depositAmount, setDepositAmount] = useState('0')
   const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
 
-  const ongoingTransactionAmountRef = useRef(new BigNumber(0))
+  const ongoingTransactionRef = useRef<OngoingTransaction | undefined>()
   const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
+  const [ethQueued, setEthQueued] = useAtom(ethQueuedAtom)
+
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
   const [useQueue, setUseQueue] = useState(false)
@@ -105,6 +109,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
+  const queueDepositEth = useQueueDepositEth()
   const { track } = useAmplitude()
 
   const trackUserEnteredDepositAmount = useCallback(
@@ -149,17 +154,24 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      onInputChange('0')
+      if (!ongoingTransactionRef.current) return
+
+      const transaction = ongoingTransactionRef.current
+      if (transaction.queuedTransaction) {
+        setEthQueued(ethQueued.plus(fromTokenAmount(transaction.amount, WETH_DECIMALS)))
+      }
+
       onTxnConfirm({
         status: true,
-        amount: ongoingTransactionAmountRef.current,
+        amount: transaction.amount,
         tradeType: BullTradeType.Deposit,
         txId: id,
       })
+      onInputChange('0')
       resetTracking()
-      ongoingTransactionAmountRef.current = new BigNumber(0)
+      ongoingTransactionRef.current = undefined
     },
-    [onTxnConfirm, resetTracking, onInputChange],
+    [onTxnConfirm, resetTracking, onInputChange, ethQueued, setEthQueued],
   )
 
   const depositFundingWarning = useAppMemo(() => {
@@ -209,43 +221,40 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     quote.wethToLend,
   ])
 
-  const onDepositClick = useCallback(async () => {
+  const onDepositClick = async () => {
     setTxLoading(true)
     try {
-      ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
+      const amount = new BigNumber(depositAmountRef.current)
+      ongoingTransactionRef.current = {
+        amount,
+        queuedTransaction: useQueue,
+      }
       const dataToTrack = {
+        amount: amount.toNumber(),
         priceImpact: quote.poolFee + quote.priceImpact,
         isPriceImpactHigh: depositPriceImpactWarning,
-        amount: new BigNumber(depositAmountRef.current).toNumber(),
       }
-      await bullFlashDeposit(
-        quote.ethToCrab,
-        quote.minEthFromSqth,
-        quote.minEthFromUsdc,
-        quote.wPowerPerpPoolFee,
-        quote.usdcPoolFee,
-        new BigNumber(depositAmountRef.current),
-        dataToTrack,
-        onTxnConfirmed,
-      )
+
+      if (useQueue) {
+        await queueDepositEth(new BigNumber(depositAmountRef.current), dataToTrack, onTxnConfirmed)
+      } else {
+        await bullFlashDeposit(
+          quote.ethToCrab,
+          quote.minEthFromSqth,
+          quote.minEthFromUsdc,
+          quote.wPowerPerpPoolFee,
+          quote.usdcPoolFee,
+          new BigNumber(depositAmountRef.current),
+          dataToTrack,
+          onTxnConfirmed,
+        )
+      }
     } catch (e) {
       resetTracking()
       console.log(e)
     }
     setTxLoading(false)
-  }, [
-    bullFlashDeposit,
-    quote.ethToCrab,
-    quote.minEthFromSqth,
-    quote.minEthFromUsdc,
-    quote.wPowerPerpPoolFee,
-    quote.usdcPoolFee,
-    quote.poolFee,
-    quote.priceImpact,
-    onTxnConfirmed,
-    resetTracking,
-    depositPriceImpactWarning,
-  ])
+  }
 
   const setDepositMax = () => {
     track(BULL_EVENTS.DEPOSIT_BULL_SET_AMOUNT_MAX, {
@@ -288,9 +297,9 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     if (!useQueue) return quote.priceImpact
 
     const withdrawalsLeft = totalWithdrawsQueued.minus(totalDepositsQueued)
-    const totalWithdraws = withdrawalsLeft.isNegative() ? new BigNumber(0) : withdrawalsLeft
+    const withdrawalsLeftAbs = withdrawalsLeft.isNegative() ? new BigNumber(0) : withdrawalsLeft
 
-    const nettingDepositAmount = totalWithdraws.gt(depositAmountBN) ? depositAmountBN : totalWithdraws
+    const nettingDepositAmount = withdrawalsLeftAbs.gt(depositAmountBN) ? depositAmountBN : withdrawalsLeftAbs
     const remainingDeposit = depositAmountBN.minus(nettingDepositAmount)
 
     const priceImpact = nettingDepositAmount
