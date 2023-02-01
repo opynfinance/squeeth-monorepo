@@ -1,14 +1,17 @@
 import { Box, Typography, Tooltip, CircularProgress } from '@material-ui/core'
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useCallback, useRef, useState, useMemo } from 'react'
 import InfoIcon from '@material-ui/icons/Info'
 import debounce from 'lodash/debounce'
+import { useEffect } from 'react'
 
-import { PrimaryButtonNew } from '@components/Button'
+import { PrimaryButtonNew, RoundedButton } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import { LinkWrapper } from '@components/LinkWrapper'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
 import {
@@ -20,8 +23,12 @@ import {
   VOL_PERCENT_SCALAR,
   WETH_DECIMALS,
   YEAR,
+  STRATEGY_DEPOSIT_LIMIT,
+  ZENBULL_TOKEN_DECIMALS,
+  NETTING_PRICE_IMPACT,
+  AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
-import { useGetFlashWithdrawParams, useBullFlashWithdraw } from '@state/bull/hooks'
+import { useGetFlashWithdrawParams, useBullFlashWithdraw, useQueueWithdrawZenBull } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -33,7 +40,13 @@ import { addressesAtom } from '@state/positions/atoms'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { useRestrictUser } from '@context/restrict-user'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
-import { bullCurrentETHPositionAtom } from '@state/bull/atoms'
+import {
+  bullCurrentETHPositionAtom,
+  isNettingAuctionLiveAtom,
+  minZenBullAmountAtom,
+  totalEthQueuedAtom,
+  totalZenBullQueuedAtom,
+} from '@state/bull/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import useAppCallback from '@hooks/useAppCallback'
 import useAmplitude from '@hooks/useAmplitude'
@@ -42,6 +55,13 @@ import useExecuteOnce from '@hooks/useExecuteOnce'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+
+enum WithdrawSteps {
+  APPROVE = 'Approve ZenBull',
+  WITHDRAW = 'Withdraw',
+}
+
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
 const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -54,14 +74,21 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
   const [quoteLoading, setQuoteLoading] = useState(false)
+  const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
+  const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
+  const [useQueue, setUseQueue] = useState(false)
+  const [userOverrode, setUserOverrode] = useState(false)
 
   const negativeReturnsError = false
-  const highDepositWarning = false
   const { isRestricted } = useRestrictUser()
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const bullPositionValueInEth = useAtomValue(bullCurrentETHPositionAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
+  const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
+  const minZenBullAmountValue = useAtomValue(minZenBullAmountAtom)
+  const totalDepositsQueued = useAtomValue(totalEthQueuedAtom)
+  const totalWithdrawsQueued = useAtomValue(totalZenBullQueuedAtom)
 
   const selectWallet = useSelectWallet()
 
@@ -70,9 +97,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
 
-  const { bullStrategy, flashBull } = useAtomValue(addressesAtom)
+  const { bullStrategy, flashBull, bullNetting } = useAtomValue(addressesAtom)
   const { value: bullBalance } = useTokenBalance(bullStrategy, 15, WETH_DECIMALS)
   const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, flashBull)
+  const { allowance: bullQueueAllowance, approve: approveQueueBull } = useUserAllowance(bullStrategy, bullNetting)
 
   const [quote, setQuote] = useState({
     maxEthForWPowerPerp: BIG_ZERO,
@@ -89,6 +117,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
   const getFlashBullWithdrawParams = useGetFlashWithdrawParams()
   const bullFlashWithdraw = useBullFlashWithdraw()
+  const queueWithdrawZenBull = useQueueWithdrawZenBull()
   const { track } = useAmplitude()
   const logAndRunTransaction = useTrackTransactionFlow()
 
@@ -170,6 +199,24 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     [onTxnConfirm, resetTracking, onInputChange],
   )
 
+  const onApproveClick = async () => {
+    setTxLoading(true)
+    try {
+      if (useQueue) {
+        logAndRunTransaction(async () => {
+          await approveQueueBull(() => console.log('Approved Standard Bull'))
+        }, BULL_EVENTS.APPROVE_WITHDRAW_STN_BULL)
+      } else {
+        await logAndRunTransaction(async () => {
+          await approveBull(() => console.log('Approved Instant Bull'))
+        }, BULL_EVENTS.APPROVE_WITHDRAW_BULL)
+      }
+    } catch (e) {
+      console.log(e)
+    }
+    setTxLoading(false)
+  }
+
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
@@ -179,31 +226,25 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         isPriceImpactHigh: showPriceImpactWarning,
         priceImpact: quote.poolFee + quote.priceImpact,
       }
-      await bullFlashWithdraw(
-        new BigNumber(withdrawAmountRef.current),
-        quote.maxEthForWPowerPerp,
-        quote.maxEthForUsdc,
-        quote.wPowerPerpPoolFee,
-        quote.usdcPoolFee,
-        dataToTrack,
-        onTxnConfirmed,
-      )
+
+      if (useQueue) {
+        await queueWithdrawZenBull(withdrawAmountBN, onTxnConfirmed)
+      } else {
+        await bullFlashWithdraw(
+          new BigNumber(withdrawAmountRef.current),
+          quote.maxEthForWPowerPerp,
+          quote.maxEthForUsdc,
+          quote.wPowerPerpPoolFee,
+          quote.usdcPoolFee,
+          dataToTrack,
+          onTxnConfirmed,
+        )
+      }
     } catch (e) {
       resetTracking()
       console.log(e)
     }
-    setTxLoading(false)
-  }
 
-  const onApproveClick = async () => {
-    setTxLoading(true)
-    try {
-      await logAndRunTransaction(async () => {
-        await approveBull(() => console.log('Approved'))
-      }, BULL_EVENTS.APPROVE_WITHDRAW_BULL)
-    } catch (e) {
-      console.log(e)
-    }
     setTxLoading(false)
   }
 
@@ -229,12 +270,109 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     [withdrawAmount, setSlippage, onInputChange, track],
   )
 
+  // Update withdraw step
+  useEffect(() => {
+    if (useQueue) {
+      // todo: check if bullQueueAllowance and withdrawAmount are comparable
+      if (bullQueueAllowance.lt(withdrawAmount)) {
+        setWithdrawStep(WithdrawSteps.APPROVE)
+      } else {
+        setWithdrawStep(WithdrawSteps.WITHDRAW)
+      }
+    } else {
+      if (bullAllowance.lt(withdrawAmount)) {
+        setWithdrawStep(WithdrawSteps.APPROVE)
+      } else {
+        setWithdrawStep(WithdrawSteps.WITHDRAW)
+      }
+    }
+  }, [useQueue, bullQueueAllowance, withdrawAmount, bullAllowance])
+
+  const minZenBullAmount = toTokenAmount(minZenBullAmountValue, ZENBULL_TOKEN_DECIMALS)
+  const isWithdrawZenBullLessThanMin = withdrawAmountBN.lt(minZenBullAmount)
+
+  useEffect(() => {
+    if (isNettingAuctionLive || isWithdrawZenBullLessThanMin) {
+      setQueueOptionAvailable(false)
+      setUseQueue(false)
+      return
+    }
+
+    if (quote.priceImpact + quote.poolFee > OTC_PRICE_IMPACT_THRESHOLD) {
+      setQueueOptionAvailable(true)
+      if (!userOverrode) {
+        setUseQueue(true)
+      }
+    } else {
+      setQueueOptionAvailable(false)
+      if (!userOverrode) {
+        setUseQueue(false)
+      }
+    }
+  }, [isNettingAuctionLive, isWithdrawZenBullLessThanMin, quote.priceImpact, quote.poolFee, userOverrode])
+
+  const withdrawPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) {
+      return quote.priceImpact
+    }
+
+    const depositsLeft = totalDepositsQueued.minus(totalWithdrawsQueued)
+    const depositsLeftAbs = depositsLeft.isNegative() ? new BigNumber(0) : depositsLeft
+
+    const nettingWithdrawAmount = depositsLeftAbs.gt(withdrawAmountBN) ? withdrawAmountBN : depositsLeftAbs
+    const remainingWithdraw = withdrawAmountBN.minus(nettingWithdrawAmount)
+
+    const priceImpact = nettingWithdrawAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingWithdraw.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(withdrawAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [totalDepositsQueued, totalWithdrawsQueued, useQueue, withdrawAmountBN, quote.priceImpact])
+
+  const isLoading = txLoading || quoteLoading
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
         <Typography variant="h3" className={classes.subtitle}>
           Strategy Withdraw
         </Typography>
+      </Box>
+
+      <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
+        <RoundedButton
+          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(withdrawAmount)}
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            setUseQueue(false)
+            setUserOverrode(true)
+          }}
+          className={!useQueue ? classes.btnActive : classes.btnDefault}
+        >
+          Instant
+        </RoundedButton>
+        <RoundedButton
+          disabled={!queueOptionAvailable}
+          variant={!queueOptionAvailable ? 'contained' : 'outlined'}
+          size="small"
+          onClick={() => {
+            setUseQueue(true)
+            setUserOverrode(true)
+          }}
+          className={useQueue ? classes.btnActive : classes.btnDefault}
+        >
+          Standard
+        </RoundedButton>
+        <Box className={classes.infoIconGray} display="flex" alignItems="center">
+          <Tooltip
+            title={`Standard reduces price impact and gas costs, exiting the strategy in 24hr on avg or Tuesday latest. Instant exits immediately.`}
+          >
+            <HelpOutlineIcon fontSize="medium" />
+          </Tooltip>
+        </Box>
       </Box>
 
       <div className={classes.tradeContainer}>
@@ -301,9 +439,9 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         <Box marginTop="24px">
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
+              isSmall
               label="Uniswap Fee"
               value={formatNumber(quote.poolFee) + '%'}
-              isSmall
               flexDirection="row"
               justifyContent="space-between"
               gridGap="12px"
@@ -311,9 +449,21 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
             <Box display="flex" alignItems="center" gridGap="12px" flex="1">
               <Metric
-                label="Price Impact"
-                value={formatNumber(quote.priceImpact) + '%'}
                 isSmall
+                label={
+                  <MetricLabel
+                    isSmall
+                    label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
+                    tooltipTitle={
+                      useQueue
+                        ? `For standard withdraw, the average price impact is ${formatNumber(
+                            withdrawPriceImpactNumber,
+                          )}% based on historical auctions`
+                        : undefined
+                    }
+                  />
+                }
+                value={formatNumber(quote.priceImpact) + '%'}
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="12px"
@@ -350,25 +500,44 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
             <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="bull-unsupported-network-btn">
               {'Unsupported Network'}
             </PrimaryButtonNew>
-          ) : bullAllowance.lt(withdrawAmount) ? (
+          ) : withdrawStep === WithdrawSteps.APPROVE ? (
             <PrimaryButtonNew
               fullWidth
-              id="bull-deposit-btn"
-              variant={'contained'}
+              id="bull-approve-btn"
+              variant="contained"
               onClick={onApproveClick}
-              disabled={quoteLoading || txLoading}
+              disabled={quoteLoading || txLoading || !!withdrawError}
             >
-              {!txLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
+              {isLoading ? <CircularProgress color="primary" size="2rem" /> : 'Approve strategy to withdraw'}
             </PrimaryButtonNew>
           ) : (
             <PrimaryButtonNew
               fullWidth
-              id="bull-deposit-btn"
-              variant={'contained'}
+              id="bull-withdraw-btn"
+              variant="contained"
               onClick={onWithdrawClick}
               disabled={quoteLoading || txLoading || !!withdrawError}
             >
-              {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
+              {isLoading ? (
+                <CircularProgress color="primary" size="2rem" />
+              ) : useQueue ? (
+                <>
+                  Standard withdraw
+                  <Tooltip
+                    title={
+                      <div>
+                        Your withdrawal will be submitted via auction to reduce price impact. This may take until
+                        Tuesday.
+                      </div>
+                    }
+                    style={{ marginLeft: '8' }}
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </Tooltip>
+                </>
+              ) : (
+                'Withdraw'
+              )}
             </PrimaryButtonNew>
           )}
         </Box>
