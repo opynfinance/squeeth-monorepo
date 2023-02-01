@@ -2,12 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { Box, Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { setOptOut } from '@amplitude/analytics-browser'
-import { NextSeo } from 'next-seo'
 
 import { PrimaryButton } from '@components/Button'
 import Nav from '@components/Nav'
 import { isOptedOut } from '@utils/amplitude'
-import { SQUEETH_BASE_URL } from '@constants/index'
+import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -42,27 +41,7 @@ const MintPage: React.FC = () => {
 
   return (
     <>
-      <NextSeo
-        title="Opyn"
-        description="Opyn builds DeFi strategies and derivatives like squeeth, a new financial primitive providing perpetual leverage without liquidations"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/squeeth-og-image.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
-
+      <DefaultSiteSeo />
       <Nav />
       <Typography align="center" variant="h6" className={classes.title}>
         {optOut ? 'You opted out from Amplitude tracking' : 'Opt out from Amplitude tracking'}

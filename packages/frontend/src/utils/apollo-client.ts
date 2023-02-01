@@ -2,6 +2,7 @@ import { ApolloClient, InMemoryCache, split, HttpLink, ApolloLink, from } from '
 import { getMainDefinition } from '@apollo/client/utilities'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { SITE_EVENTS, trackEvent } from './amplitude'
+import * as Fathom from 'fathom-client'
 
 const httpLinkMN = new HttpLink({
   uri: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
@@ -29,6 +30,7 @@ const httpLinkMNSqueeth = new HttpLink({
       const res = await fetch(...pl)
       const elapsed = new Date().getTime() - startTime
       trackEvent(SITE_EVENTS.SUBGRAPH_QUERY_LOADED, { query: body.operationName, time: elapsed })
+      Fathom.trackGoal('HPHEK6AI', elapsed) //Track in fathom
       return res
     }
 

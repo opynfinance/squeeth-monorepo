@@ -29,7 +29,7 @@ import {
   bullCrabBalanceAtom,
   bullEulerUSDCDebtAtom,
 } from '@state/bull/atoms'
-import { crabUSDValueAtom } from '@state/crab/atoms'
+import { crabStrategyVaultAtomV2, crabTotalSupplyV2Atom, crabUSDValueAtom } from '@state/crab/atoms'
 import { BULL_START_DATE } from '@constants/index'
 import { formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
@@ -212,7 +212,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
         <Typography className={clsx(classes.description, classes.textMonospace)}>
           {formatNumber(tvl, 0) + ' ETH'}
         </Typography>
-        <Typography className={classes.description}>TVL</Typography>
+        <Typography className={classes.description}>Open Interest</Typography>
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
@@ -268,6 +268,8 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
 const Wrapper: React.FC = () => {
   const ethDepositedInEuler = useAtomValue(bullDepositedEthInEulerAtom)
   const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const vault = useAtomValue(crabStrategyVaultAtomV2)
+  const crabSupply = useAtomValue(crabTotalSupplyV2Atom)
   const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
   const crabUSDValue = useAtomValue(crabUSDValueAtom)
   const ethPrice = useOnChainETHPrice()
@@ -278,9 +280,8 @@ const Wrapper: React.FC = () => {
 
   // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
   const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
-  const collateralValue = ethDepositedInEuler.plus(bullCrabBalance.times(crabPriceInETH))
-  const debtValue = eulerUSDCDebt.div(ethPrice)
-  const tvl = collateralValue.minus(debtValue).integerValue()
+  const collateralValue = ethDepositedInEuler.plus(vault?.collateralAmount.times(bullCrabBalance).div(crabSupply) ?? 0)
+  const tvl = collateralValue.integerValue()
   const isLoadingTVL =
     ethDepositedInEuler.isZero() ||
     bullCrabBalance.isZero() ||

@@ -207,7 +207,7 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
 
       <Box display="flex" gridGap="12px">
         <Typography className={clsx(classes.description, classes.textMonospace)}>{formatCurrency(tvl, 0)}</Typography>
-        <Typography className={classes.description}>TVL</Typography>
+        <Typography className={classes.description}>Open Interest</Typography>
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
@@ -274,7 +274,7 @@ const Wrapper: React.FC = () => {
 
   const collateralValue = vaultCollateral.multipliedBy(ethPrice)
   const debtValue = vaultDebt.multipliedBy(osqthPrice)
-  const tvl = collateralValue.minus(debtValue).integerValue()
+  const tvl = collateralValue.integerValue()
   const isLoadingTVL = tvl.isZero()
 
   const isLoading = isLoadingPnLSeries || isLoadingTVL
