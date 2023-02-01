@@ -641,18 +641,14 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     zenBullAmountToSend = depositReceipt.amount * memVar.currentZenBullBalance
                         / _params.depositsToProcess;
 
-                    IERC20(zenBull).transfer(
-                        deposits[k].sender,
-                        zenBullAmountToSend
-                    );
+                    IERC20(zenBull).transfer(deposits[k].sender, zenBullAmountToSend);
 
                     delete deposits[k];
                     k++;
 
-                    wethAmountToSend = depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(
-                        wethAmountToSend
-                    );
+                    wethAmountToSend =
+                        depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess;
+                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
 
                     emit EthDeposited(
                         depositReceipt.sender,
@@ -666,17 +662,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                     zenBullAmountToSend = memVar.remainingDeposits * memVar.currentZenBullBalance
                         / _params.depositsToProcess;
-                    IERC20(zenBull).transfer(
-                        depositReceipt.sender,
-                        zenBullAmountToSend
-                    );
+                    IERC20(zenBull).transfer(depositReceipt.sender, zenBullAmountToSend);
 
                     deposits[k].amount -= memVar.remainingDeposits;
 
-                    wethAmountToSend = memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(
-                        wethAmountToSend
-                    );
+                    wethAmountToSend =
+                        memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess;
+                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
 
                     emit EthDeposited(
                         depositReceipt.sender,
