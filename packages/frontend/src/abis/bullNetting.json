@@ -1,16 +1,10 @@
 [
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "_crab",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_swapRouter",
-        "type": "address"
-      }
+      { "internalType": "address", "name": "_zenBull", "type": "address" },
+      { "internalType": "address", "name": "_eulerSimpleLens", "type": "address" },
+      { "internalType": "address", "name": "_flashZenBull", "type": "address" },
+      { "internalType": "address", "name": "_uniFactory", "type": "address" }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
@@ -18,161 +12,63 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "bidId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "trader",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "quantity",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "price",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isBuying",
-        "type": "bool"
-      }
+      { "indexed": true, "internalType": "address", "name": "trader", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "bidId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "quantity", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
     ],
-    "name": "BidTraded",
+    "name": "DepositAuction",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "withdrawersBalance",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "depositor", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "depositorsBalance", "type": "uint256" }
     ],
-    "name": "CrabDeQueued",
+    "name": "DequeueEth",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "withdrawersBalance",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "receiptIndex",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "withdrawer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "withdrawersBalance", "type": "uint256" }
     ],
-    "name": "CrabQueued",
+    "name": "DequeueZenBull",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "crabAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "usdcAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "receiptIndex",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "depositor", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "ethAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "zenBullAmount", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "receiptIndex", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "refundedETH", "type": "uint256" }
     ],
-    "name": "CrabWithdrawn",
+    "name": "EthDeposited",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "nonce",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "bool", "name": "isDeposit", "type": "bool" },
+      { "indexed": true, "internalType": "address", "name": "receiver", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amountQueuedProcessed", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "amountReceived", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "index", "type": "uint256" }
     ],
-    "name": "NonceTrue",
+    "name": "NetAtPrice",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
+      { "indexed": true, "internalType": "address", "name": "previousOwner", "type": "address" },
+      { "indexed": true, "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "OwnershipTransferred",
     "type": "event"
@@ -180,18 +76,30 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "previousTwap",
-        "type": "uint32"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint32",
-        "name": "newTwap",
-        "type": "uint32"
-      }
+      { "indexed": true, "internalType": "address", "name": "depositor", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "depositorsBalance", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "receiptIndex", "type": "uint256" }
+    ],
+    "name": "QueueEth",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "withdrawer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "withdrawersBalance", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "receiptIndex", "type": "uint256" }
+    ],
+    "name": "QueueZenBull",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "uint32", "name": "previousTwap", "type": "uint32" },
+      { "indexed": false, "internalType": "uint32", "name": "newTwap", "type": "uint32" }
     ],
     "name": "SetAuctionTwapPeriod",
     "type": "event"
@@ -199,12 +107,8 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newDepositsIndex",
-        "type": "uint256"
-      }
+      { "indexed": false, "internalType": "uint256", "name": "oldDepositsIndex", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "newDepositsIndex", "type": "uint256" }
     ],
     "name": "SetDepositsIndex",
     "type": "event"
@@ -212,44 +116,26 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
+      { "indexed": false, "internalType": "uint256", "name": "oldAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "newAmount", "type": "uint256" }
     ],
-    "name": "SetMinCrab",
+    "name": "SetMinEthAmount",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
+      { "indexed": false, "internalType": "uint256", "name": "oldAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "newAmount", "type": "uint256" }
     ],
-    "name": "SetMinUSDC",
+    "name": "SetMinZenBullAmount",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "previousTolerance",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newOtcPriceTolerance",
-        "type": "uint256"
-      }
+      { "indexed": false, "internalType": "uint256", "name": "previousTolerance", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "newOtcPriceTolerance", "type": "uint256" }
     ],
     "name": "SetOTCPriceTolerance",
     "type": "event"
@@ -257,183 +143,65 @@
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newWithdrawsIndex",
-        "type": "uint256"
-      }
+      { "indexed": false, "internalType": "uint256", "name": "oldWithdrawsIndex", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "newWithdrawsIndex", "type": "uint256" }
     ],
     "name": "SetWithdrawsIndex",
     "type": "event"
   },
   {
     "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "isAuctionLive",
-        "type": "bool"
-      }
-    ],
+    "inputs": [{ "indexed": false, "internalType": "bool", "name": "isAuctionLive", "type": "bool" }],
     "name": "ToggledAuctionLive",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "depositor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "depositorsBalance",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "trader", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "bidId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "quantity", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "price", "type": "uint256" }
     ],
-    "name": "USDCDeQueued",
+    "name": "WithdrawAuction",
     "type": "event"
   },
   {
     "anonymous": false,
     "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "depositor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "usdcAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "crabAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "receiptIndex",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "refundedETH",
-        "type": "uint256"
-      }
+      { "indexed": true, "internalType": "address", "name": "withdrawer", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "zenBullAmount", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "ethAmount", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "receiptIndex", "type": "uint256" }
     ],
-    "name": "USDCDeposited",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "depositor",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "depositorsBalance",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "receiptIndex",
-        "type": "uint256"
-      }
-    ],
-    "name": "USDCQueued",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "withdrawer",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "crabAmount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "index",
-        "type": "uint256"
-      }
-    ],
-    "name": "WithdrawRejected",
+    "name": "ZenBullWithdrawn",
     "type": "event"
   },
   {
     "inputs": [],
     "name": "DOMAIN_SEPARATOR",
-    "outputs": [
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
+    "outputs": [{ "internalType": "bytes32", "name": "", "type": "bytes32" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "MAX_OTC_PRICE_TOLERANCE",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MIN_AUCTION_TWAP",
+    "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "auctionTwapPeriod",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
+    "outputs": [{ "internalType": "uint32", "name": "", "type": "uint32" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -441,96 +209,24 @@
     "inputs": [
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "bidId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "address",
-            "name": "trader",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "quantity",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "price",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "isBuying",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "expiry",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "nonce",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint8",
-            "name": "v",
-            "type": "uint8"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "r",
-            "type": "bytes32"
-          },
-          {
-            "internalType": "bytes32",
-            "name": "s",
-            "type": "bytes32"
-          }
+          { "internalType": "uint256", "name": "bidId", "type": "uint256" },
+          { "internalType": "address", "name": "trader", "type": "address" },
+          { "internalType": "uint256", "name": "quantity", "type": "uint256" },
+          { "internalType": "uint256", "name": "price", "type": "uint256" },
+          { "internalType": "bool", "name": "isBuying", "type": "bool" },
+          { "internalType": "uint256", "name": "expiry", "type": "uint256" },
+          { "internalType": "uint256", "name": "nonce", "type": "uint256" },
+          { "internalType": "uint8", "name": "v", "type": "uint8" },
+          { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+          { "internalType": "bytes32", "name": "s", "type": "bytes32" }
         ],
-        "internalType": "struct Order",
+        "internalType": "struct ZenBullNetting.Order",
         "name": "_order",
         "type": "tuple"
       }
     ],
     "name": "checkOrder",
-    "outputs": [],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "crab",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "crabBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -538,101 +234,34 @@
     "inputs": [
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "depositsQueued",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minEth",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "totalDeposit",
-            "type": "uint256"
-          },
+          { "internalType": "uint256", "name": "depositsToProcess", "type": "uint256" },
+          { "internalType": "uint256", "name": "crabAmount", "type": "uint256" },
           {
             "components": [
-              {
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "trader",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "quantity",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "price",
-                "type": "uint256"
-              },
-              {
-                "internalType": "bool",
-                "name": "isBuying",
-                "type": "bool"
-              },
-              {
-                "internalType": "uint256",
-                "name": "expiry",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "nonce",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint8",
-                "name": "v",
-                "type": "uint8"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "r",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "s",
-                "type": "bytes32"
-              }
+              { "internalType": "uint256", "name": "bidId", "type": "uint256" },
+              { "internalType": "address", "name": "trader", "type": "address" },
+              { "internalType": "uint256", "name": "quantity", "type": "uint256" },
+              { "internalType": "uint256", "name": "price", "type": "uint256" },
+              { "internalType": "bool", "name": "isBuying", "type": "bool" },
+              { "internalType": "uint256", "name": "expiry", "type": "uint256" },
+              { "internalType": "uint256", "name": "nonce", "type": "uint256" },
+              { "internalType": "uint8", "name": "v", "type": "uint8" },
+              { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+              { "internalType": "bytes32", "name": "s", "type": "bytes32" }
             ],
-            "internalType": "struct Order[]",
+            "internalType": "struct ZenBullNetting.Order[]",
             "name": "orders",
             "type": "tuple[]"
           },
-          {
-            "internalType": "uint256",
-            "name": "clearingPrice",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "ethToFlashDeposit",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint24",
-            "name": "ethUSDFee",
-            "type": "uint24"
-          },
-          {
-            "internalType": "uint24",
-            "name": "flashDepositFee",
-            "type": "uint24"
-          }
+          { "internalType": "uint256", "name": "clearingPrice", "type": "uint256" },
+          { "internalType": "uint256", "name": "flashDepositEthToCrab", "type": "uint256" },
+          { "internalType": "uint256", "name": "flashDepositMinEthFromSqth", "type": "uint256" },
+          { "internalType": "uint256", "name": "flashDepositMinEthFromUsdc", "type": "uint256" },
+          { "internalType": "uint24", "name": "flashDepositWPowerPerpPoolFee", "type": "uint24" },
+          { "internalType": "uint24", "name": "wethUsdcPoolFee", "type": "uint24" }
         ],
-        "internalType": "struct DepositAuctionParams",
-        "name": "_p",
+        "internalType": "struct ZenBullNetting.DepositAuctionParams",
+        "name": "_params",
         "type": "tuple"
       }
     ],
@@ -642,43 +271,12 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "depositUSDC",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "name": "deposits",
     "outputs": [
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
+      { "internalType": "address", "name": "sender", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -686,69 +284,62 @@
   {
     "inputs": [],
     "name": "depositsIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "depositsQueued",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_force",
-        "type": "bool"
-      }
+      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+      { "internalType": "bool", "name": "_force", "type": "bool" }
     ],
-    "name": "dequeueCrab",
+    "name": "dequeueEth",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "ethSqueethPool",
+    "inputs": [
+      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+      { "internalType": "bool", "name": "_force", "type": "bool" }
+    ],
+    "name": "dequeueZenBull",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "ethBalance",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }],
+    "name": "getDepositReceipt",
     "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "ethUsdcPool",
+    "inputs": [{ "internalType": "uint256", "name": "_index", "type": "uint256" }],
+    "name": "getWithdrawReceipt",
     "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -756,54 +347,28 @@
   {
     "inputs": [],
     "name": "isAuctionLive",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "minCrabAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "name": "minEthAmount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "minUSDCAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "name": "minZenBullAmount",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_price",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_quantity",
-        "type": "uint256"
-      }
+      { "internalType": "uint256", "name": "_price", "type": "uint256" },
+      { "internalType": "uint256", "name": "_quantity", "type": "uint256" }
     ],
     "name": "netAtPrice",
     "outputs": [],
@@ -812,258 +377,82 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "name": "nonces",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "oracle",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "otcPriceTolerance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
+  { "inputs": [], "name": "queueEth", "outputs": [], "stateMutability": "payable", "type": "function" },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "queueCrabForWithdrawal",
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
+    "name": "queueZenBull",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
+  { "inputs": [], "name": "renounceOwnership", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "i",
-        "type": "uint256"
-      }
-    ],
-    "name": "rejectWithdraw",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint32",
-        "name": "_auctionTwapPeriod",
-        "type": "uint32"
-      }
-    ],
+    "inputs": [{ "internalType": "uint32", "name": "_auctionTwapPeriod", "type": "uint32" }],
     "name": "setAuctionTwapPeriod",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_newDepositsIndex",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_newDepositsIndex", "type": "uint256" }],
     "name": "setDepositsIndex",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMinCrab",
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
+    "name": "setMinEthAmount",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMinUSDC",
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
+    "name": "setMinZenBullAmount",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_nonce",
-        "type": "uint256"
-      }
-    ],
-    "name": "setNonceTrue",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_otcPriceTolerance",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_otcPriceTolerance", "type": "uint256" }],
     "name": "setOTCPriceTolerance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_newWithdrawsIndex",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_newWithdrawsIndex", "type": "uint256" }],
     "name": "setWithdrawsIndex",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
+  { "inputs": [], "name": "toggleAuctionLive", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
   {
-    "inputs": [],
-    "name": "sqth",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "sqthController",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "sqthTwapPeriod",
-    "outputs": [
-      {
-        "internalType": "uint32",
-        "name": "",
-        "type": "uint32"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "swapRouter",
-    "outputs": [
-      {
-        "internalType": "contract ISwapRouter",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "toggleAuctionLive",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
+    "inputs": [{ "internalType": "address", "name": "newOwner", "type": "address" }],
     "name": "transferOwnership",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -1071,94 +460,32 @@
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
+      { "internalType": "int256", "name": "amount0Delta", "type": "int256" },
+      { "internalType": "int256", "name": "amount1Delta", "type": "int256" },
+      { "internalType": "bytes", "name": "_data", "type": "bytes" }
     ],
-    "name": "usdBalance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "usdc",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "uniswapV3SwapCallback",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "name": "userDepositsIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
+      { "internalType": "address", "name": "", "type": "address" },
+      { "internalType": "uint256", "name": "", "type": "uint256" }
     ],
     "name": "userWithdrawsIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "weth",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -1166,86 +493,30 @@
     "inputs": [
       {
         "components": [
-          {
-            "internalType": "uint256",
-            "name": "crabToWithdraw",
-            "type": "uint256"
-          },
+          { "internalType": "uint256", "name": "withdrawsToProcess", "type": "uint256" },
           {
             "components": [
-              {
-                "internalType": "uint256",
-                "name": "bidId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "address",
-                "name": "trader",
-                "type": "address"
-              },
-              {
-                "internalType": "uint256",
-                "name": "quantity",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "price",
-                "type": "uint256"
-              },
-              {
-                "internalType": "bool",
-                "name": "isBuying",
-                "type": "bool"
-              },
-              {
-                "internalType": "uint256",
-                "name": "expiry",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint256",
-                "name": "nonce",
-                "type": "uint256"
-              },
-              {
-                "internalType": "uint8",
-                "name": "v",
-                "type": "uint8"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "r",
-                "type": "bytes32"
-              },
-              {
-                "internalType": "bytes32",
-                "name": "s",
-                "type": "bytes32"
-              }
+              { "internalType": "uint256", "name": "bidId", "type": "uint256" },
+              { "internalType": "address", "name": "trader", "type": "address" },
+              { "internalType": "uint256", "name": "quantity", "type": "uint256" },
+              { "internalType": "uint256", "name": "price", "type": "uint256" },
+              { "internalType": "bool", "name": "isBuying", "type": "bool" },
+              { "internalType": "uint256", "name": "expiry", "type": "uint256" },
+              { "internalType": "uint256", "name": "nonce", "type": "uint256" },
+              { "internalType": "uint8", "name": "v", "type": "uint8" },
+              { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+              { "internalType": "bytes32", "name": "s", "type": "bytes32" }
             ],
-            "internalType": "struct Order[]",
+            "internalType": "struct ZenBullNetting.Order[]",
             "name": "orders",
             "type": "tuple[]"
           },
-          {
-            "internalType": "uint256",
-            "name": "clearingPrice",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minUSDC",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint24",
-            "name": "ethUSDFee",
-            "type": "uint24"
-          }
+          { "internalType": "uint256", "name": "clearingPrice", "type": "uint256" },
+          { "internalType": "uint256", "name": "maxWethForUsdc", "type": "uint256" },
+          { "internalType": "uint24", "name": "wethUsdcPoolFee", "type": "uint24" }
         ],
-        "internalType": "struct WithdrawAuctionParams",
-        "name": "_p",
+        "internalType": "struct ZenBullNetting.WithdrawAuctionParams",
+        "name": "_params",
         "type": "tuple"
       }
     ],
@@ -1255,48 +526,12 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bool",
-        "name": "_force",
-        "type": "bool"
-      }
-    ],
-    "name": "withdrawUSDC",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "name": "withdraws",
     "outputs": [
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
+      { "internalType": "address", "name": "sender", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" },
+      { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
     ],
     "stateMutability": "view",
     "type": "function"
@@ -1304,31 +539,23 @@
   {
     "inputs": [],
     "name": "withdrawsIndex",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "withdrawsQueued",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
-    "stateMutability": "payable",
-    "type": "receive"
-  }
+    "inputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "name": "zenBullBalance",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  { "stateMutability": "payable", "type": "receive" }
 ]
