@@ -44,7 +44,7 @@ const useStyles = makeStyles((theme) =>
       overflow: 'hidden',
     },
     nav: {
-      padding: `32px ${vwCalculator(120)}`,
+      padding: `8px ${vwCalculator(120)}`,
       borderBottom: '1px solid #333333',
       display: 'flex',
       alignItems: 'center',
@@ -74,7 +74,7 @@ const useStyles = makeStyles((theme) =>
     },
     navStartEarningButton: {
       backgroundColor: theme.palette.primary.main,
-      padding: `20px ${vwCalculator(18)}`,
+      padding: `15px ${vwCalculator(18)}`,
       fontFamily: 'Avenir',
       fontWeight: 800,
       fontSize: '18px',
@@ -96,7 +96,7 @@ const useStyles = makeStyles((theme) =>
     background2: {
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackgroundDown.src})`,
-      height: `${vwCalculator(2800)}`,
+      height: `${vwCalculator(2200)}`,
       width: '90vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'left',
@@ -104,7 +104,8 @@ const useStyles = makeStyles((theme) =>
     content: {},
     introSection: {
       display: 'flex',
-      padding: `80px ${vwCalculator(150)}`,
+      padding: `60px ${vwCalculator(150)}`,
+      paddingBottom: '30px',
       alignItems: 'center',
       [theme.breakpoints.down('md')]: {
         gap: '30px',
@@ -154,7 +155,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: `${vwCalculator(284)}`,
-      marginTop: '70px',
     },
     statSectionItem: {
       display: 'flex',
@@ -180,7 +180,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       padding: `${vwCalculator(120)}`,
       alignItems: 'center',
-      marginTop: '300px',
+      marginTop: '150px',
       [theme.breakpoints.down('md')]: {
         gap: '30px',
       },
@@ -240,7 +240,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       padding: `${vwCalculator(120)}`,
       alignItems: 'center',
-      marginTop: '100px',
+      marginTop: '0px',
       [theme.breakpoints.down('md')]: {
         gap: '30px',
       },
@@ -507,7 +507,7 @@ function DesktopLandingPage() {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: '100px' }} />
+        <div style={{ marginTop: '50px' }} />
       </div>
       <div className={classes.footer}>
         <div className={classes.footerLinks}>
