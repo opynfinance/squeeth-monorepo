@@ -489,7 +489,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 IERC20(zenBull).transfer(deposit.sender, amountToSend);
 
                 emit NetAtPrice(true, deposit.sender, _quantity, amountToSend, i);
-                _quantity = 0;
+                break;
             }
         }
         depositsIndex = i;
@@ -522,7 +522,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                 emit NetAtPrice(false, withdraw.sender, zenBullQuantity, amountToSend, i);
 
-                zenBullQuantity = 0;
+                break;
             }
         }
         withdrawsIndex = i;
