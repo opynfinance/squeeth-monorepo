@@ -109,6 +109,8 @@ export const useSetBullState = () => {
   const etokenContract = useAtomValue(wethETokenContractAtom)
   const auctionBullContract = useAtomValue(auctionBullContractAtom)
   const eulerLenseContract = useAtomValue(eulerLensContractAtom)
+  const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
+
   const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
   const setBullSupply = useUpdateAtom(bullSupplyAtom)
   const setEulerWeth = useUpdateAtom(bullEulerWethCollatPerShareAtom)
@@ -120,7 +122,6 @@ export const useSetBullState = () => {
   const setUsdcBorrowRate = useUpdateAtom(eulerUsdcBorrowRateAtom)
   const setEthLendRate = useUpdateAtom(eulerETHLendRateAtom)
   const setTotalUSDCInEuler = useUpdateAtom(bullEulerUSDCDebtAtom)
-  const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
 
   const isMounted = useMountedState()
 
