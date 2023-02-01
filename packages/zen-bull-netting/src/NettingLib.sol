@@ -13,6 +13,110 @@ import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
 import { IFlashZen } from "./interface/IFlashZen.sol";
 
 library NettingLib {
+    event DepositAuction(address indexed trader, uint256 indexed bidId, uint256 quantity);
+    event WithdrawAuction(
+        address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
+    );
+
+    /**
+     *
+     */
+    /**
+     * Functions that change contract state through delegate call ********************************
+     */
+    /**
+     *
+     */
+
+    function transferWethFromMarketMakers(
+        address weth,
+        address trader,
+        uint256 quantity,
+        uint256 oSqthToMint,
+        uint256 clearingPrice
+    ) external returns (bool, uint256) {
+        if (quantity >= oSqthToMint) {
+            IWETH(weth).transferFrom(trader, address(this), (oSqthToMint * clearingPrice) / 1e18);
+
+            return (true, 0);
+        } else {
+            IWETH(weth).transferFrom(trader, address(this), (quantity * clearingPrice) / 1e18);
+
+            return (false, (oSqthToMint - quantity));
+        }
+    }
+
+    function transferOsqthFromMarketMakers(
+        address oSqth,
+        address trader,
+        uint256 toExchange,
+        uint256 quantity
+    ) internal returns (bool, uint256) {
+        if (quantity < toExchange) {
+            IERC20(oSqth).transferFrom(trader, address(this), quantity);
+            return (false, (toExchange - quantity));
+        } else {
+            IERC20(oSqth).transferFrom(trader, address(this), toExchange);
+            return (true, 0);
+        }
+    }
+
+    function transferOsqthToMarketMakers(
+        address oSqth,
+        address trader,
+        uint256 bidId,
+        uint256 oSqthBalance,
+        uint256 quantity
+    ) external returns (bool, uint256) {
+        if (quantity < oSqthBalance) {
+            IERC20(oSqth).transfer(trader, quantity);
+
+            emit DepositAuction(trader, bidId, quantity);
+
+            return (false, (oSqthBalance - quantity));
+        } else {
+            IERC20(oSqth).transfer(trader, oSqthBalance);
+
+            emit DepositAuction(trader, bidId, oSqthBalance);
+
+            return (true, 0);
+        }
+    }
+
+    function transferWethToMarketMaker(
+        address weth,
+        address trader,
+        uint256 bidId,
+        uint256 toExchange,
+        uint256 quantity,
+        uint256 clearingPrice
+    ) external returns (uint256) {
+        uint256 oSqthQuantity;
+
+        if (quantity < toExchange) {
+            oSqthQuantity = quantity;
+        } else {
+            oSqthQuantity = toExchange;
+        }
+
+        IERC20(weth).transfer(trader, (oSqthQuantity * clearingPrice) / 1e18);
+        toExchange -= oSqthQuantity;
+
+        emit WithdrawAuction(trader, bidId, oSqthQuantity, clearingPrice);
+
+        return toExchange;
+    }
+
+    /**
+     *
+     */
+    /**
+     * View that change contract state through delegate call ********************************
+     */
+    /**
+     *
+     */
+
     function getCrabPrice(
         address oracle,
         address crab,
