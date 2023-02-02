@@ -20,6 +20,8 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -696,6 +698,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 initialEthBalance = address(this).balance;
         uint256 oSqthAmount = NettingLib.calcOsqthAmount(zenBull, crab, _params.withdrawsToProcess);
 
+        console.log("oSqthAmount", oSqthAmount);
+
         // get oSQTH from market makers orders
         uint256 toExchange = oSqthAmount;
         for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
@@ -712,9 +716,12 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             if (shouldBreak) break;
         }
 
-        uint256 usdcToRepay = _params.withdrawsToProcess
-            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
-            / IERC20(zenBull).totalSupply();
+        // uint256 usdcToRepay = _params.withdrawsToProcess
+        //     * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
+        //     / IERC20(zenBull).totalSupply();
+
+        uint256 usdcToRepay = (_params.withdrawsToProcess * 1e18 / IERC20(zenBull).totalSupply())
+            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) / 1e18;
 
         // WETH-USDC swap
         _exactOutFlashSwap(
@@ -797,6 +804,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     ) internal override {
         if (callSource == 0) {
             uint256 zenBullAmountToBurn = abi.decode(callData, (uint256));
+
+            console.log("zenBullAmountToBurn", zenBullAmountToBurn);
 
             IZenBullStrategy(zenBull).withdraw(zenBullAmountToBurn);
             IWETH(weth).deposit{value: amountToPay}();

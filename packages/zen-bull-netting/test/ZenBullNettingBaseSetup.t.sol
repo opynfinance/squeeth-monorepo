@@ -114,4 +114,14 @@ contract ZenBullNettingBaseSetup is Test {
             ZEN_BULL, EULER_SIMPLE_LENS, USDC, WETH, crabFairPriceInEth, ethUsdcPrice
         );
     }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256) {
+        // add(mul(x, y), WAD / 2) / WAD;
+        return ((x * y) + (1e18 / 2)) / 1e18;
+    }
+
+    function div(uint256 x, uint256 y) internal pure returns (uint256) {
+        // add(mul(x, WAD), y / 2) / y;
+        return ((x * 1e18) + (y / 2)) / y;
+    }
 }

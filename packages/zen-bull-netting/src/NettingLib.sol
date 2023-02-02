@@ -172,9 +172,20 @@ library NettingLib {
         returns (uint256)
     {
         uint256 bullTotalSupply = IERC20(zenBull).totalSupply();
-        uint256 crabAmount =
-            withdrawsToProcess * IZenBullStrategy(zenBull).getCrabBalance() / bullTotalSupply;
         (, uint256 crabDebt) = IZenBullStrategy(zenBull).getCrabVaultDetails();
-        return (crabAmount * crabDebt / IERC20(crab).totalSupply());
+        uint256 share = div(withdrawsToProcess, bullTotalSupply);
+        uint256 crabAmount = mul(share, IZenBullStrategy(zenBull).getCrabBalance());
+
+        return div(mul(crabAmount, crabDebt), IERC20(crab).totalSupply());
+    }
+
+    function mul(uint256 x, uint256 y) internal pure returns (uint256) {
+        // add(mul(x, y), WAD / 2) / WAD;
+        return ((x * y) + (1e18 / 2)) / 1e18;
+    }
+
+    function div(uint256 x, uint256 y) internal pure returns (uint256) {
+        // add(mul(x, WAD), y / 2) / y;
+        return ((x * 1e18) + (y / 2)) / y;
     }
 }
