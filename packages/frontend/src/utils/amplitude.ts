@@ -26,6 +26,7 @@ export const initializeAmplitude = () => {
         trackNewCampaigns: true,
       },
       optOut,
+      serverUrl: '/api/amplitude',
     })
   })
 }
