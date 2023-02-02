@@ -1,16 +1,17 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useState } from 'react'
+import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useTransactionStatus } from '@state/wallet/hooks'
+import { useBullPosition } from '@hooks/useBullPosition'
+import { addressAtom } from '@state/wallet/atoms'
+import { bullEthValuePerShareAtom } from '@state/bull/atoms'
 import BullDeposit from './Deposit'
 import BullWithdraw from './Withdraw'
-import { useBullPosition } from '@hooks/useBullPosition'
-import { useAtomValue } from 'jotai'
-import { addressAtom } from '@state/wallet/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -68,6 +69,31 @@ export interface BullTransactionConfirmation {
   txId?: string
 }
 
+const TxConfirmation: React.FC<{ txnData: BullTransactionConfirmation; txnHash: string; onClose: () => void }> = ({
+  txnData,
+  txnHash,
+  onClose,
+}) => {
+  const bullEthValue = useAtomValue(bullEthValuePerShareAtom)
+
+  const isDepositTx = txnData?.tradeType === BullTradeType.Deposit
+  const txAmount = txnData?.amount
+  const txAmountInEth = isDepositTx ? txAmount : new BigNumber(txAmount).times(bullEthValue)
+
+  return (
+    <>
+      <Confirmed
+        confirmationMessage={`${isDepositTx ? `Deposited` : `Withdrawn`} ${txAmountInEth.toFixed(4)} ETH`}
+        txnHash={txnHash}
+        confirmType={ConfirmType.BULL}
+      />
+      <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
+        Close
+      </PrimaryButtonNew>
+    </>
+  )
+}
+
 const BullTrade: React.FC = () => {
   const [tradeType, setTradeType] = useState(BullTradeType.Deposit)
   const isDeposit = tradeType === BullTradeType.Deposit
@@ -99,18 +125,7 @@ const BullTrade: React.FC = () => {
   return (
     <>
       {confirmed && confirmedTransactionData?.status ? (
-        <>
-          <Confirmed
-            confirmationMessage={`${
-              confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
-            } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
-            txnHash={transactionData?.hash ?? ''}
-            confirmType={ConfirmType.BULL}
-          />
-          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
-            Close
-          </PrimaryButtonNew>
-        </>
+        <TxConfirmation txnData={confirmedTransactionData} txnHash={transactionData?.hash ?? ''} onClose={onClose} />
       ) : (
         <>
           <SqueethTabsNew
