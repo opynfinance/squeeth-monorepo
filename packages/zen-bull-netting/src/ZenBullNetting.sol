@@ -799,8 +799,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         if (callSource == 0) {
             uint256 zenBullAmountToBurn = abi.decode(callData, (uint256));
 
-            console.log("zenBullAmountToBurn", zenBullAmountToBurn);
-
             IZenBullStrategy(zenBull).withdraw(zenBullAmountToBurn);
             IWETH(weth).deposit{value: amountToPay}();
             IWETH(weth).transfer(pool, amountToPay);
