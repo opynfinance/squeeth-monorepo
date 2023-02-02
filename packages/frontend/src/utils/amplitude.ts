@@ -22,6 +22,7 @@ export const initializeAmplitude = () => {
       trackNewCampaigns: true,
     },
     serverUrl: '/api/amplitude',
+    disableCookies: true,
   })
 }
 
