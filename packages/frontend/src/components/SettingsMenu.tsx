@@ -213,7 +213,7 @@ const SettingMenu = () => {
             </ListItem>
           </List>
           <Typography>The app uses the following third-party APIs:</Typography>
-          <List>
+          <List style={{ maxHeight: '400px', overflow: 'auto' }}>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
@@ -240,6 +240,13 @@ const SettingMenu = () => {
                 <ListItemText>Fathom</ListItemText>
               </Typography>
               <ListItemText>This app logs anonymized usage data to make improvements</ListItemText>
+            </ListItem>
+            <ListItem className={classes.thirdPartyItems}>
+              <Typography className={classes.thirdPartyTitle}>
+                <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
+                <ListItemText>Amplitude</ListItemText>
+              </Typography>
+              <ListItemText>The app logs anonymized usage statistics in order to improve over time.</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>

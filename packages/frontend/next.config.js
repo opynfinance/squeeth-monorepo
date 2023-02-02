@@ -17,7 +17,7 @@ const moduleExports = {
     return [
       {
         source: '/api/amplitude',
-        destination: 'https://api2.amplitude.com/',
+        destination: 'https://api.eu.amplitude.com/2/httpapi',
       },
     ]
   },
