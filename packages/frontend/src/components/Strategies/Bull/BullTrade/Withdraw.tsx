@@ -290,15 +290,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     onInputChange(bullPositionValueInEth.toString())
   }
 
-  const onChangeSlippage = useCallback(
-    (amount: BigNumber) => {
-      track(BULL_EVENTS.WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
-      setSlippage(amount.toNumber())
-      onInputChange(withdrawAmount)
-    },
-    [withdrawAmount, setSlippage, onInputChange, track],
-  )
-
   // Update withdraw step
   useEffect(() => {
     if (useQueue) {
@@ -358,6 +349,15 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
 
     return priceImpact
   }, [totalDepositsQueued, totalWithdrawsQueued, useQueue, withdrawAmountBN, quote.priceImpact])
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(BULL_EVENTS.WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+      onInputChange(withdrawAmount)
+    },
+    [withdrawAmount, setSlippage, onInputChange, track],
+  )
 
   const isLoading = txLoading || quoteLoading
 

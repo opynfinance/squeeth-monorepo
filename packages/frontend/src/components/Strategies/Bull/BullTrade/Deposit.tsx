@@ -265,15 +265,6 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     onInputChange(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
   }
 
-  const onChangeSlippage = useCallback(
-    (amount: BigNumber) => {
-      track(BULL_EVENTS.DEPOSIT_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
-      setSlippage(amount.toNumber())
-      onInputChange(depositAmount)
-    },
-    [track, setSlippage, depositAmount, onInputChange],
-  )
-
   const minEthAmount = toTokenAmount(minEthAmountValue, WETH_DECIMALS)
   const isDepositAmountLessThanMin = depositAmountBN.lt(minEthAmount)
 
@@ -312,6 +303,15 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
     return priceImpact
   }, [depositAmountBN, quote.priceImpact, totalDepositsQueued, totalWithdrawsQueued, useQueue])
+
+  const onChangeSlippage = useCallback(
+    (amount: BigNumber) => {
+      track(BULL_EVENTS.DEPOSIT_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
+      setSlippage(amount.toNumber())
+      onInputChange(depositAmount)
+    },
+    [track, setSlippage, depositAmount, onInputChange],
+  )
 
   const isLoading = txLoading || quoteLoading
 
