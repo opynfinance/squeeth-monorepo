@@ -210,6 +210,23 @@ export const useSetBullUserState = () => {
   return setBullUserState
 }
 
+export const useEthToBull = () => {
+  const bullEthValue = useAtomValue(bullEthValuePerShareAtom)
+
+  const getEthToBull = useAppCallback(
+    (ethAmount: BigNumber) => {
+      if (bullEthValue.isZero()) {
+        return BIG_ZERO
+      }
+
+      return ethAmount.div(bullEthValue)
+    },
+    [bullEthValue],
+  )
+
+  return getEthToBull
+}
+
 export const useGetFlashBulldepositParams = () => {
   const bullStrategyContract = useAtomValue(bullStrategyContractAtom)
   const crabV2Vault = useAtomValue(crabStrategyVaultAtomV2)

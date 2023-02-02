@@ -3,10 +3,10 @@ import { Box, Typography, CircularProgress } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
 import clsx from 'clsx'
 
-import { formatCurrency } from '@utils/formatter'
+import { formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
 import { BIG_ZERO, WETH_DECIMALS, ZENBULL_TOKEN_DECIMALS } from '@constants/index'
-import { ethQueuedAtom, zenBullQueuedAtom, isNettingAuctionLiveAtom } from '@state/bull/atoms'
+import { ethQueuedAtom, zenBullQueuedAtom, isNettingAuctionLiveAtom, bullEthValuePerShareAtom } from '@state/bull/atoms'
 import { useDequeueDepositEth, useDequeueWithdrawZenBull } from '@state/bull/hooks'
 import { useTransactionStatus } from '@state/wallet/hooks'
 import { toTokenAmount } from '@utils/calculations'
@@ -41,7 +41,7 @@ const DepositQueued: React.FC = () => {
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
         <Typography className={clsx(classes.heading, classes.textMonospace)}>
-          {formatCurrency(Number(toTokenAmount(ethQueued, WETH_DECIMALS)))}
+          {formatNumber(Number(toTokenAmount(ethQueued, WETH_DECIMALS)))} ETH
         </Typography>
         {!isNettingAuctionLive && (
           <TextButton color="primary" disabled={txLoading} onClick={onDequeueEth}>
@@ -56,6 +56,7 @@ const DepositQueued: React.FC = () => {
 const WithdrawQueued: React.FC = () => {
   const [zenBullQueued, setZenBullQueued] = useAtom(zenBullQueuedAtom)
   const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
+  const bullEthValue = useAtomValue(bullEthValuePerShareAtom)
   const [txLoading, setTxLoading] = useState(false)
 
   const dequeueZenBull = useDequeueWithdrawZenBull()
@@ -74,6 +75,8 @@ const WithdrawQueued: React.FC = () => {
 
   const classes = useStyles()
 
+  const withdrawalValueInEth = toTokenAmount(zenBullQueued, ZENBULL_TOKEN_DECIMALS).times(bullEthValue)
+
   return (
     <Box display="flex" flexDirection="column" gridGap="8px">
       <Typography variant="h4" className={classes.sectionTitle}>
@@ -82,8 +85,7 @@ const WithdrawQueued: React.FC = () => {
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
         <Typography className={clsx(classes.heading, classes.textMonospace)}>
-          {/* todo: calc the usd value of zenbull token */}
-          {formatCurrency(Number(toTokenAmount(zenBullQueued, ZENBULL_TOKEN_DECIMALS)))}
+          {formatNumber(Number(withdrawalValueInEth))} ETH
         </Typography>
         {!isNettingAuctionLive && (
           <TextButton color="primary" disabled={txLoading} onClick={onDeQueueCrab}>
@@ -101,11 +103,8 @@ const QueuedPosition: React.FC = () => {
 
   // ignore dust amount
   // todo: come back here to see if eth's dust amount is fine
-  // const showQueuedDeposit = ethQueued.isGreaterThan('100')
-  // const showQueuedWithdraw = zenBullQueued.isGreaterThan('10000000000')
-
-  const showQueuedDeposit = true
-  const showQueuedWithdraw = true
+  const showQueuedDeposit = ethQueued.isGreaterThan('100')
+  const showQueuedWithdraw = zenBullQueued.isGreaterThan('10000000000')
 
   if (!showQueuedDeposit && !showQueuedWithdraw) {
     return null

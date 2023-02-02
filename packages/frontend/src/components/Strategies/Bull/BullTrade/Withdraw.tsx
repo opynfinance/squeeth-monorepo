@@ -28,7 +28,12 @@ import {
   NETTING_PRICE_IMPACT,
   AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
-import { useGetFlashWithdrawParams, useBullFlashWithdraw, useQueueWithdrawZenBull } from '@state/bull/hooks'
+import {
+  useGetFlashWithdrawParams,
+  useBullFlashWithdraw,
+  useQueueWithdrawZenBull,
+  useEthToBull,
+} from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
@@ -85,7 +90,6 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const [userOverrode, setUserOverrode] = useState(false)
 
   const negativeReturnsError = false
-  const { isRestricted } = useRestrictUser()
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const bullPositionValueInEth = useAtomValue(bullCurrentETHPositionAtom)
@@ -94,18 +98,19 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const minZenBullAmountValue = useAtomValue(minZenBullAmountAtom)
   const totalDepositsQueued = useAtomValue(totalEthQueuedAtom)
   const totalWithdrawsQueued = useAtomValue(totalZenBullQueuedAtom)
-
-  const selectWallet = useSelectWallet()
-
   const index = useAtomValue(indexAtom)
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
 
+  const selectWallet = useSelectWallet()
+  const { isRestricted } = useRestrictUser()
+
   const { bullStrategy, flashBull, bullNetting } = useAtomValue(addressesAtom)
   const { value: bullBalance } = useTokenBalance(bullStrategy, 15, WETH_DECIMALS)
   const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, flashBull)
   const { allowance: bullQueueAllowance, approve: approveQueueBull } = useUserAllowance(bullStrategy, bullNetting)
+  const ethToBull = useEthToBull()
 
   const [quote, setQuote] = useState({
     maxEthForWPowerPerp: BIG_ZERO,
@@ -131,6 +136,10 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
     [track],
   )
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
+
+  const withdrawZenBullAmount = useAppMemo(() => {
+    return ethToBull(withdrawAmountBN || BIG_ZERO)
+  }, [withdrawAmountBN, ethToBull])
 
   const showPriceImpactWarning = useAppMemo(() => {
     const squeethPrice = quote.ethInForSqth.div(quote.oSqthOut).times(1 - UNI_POOL_FEES / 1000_000)
@@ -289,20 +298,19 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   // Update withdraw step
   useEffect(() => {
     if (useQueue) {
-      // todo: check if bullQueueAllowance and withdrawAmount are comparable
-      if (bullQueueAllowance.lt(withdrawAmount)) {
+      if (bullQueueAllowance.lt(withdrawZenBullAmount)) {
         setWithdrawStep(WithdrawSteps.APPROVE)
       } else {
         setWithdrawStep(WithdrawSteps.WITHDRAW)
       }
     } else {
-      if (bullAllowance.lt(withdrawAmount)) {
+      if (bullAllowance.lt(withdrawZenBullAmount)) {
         setWithdrawStep(WithdrawSteps.APPROVE)
       } else {
         setWithdrawStep(WithdrawSteps.WITHDRAW)
       }
     }
-  }, [useQueue, bullQueueAllowance, withdrawAmount, bullAllowance])
+  }, [useQueue, bullQueueAllowance, withdrawZenBullAmount, bullAllowance])
 
   const minZenBullAmount = toTokenAmount(minZenBullAmountValue, ZENBULL_TOKEN_DECIMALS)
   const isWithdrawZenBullLessThanMin = withdrawAmountBN.lt(minZenBullAmount)
