@@ -283,7 +283,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.expectRevert(bytes("ZBN12"));
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
     }
-    
+
     function testNetAtPriceWhenCallerIsRandom() public {
         uint256 ethToQueue = 10e18;
         uint256 zenBullFairPrice = getZenBullPrice();

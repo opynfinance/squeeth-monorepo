@@ -99,7 +99,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     address private immutable eulerLens;
     address private immutable crab;
     address private immutable flashZenBull;
-    
+
     address public bot;
 
     /// @dev array of ETH deposit receipts
