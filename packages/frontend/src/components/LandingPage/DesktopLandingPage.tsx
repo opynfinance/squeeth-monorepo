@@ -87,7 +87,7 @@ const useStyles = makeStyles((theme) =>
     background1: {
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackground.src})`,
-      height: `${vwCalculator(1300)}`,
+      height: `70vw`,
       width: '100%',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right',
@@ -96,7 +96,7 @@ const useStyles = makeStyles((theme) =>
     background2: {
       position: 'absolute',
       backgroundImage: `url(${LandingPageBackgroundDown.src})`,
-      height: `${vwCalculator(2200)}`,
+      height: `155vw`,
       width: '90vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'left',
@@ -104,8 +104,8 @@ const useStyles = makeStyles((theme) =>
     content: {},
     introSection: {
       display: 'flex',
-      padding: `60px ${vwCalculator(150)}`,
-      paddingBottom: '30px',
+      padding: `80px ${vwCalculator(150)}`,
+      paddingBottom: '28px',
       alignItems: 'center',
       [theme.breakpoints.down('md')]: {
         gap: '30px',
@@ -155,6 +155,7 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       justifyContent: 'center',
       gap: `${vwCalculator(284)}`,
+      marginTop: '68px',
     },
     statSectionItem: {
       display: 'flex',
