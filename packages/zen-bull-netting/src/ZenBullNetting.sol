@@ -45,6 +45,7 @@ import { NettingLib } from "./NettingLib.sol";
  * ZBN21: auction order is not buying
  * ZBN22: buy order price greater than clearing
  * ZBN23: not enough buy orders for sqth
+ * ZBN24: not authorized to perform netting at price
  */
 
 /**
@@ -98,6 +99,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     address private immutable eulerLens;
     address private immutable crab;
     address private immutable flashZenBull;
+    
+    address public bot;
 
     /// @dev array of ETH deposit receipts
     Receipt[] public deposits;
@@ -223,6 +226,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 ethAmount,
         uint256 indexed receiptIndex
     );
+    event SetBot(address bot);
     /// @dev shared events with the NettingLib for client side to detect them
     event DepositAuction(address indexed trader, uint256 indexed bidId, uint256 quantity);
     event WithdrawAuction(
@@ -341,6 +345,16 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     }
 
     /**
+     * @notice set bot address
+     * @param _bot bot address
+     */
+    function setBot(address _bot) external onlyOwner {
+        bot = _bot;
+
+        emit SetBot(_bot);
+    }
+
+    /**
      * @notice queue ETH for deposit into ZenBull
      * @dev payable function
      */
@@ -450,7 +464,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @param _price price of ZenBull in ETH
      * @param _quantity amount of ETH to net
      */
-    function netAtPrice(uint256 _price, uint256 _quantity) external onlyOwner {
+    function netAtPrice(uint256 _price, uint256 _quantity) external {
+        require((msg.sender == owner()) || (msg.sender == bot), "ZBN24");
+
         uint256 zenBullFairPrice = _getZenBullPrice();
 
         require(_price <= (zenBullFairPrice * (1e18 + otcPriceTolerance)) / 1e18, "ZBN12");
