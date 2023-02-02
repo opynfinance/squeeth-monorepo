@@ -69,19 +69,25 @@ const useLabelStyles = makeStyles((theme) =>
       color: 'rgba(255, 255, 255, 0.5)',
     },
     label: {
-      fontSize: '15px',
+      fontSize: (props: StyleProps): string => (props.isSmall ? '14px' : '15px'),
       fontWeight: 500,
       width: 'max-content',
     },
     infoIcon: {
-      fontSize: '15px',
+      fontSize: (props: StyleProps): string => (props.isSmall ? '14px' : '15px'),
       marginLeft: theme.spacing(0.5),
     },
   }),
 )
 
-export const MetricLabel: React.FC<{ label: string; tooltipTitle?: string }> = ({ label, tooltipTitle }) => {
-  const classes = useLabelStyles()
+interface MetricLabelProps {
+  label: string
+  tooltipTitle?: string
+  isSmall?: boolean
+}
+
+export const MetricLabel: React.FC<MetricLabelProps> = ({ label, tooltipTitle, isSmall = false }) => {
+  const classes = useLabelStyles({ isSmall })
 
   return (
     <div className={classes.labelContainer}>
