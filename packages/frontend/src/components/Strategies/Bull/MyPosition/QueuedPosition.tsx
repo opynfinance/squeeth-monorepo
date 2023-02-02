@@ -62,7 +62,7 @@ const WithdrawQueued: React.FC = () => {
   const dequeueZenBull = useDequeueWithdrawZenBull()
   const { resetTransactionData } = useTransactionStatus()
 
-  const onDeQueueCrab = async () => {
+  const onDequeueBull = async () => {
     setTxLoading(true)
     try {
       await dequeueZenBull(zenBullQueued, resetTransactionData)
@@ -88,7 +88,7 @@ const WithdrawQueued: React.FC = () => {
           {formatNumber(Number(withdrawalValueInEth))} ETH
         </Typography>
         {!isNettingAuctionLive && (
-          <TextButton color="primary" disabled={txLoading} onClick={onDeQueueCrab}>
+          <TextButton color="primary" disabled={txLoading} onClick={onDequeueBull}>
             {!txLoading ? 'Cancel' : <CircularProgress color="primary" size="1.5rem" />}
           </TextButton>
         )}
