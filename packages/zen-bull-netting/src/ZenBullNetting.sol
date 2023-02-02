@@ -233,7 +233,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
     );
     event CancelNonce(address trader, uint256 nonce);
-    
+
     constructor(
         address _zenBull,
         address _eulerSimpleLens,
