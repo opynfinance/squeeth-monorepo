@@ -232,7 +232,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     event WithdrawAuction(
         address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
     );
-
+    event CancelNonce(address trader, uint256 nonce);
+    
     constructor(
         address _zenBull,
         address _eulerSimpleLens,
@@ -352,6 +353,16 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         bot = _bot;
 
         emit SetBot(_bot);
+    }
+
+    /**
+     * @dev cancel nonce by marking it as used
+     * @param _nonce nonce to cancel
+     */
+    function cancelNonce(uint256 _nonce) external {
+        nonces[msg.sender][_nonce] = true;
+
+        emit CancelNonce(msg.sender, _nonce);
     }
 
     /**
