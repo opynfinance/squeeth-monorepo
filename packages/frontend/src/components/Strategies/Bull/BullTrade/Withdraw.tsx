@@ -60,8 +60,7 @@ import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 import { useZenBullStyles } from './styles'
-import { BullTradeType, BullTransactionConfirmation } from './index'
-import { OngoingTransaction } from './types'
+import { OngoingTransaction, BullTradeType, BullTransactionConfirmation, BullTradeTransactionType } from './types'
 
 enum WithdrawSteps {
   APPROVE = 'Approve ZenBull',
@@ -211,6 +210,9 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
         status: true,
         amount: transaction.amount,
         tradeType: BullTradeType.Withdraw,
+        transactionType: transaction.queuedTransaction
+          ? BullTradeTransactionType.Queued
+          : BullTradeTransactionType.Instant,
         txId: id,
       })
       onInputChange('0')
@@ -313,7 +315,7 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   }, [useQueue, bullQueueAllowance, withdrawZenBullAmount, bullAllowance])
 
   const minZenBullAmount = toTokenAmount(minZenBullAmountValue, ZENBULL_TOKEN_DECIMALS)
-  const isWithdrawZenBullLessThanMin = withdrawAmountBN.lt(minZenBullAmount)
+  const isWithdrawZenBullLessThanMin = withdrawZenBullAmount.lt(minZenBullAmount)
 
   useEffect(() => {
     if (isNettingAuctionLive || isWithdrawZenBullLessThanMin) {

@@ -47,8 +47,7 @@ import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
 import { useZenBullStyles } from './styles'
-import { BullTradeType, BullTransactionConfirmation } from './index'
-import { OngoingTransaction } from './types'
+import { OngoingTransaction, BullTradeTransactionType, BullTradeType, BullTransactionConfirmation } from './types'
 
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
@@ -165,6 +164,9 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
         status: true,
         amount: transaction.amount,
         tradeType: BullTradeType.Deposit,
+        transactionType: transaction.queuedTransaction
+          ? BullTradeTransactionType.Queued
+          : BullTradeTransactionType.Instant,
         txId: id,
       })
       onInputChange('0')

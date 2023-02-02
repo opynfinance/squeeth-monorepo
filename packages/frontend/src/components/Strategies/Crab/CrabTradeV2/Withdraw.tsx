@@ -294,8 +294,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     (id?: string) => {
       if (!ongoingTransaction.current) return
       const transaction = ongoingTransaction.current
-      if (transaction.queuedTransaction)
+      if (transaction.queuedTransaction) {
         setCrabQueued(crabQueued.plus(fromTokenAmount(transaction.amount, CRAB_TOKEN_DECIMALS)))
+      }
+
       onTxnConfirm({
         status: true,
         amount: transaction.amount,

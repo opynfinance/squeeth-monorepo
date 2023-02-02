@@ -1,6 +1,6 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
@@ -12,6 +12,7 @@ import { addressAtom } from '@state/wallet/atoms'
 import { bullEthValuePerShareAtom } from '@state/bull/atoms'
 import BullDeposit from './Deposit'
 import BullWithdraw from './Withdraw'
+import { BullTradeType, BullTransactionConfirmation, BullTradeTransactionType } from './types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -57,18 +58,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export enum BullTradeType {
-  Deposit = 'Deposit',
-  Withdraw = 'Withdraw',
-}
-
-export interface BullTransactionConfirmation {
-  status: boolean
-  amount: BigNumber
-  tradeType: BullTradeType
-  txId?: string
-}
-
 const TxConfirmation: React.FC<{ txnData: BullTransactionConfirmation; txnHash: string; onClose: () => void }> = ({
   txnData,
   txnHash,
@@ -77,16 +66,31 @@ const TxConfirmation: React.FC<{ txnData: BullTransactionConfirmation; txnHash: 
   const bullEthValue = useAtomValue(bullEthValuePerShareAtom)
 
   const isDepositTx = txnData?.tradeType === BullTradeType.Deposit
+  const isQueuedTx = txnData?.transactionType === BullTradeTransactionType.Queued
+
   const txAmount = txnData?.amount
   const txAmountInEth = isDepositTx ? txAmount : new BigNumber(txAmount).times(bullEthValue)
+  const formattedTxAmount = txAmountInEth.toFixed(4)
+
+  const confirmationMessage = useMemo(() => {
+    if (isDepositTx) {
+      if (isQueuedTx) {
+        return `Initiated ${formattedTxAmount} ETH deposit`
+      } else {
+        return `Deposited ${formattedTxAmount} ETH`
+      }
+    } else {
+      if (isQueuedTx) {
+        return `Initiated ${formattedTxAmount} ETH withdraw`
+      } else {
+        return `Withdrawn ${formattedTxAmount} ETH`
+      }
+    }
+  }, [isDepositTx, isQueuedTx, formattedTxAmount])
 
   return (
     <>
-      <Confirmed
-        confirmationMessage={`${isDepositTx ? `Deposited` : `Withdrawn`} ${txAmountInEth.toFixed(4)} ETH`}
-        txnHash={txnHash}
-        confirmType={ConfirmType.BULL}
-      />
+      <Confirmed confirmationMessage={confirmationMessage} txnHash={txnHash} confirmType={ConfirmType.BULL} />
       <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
         Close
       </PrimaryButtonNew>

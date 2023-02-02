@@ -45,9 +45,11 @@ const CrabTradeV2: React.FC<{ refetchCrabTokenBalance: (cb?: (newBalance: BigNum
     }, [resetTransactionData, setConfirmedTransactionData])
 
     const onTxnConfirm = useCallback(
-      (confirm?: CrabTransactionConfirmation) => {
-        setConfirmedTransactionData(confirm)
-        confirm?.id ? pollForNewTx(confirm?.id) : null
+      (data?: CrabTransactionConfirmation) => {
+        setConfirmedTransactionData(data)
+        if (data?.id) {
+          pollForNewTx(data?.id)
+        }
         refetchCrabTokenBalance()
       },
       [setConfirmedTransactionData, pollForNewTx, refetchCrabTokenBalance],
