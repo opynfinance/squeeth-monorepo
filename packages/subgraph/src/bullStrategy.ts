@@ -220,6 +220,7 @@ export function handleLeverageRebalance(event: LeverageRebalance): void {
 
   const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
   strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeBlockNumber = event.block.number
   strategy.lastHedgeTx = event.transaction.hash.toHex()
   strategy.save()
 }
@@ -258,6 +259,7 @@ export function handleFullRebalance(event: FullRebalance): void {
 
   const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
   strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeBlockNumber = event.block.number
   strategy.lastHedgeTx = event.transaction.hash.toHex()
   strategy.save()
 }

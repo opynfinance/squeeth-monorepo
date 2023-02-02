@@ -25,6 +25,7 @@ import useStyles from '@components/Strategies/styles'
 import { FUNDING_PERIOD } from '@constants/index'
 import { useCrabProfitData } from '@state/crab/hooks'
 import { getNextHedgeDate } from '@state/crab/utils'
+import { getCrabProfitDataPoints } from '@utils/strategyPayoff'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {
@@ -92,105 +93,6 @@ const CandyBar = (props: any) => {
   )
 }
 
-const getGreeks = (ethPrice: number, nf: number, shortAmt: number, collat: number, oSqthPrice: number) => {
-  const iv = calculateIV(oSqthPrice, nf, ethPrice)
-  const oSqthPriceInUSD = oSqthPrice * ethPrice
-
-  const deltaPerOsqth = 2 * oSqthPrice
-  const gammaPerOsqth = (2 * oSqthPrice) / ethPrice
-  const vegaPerOsqth = 2 * iv * FUNDING_PERIOD * oSqthPriceInUSD
-  const thetaPerOsqth = Math.pow(iv, 2) * oSqthPriceInUSD
-
-  const deltaPortfolio = collat - shortAmt * deltaPerOsqth
-  const gammaPortfolio = -shortAmt * gammaPerOsqth
-  const vegaPortfolio = -shortAmt * vegaPerOsqth
-  const thetaPortfolio = shortAmt * thetaPerOsqth
-
-  return { deltaPortfolio, gammaPortfolio, vegaPortfolio, thetaPortfolio }
-}
-
-/**
- * Solve using quadratic formula
- * @param a - 0.5 * gammaPortfolio
- * @param b - deltaPortfolio
- * @param c - (thetaPortfolio * time) / 365
- */
-const getProfitThresholds = (a: number, b: number, c: number) => {
-  const thresholdLower = (-b + Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a)
-  const thresholdUpper = (-b - Math.sqrt(Math.pow(b, 2) - 4 * a * c)) / (2 * a)
-
-  return { thresholdLower, thresholdUpper }
-}
-
-const getNewProfitDataPoints = (
-  ethPriceAtHedge: number,
-  nf: number,
-  shortAmt: number,
-  collat: number,
-  oSqthPrice: number,
-  percentRange: number,
-  currentEthPrice: number,
-  time: number,
-) => {
-  const dataPoints: any = []
-  const { deltaPortfolio, gammaPortfolio, vegaPortfolio, thetaPortfolio } = getGreeks(
-    ethPriceAtHedge,
-    nf,
-    shortAmt,
-    collat,
-    oSqthPrice,
-  )
-  const portfolioValueInETH = collat - shortAmt * oSqthPrice
-  const portfolioValueInUSD = portfolioValueInETH * ethPriceAtHedge
-
-  const starting = new BigNumber(-percentRange)
-  const increment = new BigNumber(0.05)
-  const ending = new BigNumber(percentRange)
-
-  const { thresholdLower, thresholdUpper } = getProfitThresholds(
-    0.5 * gammaPortfolio,
-    deltaPortfolio,
-    (thetaPortfolio * time) / 365,
-  )
-
-  let current = starting
-
-  const getData = (ethPrice: number) => {
-    const ethPriceChange = ethPrice - ethPriceAtHedge
-    const bumpedPortfolio =
-      deltaPortfolio * ethPriceChange +
-      0.5 * gammaPortfolio * Math.pow(ethPriceChange, 2) +
-      (thetaPortfolio * time) / 365
-
-    const bumpedPortfolioPercent = bumpedPortfolio / portfolioValueInUSD
-
-    const strategyReturn = bumpedPortfolioPercent
-    const strategyReturnPositive = strategyReturn >= 0 ? strategyReturn : null
-    const strategyReturnNegative = strategyReturn < 0 ? strategyReturn : null
-
-    return {
-      ethPrice: ethPrice,
-      strategyReturn,
-      strategyReturnPositive,
-      strategyReturnNegative,
-    }
-  }
-
-  while (current.lte(ending)) {
-    const ethReturn = current.div(100).toNumber()
-    const ethPrice = ethPriceAtHedge + ethReturn * ethPriceAtHedge
-    dataPoints.push(getData(ethPrice))
-    current = current.plus(increment)
-  }
-
-  return {
-    dataPoints,
-    lowerPriceBandForProfitability: getData(ethPriceAtHedge + thresholdLower),
-    upperPriceBandForProfitability: getData(ethPriceAtHedge + thresholdUpper),
-    currentProfit: getData(currentEthPrice),
-  }
-}
-
 const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
@@ -207,7 +109,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
     const nextHedgeTime = getNextHedgeDate(new Date(profitData.time * 1000)).getTime()
     const timeUntilNextHedge = nextHedgeTime - new Date(profitData.time * 1000).getTime()
     console.log('timeUntilNextHedge', timeUntilNextHedge)
-    return getNewProfitDataPoints(
+    return getCrabProfitDataPoints(
       profitData.ethPriceAtHedge,
       profitData.nf,
       profitData.shortAmt,

@@ -6,7 +6,6 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "yarn prepare:mainnet && graph deploy  --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ opynfinance/squeeth",
-    "deploy:satsuma": "yarn prepare:mainnet && graph deploy squeeth --node https://app.satsuma.xyz/api/subgraphs/deploy --version-label v0.0.2",
     "create-local": "graph create --node http://localhost:8020/ opynfinance/squeeth",
     "remove-local": "graph remove --node http://localhost:8020/ opynfinance/squeeth",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 opynfinance/squeeth",

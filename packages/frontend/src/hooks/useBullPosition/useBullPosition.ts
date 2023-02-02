@@ -15,6 +15,7 @@ import {
   isBullPositionRefetchingAtom,
   isBullReadyAtom,
   bullFirstDepositTimestampAtom,
+  bullFirstDepositBlockAtom,
 } from '@state/bull/atoms'
 import { useUserBullTxHistory } from '@hooks/useUserBullTxHistory'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -44,6 +45,7 @@ export const useBullPosition = (user: string) => {
   const setPositionLoaded = useSetAtom(bullPositionLoadedAtom)
   const setIsPositionRefetching = useSetAtom(isBullPositionRefetchingAtom)
   const setBullFirstDepositTimestamp = useSetAtom(bullFirstDepositTimestampAtom)
+  const setBullFirstDepositBlock = useSetAtom(bullFirstDepositBlockAtom)
 
   const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserBullTxHistory(user, true)
 
@@ -87,6 +89,7 @@ export const useBullPosition = (user: string) => {
     setDepositedEth(depositedEth)
     setDepositedUsdc(depositedUsd)
     setBullFirstDepositTimestamp(txHistoryData[0]?.timestamp)
+    setBullFirstDepositBlock(txHistoryData[0]?.blockNumber)
     setPositionLoaded(true)
   }, [bullCurrentEthValue, depositedEth, depositedUsd, txHistoryData])
 
