@@ -59,10 +59,7 @@ const useStyles = makeStyles((theme) =>
       position: 'relative',
       top: '6px',
     },
-    shimmer: {
-      borderRadius: '3px',
-      marginTop: '5px',
-    },
+    shimmer: { display: 'flex', flexDirection: 'column', gap: '8px', height: '500px' },
   }),
 )
 

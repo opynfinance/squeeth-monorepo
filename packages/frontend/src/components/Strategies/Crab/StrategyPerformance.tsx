@@ -255,17 +255,14 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
 const Wrapper: React.FC = () => {
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const ethPrice = useETHPrice()
-  const { data: osqthPrice } = useOSQTHPrice()
   const query = useCrabPnLV2ChartData()
 
   const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
   const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
 
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
 
   const collateralValue = vaultCollateral.multipliedBy(ethPrice)
-  const debtValue = vaultDebt.multipliedBy(osqthPrice)
   const tvl = collateralValue.integerValue()
   const isLoadingTVL = tvl.isZero()
 
@@ -280,7 +277,11 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <Skeleton width={'100%'} height={500} style={{ transform: 'none' }} />
+        <div className={classes.shimmer}>
+          <Skeleton width={'100%'} height={25} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={30} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={300} style={{ transform: 'none' }} />
+        </div>
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}
