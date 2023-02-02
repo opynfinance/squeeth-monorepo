@@ -1,5 +1,4 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
 import React, { useCallback, useState, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 
@@ -9,7 +8,6 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useTransactionStatus } from '@state/wallet/hooks'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { addressAtom } from '@state/wallet/atoms'
-import { bullEthValuePerShareAtom } from '@state/bull/atoms'
 import BullDeposit from './Deposit'
 import BullWithdraw from './Withdraw'
 import { BullTradeType, BullTransactionConfirmation, BullTradeTransactionType } from './types'
@@ -63,14 +61,11 @@ const TxConfirmation: React.FC<{ txnData: BullTransactionConfirmation; txnHash: 
   txnHash,
   onClose,
 }) => {
-  const bullEthValue = useAtomValue(bullEthValuePerShareAtom)
-
   const isDepositTx = txnData?.tradeType === BullTradeType.Deposit
   const isQueuedTx = txnData?.transactionType === BullTradeTransactionType.Queued
 
   const txAmount = txnData?.amount
-  const txAmountInEth = isDepositTx ? txAmount : new BigNumber(txAmount).times(bullEthValue)
-  const formattedTxAmount = txAmountInEth.toFixed(4)
+  const formattedTxAmount = txAmount.toFixed(4)
 
   const confirmationMessage = useMemo(() => {
     if (isDepositTx) {

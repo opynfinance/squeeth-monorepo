@@ -243,22 +243,24 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
-      const amount = new BigNumber(withdrawAmountRef.current)
+      const bullWithdrawAmount = new BigNumber(withdrawAmountRef.current)
+      const ethWithdrawAmount = new BigNumber(withdrawAmount)
+
       ongoingTransactionRef.current = {
-        amount,
+        amount: ethWithdrawAmount,
         queuedTransaction: useQueue,
       }
       const dataToTrack = {
-        amount: amount.toNumber(),
+        amount: bullWithdrawAmount,
         isPriceImpactHigh: showPriceImpactWarning,
         priceImpact: quote.poolFee + quote.priceImpact,
       }
 
       if (useQueue) {
-        await queueWithdrawZenBull(amount, dataToTrack, onTxnConfirmed)
+        await queueWithdrawZenBull(bullWithdrawAmount, dataToTrack, onTxnConfirmed)
       } else {
         await bullFlashWithdraw(
-          amount,
+          bullWithdrawAmount,
           quote.maxEthForWPowerPerp,
           quote.maxEthForUsdc,
           quote.wPowerPerpPoolFee,
