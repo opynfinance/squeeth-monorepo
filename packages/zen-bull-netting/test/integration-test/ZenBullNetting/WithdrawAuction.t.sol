@@ -214,11 +214,6 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         zenBullNetting.withdrawAuction(params);
         vm.stopPrank();
 
-        console.log(
-            "IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount",
-            IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount
-        );
-        console.log("mm1WpowerPerpBalanceBefore", mm1WpowerPerpBalanceBefore);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
         assertEq(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,

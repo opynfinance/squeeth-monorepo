@@ -698,8 +698,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 initialEthBalance = address(this).balance;
         uint256 oSqthAmount = NettingLib.calcOsqthAmount(zenBull, crab, _params.withdrawsToProcess);
 
-        console.log("oSqthAmount", oSqthAmount);
-
         // get oSQTH from market makers orders
         uint256 toExchange = oSqthAmount;
         for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
@@ -716,12 +714,10 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             if (shouldBreak) break;
         }
 
-        // uint256 usdcToRepay = _params.withdrawsToProcess
-        //     * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
-        //     / IERC20(zenBull).totalSupply();
-
-        uint256 usdcToRepay = (_params.withdrawsToProcess * 1e18 / IERC20(zenBull).totalSupply())
-            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull) / 1e18;
+        uint256 usdcToRepay = NettingLib.mul(
+            NettingLib.div(_params.withdrawsToProcess, IERC20(zenBull).totalSupply()),
+            IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
+        );
 
         // WETH-USDC swap
         _exactOutFlashSwap(
