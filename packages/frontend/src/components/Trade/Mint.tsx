@@ -261,16 +261,20 @@ const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
         flexWrap="wrap"
       >
         <Metric
+          isSmall
           label={
-            <MetricLabel label="Liquidation Price" tooltipTitle={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`} />
+            <MetricLabel
+              isSmall
+              label="Liquidation Price"
+              tooltipTitle={`${Tooltips.LiquidationPrice}. ${Tooltips.Twap}`}
+            />
           }
           value={formatCurrency(liqPrice.toNumber())}
-          isSmall
         />
         <Metric
-          label={<MetricLabel label="Current collateral ratio" tooltipTitle={Tooltips.CurrentCollRatio} />}
-          value={formatNumber(existingCollatPercent) + '%'}
           isSmall
+          label={<MetricLabel isSmall label="Current collateral ratio" tooltipTitle={Tooltips.CurrentCollRatio} />}
+          value={formatNumber(existingCollatPercent) + '%'}
         />
       </Box>
 

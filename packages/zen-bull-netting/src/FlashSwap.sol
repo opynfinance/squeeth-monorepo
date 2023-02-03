@@ -75,19 +75,9 @@ library CallbackValidation {
         view
         returns (IUniswapV3Pool pool)
     {
-        return verifyCallback(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
-    }
-
-    /// @notice Returns the address of a valid Uniswap V3 Pool
-    /// @param factory The contract address of the Uniswap V3 factory
-    /// @param poolKey The identifying key of the V3 pool
-    /// @return pool The V3 pool contract address
-    function verifyCallback(address factory, PoolAddress.PoolKey memory poolKey)
-        internal
-        view
-        returns (IUniswapV3Pool pool)
-    {
-        pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+        pool = IUniswapV3Pool(
+            PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee))
+        );
         require(msg.sender == address(pool));
     }
 }

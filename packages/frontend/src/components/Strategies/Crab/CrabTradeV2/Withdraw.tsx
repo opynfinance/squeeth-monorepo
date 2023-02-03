@@ -607,8 +607,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
             <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
+                isSmall
                 label={
                   <MetricLabel
+                    isSmall
                     label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
                     tooltipTitle={
                       useQueue
@@ -621,7 +623,6 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
                 }
                 value={formatNumber(withdrawPriceImpactNumber) + '%'}
                 textColor={withdrawPriceImpactNumber > 3 ? 'error' : undefined}
-                isSmall
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="8px"
