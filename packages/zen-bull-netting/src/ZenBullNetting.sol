@@ -231,9 +231,15 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     );
     event SetBot(address bot);
     event DepositAuction(
-        uint256 wethDeposited, uint256 crabAmount, uint256 clearingPrice, uint256 oSqthAmount, uint256 depositsIndex
+        uint256 wethDeposited,
+        uint256 crabAmount,
+        uint256 clearingPrice,
+        uint256 oSqthAmount,
+        uint256 depositsIndex
     );
-    event WithdrawAuction(uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 oSqthAmount, uint256 withdrawsIndex);
+    event WithdrawAuction(
+        uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 oSqthAmount, uint256 withdrawsIndex
+    );
     event CancelNonce(address trader, uint256 nonce);
     /// @dev shared events with the NettingLib for client side to detect them
     event TransferWethFromMarketMakers(
@@ -728,7 +734,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         depositsIndex = k;
         isAuctionLive = false;
 
-        emit DepositAuction(_params.depositsToProcess, _params.crabAmount, _params.clearingPrice, memVar.oSqthBalance, k);
+        emit DepositAuction(
+            _params.depositsToProcess,
+            _params.crabAmount,
+            _params.clearingPrice,
+            memVar.oSqthBalance,
+            k
+            );
     }
 
     /**

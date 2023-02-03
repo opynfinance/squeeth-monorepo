@@ -9,7 +9,11 @@ import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
 
 library NettingLib {
     event TransferWethFromMarketMakers(
-        address indexed trader, uint256 quantity, uint256 wethAmount, uint256 clearingPrice
+        address indexed trader,
+        uint256 quantity,
+        uint256 wethAmount,
+        uint256 remainingOsqthBalance,
+        uint256 clearingPrice
     );
     event TransferOsqthToMarketMakers(
         address indexed trader, uint256 bidId, uint256 quantity, uint256 remainingOsqthBalance
@@ -43,18 +47,24 @@ library NettingLib {
         uint256 _clearingPrice
     ) external returns (bool, uint256) {
         uint256 wethAmount;
+        uint256 remainingOsqthToMint;
         if (_quantity >= _oSqthToMint) {
             wethAmount = (_oSqthToMint * _clearingPrice) / 1e18;
             IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
 
-            emit TransferWethFromMarketMakers(_trader, _oSqthToMint, wethAmount, _clearingPrice);
-            return (true, 0);
+            emit TransferWethFromMarketMakers(
+                _trader, _oSqthToMint, wethAmount, remainingOsqthToMint, _clearingPrice
+                );
+            return (true, remainingOsqthToMint);
         } else {
             wethAmount = (_quantity * _clearingPrice) / 1e18;
+            remainingOsqthToMint = _oSqthToMint - _quantity;
             IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
 
-            emit TransferWethFromMarketMakers(_trader, _quantity, wethAmount, _clearingPrice);
-            return (false, (_oSqthToMint - _quantity));
+            emit TransferWethFromMarketMakers(
+                _trader, _quantity, wethAmount, remainingOsqthToMint, _clearingPrice
+                );
+            return (false, remainingOsqthToMint);
         }
     }
 
