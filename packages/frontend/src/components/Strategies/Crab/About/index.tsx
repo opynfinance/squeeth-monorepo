@@ -12,7 +12,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
 import { DateTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import DateFnsUtils from '@date-io/date-fns'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { addressAtom } from '@state/wallet/atoms'
 import { firstDepositBlockAtom, firstDepositTimeAtom } from '@state/crab/atoms'
 
@@ -95,9 +95,9 @@ const gitBookLink = 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/intro
 
 const DepositTimePicker: React.FC = () => {
   const aboutClasses = useAboutStyles()
-  const setDepositTime = useSetAtom(firstDepositTimeAtom)
+  const [depositTime, setDepositTime] = useAtom(firstDepositTimeAtom)
   const setDepositBlock = useSetAtom(firstDepositBlockAtom)
-  const [date, setDate] = useState(new Date())
+  const [date, setDate] = useState(new Date(depositTime ? depositTime * 1000 : Date.now()))
 
   const onDepositDateChange = async (date: Date | null) => {
     if (date) {

@@ -24,7 +24,7 @@ import { formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
 import { useBullProfitData } from '@state/bull/hooks'
 import { getNextHedgeDate } from '@state/crab/utils'
-import { getBullProfitDataPoints } from '@utils/strategyPayoff'
+import { getBullExcessProfitDataPoints } from '@utils/strategyPayoff'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {
@@ -135,7 +135,7 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
 const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
-  const { profitData, loading } = useBullProfitData()
+  const { profitData } = useBullProfitData()
 
   const impliedFunding = 2 * currentFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
@@ -150,7 +150,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
     const nextHedgeTime = getNextHedgeDate(new Date(profitData.time * 1000)).getTime()
     const timeUntilNextHedge = nextHedgeTime - new Date(profitData.time * 1000).getTime()
     console.log('timeUntilNextHedge', timeUntilNextHedge)
-    return getBullProfitDataPoints(
+    return getBullExcessProfitDataPoints(
       profitData.ethPriceAtHedge,
       profitData.nf,
       profitData.shortAmt,

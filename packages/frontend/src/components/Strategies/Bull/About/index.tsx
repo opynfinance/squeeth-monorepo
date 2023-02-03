@@ -12,8 +12,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
 import { DateTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
 import DateFnsUtils from '@date-io/date-fns'
-import { firstDepositTimeAtom, firstDepositBlockAtom } from '@state/crab/atoms'
-import { useSetAtom } from 'jotai'
+import { useAtom, useSetAtom } from 'jotai'
 import { bullFirstDepositBlockAtom, bullFirstDepositTimestampAtom } from '@state/bull/atoms'
 
 const useTextFieldStyles = makeStyles((theme) =>
@@ -96,9 +95,9 @@ const gitBookLink = 'https://opyn.gitbook.io/opyn-strategies/zen-bull/introducti
 
 const DepositTimePicker: React.FC = () => {
   const aboutClasses = useAboutStyles()
-  const setDepositTime = useSetAtom(bullFirstDepositTimestampAtom)
+  const [depositTime, setDepositTime] = useAtom(bullFirstDepositTimestampAtom)
   const setDepositBlock = useSetAtom(bullFirstDepositBlockAtom)
-  const [date, setDate] = useState(new Date())
+  const [date, setDate] = useState(new Date(depositTime ? depositTime * 1000 : Date.now()))
 
   const onDepositDateChange = async (date: Date | null) => {
     if (date) {
@@ -106,7 +105,6 @@ const DepositTimePicker: React.FC = () => {
       setDepositTime(date.getTime() / 1000)
       const resp = await fetch(`/api/getBlockNumber?timestamp=${date.getTime() / 1000}`)
       const data = await resp.json()
-      console.log(data)
       setDepositBlock(data.blockNumber)
     }
   }

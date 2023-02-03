@@ -101,7 +101,7 @@ export const getCrabProfitDataPoints = (
   }
 }
 
-export const getBullProfitDataPoints = (
+export const getBullExcessProfitDataPoints = (
   ethPriceAtHedge: number,
   nf: number,
   shortAmt: number,
@@ -134,10 +134,10 @@ export const getBullProfitDataPoints = (
   const increment = new BigNumber(0.05)
   const ending = new BigNumber(percentRange)
 
-  const ethRate = Math.exp(ethSupplyApy / (365 / time))
-  const usdRate = Math.exp(usdcBorrowApy / (365 / time))
-  const ethReturns = eulerEth * ethRate - eulerEth
-  const usdReturns = eulerUsdc * usdRate - eulerUsdc
+  const ethFutureValue = Math.exp(ethSupplyApy / (365 / time))
+  const usdFutureValue = Math.exp(usdcBorrowApy / (365 / time))
+  const ethReturns = eulerEth * ethFutureValue - eulerEth
+  const usdReturns = eulerUsdc * usdFutureValue - eulerUsdc
 
   const { thresholdLower, thresholdUpper } = getProfitThresholds(
     0.5 * gammaPortfolio,
