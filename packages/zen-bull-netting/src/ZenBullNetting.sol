@@ -227,12 +227,29 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 indexed receiptIndex
     );
     event SetBot(address bot);
-    /// @dev shared events with the NettingLib for client side to detect them
-    event DepositAuction(address indexed trader, uint256 indexed bidId, uint256 quantity);
-    event WithdrawAuction(
-        address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
+    event DepositAuction(
+        uint256 wethDeposited, uint256 crabAmount, uint256 clearingPrice, uint256 depositsIndex
     );
+    event WithdrawAuction(uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 withdrawsIndex);
     event CancelNonce(address trader, uint256 nonce);
+    /// @dev shared events with the NettingLib for client side to detect them
+    event TransferWethFromMarketMakers(
+        address indexed trader, uint256 quantity, uint256 wethAmount, uint256 clearingPrice
+    );
+    event TransferOsqthToMarketMakers(
+        address indexed trader, uint256 bidId, uint256 quantity, uint256 remainingOsqthBalance
+    );
+    event TransferOsqthFromMarketMakers(
+        address indexed trader, uint256 quantity, uint256 oSqthRemaining
+    );
+    event TransferWethToMarketMaker(
+        address indexed trader,
+        uint256 bidId,
+        uint256 quantity,
+        uint256 wethAmount,
+        uint256 oSqthRemaining,
+        uint256 clearingPrice
+    );
 
     constructor(
         address _zenBull,
@@ -707,6 +724,8 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         }
         depositsIndex = k;
         isAuctionLive = false;
+
+        emit DepositAuction(_params.depositsToProcess, _params.crabAmount, _params.clearingPrice, k);
     }
 
     /**
@@ -811,8 +830,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
         withdrawsIndex = j;
         isAuctionLive = false;
+
+        emit WithdrawAuction(_params.withdrawsToProcess, _params.clearingPrice, j);
     }
 
+    /**
+     * @dev to handle uniswap flashswap callback
+     */
     function _uniFlashSwap(
         address pool,
         uint256 amountToPay,
