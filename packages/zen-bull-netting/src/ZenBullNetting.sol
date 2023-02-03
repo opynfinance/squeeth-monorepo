@@ -231,9 +231,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     );
     event SetBot(address bot);
     event DepositAuction(
-        uint256 wethDeposited, uint256 crabAmount, uint256 clearingPrice, uint256 depositsIndex
+        uint256 wethDeposited, uint256 crabAmount, uint256 clearingPrice, uint256 oSqthAmount, uint256 depositsIndex
     );
-    event WithdrawAuction(uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 withdrawsIndex);
+    event WithdrawAuction(uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 oSqthAmount, uint256 withdrawsIndex);
     event CancelNonce(address trader, uint256 nonce);
     /// @dev shared events with the NettingLib for client side to detect them
     event TransferWethFromMarketMakers(
@@ -728,7 +728,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         depositsIndex = k;
         isAuctionLive = false;
 
-        emit DepositAuction(_params.depositsToProcess, _params.crabAmount, _params.clearingPrice, k);
+        emit DepositAuction(_params.depositsToProcess, _params.crabAmount, _params.clearingPrice, memVar.oSqthBalance, k);
     }
 
     /**
@@ -751,11 +751,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             require(!_params.orders[i].isBuying, "ZBN19");
             require(_params.orders[i].price <= _params.clearingPrice, "ZBN20");
 
-            bool shouldBreak;
-            (shouldBreak, toExchange) = NettingLib.transferOsqthFromMarketMakers(
+            toExchange = NettingLib.transferOsqthFromMarketMakers(
                 oSqth, _params.orders[i].trader, toExchange, _params.orders[i].quantity
             );
-            if (shouldBreak) break;
         }
 
         uint256 usdcToRepay = NettingLib.mul(
@@ -834,7 +832,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         withdrawsIndex = j;
         isAuctionLive = false;
 
-        emit WithdrawAuction(_params.withdrawsToProcess, _params.clearingPrice, j);
+        emit WithdrawAuction(_params.withdrawsToProcess, _params.clearingPrice, oSqthAmount, j);
     }
 
     /**

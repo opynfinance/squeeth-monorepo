@@ -32,7 +32,7 @@ library NettingLib {
      * @param _weth WETH address
      * @param _trader market maker address
      * @param _quantity oSQTH quantity
-     * @param _oSqthToMint total _oSqth to mint during the auction
+     * @param _oSqthToMint remaining amount of the total oSqthToMint
      * @param _clearingPrice auction clearing price
      */
     function transferWethFromMarketMakers(
@@ -47,7 +47,7 @@ library NettingLib {
             wethAmount = (_oSqthToMint * _clearingPrice) / 1e18;
             IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
 
-            emit TransferWethFromMarketMakers(_trader, _quantity, wethAmount, _clearingPrice);
+            emit TransferWethFromMarketMakers(_trader, _oSqthToMint, wethAmount, _clearingPrice);
             return (true, 0);
         } else {
             wethAmount = (_quantity * _clearingPrice) / 1e18;
@@ -97,31 +97,29 @@ library NettingLib {
      * @dev this is executed during the withdraw auction, MM selling OSQTH for WETH
      * @param _oSqth oSQTH address
      * @param _trader market maker address
-     * @param _totalOsqthToPull total amount of oSQTH to transfer from order array
+     * @param _remainingOsqthToPull remaining amount of oSQTH from the total oSQTH amount to transfer from order array
      * @param _quantity oSQTH quantity in market maker order
      */
     function transferOsqthFromMarketMakers(
         address _oSqth,
         address _trader,
-        uint256 _totalOsqthToPull,
+        uint256 _remainingOsqthToPull,
         uint256 _quantity
-    ) internal returns (bool, uint256) {
+    ) internal returns (uint256) {
         uint256 oSqthRemaining;
-        if (_quantity < _totalOsqthToPull) {
+        if (_quantity < _remainingOsqthToPull) {
             IERC20(_oSqth).transferFrom(_trader, address(this), _quantity);
 
-            oSqthRemaining = _totalOsqthToPull - _quantity;
+            oSqthRemaining = _remainingOsqthToPull - _quantity;
 
             emit TransferOsqthFromMarketMakers(_trader, _quantity, oSqthRemaining);
-
-            return (false, oSqthRemaining);
         } else {
-            IERC20(_oSqth).transferFrom(_trader, address(this), _totalOsqthToPull);
+            IERC20(_oSqth).transferFrom(_trader, address(this), _remainingOsqthToPull);
 
-            emit TransferOsqthFromMarketMakers(_trader, _totalOsqthToPull, oSqthRemaining);
-
-            return (true, oSqthRemaining);
+            emit TransferOsqthFromMarketMakers(_trader, _remainingOsqthToPull, oSqthRemaining);
         }
+
+        return oSqthRemaining;
     }
 
     /**
@@ -130,7 +128,7 @@ library NettingLib {
      * @param _weth WETH address
      * @param _trader market maker address
      * @param _bidId market maker bid ID
-     * @param _totalOsqthToPull total oSQTH to get from orders array
+     * @param _remainingOsqthToPull total oSQTH to get from orders array
      * @param _quantity market maker's oSQTH order quantity
      * @param _clearingPrice auction clearing price
      */
@@ -138,27 +136,27 @@ library NettingLib {
         address _weth,
         address _trader,
         uint256 _bidId,
-        uint256 _totalOsqthToPull,
+        uint256 _remainingOsqthToPull,
         uint256 _quantity,
         uint256 _clearingPrice
     ) external returns (uint256) {
         uint256 oSqthQuantity;
 
-        if (_quantity < _totalOsqthToPull) {
+        if (_quantity < _remainingOsqthToPull) {
             oSqthQuantity = _quantity;
         } else {
-            oSqthQuantity = _totalOsqthToPull;
+            oSqthQuantity = _remainingOsqthToPull;
         }
 
         uint256 wethAmount = (oSqthQuantity * _clearingPrice) / 1e18;
-        _totalOsqthToPull -= oSqthQuantity;
+        _remainingOsqthToPull -= oSqthQuantity;
         IERC20(_weth).transfer(_trader, wethAmount);
 
         emit TransferWethToMarketMaker(
-            _trader, _bidId, _quantity, wethAmount, _totalOsqthToPull, _clearingPrice
+            _trader, _bidId, _quantity, wethAmount, _remainingOsqthToPull, _clearingPrice
             );
 
-        return _totalOsqthToPull;
+        return _remainingOsqthToPull;
     }
 
     /**
