@@ -20,6 +20,8 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -259,7 +261,11 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
-    receive() external payable { }
+    receive() external payable {
+        if ((msg.sender != weth) && (msg.sender != zenBull)) {
+            _queueEth();
+        }
+    }
 
     /**
      * @dev view function to get the domain seperator used in signing
@@ -345,14 +351,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @dev payable function
      */
     function queueEth() external payable {
-        require(msg.value >= minEthAmount, "ZBN03");
-
-        // update eth balance of user, add their receipt, and receipt index to user deposits index
-        ethBalance[msg.sender] = ethBalance[msg.sender] + msg.value;
-        deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
-        userDepositsIndex[msg.sender].push(deposits.length - 1);
-
-        emit QueueEth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
+        _queueEth();
     }
 
     /**
@@ -534,7 +533,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @param _params deposit Params
      */
     function depositAuction(DepositAuctionParams calldata _params) external onlyOwner {
-        _checkOTCPrice(_params.clearingPrice, true);
+        _checkOTCPrice(_params.clearingPrice, false);
+
+        console.log("_params.crabAmount", _params.crabAmount);
 
         uint256 initialZenBullBalance = IERC20(zenBull).balanceOf(address(this));
         uint256 initialEthBalance = address(this).balance;
@@ -801,6 +802,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             IWETH(weth).deposit{value: amountToPay}();
             IWETH(weth).transfer(pool, amountToPay);
         } else if (callSource == 1) {
+            console.log("IERC20(crab).balanceOf(address(this))", IERC20(crab).balanceOf(address(this)));
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));
@@ -809,6 +811,20 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             );
             IERC20(usdc).transfer(pool, amountToPay);
         }
+    }
+
+    /**
+     * @dev queue ETH for deposit into ZenBull
+     */
+    function _queueEth() internal {
+        require(msg.value >= minEthAmount, "ZBN03");
+
+        // update eth balance of user, add their receipt, and receipt index to user deposits index
+        ethBalance[msg.sender] = ethBalance[msg.sender] + msg.value;
+        deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
+        userDepositsIndex[msg.sender].push(deposits.length - 1);
+
+        emit QueueEth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
     }
 
     /**
