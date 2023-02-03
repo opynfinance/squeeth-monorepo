@@ -683,7 +683,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 continue;
             } else {
                 uint256 zenBullAmountToSend;
-                uint256 wethAmountToSend;
+                uint256 ethAmountToSend;
                 if (depositReceipt.amount <= memVar.remainingDeposits) {
                     memVar.remainingDeposits = memVar.remainingDeposits - depositReceipt.amount;
                     ethBalance[depositReceipt.sender] -= depositReceipt.amount;
@@ -696,16 +696,18 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     delete deposits[k];
                     k++;
 
-                    wethAmountToSend =
+                    ethAmountToSend =
                         depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
+                    if (ethAmountToSend > 1e12) {
+                        payable(depositReceipt.sender).sendValue(ethAmountToSend);
+                    }
 
                     emit EthDeposited(
                         depositReceipt.sender,
                         depositReceipt.amount,
                         zenBullAmountToSend,
                         k,
-                        wethAmountToSend
+                        ethAmountToSend
                         );
                 } else {
                     ethBalance[depositReceipt.sender] -= memVar.remainingDeposits;
@@ -716,16 +718,19 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                     deposits[k].amount -= memVar.remainingDeposits;
 
-                    wethAmountToSend =
+                    ethAmountToSend =
                         memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
+
+                    if (ethAmountToSend > 1e12) {
+                        payable(depositReceipt.sender).sendValue(ethAmountToSend);
+                    }
 
                     emit EthDeposited(
                         depositReceipt.sender,
                         memVar.remainingDeposits,
                         zenBullAmountToSend,
                         k,
-                        wethAmountToSend
+                        ethAmountToSend
                         );
                     break;
                 }
