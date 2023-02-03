@@ -802,7 +802,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             IWETH(weth).deposit{value: amountToPay}();
             IWETH(weth).transfer(pool, amountToPay);
         } else if (callSource == 1) {
-            console.log("IERC20(crab).balanceOf(address(this))", IERC20(crab).balanceOf(address(this)));
+            console.log(
+                "IERC20(crab).balanceOf(address(this))", IERC20(crab).balanceOf(address(this))
+            );
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));

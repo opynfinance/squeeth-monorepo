@@ -52,8 +52,8 @@ contract QueueEth is ZenBullNettingBaseSetup {
 
         // _queueEth(user1, amount);
         vm.prank(user1);
-        (bool success, ) = address(zenBullNetting).call{value: amount}("");
-       
+        (bool success,) = address(zenBullNetting).call{value: amount}("");
+
         assertTrue(success);
         assertEq(zenBullNetting.ethBalance(user1), amount);
         assertEq(address(zenBullNetting).balance - zenBullNettingEthBalanceBefore, amount);

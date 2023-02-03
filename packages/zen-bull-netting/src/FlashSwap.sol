@@ -75,7 +75,9 @@ library CallbackValidation {
         view
         returns (IUniswapV3Pool pool)
     {
-        pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
+        pool = IUniswapV3Pool(
+            PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee))
+        );
         require(msg.sender == address(pool));
     }
 }
