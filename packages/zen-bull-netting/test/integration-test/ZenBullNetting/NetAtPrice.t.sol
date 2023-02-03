@@ -80,6 +80,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
         uint256 ethToQueue = 10e18;
         uint256 zenBullFairPrice = getZenBullPrice();
+
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueEth(user1, ethToQueue);
@@ -110,6 +111,49 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         assertApproxEqAbs(user2.balance - ethToQueue, user2EthBalanceBefore, 2);
         assertEq(withReceiptAmountBefore - zenBullToQueue, withReceiptAmountAfter);
         assertEq(depReceiptAmountBefore - ethToQueue, depReceiptAmountAfter);
+    }
+
+    function testNetAtPriceWhenCallerIsBot() public {
+        uint256 botPk;
+        address bot;
+        (bot, botPk) = makeAddrAndKey("Bot");
+
+        vm.prank(owner);
+        zenBullNetting.setBot(bot);
+
+        uint256 ethToQueue = 10e18;
+        uint256 zenBullFairPrice = getZenBullPrice();
+        uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
+
+        _queueEth(user1, ethToQueue);
+        _queueZenBull(user2, zenBullToQueue);
+
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(0);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+
+        uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
+        uint256 user2EthBalanceBefore = user2.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
+        uint256 zenBullNettingZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(address(zenBullNetting));
+
+        vm.prank(bot);
+        zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
+
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+
+        assertEq(
+            IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,
+            zenBullNettingZenBalanceBefore
+        );
+        assertApproxEqAbs(
+            address(zenBullNetting).balance + ethToQueue, zenBullNettingEthBalanceBefore, 2
+        );
+        assertEq(IERC20(ZEN_BULL).balanceOf(user1) - user1ZenBalanceBefore, zenBullToQueue);
+        assertApproxEqAbs(user2.balance - ethToQueue, user2EthBalanceBefore, 2);
+        assertEq(withReceiptAmountBefore - zenBullToQueue, withReceiptAmountAfter);
+        assertEq(depReceiptAmountBefore - ethToQueue, depReceiptAmountAfter);
+        assertEq(zenBullNetting.bot(), bot);
     }
 
     function testNetAtPriceWhenZenAmountGreaterThanQueued() public {

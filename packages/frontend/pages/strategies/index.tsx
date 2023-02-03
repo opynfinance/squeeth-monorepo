@@ -14,3 +14,12 @@ const Redirection = () => {
 const Page: React.FC = () => <Redirection />
 
 export default Page
+
+export async function getServerSideProps() {
+  return {
+    redirect: {
+      destination: '/strategies/crab',
+      permanent: true,
+    },
+  }
+}
