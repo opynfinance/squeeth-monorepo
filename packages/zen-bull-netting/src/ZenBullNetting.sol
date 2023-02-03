@@ -97,9 +97,12 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     address private immutable ethUsdcPool;
     /// @dev Euler Simple Lens contract address
     address private immutable eulerLens;
+    /// @dev crab strategy contract address
     address private immutable crab;
+    /// @dev FlashZen contract address
     address private immutable flashZenBull;
 
+    /// @dev bot address to automate netAtPrice() calls
     address public bot;
 
     /// @dev array of ETH deposit receipts
@@ -227,12 +230,35 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 indexed receiptIndex
     );
     event SetBot(address bot);
-    /// @dev shared events with the NettingLib for client side to detect them
-    event DepositAuction(address indexed trader, uint256 indexed bidId, uint256 quantity);
+    event DepositAuction(
+        uint256 wethDeposited,
+        uint256 crabAmount,
+        uint256 clearingPrice,
+        uint256 oSqthAmount,
+        uint256 depositsIndex
+    );
     event WithdrawAuction(
-        address indexed trader, uint256 indexed bidId, uint256 quantity, uint256 price
+        uint256 zenBullWithdrawn, uint256 clearingPrice, uint256 oSqthAmount, uint256 withdrawsIndex
     );
     event CancelNonce(address trader, uint256 nonce);
+    /// @dev shared events with the NettingLib for client side to detect them
+    event TransferWethFromMarketMakers(
+        address indexed trader, uint256 quantity, uint256 wethAmount, uint256 clearingPrice
+    );
+    event TransferOsqthToMarketMakers(
+        address indexed trader, uint256 bidId, uint256 quantity, uint256 remainingOsqthBalance
+    );
+    event TransferOsqthFromMarketMakers(
+        address indexed trader, uint256 quantity, uint256 oSqthRemaining
+    );
+    event TransferWethToMarketMaker(
+        address indexed trader,
+        uint256 bidId,
+        uint256 quantity,
+        uint256 wethAmount,
+        uint256 oSqthRemaining,
+        uint256 clearingPrice
+    );
 
     constructor(
         address _zenBull,
@@ -657,7 +683,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 continue;
             } else {
                 uint256 zenBullAmountToSend;
-                uint256 wethAmountToSend;
+                uint256 ethAmountToSend;
                 if (depositReceipt.amount <= memVar.remainingDeposits) {
                     memVar.remainingDeposits = memVar.remainingDeposits - depositReceipt.amount;
                     ethBalance[depositReceipt.sender] -= depositReceipt.amount;
@@ -670,16 +696,18 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     delete deposits[k];
                     k++;
 
-                    wethAmountToSend =
+                    ethAmountToSend =
                         depositReceipt.amount * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
+                    if (ethAmountToSend > 1e12) {
+                        payable(depositReceipt.sender).sendValue(ethAmountToSend);
+                    }
 
                     emit EthDeposited(
                         depositReceipt.sender,
                         depositReceipt.amount,
                         zenBullAmountToSend,
                         k,
-                        wethAmountToSend
+                        ethAmountToSend
                         );
                 } else {
                     ethBalance[depositReceipt.sender] -= memVar.remainingDeposits;
@@ -690,16 +718,19 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
                     deposits[k].amount -= memVar.remainingDeposits;
 
-                    wethAmountToSend =
+                    ethAmountToSend =
                         memVar.remainingDeposits * memVar.remainingEth / _params.depositsToProcess;
-                    payable(depositReceipt.sender).sendValue(wethAmountToSend);
+
+                    if (ethAmountToSend > 1e12) {
+                        payable(depositReceipt.sender).sendValue(ethAmountToSend);
+                    }
 
                     emit EthDeposited(
                         depositReceipt.sender,
                         memVar.remainingDeposits,
                         zenBullAmountToSend,
                         k,
-                        wethAmountToSend
+                        ethAmountToSend
                         );
                     break;
                 }
@@ -707,6 +738,14 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         }
         depositsIndex = k;
         isAuctionLive = false;
+
+        emit DepositAuction(
+            _params.depositsToProcess,
+            _params.crabAmount,
+            _params.clearingPrice,
+            memVar.oSqthBalance,
+            k
+            );
     }
 
     /**
@@ -729,11 +768,9 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             require(!_params.orders[i].isBuying, "ZBN19");
             require(_params.orders[i].price <= _params.clearingPrice, "ZBN20");
 
-            bool shouldBreak;
-            (shouldBreak, toExchange) = NettingLib.transferOsqthFromMarketMakers(
+            toExchange = NettingLib.transferOsqthFromMarketMakers(
                 oSqth, _params.orders[i].trader, toExchange, _params.orders[i].quantity
             );
-            if (shouldBreak) break;
         }
 
         uint256 usdcToRepay = NettingLib.mul(
@@ -811,8 +848,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
 
         withdrawsIndex = j;
         isAuctionLive = false;
+
+        emit WithdrawAuction(_params.withdrawsToProcess, _params.clearingPrice, oSqthAmount, j);
     }
 
+    /**
+     * @dev to handle uniswap flashswap callback
+     */
     function _uniFlashSwap(
         address pool,
         uint256 amountToPay,
