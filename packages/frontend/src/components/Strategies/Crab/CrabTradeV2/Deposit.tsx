@@ -490,15 +490,16 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
 
             <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
+                isSmall
                 label={
                   <MetricLabel
+                    isSmall
                     label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
                     tooltipTitle={useQueue ? 'Average price impact based on historical standard deposits' : undefined}
                   />
                 }
                 value={formatNumber(depositPriceImpactNumber) + '%'}
                 textColor={depositPriceImpactNumber > 3 ? 'error' : undefined}
-                isSmall
                 flexDirection="row"
                 justifyContent="space-between"
                 gridGap="8px"
