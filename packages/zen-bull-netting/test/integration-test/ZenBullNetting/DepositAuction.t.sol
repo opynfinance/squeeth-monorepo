@@ -85,7 +85,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
 
         uint256 share =
@@ -174,7 +174,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
 
         uint256 share =
@@ -264,7 +264,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
         uint256 share =
             crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
@@ -385,7 +385,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
@@ -450,7 +450,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
@@ -517,7 +517,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
@@ -586,13 +586,8 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
         uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
-
-        uint256 share =
-            crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
-        uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
-        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);

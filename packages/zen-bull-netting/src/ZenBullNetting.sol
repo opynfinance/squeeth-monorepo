@@ -97,9 +97,12 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     address private immutable ethUsdcPool;
     /// @dev Euler Simple Lens contract address
     address private immutable eulerLens;
+    /// @dev crab strategy contract address
     address private immutable crab;
+    /// @dev FlashZen contract address
     address private immutable flashZenBull;
 
+    /// @dev bot address to automate netAtPrice() calls
     address public bot;
 
     /// @dev array of ETH deposit receipts
