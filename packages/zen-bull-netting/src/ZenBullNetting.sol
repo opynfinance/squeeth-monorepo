@@ -20,8 +20,6 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -535,8 +533,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     function depositAuction(DepositAuctionParams calldata _params) external onlyOwner {
         _checkOTCPrice(_params.clearingPrice, false);
 
-        console.log("_params.crabAmount", _params.crabAmount);
-
         uint256 initialZenBullBalance = IERC20(zenBull).balanceOf(address(this));
         uint256 initialEthBalance = address(this).balance;
         (uint256 oSqthToMint, uint256 ethIntoCrab) =
@@ -713,9 +709,10 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             if (shouldBreak) break;
         }
 
-        uint256 usdcToRepay = _params.withdrawsToProcess
-            * IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
-            / IERC20(zenBull).totalSupply();
+        uint256 usdcToRepay = NettingLib.mul(
+            NettingLib.div(_params.withdrawsToProcess, IERC20(zenBull).totalSupply()),
+            IEulerSimpleLens(eulerLens).getDTokenBalance(usdc, zenBull)
+        );
 
         // WETH-USDC swap
         _exactOutFlashSwap(
@@ -802,9 +799,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             IWETH(weth).deposit{value: amountToPay}();
             IWETH(weth).transfer(pool, amountToPay);
         } else if (callSource == 1) {
-            console.log(
-                "IERC20(crab).balanceOf(address(this))", IERC20(crab).balanceOf(address(this))
-            );
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));

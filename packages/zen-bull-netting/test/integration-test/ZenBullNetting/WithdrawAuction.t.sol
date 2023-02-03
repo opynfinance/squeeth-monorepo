@@ -61,11 +61,10 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
 
         uint256 oSqthAmount;
         {
-            uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-                / IZenBullStrategy(ZEN_BULL).totalSupply();
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
             (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            oSqthAmount =
-                crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
         }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
@@ -155,11 +154,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 5e18;
         _queueZenBull(user1, amount * 2);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -209,7 +210,8 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 debtBalanceBefore =
             IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
-        uint256 usdcToRepay = amount * debtBalanceBefore / IERC20(ZEN_BULL).totalSupply();
+        uint256 usdcToRepay =
+            (amount * 1e18 / IERC20(ZEN_BULL).totalSupply()) * debtBalanceBefore / 1e18;
         uint256 wethInEulerBefore =
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
@@ -239,11 +241,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
 
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -318,11 +322,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](2);
@@ -427,11 +433,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -488,11 +496,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -549,11 +559,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -610,11 +622,13 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
         (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 share = div(amount, IZenBullStrategy(ZEN_BULL).totalSupply());
+            uint256 crabAmount = mul(share, IZenBullStrategy(ZEN_BULL).getCrabBalance());
+            oSqthAmount = div(mul(crabAmount, crabDebt), IERC20(CRAB).totalSupply());
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](2);
