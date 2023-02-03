@@ -562,7 +562,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         require(oSqthToMint == 0, "ZBN23");
 
         {
-            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.caclWethToLendAndUsdcToBorrow(
+            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.calcWethToLendAndUsdcToBorrow(
                 eulerLens, zenBull, weth, usdc, _params.crabAmount
             );
 
@@ -730,14 +730,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         // send WETH to market makers
         IWETH(weth).deposit{value: address(this).balance - initialEthBalance}();
         toExchange = oSqthAmount;
-        uint256 oSqthQuantity;
         for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
             toExchange = NettingLib.transferWethToMarketMaker(
                 weth,
                 _params.orders[i].trader,
                 _params.orders[i].bidId,
                 toExchange,
-                oSqthQuantity,
+                _params.orders[i].quantity,
                 _params.clearingPrice
             );
         }

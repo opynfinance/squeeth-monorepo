@@ -59,11 +59,14 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         uint256 amount = 10e18;
         _queueZenBull(user1, amount);
 
-        uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
-            / IZenBullStrategy(ZEN_BULL).totalSupply();
-        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount =
-            crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        uint256 oSqthAmount;
+        {
+            uint256 crabAmount = amount * IZenBullStrategy(ZEN_BULL).getCrabBalance()
+                / IZenBullStrategy(ZEN_BULL).totalSupply();
+            (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+            oSqthAmount =
+                crabAmount * crabDebt / IERC20(IZenBullStrategy(ZEN_BULL).crab()).totalSupply();
+        }
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
@@ -110,6 +113,7 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
         vm.prank(mm1);
         IERC20(WPOWERPERP).approve(address(zenBullNetting), oSqthAmount);
 
+        uint256 mm1WethBalanceBefore = IERC20(WETH).balanceOf(mm1);
         uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
         uint256 debtBalanceBefore =
             IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL);
@@ -129,6 +133,11 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
 
         assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
+        assertEq(
+            IERC20(WETH).balanceOf(mm1) - (oSqthAmount * params.clearingPrice / 1e18),
+            mm1WethBalanceBefore
+        );
+        assertLt(IERC20(WPOWERPERP).balanceOf(mm1), mm1WpowerPerpBalanceBefore);
         assertEq(
             IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,
             debtBalanceBefore
