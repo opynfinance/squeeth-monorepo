@@ -259,7 +259,11 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     /**
      * @notice receive function to allow ETH transfer to this contract
      */
-    receive() external payable { }
+    receive() external payable {
+        if ((msg.sender != weth) && (msg.sender != zenBull)) {
+            _queueEth();
+        }
+    }
 
     /**
      * @dev view function to get the domain seperator used in signing
@@ -345,14 +349,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @dev payable function
      */
     function queueEth() external payable {
-        require(msg.value >= minEthAmount, "ZBN03");
-
-        // update eth balance of user, add their receipt, and receipt index to user deposits index
-        ethBalance[msg.sender] = ethBalance[msg.sender] + msg.value;
-        deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
-        userDepositsIndex[msg.sender].push(deposits.length - 1);
-
-        emit QueueEth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
+        _queueEth();
     }
 
     /**
@@ -534,7 +531,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @param _params deposit Params
      */
     function depositAuction(DepositAuctionParams calldata _params) external onlyOwner {
-        _checkOTCPrice(_params.clearingPrice, true);
+        _checkOTCPrice(_params.clearingPrice, false);
 
         uint256 initialZenBullBalance = IERC20(zenBull).balanceOf(address(this));
         uint256 initialEthBalance = address(this).balance;
@@ -562,7 +559,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         require(oSqthToMint == 0, "ZBN23");
 
         {
-            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.caclWethToLendAndUsdcToBorrow(
+            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.calcWethToLendAndUsdcToBorrow(
                 eulerLens, zenBull, weth, usdc, _params.crabAmount
             );
 
@@ -731,14 +728,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         // send WETH to market makers
         IWETH(weth).deposit{value: address(this).balance - initialEthBalance}();
         toExchange = oSqthAmount;
-        uint256 oSqthQuantity;
         for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
             toExchange = NettingLib.transferWethToMarketMaker(
                 weth,
                 _params.orders[i].trader,
                 _params.orders[i].bidId,
                 toExchange,
-                oSqthQuantity,
+                _params.orders[i].quantity,
                 _params.clearingPrice
             );
         }
@@ -811,6 +807,20 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             );
             IERC20(usdc).transfer(pool, amountToPay);
         }
+    }
+
+    /**
+     * @dev queue ETH for deposit into ZenBull
+     */
+    function _queueEth() internal {
+        require(msg.value >= minEthAmount, "ZBN03");
+
+        // update eth balance of user, add their receipt, and receipt index to user deposits index
+        ethBalance[msg.sender] = ethBalance[msg.sender] + msg.value;
+        deposits.push(Receipt(msg.sender, msg.value, block.timestamp));
+        userDepositsIndex[msg.sender].push(deposits.length - 1);
+
+        emit QueueEth(msg.sender, msg.value, ethBalance[msg.sender], deposits.length - 1);
     }
 
     /**

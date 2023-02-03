@@ -579,4 +579,74 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         zenBullNetting.depositAuction(params);
         vm.stopPrank();
     }
+
+    function testDepositAuctionWhenPriceIsLessThanTolerance() public {
+        uint256 amount = 10e18;
+        _queueEth(user1, amount);
+
+        uint256 crabAmount = _calAuctionCrabAmount(amount);
+        uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
+        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
+
+        uint256 share =
+            crabAmount * 1e18 / (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount);
+        uint256 bullTotalSupply = IERC20(ZEN_BULL).totalSupply();
+        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
+        uint256 squeethEthPrice =
+            IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
+        ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
+        {
+            // trader signature vars
+            uint8 v;
+            bytes32 r;
+            bytes32 s;
+            // trader signing bid
+            SigUtil.Order memory orderSig = SigUtil.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0
+            });
+            bytes32 bidDigest = sigUtil.getTypedDataHash(orderSig);
+            (v, r, s) = vm.sign(mm1Pk, bidDigest);
+            ZenBullNetting.Order memory orderData = ZenBullNetting.Order({
+                bidId: 1,
+                trader: mm1,
+                quantity: oSqthAmount,
+                price: squeethEthPrice,
+                isBuying: true,
+                expiry: block.timestamp + 1000,
+                nonce: 0,
+                v: v,
+                r: r,
+                s: s
+            });
+            orders[0] = orderData;
+        }
+
+        ZenBullNetting.DepositAuctionParams memory params = ZenBullNetting.DepositAuctionParams({
+            depositsToProcess: amount,
+            crabAmount: crabAmount,
+            orders: orders,
+            // clearingPrice: squeethEthPrice * 99e16 / 1e18,
+            clearingPrice: ((squeethEthPrice * (1e18 - zenBullNetting.otcPriceTolerance())) / 1e18) - 1,
+            flashDepositEthToCrab: 0,
+            flashDepositMinEthFromSqth: 0,
+            flashDepositMinEthFromUsdc: 0,
+            flashDepositWPowerPerpPoolFee: 3000,
+            wethUsdcPoolFee: 3000
+        });
+
+        vm.prank(mm1);
+        IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
+
+        vm.startPrank(owner);
+        vm.expectRevert(bytes("ZBN15"));
+        zenBullNetting.depositAuction(params);
+        vm.stopPrank();
+    }
 }

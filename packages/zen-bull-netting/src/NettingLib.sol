@@ -35,14 +35,14 @@ library NettingLib {
     function transferOsqthFromMarketMakers(
         address oSqth,
         address trader,
-        uint256 toExchange,
+        uint256 oSqthRemaining,
         uint256 quantity
     ) internal returns (bool, uint256) {
-        if (quantity < toExchange) {
+        if (quantity < oSqthRemaining) {
             IERC20(oSqth).transferFrom(trader, address(this), quantity);
-            return (false, (toExchange - quantity));
+            return (false, (oSqthRemaining - quantity));
         } else {
-            IERC20(oSqth).transferFrom(trader, address(this), toExchange);
+            IERC20(oSqth).transferFrom(trader, address(this), oSqthRemaining);
             return (true, 0);
         }
     }
@@ -73,24 +73,24 @@ library NettingLib {
         address weth,
         address trader,
         uint256 bidId,
-        uint256 toExchange,
+        uint256 oSqthToPull,
         uint256 quantity,
         uint256 clearingPrice
     ) external returns (uint256) {
         uint256 oSqthQuantity;
 
-        if (quantity < toExchange) {
+        if (quantity < oSqthToPull) {
             oSqthQuantity = quantity;
         } else {
-            oSqthQuantity = toExchange;
+            oSqthQuantity = oSqthToPull;
         }
 
         IERC20(weth).transfer(trader, (oSqthQuantity * clearingPrice) / 1e18);
-        toExchange -= oSqthQuantity;
+        oSqthToPull -= oSqthQuantity;
 
         emit WithdrawAuction(trader, bidId, oSqthQuantity, clearingPrice);
 
-        return toExchange;
+        return oSqthToPull;
     }
 
     function getCrabPrice(
@@ -147,7 +147,7 @@ library NettingLib {
         return (oSqthToMint, ethIntoCrab);
     }
 
-    function caclWethToLendAndUsdcToBorrow(
+    function calcWethToLendAndUsdcToBorrow(
         address eulerLens,
         address zenBull,
         address weth,

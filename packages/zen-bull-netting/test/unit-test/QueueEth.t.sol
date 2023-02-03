@@ -45,6 +45,22 @@ contract QueueEth is ZenBullNettingBaseSetup {
         assertEq(zenBullNetting.depositsQueued(), amount);
     }
 
+    function testQueueEthThroughDirectEthSend() public {
+        uint256 amount = 100e18;
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 zenBullNettingEthBalanceBefore = address(zenBullNetting).balance;
+
+        // _queueEth(user1, amount);
+        vm.prank(user1);
+        (bool success,) = address(zenBullNetting).call{value: amount}("");
+
+        assertTrue(success);
+        assertEq(zenBullNetting.ethBalance(user1), amount);
+        assertEq(address(zenBullNetting).balance - zenBullNettingEthBalanceBefore, amount);
+        assertEq(user1.balance + amount, user1EthBalanceBefore);
+        assertEq(zenBullNetting.depositsQueued(), amount);
+    }
+
     function testQueueEthWhenAmountLessThanMinAmount() public {
         vm.prank(owner);
         zenBullNetting.setMinEthAmount(minWeth);
