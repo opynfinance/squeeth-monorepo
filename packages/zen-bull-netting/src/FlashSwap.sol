@@ -75,19 +75,9 @@ library CallbackValidation {
         view
         returns (IUniswapV3Pool pool)
     {
-        return verifyCallback(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee));
-    }
-
-    /// @notice Returns the address of a valid Uniswap V3 Pool
-    /// @param factory The contract address of the Uniswap V3 factory
-    /// @param poolKey The identifying key of the V3 pool
-    /// @return pool The V3 pool contract address
-    function verifyCallback(address factory, PoolAddress.PoolKey memory poolKey)
-        internal
-        view
-        returns (IUniswapV3Pool pool)
-    {
-        pool = IUniswapV3Pool(PoolAddress.computeAddress(factory, poolKey));
+        pool = IUniswapV3Pool(
+            PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee))
+        );
         require(msg.sender == address(pool));
     }
 }
@@ -109,17 +99,6 @@ abstract contract FlashSwap is IUniswapV3SwapCallback {
         address caller;
         uint8 callSource;
         bytes callData;
-    }
-
-    struct UniFlashswapCallbackData {
-        address pool;
-        address caller;
-        address tokenIn;
-        address tokenOut;
-        uint24 fee;
-        uint256 amountToPay;
-        bytes callData;
-        uint8 callSource;
     }
 
     /**
@@ -154,26 +133,20 @@ abstract contract FlashSwap is IUniswapV3SwapCallback {
         uint256 amountToPay = amount0Delta > 0 ? uint256(amount0Delta) : uint256(amount1Delta);
 
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
-        _uniFlashSwap(
-            UniFlashswapCallbackData(
-                pool,
-                data.caller,
-                tokenIn,
-                tokenOut,
-                fee,
-                amountToPay,
-                data.callData,
-                data.callSource
-            )
-        );
+        _uniFlashSwap(pool, amountToPay, data.callData, data.callSource);
     }
 
-    /**
-     * @notice function to be called by uniswap callback.
-     * @dev this function should be overridden by the child contract
-     * @param _uniFlashSwapData UniFlashswapCallbackData struct
-     */
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual { }
+    // /**
+    //  * @notice function to be called by uniswap callback.
+    //  * @dev this function should be overridden by the child contract
+    //  * @param _uniFlashSwapData UniFlashswapCallbackData struct
+    //  */
+    function _uniFlashSwap(
+        address pool,
+        uint256 amountToPay,
+        bytes memory callData,
+        uint8 callSource
+    ) internal virtual { }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)

@@ -5,7 +5,7 @@ libs = ['lib']
 test = 'test'
 auto_detect_solc = true
 optimizer = true
-optimizer_runs = 2000
+optimizer_runs = 10
 
 [profile.test]
 no_match_test = "Fuzzing"
@@ -40,6 +40,7 @@ bracket_spacing = true
 [profile.coverage]
 via_ir = true
 no_match_test = "Fuzzing"
+no_match_contract = "Script"
 
 [profile.coverage.optimizer_details]
 constantOptimizer = true

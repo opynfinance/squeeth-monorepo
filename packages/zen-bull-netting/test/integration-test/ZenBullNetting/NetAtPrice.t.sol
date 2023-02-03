@@ -40,7 +40,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPrice() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueEth(user1, ethToQueue);
@@ -75,7 +75,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWhenZenAmountGreaterThanQueued() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice - 1;
 
         _queueEth(user1, ethToQueue);
@@ -88,7 +88,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWhenEthAmountGreaterThanQueued() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueEth(user1, ethToQueue - 1);
@@ -101,7 +101,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPricePartially() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueEth(user1, ethToQueue);
@@ -139,7 +139,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWithEmptyDepositReceipt() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueEth(user1, ethToQueue);
@@ -178,7 +178,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWithEmptyWithdrawReceipt() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
 
         _queueZenBull(user2, zenBullToQueue);
@@ -217,7 +217,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWhenPriceIsFarBelowFairPrice() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         zenBullFairPrice =
             (zenBullFairPrice * (1e18 - zenBullNetting.otcPriceTolerance())) / 1e18 - 1;
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
@@ -232,7 +232,7 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
 
     function testNetAtPriceWhenPriceIsFarAboveFairPrice() public {
         uint256 ethToQueue = 10e18;
-        uint256 zenBullFairPrice = zenBullNetting.getZenBullPrice();
+        uint256 zenBullFairPrice = getZenBullPrice();
         zenBullFairPrice =
             (zenBullFairPrice * (1e18 + zenBullNetting.otcPriceTolerance())) / 1e18 + 1;
         uint256 zenBullToQueue = ethToQueue * 1e18 / zenBullFairPrice;
