@@ -103,35 +103,6 @@ function getStrategyReturn(funding: number, ethReturn: number) {
   return (funding - Math.pow(ethReturn, 2)) * 100 * 0.5
 }
 
-// generate data from -percentRange to +percentRange
-const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRange: number) => {
-  const dataPoints = []
-
-  const starting = new BigNumber(-percentRange)
-  const increment = new BigNumber(0.05)
-  const ending = new BigNumber(percentRange)
-
-  let current = starting
-  while (current.lte(ending)) {
-    const ethReturn = current.div(100).toNumber()
-
-    const strategyReturn = getStrategyReturn(funding, ethReturn)
-    const strategyReturnPositive = strategyReturn >= 0 ? strategyReturn : null
-    const strategyReturnNegative = strategyReturn < 0 ? strategyReturn : null
-
-    dataPoints.push({
-      ethPrice: ethPriceAtLastHedge + ethReturn * ethPriceAtLastHedge,
-      strategyReturn,
-      strategyReturnPositive,
-      strategyReturnNegative,
-    })
-
-    current = current.plus(increment)
-  }
-
-  return dataPoints
-}
-
 const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
@@ -158,7 +129,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
       profitData.oSqthPrice,
       30,
       currentEthPrice,
-      timeUntilNextHedge / 1000 / 60 / 60 / 24,
+      2,
       profitData.eulerEth,
       profitData.ethSupplyApy,
       profitData.eulerUsdc,
@@ -260,7 +231,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
             />
 
             <Tooltip
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 201 }}
               cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
               content={<CustomTooltip ethPriceAtLastHedge={ethPriceAtLastHedge} />}
             />

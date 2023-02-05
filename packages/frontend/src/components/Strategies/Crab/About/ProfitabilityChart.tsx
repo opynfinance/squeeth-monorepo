@@ -117,7 +117,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
       profitData.oSqthPrice,
       30,
       currentEthPrice,
-      timeUntilNextHedge / 1000 / 60 / 60 / 24,
+      2,
     )
   }, [
     currentEthPrice,
@@ -205,7 +205,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             />
 
             <Tooltip
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 201 }}
               cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
               content={<CustomTooltip />}
             />

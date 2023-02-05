@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Box, InputLabel, TextField, TextFieldProps, Typography } from '@material-ui/core'
 import clsx from 'clsx'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
@@ -99,6 +99,10 @@ const DepositTimePicker: React.FC = () => {
   const setDepositBlock = useSetAtom(bullFirstDepositBlockAtom)
   const [date, setDate] = useState(new Date(depositTime ? depositTime * 1000 : Date.now()))
 
+  useEffect(() => {
+    setDate(new Date(depositTime ? depositTime * 1000 : Date.now()))
+  }, [depositTime])
+
   const onDepositDateChange = async (date: Date | null) => {
     if (date) {
       setDate(date)
@@ -143,8 +147,8 @@ const About: React.FC = () => {
         </Typography>
 
         <Typography className={clsx(classes.text, classes.textMargin)}>
-          Zen bull makes money when ETH goes up, slow and steady. It stacks ETH if ETH is within the below bands at the
-          next rebalance.{' '}
+          Zen bull makes money when ETH goes up, slow and steady. It stacks ETH if ETH is within the below bands over
+          the period of 2 days.{' '}
           <LinkWrapper
             href={gitBookLink}
             onClick={() => track(SITE_EVENTS.CLICK_LEARN_MORE_BULL, { link: gitBookLink })}
@@ -157,7 +161,7 @@ const About: React.FC = () => {
       <Box position="relative" marginTop="32px">
         <div className={aboutClasses.timerContainer}>
           <DepositTimePicker />
-          <NextRebalanceTimer />
+          {/* <NextRebalanceTimer /> */}
         </div>
         <ProfitabilityChart />
       </Box>
