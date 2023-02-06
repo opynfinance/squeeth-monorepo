@@ -1,9 +1,11 @@
-import { Tooltip, Typography, makeStyles } from '@material-ui/core'
+import { Tooltip, Typography } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import useStyles from './useStyles'
 import Image from 'next/image'
-import { Tooltips } from '../../constants'
 import { useAtomValue } from 'jotai'
+import React from 'react'
+import clsx from 'clsx'
+
+import { Tooltips } from '@constants/index'
 import {
   bullCurrentETHPositionAtom,
   bullCurrentUSDCPositionAtom,
@@ -14,6 +16,12 @@ import {
   bullPositionLoadedAtom,
 } from '@state/bull/atoms'
 import bullStrategyImg from 'public/images/bull_strategy.png'
+import { formatCurrency, formatNumber } from '@utils/formatter'
+import useStyles from './useStyles'
+
+const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
+  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
+}
 
 const BullPosition: React.FC = () => {
   const classes = useStyles()
@@ -42,46 +50,78 @@ const BullPosition: React.FC = () => {
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Deposited Amount
+          <div className={classes.positionColumn}>
+            <div className={classes.titleWithTooltip}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Deposited Amount
+              </Typography>
+              <Tooltip title={Tooltips.CrabMigratedDeposit}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+
+            <Typography variant="body1" className={classes.textMonospace}>
+              {formatNumber(bullDepositedETH.toNumber(), 6)}&nbsp;ETH
             </Typography>
-            <Tooltip title={Tooltips.CrabMigratedDeposit}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            <Typography variant="body1">{bullDepositedETH.toFixed(6)}&nbsp;ETH</Typography>
-            <Typography variant="body2" color="textSecondary">
-              <span id="pos-page-crab-deposited-amount">${bullDepositedUSD.toFixed(2)}</span>
+            <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
+              <span id="pos-page-crab-deposited-amount">{formatCurrency(bullDepositedUSD.toNumber())}</span>
             </Typography>
           </div>
-          <div style={{ width: '50%' }}>
+
+          <div className={classes.positionColumn}>
             <Typography variant="caption" component="span" color="textSecondary">
               Current Position
             </Typography>
-            <Typography variant="body1">{!loading ? `${bullCurrentETH.toFixed(6)}` : 'Loading'} ETH</Typography>
-            <Typography variant="body2" color="textSecondary">
-              {!loading ? `$${bullCurrentUSD.toFixed(2)}` : 'Loading'}
-            </Typography>
+            {loading ? (
+              <Loading />
+            ) : (
+              <Typography variant="body1" className={classes.textMonospace}>
+                {formatNumber(bullCurrentETH.toNumber(), 6)} ETH
+              </Typography>
+            )}
+            {loading ? (
+              <Loading isSmall />
+            ) : (
+              <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
+                {formatCurrency(bullCurrentUSD.toNumber())}
+              </Typography>
+            )}
           </div>
         </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-          <div style={{ width: '50%' }}>
-            <Typography variant="caption" component="span" color="textSecondary">
-              Unrealized P&L
-            </Typography>
-            <Tooltip title={Tooltips.CrabPnL}>
-              <InfoIcon fontSize="small" className={classes.infoIcon} />
-            </Tooltip>
-            <Typography
-              variant="body1"
-              className={bullEthPnl.isLessThan(0) ? classes.red : classes.green}
-              id="pos-page-crab-pnl-amount"
-            >
-              {!loading ? `${bullEthPnl.toFixed(6)} ETH` : 'Loading'}
-            </Typography>
-            <Typography variant="caption" className={bullEthPnlInPerct.isLessThan(0) ? classes.red : classes.green}>
-              {!loading ? `${bullEthPnlInPerct.toFixed(2)}` + '%' : 'Loading'}
-            </Typography>
+
+        <div className={clsx(classes.innerPositionData, classes.rowMarginTop)}>
+          <div className={classes.positionColumn}>
+            <div className={classes.titleWithTooltip}>
+              <Typography variant="caption" component="span" color="textSecondary">
+                Unrealized P&L
+              </Typography>
+              <Tooltip title={Tooltips.CrabPnL}>
+                <InfoIcon fontSize="small" className={classes.infoIcon} />
+              </Tooltip>
+            </div>
+
+            {loading ? (
+              <Loading />
+            ) : (
+              <Typography
+                variant="body1"
+                className={clsx(classes.textMonospace, bullEthPnl.isLessThan(0) ? classes.red : classes.green)}
+                id="pos-page-crab-pnl-amount"
+              >
+                {formatNumber(bullEthPnl.toNumber(), 6) + ' ETH'}
+              </Typography>
+            )}
+            {loading ? (
+              <Loading isSmall />
+            ) : (
+              <Typography
+                variant="caption"
+                className={clsx(classes.textMonospace, bullEthPnlInPerct.isLessThan(0) ? classes.red : classes.green)}
+              >
+                {bullEthPnlInPerct.isPositive() && '+'}
+                {formatNumber(bullEthPnlInPerct.toNumber()) + '%'}
+              </Typography>
+            )}
           </div>
         </div>
       </div>
