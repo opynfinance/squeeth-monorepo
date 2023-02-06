@@ -28,36 +28,41 @@ const YourVaults: FC = () => {
 
   return (
     <>
-      {vaults?.map((vault, index) => (
-        <Link key={vault.id} href={`/vault/${vault.id}`} passHref>
-          <a>
-            <SqueethCard mt={index ? 2 : 0}>
-              <Grid container>
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="ID" />
-                  <Typography variant="body1" className={classes.textMonospace}>
-                    {vault.id}
-                  </Typography>
-                </Grid>
+      {vaults?.map((vault, index) => {
+        const vaultShortAmount = toTokenAmount(new BigNumber(vault.shortAmount), 18)
+        const vaultCollateralAmount = toTokenAmount(new BigNumber(vault.collateralAmount), 18)
 
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="Short Amount" />
-                  <Typography variant="body1" className={classes.textMonospace}>
-                    {formatNumber(toTokenAmount(new BigNumber(vault.shortAmount), 18).toNumber(), 4)} oSQTH
-                  </Typography>
-                </Grid>
+        return (
+          <Link key={vault.id} href={`/vault/${vault.id}`} passHref>
+            <a>
+              <SqueethCard mt={index ? 2 : 0}>
+                <Grid container>
+                  <Grid item md={4}>
+                    <LabelWithTooltip labelVariant="caption" label="ID" />
+                    <Typography variant="body1" className={classes.textMonospace}>
+                      {vault.id}
+                    </Typography>
+                  </Grid>
 
-                <Grid item md={4}>
-                  <LabelWithTooltip labelVariant="caption" label="Collateral Amount" />
-                  <Typography variant="body1" className={classes.textMonospace}>
-                    {formatNumber(toTokenAmount(new BigNumber(vault.collateralAmount), 18).toNumber(), 4)} ETH
-                  </Typography>
+                  <Grid item md={4}>
+                    <LabelWithTooltip labelVariant="caption" label="Short Amount" />
+                    <Typography variant="body1" className={classes.textMonospace}>
+                      {formatNumber(vaultShortAmount.toNumber(), 4)} oSQTH
+                    </Typography>
+                  </Grid>
+
+                  <Grid item md={4}>
+                    <LabelWithTooltip labelVariant="caption" label="Collateral Amount" />
+                    <Typography variant="body1" className={classes.textMonospace}>
+                      {formatNumber(vaultCollateralAmount.toNumber(), 4)} ETH
+                    </Typography>
+                  </Grid>
                 </Grid>
-              </Grid>
-            </SqueethCard>
-          </a>
-        </Link>
-      ))}
+              </SqueethCard>
+            </a>
+          </Link>
+        )
+      })}
     </>
   )
 }
