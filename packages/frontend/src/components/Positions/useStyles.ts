@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) =>
     },
     position: {
       padding: theme.spacing(2),
-      backgroundColor: `${theme.palette.background.paper}40`,
+      backgroundColor: theme.palette.background.stone,
       marginTop: theme.spacing(2),
       borderRadius: theme.spacing(1),
       display: 'flex',
