@@ -1,18 +1,17 @@
 import { Box, Tooltip, Typography } from '@material-ui/core'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
-
 import clsx from 'clsx'
 import { useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
 import Nav from '@components/Nav'
-import History from '@pages/positions/History'
-import { PositionType } from '../../types'
-import { BIG_ZERO, Tooltips } from '../../constants'
+import History from '@components/Positions/History'
+import { PositionType } from 'src/types'
+import { Tooltips } from '@constants/index'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
 import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
-import { addressAtom } from 'src/state/wallet/atoms'
+import { addressAtom } from '@state/wallet/atoms'
 import {
   useComputeSwaps,
   useFirstValidVault,
@@ -20,11 +19,24 @@ import {
   useMintedDebt,
   useShortDebt,
   usePositionsAndFeesComputation,
-} from 'src/state/positions/hooks'
-import { activePositionsAtom, positionTypeAtom } from 'src/state/positions/atoms'
-import { poolAtom } from 'src/state/squeethPool/atoms'
-import { indexAtom } from 'src/state/controller/atoms'
+} from '@state/positions/hooks'
+import { activePositionsAtom, positionTypeAtom } from '@state/positions/atoms'
+import { poolAtom } from '@state/squeethPool/atoms'
+import { indexAtom } from '@state/controller/atoms'
 import useAppMemo from '@hooks/useAppMemo'
+import ShortSqueethLiquidated from './ShortSqueethLiquidated'
+import {
+  useCurrentCrabPositionValue,
+  useCurrentCrabPositionValueV2,
+  useSetStrategyData,
+  useSetStrategyDataV2,
+} from '@state/crab/hooks'
+import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
+import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
+import useAppEffect from '@hooks/useAppEffect'
+import { crabQueuedInUsdAtom } from '@state/crab/atoms'
+import { useBullPosition } from '@hooks/useBullPosition'
+import { useInitBullStrategy } from '@state/bull/hooks'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
 import CrabPositionV2 from './CrabPositionV2'
@@ -33,20 +45,7 @@ import LongSqueeth from './LongSqueeth'
 import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
-import ShortSqueethLiquidated from './ShortSqueethLiquidated'
-import {
-  useCurrentCrabPositionValue,
-  useCurrentCrabPositionValueV2,
-  useSetStrategyData,
-  useSetStrategyDataV2,
-} from 'src/state/crab/hooks'
-import { pnl, pnlInPerct, pnlv2, pnlInPerctv2 } from 'src/lib/pnl'
-import { useCrabPositionV2 } from '@hooks/useCrabPosition/useCrabPosition'
-import useAppEffect from '@hooks/useAppEffect'
-import { crabQueuedInEthAtom, crabQueuedInUsdAtom } from '@state/crab/atoms'
-import { useBullPosition } from '@hooks/useBullPosition'
 import BullPosition from './BullPosition'
-import { useInitBullStrategy } from '@state/bull/hooks'
 
 export default function Positions() {
   const classes = useStyles()
@@ -142,11 +141,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-          depositedEth.isZero() &&
-          depositedEthV2.isZero() &&
-          squeethAmount.isZero() &&
-          mintedDebt.isZero() &&
-          lpedSqueeth.isZero() ? (
+        depositedEth.isZero() &&
+        depositedEthV2.isZero() &&
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
