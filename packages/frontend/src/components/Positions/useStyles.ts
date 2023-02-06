@@ -104,6 +104,10 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
     },
+    titleWithTooltip: {
+      display: 'flex',
+      alignItems: 'center',
+    },
     pnlTitle: {
       display: 'flex',
       alignItems: 'center',
