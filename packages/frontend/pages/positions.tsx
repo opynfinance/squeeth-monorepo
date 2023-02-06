@@ -2,9 +2,10 @@ import { useAtomValue } from 'jotai'
 
 import ConnectWallet from '@components/Positions/ConnectWallet'
 import Positions from '@components/Positions/Positions'
-import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { useInitCrabMigration } from '@state/crabMigration/hooks'
+import { addressAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import Nav from '@components/Nav'
 
 const PositionsPage = () => {
   const address = useAtomValue(addressAtom)
@@ -21,6 +22,8 @@ const Wrapper = () => {
   return (
     <>
       <DefaultSiteSeo />
+      <Nav />
+
       <PositionsPage />
     </>
   )

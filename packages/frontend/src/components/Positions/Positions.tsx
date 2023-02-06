@@ -1,10 +1,8 @@
 import { Box, Tooltip, Typography } from '@material-ui/core'
-import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
-import clsx from 'clsx'
+import InfoIcon from '@material-ui/icons/InfoOutlined'
 import { useAtomValue } from 'jotai'
 
 import { LPTable } from '@components/Lp/LPTable'
-import Nav from '@components/Nav'
 import History from '@components/Positions/History'
 import { PositionType } from 'src/types'
 import { Tooltips } from '@constants/index'
@@ -37,6 +35,7 @@ import useAppEffect from '@hooks/useAppEffect'
 import { crabQueuedInUsdAtom } from '@state/crab/atoms'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { useInitBullStrategy } from '@state/bull/hooks'
+import { formatCurrency } from '@utils/formatter'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
 import CrabPositionV2 from './CrabPositionV2'
@@ -118,23 +117,26 @@ export default function Positions() {
     return vault && vault.shortAmount?.isZero() && liquidations.length > 0
   }, [vault, liquidations?.length])
 
+  const ethPrice = toTokenAmount(index, 18).sqrt()
+
   return (
     <div>
-      <Nav />
       <div className={classes.container}>
         <div className={classes.header}>
-          <Typography color="primary" variant="h6">
+          <Typography variant="h4" className={classes.sectionTitle}>
             Your Positions
           </Typography>
-          <div style={{ display: 'flex' }}>
+          <div className={classes.ethPriceContainer}>
             <Typography component="span" color="textSecondary">
-              ETH Price:{' '}
+              ETH Price:
             </Typography>
 
             <div className={classes.tooltipContainer}>
-              <Typography component="span">$ {toTokenAmount(index, 18).sqrt().toFixed(2).toLocaleString()}</Typography>
+              <Typography component="span" className={classes.textMonospace}>
+                {formatCurrency(ethPrice.toNumber())}
+              </Typography>
               <Tooltip title={Tooltips.SpotPrice}>
-                <FiberManualRecordIcon fontSize="small" className={clsx(classes.dotIcon, classes.infoIcon)} />
+                <InfoIcon className={classes.infoIcon} />
               </Tooltip>
             </div>
           </div>
@@ -170,7 +172,7 @@ export default function Positions() {
             pnlWMidPriceInPerct={pnlWMidPriceInPerct}
             currentCrabPositionValue={currentCrabPositionValue}
             currentCrabPositionValueInETH={currentCrabPositionValueInETH}
-            version="Crab Strategy V1"
+            version="Crab Strategy v1"
           />
         )}
 
@@ -183,7 +185,7 @@ export default function Positions() {
             pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
             currentCrabPositionValue={currentCrabPositionValueV2}
             currentCrabPositionValueInETH={currentCrabPositionValueInETHV2}
-            version="Crab Strategy V2"
+            version="Crab Strategy v2"
           />
         )}
 
@@ -192,7 +194,7 @@ export default function Positions() {
         {activePositions?.length > 0 && (
           <>
             <div className={classes.header}>
-              <Typography color="primary" variant="h6">
+              <Typography variant="h4" className={classes.sectionTitle}>
                 Your LP Positions
               </Typography>
             </div>
@@ -201,7 +203,7 @@ export default function Positions() {
         )}
 
         <Box mt={8} component="section">
-          <Typography color="primary" variant="h6">
+          <Typography variant="h4" className={classes.sectionTitle}>
             Your Vaults
           </Typography>
           <Box mt={2}>
@@ -210,7 +212,7 @@ export default function Positions() {
         </Box>
 
         <div className={classes.history}>
-          <Typography color="primary" variant="h6">
+          <Typography variant="h4" className={classes.sectionTitle}>
             Transaction History
           </Typography>
           <History />
