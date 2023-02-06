@@ -1,6 +1,7 @@
 import { Link, Tooltip, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
+import clsx from 'clsx'
 
 import { useVaultData } from '@hooks/useVaultData'
 import { useFirstValidVault, useLpDebt } from '@state/positions/hooks'
@@ -41,7 +42,7 @@ export default function LPedSqueeth({ vaultExists }: Props) {
             </Typography>
           </div>
         </div>
-        <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
+        <div className={clsx(classes.innerPositionData, classes.rowMarginTop)}>
           {new BigNumber(existingLiqPrice).isFinite() ? (
             <div className={classes.positionColumn}>
               <div className={classes.titleWithTooltip}>

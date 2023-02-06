@@ -2,7 +2,6 @@ import { Tooltip, Typography } from '@material-ui/core'
 import { useAtomValue } from 'jotai'
 import Link from 'next/link'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
-import BigNumber from 'bignumber.js'
 import clsx from 'clsx'
 
 import { useComputeSwaps, useFirstValidVault, useLPPositionsQuery, useShortRealizedPnl } from '@state/positions/hooks'
@@ -52,11 +51,8 @@ export default function ShortSqueeth() {
             {isPositionLoading && squeethAmount.isEqualTo(0) ? (
               <Loading />
             ) : (
-              <Typography variant="body1">
-                <Typography component="span" id="pos-page-short-osqth-bal" className={classes.textMonospace}>
-                  {formatNumber(squeethAmount.toNumber(), 6)}
-                </Typography>
-                &nbsp; oSQTH
+              <Typography variant="body1" className={classes.textMonospace}>
+                <span id="pos-page-short-osqth-bal">{formatNumber(squeethAmount.toNumber(), 6)}</span> oSQTH
               </Typography>
             )}
           </div>
@@ -137,7 +133,7 @@ export default function ShortSqueeth() {
                       className={clsx(classes.textMonospace, shortGain.isLessThan(0) ? classes.red : classes.green)}
                     >
                       {shortGain.isPositive() && '+'}
-                      {formatNumber(shortGain?.toNumber() ?? 0)}%
+                      {formatNumber(shortGain.toNumber() || 0)}%
                     </Typography>
                   </>
                 )}

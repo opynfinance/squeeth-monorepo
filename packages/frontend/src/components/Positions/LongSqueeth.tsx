@@ -42,11 +42,8 @@ export default function LongSqueeth() {
             {isPositionLoading && squeethAmount.isEqualTo(0) ? (
               <Loading />
             ) : (
-              <Typography variant="body1">
-                <Typography component="span" id="pos-page-long-osqth-bal" className={classes.textMonospace}>
-                  {formatNumber(squeethAmount.toNumber(), 6)}
-                </Typography>
-                &nbsp; oSQTH
+              <Typography variant="body1" className={classes.textMonospace}>
+                <span id="pos-page-long-osqth-bal">{formatNumber(squeethAmount.toNumber(), 6)}</span> oSQTH
               </Typography>
             )}
           </div>
@@ -59,10 +56,8 @@ export default function LongSqueeth() {
             {isPnLLoading && longPositionValue.isEqualTo(0) ? (
               <Loading />
             ) : (
-              <Typography variant="body1">
-                <Typography component="span" className={classes.textMonospace}>
-                  {formatCurrency(longPositionValue.toNumber())}
-                </Typography>
+              <Typography variant="body1" className={classes.textMonospace}>
+                {formatCurrency(longPositionValue.toNumber())}
               </Typography>
             )}
           </div>
@@ -70,7 +65,7 @@ export default function LongSqueeth() {
 
         <div className={classes.rowMarginTop}>
           {isToHidePnL ? (
-            <HidePnLText />
+            <HidePnLText isSmall />
           ) : (
             <div className={classes.innerPositionData}>
               <div className={classes.positionColumn}>
@@ -97,7 +92,7 @@ export default function LongSqueeth() {
                       className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
                     >
                       {longGain.isPositive() && '+'}
-                      {(longGain || 0).toFixed(2)}%
+                      {formatNumber(longGain.toNumber() || 0)}%
                     </Typography>
                   </>
                 )}
