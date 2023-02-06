@@ -2,7 +2,14 @@ import { Percent } from '@uniswap/sdk-core'
 import { Pool } from '@uniswap/v3-sdk'
 import BigNumber from 'bignumber.js'
 
-import { BIG_ZERO, DEFAULT_SLIPPAGE, ETH_USDC_POOL_FEES, FUNDING_PERIOD, UNI_POOL_FEES } from '../constants'
+import {
+  BIG_ZERO,
+  DEFAULT_SLIPPAGE,
+  ETH_USDC_POOL_FEES,
+  FUNDING_PERIOD,
+  INDEX_SCALE,
+  UNI_POOL_FEES,
+} from '../constants'
 import { CollateralStatus, Networks } from '../types'
 
 export function toTokenAmount(amount: BigNumber | number | string, decimals: number): BigNumber {
@@ -59,4 +66,9 @@ export function getBreakEvenForLongSqueeth(
 
 export function getUSDCPoolFee(network: Networks) {
   return network === Networks.GOERLI ? UNI_POOL_FEES : ETH_USDC_POOL_FEES
+}
+
+export const calculateIV = (oSqthPrice: number, normFactor: number, ethPrice: number) => {
+  if (!oSqthPrice) return 0
+  return Math.sqrt(Math.log((oSqthPrice * INDEX_SCALE) / (normFactor * ethPrice)) / (FUNDING_PERIOD / 365))
 }

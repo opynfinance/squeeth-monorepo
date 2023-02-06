@@ -134,5 +134,6 @@ export function loadOrCreateStrategy(id: string): Strategy {
   strategy.vaultId = BigInt.zero()
   strategy.lastHedgeTimestamp = BigInt.zero()
   strategy.lastHedgeTx = ''
+  strategy.lastHedgeBlockNumber = BigInt.zero()
   return strategy
 }

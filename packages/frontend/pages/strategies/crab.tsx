@@ -6,9 +6,10 @@ import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
 import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
-import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
+import { useSetStrategyDataV2, useCurrentCrabPositionValueV2, useCrabProfitData } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { SQUEETH_BASE_URL } from '@constants/index'
+import { useGetVault } from '@state/controller/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

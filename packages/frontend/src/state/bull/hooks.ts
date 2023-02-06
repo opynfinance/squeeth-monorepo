@@ -7,6 +7,7 @@ import {
   USDC_DECIMALS,
   WETH_DECIMALS,
 } from '@constants/index'
+import { useOracle } from '@hooks/contracts/useOracle'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
@@ -18,12 +19,15 @@ import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__genera
 import {
   auctionBullContractAtom,
   bullStrategyContractAtom,
+  controllerContractAtom,
+  crabStrategyContractAtomV2,
   eulerLensContractAtom,
   flashBullContractAtom,
   quoterContractAtom,
   wethETokenContractAtom,
 } from '@state/contracts/atoms'
 import { indexAtom } from '@state/controller/atoms'
+import { useGetVault } from '@state/controller/hooks'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import { squeethInitialPriceAtom } from '@state/squeethPool/atoms'
@@ -37,7 +41,7 @@ import { getExactIn, getExactOut } from '@utils/quoter'
 import BigNumber from 'bignumber.js'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQueryClient } from 'react-query'
 import { useMountedState } from 'react-use'
 import {
@@ -57,6 +61,8 @@ import {
   eulerETHLendRateAtom,
   bullTimeAtLastHedgeAtom,
   bullEulerUSDCDebtAtom,
+  bullFirstDepositTimestampAtom,
+  bullFirstDepositBlockAtom,
 } from './atoms'
 import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
 
@@ -653,4 +659,116 @@ export const useBullFlashWithdraw = () => {
   }
 
   return flashWithdrawFromBull
+}
+
+export const useBullProfitData = () => {
+  const CRAB_VAULT = 286
+  const [profitData, setProfitData] = useState({
+    ethPriceAtHedge: 0,
+    nf: 0,
+    shortAmt: 0,
+    collat: 0,
+    oSqthPrice: 0,
+    time: 0,
+    eulerEth: 0,
+    ethSupplyApy: 0,
+    eulerUsdc: 0,
+    usdcBorrowApy: 0,
+  })
+
+  const { crabStrategy2, squeethPool, oSqueeth, weth, usdc, ethUsdcPool, bullStrategy } = useAtomValue(addressesAtom)
+
+  const controller = useAtomValue(controllerContractAtom)
+  const etokenContract = useAtomValue(wethETokenContractAtom)
+  const eulerLenseContract = useAtomValue(eulerLensContractAtom)
+  const crabV2Contract = useAtomValue(crabStrategyContractAtomV2)
+
+  const networkId = useAtomValue(networkIdAtom)
+  const { data, loading, error } = useQuery<strategyQuery, strategyQueryVariables>(STRATEGY_QUERY, {
+    variables: { strategyId: crabStrategy2 },
+    fetchPolicy: 'cache-and-network',
+    client: squeethClient[networkId],
+  })
+  const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
+  const currentEthPrice = useOnChainETHPrice()
+  const firstDepositTime = useAtomValue(bullFirstDepositTimestampAtom)
+  const firstDepositBlock = useAtomValue(bullFirstDepositBlockAtom)
+
+  const getVault = useGetVault()
+  const { getTwapSafe } = useOracle()
+
+  const setData = async (blockNumber?: number, timestamp?: number) => {
+    if (!controller || !etokenContract || !eulerLenseContract) return
+
+    const p1 = getVault(CRAB_VAULT, blockNumber)
+    const p2 = controller.methods.getExpectedNormalizationFactor().call({}, blockNumber)
+    const p3 = getTwapSafe(squeethPool, oSqueeth, weth, 1, blockNumber)
+    const p4 = getTwapSafe(ethUsdcPool, weth, usdc, 1, blockNumber)
+    const p5 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call({}, blockNumber)
+    const p6 = eulerLenseContract.methods.interestRates(weth).call({}, blockNumber)
+    const p7 = eulerLenseContract.methods.interestRates(usdc).call({}, blockNumber)
+    const p8 = eulerLenseContract.methods.getDTokenBalance(usdc, bullStrategy).call({}, blockNumber)
+    const p9 = crabV2Contract?.methods.balanceOf(bullStrategy).call({}, blockNumber)
+    const p10 = crabV2Contract?.methods.totalSupply().call({}, blockNumber)
+
+    const [
+      _vault,
+      _nf,
+      _osqthPrice,
+      _ethPrice,
+      depositedEth,
+      wethInterests,
+      usdcInterests,
+      totalUsdcInEuler,
+      crabBalance,
+      totalSupply,
+    ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10])
+
+    if (!_vault) return
+
+    console.log('Data', {
+      ethPriceAtHedge: timestamp ? _ethPrice.toNumber() : currentEthPrice.toNumber(),
+      nf: toTokenAmount(_nf, 18).toNumber(),
+      shortAmt: _vault.shortAmount.toNumber(),
+      collat: _vault.collateralAmount.toNumber(),
+      oSqthPrice: _osqthPrice.toNumber(),
+      time: timestamp ? Number(timestamp) : Date.now() / 1000,
+      eulerEth: toTokenAmount(depositedEth, 18).toNumber(),
+      ethSupplyApy: getEulerInterestRate(new BigNumber(wethInterests[2])).toNumber(),
+      totalUsdcInEuler: toTokenAmount(totalUsdcInEuler, 6).toNumber(),
+      usdcInterests: getEulerInterestRate(new BigNumber(usdcInterests[1])).toNumber(),
+    })
+    setProfitData({
+      ethPriceAtHedge: timestamp ? _ethPrice.toNumber() : currentEthPrice.toNumber(),
+      nf: toTokenAmount(_nf, 18).toNumber(),
+      shortAmt: toTokenAmount(crabBalance, 18).times(_vault.shortAmount).div(toTokenAmount(totalSupply, 18)).toNumber(),
+      collat: toTokenAmount(crabBalance, 18)
+        .times(_vault.collateralAmount)
+        .div(toTokenAmount(totalSupply, 18))
+        .toNumber(),
+      oSqthPrice: _osqthPrice.toNumber(),
+      time: timestamp ? Number(timestamp) : Date.now() / 1000,
+      eulerEth: toTokenAmount(depositedEth, 18).toNumber(),
+      ethSupplyApy: getEulerInterestRate(new BigNumber(wethInterests[2])).toNumber(),
+      eulerUsdc: toTokenAmount(totalUsdcInEuler, 6).toNumber(),
+      usdcBorrowApy: getEulerInterestRate(new BigNumber(usdcInterests[1])).toNumber(),
+    })
+  }
+
+  useEffect(() => {
+    if (!loading && data && data.strategy) {
+      if (firstDepositTime && firstDepositBlock && data.strategy.lastHedgeBlockNumber < firstDepositBlock) {
+        setData(firstDepositBlock, firstDepositTime)
+      } else if (
+        bullPosition.isGreaterThan(0) ||
+        (data.strategy.lastHedgeBlockNumber > firstDepositBlock && firstDepositBlock != 0)
+      ) {
+        setData(data.strategy.lastHedgeBlockNumber, data.strategy.lastHedgeTimestamp)
+      } else {
+        setData()
+      }
+    }
+  }, [loading, data, bullPosition, firstDepositBlock, firstDepositTime])
+
+  return { profitData, loading }
 }

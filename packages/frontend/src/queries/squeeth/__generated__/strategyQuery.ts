@@ -13,6 +13,7 @@ export interface strategyQuery_strategy {
   vaultId: any;
   lastHedgeTx: string;
   lastHedgeTimestamp: any;
+  lastHedgeBlockNumber: any;
 }
 
 export interface strategyQuery {

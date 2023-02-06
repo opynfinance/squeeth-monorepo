@@ -13,6 +13,7 @@ export const USER_BULL_TX_QUERY = gql`
       ethAmount
       type
       timestamp
+      blockNumber
     }
   }
 `

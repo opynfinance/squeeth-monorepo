@@ -15,6 +15,7 @@ export interface userBullTxes_bullUserTxes {
   ethAmount: any;
   type: string;
   timestamp: any;
+  blockNumber: any;
 }
 
 export interface userBullTxes {

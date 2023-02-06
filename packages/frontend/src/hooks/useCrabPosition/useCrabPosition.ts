@@ -4,7 +4,7 @@ import { useUserCrabTxHistory } from '../useUserCrabTxHistory'
 import { useUserCrabV2TxHistory } from '../useUserCrabV2TxHistory'
 import { CrabStrategyTxType, CrabStrategyV2TxType } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
-import { useAtom, useAtomValue } from 'jotai'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { indexAtom } from 'src/state/controller/atoms'
 import useAppCallback from '../useAppCallback'
 import useAppMemo from '../useAppMemo'
@@ -16,6 +16,8 @@ import {
   crabQueuedInEthAtom,
   currentCrabPositionValueInETHAtom,
   currentCrabPositionValueInETHAtomV2,
+  firstDepositBlockAtom,
+  firstDepositTimeAtom,
 } from 'src/state/crab/atoms'
 import BigNumber from 'bignumber.js'
 
@@ -112,6 +114,8 @@ export const useCrabPositionV2 = (user: string) => {
   const currentEthValue = useAtomValue(currentCrabPositionValueInETHAtomV2)
   const [txToSearch, setTxToSearch] = useState<string | undefined>(undefined)
   const currentQueuedCrabEth = useAtomValue(crabQueuedInEthAtom)
+  const setFirstDepositTime = useSetAtom(firstDepositTimeAtom)
+  const setFirstDepositBlock = useSetAtom(firstDepositBlockAtom)
 
   const { loading: txHistoryLoading, data: txHistoryData, startPolling, stopPolling } = useUserCrabV2TxHistory(user)
 
@@ -129,6 +133,8 @@ export const useCrabPositionV2 = (user: string) => {
       return { remainingDepositUsd: BIG_ZERO, remainingDepositEth: BIG_ZERO }
     }
 
+    setFirstDepositTime(Number(txHistoryData[0].timestamp))
+    setFirstDepositBlock(Number(txHistoryData[0].blockNumber))
     const { totalSharesDeposited, totalSharesWithdrawn, totalUSDDeposit, totalETHDeposit } = txHistoryData?.reduce(
       (acc, tx) => {
         if (

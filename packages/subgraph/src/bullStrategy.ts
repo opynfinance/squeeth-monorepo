@@ -36,7 +36,6 @@ import {
     Strategy,
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import * as WETH9 from "../generated/Weth/Weth"
 import { Address, BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
 import { loadOrCreateStrategy } from "./util"
 import { AUCTION_BULL, FLASH_BULL_ADDR, WETH } from "./constants"
@@ -55,6 +54,7 @@ export function loadOrCreateTx(id: string): BullUserTxSchema {
   userTx.wSqueethAmount = BigInt.zero()
   userTx.wethLentAmount = BigInt.zero()
   userTx.usdcBorrowedAmount = BigInt.zero()
+  userTx.blockNumber = BigInt.zero()
 
   return userTx
 }
@@ -71,6 +71,8 @@ export function handleWithdraw(event: Withdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
+
   userTx.save()
 }
 
@@ -92,6 +94,8 @@ export function handleDeposit(event: Deposit): void {
   userTx.owner = event.transaction.from
   userTx.type = 'DEPOSIT'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
+
   userTx.save()
 }
 
@@ -119,6 +123,7 @@ export function handleRedeemCrabAndWithdrawEth(event: RedeemCrabAndWithdrawEth):
   userTx.owner = event.transaction.from
   userTx.type = 'REDEEM_CRAB_AND_WITHDRAW_ETH'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -139,6 +144,8 @@ export function handleShutdownRepayAndWithdraw(event: ShutdownRepayAndWithdraw):
   userTx.owner = event.transaction.from
   userTx.type = 'SHUTDOWN_REPAY_AND_WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
+
   userTx.save()
 }
 
@@ -156,6 +163,7 @@ export function handleDepositEthIntoCrab(event: DepositEthIntoCrab): void {
   userTx.owner = event.transaction.from
   userTx.type = 'DEPOSIT_ETH_INTO_CRAB'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -167,6 +175,7 @@ export function handleWithdrawShutdown(event: WithdrawShutdown): void {
   userTx.owner = event.transaction.from
   userTx.type = 'WITHDRAW_SHUTDOWN'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 }
 
@@ -178,6 +187,7 @@ export function handleAuctionRepayAndWithdrawFromLeverage(event: AuctionRepayAnd
   userTx.owner = event.transaction.from
   userTx.type = 'AUCTION_REPAY_AND_WITHDRAW_FROM_LEVERAGE'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
   userTx.save()
 
 }
@@ -210,6 +220,7 @@ export function handleLeverageRebalance(event: LeverageRebalance): void {
 
   const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
   strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeBlockNumber = event.block.number
   strategy.lastHedgeTx = event.transaction.hash.toHex()
   strategy.save()
 }
@@ -248,6 +259,7 @@ export function handleFullRebalance(event: FullRebalance): void {
 
   const strategy = loadOrCreateStrategy(AUCTION_BULL.toHex())
   strategy.lastHedgeTimestamp = event.block.timestamp
+  strategy.lastHedgeBlockNumber = event.block.number
   strategy.lastHedgeTx = event.transaction.hash.toHex()
   strategy.save()
 }
@@ -262,6 +274,8 @@ export function handleFlashDeposit(event: FlashDeposit): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_DEPOSIT'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
+
   userTx.save()
 }
 
@@ -273,6 +287,8 @@ export function handleFlashWithdraw(event: FlashWithdraw): void {
   userTx.owner = event.transaction.from
   userTx.type = 'FLASH_WITHDRAW'
   userTx.timestamp = event.block.timestamp
+  userTx.blockNumber = event.block.number
+
   userTx.save()
 }
 

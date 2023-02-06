@@ -22,6 +22,9 @@ import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import { formatNumber } from '@utils/formatter'
 import useStyles from '@components/Strategies/styles'
+import { useBullProfitData } from '@state/bull/hooks'
+import { getNextHedgeDate } from '@state/crab/utils'
+import { getBullExcessProfitDataPoints } from '@utils/strategyPayoff'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {
@@ -61,7 +64,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, ethPrice
         </Typography>
         <Typography className={classes.value}>
           {`Zen Bull return: `}
-          <b>{formatNumber(strategyReturn)}%</b>
+          <b>{formatNumber(strategyReturn, 4)}%</b>
         </Typography>
       </div>
     )
@@ -100,51 +103,51 @@ function getStrategyReturn(funding: number, ethReturn: number) {
   return (funding - Math.pow(ethReturn, 2)) * 100 * 0.5
 }
 
-// generate data from -percentRange to +percentRange
-const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRange: number) => {
-  const dataPoints = []
-
-  const starting = new BigNumber(-percentRange)
-  const increment = new BigNumber(0.05)
-  const ending = new BigNumber(percentRange)
-
-  let current = starting
-  while (current.lte(ending)) {
-    const ethReturn = current.div(100).toNumber()
-
-    const strategyReturn = getStrategyReturn(funding, ethReturn)
-    const strategyReturnPositive = strategyReturn >= 0 ? strategyReturn : null
-    const strategyReturnNegative = strategyReturn < 0 ? strategyReturn : null
-
-    dataPoints.push({
-      ethPrice: ethPriceAtLastHedge + ethReturn * ethPriceAtLastHedge,
-      strategyReturn,
-      strategyReturnPositive,
-      strategyReturnNegative,
-    })
-
-    current = current.plus(increment)
-  }
-
-  return dataPoints
-}
-
 const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
   const ethPrice = useOnChainETHPrice()
+  const { profitData } = useBullProfitData()
 
   const impliedFunding = 2 * currentFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
   const currentEthPrice = Number(ethPrice)
 
-  const profitableBoundsPercent = Math.sqrt(impliedFunding)
-  const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableBoundsPercent * ethPriceAtLastHedge
-  const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
-
-  const data = useMemo(() => {
-    const percentRange = profitableBoundsPercent * 4 * 100 // 4x the profitable move percent
-    return getDataPoints(impliedFunding, ethPriceAtLastHedge, percentRange)
-  }, [impliedFunding, ethPriceAtLastHedge, profitableBoundsPercent])
+  const {
+    dataPoints: data,
+    lowerPriceBandForProfitability,
+    upperPriceBandForProfitability,
+    currentProfit,
+  } = useMemo(() => {
+    const nextHedgeTime = getNextHedgeDate(new Date(profitData.time * 1000)).getTime()
+    const timeUntilNextHedge = nextHedgeTime - new Date(profitData.time * 1000).getTime()
+    console.log('timeUntilNextHedge', timeUntilNextHedge)
+    return getBullExcessProfitDataPoints(
+      profitData.ethPriceAtHedge,
+      profitData.nf,
+      profitData.shortAmt,
+      profitData.collat,
+      profitData.oSqthPrice,
+      30,
+      currentEthPrice,
+      2,
+      profitData.eulerEth,
+      profitData.ethSupplyApy,
+      profitData.eulerUsdc,
+      profitData.usdcBorrowApy,
+    )
+  }, [
+    currentEthPrice,
+    profitData.collat,
+    profitData.ethPriceAtHedge,
+    profitData.ethSupplyApy,
+    profitData.eulerEth,
+    profitData.eulerUsdc,
+    profitData.nf,
+    profitData.oSqthPrice,
+    profitData.shortAmt,
+    profitData.time,
+    profitData.usdcBorrowApy,
+  ])
 
   const getStrategyReturnForETHPrice = (ethPriceValue: number) => {
     const ethReturn = (ethPriceValue - ethPriceAtLastHedge) / ethPriceAtLastHedge
@@ -204,7 +207,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
               type="number"
               dataKey="strategyReturn"
               tick={false}
-              domain={isMobileBreakpoint ? ['dataMin - 1.25', 'dataMax + 1.25'] : ['dataMin - 0.5', 'dataMax + 0.5']}
+              domain={isMobileBreakpoint ? ['dataMin - .25', 'dataMax + .25'] : ['dataMin - 0.05', 'dataMax + 0.05']}
               strokeDasharray="5,5"
               strokeOpacity="0.5"
               stroke="#fff"
@@ -221,14 +224,14 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
 
             <ReferenceArea
               shape={<CandyBar />}
-              x1={lowerPriceBandForProfitability}
-              x2={upperPriceBandForProfitability}
+              x1={lowerPriceBandForProfitability.ethPrice}
+              x2={upperPriceBandForProfitability.ethPrice}
               fill={successColor + '16'}
               stroke={successColor}
             />
 
             <Tooltip
-              wrapperStyle={{ outline: 'none' }}
+              wrapperStyle={{ outline: 'none', zIndex: 201 }}
               cursor={{ stroke: '#fff', strokeOpacity: '0.5', strokeWidth: 1 }}
               content={<CustomTooltip ethPriceAtLastHedge={ethPriceAtLastHedge} />}
             />
@@ -253,28 +256,28 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
             />
 
             <ReferenceDot
-              x={lowerPriceBandForProfitability}
-              y={getStrategyReturnForETHPrice(lowerPriceBandForProfitability)}
+              x={lowerPriceBandForProfitability.ethPrice}
+              y={lowerPriceBandForProfitability.strategyReturn}
               r={0}
             >
               <Label
                 fontFamily={'DM Mono'}
                 fontWeight={500}
-                value={'$' + formatNumber(lowerPriceBandForProfitability, 0)}
+                value={'$' + formatNumber(lowerPriceBandForProfitability.ethPrice, 0)}
                 position="insideBottomRight"
                 offset={8}
                 fill="#ffffffcc"
               />
             </ReferenceDot>
             <ReferenceDot
-              x={upperPriceBandForProfitability}
-              y={getStrategyReturnForETHPrice(upperPriceBandForProfitability)}
+              x={upperPriceBandForProfitability.ethPrice}
+              y={upperPriceBandForProfitability.strategyReturn}
               r={0}
             >
               <Label
                 fontFamily={'DM Mono'}
                 fontWeight={500}
-                value={'$' + formatNumber(upperPriceBandForProfitability, 0)}
+                value={'$' + formatNumber(upperPriceBandForProfitability.ethPrice, 0)}
                 position="insideBottomLeft"
                 offset={8}
                 fill="#ffffffcc"
@@ -283,9 +286,9 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
 
             <ReferenceDot
               x={currentEthPrice}
-              y={currentStrategyReturn}
+              y={currentProfit.strategyReturn}
               r={5}
-              fill={currentStrategyReturn < 0 ? errorColor : successColor}
+              fill={currentProfit.strategyReturn < 0 ? errorColor : successColor}
               strokeWidth={0}
             >
               <Label
@@ -294,7 +297,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
                 value={'$' + formatNumber(currentEthPrice, 0)}
                 position="insideTop"
                 offset={20}
-                fill={currentStrategyReturn < 0 ? errorColor : successColor}
+                fill={currentProfit.strategyReturn < 0 ? errorColor : successColor}
                 filter="url(#removebackground)"
               />
             </ReferenceDot>

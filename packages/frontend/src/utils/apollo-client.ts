@@ -17,7 +17,7 @@ const httpLinkGL = new HttpLink({
 })
 
 const httpLinkRPSqueeth = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten',
+  uri: 'https://api.thegraph.com/subgraphs/name/haythem96/squeeth-temp-subgraph',
 })
 
 const httpLinkMNSqueeth = new HttpLink({
@@ -75,7 +75,7 @@ const wsLinkGL =
 const wsLinkRPSqueeth =
   typeof window !== 'undefined'
     ? new WebSocketLink({
-        uri: 'wss://api.thegraph.com/subgraphs/name/opynfinance/squeeth-ropsten',
+        uri: 'wss://api.thegraph.com/subgraphs/name/haythem96/squeeth-temp-subgraph',
         options: {
           reconnect: false,
         },
@@ -137,7 +137,7 @@ export const uniswapClient = {
 }
 
 const squeethMainnet = new ApolloClient({
-  link: typeof window !== 'undefined' ? ApolloLink.from([splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth)]) : undefined,
+  link: typeof window !== 'undefined' ? splitLink(wsLinkMNSqueeth, httpLinkMNSqueeth) : undefined,
   cache: new InMemoryCache(),
 })
 
