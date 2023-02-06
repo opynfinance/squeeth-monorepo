@@ -18,6 +18,19 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       justifyContent: 'space-between',
     },
+    ethPriceContainer: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+      lineHeight: '130%',
+    },
+    textMonospace: {
+      fontFamily: 'DM Mono',
+    },
     position: {
       padding: theme.spacing(2),
       backgroundColor: `${theme.palette.background.paper}40`,
@@ -50,6 +63,12 @@ const useStyles = makeStyles((theme) =>
       width: '100%',
       justifyContent: 'space-between',
     },
+    positionColumn: {
+      flex: 1,
+    },
+    rowMarginTop: {
+      marginTop: '16px',
+    },
     positionTitle: {
       width: '30%',
       [theme.breakpoints.down('sm')]: {
@@ -77,14 +96,13 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     infoIcon: {
-      fontSize: '10px',
+      fontSize: '12px',
       marginLeft: theme.spacing(0.5),
     },
     tooltipContainer: {
       marginLeft: '.5em',
-    },
-    dotIcon: {
-      marginRight: '1em',
+      display: 'flex',
+      alignItems: 'center',
     },
     pnlTitle: {
       display: 'flex',

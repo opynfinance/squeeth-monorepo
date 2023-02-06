@@ -1,15 +1,20 @@
 import Typography from '@material-ui/core/Typography'
 import { useAtomValue } from 'jotai'
-import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
-import { loadingAtom } from 'src/state/pnl/atoms'
-import useStyles from './useStyles'
-import { useLongGain, useCurrentLongPositionValue, useLongUnrealizedPNL } from 'src/state/pnl/hooks'
-import { toTokenAmount } from '@utils/calculations'
-import { indexAtom } from 'src/state/controller/atoms'
-import { isToHidePnLAtom } from 'src/state/positions/atoms'
+import clsx from 'clsx'
+
+import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from '@state/positions/hooks'
+import { loadingAtom } from '@state/pnl/atoms'
+import { useLongGain, useCurrentLongPositionValue, useLongUnrealizedPNL } from '@state/pnl/hooks'
+import { isToHidePnLAtom } from '@state/positions/atoms'
 import { HidePnLText } from '@components/HidePnLText'
-import { PnLType } from '../../types'
 import { PnLTooltip } from '@components/PnLTooltip'
+import { formatNumber, formatCurrency } from '@utils/formatter'
+import { PnLType } from 'src/types'
+import useStyles from './useStyles'
+
+const Loading = () => {
+  return <Typography variant="body1">loading...</Typography>
+}
 
 export default function LongSqueeth() {
   const classes = useStyles()
@@ -29,67 +34,96 @@ export default function LongSqueeth() {
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>
-          <div style={{ width: '50%' }}>
+          <div className={classes.positionColumn}>
             <Typography variant="caption" component="span" color="textSecondary">
               oSQTH Amount
             </Typography>
-            <Typography variant="body1">
-              {isPositionLoading && squeethAmount.isEqualTo(0) ? (
-                'Loading'
-              ) : (
-                <span id="pos-page-long-osqth-bal">{squeethAmount.toFixed(8)}</span>
-              )}{' '}
-              &nbsp; oSQTH
-            </Typography>
+
+            {isPositionLoading && squeethAmount.isEqualTo(0) ? (
+              <Loading />
+            ) : (
+              <Typography variant="body1">
+                <Typography component="span" id="pos-page-long-osqth-bal" className={classes.textMonospace}>
+                  {formatNumber(squeethAmount.toNumber(), 6)}
+                </Typography>
+                &nbsp; oSQTH
+              </Typography>
+            )}
           </div>
-          <div style={{ width: '50%' }}>
+
+          <div className={classes.positionColumn}>
             <Typography variant="caption" component="span" color="textSecondary">
               Position Value
             </Typography>
-            <Typography variant="body1">
-              ${isPnLLoading && longPositionValue.isEqualTo(0) ? 'Loading' : longPositionValue.toFixed(2)}
-            </Typography>
+
+            {isPnLLoading && longPositionValue.isEqualTo(0) ? (
+              <Loading />
+            ) : (
+              <Typography variant="body1">
+                <Typography component="span" className={classes.textMonospace}>
+                  {formatCurrency(longPositionValue.toNumber())}
+                </Typography>
+              </Typography>
+            )}
           </div>
         </div>
-        {isToHidePnL ? (
-          <HidePnLText />
-        ) : (
-          <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-            <div style={{ width: '50%' }}>
-              <div className={classes.pnlTitle}>
-                <Typography variant="caption" component="span" color="textSecondary">
-                  Unrealized P&L
-                </Typography>
-                <PnLTooltip pnlType={PnLType.Unrealized} />
-              </div>
-              {isPnLLoading || longUnrealizedPNL.loading ? (
-                <Typography variant="body1">Loading</Typography>
-              ) : (
-                <>
-                  <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                    $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
-                    {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-              ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
+
+        <div className={classes.rowMarginTop}>
+          {isToHidePnL ? (
+            <HidePnLText />
+          ) : (
+            <div className={classes.innerPositionData}>
+              <div className={classes.positionColumn}>
+                <div className={classes.pnlTitle}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Unrealized P&L
                   </Typography>
-                  <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
-                    {(longGain || 0).toFixed(2)}%
-                  </Typography>
-                </>
-              )}
-            </div>
-            <div style={{ width: '50%' }}>
-              <div className={classes.pnlTitle}>
-                <Typography variant="caption" component="span" color="textSecondary">
-                  Realized P&L
-                </Typography>
-                <PnLTooltip pnlType={PnLType.Realized} />
+                  <PnLTooltip pnlType={PnLType.Unrealized} />
+                </div>
+
+                {isPnLLoading || longUnrealizedPNL.loading ? (
+                  <Loading />
+                ) : (
+                  <>
+                    <Typography
+                      variant="body1"
+                      className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
+                    >
+                      {formatCurrency(longUnrealizedPNL.usd.toNumber())} (
+                      {formatNumber(longUnrealizedPNL.eth.toNumber(), 4)} ETH)
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
+                    >
+                      {longGain.isPositive() && '+'}
+                      {(longGain || 0).toFixed(2)}%
+                    </Typography>
+                  </>
+                )}
               </div>
-              <Typography variant="body1" className={longRealizedPNL.gte(0) ? classes.green : classes.red}>
-                $ {swapsLoading ? 'Loading' : longRealizedPNL.toFixed(2)}
-              </Typography>
+              <div className={classes.positionColumn}>
+                <div className={classes.pnlTitle}>
+                  <Typography variant="caption" component="span" color="textSecondary">
+                    Realized P&L
+                  </Typography>
+                  <PnLTooltip pnlType={PnLType.Realized} />
+                </div>
+
+                {swapsLoading ? (
+                  <Loading />
+                ) : (
+                  <Typography
+                    variant="body1"
+                    className={clsx(classes.textMonospace, longRealizedPNL.gte(0) ? classes.green : classes.red)}
+                  >
+                    {formatCurrency(longRealizedPNL.toNumber())}
+                  </Typography>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   )
