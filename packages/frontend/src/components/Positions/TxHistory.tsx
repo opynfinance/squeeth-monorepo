@@ -49,7 +49,7 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const History: React.FC = () => {
+const TxHistory: React.FC = () => {
   const { transactions, loading } = useTransactionHistory()
   const networkId = useAtomValue(networkIdAtom)
   const ethPrice = useETHPrice()
@@ -70,7 +70,7 @@ const History: React.FC = () => {
   if (transactions.length === 0) {
     return (
       <div className={classes.container}>
-        <Typography variant="body1">No transactions found</Typography>
+        <Typography variant="body1">No transaction found</Typography>
       </div>
     )
   }
@@ -179,4 +179,4 @@ const History: React.FC = () => {
   )
 }
 
-export default History
+export default TxHistory
