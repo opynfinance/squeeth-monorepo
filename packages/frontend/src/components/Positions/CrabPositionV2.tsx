@@ -10,6 +10,7 @@ import { crabStrategyCollatRatioAtom, usdcQueuedAtom, crabQueuedAtom, crabUSDVal
 import { Tooltips, USDC_DECIMALS } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
+import { useCheckLegacyCrabV2User } from '@hooks/useCheckLegacyUser'
 import useStyles from './useStyles'
 
 const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
@@ -17,6 +18,7 @@ const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
 }
 
 type CrabPositionV2Type = {
+  address: string
   depositedEth: BigNumber
   depositedUsd: BigNumber
   loading: boolean
@@ -28,11 +30,14 @@ type CrabPositionV2Type = {
 }
 
 const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
+  address,
+  depositedEth,
   depositedUsd,
   loading,
   pnlWMidPriceInPerct,
   pnlWMidPriceInUSD,
   currentCrabPositionValue,
+  currentCrabPositionValueInETH,
   version,
 }) => {
   const classes = useStyles()
@@ -44,6 +49,8 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
   const setStrategyData = useSetStrategyData()
   useCurrentCrabPositionValue()
   useCurrentCrabPositionValueV2()
+
+  const isLegacyUser = useCheckLegacyCrabV2User(address ?? '')
 
   useEffect(() => {
     setStrategyData()
@@ -77,6 +84,11 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
             <Typography variant="body1" className={classes.textMonospace}>
               {formatCurrency(depositedUsd.toNumber())}
             </Typography>
+            {isLegacyUser && (
+              <Typography variant="body2" color="textSecondary">
+                <span id="pos-page-crab-deposited-amount">{formatNumber(depositedEth.toNumber(), 4)} ETH</span>
+              </Typography>
+            )}
           </div>
 
           <div className={classes.positionColumn}>
@@ -87,9 +99,16 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
             {loading ? (
               <Loading />
             ) : (
-              <Typography variant="body1" className={classes.textMonospace}>
-                {formatCurrency(currentCrabPositionValue.toNumber())}
-              </Typography>
+              <>
+                <Typography variant="body1" className={classes.textMonospace}>
+                  {formatCurrency(currentCrabPositionValue.toNumber())}
+                </Typography>
+                {isLegacyUser && (
+                  <Typography variant="body2" color="textSecondary">
+                    {formatNumber(currentCrabPositionValueInETH.toNumber(), 4)} ETH
+                  </Typography>
+                )}
+              </>
             )}
           </div>
         </div>

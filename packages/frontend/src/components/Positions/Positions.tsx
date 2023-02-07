@@ -28,7 +28,6 @@ import useAppEffect from '@hooks/useAppEffect'
 import { crabQueuedInUsdAtom } from '@state/crab/atoms'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { useInitBullStrategy } from '@state/bull/hooks'
-import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
 import CrabPositionV2 from './CrabPositionV2'
 import LongSqueeth from './LongSqueeth'
@@ -38,7 +37,6 @@ import MintedSqueeth from './MintedSqueeth'
 import BullPosition from './BullPosition'
 
 const Positions: React.FC = () => {
-  const classes = useStyles()
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
 
@@ -145,6 +143,7 @@ const Positions: React.FC = () => {
 
       {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
         <CrabPositionV2
+          address={address}
           depositedEth={depositedEthV2}
           depositedUsd={depositedUsdV2}
           loading={isCrabV2loading}

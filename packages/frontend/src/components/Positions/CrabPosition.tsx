@@ -27,11 +27,13 @@ type CrabPositionType = {
 }
 
 const CrabPosition: React.FC<CrabPositionType> = ({
+  depositedEth,
   depositedUsd,
   loading,
   pnlWMidPriceInPerct,
   pnlWMidPriceInUSD,
   currentCrabPositionValue,
+  currentCrabPositionValueInETH,
   version,
 }) => {
   const classes = useStyles()
@@ -66,6 +68,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="body1" className={classes.textMonospace}>
               {formatCurrency(depositedUsd.toNumber())}
             </Typography>
+            <Typography variant="body2" color="textSecondary">
+              <span id="pos-page-crab-deposited-amount">{formatNumber(depositedEth.toNumber(), 4)} ETH</span>
+            </Typography>
           </div>
 
           <div className={classes.positionColumn}>
@@ -75,9 +80,14 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             {loading ? (
               <Loading />
             ) : (
-              <Typography variant="body1" className={classes.textMonospace}>
-                {formatCurrency(currentCrabPositionValue.toNumber())}
-              </Typography>
+              <>
+                <Typography variant="body1" className={classes.textMonospace}>
+                  {formatCurrency(currentCrabPositionValue.toNumber())}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {formatNumber(currentCrabPositionValueInETH.toNumber(), 4)} ETH
+                </Typography>
+              </>
             )}
           </div>
         </div>
