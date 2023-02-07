@@ -12,8 +12,8 @@ import { formatNumber, formatCurrency } from '@utils/formatter'
 import { PnLType } from 'src/types'
 import useStyles from './useStyles'
 
-const Loading = () => {
-  return <Typography variant="body1">loading...</Typography>
+const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
+  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
 }
 
 export default function LongSqueeth() {
@@ -79,22 +79,25 @@ export default function LongSqueeth() {
                 {isPnLLoading || longUnrealizedPNL.loading ? (
                   <Loading />
                 ) : (
-                  <>
-                    <Typography
-                      variant="body1"
-                      className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
-                    >
-                      {formatCurrency(longUnrealizedPNL.usd.toNumber())} (
-                      {formatNumber(longUnrealizedPNL.eth.toNumber(), 4)} ETH)
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
-                    >
-                      {longGain.isPositive() && '+'}
-                      {formatNumber(longGain.toNumber() || 0)}%
-                    </Typography>
-                  </>
+                  <Typography
+                    variant="body1"
+                    className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
+                  >
+                    {formatCurrency(longUnrealizedPNL.usd.toNumber())} (
+                    {formatNumber(longUnrealizedPNL.eth.toNumber(), 4)} ETH)
+                  </Typography>
+                )}
+
+                {isPnLLoading || longUnrealizedPNL.loading ? (
+                  <Loading isSmall />
+                ) : (
+                  <Typography
+                    variant="caption"
+                    className={clsx(classes.textMonospace, longGain.isLessThan(0) ? classes.red : classes.green)}
+                  >
+                    {longGain.isPositive() && '+'}
+                    {formatNumber(longGain.toNumber() || 0)}%
+                  </Typography>
                 )}
               </div>
               <div className={classes.positionColumn}>

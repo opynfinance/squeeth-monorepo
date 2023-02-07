@@ -16,8 +16,8 @@ import { PnLTooltip } from '@components/PnLTooltip'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import useStyles from './useStyles'
 
-const Loading = () => {
-  return <Typography variant="body1">loading...</Typography>
+const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
+  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
 }
 
 export default function ShortSqueeth() {
@@ -120,22 +120,25 @@ export default function ShortSqueeth() {
                 {isPositionLoading || shortUnrealizedPNL.loading ? (
                   <Loading />
                 ) : (
-                  <>
-                    <Typography
-                      variant="body1"
-                      className={clsx(classes.textMonospace, shortGain.isLessThan(0) ? classes.red : classes.green)}
-                    >
-                      {formatCurrency(shortUnrealizedPNL.usd.toNumber())} (
-                      {formatNumber(shortUnrealizedPNL.eth.toNumber(), 4)} ETH)
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      className={clsx(classes.textMonospace, shortGain.isLessThan(0) ? classes.red : classes.green)}
-                    >
-                      {shortGain.isPositive() && '+'}
-                      {formatNumber(shortGain.toNumber() || 0)}%
-                    </Typography>
-                  </>
+                  <Typography
+                    variant="body1"
+                    className={clsx(classes.textMonospace, shortGain.isLessThan(0) ? classes.red : classes.green)}
+                  >
+                    {formatCurrency(shortUnrealizedPNL.usd.toNumber())} (
+                    {formatNumber(shortUnrealizedPNL.eth.toNumber(), 4)} ETH)
+                  </Typography>
+                )}
+
+                {isPositionLoading || shortUnrealizedPNL.loading ? (
+                  <Loading isSmall />
+                ) : (
+                  <Typography
+                    variant="caption"
+                    className={clsx(classes.textMonospace, shortGain.isLessThan(0) ? classes.red : classes.green)}
+                  >
+                    {shortGain.isPositive() && '+'}
+                    {formatNumber(shortGain.toNumber() || 0)}%
+                  </Typography>
                 )}
               </div>
               <div className={classes.positionColumn}>
