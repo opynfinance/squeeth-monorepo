@@ -292,9 +292,11 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
-          <Skeleton width={'100%'} height={500} style={{ transform: 'none' }} />
-        </Box>
+        <div className={classes.shimmer}>
+          <Skeleton width={'100%'} height={25} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={30} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={300} style={{ transform: 'none' }} />
+        </div>
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}
