@@ -22,8 +22,8 @@ const YourVaults: FC = () => {
     return <Typography>loading...</Typography>
   }
 
-  if (vaults?.length === 0) {
-    return <Typography>No vaults found</Typography>
+  if (vaults?.length === 0 || !vaults) {
+    return <Typography>No vault found</Typography>
   }
 
   return (
