@@ -1,37 +1,33 @@
 import { init, track, Types } from '@amplitude/analytics-browser'
-import { getCookieName, CookieStorage } from '@amplitude/analytics-client-common'
-import { canStoreCookies } from './cookies'
 
-const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY && !!canStoreCookies()
+const analyticsEnabled = !!process.env.NEXT_PUBLIC_AMPLITUDE_KEY
 
 // Should be called once before calling track event
 export const initializeAmplitude = () => {
-  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || !canStoreCookies()) return
+  if (!isOptedOut()) return
 
-  isOptedOut().then((optOut) => {
-    // console.log('Opted out', optOut)
-    if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
+  if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY) return
 
-    init(process.env.NEXT_PUBLIC_AMPLITUDE_KEY, undefined, {
-      serverZone: Types.ServerZone.EU,
-      trackingOptions: {
-        deviceManufacturer: false,
-        deviceModel: false,
-        ipAddress: false,
-        osName: true,
-        osVersion: true,
-        platform: true,
-      },
-      attribution: {
-        trackNewCampaigns: true,
-      },
-      optOut,
-    })
+  init(process.env.NEXT_PUBLIC_AMPLITUDE_KEY, undefined, {
+    serverZone: Types.ServerZone.EU,
+    trackingOptions: {
+      deviceManufacturer: false,
+      deviceModel: false,
+      ipAddress: false,
+      osName: true,
+      osVersion: true,
+      platform: true,
+    },
+    attribution: {
+      trackNewCampaigns: true,
+    },
+    serverUrl: '/api/amplitude',
+    disableCookies: true,
   })
 }
 
 export const trackEvent = (eventName: string, eventProps?: Record<string, unknown>) => {
-  if (!analyticsEnabled) {
+  if (!analyticsEnabled || !isOptedOut()) {
     console.log(`Analytics: ${eventName}`, JSON.stringify(eventProps))
     return
   }
@@ -151,15 +147,5 @@ export enum CRAB_EVENTS {
 
 export const isOptedOut = async () => {
   if (!process.env.NEXT_PUBLIC_AMPLITUDE_KEY || typeof window === 'undefined') return false
-
-  try {
-    const cookieName = getCookieName(process.env.NEXT_PUBLIC_AMPLITUDE_KEY)
-    const data = await new CookieStorage<{ optOut: boolean }>().get(cookieName)
-
-    return !!data?.optOut
-  } catch (e) {
-    console.log(e)
-  }
-
-  return false
+  return true
 }

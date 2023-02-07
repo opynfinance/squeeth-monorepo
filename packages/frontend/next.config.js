@@ -13,6 +13,14 @@ const moduleExports = {
   images: {
     domains: ['media.giphy.com'],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/amplitude',
+        destination: 'https://api.eu.amplitude.com/2/httpapi',
+      },
+    ]
+  },
   async headers() {
     return [
       {

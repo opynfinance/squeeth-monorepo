@@ -30,7 +30,6 @@ import '@utils/amplitude'
 import { setUserId } from '@amplitude/analytics-browser'
 import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
-import CookiePopUp from '@components/CookiePopUp'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
@@ -169,7 +168,6 @@ const TradeApp = ({ Component, pageProps }: any) => {
           </StrategyLayout>
         </ComputeSwapsProvider>
       </ThemeProvider>
-      <CookiePopUp />
     </React.Fragment>
   )
 }
