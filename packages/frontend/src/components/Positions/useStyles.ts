@@ -13,14 +13,18 @@ const useStyles = makeStyles((theme) =>
         padding: theme.spacing(0, 2),
       },
     },
-    header: {
+    sectionHeaderFirst: {
+      marginTop: theme.spacing(5),
+      display: 'flex',
+      justifyContent: 'space-between',
+    },
+    sectionHeader: {
       marginTop: theme.spacing(8),
       display: 'flex',
       justifyContent: 'space-between',
     },
-    ethPriceContainer: {
-      display: 'flex',
-      alignItems: 'center',
+    sectionContent: {
+      marginTop: theme.spacing(1.5),
     },
     sectionTitle: {
       fontSize: '18px',
@@ -75,18 +79,11 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
       },
     },
-    empty: {
-      marginTop: theme.spacing(2),
-    },
     green: {
       color: theme.palette.success.main,
     },
     red: {
       color: theme.palette.error.main,
-    },
-    history: {
-      marginTop: theme.spacing(8),
-      marginBottom: theme.spacing(8),
     },
     link: {
       color: theme.palette.primary.main,

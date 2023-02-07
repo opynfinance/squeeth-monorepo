@@ -1,13 +1,8 @@
-import { Box, Tooltip, Typography } from '@material-ui/core'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { Typography } from '@material-ui/core'
 import { useAtomValue } from 'jotai'
 
-import { LPTable } from '@components/Lp/LPTable'
-import History from '@components/Positions/History'
 import { PositionType } from 'src/types'
-import { Tooltips } from '@constants/index'
 import { useVaultLiquidations } from '@hooks/contracts/useLiquidations'
-import { toTokenAmount } from '@utils/calculations'
 import { useCrabPosition } from '@hooks/useCrabPosition'
 import { addressAtom } from '@state/wallet/atoms'
 import {
@@ -18,9 +13,7 @@ import {
   useShortDebt,
   usePositionsAndFeesComputation,
 } from '@state/positions/hooks'
-import { activePositionsAtom, positionTypeAtom } from '@state/positions/atoms'
-import { poolAtom } from '@state/squeethPool/atoms'
-import { indexAtom } from '@state/controller/atoms'
+import { positionTypeAtom } from '@state/positions/atoms'
 import useAppMemo from '@hooks/useAppMemo'
 import ShortSqueethLiquidated from './ShortSqueethLiquidated'
 import {
@@ -35,30 +28,25 @@ import useAppEffect from '@hooks/useAppEffect'
 import { crabQueuedInUsdAtom } from '@state/crab/atoms'
 import { useBullPosition } from '@hooks/useBullPosition'
 import { useInitBullStrategy } from '@state/bull/hooks'
-import { formatCurrency } from '@utils/formatter'
 import useStyles from './useStyles'
 import CrabPosition from './CrabPosition'
 import CrabPositionV2 from './CrabPositionV2'
-import YourVaults from './YourVaults'
 import LongSqueeth from './LongSqueeth'
 import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import BullPosition from './BullPosition'
 
-export default function Positions() {
+const Positions: React.FC = () => {
   const classes = useStyles()
-  const pool = useAtomValue(poolAtom)
   const address = useAtomValue(addressAtom)
   const positionType = useAtomValue(positionTypeAtom)
-  const activePositions = useAtomValue(activePositionsAtom)
 
   const { squeethAmount } = useComputeSwaps()
   const { validVault: vault, vaultId } = useFirstValidVault()
   const lpedSqueeth = useLpDebt()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
-  const index = useAtomValue(indexAtom)
   const setStrategyDataV2 = useSetStrategyDataV2()
   const setStrategyData = useSetStrategyData()
   const crabV2QueuedInUsd = useAtomValue(crabQueuedInUsdAtom)
@@ -117,107 +105,60 @@ export default function Positions() {
     return vault && vault.shortAmount?.isZero() && liquidations.length > 0
   }, [vault, liquidations?.length])
 
-  const ethPrice = toTokenAmount(index, 18).sqrt()
+  const isLoadingPositions = isCrabloading || isCrabV2loading
+
+  if (
+    shortDebt.isZero() &&
+    depositedEth.isZero() &&
+    depositedEthV2.isZero() &&
+    squeethAmount.isZero() &&
+    mintedDebt.isZero() &&
+    lpedSqueeth.isZero()
+  ) {
+    return <Typography variant="body1">{isLoadingPositions ? 'loading...' : 'No active position'}</Typography>
+  }
 
   return (
-    <div>
-      <div className={classes.container}>
-        <div className={classes.header}>
-          <Typography variant="h4" className={classes.sectionTitle}>
-            Your Positions
-          </Typography>
-          <div className={classes.ethPriceContainer}>
-            <Typography component="span" color="textSecondary">
-              ETH Price:
-            </Typography>
+    <>
+      {positionType === PositionType.LONG && <LongSqueeth />}
 
-            <div className={classes.tooltipContainer}>
-              <Typography component="span" className={classes.textMonospace}>
-                {formatCurrency(ethPrice.toNumber())}
-              </Typography>
-              <Tooltip title={Tooltips.SpotPrice}>
-                <InfoIcon className={classes.infoIcon} />
-              </Tooltip>
-            </div>
-          </div>
-        </div>
+      {positionType === PositionType.SHORT && <ShortSqueeth />}
 
-        {shortDebt.isZero() &&
-        depositedEth.isZero() &&
-        depositedEthV2.isZero() &&
-        squeethAmount.isZero() &&
-        mintedDebt.isZero() &&
-        lpedSqueeth.isZero() ? (
-          <div className={classes.empty}>
-            <Typography>No active positions</Typography>
-          </div>
-        ) : null}
+      {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={vaultExists} />}
 
-        {positionType === PositionType.LONG && <LongSqueeth />}
+      {mintedDebt.isGreaterThan(0) && !fullyLiquidated && <MintedSqueeth vaultExists={vaultExists} />}
 
-        {positionType === PositionType.SHORT && <ShortSqueeth />}
+      {liquidations.length > 0 && <ShortSqueethLiquidated />}
 
-        {lpedSqueeth.isGreaterThan(0) && !fullyLiquidated && <LPedSqueeth vaultExists={vaultExists} />}
+      {!!address && currentCrabPositionValueInETH.isGreaterThan(0) && (
+        <CrabPosition
+          depositedEth={depositedEth}
+          depositedUsd={depositedUsd}
+          loading={isCrabloading}
+          pnlWMidPriceInUSD={pnlWMidPriceInUSD}
+          pnlWMidPriceInPerct={pnlWMidPriceInPerct}
+          currentCrabPositionValue={currentCrabPositionValue}
+          currentCrabPositionValueInETH={currentCrabPositionValueInETH}
+          version="Crab Strategy v1"
+        />
+      )}
 
-        {mintedDebt.isGreaterThan(0) && !fullyLiquidated && <MintedSqueeth vaultExists={vaultExists} />}
+      {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
+        <CrabPositionV2
+          depositedEth={depositedEthV2}
+          depositedUsd={depositedUsdV2}
+          loading={isCrabV2loading}
+          pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
+          pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
+          currentCrabPositionValue={currentCrabPositionValueV2}
+          currentCrabPositionValueInETH={currentCrabPositionValueInETHV2}
+          version="Crab Strategy v2"
+        />
+      )}
 
-        {liquidations.length > 0 && <ShortSqueethLiquidated />}
-
-        {!!address && currentCrabPositionValueInETH.isGreaterThan(0) && (
-          <CrabPosition
-            depositedEth={depositedEth}
-            depositedUsd={depositedUsd}
-            loading={isCrabloading}
-            pnlWMidPriceInUSD={pnlWMidPriceInUSD}
-            pnlWMidPriceInPerct={pnlWMidPriceInPerct}
-            currentCrabPositionValue={currentCrabPositionValue}
-            currentCrabPositionValueInETH={currentCrabPositionValueInETH}
-            version="Crab Strategy v1"
-          />
-        )}
-
-        {!!address && currentCrabPositionValueInETHV2.isGreaterThan(0) && (
-          <CrabPositionV2
-            depositedEth={depositedEthV2}
-            depositedUsd={depositedUsdV2}
-            loading={isCrabV2loading}
-            pnlWMidPriceInUSD={pnlWMidPriceInUSDV2}
-            pnlWMidPriceInPerct={pnlWMidPriceInPerctV2}
-            currentCrabPositionValue={currentCrabPositionValueV2}
-            currentCrabPositionValueInETH={currentCrabPositionValueInETHV2}
-            version="Crab Strategy v2"
-          />
-        )}
-
-        {!!address ? <BullPosition /> : null}
-
-        {activePositions?.length > 0 && (
-          <>
-            <div className={classes.header}>
-              <Typography variant="h4" className={classes.sectionTitle}>
-                Your LP Positions
-              </Typography>
-            </div>
-            <LPTable isLPage={false} pool={pool!} />
-          </>
-        )}
-
-        <Box mt={8} component="section">
-          <Typography variant="h4" className={classes.sectionTitle}>
-            Your Vaults
-          </Typography>
-          <Box mt={2}>
-            <YourVaults />
-          </Box>
-        </Box>
-
-        <div className={classes.history}>
-          <Typography variant="h4" className={classes.sectionTitle}>
-            Transaction History
-          </Typography>
-          <History />
-        </div>
-      </div>
-    </div>
+      {!!address ? <BullPosition /> : null}
+    </>
   )
 }
+
+export default Positions
