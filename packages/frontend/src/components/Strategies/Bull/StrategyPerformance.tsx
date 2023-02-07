@@ -1,15 +1,7 @@
 import React, { useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Tooltip,
-  TextField,
-  InputLabel,
-  TextFieldProps,
-  Divider,
-  CircularProgress,
-} from '@material-ui/core'
+import { Box, Typography, Tooltip, TextField, InputLabel, TextFieldProps, Divider } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
+import { Skeleton } from '@material-ui/lab'
 import clsx from 'clsx'
 import { useAtom } from 'jotai'
 import { useAtomValue } from 'jotai/utils'
@@ -300,12 +292,11 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
-          <Box display="flex" alignItems="center" gridGap="15px">
-            <CircularProgress size={15} className={classes.loadingSpinner} />
-            <Typography className={classes.text}>Fetching strategy performance...</Typography>
-          </Box>
-        </Box>
+        <div className={classes.shimmer}>
+          <Skeleton width={'100%'} height={25} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={30} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={300} style={{ transform: 'none' }} />
+        </div>
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}

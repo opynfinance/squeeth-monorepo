@@ -1,4 +1,5 @@
-import { Typography, Box, CircularProgress } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
+import { Skeleton } from '@material-ui/lab'
 import React, { memo } from 'react'
 import { useAtomValue } from 'jotai'
 
@@ -42,11 +43,11 @@ const MyPosition: React.FC<{ currentCrabPositionValue: BigNumber; isCrabPosition
 
   if (loading) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="108px">
-        <Box display="flex" alignItems="center" gridGap="20px">
-          <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
-          <Typography className={classes.text}>Fetching current position...</Typography>
-        </Box>
+      <Box display="flex" flexDirection="column" gridGap={'12px'}>
+        <Typography variant="h4" className={classes.sectionTitle}>
+          My Crab Position
+        </Typography>
+        <Skeleton width={'100%'} height={'80px'} style={{ transform: 'none' }} />
       </Box>
     )
   }

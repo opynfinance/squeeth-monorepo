@@ -12,16 +12,16 @@ import {
   Tooltip,
   TooltipProps,
 } from 'recharts'
-import { Box, useTheme, Fade, CircularProgress, Typography, useMediaQuery } from '@material-ui/core'
+import { Box, useTheme, Fade, Typography, useMediaQuery } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { makeStyles } from '@material-ui/core/styles'
+import { Skeleton } from '@material-ui/lab'
 
 import { bullCurrentFundingAtom } from '@state/bull/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import { formatNumber } from '@utils/formatter'
-import useStyles from '@components/Strategies/styles'
 
 const useTooltipStyles = makeStyles(() => ({
   root: {
@@ -307,13 +307,12 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
 
 function ChartWrapper() {
   const currentFunding = useAtomValue(bullCurrentFundingAtom)
-  const classes = useStyles()
 
   const isLoading = currentFunding === 0 || isNaN(currentFunding) || !isFinite(currentFunding)
   if (isLoading) {
     return (
-      <Box display="flex" height="300px" width={1} alignItems="center" justifyContent="center">
-        <CircularProgress size={40} className={classes.loadingSpinner} />
+      <Box display="flex" height="300px" alignItems="center" justifyContent="center">
+        <Skeleton width={'100%'} height={300} />
       </Box>
     )
   }

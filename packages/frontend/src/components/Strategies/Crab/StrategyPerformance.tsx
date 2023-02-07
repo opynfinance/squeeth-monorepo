@@ -1,14 +1,5 @@
 import React, { useMemo } from 'react'
-import {
-  Box,
-  Typography,
-  Tooltip,
-  TextField,
-  InputLabel,
-  TextFieldProps,
-  Divider,
-  CircularProgress,
-} from '@material-ui/core'
+import { Box, Typography, Tooltip, TextField, InputLabel, TextFieldProps, Divider } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
 import clsx from 'clsx'
 import { useAtom } from 'jotai'
@@ -19,6 +10,7 @@ import { makeStyles, createStyles } from '@material-ui/core/styles'
 import HighchartsReact from 'highcharts-react-official'
 import Highcharts from 'highcharts'
 import differenceInCalendarDays from 'date-fns/differenceInCalendarDays'
+import { Skeleton } from '@material-ui/lab'
 
 import useStyles from '@components/Strategies/styles'
 import {
@@ -263,17 +255,14 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
 const Wrapper: React.FC = () => {
   const vault = useAtomValue(crabStrategyVaultAtomV2)
   const ethPrice = useETHPrice()
-  const { data: osqthPrice } = useOSQTHPrice()
   const query = useCrabPnLV2ChartData()
 
   const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.crabPnL * 100])
   const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
 
   const vaultCollateral = vault?.collateralAmount ?? BIG_ZERO
-  const vaultDebt = vault?.shortAmount ?? BIG_ZERO
 
   const collateralValue = vaultCollateral.multipliedBy(ethPrice)
-  const debtValue = vaultDebt.multipliedBy(osqthPrice)
   const tvl = collateralValue.integerValue()
   const isLoadingTVL = tvl.isZero()
 
@@ -288,12 +277,11 @@ const Wrapper: React.FC = () => {
       </Typography>
 
       {isLoading ? (
-        <Box display="flex" alignItems="flex-start" marginTop="8px" height="500px">
-          <Box display="flex" alignItems="center" gridGap="15px">
-            <CircularProgress size={15} className={classes.loadingSpinner} />
-            <Typography className={classes.text}>Fetching strategy performance...</Typography>
-          </Box>
-        </Box>
+        <div className={classes.shimmer}>
+          <Skeleton width={'100%'} height={25} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={30} style={{ transform: 'none' }} />
+          <Skeleton width={'100%'} height={300} style={{ transform: 'none' }} />
+        </div>
       ) : (
         <StrategyPerformance strategyPnLSeries={strategyPnLSeries} tvl={tvl.toNumber()} />
       )}

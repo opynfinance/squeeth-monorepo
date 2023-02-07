@@ -1,7 +1,8 @@
-import { Typography, Box, CircularProgress } from '@material-ui/core'
+import { Typography, Box } from '@material-ui/core'
 import React, { memo } from 'react'
 import clsx from 'clsx'
 import { useAtomValue } from 'jotai'
+import { Skeleton } from '@material-ui/lab'
 
 import {
   bullCurrentETHPositionAtom,
@@ -28,23 +29,22 @@ const BullPosition: React.FC = () => {
 
   const loading = !useAtomValue(bullPositionLoadedAtom)
   const isPositionRefetching = useAtomValue(isBullPositionRefetchingAtom)
+  const isPnlLoading = !bullEthPnL.isFinite()
 
   if (bullPosition.isZero() && !isPositionRefetching) {
     return null
   }
 
-  if (loading || isPositionRefetching) {
+  if (loading || isPositionRefetching || isPnlLoading) {
     return (
-      <Box display="flex" alignItems="flex-start" marginTop="8px" height="72px">
-        <Box display="flex" alignItems="center" gridGap="20px">
-          <CircularProgress size="1.25rem" className={classes.loadingSpinner} />
-          <Typography className={classes.text}>Fetching current position...</Typography>
-        </Box>
+      <Box display="flex" flexDirection="column" gridGap="12px">
+        <Typography variant="h4" className={classes.sectionTitle}>
+          My Zen Bull Position
+        </Typography>
+        <Skeleton width={'100%'} height={'80px'} style={{ transform: 'none' }} />
       </Box>
     )
   }
-
-  const isPnlLoading = !bullEthPnL.isFinite()
 
   return (
     <Box display="flex" flexDirection="column" gridGap="12px">
