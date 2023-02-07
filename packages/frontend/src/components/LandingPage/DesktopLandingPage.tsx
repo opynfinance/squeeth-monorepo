@@ -295,7 +295,7 @@ const navLinks = [
   { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
   {
     label: 'FAQ',
-    link: 'https://opyn.gitbook.io/opyn-strategies/crab-strategy/introduction',
+    link: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',
     analyticsEvent: SITE_EVENTS.NAV_FAQ,
   },
 ]
