@@ -41,7 +41,7 @@ const DepositQueued: React.FC = () => {
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
         <Typography className={clsx(classes.heading, classes.textMonospace)}>
-          {formatNumber(Number(toTokenAmount(ethQueued, WETH_DECIMALS)))} ETH
+          {formatNumber(Number(toTokenAmount(ethQueued, WETH_DECIMALS)), 4)} ETH
         </Typography>
         {!isNettingAuctionLive && (
           <TextButton color="primary" disabled={txLoading} onClick={onDequeueEth}>
@@ -85,7 +85,7 @@ const WithdrawQueued: React.FC = () => {
 
       <Box display="flex" alignItems="baseline" gridGap="8px">
         <Typography className={clsx(classes.heading, classes.textMonospace)}>
-          {formatNumber(Number(withdrawalValueInEth))} ETH
+          {formatNumber(Number(withdrawalValueInEth), 4)} ETH
         </Typography>
         {!isNettingAuctionLive && (
           <TextButton color="primary" disabled={txLoading} onClick={onDequeueBull}>
@@ -103,7 +103,7 @@ const QueuedPosition: React.FC = () => {
 
   // ignore dust amount
   // todo: come back here to see if eth's dust amount is fine
-  const showQueuedDeposit = ethQueued.isGreaterThan('100')
+  const showQueuedDeposit = ethQueued.isGreaterThan('10000000000')
   const showQueuedWithdraw = zenBullQueued.isGreaterThan('10000000000')
 
   if (!showQueuedDeposit && !showQueuedWithdraw) {
