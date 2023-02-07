@@ -1,4 +1,4 @@
-import { Button, Link as MatLink, Switch } from '@material-ui/core'
+import { Backdrop, Button, Link as MatLink, Switch } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
 import MoreHorizIcon from '@material-ui/icons/MoreHorizOutlined'
@@ -12,7 +12,7 @@ import List from '@material-ui/core/List'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { canStoreCookies, CookieNames, setCookie } from '@utils/cookies'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
@@ -80,8 +80,15 @@ const SettingMenu = () => {
 
   const handleModal = () => {
     handleClose()
-    setOpenModal((prevState) => !prevState)
+    setOpenModal((prevState) => {
+      return !prevState
+    })
   }
+
+  useEffect(() => {
+    document.body.style.overflow = openModal ? 'hidden' : 'none'
+  }, [openModal])
+
   const handleMouseOver = (current: string, isOver: boolean) => {
     setCurrentlyOver(current)
     setIsOver(isOver)
@@ -148,7 +155,6 @@ const SettingMenu = () => {
           </a>
         </MenuItem>
         <MenuItem onClick={handleModal}>Legal & Privacy</MenuItem>
-        <MenuItem onClick={handleCookieModal}>Cookies Settings</MenuItem>
       </Menu>
 
       <Modal
@@ -156,6 +162,8 @@ const SettingMenu = () => {
         onClose={handleModal}
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
+        BackdropComponent={Backdrop}
+        disableScrollLock
       >
         <Box className={classes.legalModal}>
           <Typography id="modal-modal-title" variant="h6" component="h2">
@@ -212,14 +220,14 @@ const SettingMenu = () => {
               </Link>
             </ListItem>
           </List>
-          <Typography>The app uses the following third-party APIs:</Typography>
+          <Typography>This app uses the following third-party APIs:</Typography>
           <List style={{ maxHeight: '400px', overflow: 'auto' }}>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>Alchemy</ListItemText>
               </Typography>
-              <ListItemText>This app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
+              <ListItemText>The app fetches on-chain data and constructs contract calls with Alchemy API</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
@@ -239,14 +247,14 @@ const SettingMenu = () => {
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>Fathom</ListItemText>
               </Typography>
-              <ListItemText>This app logs anonymized usage data to make improvements</ListItemText>
+              <ListItemText>The app logs anonymized usage data to make improvements</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>Amplitude</ListItemText>
               </Typography>
-              <ListItemText>The app logs anonymized usage statistics in order to improve over time.</ListItemText>
+              <ListItemText>The app logs anonymized usage statistics to improve over time</ListItemText>
             </ListItem>
             <ListItem className={classes.thirdPartyItems}>
               <Typography className={classes.thirdPartyTitle}>
@@ -260,7 +268,7 @@ const SettingMenu = () => {
                 <InfoOutlinedIcon style={{ marginRight: '.5em' }} />
                 <ListItemText>The Graph</ListItemText>
               </Typography>
-              <ListItemText>{`This app fetches blockchain data from the Graph's hosted service`}</ListItemText>
+              <ListItemText>{`The app fetches blockchain data from the Graph's hosted service`}</ListItemText>
             </ListItem>
           </List>
         </Box>
