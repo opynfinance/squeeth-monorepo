@@ -46,10 +46,6 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         vm.deal(mm1, 5000e18);
         vm.deal(mm2, 5000e18);
 
-        vm.prank(user1);
-        IWETH(WETH).deposit{value: 1000e18}();
-        vm.prank(user2);
-        IWETH(WETH).deposit{value: 1000e18}();
         vm.prank(mm1);
         IWETH(WETH).deposit{value: 1000e18}();
         vm.prank(mm2);
@@ -57,6 +53,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
     }
 
     function _calAuctionCrabAmount(uint256 _depositToProcess) internal view returns (uint256) {
+        console.log("_depositToProcess");
         uint256 ethUsdPrice = IOracle(ORACLE).getTwap(ethUsdcPool, WETH, USDC, 420, false);
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
@@ -72,8 +69,16 @@ contract DepositAuction is ZenBullNettingBaseSetup {
                 IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) * ethUsdPrice
                     / 1e18
             ) - (IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) * 1e12);
-        uint256 expectBullAmount = _depositToProcess * ethUsdPrice * 99e16 / 1e18 / bullEquityValue
-            * IZenBullStrategy(ZEN_BULL).totalSupply() / 1e18;
+        // uint256 expectBullAmount = _depositToProcess * ethUsdPrice * 99e16 / 1e18 / bullEquityValue
+        //     * IZenBullStrategy(ZEN_BULL).totalSupply() / 1e18;
+
+        console.log("bullEquityValue", bullEquityValue);
+        console.log("1", (_depositToProcess * ethUsdPrice / 1e18) * 99e16);
+        console.log("2", bullEquityValue * IZenBullStrategy(ZEN_BULL).totalSupply() / 1e18);
+        uint256 expectBullAmount = ((_depositToProcess * ethUsdPrice / 1e18) * 99e16)
+            / (bullEquityValue * IZenBullStrategy(ZEN_BULL).totalSupply() / 1e18);
+
+        console.log("expectBullAmount", expectBullAmount);
 
         return expectBullAmount * 1e18 / IZenBullStrategy(ZEN_BULL).totalSupply()
             * IZenBullStrategy(ZEN_BULL).getCrabBalance() / 1e18;
@@ -81,6 +86,7 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
     function testFullDepositAuction() public {
         uint256 amount = 10e18;
+        vm.deal(user1, amount);
         _queueEth(user1, amount);
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);

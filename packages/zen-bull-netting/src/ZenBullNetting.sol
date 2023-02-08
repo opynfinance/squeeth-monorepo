@@ -20,6 +20,8 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
+import { console } from "forge-std/console.sol";
+
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -612,15 +614,15 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         require(oSqthToMint == 0, "ZBN23");
 
         {
-            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.calcWethToLendAndUsdcToBorrow(
-                eulerLens, zenBull, weth, usdc, _params.crabAmount
-            );
-
             // deposit into crab
             uint256 wethFromAuction = IWETH(weth).balanceOf(address(this));
             IWETH(weth).withdraw(wethFromAuction);
 
             ICrabStrategyV2(crab).deposit{value: ethIntoCrab}();
+
+            (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.calcWethToLendAndUsdcToBorrow(
+                eulerLens, zenBull, weth, usdc, IERC20(crab).balanceOf(address(this))
+            );
 
             // flashswap WETH for USDC debt, and deposit crab + wethToLend into ZenBull
             uint256 minWethForUsdcDebt =
@@ -871,6 +873,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));
+            console.log("deposit{value: wethToLend}", wethToLend);
             IZenBullStrategy(zenBull).deposit{value: wethToLend}(
                 IERC20(crab).balanceOf(address(this))
             );

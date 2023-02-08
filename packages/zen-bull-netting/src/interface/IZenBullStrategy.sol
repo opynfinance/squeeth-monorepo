@@ -10,4 +10,5 @@ interface IZenBullStrategy is IERC20 {
     function crab() external view returns (address);
     function withdraw(uint256 _bullAmount) external;
     function deposit(uint256 _crabAmount) external payable;
+    function strategyCap() external view returns (uint256);
 }

@@ -267,13 +267,13 @@ library NettingLib {
         uint256 _crabAmount
     ) external view returns (uint256, uint256) {
         uint256 share =
-            _crabAmount * 1e18 / (IZenBullStrategy(_zenBull).getCrabBalance() + _crabAmount);
-        uint256 bullTotalSupply = IERC20(_zenBull).totalSupply();
-        uint256 bullToMint = share * bullTotalSupply / (1e18 - share);
-        uint256 wethToLend = bullToMint
-            * IEulerSimpleLens(_eulerLens).getETokenBalance(_weth, _zenBull) / bullTotalSupply;
-        uint256 usdcToBorrow = bullToMint
-            * IEulerSimpleLens(_eulerLens).getDTokenBalance(_usdc, _zenBull) / bullTotalSupply;
+            div(_crabAmount, (IZenBullStrategy(_zenBull).getCrabBalance() + _crabAmount));
+        uint256 wethToLend = div(
+            mul(IEulerSimpleLens(_eulerLens).getETokenBalance(_weth, _zenBull), share), 1e18 - share
+        );
+        uint256 usdcToBorrow = div(
+            mul(IEulerSimpleLens(_eulerLens).getDTokenBalance(_usdc, _zenBull), share), 1e18 - share
+        );
 
         return (wethToLend, usdcToBorrow);
     }
