@@ -20,8 +20,6 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -873,7 +871,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));
-            console.log("deposit{value: wethToLend}", wethToLend);
             IZenBullStrategy(zenBull).deposit{value: wethToLend}(
                 IERC20(crab).balanceOf(address(this))
             );
