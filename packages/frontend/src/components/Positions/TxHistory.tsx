@@ -61,22 +61,22 @@ const TxHistory: React.FC = () => {
 
   if (loading) {
     return (
-      <div className={classes.container}>
-        <Typography variant="body1">loading...</Typography>
-      </div>
+      <Typography variant="body1" color="textSecondary">
+        loading...
+      </Typography>
     )
   }
 
   if (transactions.length === 0) {
     return (
-      <div className={classes.container}>
-        <Typography variant="body1">No transaction found</Typography>
-      </div>
+      <Typography variant="body1" color="textSecondary">
+        No transaction found
+      </Typography>
     )
   }
 
   return (
-    <div className={classes.container}>
+    <>
       {transactions.map((tx, index) => (
         <div className={classes.historyItem} key={tx.timestamp + index}>
           <div className={classes.txItemCol}>
@@ -175,7 +175,7 @@ const TxHistory: React.FC = () => {
           </div>
         </div>
       ))}
-    </div>
+    </>
   )
 }
 

@@ -113,7 +113,11 @@ const Positions: React.FC = () => {
     mintedDebt.isZero() &&
     lpedSqueeth.isZero()
   ) {
-    return <Typography variant="body1">{isLoadingPositions ? 'loading...' : 'No active position'}</Typography>
+    return (
+      <Typography variant="body1" color="textSecondary">
+        {isLoadingPositions ? 'loading...' : 'No active position'}
+      </Typography>
+    )
   }
 
   return (

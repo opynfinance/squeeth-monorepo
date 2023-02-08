@@ -11,7 +11,11 @@ const LPPositions: React.FC = () => {
   const activePositions = useAtomValue(activePositionsAtom)
 
   if (activePositions.length === 0) {
-    return <Typography variant="body1">No active LP position</Typography>
+    return (
+      <Typography variant="body1" color="textSecondary">
+        No active LP position
+      </Typography>
+    )
   }
 
   return <LPTable isLPage={false} pool={pool!} />

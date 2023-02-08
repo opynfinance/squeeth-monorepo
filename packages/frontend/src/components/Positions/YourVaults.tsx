@@ -15,15 +15,27 @@ const YourVaults: FC = () => {
   const { data: { vaults } = {}, loading, error } = useYourVaults()
 
   if (error) {
-    return <Typography color="error">{error.message}</Typography>
+    return (
+      <Typography variant="body1" color="error">
+        {error.message}
+      </Typography>
+    )
   }
 
   if (loading) {
-    return <Typography>loading...</Typography>
+    return (
+      <Typography variant="body1" color="textSecondary">
+        loading...
+      </Typography>
+    )
   }
 
   if (vaults?.length === 0 || !vaults) {
-    return <Typography>No vault found</Typography>
+    return (
+      <Typography variant="body1" color="textSecondary">
+        No vault found
+      </Typography>
+    )
   }
 
   return (
