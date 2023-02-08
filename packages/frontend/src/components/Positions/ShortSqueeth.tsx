@@ -51,7 +51,7 @@ export default function ShortSqueeth() {
               <Loading />
             ) : (
               <Typography variant="body1" className={classes.textMonospace}>
-                <span id="pos-page-short-osqth-bal">{formatNumber(squeethAmount.toNumber(), 6)}</span> oSQTH
+                <span id="pos-page-short-osqth-bal">{formatNumber(squeethAmount.toNumber(), 4)}</span> oSQTH
               </Typography>
             )}
           </div>
