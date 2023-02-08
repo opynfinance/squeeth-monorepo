@@ -82,7 +82,7 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
               {formatCurrency(depositedUsd.toNumber())}
             </Typography>
             {isLegacyUser && (
-              <Typography variant="body2" color="textSecondary">
+              <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
                 <span id="pos-page-crab-deposited-amount">{formatNumber(depositedEth.toNumber(), 4)} ETH</span>
               </Typography>
             )}
@@ -101,7 +101,7 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
                   {formatCurrency(currentCrabPositionValue.toNumber())}
                 </Typography>
                 {isLegacyUser && (
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
                     {formatNumber(currentCrabPositionValueInETH.toNumber(), 4)} ETH
                   </Typography>
                 )}

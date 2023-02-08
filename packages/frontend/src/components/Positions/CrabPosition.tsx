@@ -65,7 +65,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
             <Typography variant="body1" className={classes.textMonospace}>
               {formatCurrency(depositedUsd.toNumber())}
             </Typography>
-            <Typography variant="body2" color="textSecondary">
+            <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
               <span id="pos-page-crab-deposited-amount">{formatNumber(depositedEth.toNumber(), 4)} ETH</span>
             </Typography>
           </div>
@@ -81,7 +81,7 @@ const CrabPosition: React.FC<CrabPositionType> = ({
                 <Typography variant="body1" className={classes.textMonospace}>
                   {formatCurrency(currentCrabPositionValue.toNumber())}
                 </Typography>
-                <Typography variant="body2" color="textSecondary">
+                <Typography variant="body2" color="textSecondary" className={classes.textMonospace}>
                   {formatNumber(currentCrabPositionValueInETH.toNumber(), 4)} ETH
                 </Typography>
               </>
