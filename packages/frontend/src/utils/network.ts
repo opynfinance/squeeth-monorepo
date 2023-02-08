@@ -3,7 +3,7 @@ export function getNetwork(networkId: number) {
     case 1:
       return 'MAINNET'
     case 5:
-      return 'GOERI'
+      return 'GOERLI'
     case 11155111:
       return 'SEPOLIA'
     default:
