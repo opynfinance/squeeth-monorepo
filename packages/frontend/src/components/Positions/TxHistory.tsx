@@ -11,7 +11,6 @@ import { networkIdAtom } from '@state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
 import { normFactorAtom } from '@state/controller/atoms'
 import { formatCurrency, formatNumber } from '@utils/formatter'
-import { LinkButton } from '@components/Button'
 import useCommonStyles from './useStyles'
 
 const useStyles = makeStyles((theme) =>
@@ -53,20 +52,15 @@ const useStyles = makeStyles((theme) =>
       },
     },
     itemDataCol: {
-      flexBasis: '380px',
       flex: 1,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
       gridGap: '12px',
-
-      [theme.breakpoints.down('xs')]: {
-        flexBasis: '280px',
-      },
     },
     txItemVal: {
-      flex: 1,
       flexBasis: '120px',
+      flex: 1,
     },
     txItemCTA: {
       textAlign: 'right',
