@@ -77,7 +77,6 @@ contract DepositAuction is ZenBullNettingBaseSetup {
 
     function testFullDepositAuction() public {
         uint256 amount = 10e18;
-        vm.deal(user1, amount);
         _queueEth(user1, amount);
 
         uint256 crabAmount = _calAuctionCrabAmount(amount);
