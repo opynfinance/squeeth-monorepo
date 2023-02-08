@@ -9,6 +9,7 @@ import {
   isBullPositionRefetchingAtom,
   ethQueuedAtom,
   zenBullQueuedAtom,
+  bullEthPnlAtom,
 } from '@state/bull/atoms'
 
 import useStyles from '@components/Strategies/styles'
@@ -19,6 +20,7 @@ const BullPosition: React.FC = () => {
   const bullPosition = useAtomValue(bullCurrentETHPositionAtom)
   const ethQueued = useAtomValue(ethQueuedAtom)
   const zenBullQueued = useAtomValue(zenBullQueuedAtom)
+  const bullEthPnL = useAtomValue(bullEthPnlAtom)
 
   const classes = useStyles()
 
