@@ -38,12 +38,12 @@ const BullPosition: React.FC = () => {
 
   const loading = !useAtomValue(bullPositionLoadedAtom)
 
-  const initiatedDepositAmount = toTokenAmount(ethQueued, WETH_DECIMALS)
-  const initiatedWithdrawalAmount = toTokenAmount(zenBullQueued, ZENBULL_TOKEN_DECIMALS).times(bullEthValue)
-
-  if (bullCurrentETH.isZero() && initiatedDepositAmount.isZero() && initiatedWithdrawalAmount.isZero()) {
+  if (bullCurrentETH.isZero() && ethQueued.isZero() && zenBullQueued.isZero()) {
     return null
   }
+
+  const initiatedDepositAmount = toTokenAmount(ethQueued, WETH_DECIMALS)
+  const initiatedWithdrawalAmount = toTokenAmount(zenBullQueued, ZENBULL_TOKEN_DECIMALS).times(bullEthValue)
 
   return (
     <div className={classes.position} id="pos-page-bull">

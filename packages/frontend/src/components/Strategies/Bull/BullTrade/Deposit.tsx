@@ -238,7 +238,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
       }
 
       if (useQueue) {
-        await queueDepositEth(new BigNumber(depositAmountRef.current), dataToTrack, onTxnConfirmed)
+        await queueDepositEth(amount, dataToTrack, onTxnConfirmed)
       } else {
         await bullFlashDeposit(
           quote.ethToCrab,
@@ -246,7 +246,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           quote.minEthFromUsdc,
           quote.wPowerPerpPoolFee,
           quote.usdcPoolFee,
-          new BigNumber(depositAmountRef.current),
+          amount,
           dataToTrack,
           onTxnConfirmed,
         )
