@@ -1,4 +1,4 @@
-import { createStyles, makeStyles, Typography, useTheme, useMediaQuery } from '@material-ui/core'
+import { createStyles, makeStyles, Typography, useTheme, useMediaQuery, IconButton } from '@material-ui/core'
 import OpenInNewIcon from '@material-ui/icons/OpenInNew'
 import { useAtomValue } from 'jotai'
 import clsx from 'clsx'
@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) =>
       gridGap: '12px',
     },
     itemHeaderCol: {
-      flexBasis: '200px',
+      flexBasis: '30%',
       [theme.breakpoints.down('xs')]: {
         flexBasis: '100%',
         marginBottom: theme.spacing(1),
@@ -74,6 +74,11 @@ const useStyles = makeStyles((theme) =>
 
       [theme.breakpoints.down('xs')]: {
         flexBasis: '40px',
+      },
+    },
+    ctaButton: {
+      '&:hover': {
+        backgroundColor: 'transparent',
       },
     },
   }),
@@ -206,14 +211,19 @@ const TxHistory: React.FC = () => {
             )}
 
             <div className={classes.txItemCTA}>
-              <LinkButton size="small" href={`${EtherscanPrefix[networkId]}/${tx.txId}`}>
+              <IconButton
+                size="small"
+                href={`${EtherscanPrefix[networkId]}/${tx.txId}`}
+                target="_blank"
+                className={classes.ctaButton}
+              >
                 {!isMobileBreakpoint && (
                   <Typography variant="body2" color="primary" component="span">
                     View Transaction
                   </Typography>
                 )}
                 <OpenInNewIcon style={{ fontSize: '16px', marginLeft: '8px' }} color="primary" />
-              </LinkButton>
+              </IconButton>
             </div>
           </div>
         </div>
