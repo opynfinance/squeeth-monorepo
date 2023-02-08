@@ -11,10 +11,7 @@ import { PnLTooltip } from '@components/PnLTooltip'
 import { formatNumber, formatCurrency } from '@utils/formatter'
 import { PnLType } from 'src/types'
 import useStyles from './useStyles'
-
-const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
-  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
-}
+import Loading from './Loading'
 
 export default function LongSqueeth() {
   const classes = useStyles()

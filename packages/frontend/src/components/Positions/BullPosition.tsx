@@ -17,11 +17,8 @@ import {
 } from '@state/bull/atoms'
 import bullStrategyImg from 'public/images/bull_strategy.png'
 import { formatCurrency, formatNumber } from '@utils/formatter'
+import Loading from './Loading'
 import useStyles from './useStyles'
-
-const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
-  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
-}
 
 const BullPosition: React.FC = () => {
   const classes = useStyles()

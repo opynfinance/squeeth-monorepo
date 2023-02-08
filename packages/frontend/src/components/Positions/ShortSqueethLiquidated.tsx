@@ -5,10 +5,7 @@ import { useVaultData } from '@hooks/useVaultData'
 import { useFirstValidVault, useLPPositionsQuery } from '@state/positions/hooks'
 import useStyles from './useStyles'
 import { formatNumber } from '@utils/formatter'
-
-const Loading = () => {
-  return <Typography variant="body1">loading...</Typography>
-}
+import Loading from './Loading'
 
 export default function ShortSqueethLiquidated() {
   const classes = useStyles()

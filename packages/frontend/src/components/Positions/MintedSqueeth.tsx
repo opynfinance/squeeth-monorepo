@@ -9,10 +9,7 @@ import { useFirstValidVault, useLPPositionsQuery, useMintedDebt } from '@state/p
 import { Tooltips } from '@constants/index'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import useStyles from './useStyles'
-
-const Loading = () => {
-  return <Typography variant="body1">loading...</Typography>
-}
+import Loading from './Loading'
 
 interface Props {
   vaultExists: boolean

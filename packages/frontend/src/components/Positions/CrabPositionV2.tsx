@@ -11,11 +11,8 @@ import { Tooltips, USDC_DECIMALS } from '@constants/index'
 import { toTokenAmount } from '@utils/calculations'
 import { formatCurrency, formatNumber } from '@utils/formatter'
 import { useCheckLegacyCrabV2User } from '@hooks/useCheckLegacyUser'
+import Loading from './Loading'
 import useStyles from './useStyles'
-
-const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
-  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
-}
 
 type CrabPositionV2Type = {
   address: string

@@ -9,11 +9,8 @@ import { useCurrentCrabPositionValue, useCurrentCrabPositionValueV2, useSetStrat
 import { crabStrategyCollatRatioAtom } from '@state/crab/atoms'
 import { Tooltips } from '@constants/index'
 import { formatCurrency, formatNumber } from '@utils/formatter'
+import Loading from './Loading'
 import useStyles from './useStyles'
-
-const Loading: React.FC<{ isSmall?: boolean }> = ({ isSmall = false }) => {
-  return <Typography variant={isSmall ? 'caption' : 'body1'}>loading...</Typography>
-}
 
 type CrabPositionType = {
   depositedEth: BigNumber
