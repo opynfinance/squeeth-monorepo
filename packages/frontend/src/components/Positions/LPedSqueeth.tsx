@@ -23,7 +23,9 @@ export default function LPedSqueeth({ vaultExists }: Props) {
   return (
     <div className={classes.position}>
       <div className={classes.positionTitle}>
-        <Typography>LP&apos;ed Squeeth</Typography>
+        <Typography variant="body1" className={classes.fontMedium}>
+          LP&apos;ed Squeeth
+        </Typography>
         <Typography className={classes.link} id="lp-vault-link">
           {vaultExists ? <Link href={`vault/${vaultId}`}>Manage</Link> : null}
         </Typography>

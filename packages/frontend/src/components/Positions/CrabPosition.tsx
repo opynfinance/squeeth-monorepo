@@ -48,7 +48,9 @@ const CrabPosition: React.FC<CrabPositionType> = ({
       <div className={classes.positionTitle}>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography>🦀</Typography>
-          <Typography style={{ marginLeft: '8px' }}>{version}</Typography>
+          <Typography style={{ marginLeft: '8px' }} variant="body1" className={classes.fontMedium}>
+            {version}
+          </Typography>
         </div>
       </div>
       <div className={classes.shortPositionData}>

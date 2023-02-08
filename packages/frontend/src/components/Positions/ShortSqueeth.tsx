@@ -33,7 +33,9 @@ export default function ShortSqueeth() {
   return (
     <div className={classes.position}>
       <div className={classes.positionTitle}>
-        <Typography>Short Squeeth</Typography>
+        <Typography variant="body1" className={classes.fontMedium}>
+          Short Squeeth
+        </Typography>
         <Typography className={classes.link}>
           <Link href={`vault/${vaultId}`}>Manage</Link>
         </Typography>

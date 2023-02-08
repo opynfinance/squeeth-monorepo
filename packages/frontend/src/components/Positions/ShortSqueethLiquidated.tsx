@@ -1,5 +1,6 @@
 import { Link, Typography } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
+import clsx from 'clsx'
 
 import { useVaultData } from '@hooks/useVaultData'
 import { useFirstValidVault, useLPPositionsQuery } from '@state/positions/hooks'
@@ -16,7 +17,9 @@ export default function ShortSqueethLiquidated() {
   return (
     <div className={classes.position}>
       <div className={classes.positionTitle}>
-        <Typography className={classes.red}>Short Squeeth - Liquidated</Typography>
+        <Typography className={clsx(classes.red, classes.fontMedium)} variant="body1">
+          Short Squeeth - Liquidated
+        </Typography>
         <Typography className={classes.link}>
           <Link href={`vault/${vaultId}`}>Manage</Link>
         </Typography>

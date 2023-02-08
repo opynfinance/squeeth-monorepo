@@ -27,7 +27,9 @@ export default function LongSqueeth() {
   return (
     <div className={classes.position}>
       <div className={classes.positionTitle}>
-        <Typography>Long Squeeth</Typography>
+        <Typography variant="body1" className={classes.fontMedium}>
+          Long Squeeth
+        </Typography>
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>

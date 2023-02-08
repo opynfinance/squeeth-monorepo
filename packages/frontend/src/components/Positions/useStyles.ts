@@ -77,6 +77,7 @@ const useStyles = makeStyles((theme) =>
       width: '30%',
       [theme.breakpoints.down('sm')]: {
         width: '100%',
+        marginBottom: theme.spacing(3),
       },
     },
     green: {
@@ -112,6 +113,9 @@ const useStyles = makeStyles((theme) =>
     emoji: {
       width: '18px',
       maxHeight: '25px',
+    },
+    fontMedium: {
+      fontWeight: 500,
     },
   }),
 )

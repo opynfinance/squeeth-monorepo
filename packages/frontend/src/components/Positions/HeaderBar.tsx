@@ -23,6 +23,8 @@ const useStyles = makeStyles((theme) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       width: '100%',
+      flexWrap: 'wrap',
+      gridGap: theme.spacing(2),
     },
     userInfoContainer: {
       display: 'flex',
