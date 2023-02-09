@@ -78,7 +78,6 @@ const useStyles = makeStyles((theme) =>
     navStartEarningButton: {
       backgroundColor: theme.palette.primary.main,
       padding: `15px ${vwCalculator(18)}`,
-      fontFamily: 'Avenir',
       fontWeight: 800,
       fontSize: '18px',
       lineHeight: '130%',
@@ -226,7 +225,6 @@ const useStyles = makeStyles((theme) =>
     contentSectionButton: {
       backgroundColor: theme.palette.primary.main,
       padding: `14px ${vwCalculator(18)}`,
-      fontFamily: 'Avenir',
       fontWeight: 800,
       fontSize: '18px',
       lineHeight: '130%',
