@@ -46,10 +46,6 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         vm.deal(mm1, 5000e18);
         vm.deal(mm2, 5000e18);
 
-        vm.prank(user1);
-        IWETH(WETH).deposit{value: 1000e18}();
-        vm.prank(user2);
-        IWETH(WETH).deposit{value: 1000e18}();
         vm.prank(mm1);
         IWETH(WETH).deposit{value: 1000e18}();
         vm.prank(mm2);
