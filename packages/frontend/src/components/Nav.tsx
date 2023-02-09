@@ -14,7 +14,7 @@ import { useWalletBalance } from '@state/wallet/hooks'
 import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { BIG_ZERO } from '@constants/index'
-import logo from 'public/images/OpynLogo.svg'
+import logo from 'public/images/logo.png'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
 import useAmplitude from '@hooks/useAmplitude'
@@ -33,11 +33,11 @@ const useStyles = makeStyles((theme) =>
     content: {
       maxWidth: '1280px',
       width: '80%',
-      padding: theme.spacing(0, 2.5),
+      padding: theme.spacing(1.5, 5),
       margin: '0 auto',
-      height: '64px',
       display: 'flex',
       alignItems: 'center',
+      justifyContent: 'space-between',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
         width: '90%',
@@ -46,29 +46,35 @@ const useStyles = makeStyles((theme) =>
         width: '100%',
       },
       [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(0, 2),
+        padding: theme.spacing(1.5, 4),
       },
       [theme.breakpoints.down('xs')]: {
-        padding: theme.spacing(0, 1),
+        padding: theme.spacing(1.5, 3),
       },
     },
+    leftNav: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+      gridGap: theme.spacing(1.5),
+    },
+    rightNav: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
     logo: {
-      marginRight: 'auto',
-      marginTop: theme.spacing(1.75),
-      marginLeft: theme.spacing(-1),
-      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 56px',
     },
     navDiv: {
       display: 'flex',
       alignItems: 'center',
-      position: 'absolute',
-      marginLeft: theme.spacing(12),
-      [theme.breakpoints.down(1042)]: {
-        marginLeft: theme.spacing(18),
-      },
     },
     navLink: {
-      margin: theme.spacing(0, 2),
+      margin: theme.spacing(0, 1.75),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
@@ -87,14 +93,17 @@ const useStyles = makeStyles((theme) =>
     navActive: {
       color: theme.palette.primary.main,
     },
-    wallet: {
-      display: 'flex',
-      marginRight: theme.spacing(2),
-    },
     navDrawer: {
       padding: theme.spacing(2, 4),
       '& > *': {
         marginBottom: theme.spacing(1),
+      },
+    },
+    menuButton: {
+      padding: 0,
+      marginLeft: theme.spacing(1.5),
+      '&:hover': {
+        backgroundColor: 'transparent',
       },
     },
   }),
@@ -134,15 +143,16 @@ const Nav: React.FC = () => {
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <div className={classes.logo}>
-          <Link href={ROUTES.HOME} passHref>
-            <Image src={logo} alt="logo" width={102} height={44} />
-          </Link>
-        </div>
         {/*For Desktop view*/}
         <Hidden smDown>
-          <div className={classes.navDiv}>
-            <div style={{ display: 'flex' }}>
+          <div className={classes.leftNav}>
+            <Link href={ROUTES.HOME} passHref>
+              <a className={classes.logo}>
+                <Image src={logo} alt="logo" width={56} height={44} />
+              </a>
+            </Link>
+
+            <div className={classes.navDiv}>
               <NavLink
                 highlightForPaths={[ROUTES.STRATEGY.CRAB, ROUTES.STRATEGY.BULL]}
                 path={ROUTES.STRATEGY.CRAB}
@@ -168,7 +178,7 @@ const Nav: React.FC = () => {
               </a>
             </div>
           </div>
-          <div className={classes.wallet}>
+          <div className={classes.rightNav}>
             <Button
               variant="outlined"
               color="primary"
@@ -192,61 +202,76 @@ const Nav: React.FC = () => {
           </div>
         </Hidden>
         <Hidden mdUp>
-          <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
-          <IconButton onClick={() => setNavOpen(true)}>
-            <MenuIcon />
-          </IconButton>
-          <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
-            <div className={classes.navDrawer}>
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <WalletButton />
-                <SettingMenu />
+          <div className={classes.leftNav}>
+            <Link href={ROUTES.HOME} passHref>
+              <a className={classes.logo}>
+                <Image src={logo} alt="logo" width={56} height={44} />
+              </a>
+            </Link>
+          </div>
+
+          <div className={classes.rightNav}>
+            <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
+            <IconButton onClick={() => setNavOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+            <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
+              <div className={classes.navDrawer}>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <WalletButton />
+                  <SettingMenu />
+                </div>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    setCopied(oSqueeth)
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    width: '200px',
+                  }}
+                >
+                  {isCopied ? (
+                    <>Copied</>
+                  ) : (
+                    <>
+                      <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                      {oSqueeth?.substring(oSqueeth.length - 4)}
+                    </>
+                  )}
+                </Button>
+                <NavLink
+                  highlightForPaths={[ROUTES.STRATEGY.CRAB, ROUTES.STRATEGY.BULL]}
+                  path={ROUTES.STRATEGY.CRAB}
+                  name="Strategies"
+                />
+                <NavLink path={ROUTES.SQUEETH} name="Squeeth" />
+                <NavLink path={ROUTES.POSITIONS} name="Positions" />
+                <a
+                  href={EXTERNAL_LINKS.AUCTION}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
+                >
+                  <Typography className={classes.navLink} variant="h6">
+                    Auction
+                  </Typography>
+                </a>
+                <NavLink path={ROUTES.LP} name="LP" />
+                <a
+                  href={EXTERNAL_LINKS.FAQ}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => track(SITE_EVENTS.NAV_FAQ)}
+                >
+                  <Typography className={classes.navLink} variant="h6">
+                    FAQ
+                  </Typography>
+                </a>
               </div>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  setCopied(oSqueeth)
-                }}
-                style={{
-                  marginTop: '8px',
-                  width: '200px',
-                }}
-              >
-                {isCopied ? (
-                  <>Copied</>
-                ) : (
-                  <>
-                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
-                    {oSqueeth?.substring(oSqueeth.length - 4)}
-                  </>
-                )}
-              </Button>
-              <NavLink
-                highlightForPaths={[ROUTES.STRATEGY.CRAB, ROUTES.STRATEGY.BULL]}
-                path={ROUTES.STRATEGY.CRAB}
-                name="Strategies"
-              />
-              <NavLink path={ROUTES.SQUEETH} name="Squeeth" />
-              <NavLink path={ROUTES.POSITIONS} name="Positions" />
-              <a
-                href={EXTERNAL_LINKS.AUCTION}
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
-              >
-                <Typography className={classes.navLink} variant="h6">
-                  Auction
-                </Typography>
-              </a>
-              <NavLink path={ROUTES.LP} name="LP" />
-              <a href={EXTERNAL_LINKS.FAQ} target="_blank" rel="noreferrer" onClick={() => track(SITE_EVENTS.NAV_FAQ)}>
-                <Typography className={classes.navLink} variant="h6">
-                  FAQ
-                </Typography>
-              </a>
-            </div>
-          </Drawer>
+            </Drawer>
+          </div>
         </Hidden>
       </div>
     </div>

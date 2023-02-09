@@ -5,7 +5,7 @@ import clsx from 'clsx'
 import { Button, Typography } from '@material-ui/core'
 import Link from 'next/link'
 
-import logo from 'public/images/OpynLogo.svg'
+import logo from 'public/images/logo.png'
 import LandingPageBackground from 'public/images/landing/athena1-desktop.png'
 import LandingPageBackgroundDown from 'public/images/landing-page-background-down.svg'
 import LandingTitle from 'public/images/landing/landing-title.png'
@@ -34,7 +34,8 @@ const useStyles = makeStyles((theme) =>
       overflow: 'hidden',
     },
     logo: {
-      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
     },
     gradientText: {
       background: `linear-gradient(180deg, #FFFFFF 0%, #C2C2C2 100%)`,
@@ -284,9 +285,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       gap: `${vwCalculator(9)}`,
     },
-    socialIcon: {
-      cursor: 'pointer',
-    },
   }),
 )
 
@@ -302,11 +300,12 @@ function DesktopLandingPage() {
   return (
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
-        <div className={classes.logo}>
-          <Link href={ROUTES.HOME} passHref>
-            <Image src={logo} alt="logo" width={97} height={75} />
-          </Link>
-        </div>
+        <Link href={ROUTES.HOME} passHref>
+          <a className={classes.logo}>
+            <Image src={logo} alt="logo" width={95} height={75} />
+          </a>
+        </Link>
+
         <div className={classes.navLinks}>
           {navLinks.map((link) => (
             <Typography
@@ -382,7 +381,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} />
+                  <Image src={logo} alt="logo" width={95} height={75} />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   SQUEETH
@@ -418,7 +417,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} />
+                  <Image src={logo} alt="logo" width={95} height={75} />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   STRATEGIES
@@ -462,7 +461,7 @@ function DesktopLandingPage() {
             <div>
               <div className={classes.contentSectionHeader}>
                 <div className={classes.contentSectionHeaderImage}>
-                  <Image src={logo} alt="logo" width={97} height={75} />
+                  <Image src={logo} alt="logo" width={95} height={75} />
                 </div>
                 <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
                   AUCTION
@@ -508,22 +507,30 @@ function DesktopLandingPage() {
         <div className={classes.footerSocial}>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
             <Link href={EXTERNAL_LINKS.TWITTER} passHref>
-              <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
+              <a>
+                <Image src={Twitter} alt="Opyn Twitter" />
+              </a>
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
             <Link href={EXTERNAL_LINKS.DISCORD} passHref>
-              <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
+              <a>
+                <Image src={Discord} alt="Opyn Discord" />
+              </a>
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
             <Link href={EXTERNAL_LINKS.GITHUB} passHref>
-              <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
+              <a>
+                <Image src={Github} alt="Opyn Github" />
+              </a>
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
             <Link href={EXTERNAL_LINKS.MEDIUM} passHref>
-              <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
+              <a>
+                <Image src={Medium} alt="Opyn Medium" />
+              </a>
             </Link>
           </div>
         </div>

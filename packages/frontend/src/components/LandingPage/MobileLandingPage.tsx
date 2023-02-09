@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Typography, Paper, Collapse } from '@material-ui/core'
+import { Button, Typography, Paper, Collapse, IconButton } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
+import MenuIcon from '@material-ui/icons/Menu'
 import Link from 'next/link'
-import Hamburger from 'hamburger-react'
 import Image from 'next/image'
 import clsx from 'clsx'
 
-import logo from 'public/images/OpynLogo.svg'
+import logo from 'public/images/logo.png'
 import LandingPageBackgroundOne from 'public/images/landing/athena1.png'
 import LandingPageBackgroundTwo from 'public/images/landing/athena2.png'
 import LandingPageBackgroundThree from 'public/images/landing/athena3.png'
@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) =>
       overflow: 'hidden',
     },
     nav: {
-      padding: `0px ${vwCalculator(10)}`,
+      padding: `8px ${vwCalculator(10)}`,
       display: 'flex',
       alignItems: 'center',
       boxShadow: '0px 3px 4px rgba(0, 0, 0, 0.2)',
@@ -56,7 +56,12 @@ const useStyles = makeStyles((theme) =>
       margin: `0 ${vwCalculator(10)}`,
       position: 'absolute',
     },
-    navLogo: { flex: 1, alignItems: 'center', justifyContent: 'center', display: 'flex' },
+    navLogo: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      display: 'flex',
+    },
     navDrawer: {},
     navDrawerBackground: {
       backgroundColor: '#191B1C',
@@ -285,8 +290,11 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       gap: `${vwCalculator(9)}`,
     },
-    socialIcon: {
-      cursor: 'pointer',
+    menuButton: {
+      padding: 0,
+      '&:hover': {
+        backgroundColor: 'transparent',
+      },
     },
   }),
 )
@@ -301,17 +309,25 @@ function MobileLandingPage() {
     track(LANDING_EVENTS.LANDING_VISIT_MOBILE)
   }, [track])
 
+  const handleNavOpen = () => {
+    setNavOpen(!navOpen)
+  }
+
   return (
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
         <div className={classes.navMenu}>
-          <Hamburger size={20} toggled={navOpen} toggle={setNavOpen} />
+          <IconButton onClick={handleNavOpen} className={classes.menuButton}>
+            <MenuIcon />
+          </IconButton>
         </div>
-        <div className={classes.navLogo}>
-          <Link href={ROUTES.HOME} passHref>
-            <Image src={logo} alt="logo" width={83} height={59} />
-          </Link>
-        </div>
+
+        <Link href={ROUTES.HOME} passHref>
+          <a className={classes.navLogo}>
+            <Image src={logo} alt="logo" width={56} height={44} />
+          </a>
+        </Link>
+
         <div className={classes.navAction}>
           <Link href={ROUTES.STRATEGY.CRAB} passHref>
             <Button onClick={() => track(LANDING_EVENTS.NAV_START_EARNING)} className={classes.navStartEarningButton}>
@@ -402,7 +418,7 @@ function MobileLandingPage() {
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>
             <div className={classes.contentSectionHeaderImage}>
-              <Image src={logo} alt="logo" width={70} height={53} />
+              <Image src={logo} alt="logo" width={67} height={53} />
             </div>
             <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
               SQUEETH
@@ -433,7 +449,7 @@ function MobileLandingPage() {
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>
             <div className={classes.contentSectionHeaderImage}>
-              <Image src={logo} alt="logo" width={70} height={53} />
+              <Image src={logo} alt="logo" width={67} height={53} />
             </div>
             <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
               STRATEGIES
@@ -470,7 +486,7 @@ function MobileLandingPage() {
         <div className={classes.squeethSection}>
           <div className={classes.contentSectionHeader}>
             <div className={classes.contentSectionHeaderImage}>
-              <Image src={logo} alt="logo" width={70} height={53} />
+              <Image src={logo} alt="logo" width={67} height={53} />
             </div>
             <Typography variant="h3" className={clsx([classes.contentSectionHeaderLabel, classes.gradientText])}>
               AUCTION
@@ -513,22 +529,30 @@ function MobileLandingPage() {
           <div className={classes.footerSocial}>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
               <Link href={EXTERNAL_LINKS.TWITTER} passHref>
-                <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
+                <a>
+                  <Image src={Twitter} alt="Opyn Twitter" />
+                </a>
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
               <Link href={EXTERNAL_LINKS.DISCORD} passHref>
-                <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
+                <a>
+                  <Image src={Discord} alt="Opyn Discord" />
+                </a>
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
               <Link href={EXTERNAL_LINKS.GITHUB} passHref>
-                <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
+                <a>
+                  <Image src={Github} alt="Opyn Github" />
+                </a>
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
               <Link href={EXTERNAL_LINKS.MEDIUM} passHref>
-                <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
+                <a>
+                  <Image src={Medium} alt="Opyn Medium" />
+                </a>
               </Link>
             </div>
           </div>
