@@ -291,7 +291,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
      * @notice receive function to allow ETH transfer to this contract
      */
     receive() external payable {
-        if ((msg.sender != weth) && (msg.sender != zenBull)) {
+        if ((msg.sender != weth) && (msg.sender != zenBull) && (msg.sender != flashZenBull)) {
             _queueEth();
         }
     }
