@@ -12,7 +12,7 @@ export const ROUTES = {
 }
 
 export const EXTERNAL_LINKS = {
-  AUCTION: 'https://squeethportal.xyz',
+  AUCTION: 'https://squeethportal.xyz/auction',
   FAQ: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',
   SECURITY: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security',
   DEVELOPERS: 'https://opyn.gitbook.io/squeeth-1/',
