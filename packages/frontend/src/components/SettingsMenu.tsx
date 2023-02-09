@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const discordLink = EXTERNAL_LINKS.DISCORD
-const docsLink = EXTERNAL_LINKS.DOCS_LINK
+const docsLink = EXTERNAL_LINKS.DOCS_HUB
 
 const SettingMenu = () => {
   const classes = useStyles()

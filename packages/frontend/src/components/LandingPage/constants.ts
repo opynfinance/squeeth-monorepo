@@ -13,7 +13,7 @@ export const navLinks = [
 ]
 
 export const footerLinks = [
-  { label: 'Developers', link: EXTERNAL_LINKS.DEVELOPERS, analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
+  { label: 'Developers', link: EXTERNAL_LINKS.DEVELOPER_DOCS, analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
   { label: 'Blog', link: EXTERNAL_LINKS.MEDIUM, analyticsEvent: LANDING_EVENTS.NAV_BLOG },
   {
     label: 'Security',
