@@ -161,7 +161,7 @@ const Nav: React.FC = () => {
               </a>
               <NavLink path="/lp" name="LP" />
               <a
-                href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
+                href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq"
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track(SITE_EVENTS.NAV_FAQ)}
@@ -245,7 +245,7 @@ const Nav: React.FC = () => {
               </a>
               <NavLink path="/lp" name="LP" />
               <a
-                href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq"
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track(SITE_EVENTS.NAV_FAQ)}
