@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react'
 import { canStoreCookies, CookieNames, setCookie } from '@utils/cookies'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
+import { EXTERNAL_LINKS } from '@constants/routes'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -58,8 +59,8 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const discordLink = 'https://tiny.cc/opyndiscord'
-const docsLink = 'https://opyn.gitbook.io/opyn-hub/'
+const discordLink = EXTERNAL_LINKS.DISCORD
+const docsLink = EXTERNAL_LINKS.DOCS_LINK
 
 const SettingMenu = () => {
   const classes = useStyles()

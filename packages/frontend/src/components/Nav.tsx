@@ -19,6 +19,7 @@ import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
+import { ROUTES, EXTERNAL_LINKS } from '@constants/routes'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -134,7 +135,7 @@ const Nav: React.FC = () => {
     <div className={classes.root}>
       <div className={classes.content}>
         <div className={classes.logo}>
-          <Link href={'/'} passHref>
+          <Link href={ROUTES.HOME} passHref>
             <Image src={logo} alt="logo" width={102} height={44} />
           </Link>
         </div>
@@ -143,14 +144,14 @@ const Nav: React.FC = () => {
           <div className={classes.navDiv}>
             <div style={{ display: 'flex' }}>
               <NavLink
-                highlightForPaths={['/strategies/crab', '/strategies/bull']}
-                path="/strategies/crab"
+                highlightForPaths={[ROUTES.STRATEGY.CRAB, ROUTES.STRATEGY.BULL]}
+                path={ROUTES.STRATEGY.CRAB}
                 name="Strategies"
               />
-              <NavLink path="/squeeth" name="Squeeth" />
-              <NavLink path="/positions" name="Positions" />
+              <NavLink path={ROUTES.SQUEETH} name="Squeeth" />
+              <NavLink path={ROUTES.POSITIONS} name="Positions" />
               <a
-                href="https://squeethportal.xyz"
+                href={EXTERNAL_LINKS.AUCTION}
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
@@ -159,13 +160,8 @@ const Nav: React.FC = () => {
                   Auction
                 </Typography>
               </a>
-              <NavLink path="/lp" name="LP" />
-              <a
-                href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-              >
+              <NavLink path={ROUTES.LP} name="LP" />
+              <a href={EXTERNAL_LINKS.FAQ} target="_blank" rel="noreferrer" onClick={() => track(SITE_EVENTS.NAV_FAQ)}>
                 <Typography className={classes.navLink} variant="h6">
                   FAQ
                 </Typography>
@@ -227,14 +223,14 @@ const Nav: React.FC = () => {
                 )}
               </Button>
               <NavLink
-                highlightForPaths={['/strategies/crab', '/strategies/bull']}
-                path="/strategies/crab"
+                highlightForPaths={[ROUTES.STRATEGY.CRAB, ROUTES.STRATEGY.BULL]}
+                path={ROUTES.STRATEGY.CRAB}
                 name="Strategies"
               />
-              <NavLink path="/squeeth" name="Squeeth" />
-              <NavLink path="/positions" name="Positions" />
+              <NavLink path={ROUTES.SQUEETH} name="Squeeth" />
+              <NavLink path={ROUTES.POSITIONS} name="Positions" />
               <a
-                href="https://squeethportal.xyz"
+                href={EXTERNAL_LINKS.AUCTION}
                 target="_blank"
                 rel="noreferrer"
                 onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
@@ -243,13 +239,8 @@ const Nav: React.FC = () => {
                   Auction
                 </Typography>
               </a>
-              <NavLink path="/lp" name="LP" />
-              <a
-                href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-              >
+              <NavLink path={ROUTES.LP} name="LP" />
+              <a href={EXTERNAL_LINKS.FAQ} target="_blank" rel="noreferrer" onClick={() => track(SITE_EVENTS.NAV_FAQ)}>
                 <Typography className={classes.navLink} variant="h6">
                   FAQ
                 </Typography>

@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { Button, Typography, Paper, Collapse } from '@material-ui/core'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
-import { Paper } from '@material-ui/core'
+import Link from 'next/link'
 import Hamburger from 'hamburger-react'
-import Collapse from '@material-ui/core/Collapse'
+import Image from 'next/image'
+import clsx from 'clsx'
+
 import logo from 'public/images/OpynLogo.svg'
 import LandingPageBackgroundOne from 'public/images/landing/athena1.png'
 import LandingPageBackgroundTwo from 'public/images/landing/athena2.png'
@@ -11,17 +14,15 @@ import LandingPageBackgroundFour from 'public/images/landing/athena4.png'
 import SqueethMobile from 'public/images/landing/squeeth-mobile.png'
 import StrategiesMobile from 'public/images/landing/strategies-mobile.png'
 import AuctionMobile from 'public/images/landing/auction-mobile.png'
-import Link from 'next/link'
 import Twitter from 'public/images/landing/twitter.svg'
 import Discord from 'public/images/landing/discord.svg'
 import Github from 'public/images/landing/github.svg'
 import Medium from 'public/images/landing/medium.svg'
-import Image from 'next/image'
-import clsx from 'clsx'
-import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
 import useAmplitude from '@hooks/useAmplitude'
-import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
+import { LANDING_EVENTS } from '@utils/amplitude'
+import { EXTERNAL_LINKS, ROUTES } from '@constants/routes'
+import { navLinks, footerLinks } from './constants'
 
 const designBaseWidth = 393
 
@@ -292,27 +293,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const navLinks = [
-  { label: 'Strategies', link: '/strategies/crab' },
-  { label: 'Squeeth', link: '/squeeth' },
-  { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
-  {
-    label: 'FAQ',
-    link: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',
-    analyticsEvent: SITE_EVENTS.NAV_FAQ,
-  },
-]
-
-const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/', analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
-  { label: 'Blog', link: 'https://medium.com/opyn', analyticsEvent: LANDING_EVENTS.NAV_BLOG },
-  {
-    label: 'Security',
-    link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security',
-    analyticsEvent: LANDING_EVENTS.NAV_SECURITY,
-  },
-]
-
 function MobileLandingPage() {
   const [navOpen, setNavOpen] = useState(false)
   const classes = useStyles()
@@ -330,12 +310,12 @@ function MobileLandingPage() {
           <Hamburger size={20} toggled={navOpen} toggle={setNavOpen} />
         </div>
         <div className={classes.navLogo}>
-          <Link href={'/'} passHref>
+          <Link href={ROUTES.HOME} passHref>
             <Image src={logo} alt="logo" width={83} height={59} />
           </Link>
         </div>
         <div className={classes.navAction}>
-          <Link href={'/strategies/crab'} passHref>
+          <Link href={ROUTES.STRATEGY.CRAB} passHref>
             <Button onClick={() => track(LANDING_EVENTS.NAV_START_EARNING)} className={classes.navStartEarningButton}>
               Launch
             </Button>
@@ -397,7 +377,7 @@ function MobileLandingPage() {
               Built on squeeth.
             </Typography>
             <div style={{ marginTop: '20px' }} />
-            <Link href={'/strategies/crab'} passHref>
+            <Link href={ROUTES.STRATEGY.CRAB} passHref>
               <Button
                 onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
                 className={clsx([classes.navStartEarningButton, classes.introStartEarningButton])}
@@ -442,7 +422,7 @@ function MobileLandingPage() {
             protected downside, and no liquidations.
           </Typography>
           <div style={{ marginTop: '15px' }} />
-          <Link href={'/squeeth'} passHref>
+          <Link href={ROUTES.SQUEETH} passHref>
             <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
               Trade Squeeth
             </Button>
@@ -476,7 +456,7 @@ function MobileLandingPage() {
             your portfolio.
           </Typography>
           <div style={{ marginTop: '15px' }} />
-          <Link href={'/strategies/crab'} passHref>
+          <Link href={ROUTES.STRATEGY.CRAB} passHref>
             <Button
               onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
               className={classes.contentSectionButton}
@@ -510,7 +490,7 @@ function MobileLandingPage() {
             squeeth in size with low price impact.
           </Typography>
           <div style={{ marginTop: '15px' }} />
-          <Link href={'https://squeethportal.xyz'} passHref>
+          <Link href={EXTERNAL_LINKS.AUCTION} passHref>
             <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
               Try Auction
             </Button>
@@ -534,22 +514,22 @@ function MobileLandingPage() {
           </div>
           <div className={classes.footerSocial}>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
-              <Link href={'https://twitter.com/opyn_'} passHref>
+              <Link href={EXTERNAL_LINKS.TWITTER} passHref>
                 <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
-              <Link href={'https://tiny.cc/opyndiscord'} passHref>
+              <Link href={EXTERNAL_LINKS.DISCORD} passHref>
                 <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
-              <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
+              <Link href={EXTERNAL_LINKS.GITHUB} passHref>
                 <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
               </Link>
             </div>
             <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
-              <Link href={'https://medium.com/opyn'} passHref>
+              <Link href={EXTERNAL_LINKS.MEDIUM} passHref>
                 <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
               </Link>
             </div>

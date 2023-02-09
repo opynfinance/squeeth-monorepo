@@ -1,11 +1,13 @@
 import React, { useEffect } from 'react'
 import { useRouter } from 'next/router'
 
+import { ROUTES } from '@constants/routes'
+
 const Redirection = () => {
   const router = useRouter()
 
   useEffect(() => {
-    router.push('/strategies/crab', undefined, { shallow: true })
+    router.push(ROUTES.STRATEGY.CRAB, undefined, { shallow: true })
   }, [router])
 
   return <></>
@@ -18,7 +20,7 @@ export default Page
 export async function getServerSideProps() {
   return {
     redirect: {
-      destination: '/strategies/crab',
+      destination: ROUTES.STRATEGY.CRAB,
       permanent: true,
     },
   }
