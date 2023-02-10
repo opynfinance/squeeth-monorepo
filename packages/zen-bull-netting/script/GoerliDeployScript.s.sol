@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { DeployScript } from "./DeployScript.s.sol";
 
 contract GoerliDeployScript is DeployScript {
-    address public constant ownerAddress = 0xE3Dc747E5A8D8B664Dd701EE6A72AE63e740Ebc6;
+    address public constant ownerAddress = 0x56a847c21a4FA937c11258d94C8B1650cdbA21F7;
     address public constant zenBullAddress = 0x2a5AD7582a9e42944Ee32671436593D16999c70a;
     address public constant eulerSimpleLensAddress = 0x62626a0f051B547b3182e55D1Eba667138790D8D;
     address public constant flashZenAddress = 0x3876aF971560FD4c4ba3FB18632AcC0570B745b1;

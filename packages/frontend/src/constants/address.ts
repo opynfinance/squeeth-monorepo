@@ -186,7 +186,7 @@ export const BULL_STRATEGY: Address = {
 export const BULL_NETTING: Address = {
   1: '',
   3: '',
-  5: '0x30ba683c45c8b14601ec32759134b7662cef7d93',
+  5: '0x4a26C9EEf4d3487AACf40C5815b88EC88a5E885A',
   421611: '',
   31337: '',
 }
