@@ -11,7 +11,7 @@ import Nav from '@components/Nav'
 import { LPProvider } from '@context/lp'
 import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
 import { useETHPrice } from '@hooks/useETHPrice'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -245,7 +245,7 @@ export function LPCalculator() {
 export function LPage() {
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <LPProvider>
         <LPCalculator />
       </LPProvider>

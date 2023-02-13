@@ -1,11 +1,11 @@
 import { getMarkdown } from '@utils/markdown'
 import MarkdownPage from '@components/MarkdownPage'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const PosMerge = (props: any) => {
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <MarkdownPage markdown={props.file} />
     </>
   )
