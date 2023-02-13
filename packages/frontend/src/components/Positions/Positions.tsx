@@ -35,6 +35,7 @@ import ShortSqueeth from './ShortSqueeth'
 import LPedSqueeth from './LPedSqueeth'
 import MintedSqueeth from './MintedSqueeth'
 import BullPosition from './BullPosition'
+import NoPosition from './NoPosition'
 
 const Positions: React.FC = () => {
   const address = useAtomValue(addressAtom)
@@ -113,10 +114,20 @@ const Positions: React.FC = () => {
     mintedDebt.isZero() &&
     lpedSqueeth.isZero()
   ) {
+    if (isLoadingPositions) {
+      return (
+        <Typography variant="body1" color="textSecondary">
+          {'loading...'}
+        </Typography>
+      )
+    }
+
     return (
-      <Typography variant="body1" color="textSecondary">
-        {isLoadingPositions ? 'loading...' : 'No active position'}
-      </Typography>
+      <NoPosition
+        noPositionText="You have no active position."
+        ctaText="stack USDC with Crab 🦀"
+        ctaLink="/strategies/crab"
+      />
     )
   }
 

@@ -102,7 +102,7 @@ const TxHistory: React.FC = () => {
   if (transactions.length === 0) {
     return (
       <Typography variant="body1" color="textSecondary">
-        No transaction found
+        No transaction found.
       </Typography>
     )
   }

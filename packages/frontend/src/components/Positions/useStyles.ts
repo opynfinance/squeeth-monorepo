@@ -117,6 +117,11 @@ const useStyles = makeStyles((theme) =>
     fontMedium: {
       fontWeight: 500,
     },
+    noPositionContainer: {
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+    },
   }),
 )
 

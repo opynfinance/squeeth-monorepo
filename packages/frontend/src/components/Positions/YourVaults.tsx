@@ -9,6 +9,7 @@ import useYourVaults from '@hooks/useYourVaults'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import useStyles from './useStyles'
+import NoPosition from './NoPosition'
 
 const YourVaults: FC = () => {
   const classes = useStyles()
@@ -31,11 +32,7 @@ const YourVaults: FC = () => {
   }
 
   if (vaults?.length === 0 || !vaults) {
-    return (
-      <Typography variant="body1" color="textSecondary">
-        No vault found
-      </Typography>
-    )
+    return <NoPosition noPositionText="No vault found." ctaText="open a vault." ctaLink="/mint" />
   }
 
   return (
