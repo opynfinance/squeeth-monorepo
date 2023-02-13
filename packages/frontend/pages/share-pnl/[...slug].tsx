@@ -14,6 +14,7 @@ import zenBullLogo from 'public/images/zenbull-logo.png'
 import PnlChart from '@components/SharePnl/PnlChart'
 import { ROUTES } from '@constants/routes'
 import SiteSeo from '@components/SiteSeo'
+import { CRAB_SEO_DEFAULTS, BULL_SEO_DEFAULTS } from '@constants/seo'
 
 type StrategyType = 'crab' | 'zenbull'
 
@@ -190,8 +191,8 @@ const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
 const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
   const isCrab = strategy === 'crab'
 
-  const title = isCrab ? 'Crab Strategy - Stack USDC' : 'Zen Bull Strategy - Stack ETH'
-  const description = isCrab ? 'Stack USDC when ETH is flat' : 'Stack ETH when ETH increases slow and steady'
+  const title = isCrab ? CRAB_SEO_DEFAULTS.TITLE : BULL_SEO_DEFAULTS.TITLE
+  const description = isCrab ? CRAB_SEO_DEFAULTS.DESCRIPTION : BULL_SEO_DEFAULTS.DESCRIPTION
   const ogImageUrl = SQUEETH_BASE_URL + '/api/pnl?strategy=' + strategy + '&depositedAt=' + depositedAt + '&pnl=' + pnl
   const ogImageAlt = isCrab ? 'Crab strategy PnL' : 'Zen Bull strategy PnL'
 

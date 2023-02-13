@@ -1,7 +1,8 @@
 import React from 'react'
 import { NextSeo } from 'next-seo'
 
-import { SEO_DEFAULTS, SQUEETH_BASE_URL } from '@constants/index'
+import { SQUEETH_BASE_URL } from '@constants/index'
+import { SEO_DEFAULTS } from '@constants/seo'
 
 interface SiteSeoProps {
   title?: string

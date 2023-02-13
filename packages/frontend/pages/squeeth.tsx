@@ -219,8 +219,8 @@ function TradePage() {
   return (
     <>
       <SiteSeo
-        title="Squeeth - Leverage without liquidations "
-        description="Bet on ETH with unlimited upside, protected downside, and no liquidations."
+        title="Squeeth - Leverage without liquidations"
+        description="Bet on ETH with unlimited upside, protected downside, and no liquidations. Squeeth performs best when the price of ETH goes up quickly."
         ogImage={SQUEETH_BASE_URL + '/images/previews/squeeth.png'}
         ogImageAlt="Opyn Squeeth"
       />

@@ -7,8 +7,8 @@ import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
-import { SQUEETH_BASE_URL } from '@constants/index'
 import SiteSeo from '@components/SiteSeo'
+import { CRAB_SEO_DEFAULTS } from '@constants/seo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -64,10 +64,10 @@ const Crab: React.FC = () => {
   return (
     <>
       <SiteSeo
-        title="Crab Strategy - Stack USDC"
-        description="Stack USDC when ETH is flat"
-        ogImage={SQUEETH_BASE_URL + '/images/previews/crab.png'}
-        ogImageAlt="Opyn Crab Strategy"
+        title={CRAB_SEO_DEFAULTS.TITLE}
+        description={CRAB_SEO_DEFAULTS.DESCRIPTION}
+        ogImage={CRAB_SEO_DEFAULTS.OG_IMAGE}
+        ogImageAlt={CRAB_SEO_DEFAULTS.OG_IMAGE_ALT}
       />
 
       <div className={classes.container}>

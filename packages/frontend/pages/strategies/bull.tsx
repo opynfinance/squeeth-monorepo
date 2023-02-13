@@ -1,17 +1,17 @@
 import React from 'react'
 
 import BullStrategy from '@components/Strategies/Bull'
-import { SQUEETH_BASE_URL } from '@constants/index'
 import SiteSeo from '@components/SiteSeo'
+import { BULL_SEO_DEFAULTS } from '@constants/seo'
 
 const Page: React.FC = () => {
   return (
     <>
       <SiteSeo
-        title="Zen Bull Strategy - Stack ETH"
-        description="Stack ETH when ETH increases slow and steady"
-        ogImage={SQUEETH_BASE_URL + '/images/previews/bull.png'}
-        ogImageAlt="Opyn Zen Bull Strategy"
+        title={BULL_SEO_DEFAULTS.TITLE}
+        description={BULL_SEO_DEFAULTS.DESCRIPTION}
+        ogImage={BULL_SEO_DEFAULTS.OG_IMAGE}
+        ogImageAlt={BULL_SEO_DEFAULTS.OG_IMAGE_ALT}
       />
 
       <BullStrategy />
