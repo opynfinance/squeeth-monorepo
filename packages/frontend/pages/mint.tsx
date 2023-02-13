@@ -4,7 +4,7 @@ import { createStyles, makeStyles } from '@material-ui/core/styles'
 
 import MintSqueeth from '@components/Trade/Mint'
 import Nav from '@components/Nav'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -29,7 +29,7 @@ const MintPage: React.FC = () => {
 
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <Nav />
 
       <div className={classes.container}>

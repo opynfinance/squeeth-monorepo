@@ -66,7 +66,7 @@ import {
 } from 'src/state/positions/hooks'
 import { useVaultData } from '@hooks/useVaultData'
 import useVault from '@hooks/useVault'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -1203,7 +1203,7 @@ const Main: React.FC = () => {
 const Page: React.FC = () => {
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <Main />
     </>
   )

@@ -6,7 +6,7 @@ import { setOptOut } from '@amplitude/analytics-browser'
 import { PrimaryButton } from '@components/Button'
 import Nav from '@components/Nav'
 import { isOptedOut } from '@utils/amplitude'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -41,7 +41,7 @@ const MintPage: React.FC = () => {
 
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <Nav />
       <Typography align="center" variant="h6" className={classes.title}>
         {optOut ? 'You opted out from Amplitude tracking' : 'Opt out from Amplitude tracking'}

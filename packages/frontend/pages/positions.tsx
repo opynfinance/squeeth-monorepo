@@ -1,14 +1,14 @@
+import Nav from '@components/Nav'
 import Positions from '@components/Positions'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
-import Nav from '@components/Nav'
+import SiteSeo from '@components/SiteSeo'
 
 const PositionsPage = () => {
   useInitCrabMigration()
 
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <Nav />
 
       <Positions />

@@ -5,7 +5,6 @@ import { useAtomValue, useAtom } from 'jotai'
 import { useResetAtom } from 'jotai/utils'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import clsx from 'clsx'
-import { NextSeo } from 'next-seo'
 
 import Nav from '@components/Nav'
 import { WelcomeModal } from '@components/Trade/WelcomeModal'
@@ -20,6 +19,7 @@ import PositionCard from '@components/PositionCard'
 import { TradeType } from 'src/types'
 import { LinkWrapper } from '@components/LinkWrapper'
 import { SQUEETH_BASE_URL } from '@constants/index'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -218,25 +218,11 @@ function TradePage() {
 
   return (
     <>
-      <NextSeo
-        title="Opyn Squeeth - Leverage without liquidations "
-        description="Bet on ETH with unlimited upside, protected downside, and no liquidations."
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/previews/squeeth.png',
-              width: 1200,
-              height: 630,
-              alt: 'Squeeth',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
+      <SiteSeo
+        title="Squeeth - Leverage without liquidations"
+        description="Bet on ETH with unlimited upside, protected downside, and no liquidations. Squeeth performs best when the price of ETH goes up quickly."
+        ogImage={SQUEETH_BASE_URL + '/images/previews/squeeth.png'}
+        ogImageAlt="Opyn Squeeth"
       />
 
       <div>

@@ -6,7 +6,7 @@ import Typography from '@material-ui/core/Typography'
 
 import Nav from '@components/Nav'
 import { getMarkdown } from '@utils/markdown'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import SiteSeo from '@components/SiteSeo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -77,7 +77,7 @@ const PrivacyPolicy = (props: any) => {
   const classes = useStyles()
   return (
     <>
-      <DefaultSiteSeo />
+      <SiteSeo />
       <Nav />
       <main>
         <div className={classes.container}>

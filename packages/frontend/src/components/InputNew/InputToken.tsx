@@ -59,6 +59,9 @@ const useInputTokenProps = makeStyles((theme) =>
     textMonospace: {
       fontFamily: 'DM Mono',
     },
+    fontMedium: {
+      fontWeight: 500,
+    },
   }),
 )
 
@@ -152,7 +155,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
 
           {showMaxAction && (
             <ButtonBase onClick={onBalanceClick}>
-              <Typography variant="subtitle2" color="primary">
+              <Typography variant="body2" color="primary" className={classes.fontMedium}>
                 (Max)
               </Typography>
             </ButtonBase>

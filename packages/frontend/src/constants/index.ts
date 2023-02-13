@@ -67,7 +67,3 @@ export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 export const STRATEGY_DEPOSIT_LIMIT = 1000_000
 export const SQUEETH_BASE_URL = 'https://opyn.co'
-
-export const SiteMetaTitle = 'Opyn - Stack your ETH and Stables'
-export const SiteMetaDescription = 'DeFi Investment Strategies Powered by Squeeth'
-export const SiteMetaImage = SQUEETH_BASE_URL + '/images/previews/opyn.png'

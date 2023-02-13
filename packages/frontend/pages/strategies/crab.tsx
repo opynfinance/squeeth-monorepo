@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { NextSeo } from 'next-seo'
 
 import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
@@ -8,7 +7,8 @@ import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
-import { SQUEETH_BASE_URL } from '@constants/index'
+import SiteSeo from '@components/SiteSeo'
+import { CRAB_SEO_DEFAULTS } from '@constants/seo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -63,25 +63,11 @@ const Crab: React.FC = () => {
 
   return (
     <>
-      <NextSeo
-        title="Opyn Crab Strategy - Stack USDC"
-        description="Stack USDC when ETH is flat"
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          images: [
-            {
-              url: SQUEETH_BASE_URL + '/images/previews/crab.png',
-              width: 1200,
-              height: 630,
-              alt: 'Crab Strategy',
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
+      <SiteSeo
+        title={CRAB_SEO_DEFAULTS.TITLE}
+        description={CRAB_SEO_DEFAULTS.DESCRIPTION}
+        ogImage={CRAB_SEO_DEFAULTS.OG_IMAGE}
+        ogImageAlt={CRAB_SEO_DEFAULTS.OG_IMAGE_ALT}
       />
 
       <div className={classes.container}>
