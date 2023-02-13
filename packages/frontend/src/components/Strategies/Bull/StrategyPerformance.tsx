@@ -28,6 +28,7 @@ import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
 import { toTokenAmount } from '@utils/calculations'
+import PerformanceMetric from '@components/Strategies/PerformanceMetric'
 
 const useTextFieldStyles = makeStyles((theme) =>
   createStyles({
@@ -76,29 +77,6 @@ const CustomTextField: React.FC<TextFieldProps> = ({ inputRef, label, InputProps
         }}
         {...props}
       />
-    </Box>
-  )
-}
-
-const PerformanceMetric: React.FC<{ label: string; value: number }> = ({ label, value }) => {
-  const classes = useStyles()
-
-  return (
-    <Box display="flex" justifyContent="flex-end" gridGap="6px">
-      <Typography className={classes.textSmall}>{label}</Typography>
-
-      <Box minWidth="6ch" display="flex" justifyContent="flex-end">
-        <Typography
-          className={clsx(
-            classes.textSmall,
-            classes.textMonospace,
-            value >= 0 ? classes.colorSuccess : classes.colorError,
-          )}
-        >
-          {value >= 0 && '+'}
-          {formatNumber(value)}%
-        </Typography>
-      </Box>
     </Box>
   )
 }
@@ -190,7 +168,9 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
         </Typography>
 
         <Box display="flex" alignItems="baseline" gridGap="12px">
-          <Typography className={classes.description}>Annualized ETH Return</Typography>
+          <Typography variant="h4" className={classes.description}>
+            Annualized ETH Return
+          </Typography>
 
           <Box position="relative" top="3px">
             <Tooltip title={<TooltipTitle />}>
@@ -204,7 +184,9 @@ const StrategyPerformance: React.FC<StrategyPerformanceProps> = ({ strategyPnLSe
         <Typography className={clsx(classes.description, classes.textMonospace)}>
           {formatNumber(tvl, 0) + ' ETH'}
         </Typography>
-        <Typography className={classes.description}>Open Interest</Typography>
+        <Typography variant="h4" className={classes.description}>
+          Open Interest
+        </Typography>
       </Box>
 
       <Box display="flex" justifyContent="space-between" alignItems="flex-end" gridGap="12px" flexWrap="wrap">
