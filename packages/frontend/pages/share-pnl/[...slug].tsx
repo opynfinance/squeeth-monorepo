@@ -1,5 +1,4 @@
 import { GetServerSideProps } from 'next'
-import { NextSeo } from 'next-seo'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
 import { Typography, Button, useMediaQuery, useTheme } from '@material-ui/core'
 import clsx from 'clsx'
@@ -14,6 +13,7 @@ import crabLogo from 'public/images/crab-logo.png'
 import zenBullLogo from 'public/images/zenbull-logo.png'
 import PnlChart from '@components/SharePnl/PnlChart'
 import { ROUTES } from '@constants/routes'
+import SiteSeo from '@components/SiteSeo'
 
 type StrategyType = 'crab' | 'zenbull'
 
@@ -190,36 +190,17 @@ const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
 const SharePnl = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
   const isCrab = strategy === 'crab'
 
-  const title = isCrab ? 'Opyn Crab Strategy - Stack USDC' : 'Opyn Zen Bull Strategy - Stack ETH'
+  const title = isCrab ? 'Crab Strategy - Stack USDC' : 'Zen Bull Strategy - Stack ETH'
   const description = isCrab ? 'Stack USDC when ETH is flat' : 'Stack ETH when ETH increases slow and steady'
   const ogImageUrl = SQUEETH_BASE_URL + '/api/pnl?strategy=' + strategy + '&depositedAt=' + depositedAt + '&pnl=' + pnl
+  const ogImageAlt = isCrab ? 'Crab strategy PnL' : 'Zen Bull strategy PnL'
 
   const depositDate = new Date(depositedAt * 1000)
   const startTimestamp = getStartTimestamp(strategy, depositDate)
 
   return (
     <>
-      <NextSeo
-        title={title}
-        description={description}
-        canonical={SQUEETH_BASE_URL}
-        openGraph={{
-          type: 'website',
-          images: [
-            {
-              url: ogImageUrl,
-              width: 1200,
-              height: 630,
-              alt: title,
-            },
-          ],
-        }}
-        twitter={{
-          handle: '@opyn_',
-          site: '@opyn_',
-          cardType: 'summary_large_image',
-        }}
-      />
+      <SiteSeo title={title} description={description} ogImage={ogImageUrl} ogImageAlt={ogImageAlt} />
 
       <UI strategy={strategy} depositedAt={startTimestamp} pnl={pnl} />
     </>
