@@ -38,16 +38,16 @@ const About: React.FC = () => {
   return (
     <div>
       <Box display="flex" flexDirection="column" gridGap="8px">
-        <Typography variant="h3" className={classes.sectionTitle}>
-          About Zen Bull
+        <Typography variant="h1" className={classes.sectionTitle}>
+          About Zen Bull Strategy
         </Typography>
         <Typography variant="h2" className={classes.heading}>
           Stack ETH when ETH increases slow and steady
         </Typography>
 
         <Typography className={clsx(classes.text, classes.textMargin)}>
-          Zen bull makes money when ETH goes up, slow and steady. It stacks ETH if ETH is within the below bands at the
-          next rebalance.{' '}
+          The Zen Bull strategy makes money when ETH goes up, slow and steady. In general, it stacks ETH if ETH is
+          within the below price bands at the next rebalance.{' '}
           <LinkWrapper
             href={gitBookLink}
             onClick={() => track(SITE_EVENTS.CLICK_LEARN_MORE_BULL, { link: gitBookLink })}

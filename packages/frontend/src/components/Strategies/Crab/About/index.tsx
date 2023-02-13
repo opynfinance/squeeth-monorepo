@@ -36,16 +36,16 @@ const About: React.FC = () => {
   return (
     <div>
       <Box display="flex" flexDirection="column" gridGap="8px">
-        <Typography variant="h3" className={classes.sectionTitle}>
-          About Crab
+        <Typography variant="h1" className={classes.sectionTitle}>
+          About Crab Strategy
         </Typography>
         <Typography variant="h2" className={classes.heading}>
           Stack USDC when ETH is calm
         </Typography>
 
         <Typography className={clsx(classes.text, classes.textMargin)}>
-          In general, Crab earns USDC returns except when there is high ETH volatility in the market, when it may draw
-          down. Most often, the strategy stacks USDC if ETH is within the below bands at the next hedge.{' '}
+          In general, the Crab strategy earns USDC returns except when there is high ETH volatility in the market, when
+          it may draw down. Most often, the strategy stacks USDC if ETH is within the below bands at the next hedge.{' '}
           <LinkWrapper
             href={gitBookLink}
             onClick={() => track(SITE_EVENTS.CLICK_LEARN_MORE_CRAB, { link: gitBookLink })}
