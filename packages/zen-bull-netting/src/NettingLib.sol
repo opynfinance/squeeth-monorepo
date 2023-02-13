@@ -252,6 +252,16 @@ library NettingLib {
         return (_oSqthToMint, ethIntoCrab);
     }
 
+    /**
+     * @notice calculate oSQTH to mint based on amount _ethIntoCrab to deposit into Crab v2
+     * @param _oracle oracle address
+     * @param _ethSqueethPool wPowerPerp/ETH uni v3 pool address
+     * @param _oSqth oSQTH address
+     * @param _weth WETH address
+     * @param _zenBull ZenBull strategy address
+     * @param _ethIntoCrab amount of ETH to deposit into Crab V2
+     * @param _auctionTwapPeriod auction TWAP
+     */
     function calcOsqthToMint(
         address _oracle,
         address _ethSqueethPool,

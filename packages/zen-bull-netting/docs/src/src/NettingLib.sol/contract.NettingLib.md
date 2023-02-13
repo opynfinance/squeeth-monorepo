@@ -1,5 +1,5 @@
 # NettingLib
-[Git Source](https://github.com/opynfinance/squeeth-monorepo/blob/334783aa87db73939fb00d5b133216b0033dfece/src/NettingLib.sol)
+[Git Source](https://github.com/opynfinance/squeeth-monorepo/blob/d9f476e77fa42301e16041672bb68b167162f81f/src/NettingLib.sol)
 
 
 ## Functions
@@ -173,7 +173,7 @@ function getZenBullPrice(
 
 ### estimateOsqthToMintAndEthIntoCrab
 
-calculate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
+estimate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
 
 
 ```solidity
@@ -189,6 +189,35 @@ function estimateOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint
 |`_crab`|`address`|crab strategy address|
 |`_zenBull`|`address`|ZenBull strategy address|
 |`_crabAmount`|`uint256`|amount of crab token|
+
+
+### calcOsqthToMint
+
+calculate oSQTH to mint based on amount _ethIntoCrab to deposit into Crab v2
+
+
+```solidity
+function calcOsqthToMint(
+    address _oracle,
+    address _ethSqueethPool,
+    address _oSqth,
+    address _weth,
+    address _zenBull,
+    uint256 _ethIntoCrab,
+    uint32 _auctionTwapPeriod
+) external view returns (uint256);
+```
+**Parameters**
+
+|Name|Type|Description|
+|----|----|-----------|
+|`_oracle`|`address`|oracle address|
+|`_ethSqueethPool`|`address`|wPowerPerp/ETH uni v3 pool address|
+|`_oSqth`|`address`|oSQTH address|
+|`_weth`|`address`|WETH address|
+|`_zenBull`|`address`|ZenBull strategy address|
+|`_ethIntoCrab`|`uint256`|amount of ETH to deposit into Crab V2|
+|`_auctionTwapPeriod`|`uint32`|auction TWAP|
 
 
 ### calcWethToLendAndUsdcToBorrow
