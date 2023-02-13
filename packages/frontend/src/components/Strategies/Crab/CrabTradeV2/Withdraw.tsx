@@ -34,7 +34,7 @@ import {
   useQueueWithdrawCrab,
 } from '@state/crab/hooks'
 import { readyAtom } from '@state/squeethPool/atoms'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
+import { useCheckLegacyCrabV2User } from '@hooks/useCheckLegacyUser'
 import {
   dailyHistoricalFundingAtom,
   impliedVolAtom,
@@ -73,8 +73,6 @@ import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, O
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
-import useAppEffect from '@hooks/useAppEffect'
-import { CrabStrategyV2TxType, CrabStrategyTxType } from 'src/types'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 
 enum WithdrawSteps {
@@ -150,7 +148,6 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const address = useAtomValue(addressAtom)
   const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
   const { allowance: crabQueueAllowance, approve: approveQueueCrab } = useUserAllowance(crabStrategy2, crabNetting)
-  const { data } = useUserCrabV2TxHistory(address ?? '')
 
   const impliedVol = useAtomValue(impliedVolAtom)
   const normFactor = useAtomValue(normFactorAtom)
@@ -179,23 +176,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     [track],
   )
 
-  useAppEffect(() => {
-    // show token toggle only if the user has deposited before 28th December 00:00 UTC, the launch date of new design
-    const launchDate = new Date('2022-12-28T00:00:00.000Z').getTime() / 1000
-    const isLegacyUser =
-      data?.some((tx) => {
-        const isDepositTx =
-          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
-          tx.type === CrabStrategyTxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
-
-        return isDepositTx && tx.timestamp < launchDate
-      }) ?? false
-
+  const isLegacyUser = useCheckLegacyCrabV2User(address ?? '')
+  useEffect(() => {
     setShowTokenToggle(isLegacyUser)
-  }, [data])
+  }, [isLegacyUser])
 
   const withdrawPriceImpactWarning = useAppMemo(() => {
     if (useQueue) return false

@@ -13,14 +13,31 @@ const useStyles = makeStyles((theme) =>
         padding: theme.spacing(0, 2),
       },
     },
-    header: {
+    sectionHeaderFirst: {
+      marginTop: theme.spacing(5),
+      display: 'flex',
+      justifyContent: 'space-between',
+    },
+    sectionHeader: {
       marginTop: theme.spacing(8),
       display: 'flex',
       justifyContent: 'space-between',
     },
+    sectionContent: {
+      marginTop: theme.spacing(1.5),
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+      lineHeight: '130%',
+    },
+    textMonospace: {
+      fontFamily: 'DM Mono',
+    },
     position: {
       padding: theme.spacing(2),
-      backgroundColor: `${theme.palette.background.paper}40`,
+      backgroundColor: theme.palette.background.stone,
       marginTop: theme.spacing(2),
       borderRadius: theme.spacing(1),
       display: 'flex',
@@ -50,24 +67,24 @@ const useStyles = makeStyles((theme) =>
       width: '100%',
       justifyContent: 'space-between',
     },
+    positionColumn: {
+      flex: 1,
+    },
+    rowMarginTop: {
+      marginTop: '16px',
+    },
     positionTitle: {
       width: '30%',
       [theme.breakpoints.down('sm')]: {
         width: '100%',
+        marginBottom: theme.spacing(3),
       },
-    },
-    empty: {
-      marginTop: theme.spacing(2),
     },
     green: {
       color: theme.palette.success.main,
     },
     red: {
       color: theme.palette.error.main,
-    },
-    history: {
-      marginTop: theme.spacing(8),
-      marginBottom: theme.spacing(8),
     },
     link: {
       color: theme.palette.primary.main,
@@ -77,14 +94,17 @@ const useStyles = makeStyles((theme) =>
       marginTop: theme.spacing(1),
     },
     infoIcon: {
-      fontSize: '10px',
+      fontSize: '12px',
       marginLeft: theme.spacing(0.5),
     },
     tooltipContainer: {
       marginLeft: '.5em',
+      display: 'flex',
+      alignItems: 'center',
     },
-    dotIcon: {
-      marginRight: '1em',
+    titleWithTooltip: {
+      display: 'flex',
+      alignItems: 'center',
     },
     pnlTitle: {
       display: 'flex',
@@ -93,6 +113,14 @@ const useStyles = makeStyles((theme) =>
     emoji: {
       width: '18px',
       maxHeight: '25px',
+    },
+    fontMedium: {
+      fontWeight: 500,
+    },
+    noPositionContainer: {
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
     },
   }),
 )

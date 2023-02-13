@@ -9,15 +9,15 @@ import * as React from 'react'
 import { useState } from 'react'
 import { useAtomValue } from 'jotai'
 
-import { SecondaryTab, SecondaryTabs } from '../../components/Tabs'
+import { SecondaryTab, SecondaryTabs } from '@components/Tabs'
 import { Tooltips, UniswapIFrameOpen } from '@constants/enums'
 import { inRange } from '@utils/calculations'
-import { UniswapIframe } from '../Modal/UniswapIframe'
-import { networkIdAtom } from 'src/state/wallet/atoms'
+import { UniswapIframe } from '@components/Modal/UniswapIframe'
+import { networkIdAtom } from '@state/wallet/atoms'
 import { useETHPrice } from '@hooks/useETHPrice'
-import { activePositionsAtom, closedPositionsAtom, isWethToken0Atom } from 'src/state/positions/atoms'
-import { useGetWSqueethPositionValue } from 'src/state/squeethPool/hooks'
-import { useLPPositionsQuery } from 'src/state/positions/hooks'
+import { activePositionsAtom, closedPositionsAtom, isWethToken0Atom } from '@state/positions/atoms'
+import { useGetWSqueethPositionValue } from '@state/squeethPool/hooks'
+import { useLPPositionsQuery } from '@state/positions/hooks'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -67,7 +67,13 @@ const useStyles = makeStyles((theme) =>
     infoIcon: {
       fontSize: '.75rem',
       marginLeft: theme.spacing(0.5),
-      marginTop: '2px',
+    },
+    textMonospace: {
+      fontFamily: 'DM Mono, monospace',
+    },
+    titleWithTooltip: {
+      display: 'flex',
+      alignItems: 'center',
     },
   }),
 )
@@ -132,6 +138,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
           <SecondaryTab label="Closed" />
         </SecondaryTabs>
       ) : null}
+
       <Table aria-label="simple table" className={classes.table}>
         <TableHead>
           <TableRow style={{ fontSize: '0.8rem' }}>
@@ -147,7 +154,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
             {
               //only show PnL on active tab for now until closed is implemented
               activeTab === 0 ? (
-                <TableCell align="left">
+                <TableCell align="left" className={classes.titleWithTooltip}>
                   <span>PnL</span>
                   <Tooltip title={Tooltips.LPPnL}>
                     <InfoIcon className={classes.infoIcon} />
@@ -164,7 +171,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               lpLoading ? (
                 <TableRow>
                   <TableCell colSpan={6} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                    <p>Loading...</p>
+                    <p>loading...</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -182,7 +189,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               closedPositions?.map((p) => {
                 return (
                   <TableRow key={p.id}>
-                    <TableCell component="th" align="left" scope="row">
+                    <TableCell component="th" align="left" scope="row" className={classes.textMonospace}>
                       <a
                         href={
                           networkId === 3
@@ -199,10 +206,10 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                     <TableCell align="left">
                       <Chip label="Closed" size="small" />
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       <span style={{ marginRight: '.5em' }}>
                         {Number(p.amount0).toFixed(4)} {p.token0.symbol}
                       </span>
@@ -218,7 +225,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                   {p.collectedFeesToken1} {p.token1.symbol}
                 </span>
               </TableCell> */}
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       <span style={{ marginRight: '.5em' }}>
                         {p.fees0?.toFixed(6)} {p.token0.symbol}
                       </span>
@@ -226,8 +233,8 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         {p.fees1?.toFixed(6)} {p.token1.symbol}
                       </span>
                     </TableCell>
-                    <TableCell align="left">
-                      <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                    <TableCell align="left" className={classes.textMonospace}>
+                      <span style={{ marginRight: '.5em' }}>${p.dollarValue?.toFixed(2)}</span>
                     </TableCell>
                   </TableRow>
                 )
@@ -250,7 +257,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               lpLoading ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" style={{ textAlign: 'center', fontSize: '16px' }}>
-                    <p>Loading...</p>
+                    <p>loading...</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -277,7 +284,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
               activePositions?.slice(0, isLPage ? activePositions.length : 3).map((p) => {
                 return (
                   <TableRow key={p.id}>
-                    <TableCell component="th" align="left" scope="row">
+                    <TableCell component="th" align="left" scope="row" className={classes.textMonospace}>
                       <a
                         href={
                           networkId === 3
@@ -298,10 +305,10 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         <Chip label="No" size="small" className={classes.outRange} />
                       )}
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       {((pool ? p.liquidity / Number(pool?.liquidity) : 0) * 100).toFixed(3)}
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       <span style={{ marginRight: '.5em' }}>
                         {Number(p.amount0).toFixed(4)} {p.token0.symbol}
                       </span>
@@ -309,7 +316,7 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         {Number(p.amount1).toFixed(4)} {p.token1.symbol}
                       </span>
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       <span style={{ marginRight: '.5em' }}>
                         {p.fees0?.toFixed(6)} {p.token0.symbol}
                       </span>
@@ -317,12 +324,12 @@ export const LPTable: React.FC<LPTableProps> = ({ isLPage, pool }) => {
                         {p.fees1?.toFixed(6)} {p.token1.symbol}
                       </span>
                     </TableCell>
-                    <TableCell align="left">
-                      <span style={{ marginRight: '.5em' }}>$ {p.dollarValue?.toFixed(2)}</span>
+                    <TableCell align="left" className={classes.textMonospace}>
+                      <span style={{ marginRight: '.5em' }}>${p.dollarValue?.toFixed(2)}</span>
                     </TableCell>
-                    <TableCell align="left">
+                    <TableCell align="left" className={classes.textMonospace}>
                       <span style={{ marginRight: '.5em' }}>
-                        ${' '}
+                        $
                         {calculatePnL(
                           p.depositedToken0,
                           p.depositedToken1,

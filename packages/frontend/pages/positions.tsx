@@ -1,22 +1,17 @@
-import { useAtomValue } from 'jotai'
-
-import ConnectWallet from '@pages/positions/ConnectWallet'
-import Positions from '@pages/positions/Positions'
-import { useInitCrabMigration } from 'src/state/crabMigration/hooks'
-import { addressAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import Positions from '@components/Positions'
+import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import Nav from '@components/Nav'
 
 const PositionsPage = () => {
-  const address = useAtomValue(addressAtom)
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
   useInitCrabMigration()
-
-  if (address && supportedNetwork) return <Positions />
 
   return (
     <>
       <DefaultSiteSeo />
-      <ConnectWallet />
+      <Nav />
+
+      <Positions />
     </>
   )
 }

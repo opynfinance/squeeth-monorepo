@@ -8,7 +8,7 @@ import { LinkWrapper } from './LinkWrapper'
 const useStyles = makeStyles((theme) =>
   createStyles({
     infoIcon: {
-      fontSize: '16px',
+      fontSize: '12px',
       marginLeft: theme.spacing(0.5),
     },
   }),
