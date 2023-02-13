@@ -171,13 +171,13 @@ function getZenBullPrice(
 |`_ethUsdcPrice`|`uint256`|ETH/USDC price|
 
 
-### calcOsqthToMintAndEthIntoCrab
+### estimateOsqthToMintAndEthIntoCrab
 
 calculate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
 
 
 ```solidity
-function calcOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
+function estimateOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
     external
     view
     returns (uint256, uint256);

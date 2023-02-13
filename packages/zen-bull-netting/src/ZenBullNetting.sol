@@ -589,7 +589,10 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         uint256 initialZenBullBalance = IERC20(zenBull).balanceOf(address(this));
         uint256 initialEthBalance = address(this).balance;
         (uint256 oSqthToMint, uint256 ethIntoCrab) =
-            NettingLib.calcOsqthToMintAndEthIntoCrab(crab, zenBull, _params.crabAmount);
+            NettingLib.estimateOsqthToMintAndEthIntoCrab(crab, zenBull, _params.crabAmount);
+        oSqthToMint = NettingLib.calcOsqthToMint(
+            oracle, ethSqueethPool, oSqth, weth, zenBull, ethIntoCrab, auctionTwapPeriod
+        );
 
         // get WETH from MM
         for (uint256 i = 0; i < _params.orders.length; i++) {
