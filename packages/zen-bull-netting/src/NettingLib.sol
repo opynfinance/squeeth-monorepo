@@ -116,7 +116,7 @@ library NettingLib {
         address _trader,
         uint256 _remainingOsqthToPull,
         uint256 _quantity
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         uint256 oSqthRemaining;
         if (_quantity < _remainingOsqthToPull) {
             IERC20(_oSqth).transferFrom(_trader, address(this), _quantity);
@@ -234,22 +234,22 @@ library NettingLib {
     }
 
     /**
-     * @notice estimate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
+     * @notice estimate amount of eth to deposit into Crab v2 based on amount of crab token
      * @param _crab crab strategy address
      * @param _zenBull ZenBull strategy address
      * @param _crabAmount amount of crab token
+     * @return amount of ETH to deposit into Crab V2
      */
-    function estimateOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
+    function estimateEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
         external
         view
-        returns (uint256, uint256)
+        returns (uint256)
     {
         uint256 crabTotalSupply = IERC20(_crab).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
-        uint256 _oSqthToMint = _crabAmount * crabDebt / crabTotalSupply;
+        (uint256 crabEth,) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
         uint256 ethIntoCrab = _crabAmount * crabEth / crabTotalSupply;
 
-        return (_oSqthToMint, ethIntoCrab);
+        return ethIntoCrab;
     }
 
     /**
