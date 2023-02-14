@@ -94,7 +94,6 @@ contract DequeueZenBull is ZenBullNettingBaseSetup {
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
-        // assertEq(zenBullNetting.isAuctionLive(), true);
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("ZBN04"));
@@ -108,7 +107,6 @@ contract DequeueZenBull is ZenBullNettingBaseSetup {
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
-        // assertEq(zenBullNetting.isAuctionLive(), true);
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("ZBN09"));
@@ -125,7 +123,6 @@ contract DequeueZenBull is ZenBullNettingBaseSetup {
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
-        // assertEq(zenBullNetting.isAuctionLive(), true);
 
         (,, uint256 receiptTimestamp) = zenBullNetting.getReceipt(0, false);
 

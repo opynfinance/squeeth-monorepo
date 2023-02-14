@@ -45,10 +45,9 @@ contract SetAuctionTwapPeriod is ZenBullNettingBaseSetup {
         zenBullNetting.setAuctionTwapPeriod(42069);
     }
 
-    // function testSetAuctionTwapPeriodWhenPeriodLessThanMinimum() public {
-    //     uint32 minAuctionTwap = zenBullNetting.MIN_AUCTION_TWAP();
-    //     vm.prank(owner);
-    //     vm.expectRevert(bytes("ZBN01"));
-    //     zenBullNetting.setAuctionTwapPeriod(minAuctionTwap - 1);
-    // }
+    function testSetAuctionTwapPeriodWhenPeriodLessThanMinimum() public {
+        vm.prank(owner);
+        vm.expectRevert(bytes("ZBN01"));
+        zenBullNetting.setAuctionTwapPeriod(160);
+    }
 }
