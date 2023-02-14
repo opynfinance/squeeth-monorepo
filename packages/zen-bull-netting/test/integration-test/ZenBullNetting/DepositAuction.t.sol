@@ -76,6 +76,11 @@ contract DepositAuction is ZenBullNettingBaseSetup {
     }
 
     function testFullDepositAuction() public {
+        AddressBalances memory user1BalancesBefore = _getAddressBalances(user1);
+        AddressBalances memory mm1BalancesBefore = _getAddressBalances(mm1);
+        AddressBalances memory zenBullBalancesBefore = _getAddressBalances(ZEN_BULL);
+
+
         uint256 amount = 10e18;
         _queueEth(user1, amount);
 
@@ -139,28 +144,58 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         vm.prank(mm1);
         IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
 
-        uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
-        uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
-        uint256 user1EthBalanceBefore = user1.balance;
-        uint256 wethInEulerBefore =
-            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
-        uint256 wethToLend = bullToMint * wethInEulerBefore / bullTotalSupply;
+        uint256 wethToLend = bullToMint * zenBullBalancesBefore.eulerWethBalance / bullTotalSupply;
+        uint256 usdcToBorrow = bullToMint * zenBullBalancesBefore.eulerUsdcDebtBalance / bullTotalSupply;
 
         vm.startPrank(owner);
         zenBullNetting.depositAuction(params);
         vm.stopPrank();
 
-        uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
+        AddressBalances memory user1BalancesAfter = _getAddressBalances(user1);
+        AddressBalances memory mm1BalancesAfter = _getAddressBalances(mm1);
+        AddressBalances memory zenBullBalancesAfter = _getAddressBalances(ZEN_BULL);
 
-        assertEq(
-            IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore,
-            wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore
-        );
-        assertGt(user1.balance, user1EthBalanceBefore);
+        // Depositor gets bull
         assertApproxEqAbs(
-            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
+            user1BalancesAfter.zenBullBalance - user1BalancesBefore.zenBullBalance ,
+            bullToMint, 2000
+        );
+        // Depositor pays eth
+        assertApproxEqAbs(
+            user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance ,
+            amount, 2000
+        );
+        console.log(user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance );
+
+        // MM gets osqth (stack too deep)
+        assertApproxEqAbs(
+            mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance,
+            oSqthAmount,
+            2000
+        );
+        console.log(mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance);
+        console.log(oSqthAmount);
+
+        // mm pays weth (stack too deep)
+        assertApproxEqAbs(
+            mm1BalancesAfter.wethBalance - mm1BalancesBefore.wethBalance,
+            oSqthAmount * params.clearingPrice / 1e18,
+            2000
+        );
+        console.log(mm1BalancesBefore.wethBalance -mm1BalancesAfter.wethBalance);
+
+        assertGt(user1.balance, user1BalancesBefore.ethBalance);
+        // Euler eth balance changes as expected
+        assertApproxEqAbs(
+            zenBullBalancesAfter.eulerWethBalance - zenBullBalancesBefore.eulerWethBalance,
             wethToLend,
             2000
+        );
+        // Euler usdc balance changes as expected
+        assertApproxEqAbs(
+            zenBullBalancesAfter.eulerUsdcDebtBalance - zenBullBalancesBefore.eulerUsdcDebtBalance,
+            usdcToBorrow,
+            1
         );
     }
 
