@@ -172,27 +172,27 @@ contract DepositAuction is ZenBullNettingBaseSetup {
             bullToMint, 2000
         );
         // Depositor pays eth
-        // assertApproxEqAbs(
-        //     user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance ,
-        //     amount, 2000
-        // );
-        // console.log(user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance );
+        assertApproxEqAbs(
+            user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance ,
+            amount, 2000
+        );
+        console.log(user1BalancesAfter.ethBalance - user1BalancesBefore.ethBalance );
 
         // MM gets osqth (stack too deep)
-        // assertApproxEqAbs(
-        //     mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance,
-        //     oSqthAmount,
-        //     2000
-        // );
-        // console.log(mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance);
-        // console.log(oSqthAmount);
+        assertApproxEqAbs(
+            mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance,
+            oSqthAmount,
+            2000
+        );
+        console.log(mm1BalancesAfter.wPowerPerpBalance - mm1BalancesBefore.wPowerPerpBalance);
+        console.log(oSqthAmount);
 
         // mm pays weth (stack too deep)
-        // assertApproxEqAbs(
-        //     mm1BalancesAfter.wethBalance - mm1BalancesBefore.wethBalance,
-        //     oSqthAmount * params.clearingPrice / 1e18,
-        //     2000
-        // )
+        assertApproxEqAbs(
+            mm1BalancesAfter.wethBalance - mm1BalancesBefore.wethBalance,
+            oSqthAmount * params.clearingPrice / 1e18,
+            2000
+        );
         console.log(mm1BalancesBefore.wethBalance -mm1BalancesAfter.wethBalance);
         console.log(wethToPay);
 
