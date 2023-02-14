@@ -36,8 +36,8 @@ import {
     Strategy,
     FullRebalance as FullRebalanceSchema
 } from "../generated/schema"
-import * as WETH9 from "../generated/Weth/Weth"
-import { Address, BigInt, ByteArray, Bytes, ethereum, log } from "@graphprotocol/graph-ts"
+import { EthDeposited, ZenBullWithdrawn } from '../generated/ZenBullNetting/ZenBullNetting'
+import { BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import { loadOrCreateStrategy } from "./util"
 import { AUCTION_BULL, FLASH_BULL_ADDR, WETH } from "./constants"
 
@@ -319,4 +319,29 @@ function findFlashBullEthDeposited(event: FlashDeposit): BigInt {
   }
 
   return event.params.ethDeposited.minus(returnedAmount)
+}
+
+export function handleNettingDeposit(event: EthDeposited): void {
+  const userTx = loadOrCreateTx(`${event.transaction.hash.toHex()}-${event.logIndex.toString()}`)
+
+  userTx.ethAmount = event.params.ethAmount
+  userTx.bullAmount = event.params.zenBullAmount
+  userTx.user = event.params.depositor
+  userTx.owner = event.params.depositor
+  userTx.type = 'OTC_DEPOSIT'
+  userTx.timestamp = event.block.timestamp
+  userTx.excessEth = event.params.refundedETH
+  userTx.save()
+}
+
+export function handleNettingWithdraw(event: ZenBullWithdrawn): void {
+  const userTx = loadOrCreateTx(`${event.transaction.hash.toHex()}-${event.logIndex.toString()}`)
+
+  userTx.bullAmount = event.params.zenBullAmount
+  userTx.ethAmount = event.params.ethAmount
+  userTx.user = event.params.withdrawer
+  userTx.owner = event.params.withdrawer
+  userTx.type = 'OTC_WITHDRAW'
+  userTx.timestamp = event.block.timestamp
+  userTx.save()
 }

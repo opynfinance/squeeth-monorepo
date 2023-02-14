@@ -1,16 +1,16 @@
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useMemo } from 'react'
+import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useTransactionStatus } from '@state/wallet/hooks'
+import { useBullPosition } from '@hooks/useBullPosition'
+import { addressAtom } from '@state/wallet/atoms'
 import BullDeposit from './Deposit'
 import BullWithdraw from './Withdraw'
-import { useBullPosition } from '@hooks/useBullPosition'
-import { useAtomValue } from 'jotai'
-import { addressAtom } from '@state/wallet/atoms'
+import { BullTradeType, BullTransactionConfirmation, BullTradeTransactionType } from './types'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -56,16 +56,41 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-export enum BullTradeType {
-  Deposit = 'Deposit',
-  Withdraw = 'Withdraw',
-}
+const TxConfirmation: React.FC<{ txnData: BullTransactionConfirmation; txnHash: string; onClose: () => void }> = ({
+  txnData,
+  txnHash,
+  onClose,
+}) => {
+  const isDepositTx = txnData?.tradeType === BullTradeType.Deposit
+  const isQueuedTx = txnData?.transactionType === BullTradeTransactionType.Queued
 
-export interface BullTransactionConfirmation {
-  status: boolean
-  amount: BigNumber
-  tradeType: BullTradeType
-  txId?: string
+  const txAmount = txnData?.amount
+  const formattedTxAmount = txAmount.toFixed(4)
+
+  const confirmationMessage = useMemo(() => {
+    if (isDepositTx) {
+      if (isQueuedTx) {
+        return `Initiated ${formattedTxAmount} ETH deposit`
+      } else {
+        return `Deposited ${formattedTxAmount} ETH`
+      }
+    } else {
+      if (isQueuedTx) {
+        return `Initiated ${formattedTxAmount} ETH withdraw`
+      } else {
+        return `Withdrawn ${formattedTxAmount} ETH`
+      }
+    }
+  }, [isDepositTx, isQueuedTx, formattedTxAmount])
+
+  return (
+    <>
+      <Confirmed confirmationMessage={confirmationMessage} txnHash={txnHash} confirmType={ConfirmType.BULL} />
+      <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
+        Close
+      </PrimaryButtonNew>
+    </>
+  )
 }
 
 const BullTrade: React.FC = () => {
@@ -99,18 +124,7 @@ const BullTrade: React.FC = () => {
   return (
     <>
       {confirmed && confirmedTransactionData?.status ? (
-        <>
-          <Confirmed
-            confirmationMessage={`${
-              confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
-            } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
-            txnHash={transactionData?.hash ?? ''}
-            confirmType={ConfirmType.BULL}
-          />
-          <PrimaryButtonNew fullWidth id="bull-close-btn" variant="contained" onClick={onClose}>
-            Close
-          </PrimaryButtonNew>
-        </>
+        <TxConfirmation txnData={confirmedTransactionData} txnHash={transactionData?.hash ?? ''} onClose={onClose} />
       ) : (
         <>
           <SqueethTabsNew

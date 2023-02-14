@@ -83,7 +83,6 @@ enum WithdrawSteps {
 }
 
 const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
-console.log(OTC_PRICE_IMPACT_THRESHOLD)
 
 const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useStyles()
@@ -295,8 +294,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     (id?: string) => {
       if (!ongoingTransaction.current) return
       const transaction = ongoingTransaction.current
-      if (transaction.queuedTransaction)
+      if (transaction.queuedTransaction) {
         setCrabQueued(crabQueued.plus(fromTokenAmount(transaction.amount, CRAB_TOKEN_DECIMALS)))
+      }
+
       onTxnConfirm({
         status: true,
         amount: transaction.amount,
@@ -597,9 +598,9 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
           <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
+              isSmall
               label="Uniswap Fee"
               value={useQueue ? '0%' : formatNumber(Number(uniswapFee)) + '%'}
-              isSmall
               flexDirection="row"
               justifyContent="space-between"
               gridGap="8px"

@@ -8,7 +8,7 @@ export const useZenBullStyles = makeStyles((theme) =>
     tradeContainer: {
       display: 'flex',
       flexDirection: 'column',
-      marginTop: theme.spacing(2),
+      marginTop: theme.spacing(3),
     },
     tabBackGround: {
       position: 'sticky',
@@ -28,6 +28,10 @@ export const useZenBullStyles = makeStyles((theme) =>
       marginRight: theme.spacing(2),
       color: '#F3FF6C',
     },
+    infoIconGray: {
+      marginRight: theme.spacing(2),
+      color: theme.palette.text.hint,
+    },
     subtitle: {
       fontSize: '18px',
       fontWeight: 700,
@@ -38,10 +42,13 @@ export const useZenBullStyles = makeStyles((theme) =>
       fontWeight: 500,
       fontSize: '13px',
     },
-    slippageContainer: {
-      [theme.breakpoints.down('xs')]: {
-        flexWrap: 'wrap',
-      },
+    btnDefault: {
+      color: 'rgba(255, 255, 255, 0.4)',
+      border: '2px solid transparent',
+    },
+    btnActive: {
+      color: theme.palette.primary.main,
+      border: `2px solid ${theme.palette.primary.main}`,
     },
   }),
 )

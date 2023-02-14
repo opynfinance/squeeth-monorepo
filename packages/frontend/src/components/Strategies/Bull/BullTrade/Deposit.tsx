@@ -3,12 +3,15 @@ import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useMemo, useRef, useState, useCallback } from 'react'
 import InfoIcon from '@material-ui/icons/Info'
+import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
+import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
 import debounce from 'lodash/debounce'
+import { useEffect } from 'react'
 
-import { PrimaryButtonNew } from '@components/Button'
+import { PrimaryButtonNew, RoundedButton } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import { LinkWrapper } from '@components/LinkWrapper'
-import Metric from '@components/Metric'
+import Metric, { MetricLabel } from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { TradeSettings } from '@components/TradeSettings'
 import {
@@ -19,23 +22,34 @@ import {
   VOL_PERCENT_SCALAR,
   YEAR,
   WETH_DECIMALS,
+  NETTING_PRICE_IMPACT,
+  AVERAGE_AUCTION_PRICE_IMPACT,
 } from '@constants/index'
-import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
+import { useGetFlashBulldepositParams, useBullFlashDeposit, useQueueDepositEth } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
-import { toTokenAmount } from '@utils/calculations'
+import { toTokenAmount, fromTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import ethLogo from 'public/images/eth-logo.svg'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useRestrictUser } from '@context/restrict-user'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, maxCapAtomV2 } from '@state/crab/atoms'
 import useAppMemo from '@hooks/useAppMemo'
-import { bullCapAtom, bullDepositedEthInEulerAtom } from '@state/bull/atoms'
+import {
+  bullCapAtom,
+  bullDepositedEthInEulerAtom,
+  minEthAmountAtom,
+  totalEthQueuedAtom,
+  totalZenBullQueuedAtom,
+  ethQueuedAtom,
+} from '@state/bull/atoms'
 import { BULL_EVENTS } from '@utils/amplitude'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
 import { useZenBullStyles } from './styles'
-import { BullTradeType, BullTransactionConfirmation } from './index'
+import { OngoingTransaction, BullTradeTransactionType, BullTradeType, BullTransactionConfirmation } from './types'
+
+const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
 
 const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useZenBullStyles()
@@ -44,11 +58,16 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const [depositAmount, setDepositAmount] = useState('0')
   const depositAmountBN = useMemo(() => new BigNumber(depositAmount), [depositAmount])
 
-  const ongoingTransactionAmountRef = useRef(new BigNumber(0))
+  const ongoingTransactionRef = useRef<OngoingTransaction | undefined>()
   const [txLoading, setTxLoading] = useState(false)
 
   const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
+  const [ethQueued, setEthQueued] = useAtom(ethQueuedAtom)
+
   const [quoteLoading, setQuoteLoading] = useState(false)
+  const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
+  const [useQueue, setUseQueue] = useState(false)
+  const [userOverrode, setUserOverrode] = useState(false)
 
   const negativeReturnsError = false
   const { isRestricted } = useRestrictUser()
@@ -66,6 +85,9 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const crabCap = useAtomValue(maxCapAtomV2)
   const crabDepositedEth = useAtomValue(crabStrategyVaultAtomV2)?.collateralAmount || BIG_ZERO
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
+  const minEthAmountValue = useAtomValue(minEthAmountAtom)
+  const totalDepositsQueued = useAtomValue(totalEthQueuedAtom)
+  const totalWithdrawsQueued = useAtomValue(totalZenBullQueuedAtom)
 
   const [quote, setQuote] = useState({
     ethToCrab: BIG_ZERO,
@@ -86,6 +108,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const getFlashBullDepositParams = useGetFlashBulldepositParams()
   const bullFlashDeposit = useBullFlashDeposit()
+  const queueDepositEth = useQueueDepositEth()
   const { track } = useAmplitude()
 
   const trackUserEnteredDepositAmount = useCallback(
@@ -130,17 +153,27 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      onInputChange('0')
+      if (!ongoingTransactionRef.current) return
+
+      const transaction = ongoingTransactionRef.current
+      if (transaction.queuedTransaction) {
+        setEthQueued(ethQueued.plus(fromTokenAmount(transaction.amount, WETH_DECIMALS)))
+      }
+
       onTxnConfirm({
         status: true,
-        amount: ongoingTransactionAmountRef.current,
+        amount: transaction.amount,
         tradeType: BullTradeType.Deposit,
+        transactionType: transaction.queuedTransaction
+          ? BullTradeTransactionType.Queued
+          : BullTradeTransactionType.Instant,
         txId: id,
       })
+      onInputChange('0')
       resetTracking()
-      ongoingTransactionAmountRef.current = new BigNumber(0)
+      ongoingTransactionRef.current = undefined
     },
-    [onTxnConfirm, resetTracking, onInputChange],
+    [onTxnConfirm, resetTracking, onInputChange, ethQueued, setEthQueued],
   )
 
   const depositFundingWarning = useAppMemo(() => {
@@ -190,43 +223,40 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     quote.wethToLend,
   ])
 
-  const onDepositClick = useCallback(async () => {
+  const onDepositClick = async () => {
     setTxLoading(true)
     try {
-      ongoingTransactionAmountRef.current = new BigNumber(depositAmountRef.current)
+      const amount = new BigNumber(depositAmountRef.current)
+      ongoingTransactionRef.current = {
+        amount,
+        queuedTransaction: useQueue,
+      }
       const dataToTrack = {
+        amount: amount.toNumber(),
         priceImpact: quote.poolFee + quote.priceImpact,
         isPriceImpactHigh: depositPriceImpactWarning,
-        amount: new BigNumber(depositAmountRef.current).toNumber(),
       }
-      await bullFlashDeposit(
-        quote.ethToCrab,
-        quote.minEthFromSqth,
-        quote.minEthFromUsdc,
-        quote.wPowerPerpPoolFee,
-        quote.usdcPoolFee,
-        new BigNumber(depositAmountRef.current),
-        dataToTrack,
-        onTxnConfirmed,
-      )
+
+      if (useQueue) {
+        await queueDepositEth(amount, dataToTrack, onTxnConfirmed)
+      } else {
+        await bullFlashDeposit(
+          quote.ethToCrab,
+          quote.minEthFromSqth,
+          quote.minEthFromUsdc,
+          quote.wPowerPerpPoolFee,
+          quote.usdcPoolFee,
+          amount,
+          dataToTrack,
+          onTxnConfirmed,
+        )
+      }
     } catch (e) {
       resetTracking()
       console.log(e)
     }
     setTxLoading(false)
-  }, [
-    bullFlashDeposit,
-    quote.ethToCrab,
-    quote.minEthFromSqth,
-    quote.minEthFromUsdc,
-    quote.wPowerPerpPoolFee,
-    quote.usdcPoolFee,
-    quote.poolFee,
-    quote.priceImpact,
-    onTxnConfirmed,
-    resetTracking,
-    depositPriceImpactWarning,
-  ])
+  }
 
   const setDepositMax = () => {
     track(BULL_EVENTS.DEPOSIT_BULL_SET_AMOUNT_MAX, {
@@ -234,6 +264,45 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     })
     onInputChange(toTokenAmount(balance ?? BIG_ZERO, WETH_DECIMALS).toString())
   }
+
+  const minEthAmount = toTokenAmount(minEthAmountValue, WETH_DECIMALS)
+  const isDepositAmountLessThanMin = depositAmountBN.lt(minEthAmount)
+
+  useEffect(() => {
+    if (isDepositAmountLessThanMin) {
+      setQueueOptionAvailable(false)
+      setUseQueue(false)
+      return
+    }
+
+    if (quote.priceImpact + quote.poolFee > OTC_PRICE_IMPACT_THRESHOLD) {
+      setQueueOptionAvailable(true)
+      if (userOverrode) return
+      setUseQueue(true)
+    } else {
+      setQueueOptionAvailable(false)
+      if (userOverrode) return
+      setUseQueue(false)
+    }
+  }, [isDepositAmountLessThanMin, quote.priceImpact, quote.poolFee, userOverrode])
+
+  const depositPriceImpactNumber = useAppMemo(() => {
+    if (!useQueue) return quote.priceImpact
+
+    const withdrawalsLeft = totalWithdrawsQueued.minus(totalDepositsQueued)
+    const withdrawalsLeftAbs = withdrawalsLeft.isNegative() ? new BigNumber(0) : withdrawalsLeft
+
+    const nettingDepositAmount = withdrawalsLeftAbs.gt(depositAmountBN) ? depositAmountBN : withdrawalsLeftAbs
+    const remainingDeposit = depositAmountBN.minus(nettingDepositAmount)
+
+    const priceImpact = nettingDepositAmount
+      .times(NETTING_PRICE_IMPACT)
+      .plus(remainingDeposit.times(AVERAGE_AUCTION_PRICE_IMPACT))
+      .div(depositAmountBN)
+      .toNumber()
+
+    return priceImpact
+  }, [depositAmountBN, quote.priceImpact, totalDepositsQueued, totalWithdrawsQueued, useQueue])
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
@@ -244,12 +313,48 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
     [track, setSlippage, depositAmount, onInputChange],
   )
 
+  const isLoading = txLoading || quoteLoading
+
   return (
     <>
       <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
         <Typography variant="h3" className={classes.subtitle}>
           Strategy Deposit
         </Typography>
+      </Box>
+
+      <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
+        <RoundedButton
+          disabled={!Number(depositAmount)}
+          variant="outlined"
+          size="small"
+          onClick={() => {
+            setUseQueue(false)
+            setUserOverrode(true)
+          }}
+          className={!useQueue ? classes.btnActive : classes.btnDefault}
+        >
+          Instant
+        </RoundedButton>
+        <RoundedButton
+          disabled={!queueOptionAvailable}
+          variant={!queueOptionAvailable ? 'contained' : 'outlined'}
+          size="small"
+          onClick={() => {
+            setUseQueue(true)
+            setUserOverrode(true)
+          }}
+          className={useQueue ? classes.btnActive : classes.btnDefault}
+        >
+          Standard
+        </RoundedButton>
+        <Box className={classes.infoIconGray} display="flex" alignItems="center">
+          <Tooltip
+            title={`Standard reduces price impact and gas costs, getting into the strategy in 24hr on avg or Tuesday latest. Instant gets in immediately.`}
+          >
+            <HelpOutlineIcon fontSize="medium" />
+          </Tooltip>
+        </Box>
       </Box>
 
       <div className={classes.tradeContainer}>
@@ -291,7 +396,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               </Tooltip>
             </div>
             <Typography variant="caption" className={classes.infoText}>
-              Zen bull premium is currently lower than usual. Consider depositing later.
+              Zen Bull premium is currently lower than usual. Consider depositing later.
             </Typography>
           </div>
         ) : null}
@@ -314,31 +419,32 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           </div>
         ) : null}
 
-        <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            gridGap="12px"
-            className={classes.slippageContainer}
-          >
+        <Box marginTop="24px">
+          <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
             <Metric
               label="Uniswap Fee"
               value={formatNumber(quote.poolFee) + '%'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
-              gridGap="12px"
+              gridGap="8px"
             />
 
-            <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+            <Box display="flex" alignItems="center" gridGap="6px" flex="1">
               <Metric
-                label="Price Impact"
-                value={formatNumber(quote.priceImpact < 0 ? 0 : quote.priceImpact) + '%'}
                 isSmall
+                label={
+                  <MetricLabel
+                    isSmall
+                    label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
+                    tooltipTitle={useQueue ? 'Average price impact based on historical standard deposits' : undefined}
+                  />
+                }
+                value={formatNumber(depositPriceImpactNumber) + '%'}
+                textColor={depositPriceImpactNumber > 3 ? 'error' : undefined}
                 flexDirection="row"
                 justifyContent="space-between"
-                gridGap="12px"
+                gridGap="8px"
               />
               <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
             </Box>
@@ -380,7 +486,25 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               onClick={onDepositClick}
               disabled={quoteLoading || txLoading || depositAmount === '0' || !!depositError}
             >
-              {!txLoading && !quoteLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
+              {isLoading ? (
+                <CircularProgress color="primary" size="1.5rem" />
+              ) : useQueue ? (
+                <>
+                  Standard deposit
+                  <Tooltip
+                    title={
+                      <div>
+                        Your deposit will be submitted via auction to reduce price impact. This may take until Tuesday.
+                      </div>
+                    }
+                    style={{ marginLeft: '8' }}
+                  >
+                    <InfoOutlinedIcon fontSize="small" />
+                  </Tooltip>
+                </>
+              ) : (
+                'Deposit'
+              )}
             </PrimaryButtonNew>
           )}
         </Box>

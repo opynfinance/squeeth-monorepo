@@ -51,5 +51,7 @@
   "ZenEmergencyShutdown": "0x14386333EFa3354c1cF39A38a9c9E372A4bC8c36",
   "ZenEmergencyShutdown-start-block": 8145337,
   "FlashZen": "0x3876aF971560FD4c4ba3FB18632AcC0570B745b1",
-  "FlashZen-start-block": 8145337
+  "FlashZen-start-block": 8145337,
+  "ZenBullNetting": "0x30ba683c45c8b14601ec32759134b7662cef7d93",
+  "ZenBullNetting-start-block": 8413668
 }

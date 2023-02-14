@@ -310,6 +310,28 @@ dataSources:
           handler: handleTransfer
       file: ./src/bullStrategy.ts
   - kind: ethereum/contract
+    name: ZenBullNetting
+    network: {{network}}
+    source:
+      address: "{{ZenBullNetting}}"
+      abi: ZenBullNetting
+      startBlock: {{ZenBullNetting-start-block}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Strategy
+      abis:
+        - name: ZenBullNetting
+          file: ./abis/ZenBullNetting.json
+      eventHandlers:
+        - event: EthDeposited(indexed address,uint256,uint256,indexed uint256,uint256)
+          handler: handleNettingDeposit
+        - event: ZenBullWithdrawn(indexed address,uint256,uint256,indexed uint256)
+          handler: handleNettingWithdraw
+      file: ./src/bullStrategy.ts    
+  - kind: ethereum/contract
     name: ZenAuction
     network: {{network}}
     source:
