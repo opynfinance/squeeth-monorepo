@@ -8,7 +8,7 @@ import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 //lib
-import {BytesLib} from "../util/BytesLib.sol";
+import { BytesLib } from "../util/BytesLib.sol";
 
 /**
  * Unit tests
