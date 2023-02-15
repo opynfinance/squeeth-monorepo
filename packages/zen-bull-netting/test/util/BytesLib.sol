@@ -67,4 +67,8 @@ library BytesLib {
 
         return tempBytes;
     }
+
+    function testAvoidCoverage() internal pure {
+        return;
+    }
 }
