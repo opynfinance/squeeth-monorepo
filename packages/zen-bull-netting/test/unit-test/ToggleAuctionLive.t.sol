@@ -7,6 +7,8 @@ import { console } from "forge-std/console.sol";
 import { ZenBullNettingBaseSetup } from "../ZenBullNettingBaseSetup.t.sol";
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+//lib
+import {BytesLib} from "../util/BytesLib.sol";
 
 /**
  * Unit tests
@@ -33,12 +35,20 @@ contract ZenBullNettingUnit is ZenBullNettingBaseSetup {
     }
 
     function testToggleAuctionLive() public {
-        // assertEq(zenBullNetting.isAuctionLive(), false);
+        bytes32 slotVars = vm.load(address(zenBullNetting), bytes32(uint256(0)));
+        bytes memory encodedSv = abi.encode(slotVars);
+        bytes memory isAuctionLive = BytesLib.slice(encodedSv, 0, 12);
+
+        assertEq(uint256(bytes32(isAuctionLive)), 0);
 
         vm.prank(owner);
         zenBullNetting.toggleAuctionLive();
 
-        // assertEq(zenBullNetting.isAuctionLive(), true);
+        slotVars = vm.load(address(zenBullNetting), bytes32(uint256(0)));
+        encodedSv = abi.encode(slotVars);
+        isAuctionLive = BytesLib.slice(encodedSv, 0, 12);
+
+        assertEq(isAuctionLive, BytesLib.slice(abi.encode(0x000000000000000000000001), 20, 12));
     }
 
     function testToggleAuctionLiveWhenCallerNotOwner() public {
