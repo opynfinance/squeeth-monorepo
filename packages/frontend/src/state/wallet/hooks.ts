@@ -240,8 +240,7 @@ export const useOnboard = () => {
     }
   }, [networkId])
 }
-const useAlchemy = process.env.NEXT_PUBLIC_USE_ALCHEMY
-const usePokt = process.env.NEXT_PUBLIC_USE_POKT
+
 export function initOnboard(subscriptions: any, networkId: Networks) {
   const network = networkId === 1 ? 'mainnet' : 'ropsten'
   const RPC_URL =
@@ -249,11 +248,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
       ? 'http://127.0.0.1:8545/'
       : networkId === Networks.ARBITRUM_RINKEBY
       ? 'https://rinkeby.arbitrum.io/rpc'
-      : useAlchemy === 'true'
-      ? `https://eth-${network}.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
-      : usePokt === 'true'
-      ? `https://eth-${network}.gateway.pokt.network/v1/lb/${process.env.NEXT_PUBLIC_POKT_ID}`
-      : `https://${network}.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY}`
+      : `https://eth-${network}.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
 
   return Onboard({
     dappId: process.env.NEXT_PUBLIC_BLOCKNATIVE_DAPP_ID,
