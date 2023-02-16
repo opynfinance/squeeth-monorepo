@@ -1,3 +1,4 @@
+// use compatible solidity version
 pragma solidity ^0.8.13;
 
 library BytesLib {
