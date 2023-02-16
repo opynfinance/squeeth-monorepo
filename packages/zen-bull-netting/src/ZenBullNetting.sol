@@ -20,8 +20,6 @@ import { FlashSwap } from "./FlashSwap.sol";
 import { Address } from "openzeppelin/utils/Address.sol";
 import { NettingLib } from "./NettingLib.sol";
 
-import { console } from "forge-std/console.sol";
-
 /**
  * Error codes
  * ZBN01: Auction TWAP is less than min value
@@ -601,8 +599,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             oracle, ethSqueethPool, oSqth, weth, zenBull, ethIntoCrab, auctionTwapPeriod
         );
 
-        console.log("contract oSqthToMint", oSqthToMint);
-
         // get WETH from MM
         for (uint256 i = 0; i < _params.orders.length; i++) {
             require(_params.orders[i].isBuying, "ZBN21");
@@ -641,7 +637,6 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 _params.wethUsdcPoolFee,
                 usdcToBorrow,
                 _params.minEthFromUsdc,
-                // wethToLend - (_params.depositsToProcess + wethFromAuction - ethIntoCrab),
                 1,
                 abi.encodePacked(wethToLend)
             );
