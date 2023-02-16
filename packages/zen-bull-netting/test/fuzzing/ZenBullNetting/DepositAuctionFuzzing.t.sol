@@ -94,25 +94,31 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
         uint256 oSqthAmount;
 
         {
-            uint256 feeRate = IController(IZenBullStrategy(ZEN_BULL).powerTokenController()).feeRate();
+            uint256 feeRate =
+                IController(IZenBullStrategy(ZEN_BULL).powerTokenController()).feeRate();
             uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
-            oSqthAmount = div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+            oSqthAmount =
+                div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
 
             uint256 crabFee = mul(oSqthAmount, feeAdjustment);
-            crabAmount = _calcCrabSharesToMint(ethIntoCrab-crabFee, crabCollateral, IERC20(CRAB).totalSupply());
+            crabAmount = _calcCrabSharesToMint(
+                ethIntoCrab - crabFee, crabCollateral, IERC20(CRAB).totalSupply()
+            );
 
             // after getting the actual crab amount, re calculate actual ethIntoCrab and oSqthAmount
             ethIntoCrab = crabAmount * crabCollateral / crabTotalSupply;
-            oSqthAmount = div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+            oSqthAmount =
+                div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
         }
 
-        uint256 share =
-            div(crabAmount, (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount));
+        uint256 share = div(crabAmount, (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount));
         uint256 wethToLend = div(
-            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL), share), 1e18 - share
+            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL), share),
+            1e18 - share
         );
         uint256 usdcToBorrow = div(
-            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL), share), 1e18 - share
+            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL), share),
+            1e18 - share
         );
 
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);

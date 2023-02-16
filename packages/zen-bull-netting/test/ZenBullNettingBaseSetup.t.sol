@@ -114,15 +114,14 @@ contract ZenBullNettingBaseSetup is Test {
         );
     }
 
-    function _calcCrabSharesToMint(uint256 _ethAmount, uint256 _crabCollateral, uint256 _crabTotalSupply) internal pure returns (uint256) {
+    function _calcCrabSharesToMint(
+        uint256 _ethAmount,
+        uint256 _crabCollateral,
+        uint256 _crabTotalSupply
+    ) internal pure returns (uint256) {
         uint256 depositorShare = div(_ethAmount, (_crabCollateral + _ethAmount));
 
-        return (
-            div(
-                mul(_crabTotalSupply, depositorShare),
-                (uint256(1e18) - depositorShare)
-            )
-        );
+        return (div(mul(_crabTotalSupply, depositorShare), (uint256(1e18) - depositorShare)));
     }
 
     function mul(uint256 x, uint256 y) internal pure returns (uint256) {
