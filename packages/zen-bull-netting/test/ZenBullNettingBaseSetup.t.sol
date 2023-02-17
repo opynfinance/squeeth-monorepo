@@ -7,6 +7,8 @@ import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
 //interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IEulerSimpleLens } from "../src/interface/IEulerSimpleLens.sol";
+
 // contracts
 import { SigUtil } from "./util/SigUtil.sol";
 import { ZenBullNetting } from "../src/ZenBullNetting.sol";
@@ -38,6 +40,17 @@ contract ZenBullNettingBaseSetup is Test {
     uint256 public ownerPk;
     address public deployer;
     address public owner;
+
+    struct AddressBalances {
+        uint256 ethBalance;
+        uint256 usdcBalance;
+        uint256 wethBalance;
+        uint256 wPowerPerpBalance;
+        uint256 crabBalance;
+        uint256 zenBullBalance;
+        uint256 eulerUsdcDebtBalance;
+        uint256 eulerWethBalance;
+    }
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
@@ -113,6 +126,20 @@ contract ZenBullNettingBaseSetup is Test {
             ZEN_BULL, EULER_SIMPLE_LENS, USDC, WETH, crabFairPriceInEth, ethUsdcPrice
         );
     }
+
+
+    function _getAddressBalances(address _address) internal returns (AddressBalances memory) {
+        AddressBalances memory balances;
+        balances.ethBalance = _address.balance;
+        balances.usdcBalance = IERC20(USDC).balanceOf(_address);
+        balances.wethBalance = IERC20(WETH).balanceOf(_address);
+        balances.wPowerPerpBalance = IERC20(WPOWERPERP).balanceOf(_address);
+        balances.crabBalance = IERC20(CRAB).balanceOf(_address);
+        balances.zenBullBalance = IERC20(ZEN_BULL).balanceOf(_address);
+        balances.eulerUsdcDebtBalance = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, _address);       
+        balances.eulerWethBalance = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, _address);
+        return balances;
+        }
 
     function _calcCrabSharesToMint(
         uint256 _ethAmount,
