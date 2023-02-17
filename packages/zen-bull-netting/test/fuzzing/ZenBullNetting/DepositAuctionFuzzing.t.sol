@@ -12,6 +12,7 @@ import { IOracle } from "../../../src/interface/IOracle.sol";
 import { IEulerSimpleLens } from "../../../src/interface/IEulerSimpleLens.sol";
 import { IWETH } from "../../../src/interface/IWETH.sol";
 import { IController } from "../../../src/interface/IController.sol";
+import { IQuoter } from "../../util/IQuoter.sol";
 // contract
 import { SigUtil } from "../../util/SigUtil.sol";
 import { ZenBullNetting } from "../../../src/ZenBullNetting.sol";
@@ -90,10 +91,36 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
         uint256 ethIntoCrab = crabAmount * crabCollateral / crabTotalSupply;
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
-        uint256 feeRate = IController(IZenBullStrategy(ZEN_BULL).powerTokenController()).feeRate();
-        uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
-        uint256 oSqthAmount =
-            div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+        uint256 oSqthAmount;
+
+        {
+            uint256 feeRate =
+                IController(IZenBullStrategy(ZEN_BULL).powerTokenController()).feeRate();
+            uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
+            oSqthAmount =
+                div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+
+            uint256 crabFee = mul(oSqthAmount, feeAdjustment);
+            crabAmount = _calcCrabSharesToMint(
+                ethIntoCrab - crabFee, crabCollateral, IERC20(CRAB).totalSupply()
+            );
+
+            // after getting the actual crab amount, re calculate actual ethIntoCrab and oSqthAmount
+            ethIntoCrab = crabAmount * crabCollateral / crabTotalSupply;
+            oSqthAmount =
+                div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+        }
+
+        uint256 share = div(crabAmount, (IZenBullStrategy(ZEN_BULL).getCrabBalance() + crabAmount));
+        uint256 wethToLend = div(
+            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL), share),
+            1e18 - share
+        );
+        uint256 usdcToBorrow = div(
+            mul(IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL), share),
+            1e18 - share
+        );
+
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
         {
             // trader signature vars
@@ -127,11 +154,14 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
             orders[0] = orderData;
         }
 
+        uint256 minEthFromUsdc =
+            IQuoter(QUOTER).quoteExactInputSingle(USDC, WETH, 3000, usdcToBorrow, 0);
         ZenBullNetting.DepositAuctionParams memory params = ZenBullNetting.DepositAuctionParams({
             depositsToProcess: _amount,
             crabAmount: crabAmount,
             orders: orders,
             clearingPrice: squeethEthPrice * 99e16 / 1e18,
+            minEthFromUsdc: minEthFromUsdc,
             flashDepositEthToCrab: 0,
             flashDepositMinEthFromSqth: 0,
             flashDepositMinEthFromUsdc: 0,
@@ -142,8 +172,27 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
         vm.prank(mm1);
         IERC20(WETH).approve(address(zenBullNetting), oSqthAmount * params.clearingPrice / 1e18);
 
+        uint256 mm1WpowerPerpBalanceBefore = IERC20(WPOWERPERP).balanceOf(mm1);
+        uint256 wPowerPerpTotalSupplyBefore = IERC20(WPOWERPERP).totalSupply();
+        uint256 user1EthBalanceBefore = user1.balance;
+        uint256 wethInEulerBefore =
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
+
         vm.startPrank(owner);
         zenBullNetting.depositAuction(params);
         vm.stopPrank();
+
+        uint256 wPowerPerpTotalSupplyAfter = IERC20(WPOWERPERP).totalSupply();
+
+        assertApproxEqAbs(
+            IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL) - wethInEulerBefore,
+            wethToLend,
+            1
+        );
+        assertGt(user1.balance, user1EthBalanceBefore);
+        assertEq(
+            IERC20(WPOWERPERP).balanceOf(mm1) - mm1WpowerPerpBalanceBefore,
+            wPowerPerpTotalSupplyAfter - wPowerPerpTotalSupplyBefore
+        );
     }
 }
