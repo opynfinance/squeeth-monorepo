@@ -404,7 +404,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
     /**
      * @notice withdraw ETH from queue
      * @param _amount ETH amount to dequeue
-     * @param _force forceWithdraw if deposited more than a week ago
+     * @param _force force withdraw if deposited more than a week ago
      */
     function dequeueEth(uint256 _amount, bool _force) external {
         require(!isAuctionLive || _force, "ZBN04");
@@ -544,7 +544,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         }
         depositsIndex = i;
 
-        // process withdraws and send usdc
+        // process withdraws and send ETH
         i = withdrawsIndex;
         while (zenBullQuantity > 0) {
             Receipt memory withdraw = withdraws[i];
@@ -814,7 +814,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 remainingWithdraws -= withdraw.amount;
                 zenBullBalance[withdraw.sender] -= withdraw.amount;
 
-                // send proportional usdc
+                // send proportional ETH
                 ethAmount = withdraw.amount * ethToWithdrawers / _params.withdrawsToProcess;
 
                 delete withdraws[j];
@@ -827,7 +827,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                 withdraws[j].amount -= remainingWithdraws;
                 zenBullBalance[withdraw.sender] -= remainingWithdraws;
 
-                // send proportional usdc
+                // send proportional ETH
                 ethAmount = remainingWithdraws * ethToWithdrawers / _params.withdrawsToProcess;
 
                 payable(withdraw.sender).sendValue(ethAmount);
