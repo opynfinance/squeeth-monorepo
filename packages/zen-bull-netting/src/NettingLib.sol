@@ -6,14 +6,11 @@ import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IOracle } from "./interface/IOracle.sol";
 import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
+import { IController } from "./interface/IController.sol";
 
 library NettingLib {
     event TransferWethFromMarketMakers(
-        address indexed trader,
-        uint256 quantity,
-        uint256 wethAmount,
-        uint256 remainingOsqthBalance,
-        uint256 clearingPrice
+        address indexed trader, uint256 wethAmount, uint256 clearingPrice
     );
     event TransferOsqthToMarketMakers(
         address indexed trader, uint256 bidId, uint256 quantity, uint256 remainingOsqthBalance
@@ -45,27 +42,21 @@ library NettingLib {
         uint256 _quantity,
         uint256 _oSqthToMint,
         uint256 _clearingPrice
-    ) external returns (bool, uint256) {
+    ) external returns (uint256) {
         uint256 wethAmount;
-        uint256 remainingOsqthToMint;
         if (_quantity >= _oSqthToMint) {
             wethAmount = (_oSqthToMint * _clearingPrice) / 1e18;
-            IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
-
-            emit TransferWethFromMarketMakers(
-                _trader, _oSqthToMint, wethAmount, remainingOsqthToMint, _clearingPrice
-                );
-            return (true, remainingOsqthToMint);
+            _oSqthToMint = 0;
         } else {
             wethAmount = (_quantity * _clearingPrice) / 1e18;
-            remainingOsqthToMint = _oSqthToMint - _quantity;
-            IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
-
-            emit TransferWethFromMarketMakers(
-                _trader, _quantity, wethAmount, remainingOsqthToMint, _clearingPrice
-                );
-            return (false, remainingOsqthToMint);
+            _oSqthToMint = _oSqthToMint - _quantity;
         }
+
+        IERC20(_weth).transferFrom(_trader, address(this), wethAmount);
+
+        emit TransferWethFromMarketMakers(_trader, wethAmount, _clearingPrice);
+
+        return _oSqthToMint;
     }
 
     /**
@@ -74,32 +65,28 @@ library NettingLib {
      * @param _oSqth oSQTH address
      * @param _trader market maker address
      * @param _bidId MM's bid ID
-     * @param _oSqthBalance remaining netting contracts's oSQTH balance
+     * @param _oSqthBalanceToPush remaining netting contracts's oSQTH balance
      * @param _quantity oSQTH quantity in market maker order
      */
     function transferOsqthToMarketMakers(
         address _oSqth,
         address _trader,
         uint256 _bidId,
-        uint256 _oSqthBalance,
+        uint256 _oSqthBalanceToPush,
         uint256 _quantity
-    ) external returns (bool, uint256) {
-        uint256 remainingOsqthBalance;
-        if (_quantity < _oSqthBalance) {
-            IERC20(_oSqth).transfer(_trader, _quantity);
-
-            remainingOsqthBalance = _oSqthBalance - _quantity;
-
-            emit TransferOsqthToMarketMakers(_trader, _bidId, _quantity, remainingOsqthBalance);
-
-            return (false, remainingOsqthBalance);
+    ) external returns (uint256) {
+        if (_quantity >= _oSqthBalanceToPush) {
+            _quantity = _oSqthBalanceToPush;
+            _oSqthBalanceToPush = 0;
         } else {
-            IERC20(_oSqth).transfer(_trader, _oSqthBalance);
-
-            emit TransferOsqthToMarketMakers(_trader, _bidId, _oSqthBalance, remainingOsqthBalance);
-
-            return (true, remainingOsqthBalance);
+            _oSqthBalanceToPush = _oSqthBalanceToPush - _quantity;
         }
+
+        IERC20(_oSqth).transfer(_trader, _quantity);
+
+        emit TransferOsqthToMarketMakers(_trader, _bidId, _quantity, _oSqthBalanceToPush);
+
+        return _oSqthBalanceToPush;
     }
 
     /**
@@ -115,21 +102,19 @@ library NettingLib {
         address _trader,
         uint256 _remainingOsqthToPull,
         uint256 _quantity
-    ) internal returns (uint256) {
-        uint256 oSqthRemaining;
-        if (_quantity < _remainingOsqthToPull) {
-            IERC20(_oSqth).transferFrom(_trader, address(this), _quantity);
-
-            oSqthRemaining = _remainingOsqthToPull - _quantity;
-
-            emit TransferOsqthFromMarketMakers(_trader, _quantity, oSqthRemaining);
+    ) external returns (uint256) {
+        if (_quantity >= _remainingOsqthToPull) {
+            _quantity = _remainingOsqthToPull;
+            _remainingOsqthToPull = 0;
         } else {
-            IERC20(_oSqth).transferFrom(_trader, address(this), _remainingOsqthToPull);
-
-            emit TransferOsqthFromMarketMakers(_trader, _remainingOsqthToPull, oSqthRemaining);
+            _remainingOsqthToPull = _remainingOsqthToPull - _quantity;
         }
 
-        return oSqthRemaining;
+        IERC20(_oSqth).transferFrom(_trader, address(this), _quantity);
+
+        emit TransferOsqthFromMarketMakers(_trader, _quantity, _remainingOsqthToPull);
+
+        return _remainingOsqthToPull;
     }
 
     /**
@@ -150,16 +135,14 @@ library NettingLib {
         uint256 _quantity,
         uint256 _clearingPrice
     ) external returns (uint256) {
-        uint256 oSqthQuantity;
-
-        if (_quantity < _remainingOsqthToPull) {
-            oSqthQuantity = _quantity;
+        if (_quantity >= _remainingOsqthToPull) {
+            _quantity = _remainingOsqthToPull;
+            _remainingOsqthToPull = 0;
         } else {
-            oSqthQuantity = _remainingOsqthToPull;
+            _remainingOsqthToPull = _remainingOsqthToPull - _quantity;
         }
 
-        uint256 wethAmount = (oSqthQuantity * _clearingPrice) / 1e18;
-        _remainingOsqthToPull -= oSqthQuantity;
+        uint256 wethAmount = (_quantity * _clearingPrice) / 1e18;
         IERC20(_weth).transfer(_trader, wethAmount);
 
         emit TransferWethToMarketMaker(
@@ -233,22 +216,55 @@ library NettingLib {
     }
 
     /**
-     * @notice calculate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
+     * @notice estimate amount of eth to deposit into Crab v2 based on amount of crab token
      * @param _crab crab strategy address
      * @param _zenBull ZenBull strategy address
      * @param _crabAmount amount of crab token
+     * @return amount of ETH to deposit into Crab V2
      */
-    function calcOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
+    function estimateEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
         external
         view
-        returns (uint256, uint256)
+        returns (uint256)
     {
         uint256 crabTotalSupply = IERC20(_crab).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
-        uint256 _oSqthToMint = _crabAmount * crabDebt / crabTotalSupply;
+        (uint256 crabEth,) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
         uint256 ethIntoCrab = _crabAmount * crabEth / crabTotalSupply;
 
-        return (_oSqthToMint, ethIntoCrab);
+        return ethIntoCrab;
+    }
+
+    /**
+     * @notice calculate oSQTH to mint based on amount _ethIntoCrab to deposit into Crab v2
+     * @param _oracle oracle address
+     * @param _ethSqueethPool wPowerPerp/ETH uni v3 pool address
+     * @param _oSqth oSQTH address
+     * @param _weth WETH address
+     * @param _zenBull ZenBull strategy address
+     * @param _ethIntoCrab amount of ETH to deposit into Crab V2
+     * @param _auctionTwapPeriod auction TWAP
+     */
+    function calcOsqthToMint(
+        address _oracle,
+        address _ethSqueethPool,
+        address _oSqth,
+        address _weth,
+        address _zenBull,
+        uint256 _ethIntoCrab,
+        uint32 _auctionTwapPeriod
+    ) external view returns (uint256) {
+        uint256 squeethEthPrice =
+            IOracle(_oracle).getTwap(_ethSqueethPool, _oSqth, _weth, _auctionTwapPeriod, false);
+        uint256 feeRate = IController(IZenBullStrategy(_zenBull).powerTokenController()).feeRate();
+        uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
+
+        (uint256 crabCollateral, uint256 crabDebt) =
+            IZenBullStrategy(_zenBull).getCrabVaultDetails();
+        // _ethIntoCrab.wmul(crabDebt).wdiv(crabCollateral.add(crabDebt.wmul(feeAdjustment)));
+        uint256 oSqthToMint =
+            div(mul(_ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+
+        return oSqthToMint;
     }
 
     /**

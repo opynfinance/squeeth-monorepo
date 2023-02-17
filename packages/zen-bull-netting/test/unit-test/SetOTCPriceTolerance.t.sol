@@ -46,9 +46,8 @@ contract SetOTCPriceTolerance is ZenBullNettingBaseSetup {
     }
 
     function testSetOTCPriceToleranceWhenPeriodLessThanMinimum() public {
-        uint256 maxOtcPriceTolerance = zenBullNetting.MAX_OTC_PRICE_TOLERANCE();
         vm.prank(owner);
         vm.expectRevert(bytes("ZBN02"));
-        zenBullNetting.setOTCPriceTolerance(maxOtcPriceTolerance + 1);
+        zenBullNetting.setOTCPriceTolerance(3e17);
     }
 }

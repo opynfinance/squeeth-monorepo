@@ -31,6 +31,7 @@ contract ZenBullNettingBaseSetup is Test {
     address public constant ORACLE = 0x65D66c76447ccB45dAf1e8044e918fA786A483A1;
     address public constant CRAB = 0x3B960E47784150F5a63777201ee2B15253D713e8;
     address public constant FLASH_ZEN = 0x11A56a3A7A6Eb768A9125798B1eABE9EBD9EcE02;
+    address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
 
     address public ethSqueethPool = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
     address public ethUsdcPool = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
@@ -73,8 +74,6 @@ contract ZenBullNettingBaseSetup is Test {
 
     function testDeployment() public {
         assertEq(zenBullNetting.owner(), owner);
-        assertEq(zenBullNetting.MAX_OTC_PRICE_TOLERANCE(), 2e17);
-        assertEq(zenBullNetting.MIN_AUCTION_TWAP(), 180);
         assertEq(zenBullNetting.otcPriceTolerance(), 5e16);
         assertEq(zenBullNetting.auctionTwapPeriod(), 420);
         assertEq(
@@ -140,6 +139,16 @@ contract ZenBullNettingBaseSetup is Test {
         balances.eulerUsdcDebtBalance = IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, _address);       
         balances.eulerWethBalance = IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, _address);
         return balances;
+        }
+
+    function _calcCrabSharesToMint(
+        uint256 _ethAmount,
+        uint256 _crabCollateral,
+        uint256 _crabTotalSupply
+    ) internal pure returns (uint256) {
+        uint256 depositorShare = div(_ethAmount, (_crabCollateral + _ethAmount));
+
+        return (div(mul(_crabTotalSupply, depositorShare), (uint256(1e18) - depositorShare)));
     }
 
     function mul(uint256 x, uint256 y) internal pure returns (uint256) {

@@ -13,7 +13,7 @@ no_match_contract = "Fuzzing"
 gas_reports = ["ZenBullNetting"]
 
 [profile.fuzz]
-runs = 2500
+runs = 5000
 max_local_rejects = 1024
 max_global_rejects = 65536
 seed = '0x3e8'
