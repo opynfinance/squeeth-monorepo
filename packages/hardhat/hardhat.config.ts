@@ -24,7 +24,7 @@ import './tasks/increaseSlot'
 
 // Load env variables
 dotenv.config()
-const InfuraKey = process.env.INFURA_KEY
+const alchemyKey = process.env.ALCHEMY_KEY
 const fs = require("fs");
 
 /*
@@ -92,23 +92,23 @@ const config: HardhatUserConfig = {
       */
     },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://rinkeby.infura.io/v3/${alchemyKey}`, // <---- YOUR ALCHEMY KEY! (or it won't work)
       accounts,
     },
     goerli: {
-      url: `https://goerli.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://goerli.infura.io/v3/${alchemyKey}`, // <---- YOUR ALCHEMY KEY! (or it won't work)
       accounts,
     },
     kovan: {
-      url: `https://kovan.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://kovan.infura.io/v3/${alchemyKey}`, // <---- YOUR ALCHEMY KEY! (or it won't work)
       accounts,
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, // <---- YOUR ALCHEMY KEY! (or it won't work)
       accounts,
     },
     ropsten: {
-      url: `https://ropsten.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://ropsten.infura.io/v3/${alchemyKey}`, // <---- YOUR ALCHEMY KEY! (or it won't work)
       accounts,
       gas: 8000000000000000
     },
