@@ -616,7 +616,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             uint256 wethFromAuction = IWETH(weth).balanceOf(address(this));
             IWETH(weth).withdraw(wethFromAuction);
 
-            ICrabStrategyV2(crab).deposit{value: ethIntoCrab}();
+            ICrabStrategyV2(crab).deposit{ value: ethIntoCrab }();
 
             (uint256 wethToLend, uint256 usdcToBorrow) = NettingLib.calcWethToLendAndUsdcToBorrow(
                 eulerLens, zenBull, weth, usdc, IERC20(crab).balanceOf(address(this))
@@ -650,7 +650,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                     usdcPoolFee: _params.wethUsdcPoolFee
                 });
 
-                IFlashZen(flashZenBull).flashDeposit{value: memVar.remainingEth}(params);
+                IFlashZen(flashZenBull).flashDeposit{ value: memVar.remainingEth }(params);
             }
         }
 
@@ -708,7 +708,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                         zenBullAmountToSend,
                         k,
                         ethAmountToSend
-                        );
+                    );
                 } else {
                     ethBalance[depositReceipt.sender] -= memVar.remainingDeposits;
 
@@ -731,7 +731,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
                         zenBullAmountToSend,
                         k,
                         ethAmountToSend
-                        );
+                    );
                     break;
                 }
             }
@@ -745,7 +745,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             _params.clearingPrice,
             memVar.oSqthBalance,
             k
-            );
+        );
     }
 
     /**
@@ -790,7 +790,7 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
         );
 
         // send WETH to market makers
-        IWETH(weth).deposit{value: address(this).balance - initialEthBalance}();
+        IWETH(weth).deposit{ value: address(this).balance - initialEthBalance }();
         toExchange = oSqthAmount;
         for (uint256 i = 0; i < _params.orders.length && toExchange > 0; i++) {
             toExchange = NettingLib.transferWethToMarketMaker(
@@ -865,13 +865,13 @@ contract ZenBullNetting is Ownable, EIP712, FlashSwap {
             uint256 zenBullAmountToBurn = abi.decode(callData, (uint256));
 
             IZenBullStrategy(zenBull).withdraw(zenBullAmountToBurn);
-            IWETH(weth).deposit{value: amountToPay}();
+            IWETH(weth).deposit{ value: amountToPay }();
             IWETH(weth).transfer(pool, amountToPay);
         } else if (callSource == 1) {
             uint256 wethToLend = abi.decode(callData, (uint256));
 
             IWETH(weth).withdraw(IWETH(weth).balanceOf(address(this)));
-            IZenBullStrategy(zenBull).deposit{value: wethToLend}(
+            IZenBullStrategy(zenBull).deposit{ value: wethToLend }(
                 IERC20(crab).balanceOf(address(this))
             );
             IERC20(usdc).transfer(pool, amountToPay);

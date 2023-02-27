@@ -82,7 +82,7 @@ contract ZenBullNettingBaseSetup is Test {
 
     function _queueEth(address _user, uint256 _amount) internal {
         vm.startPrank(_user);
-        zenBullNetting.queueEth{value: _amount}();
+        zenBullNetting.queueEth{ value: _amount }();
         vm.stopPrank();
     }
 

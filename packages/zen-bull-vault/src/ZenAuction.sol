@@ -251,7 +251,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
 
         emit SetFullRebalanceClearingPriceTolerance(
             fullRebalanceClearingPriceTolerance, _fullRebalancePriceTolerance
-            );
+        );
 
         fullRebalanceClearingPriceTolerance = _fullRebalancePriceTolerance;
     }
@@ -271,7 +271,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
 
         emit SetRebalanceWethLimitPriceTolerance(
             rebalanceWethLimitPriceTolerance, _rebalanceWethLimitPriceTolerance
-            );
+        );
 
         rebalanceWethLimitPriceTolerance = _rebalanceWethLimitPriceTolerance;
     }
@@ -401,7 +401,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
 
         emit FullRebalance(
             _crabAmount, _clearingPrice, _isDepositingInCrab, wPowerPerpAmount, _wethTargetInEuler
-            );
+        );
     }
 
     /**

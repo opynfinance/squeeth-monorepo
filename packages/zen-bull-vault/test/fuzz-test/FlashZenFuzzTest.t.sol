@@ -319,7 +319,7 @@ contract FlashZenFuzzTest is Test {
             testUtil.calcCollateralAndBorrowAmount(_crabToDeposit);
 
         IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
-        bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend }(_crabToDeposit);
 
         return (wethToLend, usdcToBorrow);
     }

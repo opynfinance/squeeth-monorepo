@@ -47,9 +47,9 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
         vm.deal(mm2, 5000e18);
 
         vm.prank(mm1);
-        IWETH(WETH).deposit{value: 5000e18}();
+        IWETH(WETH).deposit{ value: 5000e18 }();
         vm.prank(mm2);
-        IWETH(WETH).deposit{value: 5000e18}();
+        IWETH(WETH).deposit{ value: 5000e18 }();
 
         // update ZenBull cap to 100000 ETH
         vm.store(ZEN_BULL, bytes32(uint256(9)), bytes32(uint256(100000e18)));
