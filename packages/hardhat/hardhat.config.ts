@@ -24,17 +24,8 @@ import './tasks/increaseSlot'
 
 // Load env variables
 dotenv.config()
-const InfuraKey = process.env.INFURA_KEY
+const alchemyKey = process.env.ALCHEMY_KEY
 const fs = require("fs");
-
-/*
-  📡 This is where you configure your deploy configuration for 🏗 scaffold-eth
-
-  check out `packages/scripts/deploy.js` to customize your deployment
-
-  out of the box it will auto deploy anything in the `contracts` folder and named *.sol
-  plus it will use *.args for constructor args
-*/
 
 //
 // Select the network you want to deploy to here:
@@ -91,44 +82,26 @@ const config: HardhatUserConfig = {
         (you can put in a mnemonic here to set the deployer locally)
       */
     },
-    rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts,
-    },
     goerli: {
-      url: `https://goerli.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts,
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      url: `https://eth-goerli.g.alchemy.com/v2/${alchemyKey}`, 
       accounts,
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts,
-    },
-    ropsten: {
-      url: `https://ropsten.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
-      accounts,
-      gas: 8000000000000000
-    },
-    xdai: {
-      url: "https://rpc.xdaichain.com/",
-      gasPrice: 1000000000,
+      url: `https://eth-mainnet.g.alchemy.com/v2/${alchemyKey}`, 
       accounts,
     },
     matic: {
-      url: "https://rpc-mainnet.maticvigil.com/",
+      url: "https://polygon-mainnet.g.alchemy.com/v2/",
       gasPrice: 1000000000,
       accounts,
     },
-    rinkebyArbitrum: {
-      url: "https://rinkeby.arbitrum.io/rpc",
+    goerliArbitrum: {
+      url: `https://arb-goerli.g.alchemy.com/v2/${alchemyKey}`,
       gasPrice: 30000000, // 0.03 gwei
       gas: 30_000_000,
       accounts,
       companionNetworks: {
-        l1: "rinkeby",
+        l1: "goerli",
       },
     },
     localArbitrum: {
@@ -145,15 +118,6 @@ const config: HardhatUserConfig = {
       accounts,
       companionNetworks: {
         l2: "localArbitrum",
-      },
-    },
-    kovanOptimism: {
-      url: "https://kovan.optimism.io",
-      gasPrice: 0,
-      accounts,
-      ovm: true,
-      companionNetworks: {
-        l1: "kovan",
       },
     },
     localOptimism: {

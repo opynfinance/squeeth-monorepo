@@ -36,7 +36,7 @@ build
 .DS_Store
 .env
 
-packages/hardhat/.env*
+packages/hardhat/.env
 
 # debug
 npm-debug.log*
