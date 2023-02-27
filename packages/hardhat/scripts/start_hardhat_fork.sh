@@ -6,6 +6,6 @@
 
 alchemyKey=$ALCHEMY_KEY
 
-echo "Using the current infura key: ${alchemyKey}" 
+echo "Using the current alchemy key: ${alchemyKey}" 
 
 $(npm bin)/hardhat node --no-deploy --network hardhat --fork https://eth-mainnet.g.alchemy.com/v2/$alchemyKey
