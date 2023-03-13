@@ -21,6 +21,7 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('md')]: {
         gridGap: '40px',
       },
+      opacity: 0.5,
     },
     leftColumn: {
       flex: 1,
@@ -61,28 +62,35 @@ const Bull: React.FC = () => {
   }, [setStrategyDataV2])
 
   return (
-    <div className={classes.container}>
-      {/* <div className={classes.leftColumn}>
-        <div className={classes.infoContainer}>
-          <MyPosition />
-          <StrategyPerformance />
-          <About />
-        </div>
-      </div>
-      <div className={classes.rightColumn}>
-        <div className={classes.tradeSection}>
-          <BullTrade />
-        </div>
-      </div> */}
-      <div>
-        <Alert severity="error">
-          Sorry! We are currently facing issue with zen bull due to attack on Euler protocol. To get latest updates Join
-          <Link style={{ marginLeft: '-14px' }} target="_blank" href="https://discord.com/invite/2NFdXaE">
-            our discord
+    <>
+      <div style={{ marginTop: '16px' }}>
+        <Alert severity="warning">
+          Sadly, Zen Bull is impacted by the Euler Finance exploit. Please
+          <Link
+            style={{ marginLeft: '-14px', marginRight: '-14px' }}
+            target="_blank"
+            href="https://discord.com/invite/2NFdXaE"
+          >
+            join discord
           </Link>
+          for updates.
         </Alert>
       </div>
-    </div>
+      <div className={classes.container}>
+        <div className={classes.leftColumn}>
+          <div className={classes.infoContainer}>
+            <MyPosition />
+            <StrategyPerformance />
+            <About />
+          </div>
+        </div>
+        <div className={classes.rightColumn}>
+          <div className={classes.tradeSection}>
+            <BullTrade />
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
 

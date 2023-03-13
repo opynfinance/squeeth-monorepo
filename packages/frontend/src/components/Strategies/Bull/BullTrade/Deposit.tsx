@@ -373,13 +373,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
               {'Unsupported Network'}
             </PrimaryButtonNew>
           ) : (
-            <PrimaryButtonNew
-              fullWidth
-              id="bull-deposit-btn"
-              variant={'contained'}
-              onClick={onDepositClick}
-              disabled={quoteLoading || txLoading || depositAmount === '0' || !!depositError}
-            >
+            <PrimaryButtonNew fullWidth id="bull-deposit-btn" variant={'contained'} onClick={onDepositClick} disabled>
               {!txLoading && !quoteLoading ? 'Deposit' : <CircularProgress color="primary" size="1.5rem" />}
             </PrimaryButtonNew>
           )}
