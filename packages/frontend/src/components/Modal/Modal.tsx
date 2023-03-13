@@ -17,10 +17,10 @@ const useStyles = makeStyles((theme) =>
         alignItems: 'center',
         gap: '20px',
       },
-      fontSize: '1.5rem',
+      fontSize: '1.75rem',
     },
     dialogContent: {
-      padding: '10px 10px 25px',
+      padding: '10px 20px 25px',
       background: theme.palette.background.default,
       display: 'flex',
       flexDirection: 'column',
