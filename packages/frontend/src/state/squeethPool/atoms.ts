@@ -9,7 +9,7 @@ import { toTokenAmount } from '@utils/calculations'
 export const poolAtom = atom<Pool | null>(null)
 export const wethTokenAtom = atom<Token | null>(null)
 export const squeethTokenAtom = atom<Token | null>(null)
-export const wethPriceAtom = atom((get) => {
+export const wethUsdcPriceAtom = atom((get) => {
   const pool = get(poolAtom)
   const isWethToken0 = get(isWethToken0Atom)
   return toTokenAmount(

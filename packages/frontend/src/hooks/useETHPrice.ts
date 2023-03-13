@@ -2,7 +2,7 @@ import BigNumber from 'bignumber.js'
 import { useQuery, useQueryClient } from 'react-query'
 
 import { toTokenAmount } from '@utils/calculations'
-import { ethPriceAtom, indexAtom } from 'src/state/controller/atoms'
+import { ethUsdcPriceAtom, indexAtom } from 'src/state/controller/atoms'
 import { useAtomValue } from 'jotai'
 
 const ethPriceQueryKeys = {
@@ -11,8 +11,6 @@ const ethPriceQueryKeys = {
 }
 
 /**
- * get token price by address.
- * @param token token address
  * @param refetchIntervalSec refetch interval in seconds
  * @returns {BigNumber} price denominated in USD
  */
@@ -32,12 +30,12 @@ export const useETHPrice = (refetchIntervalSec = 30) => {
 }
 
 /**
- * Get's the onchain ETH price
- * @returns {BigNumber} price denominated in USD
+ * Gets the onchain ETH-USDC price
+ * @returns {BigNumber} price denominated in USDC
  */
-export const useOnChainETHPrice = () => {
-  const ethPrice = useAtomValue(ethPriceAtom)
-  return ethPrice
+export const useEthUsdcPrice = () => {
+  const ethUsdcPrice = useAtomValue(ethUsdcPriceAtom)
+  return ethUsdcPrice
 }
 
 export const getETHPriceCoingecko = async (): Promise<BigNumber> => {

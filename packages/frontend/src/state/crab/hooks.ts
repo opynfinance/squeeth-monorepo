@@ -83,7 +83,7 @@ import {
   WETH_DECIMALS,
 } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import { useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useETHPrice, useEthUsdcPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
@@ -339,7 +339,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const normFactor = useAtomValue(normFactorAtom)
@@ -385,19 +385,19 @@ export const useCurrentCrabPositionValueV2 = () => {
       const ethDebt = getWSqueethPositionValueInETH(squeethDebt)
       if (collateralOne && squeethDebtOne) {
         const ethDebtOne = getWSqueethPositionValueInETH(squeethDebtOne)
-        setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethPrice))
+        setCrabUsdValue(collateralOne.minus(ethDebtOne).times(ethUsdcPrice))
       }
 
       // Or else vault would have been liquidated
       if (collateral.lt(ethDebt)) return
 
       const crabPositionValueInETH = collateral.minus(ethDebt)
-      const crabPositionValueInUSD = crabPositionValueInETH.times(ethPrice)
+      const crabPositionValueInUSD = crabPositionValueInETH.times(ethUsdcPrice)
 
       if (debtMigrated && collatMigrated && !collatMigrated?.isZero() && !debtMigrated?.isZero()) {
         const ethDebtOne = getWSqueethPositionValueInETH(debtMigrated)
         setCrabQueuedInEth(collatMigrated.minus(ethDebtOne))
-        setCrabQueuedInUsd(collatMigrated.minus(ethDebtOne).times(ethPrice))
+        setCrabQueuedInUsd(collatMigrated.minus(ethDebtOne).times(ethUsdcPrice))
       }
 
       setCurrentCrabPositionValue(crabPositionValueInUSD)
@@ -421,7 +421,7 @@ export const useCurrentCrabPositionValueV2 = () => {
     setCurrentCrabPositionValue,
     setCurrentCrabPositionValueInETH,
     setUserMigratedSharesETH,
-    ethPrice,
+    ethUsdcPrice,
     vault,
     balLoading,
     squeethInitialPrice,

@@ -20,7 +20,7 @@ import { Skeleton } from '@material-ui/lab'
 import { bullCurrentFundingAtom } from '@state/bull/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useEthUsdcPrice } from '@hooks/useETHPrice'
 import { formatNumber } from '@utils/formatter'
 
 const useTooltipStyles = makeStyles(() => ({
@@ -131,11 +131,11 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
 
 const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
 
   const impliedFunding = 2 * currentFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
-  const currentEthPrice = Number(ethPrice)
+  const currentEthUsdcPrice = Number(ethUsdcPrice)
 
   const profitableBoundsPercent = Math.sqrt(impliedFunding)
   const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableBoundsPercent * ethPriceAtLastHedge
@@ -156,7 +156,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
   const errorColor = theme.palette.error.main
 
   const isMobileBreakpoint = useMediaQuery(theme.breakpoints.down('xs'))
-  const currentStrategyReturn = getStrategyReturnForETHPrice(currentEthPrice)
+  const currentStrategyReturn = getStrategyReturnForETHPrice(currentEthUsdcPrice)
 
   return (
     <Fade in={true}>
@@ -282,7 +282,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
             </ReferenceDot>
 
             <ReferenceDot
-              x={currentEthPrice}
+              x={currentEthUsdcPrice}
               y={currentStrategyReturn}
               r={5}
               fill={currentStrategyReturn < 0 ? errorColor : successColor}
@@ -291,7 +291,7 @@ const Chart: React.FC<{ currentFunding: number }> = ({ currentFunding }) => {
               <Label
                 fontFamily="DM Mono"
                 fontWeight={500}
-                value={'$' + formatNumber(currentEthPrice, 0)}
+                value={'$' + formatNumber(currentEthUsdcPrice, 0)}
                 position="insideTop"
                 offset={20}
                 fill={currentStrategyReturn < 0 ? errorColor : successColor}

@@ -9,10 +9,10 @@ import { Tooltips } from '@constants/enums'
 import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
 import { useSetProfitableMovePercentV2 } from '@state/crab/hooks'
 import { ethPriceAtLastHedgeAtomV2, timeAtLastHedgeAtomV2, crabStrategyCollatRatioAtomV2 } from '@state/crab/atoms'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useEthUsdcPrice } from '@hooks/useETHPrice'
 
 const CrabMetricsV2: React.FC = () => {
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
   const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
   const timeAtLastHedge = useAtomValue(timeAtLastHedgeAtomV2)
@@ -29,7 +29,7 @@ const CrabMetricsV2: React.FC = () => {
       <Metric
         flexBasis="250px"
         label={<MetricLabel label="ETH Price" tooltipTitle={Tooltips.SpotPrice} />}
-        value={formatCurrency(ethPrice.toNumber())}
+        value={formatCurrency(ethUsdcPrice.toNumber())}
       />
       <Metric
         flexBasis="250px"
