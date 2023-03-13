@@ -7,6 +7,8 @@ import MyPosition from './MyPosition'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
 import BullTrade from './BullTrade'
+import Alert from '@components/Alert'
+import { Link } from '@material-ui/core'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -60,7 +62,7 @@ const Bull: React.FC = () => {
 
   return (
     <div className={classes.container}>
-      <div className={classes.leftColumn}>
+      {/* <div className={classes.leftColumn}>
         <div className={classes.infoContainer}>
           <MyPosition />
           <StrategyPerformance />
@@ -71,6 +73,14 @@ const Bull: React.FC = () => {
         <div className={classes.tradeSection}>
           <BullTrade />
         </div>
+      </div> */}
+      <div>
+        <Alert severity="error">
+          Sorry! We are currently facing issue with zen bull due to attack on Euler protocol. To get latest updates Join
+          <Link style={{ marginLeft: '-14px' }} target="_blank" href="https://discord.com/invite/2NFdXaE">
+            our discord
+          </Link>
+        </Alert>
       </div>
     </div>
   )

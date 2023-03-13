@@ -110,44 +110,47 @@ export const useSetBullState = () => {
 
   const setBullState = useAppCallback(async () => {
     if (!bullContract || !etokenContract || !auctionBullContract || !eulerLenseContract) return null
+    try {
+      const p1 = bullContract.methods.getCrabBalance().call()
+      const p2 = bullContract.methods.totalSupply().call()
+      const p3 = bullContract.methods.calcWethToWithdraw(BIG_ONE.toString()).call()
+      const p4 = bullContract.methods.calcUsdcToRepay(BIG_ONE.toString()).call()
+      const p5 = bullContract.methods.strategyCap().call()
+      const p6 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call()
+      const p7 = auctionBullContract.methods.getCurrentDeltaAndCollatRatio().call()
+      const p8 = eulerLenseContract.methods.interestRates(weth).call()
+      const p9 = eulerLenseContract.methods.interestRates(usdc).call()
+      const p10 = eulerLenseContract.methods.getDTokenBalance(usdc, bullStrategy).call()
 
-    const p1 = bullContract.methods.getCrabBalance().call()
-    const p2 = bullContract.methods.totalSupply().call()
-    const p3 = bullContract.methods.calcWethToWithdraw(BIG_ONE.toString()).call()
-    const p4 = bullContract.methods.calcUsdcToRepay(BIG_ONE.toString()).call()
-    const p5 = bullContract.methods.strategyCap().call()
-    const p6 = etokenContract.methods.balanceOfUnderlying(bullStrategy).call()
-    const p7 = auctionBullContract.methods.getCurrentDeltaAndCollatRatio().call()
-    const p8 = eulerLenseContract.methods.interestRates(weth).call()
-    const p9 = eulerLenseContract.methods.interestRates(usdc).call()
-    const p10 = eulerLenseContract.methods.getDTokenBalance(usdc, bullStrategy).call()
+      const [
+        crabBalance,
+        totalSupply,
+        eulerWeth,
+        eulerUsdc,
+        bullCap,
+        depositedEth,
+        deltaAndCr,
+        wethInterests,
+        usdcInterests,
+        totalUsdcInEuler,
+      ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10])
 
-    const [
-      crabBalance,
-      totalSupply,
-      eulerWeth,
-      eulerUsdc,
-      bullCap,
-      depositedEth,
-      deltaAndCr,
-      wethInterests,
-      usdcInterests,
-      totalUsdcInEuler,
-    ] = await Promise.all([p1, p2, p3, p4, p5, p6, p7, p8, p9, p10])
+      if (!isMounted()) return null
 
-    if (!isMounted()) return null
-
-    setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
-    setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
-    setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
-    setEulerUsdc(toTokenAmount(eulerUsdc, USDC_DECIMALS))
-    setBullCap(toTokenAmount(bullCap, WETH_DECIMALS))
-    setDepositedEth(toTokenAmount(depositedEth, WETH_DECIMALS))
-    setBullDelta(toTokenAmount(deltaAndCr[0], WETH_DECIMALS))
-    setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
-    setUsdcBorrowRate(getEulerInterestRate(new BigNumber(usdcInterests[1])))
-    setEthLendRate(getEulerInterestRate(new BigNumber(wethInterests[2])))
-    setTotalUSDCInEuler(toTokenAmount(totalUsdcInEuler, USDC_DECIMALS))
+      setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
+      setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
+      setEulerWeth(toTokenAmount(eulerWeth, WETH_DECIMALS))
+      setEulerUsdc(toTokenAmount(eulerUsdc, USDC_DECIMALS))
+      setBullCap(toTokenAmount(bullCap, WETH_DECIMALS))
+      setDepositedEth(toTokenAmount(depositedEth, WETH_DECIMALS))
+      setBullDelta(toTokenAmount(deltaAndCr[0], WETH_DECIMALS))
+      setBullCR(toTokenAmount(deltaAndCr[1], WETH_DECIMALS))
+      setUsdcBorrowRate(getEulerInterestRate(new BigNumber(usdcInterests[1])))
+      setEthLendRate(getEulerInterestRate(new BigNumber(wethInterests[2])))
+      setTotalUSDCInEuler(toTokenAmount(totalUsdcInEuler, USDC_DECIMALS))
+    } catch (error) {
+      console.error(error)
+    }
   }, [bullContract, etokenContract, auctionBullContract, eulerLenseContract, bullStrategy, weth, usdc, isMounted])
 
   return setBullState

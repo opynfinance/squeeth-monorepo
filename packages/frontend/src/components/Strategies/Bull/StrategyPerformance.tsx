@@ -274,12 +274,15 @@ const Wrapper: React.FC = () => {
   const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
   const collateralValue = ethDepositedInEuler.plus(vault?.collateralAmount.times(bullCrabBalance).div(crabSupply) ?? 0)
   const tvl = collateralValue.integerValue()
-  const isLoadingTVL =
-    ethDepositedInEuler.isZero() ||
-    bullCrabBalance.isZero() ||
-    crabUSDValue.isZero() ||
-    eulerUSDCDebt.isZero() ||
-    ethPrice.isZero()
+  const isLoadingTVL = crabUSDValue.isZero() || ethPrice.isZero()
+
+  console.log(
+    ethDepositedInEuler.isZero(),
+    bullCrabBalance.isZero(),
+    crabUSDValue.isZero(),
+    eulerUSDCDebt.isZero(),
+    ethPrice.isZero(),
+  )
 
   const isLoading = isLoadingPnLSeries || isLoadingTVL
 
