@@ -362,12 +362,18 @@ const BullWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) 
               id="bull-deposit-btn"
               variant={'contained'}
               onClick={onApproveClick}
-              disabled={quoteLoading || txLoading}
+              disabled={quoteLoading || txLoading || !!withdrawError}
             >
               {!txLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
           ) : (
-            <PrimaryButtonNew fullWidth id="bull-deposit-btn" variant={'contained'} onClick={onWithdrawClick} disabled>
+            <PrimaryButtonNew
+              fullWidth
+              id="bull-deposit-btn"
+              variant={'contained'}
+              onClick={onWithdrawClick}
+              disabled={quoteLoading || txLoading || !!withdrawError}
+            >
               {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
           )}

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { Link, Typography } from '@material-ui/core'
 
 import { useInitBullStrategy } from '@state/bull/hooks'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
@@ -8,7 +9,7 @@ import About from './About'
 import StrategyPerformance from './StrategyPerformance'
 import BullTrade from './BullTrade'
 import Alert from '@components/Alert'
-import { Link } from '@material-ui/core'
+import { Modal } from '@components/Modal/Modal'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -21,7 +22,6 @@ const useStyles = makeStyles((theme) =>
       [theme.breakpoints.down('md')]: {
         gridGap: '40px',
       },
-      opacity: 0.5,
     },
     leftColumn: {
       flex: 1,
@@ -54,6 +54,8 @@ const Bull: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
 
+  const [isModalOpen, setModalOpen] = useState(true)
+
   useCurrentCrabPositionValueV2()
   useInitBullStrategy()
 
@@ -61,19 +63,25 @@ const Bull: React.FC = () => {
     setStrategyDataV2()
   }, [setStrategyDataV2])
 
+  const closeModal = () => {
+    setModalOpen(false)
+  }
+
   return (
     <>
       <div style={{ marginTop: '16px' }}>
         <Alert severity="warning">
-          Sadly, Zen Bull is impacted by the Euler Finance exploit. Please
-          <Link
-            style={{ marginLeft: '-14px', marginRight: '-14px' }}
-            target="_blank"
-            href="https://discord.com/invite/2NFdXaE"
-          >
-            join discord
-          </Link>
-          for updates.
+          <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
+            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
+            <Link
+              style={{ fontSize: '15px', fontWeight: 500, marginLeft: '5px', marginRight: '5px' }}
+              target="_blank"
+              href="https://discord.com/invite/2NFdXaE"
+            >
+              join discord
+            </Link>
+            for updates.
+          </Typography>
         </Alert>
       </div>
       <div className={classes.container}>
@@ -90,6 +98,20 @@ const Bull: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Modal title="Zen Bull Impacted" open={isModalOpen} handleClose={closeModal}>
+        <Typography variant="subtitle1">
+          Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
+          <Link
+            style={{ fontSize: '15px', marginLeft: '5px', marginRight: '5px' }}
+            target="_blank"
+            href="https://discord.com/invite/2NFdXaE"
+          >
+            join discord
+          </Link>
+          for updates.
+        </Typography>
+      </Modal>
     </>
   )
 }
