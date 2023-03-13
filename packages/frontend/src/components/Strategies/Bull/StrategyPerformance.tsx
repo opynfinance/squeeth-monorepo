@@ -26,7 +26,7 @@ import { BULL_START_DATE } from '@constants/index'
 import { formatNumber } from '@utils/formatter'
 import { pnlGraphOptions } from '@constants/diagram'
 import useAppMemo from '@hooks/useAppMemo'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useEthUsdcPrice } from '@hooks/useETHPrice'
 import { toTokenAmount } from '@utils/calculations'
 
 const useTextFieldStyles = makeStyles((theme) =>
@@ -264,14 +264,14 @@ const Wrapper: React.FC = () => {
   const crabSupply = useAtomValue(crabTotalSupplyV2Atom)
   const eulerUSDCDebt = useAtomValue(bullEulerUSDCDebtAtom)
   const crabUSDValue = useAtomValue(crabUSDValueAtom)
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
   const query = useBullPnLChartData()
 
   const strategyPnLSeries = query?.data?.data.map((x: ChartDataInfo) => [x.timestamp * 1000, x.bullEthPnl])
   const isLoadingPnLSeries = typeof strategyPnLSeries === 'undefined'
 
   // tvl = ethInEuler + (crabInBull * crabPriceInETH) - (debtInEuler / ethPrice)
-  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethPrice)
+  const crabPriceInETH = toTokenAmount(crabUSDValue, 18).div(ethUsdcPrice)
   const collateralValue = ethDepositedInEuler.plus(vault?.collateralAmount.times(bullCrabBalance).div(crabSupply) ?? 0)
   const tvl = collateralValue.integerValue()
   const isLoadingTVL =
@@ -279,7 +279,7 @@ const Wrapper: React.FC = () => {
     bullCrabBalance.isZero() ||
     crabUSDValue.isZero() ||
     eulerUSDCDebt.isZero() ||
-    ethPrice.isZero()
+    ethUsdcPrice.isZero()
 
   const isLoading = isLoadingPnLSeries || isLoadingTVL
 

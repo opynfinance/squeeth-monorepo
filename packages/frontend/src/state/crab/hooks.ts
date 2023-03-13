@@ -83,7 +83,7 @@ import {
   WETH_DECIMALS,
 } from '@constants/index'
 import useAppEffect from '@hooks/useAppEffect'
-import { useETHPrice, useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useETHPrice } from '@hooks/useETHPrice'
 import { userMigratedSharesAtom, userMigratedSharesETHAtom } from '../crabMigration/atom'
 import useAppMemo from '@hooks/useAppMemo'
 import * as Fathom from 'fathom-client'
@@ -339,7 +339,7 @@ export const useCurrentCrabPositionValueV2 = () => {
   const contract = useAtomValue(crabStrategyContractAtomV2)
   const setCurrentEthLoading = useUpdateAtom(currentEthLoadingAtomV2)
   const vault = useAtomValue(crabStrategyVaultAtomV2)
-  const ethPrice = useOnChainETHPrice()
+  const ethPrice = useETHPrice()
   const setStrategyData = useSetStrategyData()
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const normFactor = useAtomValue(normFactorAtom)

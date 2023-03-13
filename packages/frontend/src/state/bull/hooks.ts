@@ -11,7 +11,7 @@ import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useEthUsdcPrice } from '@hooks/useETHPrice'
 import usePopup, { GenericErrorPopupConfig } from '@hooks/usePopup'
 import STRATEGY_QUERY from '@queries/squeeth/strategyQuery'
 import { strategyQuery, strategyQueryVariables } from '@queries/squeeth/__generated__/strategyQuery'
@@ -204,7 +204,7 @@ export const useGetFlashBulldepositParams = () => {
   const slippage = useAtomValue(crabStrategySlippageAtomV2)
   const network = useAtomValue(networkIdAtom)
   const queryClient = useQueryClient()
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
   const sqthPrice = useAtomValue(squeethInitialPriceAtom)
 
   const emptyState = useMemo(
@@ -273,11 +273,11 @@ export const useGetFlashBulldepositParams = () => {
 
         const minEthFromSqth = toTokenAmount(oSqthMinProceeds, 18)
         const minEthFromUsdc = toTokenAmount(usdcMinProceeds, 18)
-        const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethPrice))
+        const cumulativeSpotPrice = oSqthToMint.times(sqthPrice).plus(usdcToBorrow.div(ethUsdcPrice))
         const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
         const squeethSpot = oSqthToMint.times(sqthPrice) // eth from sqth trade
-        const usdcSpot = usdcToBorrow.div(ethPrice) // eth from usdc trade
+        const usdcSpot = usdcToBorrow.div(ethUsdcPrice) // eth from usdc trade
 
         // cumulative uniswap fees
 
@@ -324,7 +324,7 @@ export const useGetFlashBulldepositParams = () => {
       crabTotalSupply,
       crabV2Vault,
       emptyState,
-      ethPrice,
+      ethUsdcPrice,
       network,
       oSqueeth,
       quoterContract,
@@ -337,7 +337,7 @@ export const useGetFlashBulldepositParams = () => {
 
   const queryKey = useAppMemo(
     () =>
-      `getFlashBullDepositParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}-${slippage.toString()}-${ethPrice.toString()}-${sqthPrice.toString()}`,
+      `getFlashBullDepositParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}-${slippage.toString()}-${ethUsdcPrice.toString()}-${sqthPrice.toString()}`,
     [
       network,
       crabTotalSupply,
@@ -345,7 +345,7 @@ export const useGetFlashBulldepositParams = () => {
       bullSupply,
       crabV2Vault?.collateralAmount,
       slippage,
-      ethPrice,
+      ethUsdcPrice,
       sqthPrice,
     ],
   )
@@ -461,7 +461,7 @@ export const useGetFlashWithdrawParams = () => {
   const slippage = useAtomValue(crabStrategySlippageAtomV2)
   const { oSqueeth, weth, usdc } = useAtomValue(addressesAtom)
   const queryClient = useQueryClient()
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
   const sqthPrice = useAtomValue(squeethInitialPriceAtom)
 
   const emptyState = {
@@ -515,11 +515,11 @@ export const useGetFlashWithdrawParams = () => {
     const maxEthForWPowerPerp = toTokenAmount(oSqthMinProceeds, 18)
     const maxEthForUsdc = toTokenAmount(usdcMinProceeds, 18)
 
-    const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethPrice))
+    const cumulativeSpotPrice = wPowerPerpToRedeem.times(sqthPrice).plus(usdcToRepay.div(ethUsdcPrice))
     const executionPrice = toTokenAmount(oSqthProceeds, 18).plus(toTokenAmount(usdcProceeds, 18))
 
     const squeethSpot = wPowerPerpToRedeem.times(sqthPrice)
-    const usdcSpot = usdcToRepay.div(ethPrice)
+    const usdcSpot = usdcToRepay.div(ethUsdcPrice)
 
     // cumulative uniswap fees
 
@@ -545,14 +545,14 @@ export const useGetFlashWithdrawParams = () => {
 
   const queryKey = useAppMemo(
     () =>
-      `getFlashBullWithdrawParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}-${ethPrice.toString()}-${sqthPrice.toString()}-${slippage.toString()}`,
+      `getFlashBullWithdrawParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}-${ethUsdcPrice.toString()}-${sqthPrice.toString()}-${slippage.toString()}`,
     [
       network,
       crabTotalSupply,
       bullCrabBalance,
       bullSupply,
       crabV2Vault?.collateralAmount,
-      ethPrice,
+      ethUsdcPrice,
       sqthPrice,
       slippage,
     ],

@@ -11,7 +11,7 @@ import {
   indexAtom,
   normFactorAtom,
   osqthRefVolAtom,
-  ethPriceAtom,
+  ethUsdcPriceAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -398,15 +398,15 @@ const useIndex = () => {
   return index
 }
 
-export const useUpdateEthPrice = () => {
+export const useUpdateEthUsdcPrice = () => {
   const { getTwapSafe } = useOracle()
-  const [ethPrice, setEthPrice] = useAtom(ethPriceAtom)
+  const [ethUsdcPrice, setEthUsdcPrice] = useAtom(ethUsdcPriceAtom)
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
 
   const getTwapEth = () => {
     if (ethUsdcPool && weth && usdc) {
       getTwapSafe(ethUsdcPool, weth, usdc, 1).then((quote) => {
-        setEthPrice(quote)
+        setEthUsdcPrice(quote)
       })
     }
   }
@@ -417,7 +417,7 @@ export const useUpdateEthPrice = () => {
     getTwapEth()
   }, [getTwapSafe])
 
-  return ethPrice
+  return ethUsdcPrice
 }
 
 const useDailyHistoricalFunding = () => {
@@ -492,7 +492,7 @@ const useOsqthRefVol = async (): Promise<number> => {
 
 export const useInitController = () => {
   useIndex()
-  useUpdateEthPrice()
+  useUpdateEthUsdcPrice()
   useMark()
   useCurrentImpliedFunding()
   useDailyHistoricalFunding()

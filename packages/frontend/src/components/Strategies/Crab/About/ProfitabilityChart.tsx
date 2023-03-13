@@ -20,7 +20,7 @@ import { Skeleton } from '@material-ui/lab'
 import { currentImpliedFundingAtom } from '@state/controller/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
-import { useOnChainETHPrice } from '@hooks/useETHPrice'
+import { useEthUsdcPrice } from '@hooks/useETHPrice'
 import { formatNumber, formatCurrency } from '@utils/formatter'
 
 const useTooltipStyles = makeStyles(() => ({
@@ -124,11 +124,11 @@ const getDataPoints = (funding: number, ethPriceAtLastHedge: number, percentRang
 
 const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFunding }) => {
   const ethPriceAtLastHedgeValue = useAtomValue(ethPriceAtLastHedgeAtomV2)
-  const ethPrice = useOnChainETHPrice()
+  const ethUsdcPrice = useEthUsdcPrice()
 
   const funding = 2 * currentImpliedFunding // for 2 days
   const ethPriceAtLastHedge = Number(toTokenAmount(ethPriceAtLastHedgeValue, 18))
-  const currentEthPrice = Number(ethPrice)
+  const currentEthUsdcPrice = Number(ethUsdcPrice)
   const profitableBoundsPercent = Math.sqrt(funding)
   const lowerPriceBandForProfitability = ethPriceAtLastHedge - profitableBoundsPercent * ethPriceAtLastHedge
   const upperPriceBandForProfitability = ethPriceAtLastHedge + profitableBoundsPercent * ethPriceAtLastHedge
@@ -149,7 +149,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 
   const isMobileBreakpoint = useMediaQuery(theme.breakpoints.down('xs'))
 
-  const currentStrategyReturn = getStrategyReturnForETHPrice(currentEthPrice)
+  const currentStrategyReturn = getStrategyReturnForETHPrice(currentEthUsdcPrice)
 
   return (
     <Fade in={true}>
@@ -275,7 +275,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
             </ReferenceDot>
 
             <ReferenceDot
-              x={currentEthPrice}
+              x={currentEthUsdcPrice}
               y={currentStrategyReturn}
               r={5}
               fill={currentStrategyReturn < 0 ? errorColor : successColor}
@@ -284,7 +284,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
               <Label
                 fontFamily="DM Mono"
                 fontWeight={500}
-                value={'$' + formatNumber(currentEthPrice, 0)}
+                value={'$' + formatNumber(currentEthUsdcPrice, 0)}
                 position="insideTop"
                 offset={20}
                 fill={currentStrategyReturn < 0 ? errorColor : successColor}
