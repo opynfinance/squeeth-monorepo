@@ -458,12 +458,12 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
     function useNonce(uint256 _nonce) external {
         _useNonce(msg.sender, _nonce);
     }
+
     /**
      * @notice returns the domain separator
      * @return the domain separator
      */
     // solhint-disable-next-line func-name-mixedcase
-
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
     }

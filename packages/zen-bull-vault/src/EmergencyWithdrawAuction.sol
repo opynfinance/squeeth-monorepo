@@ -53,7 +53,6 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
 
     address immutable zenBull;
     address immutable crab;
-    address immutable bullStrategy;
     address immutable wPowerPerp;
     address immutable weth;
 
@@ -63,13 +62,11 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
     constructor(
         address _zenBull,
         address _crab,
-        address _bullStrategy,
         address _wPowerPerp,
         address _weth
     ) Ownable() EIP712("EmergencyWithdrawAuction", "1") {
         zenBull = _zenBull;
         crab = _crab;
-        bullStrategy = _bullStrategy;
         wPowerPerp = _wPowerPerp;
         weth = _weth;
     }
@@ -89,11 +86,9 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
 
         // get current crab vault state
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-            IZenBullStrategy(bullStrategy).getCrabVaultDetails();
+            IZenBullStrategy(zenBull).getCrabVaultDetails();
         // total amount of wPowerPerp to trade given crab amount
-        uint256 wPowerPerpAmount =
-            _calcWPowerPerpAmountFromCrab(_crabAmount, ethInCrab, wPowerPerpInCrab);
-
+        uint256 wPowerPerpAmount = _crabAmount.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
         uint256 wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this));
         _pullWPowerPerp(_orders, wPowerPerpAmount, _clearingPrice);
         wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)).sub(wPowerPerpBalance);
@@ -119,9 +114,18 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
     }
 
     /**
+     * @notice returns the domain separator
+     * @return the domain separator
+     */
+    // solhint-disable-next-line func-name-mixedcase
+    function DOMAIN_SEPARATOR() external view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
+
+    /**
      * @notice pushes funds to trader of auction orders (weth or wPowerPerp) depending on the direction of trade
      * @param _orders list of orders
-     * @param remainingAmount amount of wPowerPerp to trade
+     * @param _remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
      */
     function _pushWeth(Order[] memory _orders, uint256 _remainingAmount, uint256 _clearingPrice)
@@ -153,7 +157,7 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
      */
     function _pullWPowerPerp(
         Order[] memory _orders,
-        uint256 remainingAmount,
+        uint256 _remainingAmount,
         uint256 _clearingPrice
     ) internal {
         uint256 prevPrice = _orders[0].price;
@@ -167,15 +171,15 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
             require(currentPrice >= prevPrice);
             prevPrice = currentPrice;
 
-            if (remainingAmount < _orders[i].quantity) {
-                _orders[i].quantity = remainingAmount;
+            if (_remainingAmount < _orders[i].quantity) {
+                _orders[i].quantity = _remainingAmount;
 
                 IERC20(wPowerPerp).transferFrom(
                     _orders[i].trader, address(this), _orders[i].quantity
                 );
                 break;
             } else {
-                remainingAmount = remainingAmount.sub(_orders[i].quantity);
+                _remainingAmount = _remainingAmount.sub(_orders[i].quantity);
 
                 IERC20(wPowerPerp).transferFrom(
                     _orders[i].trader, address(this), _orders[i].quantity
