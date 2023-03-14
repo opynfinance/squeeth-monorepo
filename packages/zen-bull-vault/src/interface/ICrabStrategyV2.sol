@@ -10,4 +10,7 @@ interface ICrabStrategyV2 is IERC20 {
     function vaultId() external view returns (uint256);
     function withdraw(uint256 _crabAmount) external;
     function withdrawShutdown(uint256 _crabAmount) external;
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
+        external
+        returns (uint256);
 }
