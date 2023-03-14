@@ -54,7 +54,7 @@ library NettingLib {
 
             emit TransferWethFromMarketMakers(
                 _trader, _oSqthToMint, wethAmount, remainingOsqthToMint, _clearingPrice
-                );
+            );
             return (true, remainingOsqthToMint);
         } else {
             wethAmount = (_quantity * _clearingPrice) / 1e18;
@@ -63,7 +63,7 @@ library NettingLib {
 
             emit TransferWethFromMarketMakers(
                 _trader, _quantity, wethAmount, remainingOsqthToMint, _clearingPrice
-                );
+            );
             return (false, remainingOsqthToMint);
         }
     }
@@ -164,7 +164,7 @@ library NettingLib {
 
         emit TransferWethToMarketMaker(
             _trader, _bidId, _quantity, wethAmount, _remainingOsqthToPull, _clearingPrice
-            );
+        );
 
         return _remainingOsqthToPull;
     }

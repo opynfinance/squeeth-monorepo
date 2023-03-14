@@ -32,7 +32,7 @@ library PoolAddress {
         returns (PoolKey memory)
     {
         if (tokenA > tokenB) (tokenA, tokenB) = (tokenB, tokenA);
-        return PoolKey({token0: tokenA, token1: tokenB, fee: fee});
+        return PoolKey({ token0: tokenA, token1: tokenB, fee: fee });
     }
 
     /// @notice Deterministically computes the pool address given the factory and PoolKey

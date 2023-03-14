@@ -47,9 +47,9 @@ contract DepositAuction is ZenBullNettingBaseSetup {
         vm.deal(mm2, 5000e18);
 
         vm.prank(mm1);
-        IWETH(WETH).deposit{value: 1000e18}();
+        IWETH(WETH).deposit{ value: 1000e18 }();
         vm.prank(mm2);
-        IWETH(WETH).deposit{value: 1000e18}();
+        IWETH(WETH).deposit{ value: 1000e18 }();
     }
 
     function _calAuctionCrabAmount(uint256 _depositToProcess) internal view returns (uint256) {
