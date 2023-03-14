@@ -190,9 +190,9 @@ contract ZenAuctionTestFork is Test {
         IERC20(wPowerPerp).transfer(user2, 500e18);
         // mint more oSQTH
         vm.prank(user1);
-        controller.mintWPowerPerpAmount{value: 100000e18}(0, 10000e18, 0);
+        controller.mintWPowerPerpAmount{ value: 100000e18 }(0, 10000e18, 0);
         vm.prank(user2);
-        controller.mintWPowerPerpAmount{value: 100000e18}(0, 10000e18, 0);
+        controller.mintWPowerPerpAmount{ value: 100000e18 }(0, 10000e18, 0);
 
         _initateDepositInBull();
     }
@@ -326,7 +326,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -434,7 +434,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -561,7 +561,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -673,7 +673,7 @@ contract ZenAuctionTestFork is Test {
 
     function testLeverageRebalanceWhereCrIsInvalid() public {
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 50000e18}();
+        IWETH9(weth).deposit{ value: 50000e18 }();
         IERC20(weth).approve(address(swapRouter), 50000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -727,7 +727,7 @@ contract ZenAuctionTestFork is Test {
                 sqrtPriceLimitX96: 0
             })
         );
-        IWETH9(weth).deposit{value: 100e18}();
+        IWETH9(weth).deposit{ value: 100e18 }();
         IERC20(weth).approve(address(swapRouter), 100e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -785,7 +785,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -893,7 +893,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1002,7 +1002,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1113,7 +1113,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1221,7 +1221,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1329,7 +1329,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1439,7 +1439,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1544,7 +1544,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1650,7 +1650,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -1776,7 +1776,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1886,7 +1886,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -1996,7 +1996,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 2000e18}();
+            IWETH9(weth).deposit{ value: 2000e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -2128,7 +2128,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -2278,7 +2278,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -2396,7 +2396,7 @@ contract ZenAuctionTestFork is Test {
         {
             // move prices up
             vm.startPrank(user1);
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -2523,8 +2523,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -2704,8 +2704,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -2885,8 +2885,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -3066,8 +3066,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -3247,8 +3247,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -3433,8 +3433,8 @@ contract ZenAuctionTestFork is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
-            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
+            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
+            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -3616,7 +3616,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -3746,7 +3746,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -3927,7 +3927,7 @@ contract ZenAuctionTestFork is Test {
                     sqrtPriceLimitX96: 0
                 })
             );
-            IWETH9(weth).deposit{value: 200e18}();
+            IWETH9(weth).deposit{ value: 200e18 }();
             IERC20(weth).approve(address(swapRouter), 200e18);
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -4105,7 +4105,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4296,7 +4296,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4443,7 +4443,7 @@ contract ZenAuctionTestFork is Test {
 
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4635,7 +4635,7 @@ contract ZenAuctionTestFork is Test {
                 sqrtPriceLimitX96: 0
             })
         );
-        IWETH9(weth).deposit{value: 100e18}();
+        IWETH9(weth).deposit{ value: 100e18 }();
         IERC20(weth).approve(address(swapRouter), 100e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4706,7 +4706,7 @@ contract ZenAuctionTestFork is Test {
                 sqrtPriceLimitX96: 0
             })
         );
-        IWETH9(weth).deposit{value: 100e18}();
+        IWETH9(weth).deposit{ value: 100e18 }();
         IERC20(weth).approve(address(swapRouter), 100e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4748,7 +4748,7 @@ contract ZenAuctionTestFork is Test {
     function testLeverageRebalanceWhenEthDownWhenDeltaTooLowAfterTrade() public {
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4817,7 +4817,7 @@ contract ZenAuctionTestFork is Test {
                 sqrtPriceLimitX96: 0
             })
         );
-        IWETH9(weth).deposit{value: 100e18}();
+        IWETH9(weth).deposit{ value: 100e18 }();
         IERC20(weth).approve(address(swapRouter), 100e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4859,7 +4859,7 @@ contract ZenAuctionTestFork is Test {
     function testLeverageRebalanceWhenEthDownWhenCrTooLowAfterTrade() public {
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4927,7 +4927,7 @@ contract ZenAuctionTestFork is Test {
                 sqrtPriceLimitX96: 0
             })
         );
-        IWETH9(weth).deposit{value: 100e18}();
+        IWETH9(weth).deposit{ value: 100e18 }();
         IERC20(weth).approve(address(swapRouter), 100e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -4968,7 +4968,7 @@ contract ZenAuctionTestFork is Test {
     function testLeverageRebalanceWhenEthDownEthLimitTooLow() public {
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -5023,7 +5023,7 @@ contract ZenAuctionTestFork is Test {
     function testLeverageRebalanceWhenEthDown() public {
         // move prices down
         vm.startPrank(user1);
-        IWETH9(weth).deposit{value: 10000e18}();
+        IWETH9(weth).deposit{ value: 10000e18 }();
         IERC20(weth).approve(address(swapRouter), 10000e18);
         swapRouter.exactInputSingle(
             ISwapRouter.ExactInputSingleParams({
@@ -5188,7 +5188,7 @@ contract ZenAuctionTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{value: totalEthToBull}(params);
+        flashBull.flashDeposit{ value: totalEthToBull }(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);

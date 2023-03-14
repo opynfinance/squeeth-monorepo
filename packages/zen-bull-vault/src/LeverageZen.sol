@@ -241,7 +241,7 @@ contract LeverageZen is Ownable {
      * @param _ethToDeposit amount of ETH to deposit
      */
     function _depositWethInEuler(uint256 _ethToDeposit) internal {
-        IWETH9(weth).deposit{value: _ethToDeposit}();
+        IWETH9(weth).deposit{ value: _ethToDeposit }();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
     }
 

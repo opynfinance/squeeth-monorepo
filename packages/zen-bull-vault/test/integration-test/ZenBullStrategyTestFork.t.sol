@@ -191,7 +191,7 @@ contract ZenBullStrategyTestFork is Test {
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS2"));
-        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend }(crabToDeposit);
         vm.stopPrank();
     }
 
@@ -201,7 +201,7 @@ contract ZenBullStrategyTestFork is Test {
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("BS9"));
-        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend }(crabToDeposit);
         vm.stopPrank();
     }
 
@@ -213,7 +213,7 @@ contract ZenBullStrategyTestFork is Test {
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
         // Deposit 1 ETH less than needed
-        bullStrategy.deposit{value: wethToLend.sub(1e18)}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend.sub(1e18) }(crabToDeposit);
         vm.stopPrank();
     }
 
@@ -227,7 +227,7 @@ contract ZenBullStrategyTestFork is Test {
             testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         // Deposit 1 ETH more than needed (will refund)
-        bullStrategy.deposit{value: wethToLend.add(1e18)}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend.add(1e18) }(crabToDeposit);
         vm.stopPrank();
         uint256 userEthBalanceAfter = address(user1).balance;
         uint256 bullCrabBalanceAfter = bullStrategy.getCrabBalance();
@@ -394,7 +394,7 @@ contract ZenBullStrategyTestFork is Test {
 
     function testReceiveFromNonWethOrCrab() public {
         vm.startPrank(user1);
-        (bool status, bytes memory returndata) = address(bullStrategy).call{value: 5e18}("");
+        (bool status, bytes memory returndata) = address(bullStrategy).call{ value: 5e18 }("");
         vm.stopPrank();
         assertFalse(status);
         assertEq(_getRevertMsg(returndata), "BS1");
@@ -407,7 +407,7 @@ contract ZenBullStrategyTestFork is Test {
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit);
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
-        bullStrategy.deposit{value: wethToLend.wdiv(2e18)}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend.wdiv(2e18) }(crabToDeposit);
         vm.stopPrank();
     }
 
@@ -418,7 +418,7 @@ contract ZenBullStrategyTestFork is Test {
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(crabToDeposit.wdiv(2e18));
         IERC20(crabV2).approve(address(bullStrategy), crabToDeposit);
         vm.expectRevert(bytes("LB0"));
-        bullStrategy.deposit{value: wethToLend}(crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend }(crabToDeposit);
         vm.stopPrank();
     }
 
@@ -491,7 +491,7 @@ contract ZenBullStrategyTestFork is Test {
             testUtil.calcCollateralAndBorrowAmount(_crabToDeposit);
 
         IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
-        bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
+        bullStrategy.deposit{ value: wethToLend }(_crabToDeposit);
 
         return (wethToLend, usdcToBorrow);
     }
