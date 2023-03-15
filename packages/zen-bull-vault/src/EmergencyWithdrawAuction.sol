@@ -2,6 +2,8 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
+import { console } from "forge-std/console.sol";
+
 // interface
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
@@ -27,14 +29,14 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
         "Order(uint256 bidId,address trader,uint256 quantity,uint256 price,bool isBuying,uint256 expiry,uint256 nonce)"
     );
 
+    /// @dev address to transfer to the redeemed ZenBull tokens
     address internal constant BURN_ADDR = address(0);
-
     /// @dev 1e18
     uint256 internal constant ONE = 1e18;
     /// @dev TWAP period
     uint32 internal constant TWAP = 420;
-    /// @dev WETH decimals - USDC decimals
-    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
+    /// @dev auction's clearing price tolerance cannot exceed 20%
+    uint256 public constant AUCTION_CLEARING_PRICE_TOLERANCE = 2e17; // 20%
 
     struct Order {
         uint256 bidId;
@@ -49,26 +51,36 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
         bytes32 s;
     }
 
+    /// @dev allow redeeming ZenBull only after auction is executed
     bool isAlreadyAuctionned;
+    /// @dev full rebalance clearing price must be within this distance of the wPowerPerp:eth uniswap twap price
+    uint256 public clearingPriceTolerance = 5e16; // 5%
 
     address immutable zenBull;
     address immutable crab;
     address immutable wPowerPerp;
     address immutable weth;
+    address immutable ethWPowerPerpPool;
 
     /// @dev store the used flag for a nonce for each address
     mapping(address => mapping(uint256 => bool)) public nonces;
+
+    event SetClearingPriceTolerance(
+        uint256 oldPriceTolerance, uint256 newPriceTolerance
+    );
 
     constructor(
         address _zenBull,
         address _crab,
         address _wPowerPerp,
-        address _weth
+        address _weth,
+        address _ethWPowerPerpPool
     ) Ownable() EIP712("EmergencyWithdrawAuction", "1") {
         zenBull = _zenBull;
         crab = _crab;
         wPowerPerp = _wPowerPerp;
         weth = _weth;
+        ethWPowerPerpPool = _ethWPowerPerpPool;
     }
 
     /**
@@ -78,14 +90,39 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
         require(msg.sender == weth);
     }
 
+    /**
+     * @notice owner can set a threshold, scaled by 1e18 that determines the maximum tolerance between a clearing sale price and the current uniswap twap price
+     * @param _auctionPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
+     */
+    function setClearingPriceTolerance(uint256 _auctionPriceTolerance)
+        external
+        onlyOwner
+    {
+        // tolerance cannot be more than 20%
+        require(_auctionPriceTolerance <= AUCTION_CLEARING_PRICE_TOLERANCE);
+
+        emit SetClearingPriceTolerance(
+            clearingPriceTolerance, _auctionPriceTolerance
+        );
+
+        clearingPriceTolerance = _auctionPriceTolerance;
+    }
+
     function withdrawAuction(Order[] memory _orders, uint256 _crabAmount, uint256 _clearingPrice)
         external
         onlyOwner
     {
         require(_clearingPrice > 0);
 
+        uint256 wPowerPerpEthPrice =
+            UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+
+        require(
+            _clearingPrice <= wPowerPerpEthPrice.wmul((ONE.add(clearingPriceTolerance)))
+        );
+
         // get current crab vault state
-        (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+        (, uint256 wPowerPerpInCrab) =
             IZenBullStrategy(zenBull).getCrabVaultDetails();
         // total amount of wPowerPerp to trade given crab amount
         uint256 wPowerPerpAmount = _crabAmount.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
@@ -93,9 +130,13 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
         _pullWPowerPerp(_orders, wPowerPerpAmount, _clearingPrice);
         wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)).sub(wPowerPerpBalance);
 
+        console.log("b1 before", IERC20(weth).balanceOf(address(this)));
+        console.log("b2 before", address(this).balance);
+
         IERC20(wPowerPerp).approve(zenBull, wPowerPerpBalance);
         IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(_crabAmount, wPowerPerpBalance);
 
+        console.log("WETH FROM CRAB", IERC20(weth).balanceOf(address(this)));
         _pushWeth(_orders, wPowerPerpBalance, _clearingPrice);
 
         IWETH9(weth).withdraw(IERC20(weth).balanceOf(address(this)));
