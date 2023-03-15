@@ -69,7 +69,8 @@ contract WithdrawAuctionTest is Test {
         mm1 = vm.addr(mm1Pk);
 
         vm.startPrank(deployer);
-        emergencyAuction = new EmergencyWithdrawAuction(ZEN_BULL, CRAB, WPOWERPERP, WETH, ethSqueethPool);
+        emergencyAuction =
+            new EmergencyWithdrawAuction(ZEN_BULL, CRAB, WPOWERPERP, WETH, ethSqueethPool);
         emergencyAuction.transferOwnership(owner);
         sigUtil = new SigUtil(emergencyAuction.DOMAIN_SEPARATOR());
         vm.stopPrank();
@@ -84,7 +85,9 @@ contract WithdrawAuctionTest is Test {
 
         // osQTH whale
         vm.startPrank(0x8D5ACF995dae10BdbBada2044C7217ac99edF5Bf);
-        IERC20(WPOWERPERP).transfer(mm1, IERC20(WPOWERPERP).balanceOf(0x8D5ACF995dae10BdbBada2044C7217ac99edF5Bf));
+        IERC20(WPOWERPERP).transfer(
+            mm1, IERC20(WPOWERPERP).balanceOf(0x8D5ACF995dae10BdbBada2044C7217ac99edF5Bf)
+        );
         vm.stopPrank();
     }
 
@@ -116,8 +119,7 @@ contract WithdrawAuctionTest is Test {
 
         uint256 oSqthAmount = crabAmount.wmul(crabDebt).wdiv(IERC20(CRAB).totalSupply());
 
-        uint256 squeethEthPrice =
-            UniOracle._getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
+        uint256 squeethEthPrice = UniOracle._getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
         EmergencyWithdrawAuction.Order[] memory orders = new EmergencyWithdrawAuction.Order[](1);
         {
             // trader signature vars
@@ -176,7 +178,6 @@ contract WithdrawAuctionTest is Test {
         emergencyAuction.withdrawAuction(orders, crabAmount, squeethEthPrice);
         vm.stopPrank();
 
-
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
         assertEq(
             IERC20(WETH).balanceOf(mm1) - (oSqthAmount * squeethEthPrice / 1e18),
@@ -186,8 +187,15 @@ contract WithdrawAuctionTest is Test {
         console.log("ethAmountFromCrab", ethAmountFromCrab);
         console.log("oSqthAmount * squeethEthPrice / 1e18", oSqthAmount * squeethEthPrice / 1e18);
         console.log("address(emergencyAuction).balance", address(emergencyAuction).balance);
-        assertEq(address(emergencyAuction).balance - (ethAmountFromCrab - (oSqthAmount * squeethEthPrice / 1e18)), contractEthBalanceBefore);
-        assertEq(address(emergencyAuction).balance, ethAmountFromCrab - (oSqthAmount * squeethEthPrice / 1e18));
+        assertEq(
+            address(emergencyAuction).balance
+                - (ethAmountFromCrab - (oSqthAmount * squeethEthPrice / 1e18)),
+            contractEthBalanceBefore
+        );
+        assertEq(
+            address(emergencyAuction).balance,
+            ethAmountFromCrab - (oSqthAmount * squeethEthPrice / 1e18)
+        );
         // assertLt(IERC20(WPOWERPERP).balanceOf(mm1), mm1WpowerPerpBalanceBefore);
         // assertEq(
         //     IEulerSimpleLens(EULER_SIMPLE_LENS).getDTokenBalance(USDC, ZEN_BULL) + usdcToRepay,

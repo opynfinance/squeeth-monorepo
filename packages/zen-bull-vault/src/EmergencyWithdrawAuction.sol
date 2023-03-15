@@ -65,9 +65,7 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
     /// @dev store the used flag for a nonce for each address
     mapping(address => mapping(uint256 => bool)) public nonces;
 
-    event SetClearingPriceTolerance(
-        uint256 oldPriceTolerance, uint256 newPriceTolerance
-    );
+    event SetClearingPriceTolerance(uint256 oldPriceTolerance, uint256 newPriceTolerance);
 
     constructor(
         address _zenBull,
@@ -94,16 +92,11 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
      * @notice owner can set a threshold, scaled by 1e18 that determines the maximum tolerance between a clearing sale price and the current uniswap twap price
      * @param _auctionPriceTolerance the OTC price tolerance, in percent, scaled by 1e18
      */
-    function setClearingPriceTolerance(uint256 _auctionPriceTolerance)
-        external
-        onlyOwner
-    {
+    function setClearingPriceTolerance(uint256 _auctionPriceTolerance) external onlyOwner {
         // tolerance cannot be more than 20%
         require(_auctionPriceTolerance <= AUCTION_CLEARING_PRICE_TOLERANCE);
 
-        emit SetClearingPriceTolerance(
-            clearingPriceTolerance, _auctionPriceTolerance
-        );
+        emit SetClearingPriceTolerance(clearingPriceTolerance, _auctionPriceTolerance);
 
         clearingPriceTolerance = _auctionPriceTolerance;
     }
@@ -117,15 +110,13 @@ contract EmergencyWithdrawAuction is Ownable, EIP712 {
         uint256 wPowerPerpEthPrice =
             UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
 
-        require(
-            _clearingPrice <= wPowerPerpEthPrice.wmul((ONE.add(clearingPriceTolerance)))
-        );
+        require(_clearingPrice <= wPowerPerpEthPrice.wmul((ONE.add(clearingPriceTolerance))));
 
         // get current crab vault state
-        (, uint256 wPowerPerpInCrab) =
-            IZenBullStrategy(zenBull).getCrabVaultDetails();
+        (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
         // total amount of wPowerPerp to trade given crab amount
-        uint256 wPowerPerpAmount = _crabAmount.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
+        uint256 wPowerPerpAmount =
+            _crabAmount.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
         uint256 wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this));
         _pullWPowerPerp(_orders, wPowerPerpAmount, _clearingPrice);
         wPowerPerpBalance = IERC20(wPowerPerp).balanceOf(address(this)).sub(wPowerPerpBalance);
