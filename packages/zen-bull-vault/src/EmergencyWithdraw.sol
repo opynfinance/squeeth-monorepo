@@ -52,7 +52,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         address _weth,
         address _wPowerPerp,
         address _factory
-    ) ERC20("ZenBull Euler Part Recovery", "ZBEPR") UniFlash(_factory) {
+    ) ERC20("ZenBullEulerRecovery", "ZBER") UniFlash(_factory) {
         crab = _crab;
         zenBull = _zenBull;
         weth = _weth;
