@@ -5,7 +5,6 @@ pragma abicoder v2;
 // interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
@@ -22,13 +21,13 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     uint256 private _zenBullSupply;
 
     /// @dev crab strategy address
-    address public immutable crab;
+    address internal immutable crab;
     /// @dev ZenBull strategy address
-    address public immutable zenBull;
+    address internal immutable zenBull;
     /// @dev WETH address
-    address public immutable weth;
+    address internal immutable weth;
     /// @dev wPowerPerp address
-    address public immutable wPowerPerp;
+    address internal immutable wPowerPerp;
 
     event Withdraw(
         address indexed recepient,
@@ -99,7 +98,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             abi.encodePacked(crabToRedeem, wPowerPerpToRedeem)
         );
 
-        uint256 payout = IWETH9(weth).balanceOf(address(this));
+        uint256 payout = IERC20(weth).balanceOf(address(this));
         IWETH9(weth).withdraw(payout);
         payable(msg.sender).sendValue(payout);
 
