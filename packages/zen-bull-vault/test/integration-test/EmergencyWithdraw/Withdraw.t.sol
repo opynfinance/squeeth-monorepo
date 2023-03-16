@@ -107,7 +107,6 @@ contract WithdrawTest is Test {
         assertEq(
             user1RecoveryTokenBalanceAfter - user1RecoveryTokenBalanceBefore, user1BullBalanceBefore
         );
-        assertGt(user1EthBalanceAfter, user1RecoveryTokenBalanceBefore);
         assertEq(
             ethToWithdrawFromCrab.sub(maxWethForOsqth),
             user1EthBalanceAfter.sub(user1EthBalanceBefore)
