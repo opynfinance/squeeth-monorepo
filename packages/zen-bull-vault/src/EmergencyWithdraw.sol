@@ -76,7 +76,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
      * @param _zenBullAmount ZenBull amount to redeem
      * @param _maxEthForWPowerPerp max ETH to pay for flashswapped oSQTH amount
      */
-    function withdraw(uint256 _zenBullAmount, uint256 _maxEthForWPowerPerp) external {
+    function emergencyWithdrawEthFromCrab(uint256 _zenBullAmount, uint256 _maxEthForWPowerPerp) external {
         uint256 crabToRedeem =
             _zenBullAmount.wdiv(_zenBullSupply).wmul(IZenBullStrategy(zenBull).getCrabBalance());
         (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();

@@ -94,7 +94,7 @@ contract WithdrawTest is Test {
 
         vm.startPrank(user1);
         IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-        emergencyWithdraw.withdraw(user1BullBalanceBefore, maxWethForOsqth);
+        emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
         uint256 bullSupplyAfter = emergencyWithdraw.zenBullSupply();
@@ -137,7 +137,7 @@ contract WithdrawTest is Test {
 
             vm.startPrank(user1);
             IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-            emergencyWithdraw.withdraw(user1BullBalanceBefore, maxWethForOsqth);
+            emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
             vm.stopPrank();
 
             uint256 bullSupplyAfter = emergencyWithdraw.zenBullSupply();
@@ -178,7 +178,7 @@ contract WithdrawTest is Test {
 
         vm.startPrank(user2);
         IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-        emergencyWithdraw.withdraw(user2BullBalanceBefore, maxWethForOsqth);
+        emergencyWithdraw.emergencyWithdrawEthFromCrab(user2BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
         uint256 bullSupplyAfter = emergencyWithdraw.zenBullSupply();
