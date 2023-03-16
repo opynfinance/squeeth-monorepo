@@ -2,108 +2,129 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import { console } from "forge-std/console.sol";
-
 // interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+// contract
 import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
-import { Address } from "openzeppelin/utils/Address.sol";
 import { UniFlash } from "./UniFlash.sol";
+// lib
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
 
 contract EmergencyWithdraw is ERC20, UniFlash {
-	using StrategyMath for uint256;
-	using Address for address payable;
+    using StrategyMath for uint256;
+    using Address for address payable;
 
-	address public immutable crab;
+    /// @dev ZenBull total supply amount at the time of this contract deployment
+    uint256 private _zenBullSupply;
+
+    /// @dev crab strategy address
+    address public immutable crab;
+    /// @dev ZenBull strategy address
     address public immutable zenBull;
-	address public immutable weth;
-	address public immutable wPowerPerp;
-	
+    /// @dev WETH address
+    address public immutable weth;
+    /// @dev wPowerPerp address
+    address public immutable wPowerPerp;
 
-	/// @dev amount of crab token owned by bull strategy
-    uint256 private _bullSupply;
+    event Withdraw(
+        address indexed recepient,
+        uint256 zenBullAmountRedeemed,
+        uint256 crabAmountRedeemed,
+        uint256 wPowerPerpRedeemed,
+        uint256 ethReceived,
+        uint256 eulerRecoveryTokenAmount
+    );
 
-	constructor(
-		address _crab,
-		address _zenBull,
-		address _powerTokenController,
-		address _factory
-	) ERC20("Zen Bull Recovery token", "ZenBullEulerRecoveryToken") UniFlash(_factory) {
+    /**
+     * @dev constructor
+     * @param _crab crab address
+     * @param _zenBull ZenBull address
+     * @param _weth WETH address
+     * @param _wPowerPerp WPowerPerp address
+     * @param _factory Uni V3 factory contract
+     */
+    constructor(
+        address _crab,
+        address _zenBull,
+        address _weth,
+        address _wPowerPerp,
+        address _factory
+    ) ERC20("ZenBull Euler Part Recovery", "ZBEPR") UniFlash(_factory) {
         crab = _crab;
-		zenBull = _zenBull;
-		_bullSupply = IERC20(_zenBull).totalSupply();
-		weth = IController(_powerTokenController).weth();
-		wPowerPerp = IController(_powerTokenController).wPowerPerp();
-		IERC20(IController(IZenBullStrategy(_zenBull).powerTokenController()).wPowerPerp()).approve(
-            _zenBull, type(uint256).max
-        );
+        zenBull = _zenBull;
+        weth = _weth;
+        wPowerPerp = _wPowerPerp;
+
+        _zenBullSupply = IERC20(_zenBull).totalSupply();
+
+        IERC20(_wPowerPerp).approve(_zenBull, type(uint256).max);
     }
 
-	receive() external payable {
+    /**
+     * @dev receive ETH
+     */
+    receive() external payable {
         require(msg.sender == weth, "Can't receive ETH from this sender");
     }
 
-	struct WithdrawData {
-        uint256 bullAmount;
-		uint256 crabToRedeem;
-		uint256 wPowerPerpToRedeem;
-    }
+    /**
+     * @notice withdraw ETH deposited into crab
+     * @dev this will give the sender ZBEPR token as ownership for the ETH deposited in Euler pool
+     * @param _zenBullAmount ZenBull amount to redeem
+     * @param _maxEthForWPowerPerp max ETH to pay for flashswapped oSQTH amount
+     */
+    function withdraw(uint256 _zenBullAmount, uint256 _maxEthForWPowerPerp) external {
+        uint256 crabToRedeem =
+            _zenBullAmount.wdiv(_zenBullSupply).wmul(IZenBullStrategy(zenBull).getCrabBalance());
+        (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
+        uint256 wPowerPerpToRedeem =
+            crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
 
-	function withdraw(uint256 _bullAmount, uint256 _maxEthForPowerPerp) external {
-		(uint256 crabToRedeem, uint256 wPowerPerpToRedeem) = _getWithdrawTokenDetails(_bullAmount);
-		_bullSupply = _bullSupply.sub(_bullAmount);
+        _zenBullSupply = _zenBullSupply.sub(_zenBullAmount);
 
-		IERC20(zenBull).transferFrom(msg.sender, address(this), _bullAmount);
-		_mint(msg.sender, _bullAmount);
+        IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
+        _mint(msg.sender, _zenBullAmount);
 
-		_exactOutFlashSwap(
+        _exactOutFlashSwap(
             weth,
             wPowerPerp,
             3000,
             wPowerPerpToRedeem,
-            _maxEthForPowerPerp,
-            1,
-            abi.encodePacked(
-                _bullAmount,
-                crabToRedeem,
-                wPowerPerpToRedeem
-            )
+            _maxEthForWPowerPerp,
+            0,
+            abi.encodePacked(crabToRedeem, wPowerPerpToRedeem)
         );
 
-		if (address(this).balance > 0) {
-            payable(msg.sender).sendValue(address(this).balance);
-        }
-	}
+        uint256 payout = IWETH9(weth).balanceOf(address(this));
+        IWETH9(weth).withdraw(payout);
+        payable(msg.sender).sendValue(payout);
 
-	function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
-		WithdrawData memory data =
-                abi.decode(_uniFlashSwapData.callData, (WithdrawData));
-		IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(data.crabToRedeem, data.wPowerPerpToRedeem);
-
-		IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
-	
-		IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-	}
-
-
-	function getWithdrawTokenDetails(uint256 _bullAmount) external view returns (uint256, uint256) {
-    	return _getWithdrawTokenDetails(_bullAmount);
+        emit Withdraw(
+            msg.sender, _zenBullAmount, crabToRedeem, wPowerPerpToRedeem, payout, _zenBullAmount
+        );
     }
 
-	function bullSupply() external view returns (uint256) {
-		return _bullSupply;
-	}
+    /**
+     * @notice return the circulating total supply of ZenBull token
+     */
+    function zenBullSupply() external view returns (uint256) {
+        return _zenBullSupply;
+    }
 
-	function _getWithdrawTokenDetails(uint256 _bullAmount) internal view returns (uint256, uint256) {
-    	uint256 crabShare = IZenBullStrategy(zenBull).getCrabBalance().wmul(_bullAmount).wdiv(_bullSupply);
-		(uint256 ethInCrab, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
-		uint256 crabSupply = IERC20(crab).totalSupply();
-		uint256 wPowerPerpNeeded = wPowerPerpInCrab.wmul(crabShare).wdiv(crabSupply);
-		return (crabShare, wPowerPerpNeeded);
+    /**
+     * @dev function to handle Uni v3 FlashSwapCallBack
+     * @param _uniFlashSwapData data struct
+     */
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
+        (uint256 crabToRedeem, uint256 wPowerPerpToRedeem) =
+            abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+
+        IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
+
+        IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
     }
 }
