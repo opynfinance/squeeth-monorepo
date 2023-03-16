@@ -130,9 +130,11 @@ contract WithdrawTest is Test {
                 uint256 wPowerPerpToRedeem =
                     crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
 
-                maxWethForOsqth =
-                    Quoter(QUOTER).quoteExactOutputSingle(WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0);
-                ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+                maxWethForOsqth = Quoter(QUOTER).quoteExactOutputSingle(
+                    WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0
+                );
+                ethToWithdrawFromCrab =
+                    crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
             }
 
             vm.startPrank(user1);
@@ -148,7 +150,8 @@ contract WithdrawTest is Test {
             assertEq(bullSupplyAfter, bullSupplyBefore - user1BullBalanceBefore);
             assertEq(user1BullBalanceAfter, 0);
             assertEq(
-                user1RecoveryTokenBalanceAfter - user1RecoveryTokenBalanceBefore, user1BullBalanceBefore
+                user1RecoveryTokenBalanceAfter - user1RecoveryTokenBalanceBefore,
+                user1BullBalanceBefore
             );
             assertEq(
                 ethToWithdrawFromCrab.sub(maxWethForOsqth),
