@@ -100,9 +100,9 @@ contract EmergencyWithdrawScenario is Test {
                 _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
             uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
             uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
-            (uint256 ethInCrab,) =
-                ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            uint256 ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+            (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+            uint256 ethToWithdrawFromCrab =
+                crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
             // transfer some oSQTH from some squeether
             vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
             IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
@@ -121,7 +121,8 @@ contract EmergencyWithdrawScenario is Test {
             vm.stopPrank();
 
             uint256 user2EthBalanceAfter = address(user2).balance;
-            normalWithdrawPayoutBeforeEmergencyWithdraws = user2EthBalanceAfter.sub(user2EthBalanceBefore);
+            normalWithdrawPayoutBeforeEmergencyWithdraws =
+                user2EthBalanceAfter.sub(user2EthBalanceBefore);
         }
 
         // roll again before euler rekt
@@ -183,9 +184,9 @@ contract EmergencyWithdrawScenario is Test {
                 _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
             uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
             uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
-            (uint256 ethInCrab,) =
-                ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            uint256 ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+            (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+            uint256 ethToWithdrawFromCrab =
+                crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
             // transfer some oSQTH from some squeether
             vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
             IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
@@ -204,10 +205,14 @@ contract EmergencyWithdrawScenario is Test {
             vm.stopPrank();
 
             uint256 user2EthBalanceAfter = address(user2).balance;
-            normalWithdrawPayoutAfterEmergencyWithdraws = user2EthBalanceAfter.sub(user2EthBalanceBefore);
+            normalWithdrawPayoutAfterEmergencyWithdraws =
+                user2EthBalanceAfter.sub(user2EthBalanceBefore);
         }
 
-        assertLt(normalWithdrawPayoutAfterEmergencyWithdraws, normalWithdrawPayoutBeforeEmergencyWithdraws);
+        assertLt(
+            normalWithdrawPayoutAfterEmergencyWithdraws,
+            normalWithdrawPayoutBeforeEmergencyWithdraws
+        );
     }
 
     function _deployAndConfigure() internal {
