@@ -17,11 +17,9 @@ contract WithdrawTest is Test {
 
     address payable public constant ZEN_BULL = 0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507;
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
-    address public constant CONTROLLER = 0x64187ae08781B09368e6253F9E94951243A493D5;
     address public constant CRAB = 0x3B960E47784150F5a63777201ee2B15253D713e8;
     address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant WPOWERPERP = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
-    address public constant ETH_SQUEETH_POOL = 0x82c427AdFDf2d245Ec51D8046b41c4ee87F0d29C;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
 
     uint256 deployerPk;
