@@ -12,7 +12,7 @@ import { ZenBullStrategy } from "../../../src/ZenBullStrategy.sol";
 import { UniOracle } from "../../../src/UniOracle.sol";
 import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 
-contract WithdrawTest is Test {
+contract EmergencyWithdrawEthFromCrabTest is Test {
     using StrategyMath for uint256;
 
     address payable public constant ZEN_BULL = 0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507;
@@ -21,6 +21,10 @@ contract WithdrawTest is Test {
     address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant WPOWERPERP = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
+    address public constant ETH_USDC_POOL = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
+    address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
+    address public constant E_TOKEN = 0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D;
+    address public constant D_TOKEN = 0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42;
 
     uint256 deployerPk;
     uint256 user1Pk;
@@ -43,7 +47,8 @@ contract WithdrawTest is Test {
         user2 = vm.addr(user2Pk);
 
         vm.startPrank(deployer);
-        emergencyWithdraw = new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, WPOWERPERP, UNI_FACTORY);
+        emergencyWithdraw =
+        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
         vm.stopPrank();
 
         // prank ZenBull owner to point to a new auction contract address
@@ -69,7 +74,7 @@ contract WithdrawTest is Test {
         assertEq(emergencyWithdraw.zenBullSupply(), ZenBullStrategy(ZEN_BULL).totalSupply());
     }
 
-    function testWithdraw() public {
+    function testEmergencyWithdrawEthFromCrab() public {
         uint256 bullSupplyBefore = emergencyWithdraw.zenBullSupply();
         uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceBefore = address(user1).balance;
@@ -111,7 +116,7 @@ contract WithdrawTest is Test {
         );
     }
 
-    function testMultipleWithdraws() public {
+    function testMultipleEmergencyWithdrawEthFromCrab() public {
         {
             uint256 bullSupplyBefore = emergencyWithdraw.zenBullSupply();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);

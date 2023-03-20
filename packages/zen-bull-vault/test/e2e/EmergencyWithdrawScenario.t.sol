@@ -28,6 +28,7 @@ contract EmergencyWithdrawScenario is Test {
     address public constant ZEN_BULL_OWNER = 0xAfE66363c27EedB597a140c28B70b32F113fd5a8;
     address public constant E_TOKEN = 0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D;
     address public constant D_TOKEN = 0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42;
+    address public constant ETH_USDC_POOL = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
 
     uint256 deployerPk;
     uint256 user1Pk;
@@ -217,7 +218,8 @@ contract EmergencyWithdrawScenario is Test {
 
     function _deployAndConfigure() internal {
         vm.startPrank(deployer);
-        emergencyWithdraw = new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, WPOWERPERP, UNI_FACTORY);
+        emergencyWithdraw =
+        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
         testUtil = new TestUtil(ZEN_BULL, CONTROLLER, E_TOKEN, D_TOKEN, CRAB);
         vm.stopPrank();
 
