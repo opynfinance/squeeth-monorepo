@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Link, Typography } from '@material-ui/core'
 
@@ -7,9 +7,8 @@ import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab
 import MyPosition from './MyPosition'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
-import BullTrade from './BullTrade'
+import RecoveryWithdraw from './BullTrade/RecoveryWithdraw'
 import Alert from '@components/Alert'
-import { Modal } from '@components/Modal/Modal'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -54,8 +53,6 @@ const Bull: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
 
-  const [isModalOpen, setModalOpen] = useState(true)
-
   useCurrentCrabPositionValueV2()
   useInitBullStrategy()
 
@@ -63,23 +60,19 @@ const Bull: React.FC = () => {
     setStrategyDataV2()
   }, [setStrategyDataV2])
 
-  const closeModal = () => {
-    setModalOpen(false)
-  }
-
   return (
     <>
       <div style={{ marginTop: '16px' }}>
         <Alert severity="warning">
           <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
-            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
+            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please{' '}
             <Link
-              style={{ fontSize: '15px', fontWeight: 500, marginLeft: '5px', marginRight: '5px' }}
+              style={{ fontSize: '15px', fontWeight: 500 }}
               target="_blank"
               href="https://discord.com/invite/2NFdXaE"
             >
               join discord
-            </Link>
+            </Link>{' '}
             for updates.
           </Typography>
         </Alert>
@@ -94,24 +87,10 @@ const Bull: React.FC = () => {
         </div>
         <div className={classes.rightColumn}>
           <div className={classes.tradeSection}>
-            <BullTrade />
+            <RecoveryWithdraw />
           </div>
         </div>
       </div>
-
-      <Modal title="Zen Bull Impacted" open={isModalOpen} handleClose={closeModal}>
-        <Typography variant="subtitle1">
-          Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
-          <Link
-            style={{ fontSize: '15px', marginLeft: '5px', marginRight: '5px' }}
-            target="_blank"
-            href="https://discord.com/invite/2NFdXaE"
-          >
-            join discord
-          </Link>
-          for updates.
-        </Typography>
-      </Modal>
     </>
   )
 }
