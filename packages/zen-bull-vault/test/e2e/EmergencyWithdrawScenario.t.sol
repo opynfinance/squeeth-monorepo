@@ -249,6 +249,29 @@ contract EmergencyWithdrawScenario is Test {
         vm.deal(user1, 100e18);
     }
 
+    function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
+        uint256 bullSupply = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 maxWethForOsqth;
+        uint256 ethToWithdrawFromCrab;
+        {
+            uint256 bullShare = _zenBullAmount.wdiv(bullSupply);
+            uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
+            (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+                ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+            uint256 wPowerPerpToRedeem =
+                crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+
+            maxWethForOsqth =
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0);
+            ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+        }
+
+        vm.startPrank(_user);
+        IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
+        emergencyWithdraw.emergencyWithdrawEthFromCrab(_zenBullAmount, maxWethForOsqth);
+        vm.stopPrank();
+    }
+
     function _calcWPowerPerpAndCrabNeededForWithdraw(uint256 _bullAmount)
         internal
         view

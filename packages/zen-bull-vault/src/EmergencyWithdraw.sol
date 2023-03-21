@@ -23,6 +23,8 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     using Address for address payable;
 
     uint256 internal constant ONE = 1e18;
+    /// @dev WETH decimals - USDC decimals
+    uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     uint256 public constant MAX_WETH_PER_DEBT_REPAY = 100 ether;
     uint256 public constant LIMIT_PRICE_TOLERANCE = 1e16; // 1%
 
@@ -63,6 +65,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     );
     event EmergencyRepayEulerDebt(
         address indexed sender,
+        uint256 ratio,
         uint256 usdcToRepay,
         uint256 wethToWithdraw,
         uint256 maxEthForUsdc,
@@ -157,22 +160,23 @@ contract EmergencyWithdraw is ERC20, UniFlash {
      * @notice repay a portion of Euler debt and withdraw WETH collateral to this contract based on ZenBullEulerRecovery amount
      * @dev this will revert of WETH to withdraw from Euler is greater than max, or limit price breach the tolerance %
      * @dev if all ZenBullEulerRecovery are burnt, the ETH withdrawl will be activated
-     * @param _wethToWithdraw amount of WETH to withdraw from Euler
+     * @param _ratio ratio of WETH to withdraw from total WETH in Euler in 18 decimals (e.g 2e17 => 0.2 => 20%)
      * @param _maxEthForUsdc max ETH to pay for 1 USDC
      * @param _poolFee ETH/USDC Uni v3 pool fee
      */
     function emergencyRepayEulerDebt(
-        uint256 _wethToWithdraw,
+        uint256 _ratio,
         uint256 _maxEthForUsdc,
         uint24 _poolFee
     ) external {
+        uint256 usdcToRepay = _ratio.wmul(IEulerDToken(dToken).balanceOf(zenBull));
+        uint256 wethToWithdraw = _ratio.wmul(IEulerEToken(eToken).balanceOfUnderlying(zenBull));
+
         require(
-            _wethToWithdraw <= MAX_WETH_PER_DEBT_REPAY,
+            wethToWithdraw <= MAX_WETH_PER_DEBT_REPAY,
             "WETH to withdraw is greater than max per repay"
         );
 
-        uint256 ratio = _wethToWithdraw.wdiv(IEulerEToken(eToken).balanceOfUnderlying(zenBull));
-        uint256 usdcToRepay = ratio.wmul(IEulerDToken(dToken).balanceOf(zenBull));
         uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
 
         require(
@@ -185,9 +189,9 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             usdc,
             _poolFee,
             usdcToRepay,
-            usdcToRepay.wmul(_maxEthForUsdc.mul(1e12)),
+            usdcToRepay.mul(WETH_DECIMALS_DIFF).wmul(_maxEthForUsdc),
             uint8(FLASH_SOURCE.EMERGENCY_REPAY_EULER_DEBT),
-            abi.encodePacked(usdcToRepay, _wethToWithdraw)
+            abi.encodePacked(usdcToRepay, wethToWithdraw)
         );
 
         IWETH9(weth).withdraw(IERC20(weth).balanceOf(address(this)));
@@ -200,7 +204,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         }
 
         emit EmergencyRepayEulerDebt(
-            msg.sender, usdcToRepay, _wethToWithdraw, _maxEthForUsdc, ethWithdrawalActivated
+            msg.sender, _ratio, usdcToRepay, wethToWithdraw, _maxEthForUsdc, ethWithdrawalActivated
         );
     }
 
@@ -208,7 +212,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
      * @notice withdraw ETH from this contract, will revert if ZenBull still have some debt not repaid
      */
     function withdrawEth(uint256 _recoveryTokenAmount) external {
-        require(ethWithdrawalActivated);
+        require(ethWithdrawalActivated, "ETH withdrawal not activated yet");
 
         uint256 payout = _recoveryTokenAmount.wmul(address(this).balance).wdiv(
             zenBullTotalSupplyForEulerWithdrawal

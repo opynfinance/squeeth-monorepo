@@ -62,32 +62,22 @@ contract EmergencyRepayEulerDebtTest is Test {
         vm.label(deployer, "Deployer");
         vm.label(user1, "user1");
         vm.label(address(emergencyWithdraw), "EmergencyWithdraw");
-
-        // bull whale
-        vm.startPrank(0xB845d3C82853b362ADF47A045c087d52384a7776);
-        IERC20(ZEN_BULL).transfer(
-            user1, IERC20(ZEN_BULL).balanceOf(0xB845d3C82853b362ADF47A045c087d52384a7776) / 2
-        );
-        IERC20(ZEN_BULL).transfer(
-            user2, IERC20(ZEN_BULL).balanceOf(0xB845d3C82853b362ADF47A045c087d52384a7776) / 2
-        );
-        vm.stopPrank();
     }
 
     function testEmergencyRepayEulerDebt() public {
         uint256 maxEthForUsdc =
             (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
-        uint256 wethToWithdraw = 100e18;
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
-        uint256 ratio = wethToWithdraw.wdiv(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+        uint256 ratio = 2e17;
+        uint256 wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
         uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
         uint256 ethToRepayForFlashswap =
             Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
 
         vm.startPrank(user1);
-        emergencyWithdraw.emergencyRepayEulerDebt(wethToWithdraw, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
         vm.stopPrank();
 
         uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -102,78 +92,70 @@ contract EmergencyRepayEulerDebtTest is Test {
         );
     }
 
+    function testMultipleEmergencyRepayEulerDebt() public {
+        uint256 totalEthInContract;
+
+        uint256 ratio = 1e17;
+        while(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
+            if (ratio > 1e18) ratio = 1e18;
+
+            uint256 maxEthForUsdc =
+                (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
+            uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
+            uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
+            uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
+            uint256 wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+            if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
+                ratio = ratio / 2;
+                wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+            }
+            uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
+            // console.log("usdcToRepay", usdcToRepay);
+            uint256 ethToRepayForFlashswap =
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+            totalEthInContract = totalEthInContract.add(wethToWithdraw.sub(ethToRepayForFlashswap));
+
+            vm.startPrank(user1);
+            emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
+            vm.stopPrank();
+
+            uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
+            uint256 zenBullDebtAfter = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
+            uint256 zenBullCollateralAfter = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
+
+            assertEq(zenBullDebtBefore.sub(usdcToRepay), zenBullDebtAfter);
+            assertApproxEqRel(zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1000000000);
+            assertEq(
+                emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)),
+                emergencyContractEthBalanceAfter
+            );
+
+            ratio = ratio.mul(2);
+        }
+
+        assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
+        assertEq(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL), 0);
+        assertEq(address(emergencyWithdraw).balance, totalEthInContract);
+    }
+
+
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
-        uint256 user1RecoveryTokenBalanceBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-
-        uint256 zenBullAmount = IERC20(ZEN_BULL).balanceOf(user1);
-        assertGt(zenBullAmount, 0);
-        _emergencyWithdrawEthFromCrab(user1, zenBullAmount);
-
-        uint256 user1RecoveryTokenAfterBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-        assertEq(
-            user1RecoveryTokenAfterBeforeCrabWithdraw.sub(
-                user1RecoveryTokenBalanceBeforeCrabWithdraw
-            ),
-            zenBullAmount
-        );
-
         uint256 maxEthForUsdc =
             (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.sub(5e17)));
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
-        emergencyWithdraw.emergencyRepayEulerDebt(100e18, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(2e17, maxEthForUsdc, 3000);
         vm.stopPrank();
     }
 
     function testEmergencyRepayEulerDebtWhenWethToWithdrawGreaterThanMax() public {
-        uint256 user1RecoveryTokenBalanceBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-
-        uint256 zenBullAmount = IERC20(ZEN_BULL).balanceOf(user1);
-        assertGt(zenBullAmount, 0);
-        _emergencyWithdrawEthFromCrab(user1, zenBullAmount);
-
-        uint256 user1RecoveryTokenAfterBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-        assertEq(
-            user1RecoveryTokenAfterBeforeCrabWithdraw.sub(
-                user1RecoveryTokenBalanceBeforeCrabWithdraw
-            ),
-            zenBullAmount
-        );
-
         uint256 maxEthForUsdc =
             (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
-        emergencyWithdraw.emergencyRepayEulerDebt(200e18, maxEthForUsdc, 3000);
-        vm.stopPrank();
-    }
-
-    function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
-        uint256 bullSupply = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
-        uint256 maxWethForOsqth;
-        uint256 ethToWithdrawFromCrab;
-        {
-            uint256 bullShare = _zenBullAmount.wdiv(bullSupply);
-            uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
-            (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-                ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            uint256 wPowerPerpToRedeem =
-                crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
-
-            maxWethForOsqth =
-                Quoter(QUOTER).quoteExactOutputSingle(WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0);
-            ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
-        }
-
-        vm.startPrank(_user);
-        IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-        emergencyWithdraw.emergencyWithdrawEthFromCrab(_zenBullAmount, maxWethForOsqth);
+        emergencyWithdraw.emergencyRepayEulerDebt(1e18, maxEthForUsdc, 3000);
         vm.stopPrank();
     }
 }
