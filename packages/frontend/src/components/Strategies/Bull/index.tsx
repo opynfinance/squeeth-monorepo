@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Link, Typography } from '@material-ui/core'
 
-import { useInitBullStrategy } from '@state/bull/hooks'
+import { useInitBullRecoveryStrategy } from '@state/bull/hooks'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import MyPosition from './MyPosition'
 import About from './About'
@@ -54,7 +54,7 @@ const Bull: React.FC = () => {
   const classes = useStyles()
 
   useCurrentCrabPositionValueV2()
-  useInitBullStrategy()
+  useInitBullRecoveryStrategy()
 
   useEffect(() => {
     setStrategyDataV2()
