@@ -74,7 +74,6 @@ contract WithdrawEthTest is Test {
         vm.stopPrank();
     }
 
-
     function testWithdrawEthWhenNotActivated() public {
         _emergencyWithdrawEthFromCrab(user1, IERC20(ZEN_BULL).balanceOf(user1));
 
@@ -89,12 +88,14 @@ contract WithdrawEthTest is Test {
     function testWithdrawEth() public {
         {
             uint256 ratio = 1e17;
-            while(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
+            while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
                 if (ratio > 1e18) ratio = 1e18;
 
-                uint256 maxEthForUsdc =
-                    (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
-                uint256 wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+                uint256 maxEthForUsdc = (
+                    Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
+                ).wmul((ONE.add(1e16)));
+                uint256 wethToWithdraw =
+                    ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
                 if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
                     ratio = ratio / 2;
                     wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
@@ -113,7 +114,8 @@ contract WithdrawEthTest is Test {
 
         _emergencyWithdrawEthFromCrab(user1, IERC20(ZEN_BULL).balanceOf(user1));
         uint256 recoveryTokenAmount = emergencyWithdraw.balanceOf(user1);
-        uint256 totalSupplyForEulerWithdrawal = emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal();
+        uint256 totalSupplyForEulerWithdrawal =
+            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal();
         uint256 payout = recoveryTokenAmount.wmul(address(emergencyWithdraw).balance).wdiv(
             totalSupplyForEulerWithdrawal
         );
@@ -128,8 +130,10 @@ contract WithdrawEthTest is Test {
         assertEq(user1EthBalanceBefore.add(payout), address(user1).balance);
         assertEq(contractEthBalanceBefore.sub(payout), address(emergencyWithdraw).balance);
         assertEq(emergencyWithdraw.balanceOf(user1), 0);
-        assertEq(emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal(), totalSupplyForEulerWithdrawal.sub(recoveryTokenAmount));
-
+        assertEq(
+            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal(),
+            totalSupplyForEulerWithdrawal.sub(recoveryTokenAmount)
+        );
     }
 
     function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {

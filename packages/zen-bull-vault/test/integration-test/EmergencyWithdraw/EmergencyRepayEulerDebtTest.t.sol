@@ -96,11 +96,12 @@ contract EmergencyRepayEulerDebtTest is Test {
         uint256 totalEthInContract;
 
         uint256 ratio = 1e17;
-        while(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
+        while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
             if (ratio > 1e18) ratio = 1e18;
 
-            uint256 maxEthForUsdc =
-                (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
+            uint256 maxEthForUsdc = (
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
+            ).wmul((ONE.add(1e16)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -124,7 +125,9 @@ contract EmergencyRepayEulerDebtTest is Test {
             uint256 zenBullCollateralAfter = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
 
             assertEq(zenBullDebtBefore.sub(usdcToRepay), zenBullDebtAfter);
-            assertApproxEqRel(zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1000000000);
+            assertApproxEqRel(
+                zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1000000000
+            );
             assertEq(
                 emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)),
                 emergencyContractEthBalanceAfter
@@ -137,7 +140,6 @@ contract EmergencyRepayEulerDebtTest is Test {
         assertEq(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL), 0);
         assertEq(address(emergencyWithdraw).balance, totalEthInContract);
     }
-
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
         uint256 maxEthForUsdc =

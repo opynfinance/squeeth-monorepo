@@ -164,11 +164,9 @@ contract EmergencyWithdraw is ERC20, UniFlash {
      * @param _maxEthForUsdc max ETH to pay for 1 USDC
      * @param _poolFee ETH/USDC Uni v3 pool fee
      */
-    function emergencyRepayEulerDebt(
-        uint256 _ratio,
-        uint256 _maxEthForUsdc,
-        uint24 _poolFee
-    ) external {
+    function emergencyRepayEulerDebt(uint256 _ratio, uint256 _maxEthForUsdc, uint24 _poolFee)
+        external
+    {
         uint256 usdcToRepay = _ratio.wmul(IEulerDToken(dToken).balanceOf(zenBull));
         uint256 wethToWithdraw = _ratio.wmul(IEulerEToken(eToken).balanceOfUnderlying(zenBull));
 
