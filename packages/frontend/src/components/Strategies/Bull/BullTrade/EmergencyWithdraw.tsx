@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef, useMemo } from 'react'
+import React, { useCallback, useState, useRef } from 'react'
 import { Box, Typography, Link, CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
@@ -15,13 +15,11 @@ import { indexAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { addressesAtom } from '@state/positions/atoms'
-import { addressAtom } from '@state/wallet/atoms'
 import { bullRecoveryETHPositionAtom, bullRecoveryETHValuePerShareAtom } from '@state/bull/atoms'
-import { useGetEmergencyWithdrawParams } from '@state/bull/hooks'
+import { useGetEmergencyWithdrawParams, useBullEmergencyWithdrawEthFromCrab } from '@state/bull/hooks'
 import useAppCallback from '@hooks/useAppCallback'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
-import { useBullPosition } from '@hooks/useBullPosition'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
@@ -33,6 +31,7 @@ import { BULL_EVENTS } from '@utils/amplitude'
 import { BULL_TOKEN_DECIMALS, BIG_ZERO } from '@constants/index'
 import ethLogo from 'public/images/eth-logo.svg'
 import { useZenBullStyles } from './styles'
+import { BullTradeType, BullTransactionConfirmation } from './index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -43,7 +42,9 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const RecoveryWithdraw: React.FC = () => {
+const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({
+  onTxnConfirm,
+}) => {
   const zenBullClasses = useZenBullStyles()
   const classes = useStyles()
 
@@ -66,6 +67,7 @@ const RecoveryWithdraw: React.FC = () => {
 
   const { track } = useAmplitude()
   const getEmergencyWithdrawParams = useGetEmergencyWithdrawParams()
+  const bullEmergencyWithdrawEthFromCrab = useBullEmergencyWithdrawEthFromCrab()
 
   const trackUserEnteredWithdrawAmount = useCallback(
     (amount: BigNumber) => track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_AMOUNT_ENTERED, { amount: amount.toNumber() }),
@@ -73,6 +75,7 @@ const RecoveryWithdraw: React.FC = () => {
   )
 
   const bullWithdrawAmountRef = useRef(BIG_ZERO)
+  const ongoingTransactionEthAmountRef = useRef(BIG_ZERO)
 
   const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, bullEmergencyWithdraw)
   const logAndRunTransaction = useTrackTransactionFlow()
@@ -137,10 +140,37 @@ const RecoveryWithdraw: React.FC = () => {
     setTxLoading(false)
   }
 
+  const onTxnConfirmed = useCallback(
+    (id?: string) => {
+      onInputChange(BIG_ZERO)
+      onTxnConfirm({
+        status: true,
+        amount: ongoingTransactionEthAmountRef.current,
+        tradeType: BullTradeType.Withdraw,
+        txId: id,
+      })
+      resetTracking()
+      ongoingTransactionEthAmountRef.current = new BigNumber(0)
+    },
+    [onTxnConfirm, resetTracking, onInputChange],
+  )
+
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
-      console.log('withdrawing...')
+      ongoingTransactionEthAmountRef.current = ethWithdrawAmount
+
+      const dataToTrack = {
+        amount: bullWithdrawAmountRef.current.toNumber(),
+        priceImpact: quote.priceImpact,
+      }
+
+      await bullEmergencyWithdrawEthFromCrab(
+        bullWithdrawAmountRef.current,
+        quote.maxEthForWPowerPerp,
+        dataToTrack,
+        onTxnConfirmed,
+      )
     } catch (e) {
       console.log(e)
     }
@@ -271,11 +301,4 @@ const RecoveryWithdraw: React.FC = () => {
   )
 }
 
-const Wrapper: React.FC = () => {
-  const address = useAtomValue(addressAtom)
-  useBullPosition(address ?? '')
-
-  return <RecoveryWithdraw />
-}
-
-export default Wrapper
+export default EmergencyWithdraw

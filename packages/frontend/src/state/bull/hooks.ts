@@ -22,6 +22,7 @@ import {
   flashBullContractAtom,
   quoterContractAtom,
   wethETokenContractAtom,
+  bullEmergencyWithdrawContractAtom,
 } from '@state/contracts/atoms'
 import { indexAtom } from '@state/controller/atoms'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
@@ -832,4 +833,75 @@ export const useGetEmergencyWithdrawParams = () => {
   }
 
   return getCachedWithdrawParams
+}
+
+export const useBullEmergencyWithdrawEthFromCrab = () => {
+  const bullEmergencyWithdrawContract = useAtomValue(bullEmergencyWithdrawContractAtom)
+  const address = useAtomValue(addressAtom)
+  const { bullEmergencyWithdraw } = useAtomValue(addressesAtom)
+  const { track } = useAmplitude()
+  const handleTransaction = useHandleTransaction()
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.', 'withdraw-bull-recovery'),
+  )
+
+  const bullEmergencyWithdrawFromCrab = async (
+    bullAmount: BigNumber,
+    maxEthForWPowerPerp: BigNumber,
+    dataToTrack?: any,
+    onTxConfirmed?: () => void,
+  ) => {
+    if (!bullEmergencyWithdrawContract) {
+      return
+    }
+
+    track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_CLICK, dataToTrack)
+
+    let gasEstimate
+    let gas
+
+    try {
+      const _bullAmount = fromTokenAmount(bullAmount, 18).toFixed(0)
+      const _maxEthForWPowerPerp = fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0)
+
+      try {
+        gasEstimate = await bullEmergencyWithdrawContract.methods
+          .emergencyWithdrawEthFromCrab(_bullAmount, _maxEthForWPowerPerp)
+          .estimateGas({
+            to: bullEmergencyWithdraw,
+            from: address,
+          })
+
+        console.log('gasEstimate for bullEmergencyWithdraw', gasEstimate)
+        if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
+      } catch (e) {
+        track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_WRONG_GAS)
+        alert('Error occurred, please refresh and try again')
+        throw e
+      }
+      gas = Number((gasEstimate * 1.2).toFixed(0))
+      await handleTransaction(
+        bullEmergencyWithdrawContract.methods.emergencyWithdrawEthFromCrab(_bullAmount, _maxEthForWPowerPerp).send({
+          from: address,
+          gas: gasEstimate ? Number((gasEstimate * 1.2).toFixed(0)) : undefined,
+        }),
+        onTxConfirmed,
+      )
+
+      track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
+    } catch (e: any) {
+      const trackingData = { ...(dataToTrack ?? {}), gas }
+      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_REVERT, trackingData) : null
+      e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
+
+      track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_FAILED, {
+        code: e?.code,
+        message: e?.message,
+        ...trackingData,
+      })
+      console.log(e)
+    }
+  }
+
+  return bullEmergencyWithdrawFromCrab
 }
