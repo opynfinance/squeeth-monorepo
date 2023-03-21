@@ -46,6 +46,9 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       padding: '32px 24px',
     },
+    topAlert: {
+      marginTop: '16px',
+    },
   }),
 )
 
@@ -62,7 +65,7 @@ const Bull: React.FC = () => {
 
   return (
     <>
-      <div style={{ marginTop: '16px' }}>
+      <div className={classes.topAlert}>
         <Alert severity="warning">
           <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
             Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please{' '}
