@@ -175,7 +175,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             "WETH to withdraw is greater than max per repay"
         );
 
-        uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
+        uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, usdc, weth, 420, false);
 
         require(
             _maxEthForUsdc <= ethUsdPrice.wmul((ONE.add(LIMIT_PRICE_TOLERANCE))),
