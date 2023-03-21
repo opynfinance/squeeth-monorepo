@@ -1,9 +1,9 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useRef, useMemo } from 'react'
 import { Box, Typography, Link, CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
-import clsx from 'clsx'
+import debounce from 'lodash/debounce'
 
 import { InputToken } from '@components/InputNew'
 import Metric from '@components/Metric'
@@ -16,14 +16,21 @@ import { useSelectWallet } from '@state/wallet/hooks'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { addressesAtom } from '@state/positions/atoms'
 import { addressAtom } from '@state/wallet/atoms'
+import { bullRecoveryETHPositionAtom, bullRecoveryETHValuePerShareAtom } from '@state/bull/atoms'
+import { useGetEmergencyWithdrawParams } from '@state/bull/hooks'
 import useAppCallback from '@hooks/useAppCallback'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 import { useBullPosition } from '@hooks/useBullPosition'
+import useExecuteOnce from '@hooks/useExecuteOnce'
+import useAmplitude from '@hooks/useAmplitude'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import useAppMemo from '@hooks/useAppMemo'
 import { useRestrictUser } from '@context/restrict-user'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import { BULL_EVENTS } from '@utils/amplitude'
+import { BULL_TOKEN_DECIMALS, BIG_ZERO } from '@constants/index'
 import ethLogo from 'public/images/eth-logo.svg'
 import { useZenBullStyles } from './styles'
 
@@ -40,11 +47,12 @@ const RecoveryWithdraw: React.FC = () => {
   const zenBullClasses = useZenBullStyles()
   const classes = useStyles()
 
-  const [withdrawEthAmount, setWithdrawEthAmount] = useState('0')
+  const [ethWithdrawAmount, setEthWithdrawAmount] = useState(BIG_ZERO)
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quote, setQuote] = useState({
+    maxEthForWPowerPerp: BIG_ZERO,
+    wPowerPerpPoolFee: 0,
     priceImpact: 0,
-    poolFee: 0,
   })
   const [txLoading, setTxLoading] = useState(false)
 
@@ -53,24 +61,68 @@ const RecoveryWithdraw: React.FC = () => {
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { bullStrategy, bullEmergencyWithdraw } = useAtomValue(addressesAtom)
+  const bullRecoveryPositionValueInEth = useAtomValue(bullRecoveryETHPositionAtom)
+  const bullRecoveryEthPrice = useAtomValue(bullRecoveryETHValuePerShareAtom)
 
-  const bullPositionValueInEth = new BigNumber(100)
+  const { track } = useAmplitude()
+  const getEmergencyWithdrawParams = useGetEmergencyWithdrawParams()
+
+  const trackUserEnteredWithdrawAmount = useCallback(
+    (amount: BigNumber) => track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    [track],
+  )
+
+  const bullWithdrawAmountRef = useRef(BIG_ZERO)
+
+  const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, bullEmergencyWithdraw)
   const logAndRunTransaction = useTrackTransactionFlow()
+  const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
+  const { value: bullBalance } = useTokenBalance(bullStrategy, 15, BULL_TOKEN_DECIMALS)
 
-  const onInputChange = useAppCallback((ethToWithdraw: string) => {
-    setWithdrawEthAmount(ethToWithdraw)
-  }, [])
+  const debouncedGetWithdrawQuote = debounce(async (bullToWithdraw: BigNumber) => {
+    // ignore if its not the most recent request
+    if (!bullWithdrawAmountRef.current.isEqualTo(bullToWithdraw)) {
+      return
+    }
+
+    setQuoteLoading(true)
+    getEmergencyWithdrawParams(bullToWithdraw)
+      .then((_quote) => {
+        setQuote(_quote)
+      })
+      .finally(() => {
+        setQuoteLoading(false)
+      })
+  }, 500)
+
+  const onInputChange = useAppCallback(
+    (ethToWithdraw: BigNumber) => {
+      ethToWithdraw.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(ethToWithdraw) : null
+
+      const _bullToWithdraw = ethToWithdraw.div(bullRecoveryPositionValueInEth).times(bullBalance)
+      bullWithdrawAmountRef.current = _bullToWithdraw
+      setEthWithdrawAmount(ethToWithdraw)
+      debouncedGetWithdrawQuote(_bullToWithdraw)
+    },
+    [bullBalance, bullRecoveryPositionValueInEth, debouncedGetWithdrawQuote, trackWithdrawAmountEnteredOnce],
+  )
+  const onInputChangeBNWrapper = useAppCallback(
+    (ethToWithdraw: string) => {
+      onInputChange(new BigNumber(ethToWithdraw))
+    },
+    [onInputChange],
+  )
 
   const setWithdrawMax = useAppCallback(() => {
-    onInputChange(bullPositionValueInEth.toString())
-  }, [bullPositionValueInEth, onInputChange])
+    onInputChange(bullRecoveryPositionValueInEth)
+  }, [bullRecoveryPositionValueInEth, onInputChange])
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
       setSlippage(amount.toNumber())
-      onInputChange(withdrawEthAmount)
+      onInputChange(ethWithdrawAmount)
     },
-    [setSlippage, onInputChange, withdrawEthAmount],
+    [setSlippage, onInputChange, ethWithdrawAmount],
   )
 
   const onApproveClick = async () => {
@@ -78,7 +130,7 @@ const RecoveryWithdraw: React.FC = () => {
     try {
       await logAndRunTransaction(async () => {
         await approveBull(() => console.log('Approved'))
-      }, BULL_EVENTS.APPROVE_WITHDRAW_BULL)
+      }, BULL_EVENTS.APPROVE_WITHDRAW_BULL_RECOVERY)
     } catch (e) {
       console.log(e)
     }
@@ -95,13 +147,17 @@ const RecoveryWithdraw: React.FC = () => {
     setTxLoading(false)
   }
 
-  const withdrawError = null
+  const withdrawError = useAppMemo(() => {
+    if (ethWithdrawAmount.gt(bullRecoveryPositionValueInEth)) {
+      return 'Withdraw amount greater than strategy balance'
+    }
+  }, [ethWithdrawAmount, bullRecoveryPositionValueInEth])
 
   const { isRestricted } = useRestrictUser()
   const selectWallet = useSelectWallet()
-  const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, bullEmergencyWithdraw)
 
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+  const bullAllowanceInEth = bullAllowance.times(bullRecoveryEthPrice)
 
   return (
     <>
@@ -119,9 +175,9 @@ const RecoveryWithdraw: React.FC = () => {
       <div className={zenBullClasses.tradeContainer}>
         <InputToken
           id="bull-withdraw-eth-input"
-          value={withdrawEthAmount}
-          onInputChange={onInputChange}
-          balance={bullPositionValueInEth}
+          value={ethWithdrawAmount.toString()}
+          onInputChange={onInputChangeBNWrapper}
+          balance={bullRecoveryPositionValueInEth}
           logo={ethLogo}
           symbol={'ETH'}
           usdPrice={ethIndexPrice}
@@ -188,7 +244,7 @@ const RecoveryWithdraw: React.FC = () => {
             <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="bull-unsupported-network-btn">
               {'Unsupported Network'}
             </PrimaryButtonNew>
-          ) : bullAllowance.lt(withdrawEthAmount) ? (
+          ) : bullAllowanceInEth.lt(ethWithdrawAmount) ? (
             <PrimaryButtonNew
               fullWidth
               id="bull-deposit-btn"
