@@ -15,6 +15,13 @@ contract GoerliDeployEmergencyWithdraw is Script {
         0x55C0ceF3cc64F511C34b18c720bCf38feC6C6fFa;
     address public constant WPOWERPERP =
         0x9421c968D28DD789363FbD8c9aA5cF2090F0a656;
+    address public constant ETH_USDC_POOL =
+        0x5d3EfE9157003f05be0d4031F00D43F952d6F6b7;
+    address public constant USDC = 0x306bf03b689f7d7e5e9D3aAC87a068F16AFF9482;
+    address public constant E_TOKEN =
+        0xEf5e087D827194732Bc1843351ccA80982E154eB;
+    address public constant D_TOKEN =
+        0x356079240635B276A63065478471d89340443C49;
 
     // Deploy contracts
     EmergencyWithdraw emergencyWithdraw;
@@ -29,14 +36,23 @@ contract GoerliDeployEmergencyWithdraw is Script {
             CRAB,
             ZEN_BULL,
             WETH,
+            USDC,
             WPOWERPERP,
+            ETH_USDC_POOL,
+            E_TOKEN,
+            D_TOKEN,
             UNI_FACTORY
         );
 
         vm.stopBroadcast();
 
         require(
-            emergencyWithdraw.zenBullSupply() == IERC20(ZEN_BULL).totalSupply()
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal() ==
+                IERC20(ZEN_BULL).totalSupply()
+        );
+        require(
+            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal() ==
+                IERC20(ZEN_BULL).totalSupply()
         );
     }
 }
