@@ -276,14 +276,6 @@ const Wrapper: React.FC = () => {
   const tvl = collateralValue.integerValue()
   const isLoadingTVL = crabUSDValue.isZero() || ethPrice.isZero()
 
-  console.log(
-    ethDepositedInEuler.isZero(),
-    bullCrabBalance.isZero(),
-    crabUSDValue.isZero(),
-    eulerUSDCDebt.isZero(),
-    ethPrice.isZero(),
-  )
-
   const isLoading = isLoadingPnLSeries || isLoadingTVL
 
   const classes = useStyles()

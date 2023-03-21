@@ -14,8 +14,8 @@ import { useAtomValue } from 'jotai'
 import { RestrictUserProvider } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
-import { useOnboard } from 'src/state/wallet/hooks'
-import { addressAtom, networkIdAtom, onboardAddressAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
+import { useOnboard, useConnectWallet } from 'src/state/wallet/hooks'
+import { networkIdAtom, onboardAddressAtom, walletFailVisibleAtom } from 'src/state/wallet/atoms'
 import { useUpdateSqueethPrices, useUpdateSqueethPoolData } from 'src/state/squeethPool/hooks'
 import { useInitController } from 'src/state/controller/hooks'
 import { ComputeSwapsProvider } from 'src/state/positions/providers'
@@ -27,8 +27,7 @@ import { checkIsValidAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import '@utils/amplitude'
-import { setUserId } from '@amplitude/analytics-browser'
-import { WALLET_EVENTS, initializeAmplitude } from '@utils/amplitude'
+import { initializeAmplitude } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
@@ -114,11 +113,13 @@ function MyApp({ Component, pageProps }: any) {
 }
 
 const Init = () => {
-  const setAddress = useUpdateAtom(addressAtom)
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const firstAddressCheck = useRef(true)
-  const { track } = useAmplitude()
+  const router = useRouter()
+  const connectWallet = useConnectWallet()
+
+  const isZenbullPage = router.pathname === '/strategies/bull'
 
   useAppEffect(() => {
     if (!onboardAddress) {
@@ -127,9 +128,15 @@ const Init = () => {
 
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
-        setAddress(onboardAddress)
-        setUserId(onboardAddress)
-        track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
+        if (isZenbullPage) {
+          // connect automatically (to zenbull) only if user has specifically connected to zenbull page
+          const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
+          if (hasConnectedToZenbullBefore) {
+            connectWallet(onboardAddress)
+          }
+        } else {
+          connectWallet(onboardAddress)
+        }
       } else {
         if (firstAddressCheck.current) {
           firstAddressCheck.current = false
@@ -138,7 +145,7 @@ const Init = () => {
         }
       }
     })
-  }, [onboardAddress, setAddress, setWalletFailVisible, track])
+  }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
 
   useOnboard()
   useTrackSiteReload()

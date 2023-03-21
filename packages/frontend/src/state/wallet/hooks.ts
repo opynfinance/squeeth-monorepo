@@ -6,6 +6,7 @@ import Onboard from 'bnc-onboard'
 import Web3 from 'web3'
 import { ethers } from 'ethers'
 import { useQuery, useQueryClient } from 'react-query'
+import { useRouter } from 'next/router'
 
 import {
   onboardAtom,
@@ -33,38 +34,60 @@ import useAmplitude from '@hooks/useAmplitude'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
-  const setAddress = useUpdateAtom(addressAtom)
-  const onboardAddress = useAtomValue(onboardAddressAtom)
+
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
-  const { track } = useAmplitude()
+  const { pathname } = useRouter()
+  const connectWallet = useConnectWallet()
 
   const onWalletSelect = async () => {
     if (!onboard) return
-    onboard.walletSelect().then(async (success) => {
-      if (success) {
-        // if onboard address is invalid
-        if (onboardAddress) {
-          checkIsValidAddress(onboardAddress).then((valid) => {
-            if (valid) {
-              setAddress(onboardAddress)
-              // Analytics
-              setUserId(onboardAddress)
-              track(WALLET_EVENTS.WALLET_CONNECTED, { address: onboardAddress })
-            } else {
-              setWalletFailVisible(true)
-            }
-          })
-        }
 
-        await onboard.walletCheck()
+    const success = await onboard.walletSelect()
+    if (success) {
+      const { address } = onboard.getState()
+
+      // if onboard address is invalid
+      if (address) {
+        checkIsValidAddress(address).then((valid) => {
+          if (valid) {
+            connectWallet(address)
+
+            // in case connected specifically to zenbull
+            const isZenbullPage = pathname === '/strategies/bull'
+            if (isZenbullPage) {
+              window.localStorage.setItem('walletConnectedToZenbull', 'true')
+            }
+          } else {
+            setWalletFailVisible(true)
+          }
+        })
       }
-    })
+
+      // Run wallet checks to make sure that user is ready to transact
+      await onboard.walletCheck()
+    }
   }
 
   return onWalletSelect
 }
 
-export const useDiscconectWallet = () => {
+export const useConnectWallet = () => {
+  const setAddress = useUpdateAtom(addressAtom)
+  const { track } = useAmplitude()
+
+  const connectWallet = useAppCallback(
+    (address: string) => {
+      setAddress(address)
+      setUserId(address) // analytics
+      track(WALLET_EVENTS.WALLET_CONNECTED, { address: address })
+    },
+    [setAddress, track],
+  )
+
+  return connectWallet
+}
+
+export const useDisconnectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
   const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
