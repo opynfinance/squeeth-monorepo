@@ -281,7 +281,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
           ) : bullAllowanceInEth.lt(ethWithdrawAmount) ? (
             <PrimaryButtonNew
               fullWidth
-              id="bull-deposit-btn"
+              id="bull-withdraw-btn"
               variant={'contained'}
               onClick={onApproveClick}
               disabled={quoteLoading || txLoading || !!withdrawError}
@@ -291,7 +291,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
           ) : (
             <PrimaryButtonNew
               fullWidth
-              id="bull-deposit-btn"
+              id="bull-withdraw-btn"
               variant={'contained'}
               onClick={onWithdrawClick}
               disabled={quoteLoading || txLoading || !!withdrawError}
