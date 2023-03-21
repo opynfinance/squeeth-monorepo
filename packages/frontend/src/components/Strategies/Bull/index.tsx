@@ -7,7 +7,7 @@ import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab
 import MyPosition from './MyPosition'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
-import RecoveryWithdraw from './BullTrade/RecoveryWithdraw'
+import BullTrade from './BullTrade'
 import Alert from '@components/Alert'
 
 const useStyles = makeStyles((theme) =>
@@ -87,7 +87,7 @@ const Bull: React.FC = () => {
         </div>
         <div className={classes.rightColumn}>
           <div className={classes.tradeSection}>
-            <RecoveryWithdraw />
+            <BullTrade />
           </div>
         </div>
       </div>
