@@ -70,7 +70,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const bullEmergencyWithdrawEthFromCrab = useBullEmergencyWithdrawEthFromCrab()
 
   const trackUserEnteredWithdrawAmount = useCallback(
-    (amount: BigNumber) => track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_AMOUNT_ENTERED, { amount: amount.toNumber() }),
+    (amount: BigNumber) => track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
     [track],
   )
 
@@ -116,16 +116,20 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
     [onInputChange],
   )
 
-  const setWithdrawMax = useAppCallback(() => {
+  const setWithdrawMax = () => {
+    track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_SET_AMOUNT_MAX, {
+      amount: bullRecoveryPositionValueInEth.toNumber(),
+    })
     onInputChange(bullRecoveryPositionValueInEth)
-  }, [bullRecoveryPositionValueInEth, onInputChange])
+  }
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
+      track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
       setSlippage(amount.toNumber())
       onInputChange(ethWithdrawAmount)
     },
-    [setSlippage, onInputChange, ethWithdrawAmount],
+    [setSlippage, onInputChange, ethWithdrawAmount, track],
   )
 
   const onApproveClick = async () => {
@@ -133,7 +137,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
     try {
       await logAndRunTransaction(async () => {
         await approveBull(() => console.log('Approved'))
-      }, BULL_EVENTS.APPROVE_WITHDRAW_BULL_RECOVERY)
+      }, BULL_EVENTS.APPROVE_EMERGENCY_WITHDRAW_BULL)
     } catch (e) {
       console.log(e)
     }

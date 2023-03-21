@@ -855,7 +855,7 @@ export const useBullEmergencyWithdrawEthFromCrab = () => {
       return
     }
 
-    track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_CLICK, dataToTrack)
+    track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_CLICK, dataToTrack)
 
     let gasEstimate
     let gas
@@ -875,7 +875,8 @@ export const useBullEmergencyWithdrawEthFromCrab = () => {
         console.log('gasEstimate for bullEmergencyWithdraw', gasEstimate)
         if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
       } catch (e) {
-        track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_WRONG_GAS)
+        console.error('gas estimate error: ', e)
+        track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_WRONG_GAS)
         alert('Error occurred, please refresh and try again')
         throw e
       }
@@ -888,13 +889,13 @@ export const useBullEmergencyWithdrawEthFromCrab = () => {
         onTxConfirmed,
       )
 
-      track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
+      track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
     } catch (e: any) {
       const trackingData = { ...(dataToTrack ?? {}), gas }
-      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_REVERT, trackingData) : null
+      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_REVERT, trackingData) : null
       e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
 
-      track(BULL_EVENTS.WITHDRAW_BULL_RECOVERY_FAILED, {
+      track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_FAILED, {
         code: e?.code,
         message: e?.message,
         ...trackingData,
