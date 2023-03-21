@@ -99,8 +99,9 @@ contract EmergencyRepayEulerDebtTest is Test {
         while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
             if (ratio > 1e18) ratio = 1e18;
 
-            uint256 maxEthForUsdc = 
-                (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e15)));
+            uint256 maxEthForUsdc = (
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
+            ).wmul((ONE.add(1e15)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -141,8 +142,7 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
-        uint256 maxEthForUsdc =
-            Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0);
+        uint256 maxEthForUsdc = Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0);
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
         emergencyWithdraw.emergencyRepayEulerDebt(2e17, maxEthForUsdc, 3000);
