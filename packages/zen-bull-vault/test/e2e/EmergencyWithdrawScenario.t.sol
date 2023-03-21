@@ -73,7 +73,7 @@ contract EmergencyWithdrawScenario is Test {
         vm.stopPrank();
     }
 
-    function testWithdrawWhenEulerIsNotWorking() public {
+    function testEmergencyWithdrawEthFromCrabWhenEulerIsNotWorking() public {
         uint256 bullToRedeem = IERC20(ZEN_BULL).balanceOf(user1);
         (uint256 wPowerPerpToRedeem,) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToRedeem);
         // transfer some oSQTH from some squeether
@@ -88,7 +88,7 @@ contract EmergencyWithdrawScenario is Test {
         vm.stopPrank();
     }
 
-    function testWithdrawWhenEulerWorksAndAfterEmergencyWithdraw() public {
+    function testEmergencyWithdrawEthFromCrabWhenEulerWorksAndAfterEmergencyWithdraw() public {
         // block number before euler rekt
         vm.rollFork(16817896);
         _deployAndConfigure();
@@ -132,7 +132,7 @@ contract EmergencyWithdrawScenario is Test {
 
         // withdraw through emergency contract
         {
-            uint256 bullSupplyBefore = emergencyWithdraw.zenBullSupply();
+            uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
 
             uint256 maxWethForOsqth;
@@ -155,7 +155,7 @@ contract EmergencyWithdrawScenario is Test {
             vm.stopPrank();
 
             // user3 emergency withdraw
-            bullSupplyBefore = emergencyWithdraw.zenBullSupply();
+            bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
             uint256 user3BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user3);
 
             {

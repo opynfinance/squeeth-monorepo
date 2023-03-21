@@ -75,36 +75,18 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebt() public {
-        uint256 user1RecoveryTokenBalanceBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-
-        uint256 zenBullAmount = IERC20(ZEN_BULL).balanceOf(user1);
-        assertGt(zenBullAmount, 0);
-        _emergencyWithdrawEthFromCrab(user1, zenBullAmount);
-
-        uint256 user1RecoveryTokenAfterBeforeCrabWithdraw =
-            IERC20(emergencyWithdraw).balanceOf(user1);
-        assertEq(
-            user1RecoveryTokenAfterBeforeCrabWithdraw.sub(
-                user1RecoveryTokenBalanceBeforeCrabWithdraw
-            ),
-            zenBullAmount
-        );
-
         uint256 maxEthForUsdc =
             (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
-
-        uint256 recoveryTokenAmount = user1RecoveryTokenAfterBeforeCrabWithdraw / 5;
+        uint256 wethToWithdraw = 100e18;
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
-        uint256 recoverShare = recoveryTokenAmount.wdiv(IERC20(emergencyWithdraw).totalSupply());
-        uint256 usdcToRepay = recoverShare.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
-        uint256 wethToWithdraw =
-            recoverShare.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+        uint256 ratio = wethToWithdraw.wdiv(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+        uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
+        uint256 ethToRepayForFlashswap = Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
 
         vm.startPrank(user1);
-        emergencyWithdraw.emergencyRepayEulerDebt(recoveryTokenAmount, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(wethToWithdraw, maxEthForUsdc, 3000);
         vm.stopPrank();
 
         uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -112,7 +94,8 @@ contract EmergencyRepayEulerDebtTest is Test {
         uint256 zenBullCollateralAfter = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
 
         assertEq(zenBullDebtBefore.sub(usdcToRepay), zenBullDebtAfter);
-        assertEq(zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter);
+        assertApproxEqRel(zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1);
+        assertEq(emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)), emergencyContractEthBalanceAfter);
     }
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
@@ -132,12 +115,13 @@ contract EmergencyRepayEulerDebtTest is Test {
             zenBullAmount
         );
 
-        uint256 maxEthForUsdc = Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0);
+        uint256 maxEthForUsdc =
+            (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.sub(5e17)));
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
         emergencyWithdraw.emergencyRepayEulerDebt(
-            user1RecoveryTokenAfterBeforeCrabWithdraw / 5, maxEthForUsdc, 3000
+            100e18, maxEthForUsdc, 3000
         );
         vm.stopPrank();
     }
@@ -165,13 +149,13 @@ contract EmergencyRepayEulerDebtTest is Test {
         vm.startPrank(user1);
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
         emergencyWithdraw.emergencyRepayEulerDebt(
-            user1RecoveryTokenAfterBeforeCrabWithdraw, maxEthForUsdc, 3000
+            200e18, maxEthForUsdc, 3000
         );
         vm.stopPrank();
     }
 
     function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
-        uint256 bullSupply = emergencyWithdraw.zenBullSupply();
+        uint256 bullSupply = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
