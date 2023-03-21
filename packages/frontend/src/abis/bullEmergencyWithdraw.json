@@ -4,7 +4,11 @@
       { "internalType": "address", "name": "_crab", "type": "address" },
       { "internalType": "address", "name": "_zenBull", "type": "address" },
       { "internalType": "address", "name": "_weth", "type": "address" },
+      { "internalType": "address", "name": "_usdc", "type": "address" },
       { "internalType": "address", "name": "_wPowerPerp", "type": "address" },
+      { "internalType": "address", "name": "_ethUSDCPool", "type": "address" },
+      { "internalType": "address", "name": "_eToken", "type": "address" },
+      { "internalType": "address", "name": "_dToken", "type": "address" },
       { "internalType": "address", "name": "_factory", "type": "address" }
     ],
     "stateMutability": "nonpayable",
@@ -18,6 +22,19 @@
       { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }
     ],
     "name": "Approval",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "ratio", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "usdcToRepay", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "wethToWithdraw", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "maxEthForUsdc", "type": "uint256" },
+      { "indexed": false, "internalType": "bool", "name": "isEthWithdrawalActivated", "type": "bool" }
+    ],
+    "name": "EmergencyRepayEulerDebt",
     "type": "event"
   },
   {
@@ -42,6 +59,29 @@
     ],
     "name": "Withdraw",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "recepient", "type": "address" },
+      { "indexed": false, "internalType": "uint256", "name": "ethAmount", "type": "uint256" }
+    ],
+    "name": "WithdrawEth",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "LIMIT_PRICE_TOLERANCE",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_WETH_PER_DEBT_REPAY",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "inputs": [
@@ -89,12 +129,30 @@
   },
   {
     "inputs": [
+      { "internalType": "uint256", "name": "_ratio", "type": "uint256" },
+      { "internalType": "uint256", "name": "_maxEthForUsdc", "type": "uint256" },
+      { "internalType": "uint24", "name": "_poolFee", "type": "uint24" }
+    ],
+    "name": "emergencyRepayEulerDebt",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "uint256", "name": "_zenBullAmount", "type": "uint256" },
       { "internalType": "uint256", "name": "_maxEthForWPowerPerp", "type": "uint256" }
     ],
     "name": "emergencyWithdrawEthFromCrab",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ethWithdrawalActivated",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -161,8 +219,22 @@
     "type": "function"
   },
   {
+    "inputs": [{ "internalType": "uint256", "name": "_recoveryTokenAmount", "type": "uint256" }],
+    "name": "withdrawEth",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [],
-    "name": "zenBullSupply",
+    "name": "zenBullTotalSupplyForCrabWithdrawal",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "zenBullTotalSupplyForEulerWithdrawal",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
