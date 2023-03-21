@@ -71,7 +71,10 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
     }
 
     function testSetup() public {
-        assertEq(emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal(), ZenBullStrategy(ZEN_BULL).totalSupply());
+        assertEq(
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal(),
+            ZenBullStrategy(ZEN_BULL).totalSupply()
+        );
     }
 
     function testEmergencyWithdrawEthFromCrab() public {

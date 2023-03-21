@@ -83,7 +83,8 @@ contract EmergencyRepayEulerDebtTest is Test {
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
         uint256 ratio = wethToWithdraw.wdiv(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
         uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
-        uint256 ethToRepayForFlashswap = Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+        uint256 ethToRepayForFlashswap =
+            Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
 
         vm.startPrank(user1);
         emergencyWithdraw.emergencyRepayEulerDebt(wethToWithdraw, maxEthForUsdc, 3000);
@@ -95,7 +96,10 @@ contract EmergencyRepayEulerDebtTest is Test {
 
         assertEq(zenBullDebtBefore.sub(usdcToRepay), zenBullDebtAfter);
         assertApproxEqRel(zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1);
-        assertEq(emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)), emergencyContractEthBalanceAfter);
+        assertEq(
+            emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)),
+            emergencyContractEthBalanceAfter
+        );
     }
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
@@ -120,9 +124,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
-        emergencyWithdraw.emergencyRepayEulerDebt(
-            100e18, maxEthForUsdc, 3000
-        );
+        emergencyWithdraw.emergencyRepayEulerDebt(100e18, maxEthForUsdc, 3000);
         vm.stopPrank();
     }
 
@@ -148,9 +150,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
-        emergencyWithdraw.emergencyRepayEulerDebt(
-            200e18, maxEthForUsdc, 3000
-        );
+        emergencyWithdraw.emergencyRepayEulerDebt(200e18, maxEthForUsdc, 3000);
         vm.stopPrank();
     }
 

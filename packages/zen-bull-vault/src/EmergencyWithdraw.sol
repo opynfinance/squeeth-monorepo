@@ -121,13 +121,15 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     function emergencyWithdrawEthFromCrab(uint256 _zenBullAmount, uint256 _maxEthForWPowerPerp)
         external
     {
-        uint256 crabToRedeem =
-            _zenBullAmount.wdiv(zenBullTotalSupplyForCrabWithdrawal).wmul(IZenBullStrategy(zenBull).getCrabBalance());
+        uint256 crabToRedeem = _zenBullAmount.wdiv(zenBullTotalSupplyForCrabWithdrawal).wmul(
+            IZenBullStrategy(zenBull).getCrabBalance()
+        );
         (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
         uint256 wPowerPerpToRedeem =
             crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
 
-        zenBullTotalSupplyForCrabWithdrawal = zenBullTotalSupplyForCrabWithdrawal.sub(_zenBullAmount);
+        zenBullTotalSupplyForCrabWithdrawal =
+            zenBullTotalSupplyForCrabWithdrawal.sub(_zenBullAmount);
 
         IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
         _mint(msg.sender, _zenBullAmount);
@@ -198,11 +200,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         }
 
         emit EmergencyRepayEulerDebt(
-            msg.sender,
-            usdcToRepay,
-            _wethToWithdraw,
-            _maxEthForUsdc,
-            ethWithdrawalActivated
+            msg.sender, usdcToRepay, _wethToWithdraw, _maxEthForUsdc, ethWithdrawalActivated
         );
     }
 
@@ -212,8 +210,11 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     function withdrawEth(uint256 _recoveryTokenAmount) external {
         require(ethWithdrawalActivated);
 
-        uint256 payout = _recoveryTokenAmount.wmul(address(this).balance).wdiv(zenBullTotalSupplyForEulerWithdrawal);
-        zenBullTotalSupplyForEulerWithdrawal = zenBullTotalSupplyForEulerWithdrawal.sub(_recoveryTokenAmount);
+        uint256 payout = _recoveryTokenAmount.wmul(address(this).balance).wdiv(
+            zenBullTotalSupplyForEulerWithdrawal
+        );
+        zenBullTotalSupplyForEulerWithdrawal =
+            zenBullTotalSupplyForEulerWithdrawal.sub(_recoveryTokenAmount);
 
         _burn(msg.sender, _recoveryTokenAmount);
         payable(msg.sender).sendValue(payout);
