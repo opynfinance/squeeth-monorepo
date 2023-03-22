@@ -238,15 +238,16 @@ export const useSetBullRecoveryState = () => {
 
     try {
       const p1 = bullContract.methods.getCrabBalance().call()
-      const p2 = bullEmergencyWithdrawContract.methods.zenBullTotalSupplyForCrabWithdrawal().call()
+      const p2 = bullContract.methods.totalSupply().call()
+      const p4 = bullEmergencyWithdrawContract.methods.redeemedZenBullAmountForCrabWithdrawal().call()
       const p3 = bullContract.methods.strategyCap().call()
 
-      const [crabBalance, totalSupply, bullCap] = await Promise.all([p1, p2, p3])
+      const [crabBalance, totalSupply, bullCap, redeemed] = await Promise.all([p1, p2, p3, p4])
 
       if (!isMounted()) return null
 
       setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
-      setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS))
+      setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS).minus(toTokenAmount(redeemed, WETH_DECIMALS)))
       setBullCap(toTokenAmount(bullCap, WETH_DECIMALS))
     } catch (error) {
       console.error(error)
