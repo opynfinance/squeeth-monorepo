@@ -44,9 +44,9 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     address internal immutable dToken;
 
     /// @dev total amount of redeemed ZenBull through emergencyWithdrawEthFromCrab
-    uint256 public redeemedZenBullAmount;
+    uint256 public redeemedZenBullAmountForCrabWithdrawal;
     /// @dev ZenBull total supply amount at the time of this contract deployment, used for Euler withdrawal calc
-    uint256 public zenBullTotalSupplyForEulerWithdrawal;
+    uint256 public redeemedRecoveryAmountForEulerWithdrawal;
     /// @dev if true, enable ETH withdrawal from this contract
     bool public ethWithdrawalActivated;
 
@@ -101,7 +101,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         eToken = _eToken;
         dToken = _dToken;
 
-        zenBullTotalSupplyForEulerWithdrawal = IERC20(_zenBull).totalSupply();
+        // redeemedRecoveryAmountForEulerWithdrawal = IERC20(_zenBull).totalSupply();
 
         IERC20(_wPowerPerp).approve(_zenBull, type(uint256).max);
         IERC20(_usdc).approve(_zenBull, type(uint256).max);
@@ -125,7 +125,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     {
         IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
 
-        uint256 circulatingTotalSupply = IERC20(zenBull).totalSupply().sub(redeemedZenBullAmount);
+        uint256 circulatingTotalSupply = IERC20(zenBull).totalSupply().sub(redeemedZenBullAmountForCrabWithdrawal);
         uint256 crabToRedeem = _zenBullAmount.wdiv(circulatingTotalSupply).wmul(
             IZenBullStrategy(zenBull).getCrabBalance()
         );
@@ -135,7 +135,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
 
         _mint(msg.sender, _zenBullAmount);
 
-        redeemedZenBullAmount = redeemedZenBullAmount.add(_zenBullAmount);
+        redeemedZenBullAmountForCrabWithdrawal = redeemedZenBullAmountForCrabWithdrawal.add(_zenBullAmount);
 
         _exactOutFlashSwap(
             weth,
@@ -218,10 +218,10 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         require(ethWithdrawalActivated, "ETH withdrawal not activated yet");
 
         uint256 payout = _recoveryTokenAmount.wmul(address(this).balance).wdiv(
-            zenBullTotalSupplyForEulerWithdrawal
+            IERC20(zenBull).totalSupply().sub(redeemedRecoveryAmountForEulerWithdrawal)
         );
-        zenBullTotalSupplyForEulerWithdrawal =
-            zenBullTotalSupplyForEulerWithdrawal.sub(_recoveryTokenAmount);
+        redeemedRecoveryAmountForEulerWithdrawal =
+            redeemedRecoveryAmountForEulerWithdrawal.add(_recoveryTokenAmount);
 
         _burn(msg.sender, _recoveryTokenAmount);
         payable(msg.sender).sendValue(payout);

@@ -85,7 +85,7 @@ contract WithdrawEthTest is Test {
         vm.stopPrank();
     }
 
-    function testWithdrawEth() public {
+    function testWithdrawEthWhenActivated() public {
         {
             uint256 ratio = 1e17;
             while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
@@ -109,14 +109,19 @@ contract WithdrawEthTest is Test {
 
                 ratio = ratio.mul(2);
             }
+
+            assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
+            assertEq(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL), 0);
+            assertEq(emergencyWithdraw.ethWithdrawalActivated(), true);
+            assertEq(emergencyWithdraw.ethWithdrawalActivated(), true);
         }
 
         _emergencyWithdrawEthFromCrab(user1, IERC20(ZEN_BULL).balanceOf(user1));
         uint256 recoveryTokenAmount = emergencyWithdraw.balanceOf(user1);
-        uint256 totalSupplyForEulerWithdrawal =
-            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal();
+        uint256 totalRedeemedRecoveryTokenBefore =
+            emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal();
         uint256 payout = recoveryTokenAmount.wmul(address(emergencyWithdraw).balance).wdiv(
-            totalSupplyForEulerWithdrawal
+            IERC20(ZEN_BULL).totalSupply().sub(totalRedeemedRecoveryTokenBefore)
         );
         uint256 user1EthBalanceBefore = address(user1).balance;
         uint256 contractEthBalanceBefore = address(emergencyWithdraw).balance;
@@ -130,13 +135,13 @@ contract WithdrawEthTest is Test {
         assertEq(contractEthBalanceBefore.sub(payout), address(emergencyWithdraw).balance);
         assertEq(emergencyWithdraw.balanceOf(user1), 0);
         assertEq(
-            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal(),
-            totalSupplyForEulerWithdrawal.sub(recoveryTokenAmount)
+            emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal(),
+            totalRedeemedRecoveryTokenBefore.add(recoveryTokenAmount)
         );
     }
 
     function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
-        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {

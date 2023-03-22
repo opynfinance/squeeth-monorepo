@@ -71,11 +71,11 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
     }
 
     function testSetup() public {
-        assertEq(emergencyWithdraw.redeemedZenBullAmount(), 0);
+        assertEq(emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal(), 0);
     }
 
     function testEmergencyWithdrawEthFromCrab() public {
-        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceBefore = address(user1).balance;
         uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -102,7 +102,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
-        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
+        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceAfter = address(user1).balance;
         uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -120,7 +120,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
 
     function testMultipleEmergencyWithdrawEthFromCrab() public {
         {
-            uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
+            uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
             uint256 user1EthBalanceBefore = address(user1).balance;
             uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -149,7 +149,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
             emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
             vm.stopPrank();
 
-            uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
+            uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
             uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
             uint256 user1EthBalanceAfter = address(user1).balance;
             uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -166,7 +166,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
             );
         }
 
-        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user2BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user2);
         uint256 user2EthBalanceBefore = address(user2).balance;
         uint256 user2RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user2);
@@ -193,7 +193,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         emergencyWithdraw.emergencyWithdrawEthFromCrab(user2BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
-        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
+        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user2BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user2);
         uint256 user2EthBalanceAfter = address(user2).balance;
         uint256 user2RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user2);
