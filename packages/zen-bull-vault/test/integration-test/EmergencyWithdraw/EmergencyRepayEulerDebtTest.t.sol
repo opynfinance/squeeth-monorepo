@@ -65,7 +65,8 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebt() public {
-        uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+        uint256 ethLimitPrice =
+            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -98,7 +99,8 @@ contract EmergencyRepayEulerDebtTest is Test {
         while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
             if (ratio > 1e18) ratio = 1e18;
 
-            uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+            uint256 ethLimitPrice =
+                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -139,7 +141,8 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
-        uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.add(1e16)));
+        uint256 ethLimitPrice =
+            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.add(1e16)));
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
         emergencyWithdraw.emergencyRepayEulerDebt(2e17, ethLimitPrice, 3000);

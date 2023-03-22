@@ -217,17 +217,25 @@ contract EmergencyWithdrawScenario is Test {
     }
 
     function testScenario() public {
-        uint256 zenBullTotalSupplyForCrabWithdrawalBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 zenBullTotalSupplyForCrabWithdrawalBefore =
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
         uint256 user1ZenBullAmount = IERC20(ZEN_BULL).balanceOf(user1);
         _emergencyWithdrawEthFromCrab(user1, user1ZenBullAmount);
         uint256 user1RecoveryTokenAmount = emergencyWithdraw.balanceOf(user1);
-        assertEq(emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user1ZenBullAmount), zenBullTotalSupplyForCrabWithdrawalBefore);
+        assertEq(
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user1ZenBullAmount),
+            zenBullTotalSupplyForCrabWithdrawalBefore
+        );
 
-        zenBullTotalSupplyForCrabWithdrawalBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        zenBullTotalSupplyForCrabWithdrawalBefore =
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
         uint256 user2ZenBullAmount = IERC20(ZEN_BULL).balanceOf(user2);
         _emergencyWithdrawEthFromCrab(user2, user2ZenBullAmount);
         uint256 user2RecoveryTokenAmount = emergencyWithdraw.balanceOf(user2);
-        assertEq(emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user2ZenBullAmount), zenBullTotalSupplyForCrabWithdrawalBefore);
+        assertEq(
+            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user2ZenBullAmount),
+            zenBullTotalSupplyForCrabWithdrawalBefore
+        );
     }
 
     function _deployAndConfigure() internal {

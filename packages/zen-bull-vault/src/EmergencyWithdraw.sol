@@ -183,7 +183,10 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         );
 
         console.log("_limitPriceUsdcPerEth", _limitPriceUsdcPerEth);
-        console.log("usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)", usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth));
+        console.log(
+            "usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)",
+            usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)
+        );
 
         _exactOutFlashSwap(
             weth,
@@ -205,7 +208,12 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         }
 
         emit EmergencyRepayEulerDebt(
-            msg.sender, _ratio, usdcToRepay, wethToWithdraw, _limitPriceUsdcPerEth, ethWithdrawalActivated
+            msg.sender,
+            _ratio,
+            usdcToRepay,
+            wethToWithdraw,
+            _limitPriceUsdcPerEth,
+            ethWithdrawalActivated
         );
     }
 

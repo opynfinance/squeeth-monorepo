@@ -91,7 +91,8 @@ contract WithdrawEthTest is Test {
             while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
                 if (ratio > 1e18) ratio = 1e18;
 
-                uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+                uint256 ethLimitPrice =
+                    UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
                 uint256 wethToWithdraw =
                     ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
                 if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
