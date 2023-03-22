@@ -172,7 +172,7 @@ contract FlashZenTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
@@ -227,7 +227,7 @@ contract FlashZenTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
@@ -274,7 +274,7 @@ contract FlashZenTestFork is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount out less than min"));
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
     }
 
@@ -314,7 +314,7 @@ contract FlashZenTestFork is Test {
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount out less than min"));
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
     }
 
@@ -354,7 +354,7 @@ contract FlashZenTestFork is Test {
 
         vm.startPrank(user1);
         vm.expectRevert();
-        flashBull.flashDeposit{ value: totalEthToBull.sub(5e18) }(params);
+        flashBull.flashDeposit{value: totalEthToBull.sub(5e18)}(params);
         vm.stopPrank();
     }
 
@@ -395,7 +395,7 @@ contract FlashZenTestFork is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{ value: totalEthToBull }(firstParams);
+        flashBull.flashDeposit{value: totalEthToBull}(firstParams);
         vm.stopPrank();
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
         assertApproxEqAbs(
@@ -848,7 +848,7 @@ contract FlashZenTestFork is Test {
             testUtil.calcCollateralAndBorrowAmount(_crabToDeposit);
 
         IERC20(crabV2).approve(address(bullStrategy), _crabToDeposit);
-        bullStrategy.deposit{ value: wethToLend }(_crabToDeposit);
+        bullStrategy.deposit{value: wethToLend}(_crabToDeposit);
 
         return (wethToLend, usdcToBorrow);
     }

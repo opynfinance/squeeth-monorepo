@@ -153,7 +153,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
 
         emit Withdraw(
             msg.sender, _zenBullAmount, crabToRedeem, wPowerPerpToRedeem, payout, _zenBullAmount
-        );
+            );
     }
 
     /**
@@ -178,7 +178,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         uint256 ethUsdcPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
 
         require(
-             _limitPriceUsdcPerEth >= ethUsdcPrice.wmul((ONE.sub(LIMIT_PRICE_TOLERANCE))),
+            _limitPriceUsdcPerEth >= ethUsdcPrice.wmul((ONE.sub(LIMIT_PRICE_TOLERANCE))),
             "ETH limit price lower than limit price tolerance"
         );
 
@@ -208,7 +208,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             wethToWithdraw,
             _limitPriceUsdcPerEth,
             ethWithdrawalActivated
-        );
+            );
     }
 
     /**

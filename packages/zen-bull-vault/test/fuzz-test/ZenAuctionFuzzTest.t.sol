@@ -188,9 +188,9 @@ contract ZenAuctionFuzzTest is Test {
         IERC20(wPowerPerp).transfer(user2, 500e18);
         // mint more oSQTH
         vm.prank(user1);
-        controller.mintWPowerPerpAmount{ value: 100000e18 }(0, 10000e18, 0);
+        controller.mintWPowerPerpAmount{value: 100000e18}(0, 10000e18, 0);
         vm.prank(user2);
-        controller.mintWPowerPerpAmount{ value: 100000e18 }(0, 10000e18, 0);
+        controller.mintWPowerPerpAmount{value: 100000e18}(0, 10000e18, 0);
 
         _initateDepositInBull();
     }
@@ -213,8 +213,8 @@ contract ZenAuctionFuzzTest is Test {
             IERC20(usdc).approve(address(swapRouter), type(uint256).max);
             IERC20(weth).approve(address(swapRouter), type(uint256).max);
             IERC20(wPowerPerp).approve(address(swapRouter), type(uint256).max);
-            IWETH9(weth).deposit{ value: sellWethBuyWPowerPerpAmount }();
-            IWETH9(weth).deposit{ value: sellWethBuyUsdcAmount }();
+            IWETH9(weth).deposit{value: sellWethBuyWPowerPerpAmount}();
+            IWETH9(weth).deposit{value: sellWethBuyUsdcAmount}();
             IERC20(wPowerPerp).approve(address(auctionBull), type(uint256).max);
 
             swapRouter.exactInputSingle(
@@ -473,7 +473,7 @@ contract ZenAuctionFuzzTest is Test {
         });
 
         vm.startPrank(user1);
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);

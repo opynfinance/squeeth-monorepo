@@ -114,7 +114,7 @@ contract ZenBullStrategyFuzzTest is Test {
 
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{ value: wethToLend }(_crabAmount);
+        bullStrategy.deposit{value: wethToLend}(_crabAmount);
         vm.stopPrank();
 
         assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
@@ -144,7 +144,7 @@ contract ZenBullStrategyFuzzTest is Test {
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(_crabAmount);
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{ value: wethToLend }(_crabAmount);
+        bullStrategy.deposit{value: wethToLend}(_crabAmount);
         vm.stopPrank();
 
         (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =

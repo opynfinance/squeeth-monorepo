@@ -213,7 +213,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
             wPowerPerpToRedeem,
             usdcToRepay,
             address(this).balance
-        );
+            );
 
         payable(msg.sender).sendValue(address(this).balance);
     }
@@ -238,7 +238,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
         uint256 wethBalanceToReturn = address(this).balance;
-        IWETH9(weth).deposit{ value: wethBalanceToReturn }();
+        IWETH9(weth).deposit{value: wethBalanceToReturn}();
         IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
         emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
@@ -258,7 +258,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
 
         uint256 crabBalancebefore = IERC20(crab).balanceOf(address(this));
 
-        ICrabStrategyV2(crab).deposit{ value: _ethToDeposit }();
+        ICrabStrategyV2(crab).deposit{value: _ethToDeposit}();
 
         _increaseCrabBalance(IERC20(crab).balanceOf(address(this)).sub(crabBalancebefore));
 
@@ -283,7 +283,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
 
         _repayAndWithdrawFromLeverage(shareToUnwind);
-        IWETH9(weth).deposit{ value: wethToUniswap }();
+        IWETH9(weth).deposit{value: wethToUniswap}();
         IWETH9(weth).transfer(shutdownContract, wethToUniswap);
 
         emit ShutdownRepayAndWithdraw(wethToUniswap, shareToUnwind, crabToRedeem);

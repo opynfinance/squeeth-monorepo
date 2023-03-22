@@ -69,7 +69,7 @@ contract EmergencyWithdrawScenarios is Test {
         vm.startPrank(user1);
         IERC20(CRAB).approve(ZEN_BULL, crabToDeposit);
         vm.expectRevert(bytes("REVERT"));
-        ZenBullStrategy(ZEN_BULL).deposit{ value: 100e18 }(crabToDeposit);
+        ZenBullStrategy(ZEN_BULL).deposit{value: 100e18}(crabToDeposit);
         vm.stopPrank();
     }
 
