@@ -120,7 +120,8 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
 
     function testMultipleEmergencyWithdrawEthFromCrab() public {
         {
-            uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
+            uint256 emergencyRedeemedBull =
+                emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
             uint256 user1EthBalanceBefore = address(user1).balance;
             uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);

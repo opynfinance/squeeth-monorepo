@@ -125,7 +125,8 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     {
         IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
 
-        uint256 circulatingTotalSupply = IERC20(zenBull).totalSupply().sub(redeemedZenBullAmountForCrabWithdrawal);
+        uint256 circulatingTotalSupply =
+            IERC20(zenBull).totalSupply().sub(redeemedZenBullAmountForCrabWithdrawal);
         uint256 crabToRedeem = _zenBullAmount.wdiv(circulatingTotalSupply).wmul(
             IZenBullStrategy(zenBull).getCrabBalance()
         );
@@ -135,7 +136,8 @@ contract EmergencyWithdraw is ERC20, UniFlash {
 
         _mint(msg.sender, _zenBullAmount);
 
-        redeemedZenBullAmountForCrabWithdrawal = redeemedZenBullAmountForCrabWithdrawal.add(_zenBullAmount);
+        redeemedZenBullAmountForCrabWithdrawal =
+            redeemedZenBullAmountForCrabWithdrawal.add(_zenBullAmount);
 
         _exactOutFlashSwap(
             weth,
