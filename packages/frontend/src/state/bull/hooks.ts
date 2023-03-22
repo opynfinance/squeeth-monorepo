@@ -221,6 +221,7 @@ export const useInitBullRecoveryStrategy = () => {
 
 export const useSetBullRecoveryState = () => {
   const bullContract = useAtomValue(bullStrategyContractAtom)
+  const bullEmergencyWithdrawContract = useAtomValue(bullEmergencyWithdrawContractAtom)
 
   const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
   const setBullSupply = useUpdateAtom(bullSupplyAtom)
@@ -231,13 +232,13 @@ export const useSetBullRecoveryState = () => {
   const isMounted = useMountedState()
 
   const setBullRecoveryState = useAppCallback(async () => {
-    if (!bullContract) {
+    if (!bullContract || !bullEmergencyWithdrawContract) {
       return null
     }
 
     try {
       const p1 = bullContract.methods.getCrabBalance().call()
-      const p2 = bullContract.methods.totalSupply().call()
+      const p2 = bullEmergencyWithdrawContract.methods.zenBullTotalSupplyForCrabWithdrawal().call()
       const p3 = bullContract.methods.strategyCap().call()
 
       const [crabBalance, totalSupply, bullCap] = await Promise.all([p1, p2, p3])
@@ -250,7 +251,7 @@ export const useSetBullRecoveryState = () => {
     } catch (error) {
       console.error(error)
     }
-  }, [bullContract, bullStrategy, weth, usdc, isMounted])
+  }, [bullContract, bullEmergencyWithdrawContract, bullStrategy, weth, usdc, isMounted])
 
   return setBullRecoveryState
 }
@@ -797,6 +798,15 @@ export const useGetEmergencyWithdrawParams = () => {
       UNI_POOL_FEES,
       slippage,
     )
+
+    const wPowerPerpToRedeemInEth = wPowerPerpToRedeem.times(sqthPriceInEth)
+
+    console.log({
+      wPowerPerpToRedeem: wPowerPerpToRedeem.toString(),
+      wPowerPerpToRedeemInEth: wPowerPerpToRedeemInEth.toString(),
+      maxEthForOsqth: toTokenAmount(maxEthForOsqth, 18).toString(),
+      ethForOsqth: toTokenAmount(ethForOsqth, 18).toString(),
+    })
 
     const maxEthForWPowerPerp = toTokenAmount(maxEthForOsqth, 18)
 
