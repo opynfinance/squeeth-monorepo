@@ -218,7 +218,7 @@ export const EULER_SIMPLE_LENS: Address = {
 export const BULL_EMERGENCY_WITHDRAW: Address = {
   1: '',
   3: '',
-  5: '0xE42849d2F2047b3c29DB8fC315aABa4922921A1f',
+  5: '0x0D4c6e0874c977d99bc6Dc06Ae0461A175AE7869',
   421611: '',
   31337: '',
 }

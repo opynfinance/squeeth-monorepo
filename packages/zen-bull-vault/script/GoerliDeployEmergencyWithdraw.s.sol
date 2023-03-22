@@ -7,8 +7,7 @@ import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
 import {EmergencyWithdraw} from "../src/EmergencyWithdraw.sol";
 
 contract GoerliDeployEmergencyWithdraw is Script {
-    address payable public constant ZEN_BULL =
-        0x2a5AD7582a9e42944Ee32671436593D16999c70a;
+    address payable public constant ZEN_BULL = 0x8C9392e145c4C22cF96acA3D88d4b0258bD0b538;
     address public constant WETH = 0x083fd3D47eC8DC56b572321bc4dA8b26f7E82103;
     address public constant CRAB = 0x3fF39f6BF8156bdA997D93E3EFF6904c2bc4481f;
     address public constant UNI_FACTORY =
