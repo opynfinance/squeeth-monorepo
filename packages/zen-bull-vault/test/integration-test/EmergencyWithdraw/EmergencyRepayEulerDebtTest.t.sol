@@ -168,7 +168,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
     function testMultipleEmergencyRepayEulerDebtAndWithdraw() public {
         // User 1 redeems some crab from emergencyWithdrawEthFromCrab
-        uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 redeemedZenBullAmountForCrabWithdrawalBefore = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceBefore = address(user1).balance;
         uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -176,7 +176,7 @@ contract EmergencyRepayEulerDebtTest is Test {
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
-            uint256 bullShare = user1BullBalanceBefore.wdiv(bullSupplyBefore);
+            uint256 bullShare = user1BullBalanceBefore.wdiv(IERC20(ZEN_BULL).totalSupply().sub(redeemedZenBullAmountForCrabWithdrawalBefore));
             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -193,7 +193,7 @@ contract EmergencyRepayEulerDebtTest is Test {
         emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
-        uint256 bullSupplyAfter = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 redeemedZenBullAmountForCrabWithdrawalAfter = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
         uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceAfter = address(user1).balance;
         uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -246,7 +246,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
         // User 1 withdraws ETH now that all Euler balances are zero
         uint256 zenBullTotalSupplyForEulerWithdrawalBefore =
-            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal();
+            emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal();
         uint256 user1RecoveryTokenBalanceBefore_ = emergencyWithdraw.balanceOf(user1);
         uint256 emergencyWithdrawEthBalanceBefore = address(emergencyWithdraw).balance;
         vm.startPrank(user1);
@@ -257,7 +257,7 @@ contract EmergencyRepayEulerDebtTest is Test {
         assertEq(
             user1BalanceAfter.sub(user1BalanceBefore),
             user1RecoveryTokenBalanceBefore_.wmul(emergencyWithdrawEthBalanceBefore).wdiv(
-                zenBullTotalSupplyForEulerWithdrawalBefore
+                IERC20(ZEN_BULL).totalSupply().sub(zenBullTotalSupplyForEulerWithdrawalBefore)
             )
         );
         assertEq(emergencyWithdraw.balanceOf(user1), 0);
