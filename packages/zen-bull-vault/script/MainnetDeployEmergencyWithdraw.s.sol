@@ -31,10 +31,7 @@ contract MainnetDeployEmergencyWithdraw is Script {
 
         vm.stopBroadcast();
 
-        require(
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal()
-                == IERC20(ZEN_BULL).totalSupply()
-        );
+        require(emergencyWithdraw.redeemedZenBullAmount() == 0);
         require(
             emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal()
                 == IERC20(ZEN_BULL).totalSupply()

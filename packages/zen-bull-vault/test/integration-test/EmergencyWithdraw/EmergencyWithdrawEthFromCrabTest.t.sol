@@ -71,14 +71,11 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
     }
 
     function testSetup() public {
-        assertEq(
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal(),
-            ZenBullStrategy(ZEN_BULL).totalSupply()
-        );
+        assertEq(emergencyWithdraw.redeemedZenBullAmount(), 0);
     }
 
     function testEmergencyWithdrawEthFromCrab() public {
-        uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceBefore = address(user1).balance;
         uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -86,7 +83,9 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
-            uint256 bullShare = user1BullBalanceBefore.wdiv(bullSupplyBefore);
+            uint256 bullShare = user1BullBalanceBefore.wdiv(
+                IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+            );
             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -103,12 +102,12 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
-        uint256 bullSupplyAfter = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user1EthBalanceAfter = address(user1).balance;
         uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
 
-        assertEq(bullSupplyAfter, bullSupplyBefore - user1BullBalanceBefore);
+        assertEq(bullSupplyAfter, emergencyRedeemedBull.add(user1BullBalanceBefore));
         assertEq(user1BullBalanceAfter, 0);
         assertEq(
             user1RecoveryTokenBalanceAfter - user1RecoveryTokenBalanceBefore, user1BullBalanceBefore
@@ -121,7 +120,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
 
     function testMultipleEmergencyWithdrawEthFromCrab() public {
         {
-            uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+            uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
             uint256 user1EthBalanceBefore = address(user1).balance;
             uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
@@ -129,7 +128,9 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
             uint256 maxWethForOsqth;
             uint256 ethToWithdrawFromCrab;
             {
-                uint256 bullShare = user1BullBalanceBefore.wdiv(bullSupplyBefore);
+                uint256 bullShare = user1BullBalanceBefore.wdiv(
+                    IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+                );
                 uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
                 (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                     ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -148,12 +149,12 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
             emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
             vm.stopPrank();
 
-            uint256 bullSupplyAfter = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+            uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
             uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
             uint256 user1EthBalanceAfter = address(user1).balance;
             uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
 
-            assertEq(bullSupplyAfter, bullSupplyBefore - user1BullBalanceBefore);
+            assertEq(bullSupplyAfter, emergencyRedeemedBull.add(user1BullBalanceBefore));
             assertEq(user1BullBalanceAfter, 0);
             assertEq(
                 user1RecoveryTokenBalanceAfter - user1RecoveryTokenBalanceBefore,
@@ -165,7 +166,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
             );
         }
 
-        uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user2BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user2);
         uint256 user2EthBalanceBefore = address(user2).balance;
         uint256 user2RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user2);
@@ -173,7 +174,9 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
-            uint256 bullShare = user2BullBalanceBefore.wdiv(bullSupplyBefore);
+            uint256 bullShare = user2BullBalanceBefore.wdiv(
+                IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+            );
             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -190,12 +193,12 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
         emergencyWithdraw.emergencyWithdrawEthFromCrab(user2BullBalanceBefore, maxWethForOsqth);
         vm.stopPrank();
 
-        uint256 bullSupplyAfter = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 bullSupplyAfter = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user2BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user2);
         uint256 user2EthBalanceAfter = address(user2).balance;
         uint256 user2RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user2);
 
-        assertEq(bullSupplyAfter, bullSupplyBefore - user2BullBalanceBefore);
+        assertEq(bullSupplyAfter, emergencyRedeemedBull.add(user2BullBalanceBefore));
         assertEq(user2BullBalanceAfter, 0);
         assertEq(
             user2RecoveryTokenBalanceAfter - user2RecoveryTokenBalanceBefore, user2BullBalanceBefore

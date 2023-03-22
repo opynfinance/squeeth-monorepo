@@ -136,11 +136,12 @@ contract WithdrawEthTest is Test {
     }
 
     function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
-        uint256 bullSupply = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
-            uint256 bullShare = _zenBullAmount.wdiv(bullSupply);
+            uint256 bullShare =
+                _zenBullAmount.wdiv(IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull));
             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();

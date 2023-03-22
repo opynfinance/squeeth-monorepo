@@ -132,12 +132,14 @@ contract EmergencyWithdrawScenario is Test {
 
         // withdraw through emergency contract
         {
-            uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+            uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
             uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
 
             uint256 maxWethForOsqth;
             {
-                uint256 bullShare = user1BullBalanceBefore.wdiv(bullSupplyBefore);
+                uint256 bullShare = user1BullBalanceBefore.wdiv(
+                    IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+                );
                 uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
                 (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                     ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -155,11 +157,13 @@ contract EmergencyWithdrawScenario is Test {
             vm.stopPrank();
 
             // user3 emergency withdraw
-            bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+            emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
             uint256 user3BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user3);
 
             {
-                uint256 bullShare = user3BullBalanceBefore.wdiv(bullSupplyBefore);
+                uint256 bullShare = user3BullBalanceBefore.wdiv(
+                    IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+                );
                 uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
                 (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                     ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
@@ -217,24 +221,22 @@ contract EmergencyWithdrawScenario is Test {
     }
 
     function testScenario() public {
-        uint256 zenBullTotalSupplyForCrabWithdrawalBefore =
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 emergencyRedeemedBullBefore = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user1ZenBullAmount = IERC20(ZEN_BULL).balanceOf(user1);
         _emergencyWithdrawEthFromCrab(user1, user1ZenBullAmount);
         uint256 user1RecoveryTokenAmount = emergencyWithdraw.balanceOf(user1);
         assertEq(
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user1ZenBullAmount),
-            zenBullTotalSupplyForCrabWithdrawalBefore
+            (emergencyWithdraw.redeemedZenBullAmount()).sub(user1ZenBullAmount),
+            emergencyRedeemedBullBefore
         );
 
-        zenBullTotalSupplyForCrabWithdrawalBefore =
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        emergencyRedeemedBullBefore = emergencyWithdraw.redeemedZenBullAmount();
         uint256 user2ZenBullAmount = IERC20(ZEN_BULL).balanceOf(user2);
         _emergencyWithdrawEthFromCrab(user2, user2ZenBullAmount);
         uint256 user2RecoveryTokenAmount = emergencyWithdraw.balanceOf(user2);
         assertEq(
-            emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal().add(user2ZenBullAmount),
-            zenBullTotalSupplyForCrabWithdrawalBefore
+            (emergencyWithdraw.redeemedZenBullAmount()).sub(user2ZenBullAmount),
+            emergencyRedeemedBullBefore
         );
     }
 
@@ -272,11 +274,12 @@ contract EmergencyWithdrawScenario is Test {
     }
 
     function _emergencyWithdrawEthFromCrab(address _user, uint256 _zenBullAmount) internal {
-        uint256 bullSupply = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmount();
         uint256 maxWethForOsqth;
         uint256 ethToWithdrawFromCrab;
         {
-            uint256 bullShare = _zenBullAmount.wdiv(bullSupply);
+            uint256 bullShare =
+                _zenBullAmount.wdiv(IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull));
             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();

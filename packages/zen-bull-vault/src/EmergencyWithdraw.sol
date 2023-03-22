@@ -43,8 +43,8 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     address internal immutable eToken;
     address internal immutable dToken;
 
-    /// @dev ZenBull total supply amount at the time of this contract deployment, used for Crab withdrawal calc
-    uint256 public zenBullTotalSupplyForCrabWithdrawal;
+    /// @dev total amount of redeemed ZenBull through emergencyWithdrawEthFromCrab
+    uint256 public redeemedZenBullAmount;
     /// @dev ZenBull total supply amount at the time of this contract deployment, used for Euler withdrawal calc
     uint256 public zenBullTotalSupplyForEulerWithdrawal;
     /// @dev if true, enable ETH withdrawal from this contract
@@ -101,7 +101,6 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         eToken = _eToken;
         dToken = _dToken;
 
-        zenBullTotalSupplyForCrabWithdrawal = IERC20(_zenBull).totalSupply();
         zenBullTotalSupplyForEulerWithdrawal = IERC20(_zenBull).totalSupply();
 
         IERC20(_wPowerPerp).approve(_zenBull, type(uint256).max);
@@ -124,18 +123,19 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     function emergencyWithdrawEthFromCrab(uint256 _zenBullAmount, uint256 _maxEthForWPowerPerp)
         external
     {
-        uint256 crabToRedeem = _zenBullAmount.wdiv(zenBullTotalSupplyForCrabWithdrawal).wmul(
+        IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
+
+        uint256 circulatingTotalSupply = IERC20(zenBull).totalSupply().sub(redeemedZenBullAmount);
+        uint256 crabToRedeem = _zenBullAmount.wdiv(circulatingTotalSupply).wmul(
             IZenBullStrategy(zenBull).getCrabBalance()
         );
         (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
         uint256 wPowerPerpToRedeem =
             crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
 
-        zenBullTotalSupplyForCrabWithdrawal =
-            zenBullTotalSupplyForCrabWithdrawal.sub(_zenBullAmount);
-
-        IERC20(zenBull).transferFrom(msg.sender, address(this), _zenBullAmount);
         _mint(msg.sender, _zenBullAmount);
+
+        redeemedZenBullAmount = redeemedZenBullAmount.add(_zenBullAmount);
 
         _exactOutFlashSwap(
             weth,
@@ -176,16 +176,10 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         );
 
         uint256 ethUsdcPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
-        console.log("ethUsdcPrice", ethUsdcPrice);
+
         require(
             _limitPriceUsdcPerEth <= ethUsdcPrice.wmul((ONE.add(LIMIT_PRICE_TOLERANCE))),
             "ETH limit price greater than max price tolerance"
-        );
-
-        console.log("_limitPriceUsdcPerEth", _limitPriceUsdcPerEth);
-        console.log(
-            "usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)",
-            usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)
         );
 
         _exactOutFlashSwap(
@@ -259,8 +253,6 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             IZenBullStrategy(zenBull).auctionRepayAndWithdrawFromLeverage(
                 usdcToRepay, wethToWithdraw
             );
-
-            console.log("_uniFlashSwapData.amountToPay", _uniFlashSwapData.amountToPay);
 
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
