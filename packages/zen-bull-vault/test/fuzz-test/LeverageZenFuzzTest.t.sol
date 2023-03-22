@@ -91,7 +91,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).deposit{ value: _wethToDeposit }();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -127,7 +127,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).deposit{ value: _wethToDeposit }();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -158,7 +158,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).deposit{ value: _wethToDeposit }();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -202,7 +202,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{value: _wethToDeposit}();
+        IWETH9(weth).deposit{ value: _wethToDeposit }();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();

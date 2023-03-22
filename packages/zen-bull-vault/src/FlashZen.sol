@@ -215,7 +215,7 @@ contract FlashZen is UniFlash {
 
         emit FlashDeposit(
             msg.sender, crabAmount, msg.value, wPowerPerpToMint, usdcToBorrow, wethToLend
-            );
+        );
     }
 
     /**
@@ -276,7 +276,7 @@ contract FlashZen is UniFlash {
 
             // convert WETH to ETH as Uniswap uses WETH
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
-            ICrabStrategyV2(crab).deposit{value: data.ethToDepositInCrab}();
+            ICrabStrategyV2(crab).deposit{ value: data.ethToDepositInCrab }();
 
             // repay the wPowerPerp flash swap
             IERC20(wPowerPerp).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
@@ -288,7 +288,7 @@ contract FlashZen is UniFlash {
                 abi.decode(_uniFlashSwapData.callData, (FlashDepositCollateralData));
             IWETH9(weth).withdraw(IWETH9(weth).balanceOf(address(this)));
 
-            IZenBullStrategy(bullStrategy).deposit{value: data.wethToLend}(data.crabToDeposit);
+            IZenBullStrategy(bullStrategy).deposit{ value: data.wethToLend }(data.crabToDeposit);
 
             // repay the dollars flash swap
             IERC20(usdc).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
@@ -308,7 +308,7 @@ contract FlashZen is UniFlash {
                 abi.encodePacked(data.bullToRedeem, data.usdcToRepay)
             );
 
-            IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
+            IWETH9(weth).deposit{ value: _uniFlashSwapData.amountToPay }();
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         } else if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.FLASH_WITHDRAW_BULL) {
             FlashWithdrawBullData memory data =
@@ -316,7 +316,7 @@ contract FlashZen is UniFlash {
 
             IZenBullStrategy(bullStrategy).withdraw(data.bullToRedeem);
 
-            IWETH9(weth).deposit{value: _uniFlashSwapData.amountToPay}();
+            IWETH9(weth).deposit{ value: _uniFlashSwapData.amountToPay }();
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
     }

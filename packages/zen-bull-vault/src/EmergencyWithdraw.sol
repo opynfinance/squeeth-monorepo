@@ -153,7 +153,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
 
         emit Withdraw(
             msg.sender, _zenBullAmount, crabToRedeem, wPowerPerpToRedeem, payout, _zenBullAmount
-            );
+        );
     }
 
     /**
@@ -208,7 +208,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             wethToWithdraw,
             _limitPriceUsdcPerEth,
             ethWithdrawalActivated
-            );
+        );
     }
 
     /**
