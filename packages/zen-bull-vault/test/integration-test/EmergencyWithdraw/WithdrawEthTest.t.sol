@@ -91,10 +91,7 @@ contract WithdrawEthTest is Test {
             while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
                 if (ratio > 1e18) ratio = 1e18;
 
-                uint256 maxEthForUsdc = (
-                    Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
-                ).wmul((ONE.add(1e15)));
-                console.log("maxEthForUsdc", maxEthForUsdc);
+                uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
                 uint256 wethToWithdraw =
                     ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
                 if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
@@ -106,7 +103,7 @@ contract WithdrawEthTest is Test {
                     Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
 
                 vm.startPrank(user1);
-                emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
+                emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
                 vm.stopPrank();
 
                 ratio = ratio.mul(2);

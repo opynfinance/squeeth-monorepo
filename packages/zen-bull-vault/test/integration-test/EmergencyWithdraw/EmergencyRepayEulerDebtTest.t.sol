@@ -65,8 +65,7 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebt() public {
-        uint256 maxEthForUsdc =
-            (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e15)));
+        uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -77,7 +76,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
 
         vm.startPrank(user1);
-        emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
         vm.stopPrank();
 
         uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -99,9 +98,7 @@ contract EmergencyRepayEulerDebtTest is Test {
         while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
             if (ratio > 1e18) ratio = 1e18;
 
-            uint256 maxEthForUsdc = (
-                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
-            ).wmul((ONE.add(1e15)));
+            uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -117,7 +114,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             totalEthInContract = totalEthInContract.add(wethToWithdraw.sub(ethToRepayForFlashswap));
 
             vm.startPrank(user1);
-            emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
+            emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
             vm.stopPrank();
 
             uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -142,20 +139,20 @@ contract EmergencyRepayEulerDebtTest is Test {
     }
 
     function testEmergencyRepayEulerDebtWhenAmountInGreaterThanMax() public {
-        uint256 maxEthForUsdc = Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0);
+        uint256 ethLimitPrice = UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.add(1e16)));
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
-        emergencyWithdraw.emergencyRepayEulerDebt(2e17, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(2e17, ethLimitPrice, 3000);
         vm.stopPrank();
     }
 
     function testEmergencyRepayEulerDebtWhenWethToWithdrawGreaterThanMax() public {
-        uint256 maxEthForUsdc =
-            (Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)).wmul((ONE.add(1e16)));
+        uint256 ethLimitPrice =
+            (Quoter(QUOTER).quoteExactOutputSingle(USDC, WETH, 3000, 1e18, 0)).wmul((ONE.add(1e16)));
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
-        emergencyWithdraw.emergencyRepayEulerDebt(1e18, maxEthForUsdc, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(1e18, ethLimitPrice, 3000);
         vm.stopPrank();
     }
 }

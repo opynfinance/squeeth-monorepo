@@ -161,10 +161,10 @@ contract EmergencyWithdraw is ERC20, UniFlash {
      * @dev this will revert of WETH to withdraw from Euler is greater than max, or limit price breach the tolerance %
      * @dev if all ZenBullEulerRecovery are burnt, the ETH withdrawl will be activated
      * @param _ratio ratio of WETH to withdraw from total WETH in Euler in 18 decimals (e.g 2e17 => 0.2 => 20%)
-     * @param _maxEthForUsdc max ETH to pay for 1 USDC
+     * @param _limitPriceUsdcPerEth ETH limit price
      * @param _poolFee ETH/USDC Uni v3 pool fee
      */
-    function emergencyRepayEulerDebt(uint256 _ratio, uint256 _maxEthForUsdc, uint24 _poolFee)
+    function emergencyRepayEulerDebt(uint256 _ratio, uint256 _limitPriceUsdcPerEth, uint24 _poolFee)
         external
     {
         uint256 usdcToRepay = _ratio.wmul(IEulerDToken(dToken).balanceOf(zenBull));
@@ -175,19 +175,22 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             "WETH to withdraw is greater than max per repay"
         );
 
-        uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, usdc, weth, 420, false);
-
+        uint256 ethUsdcPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
+        console.log("ethUsdcPrice", ethUsdcPrice);
         require(
-            _maxEthForUsdc <= ethUsdPrice.wmul((ONE.add(LIMIT_PRICE_TOLERANCE))),
-            "Max ETH for USDC greater than max price tolerance"
+            _limitPriceUsdcPerEth <= ethUsdcPrice.wmul((ONE.add(LIMIT_PRICE_TOLERANCE))),
+            "ETH limit price greater than max price tolerance"
         );
+
+        console.log("_limitPriceUsdcPerEth", _limitPriceUsdcPerEth);
+        console.log("usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth)", usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth));
 
         _exactOutFlashSwap(
             weth,
             usdc,
             _poolFee,
             usdcToRepay,
-            usdcToRepay.mul(WETH_DECIMALS_DIFF).wmul(_maxEthForUsdc),
+            usdcToRepay.mul(WETH_DECIMALS_DIFF).wdiv(_limitPriceUsdcPerEth),
             uint8(FLASH_SOURCE.EMERGENCY_REPAY_EULER_DEBT),
             abi.encodePacked(usdcToRepay, wethToWithdraw)
         );
@@ -202,7 +205,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         }
 
         emit EmergencyRepayEulerDebt(
-            msg.sender, _ratio, usdcToRepay, wethToWithdraw, _maxEthForUsdc, ethWithdrawalActivated
+            msg.sender, _ratio, usdcToRepay, wethToWithdraw, _limitPriceUsdcPerEth, ethWithdrawalActivated
         );
     }
 
@@ -248,6 +251,8 @@ contract EmergencyWithdraw is ERC20, UniFlash {
             IZenBullStrategy(zenBull).auctionRepayAndWithdrawFromLeverage(
                 usdcToRepay, wethToWithdraw
             );
+
+            console.log("_uniFlashSwapData.amountToPay", _uniFlashSwapData.amountToPay);
 
             IERC20(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);
         }
