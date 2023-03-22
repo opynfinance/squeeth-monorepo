@@ -47,7 +47,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     uint256 public redeemedZenBullAmountForCrabWithdrawal;
     /// @dev ZenBull total supply amount at the time of this contract deployment, used for Euler withdrawal calc
     uint256 public redeemedRecoveryAmountForEulerWithdrawal;
-    /// @dev if true, enable ETH withdrawal from this contract
+    /// @dev if true, ETH withdrawal is enabled, after 100% of Euler debt and collateral has been removed
     bool public ethWithdrawalActivated;
 
     enum FLASH_SOURCE {
@@ -100,8 +100,6 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         ethUSDCPool = _ethUSDCPool;
         eToken = _eToken;
         dToken = _dToken;
-
-        // redeemedRecoveryAmountForEulerWithdrawal = IERC20(_zenBull).totalSupply();
 
         IERC20(_wPowerPerp).approve(_zenBull, type(uint256).max);
         IERC20(_usdc).approve(_zenBull, type(uint256).max);
@@ -180,8 +178,10 @@ contract EmergencyWithdraw is ERC20, UniFlash {
         uint256 ethUsdcPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, 420, false);
 
         require(
-            _limitPriceUsdcPerEth <= ethUsdcPrice.wmul((ONE.add(LIMIT_PRICE_TOLERANCE))),
-            "ETH limit price greater than max price tolerance"
+             _limitPriceUsdcPerEth >= ethUsdcPrice.wmul((ONE.sub(LIMIT_PRICE_TOLERANCE)))
+
+
+            "ETH limit price lower than limit price tolerance"
         );
 
         _exactOutFlashSwap(
