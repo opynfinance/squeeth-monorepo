@@ -59,6 +59,13 @@ contract EmergencyRepayEulerDebtTest is Test {
         vm.prank(0xAfE66363c27EedB597a140c28B70b32F113fd5a8);
         ZenBullStrategy(ZEN_BULL).setAuction(address(emergencyWithdraw));
 
+        // bull whale gives some to user1
+        vm.startPrank(0xB845d3C82853b362ADF47A045c087d52384a7776);
+        IERC20(ZEN_BULL).transfer(
+            user1, IERC20(ZEN_BULL).balanceOf(0xB845d3C82853b362ADF47A045c087d52384a7776) / 2
+        );
+        vm.stopPrank();
+
         vm.label(deployer, "Deployer");
         vm.label(user1, "user1");
         vm.label(address(emergencyWithdraw), "EmergencyWithdraw");
@@ -157,5 +164,102 @@ contract EmergencyRepayEulerDebtTest is Test {
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
         emergencyWithdraw.emergencyRepayEulerDebt(1e18, ethLimitPrice, 3000);
         vm.stopPrank();
+    }
+
+    function testMultipleEmergencyRepayEulerDebtAndWithdraw() public {
+        // User 1 redeems some crab from emergencyWithdrawEthFromCrab
+        uint256 bullSupplyBefore = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
+        uint256 user1EthBalanceBefore = address(user1).balance;
+        uint256 user1RecoveryTokenBalanceBefore = IERC20(emergencyWithdraw).balanceOf(user1);
+
+        uint256 maxWethForOsqth;
+        uint256 ethToWithdrawFromCrab;
+        {
+            uint256 bullShare = user1BullBalanceBefore.wdiv(bullSupplyBefore);
+            uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
+            (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+                ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+            uint256 wPowerPerpToRedeem =
+                crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+
+            maxWethForOsqth =
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0);
+            ethToWithdrawFromCrab = crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+        }
+
+        vm.startPrank(user1);
+        IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
+        emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
+        vm.stopPrank();
+
+        uint256 bullSupplyAfter = emergencyWithdraw.zenBullTotalSupplyForCrabWithdrawal();
+        uint256 user1BullBalanceAfter = IERC20(ZEN_BULL).balanceOf(user1);
+        uint256 user1EthBalanceAfter = address(user1).balance;
+        uint256 user1RecoveryTokenBalanceAfter = IERC20(emergencyWithdraw).balanceOf(user1);
+
+        uint256 totalEthInContract;
+        uint256 ratio = 1e17;
+        // Reduce Bull's Euler balances to zero by paying down debt with emergencyRepayEulerDebt
+        while (IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL) > 0) {
+            if (ratio > 1e18) ratio = 1e18;
+
+            uint256 maxEthForUsdc = (
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, 1e6, 0)
+            ).wmul((ONE.add(1e15)));
+            uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
+            uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
+            uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
+            uint256 wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+            if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
+                ratio = ratio / 2;
+                wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
+            }
+            uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
+            uint256 ethToRepayForFlashswap =
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+            totalEthInContract = totalEthInContract.add(wethToWithdraw.sub(ethToRepayForFlashswap));
+
+            vm.startPrank(user1);
+            emergencyWithdraw.emergencyRepayEulerDebt(ratio, maxEthForUsdc, 3000);
+            vm.stopPrank();
+
+            uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
+            uint256 zenBullDebtAfter = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
+            uint256 zenBullCollateralAfter = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
+
+            assertEq(zenBullDebtBefore.sub(usdcToRepay), zenBullDebtAfter);
+            assertApproxEqRel(
+                zenBullCollateralBefore.sub(wethToWithdraw), zenBullCollateralAfter, 1000000000
+            );
+            assertEq(
+                emergencyContractEthBalanceBefore.add(wethToWithdraw.sub(ethToRepayForFlashswap)),
+                emergencyContractEthBalanceAfter
+            );
+
+            ratio = ratio.mul(2);
+        }
+
+        assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
+        assertEq(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL), 0);
+        assertEq(address(emergencyWithdraw).balance, totalEthInContract);
+
+        // User 1 withdraws ETH now that all Euler balances are zero
+        uint256 zenBullTotalSupplyForEulerWithdrawalBefore =
+            emergencyWithdraw.zenBullTotalSupplyForEulerWithdrawal();
+        uint256 user1RecoveryTokenBalanceBefore_ = emergencyWithdraw.balanceOf(user1);
+        uint256 emergencyWithdrawEthBalanceBefore = address(emergencyWithdraw).balance;
+        vm.startPrank(user1);
+        uint256 user1BalanceBefore = address(user1).balance;
+        emergencyWithdraw.withdrawEth(emergencyWithdraw.balanceOf(user1));
+        uint256 user1BalanceAfter = address(user1).balance;
+        vm.stopPrank();
+        assertEq(
+            user1BalanceAfter.sub(user1BalanceBefore),
+            user1RecoveryTokenBalanceBefore_.wmul(emergencyWithdrawEthBalanceBefore).wdiv(
+                zenBullTotalSupplyForEulerWithdrawalBefore
+            )
+        );
+        assertEq(emergencyWithdraw.balanceOf(user1), 0);
     }
 }
