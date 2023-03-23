@@ -137,7 +137,7 @@ const Confirmed: React.FC<ConfirmedProps> = ({ confirmationMessage, txnHash, con
           View on Etherscan{' '}
         </a>
       </div>
-      <ConfirmGraphic type={confirmType} />
+      {/* <ConfirmGraphic type={confirmType} /> */}
     </div>
   )
 }
