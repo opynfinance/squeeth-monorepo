@@ -58,9 +58,8 @@ import {
   eulerETHLendRateAtom,
   bullTimeAtLastHedgeAtom,
   bullEulerUSDCDebtAtom,
-  bullRecoveryETHPositionAtom,
-  bullRecoveryUSDCPositionAtom,
-  bullRecoveryETHValuePerShareAtom,
+  bullCrabPositionValueInEth,
+  bullCrabValueInEth,
   isBullRecoveryReadyAtom,
 } from './atoms'
 import {
@@ -225,9 +224,6 @@ export const useSetBullRecoveryState = () => {
 
   const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
   const setBullSupply = useUpdateAtom(bullSupplyAtom)
-  const setBullCap = useUpdateAtom(bullCapAtom)
-
-  const { bullStrategy, weth, usdc } = useAtomValue(addressesAtom)
 
   const isMounted = useMountedState()
 
@@ -239,20 +235,18 @@ export const useSetBullRecoveryState = () => {
     try {
       const p1 = bullContract.methods.getCrabBalance().call()
       const p2 = bullContract.methods.totalSupply().call()
-      const p4 = bullEmergencyWithdrawContract.methods.redeemedZenBullAmountForCrabWithdrawal().call()
-      const p3 = bullContract.methods.strategyCap().call()
+      const p3 = bullEmergencyWithdrawContract.methods.redeemedZenBullAmountForCrabWithdrawal().call()
 
-      const [crabBalance, totalSupply, bullCap, redeemed] = await Promise.all([p1, p2, p3, p4])
+      const [crabBalance, totalSupply, redeemed] = await Promise.all([p1, p2, p3])
 
       if (!isMounted()) return null
 
       setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
       setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS).minus(toTokenAmount(redeemed, WETH_DECIMALS)))
-      setBullCap(toTokenAmount(bullCap, WETH_DECIMALS))
     } catch (error) {
       console.error(error)
     }
-  }, [bullContract, bullEmergencyWithdrawContract, bullStrategy, weth, usdc, isMounted])
+  }, [bullContract, bullEmergencyWithdrawContract, isMounted])
 
   return setBullRecoveryState
 }
@@ -265,9 +259,8 @@ export const useSetBullRecoveryUserState = () => {
   const crabV2Vault = useAtomValue(crabStrategyVaultAtomV2)
   const index = useAtomValue(indexAtom)
 
-  const setBullRecoveryETHPosition = useUpdateAtom(bullRecoveryETHPositionAtom)
-  const setBullRecoveryUSDCPosition = useUpdateAtom(bullRecoveryUSDCPositionAtom)
-  const setBullRecoveryETHValuePerShare = useUpdateAtom(bullRecoveryETHValuePerShareAtom)
+  const setBullCrabPositionValueInEth = useUpdateAtom(bullCrabPositionValueInEth)
+  const setBullCrabValueInEth = useUpdateAtom(bullCrabValueInEth)
   const setBullRecoveryReady = useUpdateAtom(isBullRecoveryReadyAtom)
 
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
@@ -288,11 +281,10 @@ export const useSetBullRecoveryUserState = () => {
     const crabDebtInEth = getWSqueethPositionValueInETH(crabDebt)
 
     const crabComponent = crabCollat.minus(crabDebtInEth)
-    const userBullPosition = crabComponent
+    const userBullCrabPosition = crabComponent
 
-    setBullRecoveryETHPosition(new BigNumber(userBullPosition.toFixed(18)))
-    setBullRecoveryUSDCPosition(userBullPosition.times(ethPrice))
-    setBullRecoveryETHValuePerShare(userBullPosition.div(userBullBalance))
+    setBullCrabPositionValueInEth(new BigNumber(userBullCrabPosition.toFixed(18)))
+    setBullCrabValueInEth(userBullCrabPosition.div(userBullBalance))
     setBullRecoveryReady(true)
   }, [bullCrabBalance, userBullBalance, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, isMounted])
 
@@ -800,15 +792,6 @@ export const useGetEmergencyWithdrawParams = () => {
       UNI_POOL_FEES,
       slippage,
     )
-
-    const wPowerPerpToRedeemInEth = wPowerPerpToRedeem.times(sqthPriceInEth)
-
-    console.log({
-      wPowerPerpToRedeem: wPowerPerpToRedeem.toString(),
-      wPowerPerpToRedeemInEth: wPowerPerpToRedeemInEth.toString(),
-      maxEthForOsqth: toTokenAmount(maxEthForOsqth, 18).toString(),
-      ethForOsqth: toTokenAmount(ethForOsqth, 18).toString(),
-    })
 
     const maxEthForWPowerPerp = toTokenAmount(maxEthForOsqth, 18)
 
