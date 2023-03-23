@@ -201,7 +201,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
 
       <Typography variant="body2" className={classes.description}>
         Use recovery withdrawal to withdraw the Crab portion of a Zen Bull position.{' '}
-        <Link href="https://opyn.gitbook.io/squeeth-faq/squeeth/beginner-squeeth-faq" target="_blank">
+        <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
           Learn more.
         </Link>
       </Typography>
