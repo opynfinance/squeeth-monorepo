@@ -273,7 +273,7 @@ export const useSetBullRecoveryUserState = () => {
   const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
   const isMounted = useMountedState()
 
-  const { value: bullShare } = useTokenBalance(bullStrategy)
+  const { value: userBullBalance } = useTokenBalance(bullStrategy)
   const ethPrice = toTokenAmount(index, 18).sqrt()
 
   const setBullRecoveryUserState = useAppCallback(async () => {
@@ -281,7 +281,8 @@ export const useSetBullRecoveryUserState = () => {
       return null
     }
 
-    const userCrab = bullShare.times(bullCrabBalance).div(bullSupply)
+    const bullShare = bullSupply.isZero() ? BIG_ZERO : userBullBalance.div(bullSupply)
+    const userCrab = bullShare.times(bullCrabBalance)
     const crabCollat = userCrab.times(crabV2Vault.collateralAmount).div(crabTotalSupply)
     const crabDebt = userCrab.times(crabV2Vault.shortAmount).div(crabTotalSupply)
     const crabDebtInEth = getWSqueethPositionValueInETH(crabDebt)
@@ -291,9 +292,9 @@ export const useSetBullRecoveryUserState = () => {
 
     setBullRecoveryETHPosition(new BigNumber(userBullPosition.toFixed(18)))
     setBullRecoveryUSDCPosition(userBullPosition.times(ethPrice))
-    setBullRecoveryETHValuePerShare(userBullPosition.div(bullShare))
+    setBullRecoveryETHValuePerShare(userBullPosition.div(userBullBalance))
     setBullRecoveryReady(true)
-  }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, isMounted])
+  }, [bullCrabBalance, userBullBalance, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, isMounted])
 
   return setBullRecoveryUserState
 }
