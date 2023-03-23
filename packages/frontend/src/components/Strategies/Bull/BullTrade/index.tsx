@@ -1,11 +1,8 @@
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useState, useEffect } from 'react'
-import { useAtomValue } from 'jotai'
-import { addressAtom } from '@state/wallet/atoms'
 
 import { PrimaryButtonNew } from '@components/Button'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import { useBullPosition } from '@hooks/useBullPosition'
 import { useTransactionStatus, useDisconnectWallet } from '@state/wallet/hooks'
 import BullEmergencyWithdraw from './EmergencyWithdraw'
 
@@ -23,15 +20,13 @@ export interface BullTransactionConfirmation {
 
 const BullTrade: React.FC = () => {
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<BullTransactionConfirmation | undefined>()
+
   const { confirmed, transactionData, resetTransactionData } = useTransactionStatus()
-  const address = useAtomValue(addressAtom)
   const disconnectWallet = useDisconnectWallet()
 
-  const { pollForNewTx } = useBullPosition(address ?? '')
-
   useEffect(() => {
+    // make sure user has specifically connected the wallet to zenbull
     const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
-    console.log({ hasConnectedToZenbullBefore })
     if (!hasConnectedToZenbullBefore) {
       disconnectWallet()
     }
@@ -42,11 +37,8 @@ const BullTrade: React.FC = () => {
     (data: BullTransactionConfirmation | undefined) => {
       console.log('Tx on confirm', data, transactionData?.hash)
       setConfirmedTransactionData(data)
-      if (data?.txId) {
-        pollForNewTx(data?.txId)
-      }
     },
-    [pollForNewTx, transactionData?.hash],
+    [transactionData?.hash],
   )
 
   const onClose = useCallback(() => {
