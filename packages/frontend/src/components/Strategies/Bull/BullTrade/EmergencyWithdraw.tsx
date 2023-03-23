@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useRef } from 'react'
+import React, { useCallback, useState, useRef, useMemo } from 'react'
 import { Box, Typography, Link, CircularProgress } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
@@ -48,7 +48,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const zenBullClasses = useZenBullStyles()
   const classes = useStyles()
 
-  const [ethWithdrawAmount, setEthWithdrawAmount] = useState(BIG_ZERO)
+  const [ethToWithdrawInput, setEthToWithdrawInput] = useState('0')
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quote, setQuote] = useState({
     maxEthForWPowerPerp: BIG_ZERO,
@@ -81,6 +81,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const logAndRunTransaction = useTrackTransactionFlow()
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
   const { value: bullBalance } = useTokenBalance(bullStrategy, 15, BULL_TOKEN_DECIMALS)
+  const ethToWithdrawInputBN = useMemo(() => new BigNumber(ethToWithdrawInput), [ethToWithdrawInput])
 
   const debouncedGetWithdrawQuote = debounce(async (bullToWithdraw: BigNumber) => {
     // ignore if its not the most recent request
@@ -99,37 +100,33 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   }, 500)
 
   const onInputChange = useAppCallback(
-    (ethToWithdraw: BigNumber) => {
-      ethToWithdraw.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(ethToWithdraw) : null
+    (ethToWithdraw: string) => {
+      setEthToWithdrawInput(ethToWithdraw)
 
-      const _bullToWithdraw = ethToWithdraw.div(bullRecoveryPositionValueInEth).times(bullBalance)
+      const ethToWithdrawBN = new BigNumber(ethToWithdraw)
+      ethToWithdrawBN.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(ethToWithdrawBN) : null
+
+      const _bullToWithdraw = ethToWithdrawBN.div(bullRecoveryPositionValueInEth).times(bullBalance)
       bullWithdrawAmountRef.current = _bullToWithdraw
-      setEthWithdrawAmount(ethToWithdraw)
       debouncedGetWithdrawQuote(_bullToWithdraw)
     },
     [bullBalance, bullRecoveryPositionValueInEth, debouncedGetWithdrawQuote, trackWithdrawAmountEnteredOnce],
-  )
-  const onInputChangeBNWrapper = useAppCallback(
-    (ethToWithdraw: string) => {
-      onInputChange(new BigNumber(ethToWithdraw))
-    },
-    [onInputChange],
   )
 
   const setWithdrawMax = () => {
     track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_SET_AMOUNT_MAX, {
       amount: bullRecoveryPositionValueInEth.toNumber(),
     })
-    onInputChange(bullRecoveryPositionValueInEth)
+    onInputChange(bullRecoveryPositionValueInEth.toString())
   }
 
   const onChangeSlippage = useCallback(
     (amount: BigNumber) => {
       track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
       setSlippage(amount.toNumber())
-      onInputChange(ethWithdrawAmount)
+      onInputChange(ethToWithdrawInput)
     },
-    [setSlippage, onInputChange, ethWithdrawAmount, track],
+    [setSlippage, onInputChange, ethToWithdrawInput, track],
   )
 
   const onApproveClick = async () => {
@@ -146,7 +143,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
 
   const onTxnConfirmed = useCallback(
     (id?: string) => {
-      onInputChange(BIG_ZERO)
+      onInputChange('0')
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionEthAmountRef.current,
@@ -162,7 +159,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const onWithdrawClick = async () => {
     setTxLoading(true)
     try {
-      ongoingTransactionEthAmountRef.current = ethWithdrawAmount
+      ongoingTransactionEthAmountRef.current = ethToWithdrawInputBN
 
       const dataToTrack = {
         amount: bullWithdrawAmountRef.current.toNumber(),
@@ -182,10 +179,10 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   }
 
   const withdrawError = useAppMemo(() => {
-    if (ethWithdrawAmount.gt(bullRecoveryPositionValueInEth)) {
+    if (ethToWithdrawInputBN.gt(bullRecoveryPositionValueInEth)) {
       return 'Withdraw amount greater than strategy balance'
     }
-  }, [ethWithdrawAmount, bullRecoveryPositionValueInEth])
+  }, [ethToWithdrawInputBN, bullRecoveryPositionValueInEth])
 
   const { isRestricted } = useRestrictUser()
   const selectWallet = useSelectWallet()
@@ -209,8 +206,8 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
       <div className={zenBullClasses.tradeContainer}>
         <InputToken
           id="bull-withdraw-eth-input"
-          value={ethWithdrawAmount.toString()}
-          onInputChange={onInputChangeBNWrapper}
+          value={ethToWithdrawInput}
+          onInputChange={onInputChange}
           balance={bullRecoveryPositionValueInEth}
           logo={ethLogo}
           symbol={'ETH'}
@@ -278,7 +275,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
             <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="bull-unsupported-network-btn">
               {'Unsupported Network'}
             </PrimaryButtonNew>
-          ) : bullAllowanceInEth.lt(ethWithdrawAmount) ? (
+          ) : bullAllowanceInEth.lt(ethToWithdrawInputBN) ? (
             <PrimaryButtonNew
               fullWidth
               id="bull-withdraw-btn"

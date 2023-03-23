@@ -38,7 +38,6 @@ const InputNumber = React.forwardRef<any, InputNumberProps>(
 
     return (
       <InputBase
-        type="number"
         ref={ref}
         value={value}
         onChange={(event) => handleChange(event.target.value)}
