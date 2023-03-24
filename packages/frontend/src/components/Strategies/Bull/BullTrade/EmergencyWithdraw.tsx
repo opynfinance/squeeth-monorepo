@@ -22,13 +22,12 @@ import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
 import useExecuteOnce from '@hooks/useExecuteOnce'
 import useAmplitude from '@hooks/useAmplitude'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAppMemo from '@hooks/useAppMemo'
 import { useRestrictUser } from '@context/restrict-user'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import { BULL_EVENTS } from '@utils/amplitude'
-import { BULL_TOKEN_DECIMALS, BIG_ZERO } from '@constants/index'
+import { BIG_ZERO } from '@constants/index'
 import ethLogo from 'public/images/eth-logo.svg'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
@@ -42,9 +41,11 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) => void }> = ({
-  onTxnConfirm,
-}) => {
+const EmergencyWithdraw: React.FC<{
+  onTxnConfirm: (txn: BullTransactionConfirmation) => void
+  isLoadingBalance: boolean
+  bullBalance: BigNumber
+}> = ({ onTxnConfirm, isLoadingBalance, bullBalance }) => {
   const zenBullClasses = useZenBullStyles()
   const classes = useStyles()
 
@@ -68,7 +69,6 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const { track } = useAmplitude()
   const getEmergencyWithdrawParams = useGetEmergencyWithdrawParams()
   const bullEmergencyWithdrawEthFromCrab = useBullEmergencyWithdrawEthFromCrab()
-  const { loading: isBullBalanceLoading, refetch: refetchBullBalance } = useTokenBalance(bullStrategy)
 
   const trackUserEnteredWithdrawAmount = useCallback(
     (amount: BigNumber) => track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_AMOUNT_ENTERED, { amount: amount.toNumber() }),
@@ -81,7 +81,6 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const { allowance: bullAllowance, approve: approveBull } = useUserAllowance(bullStrategy, bullEmergencyWithdraw)
   const logAndRunTransaction = useTrackTransactionFlow()
   const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
-  const { value: bullBalance } = useTokenBalance(bullStrategy, 15, BULL_TOKEN_DECIMALS)
   const ethToWithdrawInputBN = useMemo(() => new BigNumber(ethToWithdrawInput), [ethToWithdrawInput])
 
   const debouncedGetWithdrawQuote = debounce(async (bullToWithdraw: BigNumber) => {
@@ -145,6 +144,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const onTxnConfirmed = useCallback(
     (id?: string) => {
       onInputChange('0')
+
       onTxnConfirm({
         status: true,
         amount: ongoingTransactionEthAmountRef.current,
@@ -153,10 +153,8 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
       })
       resetTracking()
       ongoingTransactionEthAmountRef.current = new BigNumber(0)
-
-      refetchBullBalance()
     },
-    [onTxnConfirm, resetTracking, onInputChange, refetchBullBalance],
+    [onTxnConfirm, resetTracking, onInputChange],
   )
 
   const onWithdrawClick = async () => {
@@ -193,6 +191,8 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
   const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const bullAllowanceInEth = bullAllowance.times(bullValueInEth)
 
+  const isInputEmpty = ethToWithdrawInputBN.isZero()
+
   return (
     <>
       <Typography variant="h3" className={zenBullClasses.subtitle}>
@@ -211,7 +211,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
           id="bull-withdraw-eth-input"
           value={ethToWithdrawInput}
           onInputChange={onInputChange}
-          isBalanceLoading={isBullBalanceLoading}
+          isBalanceLoading={isLoadingBalance}
           balance={bullPositionValueInEth}
           logo={ethLogo}
           symbol={'ETH'}
@@ -285,7 +285,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
               id="bull-withdraw-btn"
               variant={'contained'}
               onClick={onApproveClick}
-              disabled={quoteLoading || txLoading || !!withdrawError}
+              disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
             >
               {!txLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
@@ -295,7 +295,7 @@ const EmergencyWithdraw: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmat
               id="bull-withdraw-btn"
               variant={'contained'}
               onClick={onWithdrawClick}
-              disabled={quoteLoading || txLoading || !!withdrawError}
+              disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
             >
               {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>

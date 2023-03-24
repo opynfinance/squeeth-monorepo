@@ -1,9 +1,12 @@
 import BigNumber from 'bignumber.js'
 import React, { useCallback, useState, useEffect } from 'react'
+import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useTransactionStatus, useDisconnectWallet } from '@state/wallet/hooks'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { addressesAtom } from '@state/positions/atoms'
 import BullEmergencyWithdraw from './EmergencyWithdraw'
 
 export enum BullTradeType {
@@ -23,6 +26,12 @@ const BullTrade: React.FC = () => {
 
   const { confirmed, transactionData, resetTransactionData } = useTransactionStatus()
   const disconnectWallet = useDisconnectWallet()
+  const { bullStrategy } = useAtomValue(addressesAtom)
+  const {
+    value: bullBalance,
+    loading: isBullBalanceLoading,
+    refetch: refetchBullBalance,
+  } = useTokenBalance(bullStrategy, 30, 18)
 
   useEffect(() => {
     // make sure user has specifically connected the wallet to zenbull
@@ -37,8 +46,9 @@ const BullTrade: React.FC = () => {
     (data: BullTransactionConfirmation | undefined) => {
       console.log('Tx on confirm', data, transactionData?.hash)
       setConfirmedTransactionData(data)
+      refetchBullBalance()
     },
-    [transactionData?.hash],
+    [transactionData?.hash, refetchBullBalance],
   )
 
   const onClose = useCallback(() => {
@@ -62,7 +72,11 @@ const BullTrade: React.FC = () => {
           </PrimaryButtonNew>
         </>
       ) : (
-        <BullEmergencyWithdraw onTxnConfirm={onTxnConfirm} />
+        <BullEmergencyWithdraw
+          onTxnConfirm={onTxnConfirm}
+          isLoadingBalance={isBullBalanceLoading}
+          bullBalance={bullBalance}
+        />
       )}
     </>
   )
