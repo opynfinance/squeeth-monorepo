@@ -293,7 +293,7 @@ const EmergencyWithdraw: React.FC<{
             <PrimaryButtonNew
               fullWidth
               id="bull-withdraw-btn"
-              variant={'contained'}
+              variant="contained"
               onClick={onWithdrawClick}
               disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
             >
