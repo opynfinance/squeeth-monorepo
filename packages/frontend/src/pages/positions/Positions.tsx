@@ -142,11 +142,11 @@ export default function Positions() {
         </div>
 
         {shortDebt.isZero() &&
-          depositedEth.isZero() &&
-          depositedEthV2.isZero() &&
-          squeethAmount.isZero() &&
-          mintedDebt.isZero() &&
-          lpedSqueeth.isZero() ? (
+        depositedEth.isZero() &&
+        depositedEthV2.isZero() &&
+        squeethAmount.isZero() &&
+        mintedDebt.isZero() &&
+        lpedSqueeth.isZero() ? (
           <div className={classes.empty}>
             <Typography>No active positions</Typography>
           </div>
@@ -188,7 +188,7 @@ export default function Positions() {
           />
         )}
 
-        {!!address ? <BullPosition /> : null}
+        {/* {!!address ? <BullPosition /> : null} */}
 
         {activePositions?.length > 0 && (
           <>
