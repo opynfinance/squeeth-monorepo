@@ -83,7 +83,7 @@ const Bull: React.FC = () => {
       <div className={classes.container}>
         <div className={classes.leftColumn}>
           <div className={classes.infoContainer}>
-            <MyPosition />
+            {/* <MyPosition /> */}
             <StrategyPerformance />
             <About />
           </div>
