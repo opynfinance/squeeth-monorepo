@@ -88,7 +88,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
   loadingMessage = 'loading...',
   readOnly = false,
   readOnlyTooltip = '',
-  isBalanceLoading = true,
+  isBalanceLoading = false,
   loadingBalanceMessage = 'loading...',
   ...props
 }) => {
