@@ -287,7 +287,7 @@ const EmergencyWithdraw: React.FC<{
               onClick={onApproveClick}
               disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
             >
-              {!txLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
+              {!txLoading && !quoteLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
             </PrimaryButtonNew>
           ) : (
             <PrimaryButtonNew
