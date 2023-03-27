@@ -36,7 +36,7 @@ export const transactionLoadingAtom = atom((get) => {
 })
 export const cancelTransactionAtom = atomWithReset<boolean>(false)
 export const addressAtom = atom<string | null>(null)
-export const networkIdAtom = atom(Networks.MAINNET)
+export const networkIdAtom = atom(Networks.GOERLI)
 export const web3Atom = atom(defaultWeb3)
 export const onboardAtom = atom<API | null>(null)
 export const notifyAtom = atom<NotifyAPI | null>(null)
