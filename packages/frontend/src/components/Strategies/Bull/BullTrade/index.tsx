@@ -1,10 +1,10 @@
 import BigNumber from 'bignumber.js'
-import React, { useCallback, useState, useEffect } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
 import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
-import { useTransactionStatus, useDisconnectWallet } from '@state/wallet/hooks'
+import { useTransactionStatus } from '@state/wallet/hooks'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from '@state/positions/atoms'
 import BullEmergencyWithdraw from './EmergencyWithdraw'
@@ -25,22 +25,12 @@ const BullTrade: React.FC = () => {
   const [confirmedTransactionData, setConfirmedTransactionData] = useState<BullTransactionConfirmation | undefined>()
 
   const { confirmed, transactionData, resetTransactionData } = useTransactionStatus()
-  const disconnectWallet = useDisconnectWallet()
   const { bullStrategy } = useAtomValue(addressesAtom)
   const {
     value: bullBalance,
     loading: isBullBalanceLoading,
     refetch: refetchBullBalance,
   } = useTokenBalance(bullStrategy, 30, 18)
-
-  useEffect(() => {
-    // make sure user has specifically connected the wallet to zenbull
-    const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
-    if (!hasConnectedToZenbullBefore) {
-      disconnectWallet()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const onTxnConfirm = useCallback(
     (data: BullTransactionConfirmation | undefined) => {

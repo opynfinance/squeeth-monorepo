@@ -34,6 +34,7 @@ import useAmplitude from '@hooks/useAmplitude'
 
 export const useSelectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
+  const onboardAddress = useAtomValue(onboardAddressAtom)
 
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const { pathname } = useRouter()
@@ -42,30 +43,28 @@ export const useSelectWallet = () => {
   const onWalletSelect = async () => {
     if (!onboard) return
 
-    const success = await onboard.walletSelect()
-    if (success) {
-      const { address } = onboard.getState()
+    onboard.walletSelect().then(async (success) => {
+      if (success) {
+        // in case connected specifically to zenbull
+        const isZenbullPage = pathname === '/strategies/bull'
+        if (isZenbullPage) {
+          window.localStorage.setItem('walletConnectedToZenbull', 'true')
+        }
 
-      // if onboard address is invalid
-      if (address) {
-        checkIsValidAddress(address).then((valid) => {
-          if (valid) {
-            connectWallet(address)
-
-            // in case connected specifically to zenbull
-            const isZenbullPage = pathname === '/strategies/bull'
-            if (isZenbullPage) {
-              window.localStorage.setItem('walletConnectedToZenbull', 'true')
+        // if onboard address is invalid
+        if (onboardAddress) {
+          checkIsValidAddress(onboardAddress).then((valid) => {
+            if (valid) {
+              connectWallet(onboardAddress)
+            } else {
+              setWalletFailVisible(true)
             }
-          } else {
-            setWalletFailVisible(true)
-          }
-        })
-      }
+          })
+        }
 
-      // Run wallet checks to make sure that user is ready to transact
-      await onboard.walletCheck()
-    }
+        await onboard.walletCheck()
+      }
+    })
   }
 
   return onWalletSelect

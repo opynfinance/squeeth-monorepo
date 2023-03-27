@@ -4,7 +4,7 @@ import { Link, Typography } from '@material-ui/core'
 
 import { useInitBullRecoveryStrategy } from '@state/bull/hooks'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
-import MyPosition from './MyPosition'
+import { useDisconnectWallet } from '@state/wallet/hooks'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
 import BullTrade from './BullTrade'
@@ -54,6 +54,7 @@ const useStyles = makeStyles((theme) =>
 
 const Bull: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
+  const disconnectWallet = useDisconnectWallet()
   const classes = useStyles()
 
   useCurrentCrabPositionValueV2()
@@ -62,6 +63,15 @@ const Bull: React.FC = () => {
   useEffect(() => {
     setStrategyDataV2()
   }, [setStrategyDataV2])
+
+  useEffect(() => {
+    // make sure user has specifically connected the wallet to zenbull before
+    const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
+    if (!hasConnectedToZenbullBefore) {
+      disconnectWallet()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
