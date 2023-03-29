@@ -38,9 +38,6 @@ contract MainnetDeployEmergencyWithdraw is Script {
         vm.stopBroadcast();
 
         require(emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal() == 0);
-        require(
-            emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal()
-                == 0
-        );
+        require(emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal() == 0);
     }
 }
