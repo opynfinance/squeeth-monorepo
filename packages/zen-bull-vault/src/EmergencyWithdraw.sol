@@ -2,8 +2,6 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import { console } from "forge-std/console.sol";
-
 // interface
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";

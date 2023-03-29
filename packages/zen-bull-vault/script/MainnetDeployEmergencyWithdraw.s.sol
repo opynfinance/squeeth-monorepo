@@ -6,6 +6,12 @@ import "forge-std/Script.sol";
 import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
 import { EmergencyWithdraw } from "../src/EmergencyWithdraw.sol";
 
+/**
+ * Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables. (Mainly the MAINNET_RPC_URL, DEPLOYER_PK and ETHERSCAN_API_KEY vars)
+ * This script can be executed using the below command:
+ * - source .env
+ * - forge script script/MainnetDeployEmergencyWithdraw.s.sol:MainnetDeployEmergencyWithdraw --rpc-url $MAINNET_RPC_URL --broadcast --verify -vvvv
+ */
 contract MainnetDeployEmergencyWithdraw is Script {
     address payable public constant ZEN_BULL = 0xb46Fb07b0c80DBC3F97cae3BFe168AcaD46dF507;
     address public constant WETH = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
@@ -34,7 +40,7 @@ contract MainnetDeployEmergencyWithdraw is Script {
         require(emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal() == 0);
         require(
             emergencyWithdraw.redeemedRecoveryAmountForEulerWithdrawal()
-                == IERC20(ZEN_BULL).totalSupply()
+                == 0
         );
     }
 }
