@@ -56,7 +56,7 @@ const useStyles = makeStyles((theme) =>
 const TooltipTitle = () => (
   <>
     <Typography variant="caption">
-      The zen bull recovery contract has been peer reviewed, but not audited. Use at your own descretion
+      The zen bull recovery contract has been peer reviewed, but not audited. Use at your own discretion.
       <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank" style={{ marginLeft: '4px' }}>
         Learn more.
       </Link>
