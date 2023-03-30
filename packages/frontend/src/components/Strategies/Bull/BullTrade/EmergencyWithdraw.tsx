@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useRef, useMemo } from 'react'
-import { Box, Typography, Link, CircularProgress,Tooltip } from '@material-ui/core'
+import { Box, Typography, Link, CircularProgress, Tooltip } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/InfoOutlined'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
@@ -41,27 +41,26 @@ const useStyles = makeStyles((theme) =>
     },
     subDescription: {
       marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(1),
-      color: theme.palette.text.secondary,
       display: 'flex',
       alignItems: 'center',
+      color: theme.palette.text.secondary,
     },
     infoIcon: {
       color: theme.palette.text.hint,
       fontSize: 14,
-      marginLeft: theme.spacing(0.5)
+      marginLeft: theme.spacing(0.75),
     },
   }),
 )
 
 const TooltipTitle = () => (
   <>
-   <Typography variant="body2">
-    The zen bull recovery contract has been peer reviewed, but not audited. Use at your own descretion
-    <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank" style={{ marginLeft: '4px'}}>
-      Learn more.
-    </Link>
-   </Typography>
+    <Typography variant="caption">
+      The zen bull recovery contract has been peer reviewed, but not audited. Use at your own descretion
+      <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank" style={{ marginLeft: '4px' }}>
+        Learn more.
+      </Link>
+    </Typography>
   </>
 )
 
@@ -230,14 +229,12 @@ const EmergencyWithdraw: React.FC<{
         </Link>
       </Typography>
 
-      <Typography variant="body2" className={classes.subDescription}>
-        <p>
-          Recovery contract has been peer reviewed
-        </p>
-        <Tooltip title={<TooltipTitle />}>
+      <div className={classes.subDescription}>
+        <Typography variant="body2">Recovery contract has been peer reviewed</Typography>
+        <Tooltip title={<TooltipTitle />} interactive>
           <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
         </Tooltip>
-      </Typography>
+      </div>
 
       <div className={zenBullClasses.tradeContainer}>
         <InputToken
