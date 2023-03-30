@@ -25,7 +25,7 @@ contract EmergencyRepayEulerDebtTest is Test {
     address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant WPOWERPERP = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    address public constant ETH_USDC_POOL = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
+    address public constant ETH_USDC_POOL = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant E_TOKEN = 0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D;
     address public constant D_TOKEN = 0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42;
@@ -73,7 +73,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
     function testEmergencyRepayEulerDebt() public {
         uint256 ethLimitPrice =
-            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(5e15)));
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -81,10 +81,10 @@ contract EmergencyRepayEulerDebtTest is Test {
         uint256 wethToWithdraw = ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
         uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
         uint256 ethToRepayForFlashswap =
-            Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+            Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 500, usdcToRepay, 0);
 
         vm.startPrank(user1);
-        emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 500);
         vm.stopPrank();
 
         uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -107,7 +107,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             if (ratio > 1e18) ratio = 1e18;
 
             uint256 ethLimitPrice =
-                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(5e15)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -119,11 +119,11 @@ contract EmergencyRepayEulerDebtTest is Test {
             uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
             // console.log("usdcToRepay", usdcToRepay);
             uint256 ethToRepayForFlashswap =
-                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 500, usdcToRepay, 0);
             totalEthInContract = totalEthInContract.add(wethToWithdraw.sub(ethToRepayForFlashswap));
 
             vm.startPrank(user1);
-            emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
+            emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 500);
             vm.stopPrank();
 
             uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;
@@ -152,17 +152,17 @@ contract EmergencyRepayEulerDebtTest is Test {
             UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.add(1e16)));
         vm.startPrank(user1);
         vm.expectRevert(bytes("amount in greater than max"));
-        emergencyWithdraw.emergencyRepayEulerDebt(2e17, ethLimitPrice, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(2e17, ethLimitPrice, 500);
         vm.stopPrank();
     }
 
     function testEmergencyRepayEulerDebtWhenWethToWithdrawGreaterThanMax() public {
         uint256 ethLimitPrice =
-            (Quoter(QUOTER).quoteExactOutputSingle(USDC, WETH, 3000, 1e18, 0)).wmul((ONE.add(1e16)));
+            (Quoter(QUOTER).quoteExactOutputSingle(USDC, WETH, 500, 1e18, 0)).wmul((ONE.add(1e16)));
 
         vm.startPrank(user1);
         vm.expectRevert(bytes("WETH to withdraw is greater than max per repay"));
-        emergencyWithdraw.emergencyRepayEulerDebt(1e18, ethLimitPrice, 3000);
+        emergencyWithdraw.emergencyRepayEulerDebt(1e18, ethLimitPrice, 500);
         vm.stopPrank();
     }
 
@@ -209,7 +209,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             if (ratio > 1e18) ratio = 1e18;
 
             uint256 ethLimitPrice =
-                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(1e16)));
+                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(5e15)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -220,11 +220,11 @@ contract EmergencyRepayEulerDebtTest is Test {
             }
             uint256 usdcToRepay = ratio.wmul(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL));
             uint256 ethToRepayForFlashswap =
-                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 3000, usdcToRepay, 0);
+                Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 500, usdcToRepay, 0);
             totalEthInContract = totalEthInContract.add(wethToWithdraw.sub(ethToRepayForFlashswap));
 
             vm.startPrank(user1);
-            emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
+            emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 500);
             vm.stopPrank();
 
             uint256 emergencyContractEthBalanceAfter = address(emergencyWithdraw).balance;

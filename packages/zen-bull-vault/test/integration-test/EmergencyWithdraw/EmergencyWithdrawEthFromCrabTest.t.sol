@@ -21,7 +21,7 @@ contract EmergencyWithdrawEthFromCrabTest is Test {
     address public constant UNI_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
     address public constant WPOWERPERP = 0xf1B99e3E573A1a9C5E6B2Ce818b617F0E664E86B;
     address public constant QUOTER = 0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6;
-    address public constant ETH_USDC_POOL = 0x8ad599c3A0ff1De082011EFDDc58f1908eb6e6D8;
+    address public constant ETH_USDC_POOL = 0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640;
     address public constant USDC = 0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48;
     address public constant E_TOKEN = 0x1b808F49ADD4b8C6b5117d9681cF7312Fcf0dC1D;
     address public constant D_TOKEN = 0x84721A3dB22EB852233AEAE74f9bC8477F8bcc42;
