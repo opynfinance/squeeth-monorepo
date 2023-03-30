@@ -24,7 +24,7 @@ contract EmergencyWithdraw is ERC20, UniFlash {
     /// @dev WETH decimals - USDC decimals
     uint256 internal constant WETH_DECIMALS_DIFF = 1e12;
     uint256 public constant MAX_WETH_PER_DEBT_REPAY = 100 ether;
-    uint256 public constant LIMIT_PRICE_TOLERANCE = 5e15; // 0.3%
+    uint256 public constant LIMIT_PRICE_TOLERANCE = 4e15; // 0.4%
 
     /// @dev crab strategy address
     address internal immutable crab;
