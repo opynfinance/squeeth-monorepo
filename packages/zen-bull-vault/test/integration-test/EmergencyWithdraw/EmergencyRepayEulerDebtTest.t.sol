@@ -41,7 +41,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
-        vm.createSelectFork(FORK_URL, 16817896);
+        vm.createSelectFork(FORK_URL, 16816896);
 
         deployerPk = 0xA11CD;
         deployer = vm.addr(deployerPk);
@@ -73,7 +73,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
     function testEmergencyRepayEulerDebt() public {
         uint256 ethLimitPrice =
-            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(4e15)));
+            UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(2e15)));
         uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
         uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
         uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -107,7 +107,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             if (ratio > 1e18) ratio = 1e18;
 
             uint256 ethLimitPrice =
-                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(4e15)));
+                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(2e15)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -140,6 +140,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             );
 
             ratio = ratio.mul(2);
+            skip(420);
         }
 
         assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
@@ -209,7 +210,7 @@ contract EmergencyRepayEulerDebtTest is Test {
             if (ratio > 1e18) ratio = 1e18;
 
             uint256 ethLimitPrice =
-                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(4e15)));
+                UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(2e15)));
             uint256 emergencyContractEthBalanceBefore = address(emergencyWithdraw).balance;
             uint256 zenBullDebtBefore = IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL);
             uint256 zenBullCollateralBefore = IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL);
@@ -241,6 +242,8 @@ contract EmergencyRepayEulerDebtTest is Test {
             );
 
             ratio = ratio.mul(2);
+            skip(420);
+
         }
 
         assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);

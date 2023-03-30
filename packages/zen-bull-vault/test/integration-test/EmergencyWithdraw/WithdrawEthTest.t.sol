@@ -41,7 +41,7 @@ contract WithdrawEthTest is Test {
 
     function setUp() public virtual {
         string memory FORK_URL = vm.envString("FORK_URL");
-        vm.createSelectFork(FORK_URL, 16817896);
+        vm.createSelectFork(FORK_URL, 16816896);
 
         deployerPk = 0xA11CD;
         deployer = vm.addr(deployerPk);
@@ -92,7 +92,7 @@ contract WithdrawEthTest is Test {
                 if (ratio > 1e18) ratio = 1e18;
 
                 uint256 ethLimitPrice =
-                    UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(4e15)));
+                    UniOracle._getTwap(ETH_USDC_POOL, WETH, USDC, 420, false).wmul((ONE.sub(2e15)));
                 uint256 wethToWithdraw =
                     ratio.wmul(IEulerEToken(E_TOKEN).balanceOfUnderlying(ZEN_BULL));
                 if (wethToWithdraw > emergencyWithdraw.MAX_WETH_PER_DEBT_REPAY()) {
@@ -104,10 +104,11 @@ contract WithdrawEthTest is Test {
                     Quoter(QUOTER).quoteExactOutputSingle(WETH, USDC, 500, usdcToRepay, 0);
 
                 vm.startPrank(user1);
-                emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 3000);
+                emergencyWithdraw.emergencyRepayEulerDebt(ratio, ethLimitPrice, 500);
                 vm.stopPrank();
 
                 ratio = ratio.mul(2);
+                skip(420);
             }
 
             assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
