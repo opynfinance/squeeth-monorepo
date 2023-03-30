@@ -16,6 +16,7 @@ import crabHelperAbi from '../../abis/crabHelper.json'
 import crabNettingAbi from '../../abis/crabNetting.json'
 import flashBullAbi from '../../abis/flashBullStrategy.json'
 import bullStrategyAbi from '../../abis/bullStrategy.json'
+import bullEmergencyWithdrawAbi from '../../abis/bullEmergencyWithdraw.json'
 import eTokenAbi from '../../abis/eulerEToken.json'
 import auctionBullAbi from '../../abis/auctionBull.json'
 import eulerSimpleLensAbi from '../../abis/eulerSimpleLens.json'
@@ -146,4 +147,11 @@ export const eulerLensContractAtom = atom<Contract | null>((get) => {
   const { eulerSimpleLens } = get(addressesAtom)
   if (!web3) return null
   return getContract(web3, eulerSimpleLens, eulerSimpleLensAbi)
+})
+
+export const bullEmergencyWithdrawContractAtom = atom<Contract | null>((get) => {
+  const web3 = get(web3Atom)
+  const { bullEmergencyWithdraw } = get(addressesAtom)
+  if (!web3) return null
+  return getContract(web3, bullEmergencyWithdraw, bullEmergencyWithdrawAbi)
 })

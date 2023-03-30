@@ -22,6 +22,7 @@ import {
   flashBullContractAtom,
   quoterContractAtom,
   wethETokenContractAtom,
+  bullEmergencyWithdrawContractAtom,
 } from '@state/contracts/atoms'
 import { indexAtom } from '@state/controller/atoms'
 import { crabStrategySlippageAtomV2, crabStrategyVaultAtomV2, crabTotalSupplyV2Atom } from '@state/crab/atoms'
@@ -57,8 +58,16 @@ import {
   eulerETHLendRateAtom,
   bullTimeAtLastHedgeAtom,
   bullEulerUSDCDebtAtom,
+  bullCrabPositionValueInEth,
+  bullCrabValueInEth,
+  isBullRecoveryReadyAtom,
 } from './atoms'
-import { calcAssetNeededForFlashWithdraw, getEulerInterestRate, getWethToLendFromCrabEth } from './utils'
+import {
+  calcAssetNeededForFlashWithdraw,
+  getEulerInterestRate,
+  getWethToLendFromCrabEth,
+  calcAssetNeededForEmergencyWithdraw,
+} from './utils'
 
 export const useInitBullStrategy = () => {
   const setBullState = useSetBullState()
@@ -194,6 +203,92 @@ export const useSetBullUserState = () => {
   }, [bullCrabBalance, bullShare, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, eulerUsdc, eulerWeth, isMounted])
 
   return setBullUserState
+}
+
+export const useInitBullRecoveryStrategy = () => {
+  const setBullRecoveryState = useSetBullRecoveryState()
+  const setBullRecoveryUserState = useSetBullRecoveryUserState()
+
+  useEffect(() => {
+    setBullRecoveryState()
+  }, [setBullRecoveryState])
+
+  useEffect(() => {
+    setBullRecoveryUserState()
+  }, [setBullRecoveryUserState])
+}
+
+export const useSetBullRecoveryState = () => {
+  const bullContract = useAtomValue(bullStrategyContractAtom)
+  const bullEmergencyWithdrawContract = useAtomValue(bullEmergencyWithdrawContractAtom)
+
+  const setBullCrabBalance = useUpdateAtom(bullCrabBalanceAtom)
+  const setBullSupply = useUpdateAtom(bullSupplyAtom)
+
+  const isMounted = useMountedState()
+
+  const setBullRecoveryState = useAppCallback(async () => {
+    if (!bullContract || !bullEmergencyWithdrawContract) {
+      return null
+    }
+
+    try {
+      const p1 = bullContract.methods.getCrabBalance().call()
+      const p2 = bullContract.methods.totalSupply().call()
+      const p3 = bullEmergencyWithdrawContract.methods.redeemedZenBullAmountForCrabWithdrawal().call()
+
+      const [crabBalance, totalSupply, redeemed] = await Promise.all([p1, p2, p3])
+
+      if (!isMounted()) return null
+
+      setBullCrabBalance(toTokenAmount(crabBalance, WETH_DECIMALS))
+      setBullSupply(toTokenAmount(totalSupply, WETH_DECIMALS).minus(toTokenAmount(redeemed, WETH_DECIMALS)))
+    } catch (error) {
+      console.error(error)
+    }
+  }, [bullContract, bullEmergencyWithdrawContract, isMounted])
+
+  return setBullRecoveryState
+}
+
+export const useSetBullRecoveryUserState = () => {
+  const { bullStrategy } = useAtomValue(addressesAtom)
+  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const bullSupply = useAtomValue(bullSupplyAtom)
+  const crabTotalSupply = useAtomValue(crabTotalSupplyV2Atom)
+  const crabV2Vault = useAtomValue(crabStrategyVaultAtomV2)
+  const index = useAtomValue(indexAtom)
+
+  const setBullCrabPositionValueInEth = useUpdateAtom(bullCrabPositionValueInEth)
+  const setBullCrabValueInEth = useUpdateAtom(bullCrabValueInEth)
+  const setBullRecoveryReady = useUpdateAtom(isBullRecoveryReadyAtom)
+
+  const getWSqueethPositionValueInETH = useGetWSqueethPositionValueInETH()
+  const isMounted = useMountedState()
+
+  const { value: userBullBalance } = useTokenBalance(bullStrategy)
+  const ethPrice = toTokenAmount(index, 18).sqrt()
+
+  const setBullRecoveryUserState = useAppCallback(async () => {
+    if (!crabV2Vault || !isMounted()) {
+      return null
+    }
+
+    const bullShare = bullSupply.isZero() ? BIG_ZERO : userBullBalance.div(bullSupply)
+    const userCrab = bullShare.times(bullCrabBalance)
+    const crabCollat = userCrab.times(crabV2Vault.collateralAmount).div(crabTotalSupply)
+    const crabDebt = userCrab.times(crabV2Vault.shortAmount).div(crabTotalSupply)
+    const crabDebtInEth = getWSqueethPositionValueInETH(crabDebt)
+
+    const crabComponent = crabCollat.minus(crabDebtInEth)
+    const userBullCrabPosition = crabComponent
+
+    setBullCrabPositionValueInEth(new BigNumber(userBullCrabPosition.toFixed(18)))
+    setBullCrabValueInEth(userBullCrabPosition.div(userBullBalance))
+    setBullRecoveryReady(true)
+  }, [bullCrabBalance, userBullBalance, bullSupply, crabTotalSupply, crabV2Vault, ethPrice, isMounted])
+
+  return setBullRecoveryUserState
 }
 
 export const useGetFlashBulldepositParams = () => {
@@ -656,4 +751,153 @@ export const useBullFlashWithdraw = () => {
   }
 
   return flashWithdrawFromBull
+}
+
+export const useGetEmergencyWithdrawParams = () => {
+  const crabV2Vault = useAtomValue(crabStrategyVaultAtomV2)
+  const bullSupply = useAtomValue(bullSupplyAtom)
+  const bullCrabBalance = useAtomValue(bullCrabBalanceAtom)
+  const crabTotalSupply = useAtomValue(crabTotalSupplyV2Atom)
+  const quoterContract = useAtomValue(quoterContractAtom)
+  const { oSqueeth, weth } = useAtomValue(addressesAtom)
+  const slippage = useAtomValue(crabStrategySlippageAtomV2)
+  const sqthPriceInEth = useAtomValue(squeethInitialPriceAtom)
+  const network = useAtomValue(networkIdAtom)
+  const queryClient = useQueryClient()
+
+  const emptyState = {
+    maxEthForWPowerPerp: BIG_ZERO,
+    wPowerPerpPoolFee: UNI_POOL_FEES,
+    priceImpact: 0,
+  }
+
+  const getEmergencyWithdrawParams = async (bullToWithdraw: BigNumber) => {
+    if (!crabV2Vault || !quoterContract) {
+      return emptyState
+    }
+
+    const { wPowerPerpToRedeem } = await calcAssetNeededForEmergencyWithdraw(
+      bullToWithdraw,
+      crabV2Vault,
+      bullSupply,
+      bullCrabBalance,
+      crabTotalSupply,
+    )
+
+    const { maxAmountIn: maxEthForOsqth, amountIn: ethForOsqth } = await getExactOut(
+      quoterContract,
+      weth,
+      oSqueeth,
+      fromTokenAmount(wPowerPerpToRedeem, 18),
+      UNI_POOL_FEES,
+      slippage,
+    )
+
+    const maxEthForWPowerPerp = toTokenAmount(maxEthForOsqth, 18)
+
+    const spotPrice = wPowerPerpToRedeem.times(sqthPriceInEth)
+    const executionPrice = toTokenAmount(ethForOsqth, 18)
+
+    const priceImpact = (executionPrice.div(spotPrice).toNumber() - 1) * 100
+
+    return {
+      ...emptyState,
+      maxEthForWPowerPerp,
+      priceImpact,
+    }
+  }
+
+  const queryKey = useAppMemo(
+    () =>
+      `getEmergencyWithdrawParams-${network}-${crabTotalSupply.toString()}-${bullCrabBalance.toString()}-${bullSupply.toString()}-${crabV2Vault?.collateralAmount.toString()}-${sqthPriceInEth.toString()}-${slippage.toString()}`,
+    [network, crabTotalSupply, bullCrabBalance, bullSupply, crabV2Vault?.collateralAmount, sqthPriceInEth, slippage],
+  )
+
+  const getCachedWithdrawParams = async (bullToWithdraw: BigNumber) => {
+    try {
+      const data = await queryClient.fetchQuery({
+        queryKey: `${queryKey}-${bullToWithdraw.toString()}`,
+        queryFn: () => getEmergencyWithdrawParams(bullToWithdraw),
+        staleTime: 60_000,
+      })
+      return data
+    } catch (error) {
+      console.log(error)
+      return emptyState
+    }
+  }
+
+  return getCachedWithdrawParams
+}
+
+export const useBullEmergencyWithdrawEthFromCrab = () => {
+  const bullEmergencyWithdrawContract = useAtomValue(bullEmergencyWithdrawContractAtom)
+  const address = useAtomValue(addressAtom)
+  const { bullEmergencyWithdraw } = useAtomValue(addressesAtom)
+  const { track } = useAmplitude()
+  const handleTransaction = useHandleTransaction()
+  const { show: showErrorFeedbackPopup } = usePopup(
+    GenericErrorPopupConfig('Hi, I am having trouble withdrawing from bull.', 'withdraw-bull-recovery'),
+  )
+
+  const bullEmergencyWithdrawFromCrab = async (
+    bullAmount: BigNumber,
+    maxEthForWPowerPerp: BigNumber,
+    dataToTrack?: any,
+    onTxConfirmed?: () => void,
+  ) => {
+    if (!bullEmergencyWithdrawContract) {
+      return
+    }
+
+    track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_CLICK, dataToTrack)
+
+    let gasEstimate
+    let gas
+
+    try {
+      const _bullAmount = fromTokenAmount(bullAmount, 18).toFixed(0)
+      const _maxEthForWPowerPerp = fromTokenAmount(maxEthForWPowerPerp, 18).toFixed(0)
+
+      try {
+        gasEstimate = await bullEmergencyWithdrawContract.methods
+          .emergencyWithdrawEthFromCrab(_bullAmount, _maxEthForWPowerPerp)
+          .estimateGas({
+            to: bullEmergencyWithdraw,
+            from: address,
+          })
+
+        console.log('gasEstimate for bullEmergencyWithdraw', gasEstimate)
+        if (gasEstimate === 0) throw new Error('WRONG_GAS_ESTIMATE')
+      } catch (e) {
+        console.error('gas estimate error: ', e)
+        track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_WRONG_GAS)
+        alert('Error occurred, please refresh and try again')
+        throw e
+      }
+      gas = Number((gasEstimate * 1.2).toFixed(0))
+      await handleTransaction(
+        bullEmergencyWithdrawContract.methods.emergencyWithdrawEthFromCrab(_bullAmount, _maxEthForWPowerPerp).send({
+          from: address,
+          gas: gasEstimate ? Number((gasEstimate * 1.2).toFixed(0)) : undefined,
+        }),
+        onTxConfirmed,
+      )
+
+      track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_SUCCESS, { ...(dataToTrack ? { ...dataToTrack, gas } : {}) })
+    } catch (e: any) {
+      const trackingData = { ...(dataToTrack ?? {}), gas }
+      e?.code === REVERTED_TRANSACTION_CODE ? track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_REVERT, trackingData) : null
+      e?.code !== REVERTED_TRANSACTION_CODE ? showErrorFeedbackPopup() : null
+
+      track(BULL_EVENTS.EMERGENCY_WITHDRAW_BULL_FAILED, {
+        code: e?.code,
+        message: e?.message,
+        ...trackingData,
+      })
+      console.log(e)
+    }
+  }
+
+  return bullEmergencyWithdrawFromCrab
 }

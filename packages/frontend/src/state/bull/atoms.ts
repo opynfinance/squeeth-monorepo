@@ -70,6 +70,11 @@ export const bullTimeAtLastHedgeAtom = atom(0)
 export const bullStrategyFilterStartDateAtom = atom<Date>(new Date(BULL_START_DATE))
 export const bullStrategyFilterEndDateAtom = atom<Date>(new Date())
 
+// Bull Recovery Withdrawal variables
+export const bullCrabPositionValueInEth = atom(new BigNumber(0))
+export const bullCrabValueInEth = atom(new BigNumber(0))
+export const isBullRecoveryReadyAtom = atom(false)
+
 export const useBullPnLChartData = () => {
   const startDate = useAtomValue(bullStrategyFilterStartDateAtom)
   const endDate = useAtomValue(bullStrategyFilterEndDateAtom)

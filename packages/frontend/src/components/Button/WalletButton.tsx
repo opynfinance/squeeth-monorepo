@@ -8,7 +8,7 @@ import { Networks } from '../../types'
 import { toTokenAmount } from '@utils/calculations'
 import { useENS } from '@hooks/useENS'
 import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
-import { useDiscconectWallet, useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
+import { useDisconnectWallet, useSelectWallet, useWalletBalance } from 'src/state/wallet/hooks'
 import { BIG_ZERO } from '../../constants'
 
 const useStyles = makeStyles((theme) =>
@@ -84,7 +84,7 @@ const WalletButton: React.FC = () => {
   const networkId = useAtomValue(networkIdAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const { data: balance } = useWalletBalance()
-  const disconnectWallet = useDiscconectWallet()
+  const disconnectWallet = useDisconnectWallet()
   const selectWallet = useSelectWallet()
   const [networkErrorVisible, setNetworkErrorVisible] = useState(false)
 

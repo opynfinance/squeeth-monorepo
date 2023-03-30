@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { Link, Typography } from '@material-ui/core'
 
-import { useInitBullStrategy } from '@state/bull/hooks'
+import { useInitBullRecoveryStrategy } from '@state/bull/hooks'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
-import MyPosition from './MyPosition'
+import { useDisconnectWallet } from '@state/wallet/hooks'
 import About from './About'
 import StrategyPerformance from './StrategyPerformance'
 import BullTrade from './BullTrade'
 import Alert from '@components/Alert'
-import { Modal } from '@components/Modal/Modal'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -47,39 +46,46 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       padding: '32px 24px',
     },
+    topAlert: {
+      marginTop: '16px',
+    },
   }),
 )
 
 const Bull: React.FC = () => {
   const setStrategyDataV2 = useSetStrategyDataV2()
+  const disconnectWallet = useDisconnectWallet()
   const classes = useStyles()
 
-  const [isModalOpen, setModalOpen] = useState(true)
-
   useCurrentCrabPositionValueV2()
-  useInitBullStrategy()
+  useInitBullRecoveryStrategy()
 
   useEffect(() => {
     setStrategyDataV2()
   }, [setStrategyDataV2])
 
-  const closeModal = () => {
-    setModalOpen(false)
-  }
+  useEffect(() => {
+    // make sure user has specifically connected the wallet to zenbull before
+    const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
+    if (!hasConnectedToZenbullBefore) {
+      disconnectWallet()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>
-      <div style={{ marginTop: '16px' }}>
+      <div className={classes.topAlert}>
         <Alert severity="warning">
           <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
-            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
+            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please{' '}
             <Link
-              style={{ fontSize: '15px', fontWeight: 500, marginLeft: '5px', marginRight: '5px' }}
+              style={{ fontSize: '15px', fontWeight: 500 }}
               target="_blank"
               href="https://discord.com/invite/2NFdXaE"
             >
               join discord
-            </Link>
+            </Link>{' '}
             for updates.
           </Typography>
         </Alert>
@@ -87,8 +93,8 @@ const Bull: React.FC = () => {
       <div className={classes.container}>
         <div className={classes.leftColumn}>
           <div className={classes.infoContainer}>
-            <MyPosition />
-            <StrategyPerformance />
+            {/* <MyPosition /> */}
+            {/* <StrategyPerformance /> */}
             <About />
           </div>
         </div>
@@ -98,20 +104,6 @@ const Bull: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <Modal title="Zen Bull Impacted" open={isModalOpen} handleClose={closeModal}>
-        <Typography variant="subtitle1">
-          Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please
-          <Link
-            style={{ fontSize: '15px', marginLeft: '5px', marginRight: '5px' }}
-            target="_blank"
-            href="https://discord.com/invite/2NFdXaE"
-          >
-            join discord
-          </Link>
-          for updates.
-        </Typography>
-      </Modal>
     </>
   )
 }
