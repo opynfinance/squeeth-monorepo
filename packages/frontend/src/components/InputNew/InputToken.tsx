@@ -72,6 +72,8 @@ interface InputTokenProps extends InputNumberProps {
   isLoading?: boolean
   loadingMessage?: string
   readOnlyTooltip?: string
+  isBalanceLoading?: boolean
+  loadingBalanceMessage?: string
 }
 
 export const InputToken: React.FC<InputTokenProps> = ({
@@ -86,7 +88,8 @@ export const InputToken: React.FC<InputTokenProps> = ({
   loadingMessage = 'loading...',
   readOnly = false,
   readOnlyTooltip = '',
-
+  isBalanceLoading = false,
+  loadingBalanceMessage = 'loading...',
   ...props
 }) => {
   const classes = useInputTokenProps()
@@ -145,17 +148,25 @@ export const InputToken: React.FC<InputTokenProps> = ({
         </Typography>
 
         <Box display="flex" alignItems="center" gridGap="4px">
-          <Typography variant="body2" className={classes.textMonospace}>
-            {formatBalance(balance.toNumber())}
-          </Typography>
-          <Typography variant="body2">{` ${symbol}`}</Typography>
-
-          {showMaxAction && (
-            <ButtonBase onClick={onBalanceClick}>
-              <Typography variant="subtitle2" color="primary">
-                (Max)
+          {isBalanceLoading ? (
+            <Typography variant="body2" className={clsx(textClasses.lightFontColor, textClasses.smallFont)}>
+              {loadingBalanceMessage}
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" className={classes.textMonospace}>
+                {isBalanceLoading ? loadingBalanceMessage : formatBalance(balance.toNumber())}
               </Typography>
-            </ButtonBase>
+              <Typography variant="body2">{` ${symbol}`}</Typography>
+
+              {showMaxAction && (
+                <ButtonBase onClick={onBalanceClick}>
+                  <Typography variant="subtitle2" color="primary">
+                    (Max)
+                  </Typography>
+                </ButtonBase>
+              )}
+            </>
           )}
         </Box>
       </div>

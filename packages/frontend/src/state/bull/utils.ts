@@ -53,6 +53,20 @@ export const calcAssetNeededForFlashWithdraw = async (
   return { crabToRedeem, wPowerPerpToRedeem, ethToWithdraw, usdcToRepay }
 }
 
+export const calcAssetNeededForEmergencyWithdraw = async (
+  bullAmount: BigNumber,
+  vault: Vault,
+  bullSupply: BigNumber,
+  bullCrabBalance: BigNumber,
+  totalCrabSupply: BigNumber,
+) => {
+  const bullShare = bullAmount.div(bullSupply)
+  const crabToRedeem = bullShare.times(bullCrabBalance)
+  const wPowerPerpToRedeem = crabToRedeem.times(vault.shortAmount).div(totalCrabSupply)
+
+  return { crabToRedeem, wPowerPerpToRedeem }
+}
+
 // ToDo: Include fee calculation
 const calcWsqueethToMint = (depositEthAmount: BigNumber, strategyDebt: BigNumber, strategyCollat: BigNumber) => {
   return depositEthAmount.times(strategyDebt).div(strategyCollat)
