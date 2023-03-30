@@ -243,7 +243,6 @@ contract EmergencyRepayEulerDebtTest is Test {
 
             ratio = ratio.mul(2);
             skip(420);
-
         }
 
         assertEq(IEulerDToken(D_TOKEN).balanceOf(ZEN_BULL), 0);
