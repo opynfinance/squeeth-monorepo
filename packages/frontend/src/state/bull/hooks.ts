@@ -767,6 +767,8 @@ export const useGetEmergencyWithdrawParams = () => {
 
   const emptyState = {
     maxEthForWPowerPerp: BIG_ZERO,
+    ethInForOsqth: BIG_ZERO,
+    osqthOut: BIG_ZERO,
     wPowerPerpPoolFee: UNI_POOL_FEES,
     priceImpact: 0,
   }
@@ -794,15 +796,18 @@ export const useGetEmergencyWithdrawParams = () => {
     )
 
     const maxEthForWPowerPerp = toTokenAmount(maxEthForOsqth, 18)
+    const ethInForOsqth = toTokenAmount(ethForOsqth, 18)
 
     const spotPrice = wPowerPerpToRedeem.times(sqthPriceInEth)
-    const executionPrice = toTokenAmount(ethForOsqth, 18)
+    const executionPrice = ethInForOsqth
 
     const priceImpact = (executionPrice.div(spotPrice).toNumber() - 1) * 100
 
     return {
       ...emptyState,
       maxEthForWPowerPerp,
+      ethInForOsqth,
+      osqthOut: wPowerPerpToRedeem,
       priceImpact,
     }
   }

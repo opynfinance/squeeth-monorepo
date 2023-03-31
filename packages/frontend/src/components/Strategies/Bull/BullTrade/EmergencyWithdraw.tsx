@@ -1,6 +1,7 @@
 import React, { useCallback, useState, useRef, useMemo } from 'react'
 import { Box, Typography, Link, CircularProgress, Tooltip } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/InfoOutlined'
+import InfoIcon from '@material-ui/icons/Info'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
@@ -12,7 +13,7 @@ import { TradeSettings } from '@components/TradeSettings'
 import { PrimaryButtonNew } from '@components/Button'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { crabStrategySlippageAtomV2 } from '@state/crab/atoms'
-import { indexAtom } from '@state/controller/atoms'
+import { indexAtom, impliedVolAtom, normFactorAtom } from '@state/controller/atoms'
 import { useSelectWallet } from '@state/wallet/hooks'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { addressesAtom } from '@state/positions/atoms'
@@ -28,7 +29,15 @@ import { useRestrictUser } from '@context/restrict-user'
 import { toTokenAmount } from '@utils/calculations'
 import { formatNumber } from '@utils/formatter'
 import { BULL_EVENTS } from '@utils/amplitude'
-import { BIG_ZERO } from '@constants/index'
+import {
+  BIG_ZERO,
+  UNI_POOL_FEES,
+  FUNDING_PERIOD,
+  YEAR,
+  INDEX_SCALE,
+  VOL_PERCENT_FIXED,
+  VOL_PERCENT_SCALAR,
+} from '@constants/index'
 import ethLogo from 'public/images/eth-logo.svg'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
@@ -56,7 +65,8 @@ const useStyles = makeStyles((theme) =>
 const TooltipTitle = () => (
   <>
     <Typography variant="caption">
-      The recovery contract has undergone internal testing and an external peer review, but not audited. Use at your own discretion.
+      The recovery contract has undergone internal testing and an external peer review, but not audited. Use at your own
+      discretion.
       <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank" style={{ marginLeft: '4px' }}>
         Learn more.
       </Link>
@@ -76,6 +86,8 @@ const EmergencyWithdraw: React.FC<{
   const [quoteLoading, setQuoteLoading] = useState(false)
   const [quote, setQuote] = useState({
     maxEthForWPowerPerp: BIG_ZERO,
+    ethInForOsqth: BIG_ZERO,
+    osqthOut: BIG_ZERO,
     wPowerPerpPoolFee: 0,
     priceImpact: 0,
   })
@@ -88,6 +100,8 @@ const EmergencyWithdraw: React.FC<{
   const { bullStrategy, bullEmergencyWithdraw } = useAtomValue(addressesAtom)
   const bullValueInEth = useAtomValue(bullCrabValueInEth)
   const bullPositionValueInEth = useAtomValue(bullCrabPositionValueInEth)
+  const impliedVol = useAtomValue(impliedVolAtom)
+  const normFactor = useAtomValue(normFactorAtom)
 
   const { track } = useAmplitude()
   const getEmergencyWithdrawParams = useGetEmergencyWithdrawParams()
@@ -187,6 +201,7 @@ const EmergencyWithdraw: React.FC<{
 
       const dataToTrack = {
         amount: bullWithdrawAmountRef.current.toNumber(),
+        isPriceImpactHigh: showPriceImpactWarning,
         priceImpact: quote.priceImpact,
       }
 
@@ -202,16 +217,35 @@ const EmergencyWithdraw: React.FC<{
     setTxLoading(false)
   }
 
+  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
+
   const withdrawError = useAppMemo(() => {
     if (ethToWithdrawInputBN.gt(bullPositionValueInEth)) {
       return 'Withdraw amount greater than strategy balance'
     }
   }, [ethToWithdrawInputBN, bullPositionValueInEth])
 
+  const showPriceImpactWarning = useAppMemo(() => {
+    const squeethPriceFromTrade = quote.ethInForOsqth.div(quote.osqthOut).times(1 - UNI_POOL_FEES / 1000_000)
+    const scalingFactor = new BigNumber(INDEX_SCALE)
+    const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
+    const executionVol = new BigNumber(
+      Math.log(scalingFactor.times(squeethPriceFromTrade).div(normFactor.times(ethIndexPrice)).toNumber()),
+    )
+      .div(fundingPeriod)
+      .sqrt()
+
+    const showWarning = executionVol
+      .minus(impliedVol)
+      .abs()
+      .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
+
+    return showWarning
+  }, [quote.ethInForOsqth, quote.osqthOut, normFactor, ethIndexPrice, impliedVol])
+
   const { isRestricted } = useRestrictUser()
   const selectWallet = useSelectWallet()
 
-  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
   const bullAllowanceInEth = bullAllowance.times(bullValueInEth)
 
   const isInputEmpty = ethToWithdrawInputBN.isZero()
@@ -250,6 +284,23 @@ const EmergencyWithdraw: React.FC<{
           helperText={withdrawError}
           onBalanceClick={setWithdrawMax}
         />
+
+        {showPriceImpactWarning ? (
+          <div className={zenBullClasses.notice}>
+            <div className={zenBullClasses.infoIcon}>
+              <Tooltip
+                title={
+                  'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
+                }
+              >
+                <InfoIcon fontSize="medium" />
+              </Tooltip>
+            </div>
+            <Typography variant="caption" className={zenBullClasses.infoText}>
+              High price impact. Try multiple smaller transactions.
+            </Typography>
+          </div>
+        ) : null}
 
         <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
           <Box
