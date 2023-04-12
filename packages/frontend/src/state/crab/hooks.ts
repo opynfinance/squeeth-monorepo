@@ -1037,17 +1037,27 @@ export const useFlashWithdrawEthV2 = () => {
 
 export const useETHtoCrab = () => {
   const { crabStrategy2 } = useAtomValue(addressesAtom)
-  const currentEthValue = useAtomValue(currentCrabPositionETHActualAtomV2)
+  const crabMigrationValueInEth = useAtomValue(userMigratedSharesETHAtom)
+  const currentCrabPositionValueInEth = useAtomValue(currentCrabPositionETHActualAtomV2)
   const { value: userCrabBalance } = useTokenBalance(crabStrategy2, 5, 18)
+  const userMigratedShares = useAtomValue(userMigratedSharesAtom)
+
+  const userShares = useAppMemo(() => {
+    return userMigratedShares.plus(userCrabBalance)
+  }, [userMigratedShares, userCrabBalance])
+
+  const crabValueInEth = useAppMemo(() => {
+    return crabMigrationValueInEth.plus(currentCrabPositionValueInEth)
+  }, [])
 
   const getUserCrabForEthAmount = useAppCallback(
     (ethAmount: BigNumber) => {
-      if (currentEthValue.isZero()) {
+      if (crabValueInEth.isZero()) {
         return BIG_ZERO
       }
-      return ethAmount.div(currentEthValue).times(userCrabBalance)
+      return ethAmount.div(crabValueInEth).times(userShares)
     },
-    [currentEthValue, userCrabBalance],
+    [crabValueInEth, userShares],
   )
 
   return getUserCrabForEthAmount
