@@ -369,6 +369,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   useEffect(() => {
     if (isClaimAndWithdraw) {
       setUseUsdc(false)
+    } else {
+      setUseUsdc(true)
     }
   }, [isClaimAndWithdraw])
 
