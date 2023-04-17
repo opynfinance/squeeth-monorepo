@@ -97,5 +97,8 @@ export const useStyles = makeStyles((theme) =>
         backgroundColor: 'transparent',
       },
     },
+    withdrawStepsContainer: {
+      marginBottom: theme.spacing(2),
+    },
   }),
 )

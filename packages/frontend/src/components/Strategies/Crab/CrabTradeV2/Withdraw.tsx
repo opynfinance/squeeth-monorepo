@@ -271,9 +271,15 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
     if (!useUsdc) {
       calculateEthWillingToPay(withdrawCrabAmount, slippage).then((q) => {
-        setWithdrawPriceImpact(q.priceImpact)
         setEthAmountInFromWithdraw(q.amountIn)
         setSqueethAmountOutFromWithdraw(q.squeethDebt)
+
+        let quotePriceImpact = q.priceImpact
+        if (q.poolFee) {
+          quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
+        }
+        setWithdrawPriceImpact(quotePriceImpact)
+        setUniswapFee(q.poolFee)
       })
     } else {
       const fee = getUSDCPoolFee(network)
@@ -359,6 +365,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
     setTxLoading(false)
   }
+
+  useEffect(() => {
+    if (isClaimAndWithdraw) {
+      setUseUsdc(false)
+    } else {
+      setUseUsdc(true)
+    }
+  }, [isClaimAndWithdraw])
 
   const handleTokenChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -479,7 +493,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
             <Typography variant="caption" className={classes.tokenChoice}>
               ETH
             </Typography>
-            <Switch checked={useUsdc} onChange={handleTokenChange} color="primary" name="useUSDC" size="small" />
+            <Switch
+              checked={useUsdc}
+              onChange={handleTokenChange}
+              color="primary"
+              name="useUSDC"
+              size="small"
+              disabled={isClaimAndWithdraw}
+            />
             <Typography variant="caption" className={classes.tokenChoice}>
               USDC
             </Typography>
@@ -522,18 +543,22 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       </Box>
 
       <div className={classes.tradeContainer}>
-        <div>
-          {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
-            <>
-              <Typography variant="caption" component="div">
-                Step 1: Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
-              </Typography>
-              <Typography variant="caption">
-                Step 2: Withdraw crab v2 position, {currentEthActualValue.toFixed(4)} ETH
-              </Typography>
-            </>
-          ) : null}
-        </div>
+        {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
+          <div className={classes.withdrawStepsContainer}>
+            <Typography variant="caption" component="div">
+              Step 1: Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
+            </Typography>
+            <Typography variant="caption">
+              Step 2: Withdraw crab v2 position, {currentEthActualValue.toFixed(4)} ETH
+            </Typography>
+          </div>
+        ) : isClaimAndWithdraw ? (
+          <div className={classes.withdrawStepsContainer}>
+            <Typography variant="caption" component="div">
+              Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
+            </Typography>
+          </div>
+        ) : null}
 
         <InputToken
           id="crab-withdraw-input"
