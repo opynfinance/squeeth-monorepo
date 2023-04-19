@@ -260,7 +260,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const selectWallet = useSelectWallet()
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const { shortHelper } = useAtomValue(addressesAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
@@ -650,7 +650,7 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
             </Box>
           </Box>
 
-          {isRestricted && <RestrictionInfo marginTop="24px" />}
+          {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
           <Box marginTop="24px" className={classes.buttonDiv}>
             {isRestricted ? (
@@ -779,7 +779,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const { data: osqthPrice } = useOSQTHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   useAppEffect(() => {
     if (vault) {
@@ -1201,10 +1201,10 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="24px" />}
+            {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
             <Box marginTop="24px" className={classes.buttonDiv}>
-              {isRestricted ? (
+              {isRestricted && isWithdrawAllowed ? (
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"

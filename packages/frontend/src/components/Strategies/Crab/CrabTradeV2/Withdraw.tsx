@@ -143,7 +143,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const logAndRunTransaction = useTrackTransactionFlow()
 
   const ready = useAtomValue(readyAtom)
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
 
@@ -667,10 +667,10 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
             </div>
           )} */}
 
-          {isRestricted && <RestrictionInfo marginTop="24px" />}
+          {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
           <div>
-            {isRestricted ? (
+            {isRestricted && !isWithdrawAllowed ? (
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"

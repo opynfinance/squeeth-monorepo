@@ -115,7 +115,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
   const { resetTransactionData } = useTransactionStatus()
 
   const ready = useAtomValue(readyAtom)
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const { allowance: usdcAllowance, approve: approveUsdc } = useUserAllowance(usdc, crabHelper, USDC_DECIMALS)
   const { allowance: usdcQueueAllowance, approve: approveQueueUsdc } = useUserAllowance(
@@ -518,7 +518,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </div>
           )} */}
 
-          {isRestricted && <RestrictionInfo />}
+          {isRestricted && <RestrictionInfo withdrawAllowed={isRestricted} />}
 
           <div>
             {isRestricted ? (

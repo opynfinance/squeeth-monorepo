@@ -67,6 +67,7 @@ import {
 import { useVaultData } from '@hooks/useVaultData'
 import useVault from '@hooks/useVault'
 import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
+import RestrictionInfo from '@components/RestrictionInfo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -109,6 +110,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       justifyContent: 'space-between',
       margin: theme.spacing(3, 0),
+      gap: theme.spacing(2),
     },
     managerItem: {
       background: theme.palette.background.stone,
@@ -134,6 +136,7 @@ const useStyles = makeStyles((theme) =>
       width: '300px',
       display: 'flex',
       justifyContent: 'space-around',
+      marginTop: theme.spacing(2),
     },
     actionBtn: {
       width: '75px',
@@ -297,7 +300,7 @@ const SelectLP: React.FC<{ lpToken: number; setLpToken: (t: number) => void; dis
 const Component: React.FC = () => {
   const classes = useStyles()
   const router = useRouter()
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
   usePositionsAndFeesComputation()
 
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
@@ -344,7 +347,7 @@ const Component: React.FC = () => {
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
   useEffect(() => {
-    ;(async () => {
+    ; (async () => {
       if (vault) {
         let collateralAmount = vault.collateralAmount
         if (currentLpNftId) {
@@ -772,7 +775,7 @@ const Component: React.FC = () => {
                 <Typography className={classes.overviewValue} id="vault-collat-amount">
                   {vault?.collateralAmount.toFixed(4)}
                 </Typography>
-                {!isRestricted ? (
+                {!isRestricted || isWithdrawAllowed ? (
                   <>
                     {vault?.shortAmount.isZero() && vault.collateralAmount.gt(0) ? (
                       <button
@@ -809,7 +812,7 @@ const Component: React.FC = () => {
               <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
             </div>
           </div>
-          {!isRestricted ? (
+          {!isRestricted || isWithdrawAllowed ? (
             <>
               <div className={classes.manager}>
                 <div className={classes.managerItem}>
@@ -906,12 +909,13 @@ const Component: React.FC = () => {
                       id="collat-new-liqp"
                     />
                   </div>
+                  {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} />}
                   <div className={classes.managerActions}>
                     <RemoveButton
                       id="remove-collat-submit-tx-btn"
                       className={classes.actionBtn}
                       size="small"
-                      disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError}
+                      disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError || (isRestricted && !isWithdrawAllowed)}
                       onClick={() => removeCollat(collateralBN.abs())}
                     >
                       {action === VaultAction.REMOVE_COLLATERAL && txLoading ? (
@@ -925,7 +929,7 @@ const Component: React.FC = () => {
                       onClick={() => addCollat(collateralBN)}
                       className={classes.actionBtn}
                       size="small"
-                      disabled={action !== VaultAction.ADD_COLLATERAL || txLoading || !!adjustCollatError}
+                      disabled={action !== VaultAction.ADD_COLLATERAL || txLoading || !!adjustCollatError || isRestricted}
                     >
                       {action === VaultAction.ADD_COLLATERAL && txLoading ? (
                         <CircularProgress color="primary" size="1rem" />
@@ -957,8 +961,8 @@ const Component: React.FC = () => {
                           shortAmountBN.isPositive()
                             ? updateShort(maxToMint.toString())
                             : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                            ? updateShort(oSqueethBal.negated().toString())
-                            : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
+                              ? updateShort(oSqueethBal.negated().toString())
+                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
                         }
                         variant="text"
                       >
@@ -981,8 +985,8 @@ const Component: React.FC = () => {
                             Balance{' '}
                             <span id="vault-debt-input-osqth-balance">
                               {oSqueethBal?.isGreaterThan(0) &&
-                              positionType === PositionType.LONG &&
-                              oSqueethBal.minus(squeethAmount).isGreaterThan(0)
+                                positionType === PositionType.LONG &&
+                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
                                 ? oSqueethBal.minus(squeethAmount).toFixed(6)
                                 : oSqueethBal.toFixed(6)}
                             </span>{' '}
@@ -1028,13 +1032,14 @@ const Component: React.FC = () => {
                       id="debt-new-liqp"
                     />
                   </div>
+                  {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} />}
                   <div className={classes.managerActions}>
                     <RemoveButton
                       id="burn-submit-tx-btn"
                       onClick={() => burn(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
-                      disabled={action !== VaultAction.BURN_SQUEETH || txLoading || !!adjustAmountError}
+                      disabled={action !== VaultAction.BURN_SQUEETH || txLoading || !!adjustAmountError || (isRestricted && !isWithdrawAllowed)}
                     >
                       {action === VaultAction.BURN_SQUEETH && txLoading ? (
                         <CircularProgress color="primary" size="1rem" />
@@ -1047,7 +1052,7 @@ const Component: React.FC = () => {
                       onClick={() => mint(shortAmountBN)}
                       className={classes.actionBtn}
                       size="small"
-                      disabled={action !== VaultAction.MINT_SQUEETH || txLoading || !!adjustAmountError}
+                      disabled={action !== VaultAction.MINT_SQUEETH || txLoading || !!adjustAmountError || isRestricted}
                     >
                       {action === VaultAction.MINT_SQUEETH && txLoading ? (
                         <CircularProgress color="primary" size="1rem" />
@@ -1143,7 +1148,7 @@ const Component: React.FC = () => {
                         onClick={() => approveUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"
-                        disabled={action !== VaultAction.APPROVE_UNI_POSITION || txLoading}
+                        disabled={action !== VaultAction.APPROVE_UNI_POSITION || txLoading || isRestricted}
                       >
                         {action === VaultAction.APPROVE_UNI_POSITION && txLoading ? (
                           <CircularProgress color="primary" size="1rem" />
@@ -1158,7 +1163,7 @@ const Component: React.FC = () => {
                         onClick={() => depositUniLPToken(uniTokenToDeposit)}
                         className={classes.actionBtn}
                         size="small"
-                        disabled={action !== VaultAction.DEPOSIT_UNI_POSITION || txLoading}
+                        disabled={action !== VaultAction.DEPOSIT_UNI_POSITION || txLoading || isRestricted}
                       >
                         {action === VaultAction.DEPOSIT_UNI_POSITION && txLoading ? (
                           <CircularProgress color="primary" size="1rem" />

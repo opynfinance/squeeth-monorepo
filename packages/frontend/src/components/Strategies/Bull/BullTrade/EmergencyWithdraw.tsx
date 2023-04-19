@@ -252,7 +252,7 @@ const EmergencyWithdraw: React.FC<{
     return showWarning
   }, [quote.ethInForOsqth, quote.osqthOut, normFactor, ethIndexPrice, impliedVol])
 
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
   const selectWallet = useSelectWallet()
 
   const bullAllowanceInEth = bullAllowance.times(bullValueInEth)
@@ -346,10 +346,10 @@ const EmergencyWithdraw: React.FC<{
               </Box>
             </Box>
 
-            {isRestricted && <RestrictionInfo marginTop="24px" />}
+            {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
             <Box marginTop="24px">
-              {isRestricted ? (
+              {isRestricted && !isWithdrawAllowed ? (
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"

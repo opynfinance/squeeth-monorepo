@@ -8,6 +8,8 @@ import { useAtomValue } from 'jotai'
 
 import { UniswapIFrameOpen } from '@constants/enums'
 import { networkIdAtom } from '@state/wallet/atoms'
+import { useRestrictUser } from '@context/restrict-user'
+import RestrictionInfo from '@components/RestrictionInfo'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -46,12 +48,16 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       color: theme.palette.primary.main,
     },
+    restrictionInfo: {
+      marginTop: theme.spacing(5),
+    },
   }),
 )
 
 const ProvideLiquidity: React.FC = () => {
   const classes = useStyles()
   const networkId = useAtomValue(networkIdAtom)
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   return (
     <>
@@ -73,7 +79,13 @@ const ProvideLiquidity: React.FC = () => {
             <OpenInNewIcon style={{ fontSize: 16, marginLeft: '4px' }} fontSize="small" />
           </a>
         </div>
-        <iframe className={classes.iframeBox} src={UniswapIFrameOpen[networkId]}></iframe>
+        {isRestricted ? (
+          <div className={classes.restrictionInfo}>
+            <RestrictionInfo />
+          </div>
+        ) : (
+          <iframe className={classes.iframeBox} src={UniswapIFrameOpen[networkId]}></iframe>
+        )}
       </motion.div>
     </>
   )
