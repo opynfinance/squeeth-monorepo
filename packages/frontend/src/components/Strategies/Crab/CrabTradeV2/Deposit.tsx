@@ -518,7 +518,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
             </div>
           )} */}
 
-          {isRestricted && <RestrictionInfo withdrawAllowed={isRestricted} />}
+          {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} />}
 
           <div>
             {isRestricted ? (
