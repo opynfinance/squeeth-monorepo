@@ -285,7 +285,7 @@ export function initOnboard(subscriptions: any, networkId: Networks) {
     subscriptions: subscriptions,
     walletSelect: {
       description: `<div>
-          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on August 25, 2022.</p>
+          <p> By connecting a wallet, you agree to the Opyn user <a href="/terms-of-service" style="color: #2CE6F9;" target="_blank">Terms of Service</a> and acknowledge that you have read and understand the Opyn <a href="/privacy-policy" style="color: #2CE6F9;" target="_blank">Privacy Policy</a>. Our Terms of Service and Opyn Privacy Policy were last updated on April 20, 2023.</p>
           </div > `,
 
       wallets: [
