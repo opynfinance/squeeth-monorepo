@@ -21,7 +21,7 @@ import {
   onboardAddressAtom,
   walletFailVisibleAtom,
 } from './atoms'
-import { BIG_ZERO, EtherscanPrefix } from '../../constants/'
+import { BIG_ZERO, EtherscanPrefix, TOS_UPDATE_DATE } from '../../constants/'
 import { Networks } from '../../types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useApolloClient } from '@apollo/client'
@@ -50,6 +50,8 @@ export const useSelectWallet = () => {
         if (isZenbullPage) {
           window.localStorage.setItem('walletConnectedToZenbull', 'true')
         }
+
+        window.localStorage.setItem(TOS_UPDATE_DATE, 'true')
 
         // if onboard address is invalid
         if (onboardAddress) {

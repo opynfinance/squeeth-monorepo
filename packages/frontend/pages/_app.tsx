@@ -32,6 +32,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
+import { TOS_UPDATE_DATE } from '@constants/index'
 
 initializeAmplitude()
 
@@ -128,7 +129,10 @@ const Init = () => {
 
     checkIsValidAddress(onboardAddress).then((valid) => {
       if (valid) {
-        if (isZenbullPage) {
+        const hasConnectedAfterTosUpdate = window.localStorage.getItem(TOS_UPDATE_DATE) === 'true'
+        if (!hasConnectedAfterTosUpdate) {
+          return
+        } else if (isZenbullPage) {
           // connect automatically (to zenbull) only if user has specifically connected to zenbull page
           const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
           if (hasConnectedToZenbullBefore) {

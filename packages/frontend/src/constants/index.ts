@@ -73,3 +73,5 @@ export const SQUEETH_BASE_URL = 'https://opyn.co'
 export const SiteMetaTitle = 'Opyn - Stack your ETH and Stables'
 export const SiteMetaDescription = 'DeFi Investment Strategies Powered by Squeeth'
 export const SiteMetaImage = SQUEETH_BASE_URL + '/images/previews/opyn.png'
+
+export const TOS_UPDATE_DATE = '2023-04-21'
