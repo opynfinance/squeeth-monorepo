@@ -1,11 +1,13 @@
 import React, { useCallback, useState, useRef, useMemo } from 'react'
-import { Box, Typography, Link, CircularProgress, Tooltip } from '@material-ui/core'
+import { Box, Typography, Link, CircularProgress, Tooltip, withStyles, IconButton } from '@material-ui/core'
 import HelpOutlineIcon from '@material-ui/icons/InfoOutlined'
 import InfoIcon from '@material-ui/icons/Info'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useAtom, useAtomValue } from 'jotai'
 import BigNumber from 'bignumber.js'
 import debounce from 'lodash/debounce'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward'
 
 import { InputToken } from '@components/InputNew'
 import Metric from '@components/Metric'
@@ -74,6 +76,11 @@ const TooltipTitle = () => (
   </>
 )
 
+enum Step {
+  OPYN = 1,
+  EULER = 2,
+}
+
 const EmergencyWithdraw: React.FC<{
   onTxnConfirm: (txn: BullTransactionConfirmation) => void
   isLoadingBalance: boolean
@@ -81,6 +88,8 @@ const EmergencyWithdraw: React.FC<{
 }> = ({ onTxnConfirm, isLoadingBalance, bullBalance }) => {
   const zenBullClasses = useZenBullStyles()
   const classes = useStyles()
+
+  const [step, setStep] = useState(Step.OPYN)
 
   const [ethToWithdrawInput, setEthToWithdrawInput] = useState('0')
   const [quoteLoading, setQuoteLoading] = useState(false)
@@ -252,138 +261,232 @@ const EmergencyWithdraw: React.FC<{
 
   return (
     <>
-      <Typography variant="h3" className={zenBullClasses.subtitle}>
-        Recovery Withdrawal
-      </Typography>
+      <Stepper step={step} setStep={setStep} />
 
-      <Typography variant="body2" className={classes.description}>
-        Use recovery withdrawal to withdraw the Crab portion of a Zen Bull position.{' '}
-        <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
-          Learn more.
-        </Link>
-      </Typography>
+      {step === Step.OPYN ? (
+        <>
+          <Typography style={{ marginTop: '16px' }} variant="h3" className={zenBullClasses.subtitle}>
+            Recovery Withdrawal - Crab
+          </Typography>
 
-      <div className={classes.subDescription}>
-        <Typography variant="body2">Recovery contract has been peer reviewed</Typography>
-        <Tooltip title={<TooltipTitle />} interactive>
-          <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
-        </Tooltip>
-      </div>
+          <Typography variant="body2" className={classes.description}>
+            Use recovery withdrawal to withdraw the Crab portion of a Zen Bull position.{' '}
+            <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
+              Learn more.
+            </Link>
+          </Typography>
 
-      <div className={zenBullClasses.tradeContainer}>
-        <InputToken
-          id="bull-withdraw-eth-input"
-          value={ethToWithdrawInput}
-          onInputChange={onInputChange}
-          isBalanceLoading={isLoadingBalance}
-          balance={bullPositionValueInEth}
-          logo={ethLogo}
-          symbol={'ETH'}
-          usdPrice={ethIndexPrice}
-          error={!!withdrawError}
-          helperText={withdrawError}
-          onBalanceClick={setWithdrawMax}
-        />
-
-        {showPriceImpactWarning ? (
-          <div className={zenBullClasses.notice}>
-            <div className={zenBullClasses.infoIcon}>
-              <Tooltip
-                title={
-                  'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
-                }
-              >
-                <InfoIcon fontSize="medium" />
-              </Tooltip>
-            </div>
-            <Typography variant="caption" className={zenBullClasses.infoText}>
-              High price impact. Try multiple smaller transactions.
-            </Typography>
+          <div className={classes.subDescription}>
+            <Typography variant="body2">Recovery contract has been peer reviewed</Typography>
+            <Tooltip title={<TooltipTitle />} interactive>
+              <HelpOutlineIcon fontSize="small" className={classes.infoIcon} />
+            </Tooltip>
           </div>
-        ) : null}
 
-        <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            gridGap="12px"
-            className={zenBullClasses.slippageContainer}
-          >
-            <Metric
-              label="Slippage"
-              value={formatNumber(slippage) + '%'}
-              isSmall
-              flexDirection="row"
-              justifyContent="space-between"
-              gridGap="12px"
+          <div className={zenBullClasses.tradeContainer}>
+            <InputToken
+              id="bull-withdraw-eth-input"
+              value={ethToWithdrawInput}
+              onInputChange={onInputChange}
+              isBalanceLoading={isLoadingBalance}
+              balance={bullPositionValueInEth}
+              logo={ethLogo}
+              symbol={'ETH'}
+              usdPrice={ethIndexPrice}
+              error={!!withdrawError}
+              helperText={withdrawError}
+              onBalanceClick={setWithdrawMax}
             />
 
-            <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-              <Metric
-                label="Price Impact"
-                value={formatNumber(quote.priceImpact) + '%'}
-                isSmall
-                flexDirection="row"
+            {showPriceImpactWarning ? (
+              <div className={zenBullClasses.notice}>
+                <div className={zenBullClasses.infoIcon}>
+                  <Tooltip
+                    title={
+                      'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
+                    }
+                  >
+                    <InfoIcon fontSize="medium" />
+                  </Tooltip>
+                </div>
+                <Typography variant="caption" className={zenBullClasses.infoText}>
+                  High price impact. Try multiple smaller transactions.
+                </Typography>
+              </div>
+            ) : null}
+
+            <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
+              <Box
+                display="flex"
+                alignItems="center"
                 justifyContent="space-between"
                 gridGap="12px"
-              />
-              <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
+                className={zenBullClasses.slippageContainer}
+              >
+                <Metric
+                  label="Slippage"
+                  value={formatNumber(slippage) + '%'}
+                  isSmall
+                  flexDirection="row"
+                  justifyContent="space-between"
+                  gridGap="12px"
+                />
+
+                <Box display="flex" alignItems="center" gridGap="12px" flex="1">
+                  <Metric
+                    label="Price Impact"
+                    value={formatNumber(quote.priceImpact) + '%'}
+                    isSmall
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    gridGap="12px"
+                  />
+                  <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />
+                </Box>
+              </Box>
             </Box>
-          </Box>
-        </Box>
 
-        {isRestricted && <RestrictionInfo marginTop="24px" />}
+            {isRestricted && <RestrictionInfo marginTop="24px" />}
 
-        <Box marginTop="24px">
-          {isRestricted ? (
-            <PrimaryButtonNew
-              fullWidth
-              variant="contained"
-              onClick={selectWallet}
-              disabled={true}
-              id="bull-restricted-btn"
-            >
-              {'Unavailable'}
-            </PrimaryButtonNew>
-          ) : !connected ? (
-            <PrimaryButtonNew
-              fullWidth
-              variant="contained"
-              onClick={selectWallet}
-              disabled={false}
-              id="bull-select-wallet-btn"
-            >
-              {'Connect Wallet'}
-            </PrimaryButtonNew>
-          ) : !supportedNetwork ? (
-            <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="bull-unsupported-network-btn">
-              {'Unsupported Network'}
-            </PrimaryButtonNew>
-          ) : bullAllowanceInEth.lt(ethToWithdrawInputBN) ? (
-            <PrimaryButtonNew
-              fullWidth
-              id="bull-withdraw-btn"
-              variant={'contained'}
-              onClick={onApproveClick}
-              disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
-            >
-              {!txLoading && !quoteLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
-            </PrimaryButtonNew>
-          ) : (
-            <PrimaryButtonNew
-              fullWidth
-              id="bull-withdraw-btn"
-              variant="contained"
-              onClick={onWithdrawClick}
-              disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
-            >
-              {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
-            </PrimaryButtonNew>
-          )}
-        </Box>
-      </div>
+            <Box marginTop="24px">
+              {isRestricted ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  disabled={true}
+                  id="bull-restricted-btn"
+                >
+                  {'Unavailable'}
+                </PrimaryButtonNew>
+              ) : !connected ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  variant="contained"
+                  onClick={selectWallet}
+                  disabled={false}
+                  id="bull-select-wallet-btn"
+                >
+                  {'Connect Wallet'}
+                </PrimaryButtonNew>
+              ) : !supportedNetwork ? (
+                <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="bull-unsupported-network-btn">
+                  {'Unsupported Network'}
+                </PrimaryButtonNew>
+              ) : bullAllowanceInEth.lt(ethToWithdrawInputBN) ? (
+                <PrimaryButtonNew
+                  fullWidth
+                  id="bull-withdraw-btn"
+                  variant={'contained'}
+                  onClick={onApproveClick}
+                  disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
+                >
+                  {!txLoading && !quoteLoading ? 'Approve' : <CircularProgress color="primary" size="2rem" />}
+                </PrimaryButtonNew>
+              ) : (
+                <PrimaryButtonNew
+                  fullWidth
+                  id="bull-withdraw-btn"
+                  variant="contained"
+                  onClick={onWithdrawClick}
+                  disabled={quoteLoading || txLoading || !!withdrawError || isInputEmpty}
+                >
+                  {!txLoading && !quoteLoading ? 'Withdraw' : <CircularProgress color="primary" size="2rem" />}
+                </PrimaryButtonNew>
+              )}
+            </Box>
+          </div>
+        </>
+      ) : (
+        <>
+          <Typography variant="h3" style={{ marginTop: '16px' }} className={zenBullClasses.subtitle}>
+            Recovery Withdrawal - Euler
+          </Typography>
+          <Typography variant="body2" className={classes.description}>
+            Go to Euler&apos;s redemption page to claim funds from Euler.{' '}
+            <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
+              Learn more.
+            </Link>
+          </Typography>
+          <div className={zenBullClasses.tradeContainer}>
+            <a style={{ width: '100%' }} href="https://redemptions.euler.finance/" target="_blank" rel="noreferrer">
+              <PrimaryButtonNew style={{ marginTop: '16px', width: '100%' }}>Go to Redemption page</PrimaryButtonNew>
+            </a>
+          </div>
+        </>
+      )}
     </>
+  )
+}
+
+const useStepperStyles = makeStyles((theme) =>
+  createStyles({
+    container: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing(1),
+    },
+    stepData: {
+      marginTop: theme.spacing(0),
+      fontFamily: 'DM Mono',
+      textAlign: 'center',
+      fontSize: '14px',
+    },
+    stepButton: {
+      padding: theme.spacing(0.5),
+      margin: theme.spacing(0, 0.5),
+      '&:disabled': {
+        background: theme.palette.background.lightStone,
+        opacity: '0.5',
+      },
+    },
+    disabled: {
+      backgroundColor: theme.palette.background.lightStone,
+      opacity: '1',
+    },
+  }),
+)
+
+const StepperIconButton = withStyles((theme) => ({
+  root: {
+    background: theme.palette.background.stone,
+  },
+  disabled: {
+    background: theme.palette.background.stone,
+    opacity: '1',
+  },
+}))(IconButton)
+
+const Stepper: React.FC<{ step: number; setStep: (step: number) => void }> = ({ setStep, step }) => {
+  const classes = useStepperStyles()
+
+  return (
+    <div>
+      <div className={classes.container}>
+        <StepperIconButton
+          id="lp-prev-step-btn"
+          className={classes.stepButton}
+          classes={{ disabled: classes.disabled }}
+          disabled={step === 1}
+          onClick={() => setStep(step - 1)}
+        >
+          <ArrowBackIcon fontSize="small" />
+        </StepperIconButton>
+        <StepperIconButton
+          id="lp-next-step-btn"
+          className={classes.stepButton}
+          classes={{ disabled: classes.disabled }}
+          disabled={step === 2}
+          onClick={() => setStep(step + 1)}
+        >
+          <ArrowForwardIcon fontSize="small" />
+        </StepperIconButton>
+      </div>
+      <Typography className={classes.stepData}>
+        0<span id="current-lp-step">{step}</span> / 02
+      </Typography>{' '}
+    </div>
   )
 }
 

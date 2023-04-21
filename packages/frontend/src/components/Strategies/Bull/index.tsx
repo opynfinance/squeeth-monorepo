@@ -86,7 +86,7 @@ const Bull: React.FC = () => {
             >
               join discord
             </Link>{' '}
-            for updates.
+            for updates. You can recover funds from Recovery withdrawal section below.
           </Typography>
         </Alert>
       </div>
