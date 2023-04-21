@@ -261,10 +261,12 @@ const EmergencyWithdraw: React.FC<{
 
   return (
     <>
+      <Stepper step={step} setStep={setStep} />
+
       {step === Step.OPYN ? (
         <>
-          <Typography variant="h3" className={zenBullClasses.subtitle}>
-            Recovery Withdrawal - Opyn
+          <Typography style={{ marginTop: '16px' }} variant="h3" className={zenBullClasses.subtitle}>
+            Recovery Withdrawal - Crab
           </Typography>
 
           <Typography variant="body2" className={classes.description}>
@@ -397,11 +399,14 @@ const EmergencyWithdraw: React.FC<{
         </>
       ) : (
         <>
-          <Typography variant="h3" className={zenBullClasses.subtitle}>
+          <Typography variant="h3" style={{ marginTop: '16px' }} className={zenBullClasses.subtitle}>
             Recovery Withdrawal - Euler
           </Typography>
           <Typography variant="body2" className={classes.description}>
-            Go to Euler&apos;s redemption page to claim funds from Euler.
+            Go to Euler&apos;s redemption page to claim funds from Euler.{' '}
+            <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
+              Learn more.
+            </Link>
           </Typography>
           <div className={zenBullClasses.tradeContainer}>
             <a style={{ width: '100%' }} href="https://redemptions.euler.finance/" target="_blank" rel="noreferrer">
@@ -410,7 +415,6 @@ const EmergencyWithdraw: React.FC<{
           </div>
         </>
       )}
-      <Stepper step={step} setStep={setStep} />
     </>
   )
 }
@@ -421,14 +425,16 @@ const useStepperStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(1),
     },
     stepData: {
-      marginTop: theme.spacing(1),
+      marginTop: theme.spacing(0),
       fontFamily: 'DM Mono',
       textAlign: 'center',
+      fontSize: '14px',
     },
     stepButton: {
+      padding: theme.spacing(0.5),
       margin: theme.spacing(0, 0.5),
       '&:disabled': {
         background: theme.palette.background.lightStone,
@@ -465,7 +471,7 @@ const Stepper: React.FC<{ step: number; setStep: (step: number) => void }> = ({ 
           disabled={step === 1}
           onClick={() => setStep(step - 1)}
         >
-          <ArrowBackIcon />
+          <ArrowBackIcon fontSize="small" />
         </StepperIconButton>
         <StepperIconButton
           id="lp-next-step-btn"
@@ -474,7 +480,7 @@ const Stepper: React.FC<{ step: number; setStep: (step: number) => void }> = ({ 
           disabled={step === 2}
           onClick={() => setStep(step + 1)}
         >
-          <ArrowForwardIcon />
+          <ArrowForwardIcon fontSize="small" />
         </StepperIconButton>
       </div>
       <Typography className={classes.stepData}>
