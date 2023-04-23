@@ -438,10 +438,10 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
   const error = existingLongError
     ? existingLongError
     : priceImpactWarning
-    ? priceImpactWarning
-    : lowVolError
-    ? lowVolError
-    : ''
+      ? priceImpactWarning
+      : lowVolError
+        ? lowVolError
+        : ''
 
   const handleDefaultCollatRatioToggle = useAppCallback(
     (value: boolean) => {
@@ -706,8 +706,8 @@ const OpenShort: React.FC<SellType> = ({ open }) => {
                     {isVaultApproved
                       ? 'Deposit and sell'
                       : shortOpenPriceImpactErrorState && isVaultApproved
-                      ? 'Deposit and sell anyway'
-                      : 'Allow wrapper to manage vault (1/2)'}
+                        ? 'Deposit and sell anyway'
+                        : 'Allow wrapper to manage vault (1/2)'}
                     {!isVaultApproved ? (
                       <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                         <InfoOutlinedIcon fontSize="small" />
@@ -972,12 +972,12 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
   const error = closeError
     ? closeError
     : existingLongError
-    ? existingLongError
-    : priceImpactWarning
-    ? priceImpactWarning
-    : insufficientETHBalance
-    ? insufficientETHBalance
-    : ''
+      ? existingLongError
+      : priceImpactWarning
+        ? priceImpactWarning
+        : insufficientETHBalance
+          ? insufficientETHBalance
+          : ''
 
   const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
   const priceImpact = isNaN(Number(sellCloseQuote.priceImpact)) ? 0 : Number(sellCloseQuote.priceImpact)
@@ -1204,7 +1204,7 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
             {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
             <Box marginTop="24px" className={classes.buttonDiv}>
-              {isRestricted && isWithdrawAllowed ? (
+              {isRestricted && !isWithdrawAllowed ? (
                 <PrimaryButtonNew
                   fullWidth
                   variant="contained"
@@ -1259,8 +1259,8 @@ const CloseShort: React.FC<SellType> = ({ open }) => {
                       {isVaultApproved
                         ? 'Buy back and close'
                         : shortClosePriceImpactErrorState && isVaultApproved
-                        ? 'Buy back and close anyway'
-                        : 'Allow wrapper to manage vault (1/2)'}
+                          ? 'Buy back and close anyway'
+                          : 'Allow wrapper to manage vault (1/2)'}
                       {!isVaultApproved ? (
                         <Tooltip style={{ marginLeft: '2px' }} title={Tooltips.Operator}>
                           <InfoOutlinedIcon fontSize="small" />

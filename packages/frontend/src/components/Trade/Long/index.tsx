@@ -597,7 +597,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, showTitle }) => {
                 </Box>
               </Box>
 
-              {isRestricted && <RestrictionInfo withdrawAllowed={isRestricted} marginTop="24px" />}
+              {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
               <Box marginTop="24px" className={classes.buttonDiv}>
                 {isRestricted ? (
