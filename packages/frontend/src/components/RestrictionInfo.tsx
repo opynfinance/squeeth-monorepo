@@ -25,17 +25,20 @@ const restrictedCountries: Record<string, string> = {
   SD: 'Sudan',
   SY: 'Syria',
   ZW: 'Zimbabwe',
+  CA: 'Canada',
 }
 
-const RestrictionInfo: React.FC<BoxProps> = (props) => {
+type RestrictionInfoProps = BoxProps & { withdrawAllowed?: boolean }
+
+const RestrictionInfo: React.FC<RestrictionInfoProps> = (props) => {
   const classes = useStyles()
   const router = useRouter()
   const userLocation = router.query?.ct
   return (
     <Alert severity="warning" showIcon={false} {...props}>
       <Typography className={classes.text}>
-        This app is not available in {userLocation ? restrictedCountries[String(userLocation)] : 'your country'}. More
-        details can be found in our{' '}
+        This app is not available in {userLocation ? restrictedCountries[String(userLocation)] : 'your country'}.{' '}
+        {props.withdrawAllowed ? 'Only withdrawals are still available.' : null} More details can be found in our{' '}
         <Typography className={clsx(classes.text, classes.link)} component="span">
           <Link href="/terms-of-service">
             <a target="_blank"> Terms of service. </a>

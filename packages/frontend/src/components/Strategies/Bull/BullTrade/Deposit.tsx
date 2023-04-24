@@ -51,7 +51,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
   const [quoteLoading, setQuoteLoading] = useState(false)
 
   const negativeReturnsError = false
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
   const connected = useAtomValue(connectedWalletAtom)
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
@@ -345,7 +345,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
           </Box>
         </Box>
 
-        {isRestricted && <RestrictionInfo marginTop="24px" />}
+        {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
         <Box marginTop="24px">
           {isRestricted ? (

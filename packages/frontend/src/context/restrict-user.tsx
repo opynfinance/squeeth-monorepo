@@ -4,15 +4,17 @@ import { useRouter } from 'next/router'
 
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { BLOCKED_COUNTRIES } from '../constants/index'
+import { ALLOW_WITHDRAWALS, BLOCKED_COUNTRIES } from '../constants/index'
 
 type restrictUserContextType = {
   isRestricted: boolean
-  handleRestrictUser: (isRestricted: boolean) => void
+  isWithdrawAllowed: boolean
+  handleRestrictUser: (isRestricted: boolean, isWithdrawAllowed: boolean) => void
 }
 
 const initialState: restrictUserContextType = {
   isRestricted: false,
+  isWithdrawAllowed: true,
   handleRestrictUser: () => null,
 }
 
@@ -24,27 +26,33 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   const networkId = useAtomValue(networkIdAtom)
   const userLocation = router.query?.ct
   const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation))
+  const isWithdrawAllowed = ALLOW_WITHDRAWALS.includes(String(userLocation))
+
   const [state, setState] = useState({
     isRestricted: false,
+    isWithdrawAllowed: false,
   })
 
-  const handleRestrictUser = useCallback((isRestricted: boolean) => {
+  const handleRestrictUser = useCallback((isRestricted: boolean, isWithdrawAllowed: boolean) => {
     setState((prevState) => ({
       ...prevState,
       isRestricted: isRestricted,
+      isWithdrawAllowed,
     }))
   }, [])
 
   useEffect(() => {
     if (isRestricted && networkId === Networks.MAINNET) {
-      handleRestrictUser(true)
+      handleRestrictUser(true, isWithdrawAllowed)
     } else {
-      handleRestrictUser(false)
+      handleRestrictUser(false, true)
     }
-  }, [handleRestrictUser, networkId, isRestricted])
+  }, [handleRestrictUser, networkId, isRestricted, isWithdrawAllowed])
 
   return (
-    <restrictUserContext.Provider value={{ handleRestrictUser, isRestricted: state.isRestricted }}>
+    <restrictUserContext.Provider
+      value={{ handleRestrictUser, isRestricted: state.isRestricted, isWithdrawAllowed: state.isWithdrawAllowed }}
+    >
       {children}
     </restrictUserContext.Provider>
   )

@@ -1,6 +1,6 @@
 ### Squeeth User Terms of Service
 
-### Last Updated: August 25, 2022
+### Last Updated: April 20, 2023
 
 &nbsp;
 &nbsp;
@@ -23,6 +23,7 @@ As a condition to accessing or using the Interface, you represent, warrant, and 
 
 - if you are entering into these Terms to access the Protocol or, in the future, to access the Protocol, then you are not a US Person;
 - you are not a resident, national, or agent of Belarus, Burma (Myanmar), Cote D'Ivoire (Ivory Coast), Cuba, Democratic Republic of Congo, Iran, Iraq, Liberia, North Korea, Sudan, Syria, Zimbabwe, or any other country to which the United States, the United Kingdom or the European Union embargoes goods or imposes similar sanctions (collectively, “Restricted Territories” or singularly a “Restricted Territory”);
+- you are not located in, reside in, incorporated in, or have a registered office in the Dominion of Canada, or any other country which prohibits the offering of leverage in connection with trading of crypto contracts or crypto assets, or generally prohibits digital asset transactions (collectively, “Restricted Territories” or singularly a “Restricted Territory”);
 - you are not a member of any sanctions list or equivalent maintained by the United States government, the United Kingdom government, the European Union, or the United Nations (collectively, “Sanctions Lists Persons”);
 - you do not intend to transact with any Restricted Person or Sanctions List Person;
 - you only will transfer legally-obtained Digital Assets (defined below) that belong to you (or you are legally authorized to use), when using, transacting, or connecting to the Interface;

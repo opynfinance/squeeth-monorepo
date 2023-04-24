@@ -71,7 +71,7 @@ const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
   const { existingCollat, existingCollatPercent } = useVaultData(vault)
   const ethPrice = useETHPrice()
   const { data: osqthPrice } = useOSQTHPrice()
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
   const selectWallet = useSelectWallet()
 
   const [mintAmount, setMintAmount] = useState(new BigNumber(0))
@@ -278,7 +278,7 @@ const MintSqueeth: React.FC<MintProps> = ({ onMint, showManageLink }) => {
         />
       </Box>
 
-      {isRestricted && <RestrictionInfo marginTop="24px" />}
+      {isRestricted && <RestrictionInfo withdrawAllowed={isRestricted} marginTop="24px" />}
 
       <Box marginTop="24px">
         {isRestricted ? (

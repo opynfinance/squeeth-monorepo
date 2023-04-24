@@ -318,7 +318,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, showTitle }) => {
   const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
   const ethPrice = useETHPrice()
   const { loading: loadingOSQTHPrice, data: osqthPrice } = useOSQTHPrice()
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const { squeethAmount } = useComputeSwaps()
 
@@ -597,7 +597,7 @@ const OpenLong: React.FC<BuyProps> = ({ activeStep = 0, showTitle }) => {
                 </Box>
               </Box>
 
-              {isRestricted && <RestrictionInfo marginTop="24px" />}
+              {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
               <Box marginTop="24px" className={classes.buttonDiv}>
                 {isRestricted ? (
@@ -698,7 +698,7 @@ const CloseLong: React.FC<BuyProps> = () => {
   const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
-  const { isRestricted } = useRestrictUser()
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
@@ -953,10 +953,10 @@ const CloseLong: React.FC<BuyProps> = () => {
             </Box>
           </Box>
 
-          {isRestricted && <RestrictionInfo marginTop="24px" />}
+          {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
           <Box marginTop="24px" className={classes.buttonDiv}>
-            {isRestricted ? (
+            {isRestricted && !isWithdrawAllowed ? (
               <PrimaryButtonNew
                 fullWidth
                 variant="contained"
