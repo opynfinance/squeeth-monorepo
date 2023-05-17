@@ -3,9 +3,11 @@ import { Box, CircularProgress, createStyles, makeStyles, Tooltip } from '@mater
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import dynamic from 'next/dynamic'
 import React, { useState } from 'react'
+
 import CustomSwitch, { SwitchItem } from '@components/CustomSwitch'
-import { useNormHistory } from '@hooks/useNormHistory'
+import { useNormHistory, useNormHistoryByLastTimestamp } from '@hooks/useNormHistory'
 import { Tooltips } from '@constants/enums'
+import Checkbox from '@components/Checkbox'
 import { graphOptions } from '../../constants/diagram'
 
 const Chart = dynamic(() => import('kaktana-react-lightweight-charts'), { ssr: false })
@@ -90,8 +92,15 @@ const FundingChart = () => {
   ]
   const [fundingType, setFundingType] = useState<SwitchItem>(fundingTypes[0])
   const [fundingDuration, setFundingDuration] = useState<SwitchItem>(fundingDurations[0])
+  const [showDetailed, setShowDetailed] = useState(false)
 
-  const { normHistory: normFactors, fetchingComplete } = useNormHistory()
+  const { normHistory: normFactorsByLastId, fetchingComplete: fetchingCompleteByLastId } = useNormHistory()
+  const { normHistory: normFactorsByLastTimestamp, fetchingComplete: fetchingCompleteByLastTimestamp } =
+    useNormHistoryByLastTimestamp(showDetailed)
+
+  const normFactors = showDetailed ? normFactorsByLastTimestamp : normFactorsByLastId
+  const fetchingComplete = showDetailed ? fetchingCompleteByLastTimestamp : fetchingCompleteByLastId
+
   const graphData = normFactors.map((item) => {
     const secondsElapsed = Number(item.timestamp) - Number(item.lastModificationTimestamp)
     const deltaT = secondsElapsed / (420 * 60 * 60)
@@ -132,9 +141,18 @@ const FundingChart = () => {
       <div style={{ width: '100%' }}>
         <div className={classes.switchWrapper}>
           <CustomSwitch items={fundingTypes} value={fundingType} onChange={setFundingType} />
+
           {fundingType.id === 'funding' && (
             <CustomSwitch items={fundingDurations} value={fundingDuration} onChange={setFundingDuration} />
           )}
+
+          <Checkbox
+            name="showDetailed"
+            label="Show Detailed"
+            isChecked={showDetailed}
+            onInputChange={setShowDetailed}
+            style={{ opacity: 0.5 }}
+          />
         </div>
         {fetchingComplete ? (
           <>
