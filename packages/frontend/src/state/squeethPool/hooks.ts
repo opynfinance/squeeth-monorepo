@@ -5,9 +5,21 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { useOracle } from '@hooks/contracts/useOracle'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
-import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
+import {
+  AlphaRouter,
+  ChainId,
+  SwapRoute,
+  EIP1559GasPriceProvider,
+  CachingGasStationProvider,
+  OnChainGasPriceProvider,
+  LegacyGasPriceProvider,
+  GasPrice,
+  NodeJSCache,
+} from '@uniswap/smart-order-router'
+import { JsonRpcProvider } from '@ethersproject/providers'
+import NodeCache from 'node-cache'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
-import { fromTokenAmount, parseSlippageInput, toTokenAmount } from '@utils/calculations'
+import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
 import { ethers } from 'ethers'
 import { useAtomValue } from 'jotai'
@@ -34,8 +46,25 @@ import { computeRealizedLPFeePercent } from './price'
 import { slippageAmountAtom } from '../trade/atoms'
 import { getErrorMessage } from '@utils/error'
 import useInterval from '@hooks/useInterval'
-// import { BaseProvider } from '@ethersproject/providers'
-// import {BaseProvider} from '@ethers
+
+const getGasPriceProvider = (chainId: ChainId) => {
+  const gasPriceCache = new NodeJSCache<GasPrice>(new NodeCache({ stdTTL: 15, useClones: true }))
+
+  const connectionUrl = `https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
+  const jsonRpcProvider = new JsonRpcProvider(connectionUrl, chainId)
+
+  const gasPriceProvider = new CachingGasStationProvider(
+    chainId,
+    new OnChainGasPriceProvider(
+      chainId,
+      new EIP1559GasPriceProvider(jsonRpcProvider as any),
+      new LegacyGasPriceProvider(jsonRpcProvider as any),
+    ),
+    gasPriceCache,
+  )
+
+  return gasPriceProvider
+}
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -165,8 +194,16 @@ export const useGetBuyQuoteForETH = () => {
         const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
         const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
         const chainId = networkId as any as ChainId
-        const router = new AlphaRouter({ chainId: chainId, provider: provider as any })
+
+        const gasPriceProvider = getGasPriceProvider(chainId)
+        const router = new AlphaRouter({
+          chainId: chainId,
+          provider: provider as any,
+          gasPriceProvider,
+        })
+
         const rawAmount = CurrencyAmount.fromRawAmount(wethToken!, fromTokenAmount(ETHAmount, 18).toFixed(0))
+
         const route = await router.route(rawAmount, squeethToken!, TradeType.EXACT_INPUT, {
           recipient: address ?? ZERO_ADDRESS,
           slippageTolerance: parseSlippageInput(slippageTolerance.toString()),
@@ -450,7 +487,13 @@ export const useAutoRoutedBuyAndRefund = () => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: provider as any })
+
+      const gasPriceProvider = getGasPriceProvider(chainId)
+      const router = new AlphaRouter({
+        chainId: chainId,
+        provider: provider as any,
+        gasPriceProvider,
+      })
       const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
 
       // Call Route
@@ -511,7 +554,14 @@ export const useAutoRoutedGetSellQuote = () => {
       const slippageTolerance = slippageAmount ? slippageAmount : DEFAULT_SLIPPAGE
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: provider as any })
+
+      const gasPriceProvider = getGasPriceProvider(chainId)
+      const router = new AlphaRouter({
+        chainId: chainId,
+        provider: provider as any,
+        gasPriceProvider,
+      })
+
       const rawAmount = CurrencyAmount.fromRawAmount(
         squeethToken!,
         fromTokenAmount(squeethAmount, OSQUEETH_DECIMALS).toFixed(0),
@@ -685,7 +735,13 @@ export const useAutoRoutedSell = () => {
       // Initializing the AlphaRouter
       const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
       const chainId = networkId as any as ChainId
-      const router = new AlphaRouter({ chainId: chainId, provider: provider as any })
+
+      const gasPriceProvider = getGasPriceProvider(chainId)
+      const router = new AlphaRouter({
+        chainId: chainId,
+        provider: provider as any,
+        gasPriceProvider,
+      })
 
       // Call Route
       const rawAmount = CurrencyAmount.fromRawAmount(
