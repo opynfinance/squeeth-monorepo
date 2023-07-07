@@ -5,19 +5,7 @@ import { useETHPrice } from '@hooks/useETHPrice'
 import { useOracle } from '@hooks/contracts/useOracle'
 import useUniswapTicks from '@hooks/useUniswapTicks'
 import { CurrencyAmount, Percent, Token, TradeType } from '@uniswap/sdk-core'
-import {
-  AlphaRouter,
-  ChainId,
-  SwapRoute,
-  EIP1559GasPriceProvider,
-  CachingGasStationProvider,
-  OnChainGasPriceProvider,
-  LegacyGasPriceProvider,
-  GasPrice,
-  NodeJSCache,
-} from '@uniswap/smart-order-router'
-import { JsonRpcProvider } from '@ethersproject/providers'
-import NodeCache from 'node-cache'
+import { AlphaRouter, ChainId, SwapRoute } from '@uniswap/smart-order-router'
 import { Pool, Route, Trade } from '@uniswap/v3-sdk'
 import { fromTokenAmount, parseSlippageInput } from '@utils/calculations'
 import BigNumber from 'bignumber.js'
@@ -46,25 +34,7 @@ import { computeRealizedLPFeePercent } from './price'
 import { slippageAmountAtom } from '../trade/atoms'
 import { getErrorMessage } from '@utils/error'
 import useInterval from '@hooks/useInterval'
-
-const getGasPriceProvider = (chainId: ChainId) => {
-  const gasPriceCache = new NodeJSCache<GasPrice>(new NodeCache({ stdTTL: 15, useClones: true }))
-
-  const connectionUrl = `https://eth-mainnet.alchemyapi.io/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
-  const jsonRpcProvider = new JsonRpcProvider(connectionUrl, chainId)
-
-  const gasPriceProvider = new CachingGasStationProvider(
-    chainId,
-    new OnChainGasPriceProvider(
-      chainId,
-      new EIP1559GasPriceProvider(jsonRpcProvider as any),
-      new LegacyGasPriceProvider(jsonRpcProvider as any),
-    ),
-    gasPriceCache,
-  )
-
-  return gasPriceProvider
-}
+import { getGasPriceProvider } from '@utils/gasProvider'
 
 const getImmutables = async (squeethContract: Contract) => {
   const [token0, token1, fee, tickSpacing, maxLiquidityPerTick] = await Promise.all([
@@ -196,6 +166,7 @@ export const useGetBuyQuoteForETH = () => {
         const chainId = networkId as any as ChainId
 
         const gasPriceProvider = getGasPriceProvider(chainId)
+
         const router = new AlphaRouter({
           chainId: chainId,
           provider: provider as any,
