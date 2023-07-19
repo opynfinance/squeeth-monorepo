@@ -5,6 +5,7 @@ export const checkIsValidAddress = async (address: string) => {
   if (process.env.NODE_ENV === 'development') {
     return true
   }
+
   const { data } = await axios.get<{ valid: boolean }>(`/api/isValidAddress?address=${address}`)
 
   if (!data.valid) {
@@ -12,4 +13,12 @@ export const checkIsValidAddress = async (address: string) => {
   }
 
   return data.valid
+}
+
+export const updateBlockedAddress = async (address: string) => {
+  // if (process.env.NODE_ENV === 'development') {
+  //   return true
+  // }
+
+  await axios.post<{ message: string }>('/api/updateBlockedAddress', { address })
 }

@@ -53,6 +53,7 @@
         "date-fns": "^2.29.3",
         "fathom-client": "^3.2.0",
         "firebase": "^8.8.0",
+        "firebase-admin": "^11.10.1",
         "framer-motion": "^5.3.3",
         "fzero": "^0.2.4",
         "graphql": "^16.1.0",
