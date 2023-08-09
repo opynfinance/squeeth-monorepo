@@ -41,7 +41,7 @@ const RestrictionInfo: React.FC<RestrictionInfoProps> = (props) => {
     <Alert severity="warning" showIcon={false} {...props}>
       <Typography className={classes.text}>
         {isBlockedUser
-          ? 'Your account is blocked because you violated our Terms of service. Withdrawals are still available.'
+          ? 'Your wallet address is blocked for violating our terms of service.'
           : `This app is not available in ${
               userLocation ? restrictedCountries[String(userLocation)] : 'your country'
             }. ${

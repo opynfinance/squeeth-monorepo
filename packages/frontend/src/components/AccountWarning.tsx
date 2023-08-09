@@ -1,6 +1,4 @@
 import { Box, Link } from '@material-ui/core'
-import { useAtom } from 'jotai'
-import { walletFailVisibleAtom } from 'src/state/wallet/atoms'
 import { Modal } from './Modal/Modal'
 import { useRestrictUser } from '@context/restrict-user'
 import { useState } from 'react'
@@ -11,16 +9,16 @@ export default function AccountWarning() {
 
   return (
     <Modal
-      title="You're accessing for restricted region"
+      title="You are accessing from a restricted territory"
       open={isRestricted && showWarning}
       handleClose={() => setShowWarning(false)}
     >
       <Box px="10px">
-        You are connecting from a restricted region. Please read the{' '}
+        If your wallet attempts to connect 3 times from a restricted territory, your wallet address will be blocked.
+        Please read the{' '}
         <Link href="https://opyn.co/terms-of-service" target="_blank">
           Terms of Service
         </Link>
-        . If connected 3 times from a restricted region, your account will be blocked .
       </Box>
     </Modal>
   )

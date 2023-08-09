@@ -17,9 +17,7 @@ export default db
 
 export const isBlocked = async (address: string) => {
   const docRef = db.doc(`blocked-addresses/${address}`)
-  console.log('docRef', docRef)
   const doc = (await docRef.get()).data()
-  console.log('doc', doc)
 
-  return doc?.visitCount > 0
+  return doc?.visitCount > 3
 }
