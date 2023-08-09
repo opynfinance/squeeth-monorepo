@@ -14,3 +14,10 @@ const firebaseApp = !firebase.apps.length ? firebase.initializeApp(firebaseConfi
 const db = firebaseApp.firestore()
 
 export default db
+
+export const isBlocked = async (address: string) => {
+  const docRef = db.doc(`blocked-addresses/${address}`)
+  const doc = (await docRef.get()).data()
+
+  return doc?.visitCount > 3
+}

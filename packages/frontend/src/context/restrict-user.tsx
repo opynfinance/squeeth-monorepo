@@ -9,13 +9,17 @@ import { ALLOW_WITHDRAWALS, BLOCKED_COUNTRIES } from '../constants/index'
 type restrictUserContextType = {
   isRestricted: boolean
   isWithdrawAllowed: boolean
+  isBlockedUser: boolean
   handleRestrictUser: (isRestricted: boolean, isWithdrawAllowed: boolean) => void
+  blockUser: () => void
 }
 
 const initialState: restrictUserContextType = {
   isRestricted: false,
   isWithdrawAllowed: true,
+  isBlockedUser: false,
   handleRestrictUser: () => null,
+  blockUser: () => null,
 }
 
 const restrictUserContext = React.createContext<restrictUserContextType>(initialState)
@@ -25,8 +29,9 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   const router = useRouter()
   const networkId = useAtomValue(networkIdAtom)
   const userLocation = router.query?.ct
-  const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation))
-  const isWithdrawAllowed = ALLOW_WITHDRAWALS.includes(String(userLocation))
+  const [isBlockedUser, setIsBlockedUser] = useState(false)
+  const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation)) || isBlockedUser
+  const isWithdrawAllowed = ALLOW_WITHDRAWALS.includes(String(userLocation)) || isBlockedUser
 
   const [state, setState] = useState({
     isRestricted: false,
@@ -41,6 +46,10 @@ const RestrictUserProvider: React.FC = ({ children }) => {
     }))
   }, [])
 
+  const blockUser = useCallback(() => {
+    setIsBlockedUser(true)
+  }, [])
+
   useEffect(() => {
     if (isRestricted && networkId === Networks.MAINNET) {
       handleRestrictUser(true, isWithdrawAllowed)
@@ -51,7 +60,13 @@ const RestrictUserProvider: React.FC = ({ children }) => {
 
   return (
     <restrictUserContext.Provider
-      value={{ handleRestrictUser, isRestricted: state.isRestricted, isWithdrawAllowed: state.isWithdrawAllowed }}
+      value={{
+        handleRestrictUser,
+        isRestricted: state.isRestricted,
+        isWithdrawAllowed: state.isWithdrawAllowed,
+        blockUser,
+        isBlockedUser,
+      }}
     >
       {children}
     </restrictUserContext.Provider>

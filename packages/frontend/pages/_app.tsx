@@ -11,7 +11,7 @@ import React, { memo, useEffect, useMemo, useRef } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { useAtomValue } from 'jotai'
-import { RestrictUserProvider } from '@context/restrict-user'
+import { RestrictUserProvider, useRestrictUser } from '@context/restrict-user'
 import getTheme, { Mode } from '../src/theme'
 import { uniswapClient } from '@utils/apollo-client'
 import { useOnboard, useConnectWallet } from 'src/state/wallet/hooks'
@@ -23,7 +23,7 @@ import { useSwaps } from 'src/state/positions/hooks'
 import { useUpdateAtom } from 'jotai/utils'
 import useAppEffect from '@hooks/useAppEffect'
 import WalletFailModal from '@components/WalletFailModal'
-import { checkIsValidAddress } from 'src/state/wallet/apis'
+import { checkIsValidAddress, updateBlockedAddress } from 'src/state/wallet/apis'
 import TimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 import '@utils/amplitude'
@@ -33,6 +33,8 @@ import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
 import { TOS_UPDATE_DATE } from '@constants/index'
+import { isBlocked } from '@utils/firestore'
+import AccountWarning from '@components/AccountWarning'
 
 initializeAmplitude()
 
@@ -120,6 +122,8 @@ const Init = () => {
   const router = useRouter()
   const connectWallet = useConnectWallet()
 
+  const { isRestricted, blockUser } = useRestrictUser()
+
   const isZenbullPage = router.pathname === '/strategies/bull'
 
   useAppEffect(() => {
@@ -151,6 +155,25 @@ const Init = () => {
     })
   }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
 
+  useEffect(() => {
+    if (!isRestricted || !onboardAddress) {
+      return
+    }
+
+    if (isRestricted) {
+      updateBlockedAddress(onboardAddress)
+    }
+  }, [isRestricted, onboardAddress])
+
+  useEffect(() => {
+    if (!onboardAddress) {
+      return
+    }
+    isBlocked(onboardAddress).then((blocked) => {
+      if (blocked) blockUser()
+    })
+  }, [blockUser, onboardAddress])
+
   useOnboard()
   useTrackSiteReload()
   useUpdateSqueethPrices()
@@ -174,6 +197,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <CssBaseline />
         <ComputeSwapsProvider>
           <WalletFailModal />
+          <AccountWarning />
           <StrategyLayout>
             <Component {...pageProps} />
           </StrategyLayout>
