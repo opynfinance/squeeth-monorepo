@@ -60,7 +60,9 @@
       "**/@graphprotocol/graph-ts",
       "**/@graphprotocol/graph-ts/**",
       "**/hardhat",
-      "**/hardhat/**"
+      "**/hardhat/**",
+      "**/ip-range-check",
+      "**/ip-range-check/**"
     ]
   },
   "dependencies": {},
