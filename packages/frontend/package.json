@@ -115,5 +115,11 @@
     },
     "resolutions": {
         "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
+    },
+    "workspaces": {
+        "nohoist": [
+            "ip-range-check",
+            "ip-range-check/**"
+        ]
     }
 }
