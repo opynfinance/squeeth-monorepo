@@ -2746,7 +2746,11 @@ export function middleware(request: NextRequest) {
 
   const ip = request.headers.get('x-forwarded-for') ?? request.ip ?? '0.0.0.0'
   const isIPBlocked = ipRangeCheck(ip, blockRanges)
-  console.log('ip', ip, isIPBlocked)
+  console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
+
+  if (isIPBlocked && url.pathname !== '/blocked') {
+    return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
+  }
 
   console.log('country', cloudflareCountry, country)
 
