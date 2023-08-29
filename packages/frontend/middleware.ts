@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import ipRangeCheck from 'ip-range-check'
+// import ipRangeCheck from 'ip-range-check'
 
 export function middleware(request: NextRequest) {
   const cloudfareCountry = request.headers.get('cf-ipcountry')
