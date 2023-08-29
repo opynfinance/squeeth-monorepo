@@ -66,6 +66,9 @@
     ]
   },
   "dependencies": {},
+  "resolutions": {
+    "ipfs-http-client@34.0.0/concat-stream": "2.0.0"
+  },
   "devDependencies": {
     "husky": "^7.0.1",
     "lint-staged": "^11.1.2"
