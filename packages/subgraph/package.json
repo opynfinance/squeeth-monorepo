@@ -16,7 +16,7 @@
     "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ haythem96/squeeth-temp-subgraph"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.33.1",
+    "@graphprotocol/graph-cli": "0.45.2",
     "@graphprotocol/graph-ts": "0.27.0"
   },
   "devDependencies": {

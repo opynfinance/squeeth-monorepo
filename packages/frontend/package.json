@@ -41,6 +41,7 @@
         "@uniswap/sdk-core": "^3.0.1",
         "@uniswap/smart-order-router": "^2.5.30",
         "@uniswap/v3-sdk": "^3.3.2",
+        "@upstash/redis": "^1.22.0",
         "@vercel/og": "^0.0.25",
         "axios": "^0.24.0",
         "bignumber.js": "^9.0.1",
@@ -114,5 +115,11 @@
     },
     "resolutions": {
         "assemblyscript": "git+https://github.com/AssemblyScript/assemblyscript.git#v0.6"
+    },
+    "workspaces": {
+        "nohoist": [
+            "ip-range-check",
+            "ip-range-check/**"
+        ]
     }
 }
