@@ -25,7 +25,7 @@ The backtests use Tardis and Firebase and we use Fathom for analytics. All of th
 Once everything is set run the following command.
 
 ```
-yarn start
+yarn dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
