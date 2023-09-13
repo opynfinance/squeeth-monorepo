@@ -12,6 +12,9 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
 
   const ip = request.headers.get('x-forwarded-for') ?? request.ip
+  console.log('ip', ip, request.headers.get('x-forwarded-for'), request.ip);
+  // const ip = "212.103.61.75"
+
 
   if (ip) {
     const redisData = await redis.get(ip)
