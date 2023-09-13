@@ -15,7 +15,6 @@ export async function middleware(request: NextRequest) {
   console.log('ip', ip, request.headers.get('x-forwarded-for'), request.ip)
   console.log('cf ip', request.headers.get('cf-connecting-ip'), request.headers.get('true-client-ip'))
   console.log(request.headers)
-
   // const ip = "212.103.61.75"
 
 
