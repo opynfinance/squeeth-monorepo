@@ -11,12 +11,7 @@ export async function middleware(request: NextRequest) {
   const country = cloudflareCountry ?? request.geo?.country
   const url = request.nextUrl
 
-  const ip = request.headers.get('x-forwarded-for') ?? request.ip
-  console.log('ip', ip, request.headers.get('x-forwarded-for'), request.ip)
-  console.log('cf ip', request.headers.get('cf-connecting-ip'), request.headers.get('true-client-ip'))
-  console.log(request.headers)
-  // const ip = "212.103.61.75"
-
+  const ip = request.headers.get('cf-connecting-ip')
 
   if (ip) {
     const redisData = await redis.get(ip)
