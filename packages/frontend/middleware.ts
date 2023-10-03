@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
   const country = cloudflareCountry ?? request.geo?.country
   const url = request.nextUrl
 
-  const ip = request.headers.get('cf-connecting-ip')
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip
   const user_agent = request.headers.get('user-agent')
   const language = request.headers.get('accept-language')
 
