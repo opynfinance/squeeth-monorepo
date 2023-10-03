@@ -26,7 +26,9 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
+    console.log("pre calling vpn")
     const isVpn = await isVPN(ip, user_agent??"", language??"")
+    console.log("post calling vpn", isVpn)
     if(isVpn){
       await redis.set(ip, 1)
       console.log('vpnip', ip, isVPN, '/blocked')
