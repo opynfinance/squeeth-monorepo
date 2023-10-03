@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
+import { isVPN } from 'src/server/ipqs'
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -12,6 +13,8 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
 
   const ip = request.headers.get('cf-connecting-ip')
+  const user_agent = request.headers.get('user-agent')
+  const language = request.headers.get('accept-language')
 
   if (ip) {
     const redisData = await redis.get(ip)
@@ -20,6 +23,13 @@ export async function middleware(request: NextRequest) {
     console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
 
     if (isIPBlocked && url.pathname !== '/blocked') {
+      return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
+    }
+
+    const isVpn = await isVPN(ip, user_agent??"", language??"")
+    if(isVpn){
+      await redis.set(ip, 1)
+      console.log('vpnip', ip, isVPN, '/blocked')
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
   }
