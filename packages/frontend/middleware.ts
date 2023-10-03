@@ -26,12 +26,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
-    console.log("pre calling vpn")
-    const isVpn = await isVPN(ip, user_agent??"", language??"")
-    console.log("post calling vpn", isVpn)
-    if(isVpn){
+    const isFromVpn = await isVPN(ip, user_agent ?? '', language ?? '')
+    if (isFromVpn && url.pathname !== '/blocked') {
       await redis.set(ip, 1)
-      console.log('vpnip', ip, isVPN, '/blocked')
+      console.log('vpnip', ip, isFromVpn, '/blocked')
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
   }
@@ -51,5 +49,5 @@ export async function middleware(request: NextRequest) {
   link: https://github.com/vercel/next.js/discussions/36308#discussioncomment-3758041
 */
 export const config = {
-  matcher: '/((?!api|static|.*\\..*|_next).*)',
+  matcher: '/((?!api|static|.*\\..*|_next|blocked).*)',
 }

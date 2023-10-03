@@ -1,5 +1,3 @@
-import axios from 'axios'
-
 type ApiResponse = {
   success: boolean
   message: string
@@ -42,11 +40,7 @@ async function CheckUserIP(ip_address: string, user_agent: string, language: str
     key +
     '/' +
     ip_address +
-    '?user_agent=' +
-    user_agent +
-    '&user_language=' +
-    language +
-    '&strictness=' +
+    '?strictness=' +
     strictness +
     '&allow_public_access_points=' +
     allow_public_access_points
@@ -60,8 +54,9 @@ async function CheckUserIP(ip_address: string, user_agent: string, language: str
 
 async function get_IPQ_URL(url: string): Promise<ApiResponse | null> {
   try {
-    const response = await axios.get(url)
-    return response.data
+    const response = await fetch(url)
+    const data = await response.json()
+    return data
   } catch (error) {
     return null
   }
