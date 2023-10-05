@@ -52,3 +52,6 @@ export const connectedWalletAtom = atom((get) => {
 export const isTransactionFirstStepAtom = atom(false)
 export const onboardAddressAtom = atom<string | null>(null)
 export const walletFailVisibleAtom = atom(false)
+export const addressStrikeCountAtom = atom(0)
+export const isStrikeCountModalOpenAtom = atom(false)
+export const isWalletLoadingAtom = atom(true)

@@ -33,8 +33,14 @@ import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
 import { TOS_UPDATE_DATE } from '@constants/index'
-import { isBlocked } from '@utils/firestore'
-import AccountWarning from '@components/AccountWarning'
+import StrikeWarning from '@components/StrikeWarning'
+import { getAddressStrikeCount } from '@state/wallet/apis'
+import {
+  addressStrikeCountAtom,
+  isStrikeCountModalOpenAtom,
+  connectedWalletAtom,
+  isWalletLoadingAtom,
+} from '@state/wallet/atoms'
 
 initializeAmplitude()
 
@@ -118,6 +124,10 @@ function MyApp({ Component, pageProps }: any) {
 const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+  const setAddressStrikeCount = useUpdateAtom(addressStrikeCountAtom)
+  const setIsWalletLoading = useUpdateAtom(isWalletLoadingAtom)
+  const setIsStrikeCountModalOpen = useUpdateAtom(isStrikeCountModalOpenAtom)
+
   const firstAddressCheck = useRef(true)
   const router = useRouter()
   const connectWallet = useConnectWallet()
@@ -127,52 +137,73 @@ const Init = () => {
   const isZenbullPage = router.pathname === '/strategies/bull'
 
   useAppEffect(() => {
-    if (!onboardAddress) {
-      return
-    }
+    try {
+      if (!onboardAddress) {
+        return
+      }
 
-    checkIsValidAddress(onboardAddress).then((valid) => {
-      if (valid) {
-        const hasConnectedAfterTosUpdate = window.localStorage.getItem(TOS_UPDATE_DATE) === 'true'
-        if (!hasConnectedAfterTosUpdate) {
-          return
-        } else if (isZenbullPage) {
-          // connect automatically (to zenbull) only if user has specifically connected to zenbull page
-          const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
-          if (hasConnectedToZenbullBefore) {
+      checkIsValidAddress(onboardAddress).then((valid) => {
+        if (valid) {
+          const hasConnectedAfterTosUpdate = window.localStorage.getItem(TOS_UPDATE_DATE) === 'true'
+          if (!hasConnectedAfterTosUpdate) {
+            return
+          } else if (isZenbullPage) {
+            // connect automatically (to zenbull) only if user has specifically connected to zenbull page
+            const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
+            if (hasConnectedToZenbullBefore) {
+              connectWallet(onboardAddress)
+            }
+          } else {
             connectWallet(onboardAddress)
           }
         } else {
-          connectWallet(onboardAddress)
+          if (firstAddressCheck.current) {
+            firstAddressCheck.current = false
+          } else {
+            setWalletFailVisible(true)
+          }
         }
-      } else {
-        if (firstAddressCheck.current) {
-          firstAddressCheck.current = false
-        } else {
-          setWalletFailVisible(true)
-        }
-      }
-    })
-  }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
+      })
+    } finally {
+      setIsWalletLoading(false)
+    }
+  }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet, setIsWalletLoading])
 
+  // increment strike count if user is restricted
   useEffect(() => {
     if (!isRestricted || !onboardAddress) {
       return
     }
 
     if (isRestricted) {
-      updateBlockedAddress(onboardAddress)
-    }
-  }, [isRestricted, onboardAddress])
+      // increment strike count
+      updateBlockedAddress(onboardAddress).then((visitCount) => {
+        setAddressStrikeCount(visitCount)
 
+        if (visitCount >= 3) {
+          blockUser()
+        }
+
+        // show strike count modal after updating strike count
+        setIsStrikeCountModalOpen(true)
+      })
+    }
+  }, [isRestricted, onboardAddress, setAddressStrikeCount, blockUser, setIsStrikeCountModalOpen])
+
+  // update user's strike count and block user if strike count >= 3
   useEffect(() => {
     if (!onboardAddress) {
       return
     }
-    isBlocked(onboardAddress).then((blocked) => {
-      if (blocked) blockUser()
+
+    getAddressStrikeCount(onboardAddress).then((visitCount) => {
+      setAddressStrikeCount(visitCount)
+
+      if (visitCount >= 3) {
+        blockUser()
+      }
     })
-  }, [blockUser, onboardAddress])
+  }, [blockUser, onboardAddress, setAddressStrikeCount])
 
   useOnboard()
   useTrackSiteReload()
@@ -197,7 +228,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <CssBaseline />
         <ComputeSwapsProvider>
           <WalletFailModal />
-          <AccountWarning />
+          <StrikeWarning />
           <StrategyLayout>
             <Component {...pageProps} />
           </StrategyLayout>
