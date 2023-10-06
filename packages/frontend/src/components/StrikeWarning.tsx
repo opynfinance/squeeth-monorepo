@@ -1,26 +1,21 @@
 import { Box, Link } from '@material-ui/core'
 import { useAtomValue, useAtom } from 'jotai'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 import { useRestrictUser } from '@context/restrict-user'
 import { Modal } from './Modal/Modal'
-import {
-  connectedWalletAtom,
-  isStrikeCountModalOpenAtom,
-  addressStrikeCountAtom,
-  isWalletLoadingAtom,
-} from '@state/wallet/atoms'
+import { connectedWalletAtom, isStrikeCountModalOpenAtom, addressStrikeCountAtom } from '@state/wallet/atoms'
 
 interface StrikeWarningModalProps {
-  setIsStrikeModalShown: (value: boolean) => void
+  setIsStrikeModalShownOnce: (value: boolean) => void
 }
 
-const StrikeWarningModal: React.FC<StrikeWarningModalProps> = ({ setIsStrikeModalShown }) => {
+const StrikeWarningModal: React.FC<StrikeWarningModalProps> = ({ setIsStrikeModalShownOnce }) => {
   const [isOpen, setIsOpen] = useState(true)
 
   const onClose = () => {
     setIsOpen(false)
-    setIsStrikeModalShown(true)
+    setIsStrikeModalShownOnce(true)
   }
 
   return (
@@ -42,16 +37,16 @@ const StrikeWarningModal: React.FC<StrikeWarningModalProps> = ({ setIsStrikeModa
 }
 
 interface StrikeCountModalProps {
-  setIsStrikeModalShown: (value: boolean) => void
+  setIsStrikeModalShownOnce: (value: boolean) => void
 }
 
-const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalShown }) => {
+const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalShownOnce }) => {
   const addressStrikeCount = useAtomValue(addressStrikeCountAtom)
   const [isStrikeCountModalOpen, setIsStrikeCountModalOpen] = useAtom(isStrikeCountModalOpenAtom)
 
   const onClose = () => {
     setIsStrikeCountModalOpen(false)
-    setIsStrikeModalShown(true)
+    setIsStrikeModalShownOnce(true)
   }
 
   return (
@@ -72,21 +67,28 @@ const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalSho
 }
 
 export default function StrikeModalManager() {
+  const [showModal, setShowModal] = useState(false)
   const isWalletConnected = useAtomValue(connectedWalletAtom)
-  const isWalletLoading = useAtomValue(isWalletLoadingAtom)
-
-  const [isStrikeModalShown, setIsStrikeModalShown] = useState(false)
+  const [isStrikeModalShownOnce, setIsStrikeModalShownOnce] = useState(false)
   const { isRestricted } = useRestrictUser()
 
-  if (isRestricted && !isWalletLoading) {
-    if (isWalletConnected) {
-      return <StrikeCountModal setIsStrikeModalShown={setIsStrikeModalShown} />
+  // delayed state change - show modal after 2 seconds
+  // this is because it takes some time to automatically connect the wallet (incase previously connected)
+  useEffect(() => {
+    if (isRestricted) {
+      const timerId = setTimeout(() => setShowModal(true), 2_000)
+      // cleanup function to clear the timeout if the component is unmounted before the delay is over.
+      return () => clearTimeout(timerId)
     }
+  }, [isRestricted])
 
-    if (!isStrikeModalShown) {
-      return <StrikeWarningModal setIsStrikeModalShown={setIsStrikeModalShown} />
+  if (showModal) {
+    if (isWalletConnected) {
+      return <StrikeCountModal setIsStrikeModalShownOnce={setIsStrikeModalShownOnce} />
+    }
+    if (!isStrikeModalShownOnce) {
+      return <StrikeWarningModal setIsStrikeModalShownOnce={setIsStrikeModalShownOnce} />
     }
   }
-
   return null
 }

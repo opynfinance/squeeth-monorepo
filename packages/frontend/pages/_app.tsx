@@ -35,12 +35,7 @@ import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
 import { TOS_UPDATE_DATE } from '@constants/index'
 import StrikeWarning from '@components/StrikeWarning'
 import { getAddressStrikeCount } from '@state/wallet/apis'
-import {
-  addressStrikeCountAtom,
-  isStrikeCountModalOpenAtom,
-  connectedWalletAtom,
-  isWalletLoadingAtom,
-} from '@state/wallet/atoms'
+import { addressStrikeCountAtom, isStrikeCountModalOpenAtom } from '@state/wallet/atoms'
 
 initializeAmplitude()
 
@@ -125,7 +120,6 @@ const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
   const setAddressStrikeCount = useUpdateAtom(addressStrikeCountAtom)
-  const setIsWalletLoading = useUpdateAtom(isWalletLoadingAtom)
   const setIsStrikeCountModalOpen = useUpdateAtom(isStrikeCountModalOpenAtom)
 
   const firstAddressCheck = useRef(true)
@@ -137,37 +131,33 @@ const Init = () => {
   const isZenbullPage = router.pathname === '/strategies/bull'
 
   useAppEffect(() => {
-    try {
-      if (!onboardAddress) {
-        return
-      }
+    if (!onboardAddress) {
+      return
+    }
 
-      checkIsValidAddress(onboardAddress).then((valid) => {
-        if (valid) {
-          const hasConnectedAfterTosUpdate = window.localStorage.getItem(TOS_UPDATE_DATE) === 'true'
-          if (!hasConnectedAfterTosUpdate) {
-            return
-          } else if (isZenbullPage) {
-            // connect automatically (to zenbull) only if user has specifically connected to zenbull page
-            const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
-            if (hasConnectedToZenbullBefore) {
-              connectWallet(onboardAddress)
-            }
-          } else {
+    checkIsValidAddress(onboardAddress).then((valid) => {
+      if (valid) {
+        const hasConnectedAfterTosUpdate = window.localStorage.getItem(TOS_UPDATE_DATE) === 'true'
+        if (!hasConnectedAfterTosUpdate) {
+          return
+        } else if (isZenbullPage) {
+          // connect automatically (to zenbull) only if user has specifically connected to zenbull page
+          const hasConnectedToZenbullBefore = window.localStorage.getItem('walletConnectedToZenbull') === 'true'
+          if (hasConnectedToZenbullBefore) {
             connectWallet(onboardAddress)
           }
         } else {
-          if (firstAddressCheck.current) {
-            firstAddressCheck.current = false
-          } else {
-            setWalletFailVisible(true)
-          }
+          connectWallet(onboardAddress)
         }
-      })
-    } finally {
-      setIsWalletLoading(false)
-    }
-  }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet, setIsWalletLoading])
+      } else {
+        if (firstAddressCheck.current) {
+          firstAddressCheck.current = false
+        } else {
+          setWalletFailVisible(true)
+        }
+      }
+    })
+  }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
 
   // increment strike count if user is restricted
   useEffect(() => {
