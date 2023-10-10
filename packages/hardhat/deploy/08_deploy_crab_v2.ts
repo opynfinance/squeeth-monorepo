@@ -14,7 +14,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const oracle = await ethers.getContract("Oracle", deployer);
   const weth = await getWETH(ethers, deployer, network.name)
   const wsqueeth = await ethers.getContract("WPowerPerp", deployer);
-  const crabV1 = getCrab(network.name);
 
   const { uniswapFactory, } = await getUniswapDeployments(ethers, deployer, network.name)
 
@@ -25,6 +24,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const dWethToken = await getDwethToken(deployer, network.name)
 
   if (network.name === 'mainnet') {
+    const crabV1 = getCrab(network.name);
+
     const migrationArgs = [
       crabV1,
       weth.address,

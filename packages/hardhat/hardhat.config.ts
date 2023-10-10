@@ -112,6 +112,10 @@ const config: HardhatUserConfig = {
       accounts,
       gas: 8000000000000000
     },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${InfuraKey}`, // <---- YOUR INFURA ID! (or it won't work)
+      accounts,
+    },
     xdai: {
       url: "https://rpc.xdaichain.com/",
       gasPrice: 1000000000,

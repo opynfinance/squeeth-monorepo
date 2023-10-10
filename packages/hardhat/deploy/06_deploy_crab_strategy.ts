@@ -4,6 +4,7 @@ import { getUniswapDeployments, getWETH, createArgumentFile } from '../tasks/uti
 import { getPoolAddress } from '../test/setup';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  return;
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
     

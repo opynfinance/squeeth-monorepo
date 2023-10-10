@@ -171,7 +171,7 @@ export const getPoolAddress = async (
   const shortSqueeth = (await NFTContract.deploy('short Squeeth', 'sSQU')) as ShortPowerPerp;
 
   const WPowerPerpContract = await ethers.getContractFactory("WPowerPerp");
-  const wsqueeth = (await WPowerPerpContract.deploy('Wrapped Squeeth', 'wSQU')) as WPowerPerp;
+  const wsqueeth = (await WPowerPerpContract.deploy('Wrapped Squeeth', 'wSQU')) as Contract;
 
   // 1 squeeth is 3000 eth
   const squeethPriceInEth = wsqueethEthPrice || 0.3

@@ -3,6 +3,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 import { getUniswapDeployments, getController, getExec, getEuler, getDwethToken, createArgumentFile } from '../tasks/utils'
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
+  return;
   const { deployments, getNamedAccounts, ethers, network } = hre;
   const { deploy } = deployments;
     

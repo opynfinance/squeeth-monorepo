@@ -43,6 +43,7 @@ export const networkNameToUSDC = (name: string) => {
     case 'mainnet': return '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
     case 'ropsten': return '0x27415c30d8c87437becbd4f98474f26e712047f4'
     case 'goerli': return '0x306bf03b689f7d7e5e9D3aAC87a068F16AFF9482'
+    case 'sepolia': return '0x3c5E427E0EEc0018CD30754bd9f1cDBF084cC070'
     default: return undefined
   }
 }
@@ -54,6 +55,7 @@ export const networkNameToWeth = (name: string) => {
     case 'ropsten': return '0xc778417e063141139fce010982780140aa0cd5ab'
     case 'rinkebyArbitrum': return '0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681'
     case 'goerli': return '0x083fd3D47eC8DC56b572321bc4dA8b26f7E82103'
+    case 'sepolia': return '0x05ff8ADe428a6d40C3EB96035F5dC2b974f8Ec98'
     default: return undefined
   }
 }
