@@ -46,7 +46,7 @@ contract ZenEmergencyShutdown is UniFlash, Ownable {
     address private immutable weth;
     /// @dev usdc address
     address private immutable usdc;
-    /// @dev bull stratgey address
+    /// @dev bull strategy address
     address public immutable bullStrategy;
 
     /**

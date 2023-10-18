@@ -266,7 +266,7 @@ describe('Trade on trade page', () => {
       })
 
       it('position card should update to new osqth balance', () => {
-        // wait for 20 sec to update positon
+        // wait for 20 sec to update position
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
           .then((v) => Number(parseFloat(v.text()).toFixed(4)))
@@ -405,7 +405,7 @@ describe('Trade on trade page', () => {
       })
 
       it('new position card value should be the same as prev position card value', () => {
-        // wait for 30 sec to update positon
+        // wait for 30 sec to update position
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
           .then((v) => Number(parseFloat(v.text()).toFixed(6)))
@@ -515,7 +515,7 @@ describe('Trade on trade page', () => {
       })
 
       it('new position card value should be the same as prev position card value', () => {
-        // wait for 30 sec to update positon
+        // wait for 30 sec to update position
         cy.get('#position-card-before-trade-balance')
           .wait(30000)
           .then((v) => Number(parseFloat(v.text()).toFixed(6)))
