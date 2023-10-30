@@ -16,7 +16,10 @@ export async function middleware(request: NextRequest) {
   const user_agent = request.headers.get('user-agent')
   const language = request.headers.get('accept-language')
 
-  if (ip) {
+  const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
+  const isIPWhitelisted = ip && allowedIPs.includes(ip)
+
+  if (ip && !isIPWhitelisted) {
     const redisData = await redis.get(ip)
     const isIPBlocked = !!redisData
 
