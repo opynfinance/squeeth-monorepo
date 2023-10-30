@@ -31,7 +31,7 @@ type ApiResponse = {
   request_id: string
 }
 
-async function CheckUserIP(ip_address: string, user_agent: string, language: string): Promise<ApiResponse | null> {
+async function CheckUserIP(ip_address: string): Promise<ApiResponse | null> {
   const key = process.env.IPQS_API_KEY
   const strictness = 1 // This optional parameter controls the level of strictness for the lookup. Setting this option higher will increase the chance for false-positives as well as the time needed to perform the IP analysis. Increase this setting if you still continue to see fraudulent IPs with our base setting (level 1 is recommended) or decrease this setting for faster lookups with less false-positives. Current options for this parameter are 0 (fastest), 1 (recommended), 2 (more strict), or 3 (strictest).
   const allow_public_access_points = 'true' // Bypasses certain checks for IP addresses from education and research institutions, schools, and some corporate connections to better accommodate audiences that frequently use public connections. This value can be set to true to make the service less strict while still catching the riskiest connections.
@@ -62,8 +62,8 @@ async function get_IPQ_URL(url: string): Promise<ApiResponse | null> {
   }
 }
 
-export async function isVPN(ip_address: string, user_agent: string, language: string): Promise<boolean> {
-  const ip_result = await CheckUserIP(ip_address, user_agent, language)
+export async function isVPN(ip_address: string): Promise<boolean> {
+  const ip_result = await CheckUserIP(ip_address)
   if (ip_result === null) {
     return false
   }

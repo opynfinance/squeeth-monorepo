@@ -13,8 +13,6 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
 
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip
-  const user_agent = request.headers.get('user-agent')
-  const language = request.headers.get('accept-language')
 
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
@@ -29,7 +27,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
-    const isFromVpn = await isVPN(ip, user_agent ?? '', language ?? '')
+    const isFromVpn = await isVPN(ip)
     if (isFromVpn && url.pathname !== '/blocked') {
       await redis.set(ip, 1)
       console.log('vpnip', ip, isFromVpn, '/blocked')

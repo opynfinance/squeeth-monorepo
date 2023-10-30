@@ -24,7 +24,7 @@ const BlockedPage: React.FC = () => {
   return (
     <Box className={classes.container}>
       <Typography align="center" variant="h6" className={classes.title}>
-        Seems you are using a VPN service, which is a violation of our terms of service. Please disconnect from your VPN
+        Seems you are using a VPN service or accessing our website from a blocked country, which is a violation of our terms of service. Please disconnect from your VPN
         and refresh the page to continue using our service.
       </Typography>
     </Box>
