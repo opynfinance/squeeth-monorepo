@@ -48,11 +48,12 @@ const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalSho
     setIsStrikeCountModalOpen(false)
     setIsStrikeModalShownOnce(true)
   }
-
+ if (addressStrikeCount<3) {
   return (
     <Modal title="Strike Count Warning" open={isStrikeCountModalOpen} handleClose={onClose}>
       <Box px="4px">
-        You currently have {addressStrikeCount} strike(s). Be aware that after three strikes, your wallet address will
+      You have attempted to access opyn.co from a restricted territory. You currently have {addressStrikeCount} strike(s).
+        Be aware that after three strikes, your wallet address will
         be blocked.
         <br />
         <br />
@@ -63,7 +64,25 @@ const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalSho
         for more details.
       </Box>
     </Modal>
-  )
+  ) } else {
+    return (
+    <Modal title="Account blocked warning" open={isStrikeCountModalOpen} handleClose={onClose}>
+    <Box px="4px">
+    You have attempted to access opyn.co from a restricted territory more than 3 times. 
+    Your wallet address is blocked for violating our terms of service. 
+    You cannot open any new positions. 
+    You can still close positions and remove collateral from vaults.
+      <br />
+      <br />
+      Please review our{' '}
+      <Link href="https://opyn.co/terms-of-service" target="_blank">
+        Terms of Service
+      </Link>{' '}
+      for more details.
+    </Box>
+  </Modal>
+  )}
+
 }
 
 export default function StrikeModalManager() {
