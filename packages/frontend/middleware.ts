@@ -31,7 +31,6 @@ export async function middleware(request: NextRequest) {
       }
     } else if (redisData == null) {
       // check vpn from ipqs if redisData does not exist
-      console.log('calling ipqs')
       const isFromVpn = await isVPN(ip)
       console.log('vpnip', ip, isFromVpn)
       if (isFromVpn) {
