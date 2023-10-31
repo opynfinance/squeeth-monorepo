@@ -66,7 +66,7 @@ const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalSho
     )
   } else {
     return (
-      <Modal title="Account blocked warning" open={isStrikeCountModalOpen} handleClose={onClose}>
+      <Modal title="Account blocked" open={isStrikeCountModalOpen} handleClose={onClose}>
         <Box px="4px">
           You have attempted to access opyn.co from a restricted territory 3 times. Your wallet address is blocked for
           violating our terms of service. You cannot open any new positions. You can still close positions and remove
