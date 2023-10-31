@@ -7,6 +7,9 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
+const IS_VPN = 1
+const IS_NOT_VPN = 2
+
 export async function middleware(request: NextRequest) {
   const cloudflareCountry = request.headers.get('cf-ipcountry')
   const country = cloudflareCountry ?? request.geo?.country
@@ -19,19 +22,26 @@ export async function middleware(request: NextRequest) {
 
   if (ip && !isIPWhitelisted) {
     const redisData = await redis.get(ip)
-    const isIPBlocked = !!redisData
+    console.log('ip', ip, redisData, url.protocol, url.host, '/blocked')
 
-    console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
-
-    if (isIPBlocked && url.pathname !== '/blocked') {
-      return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
-    }
-
-    const isFromVpn = await isVPN(ip)
-    if (isFromVpn && url.pathname !== '/blocked') {
-      await redis.set(ip, 1)
-      console.log('vpnip', ip, isFromVpn, '/blocked')
-      return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
+    if (redisData == IS_VPN) {
+      // IP is blocked, redirect
+      if (url.pathname !== '/blocked') {
+        return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
+      }
+    } else if (redisData == null) {
+      // check vpn from ipqs if redisData does not exist
+      console.log('calling ipqs')
+      const isFromVpn = await isVPN(ip)
+      console.log('vpnip', ip, isFromVpn)
+      if (isFromVpn) {
+        await redis.set(ip, IS_VPN) // 1 means vpn
+        if (url.pathname !== '/blocked') {
+          return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
+        }
+      } else {
+        await redis.set(ip, IS_NOT_VPN) // 2 means checked and is not VPN
+      }
     }
   }
 
