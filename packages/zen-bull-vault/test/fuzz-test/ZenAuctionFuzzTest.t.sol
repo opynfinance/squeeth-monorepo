@@ -86,8 +86,8 @@ contract ZenAuctionFuzzTest is Test {
 
     function setUp() public {
         string memory FORK_URL = vm.envString("FORK_URL");
-        // vm.createSelectFork(FORK_URL, 15939557);
-        vm.createSelectFork(FORK_URL, 15781550);
+        vm.createSelectFork(FORK_URL, 15939557);
+        // vm.createSelectFork(FORK_URL, 15781550);
 
         ownerPk = 0xA1CCE;
         owner = vm.addr(ownerPk);

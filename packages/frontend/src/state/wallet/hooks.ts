@@ -20,6 +20,7 @@ import {
   transactionLoadingAtom,
   onboardAddressAtom,
   walletFailVisibleAtom,
+  addressStrikeCountAtom,
 } from './atoms'
 import { BIG_ZERO, EtherscanPrefix, TOS_UPDATE_DATE } from '../../constants/'
 import { Networks } from '../../types'
@@ -92,15 +93,19 @@ export const useDisconnectWallet = () => {
   const [onboard] = useAtom(onboardAtom)
   const setAddress = useUpdateAtom(addressAtom)
   const setOnboardAddress = useUpdateAtom(onboardAddressAtom)
+  const setAddressStrikeCount = useUpdateAtom(addressStrikeCountAtom)
+
   const queryClient = useQueryClient()
   const apolloClient = useApolloClient()
 
   const disconnectWallet = () => {
     if (!onboard) return
+
     onboard.walletReset()
     window.localStorage.setItem('walletAddress', '')
     setAddress(null)
     setOnboardAddress(null)
+    setAddressStrikeCount(0)
     queryClient.setQueryData('userWalletBalance', BIG_ZERO)
     queryClient.removeQueries()
     apolloClient.clearStore()

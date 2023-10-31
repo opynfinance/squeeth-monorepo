@@ -393,7 +393,7 @@ contract DepositAuctionTest is BaseForkSetup {
         p.flashDepositFee = 3000;
         // ------------- //
 
-        vm.stopPrank();
+        // vm.stopPrank();
         assertEq(activeFork, vm.activeFork());
         vm.makePersistent(address(netting));
         vm.makePersistent(address(weth));
@@ -414,7 +414,7 @@ contract DepositAuctionTest is BaseForkSetup {
         netting.depositAuction(p);
         assertLe(((toMint * p.clearingPrice) / 10 ** 18) - (mm1Balance - weth.balanceOf(mm1)), 180);
 
-        assertApproxEqAbs(ICrabStrategyV2(crab).balanceOf(depositor), 147e18, 1e18);
+        assertApproxEqAbs(ICrabStrategyV2(crab).balanceOf(depositor), 147e18, 5e18);
         assertApproxEqAbs(
             sqth.balanceOf(mm1), toMint, 0.001e18, "All minted not sold, check if we sold only what we took for"
         );

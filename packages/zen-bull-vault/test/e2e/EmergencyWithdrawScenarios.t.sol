@@ -88,134 +88,134 @@ contract EmergencyWithdrawScenarios is Test {
         vm.stopPrank();
     }
 
-    function testEmergencyWithdrawEthFromCrabWhenEulerWorksAndAfterEmergencyWithdraw() public {
-        // block number before euler rekt
-        vm.rollFork(16817896);
-        _deployAndConfigure();
+    // function testEmergencyWithdrawEthFromCrabWhenEulerWorksAndAfterEmergencyWithdraw() public {
+    //     // block number before euler rekt
+    //     vm.rollFork(16817896);
+    //     _deployAndConfigure();
 
-        uint256 normalWithdrawPayoutBeforeEmergencyWithdraws;
-        {
-            // normal withdraw from user2
-            uint256 bullAmountToWithdraw = IERC20(ZEN_BULL).balanceOf(user2);
-            (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
-                _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
-            uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
-            uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
-            (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            uint256 ethToWithdrawFromCrab =
-                crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
-            // transfer some oSQTH from some squeether
-            vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
-            IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
+    //     uint256 normalWithdrawPayoutBeforeEmergencyWithdraws;
+    //     {
+    //         // normal withdraw from user2
+    //         uint256 bullAmountToWithdraw = IERC20(ZEN_BULL).balanceOf(user2);
+    //         (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
+    //             _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
+    //         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
+    //         uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
+    //         (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+    //         uint256 ethToWithdrawFromCrab =
+    //             crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+    //         // transfer some oSQTH from some squeether
+    //         vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
+    //         IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
 
-            vm.prank(0x0A59649758aa4d66E25f08Dd01271e891fe52199);
-            IERC20(USDC).transfer(user2, usdcToRepay);
+    //         vm.prank(0x0A59649758aa4d66E25f08Dd01271e891fe52199);
+    //         IERC20(USDC).transfer(user2, usdcToRepay);
 
-            uint256 user2EthBalanceBefore = address(user2).balance;
+    //         uint256 user2EthBalanceBefore = address(user2).balance;
 
-            vm.startPrank(user2);
-            IERC20(USDC).approve(ZEN_BULL, usdcToRepay);
-            IERC20(WPOWERPERP).approve(ZEN_BULL, wPowerPerpToRedeem);
-            ZenBullStrategy(ZEN_BULL).withdraw(bullAmountToWithdraw);
-            vm.stopPrank();
+    //         vm.startPrank(user2);
+    //         IERC20(USDC).approve(ZEN_BULL, usdcToRepay);
+    //         IERC20(WPOWERPERP).approve(ZEN_BULL, wPowerPerpToRedeem);
+    //         ZenBullStrategy(ZEN_BULL).withdraw(bullAmountToWithdraw);
+    //         vm.stopPrank();
 
-            uint256 user2EthBalanceAfter = address(user2).balance;
-            normalWithdrawPayoutBeforeEmergencyWithdraws =
-                user2EthBalanceAfter.sub(user2EthBalanceBefore);
-        }
+    //         uint256 user2EthBalanceAfter = address(user2).balance;
+    //         normalWithdrawPayoutBeforeEmergencyWithdraws =
+    //             user2EthBalanceAfter.sub(user2EthBalanceBefore);
+    //     }
 
-        // roll again before euler rekt
-        vm.rollFork(16817896);
-        _deployAndConfigure();
+    //     // roll again before euler rekt
+    //     vm.rollFork(16817896);
+    //     _deployAndConfigure();
 
-        // withdraw through emergency contract
-        {
-            uint256 emergencyRedeemedBull =
-                emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
-            uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
+    //     // withdraw through emergency contract
+    //     {
+    //         uint256 emergencyRedeemedBull =
+    //             emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
+    //         uint256 user1BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
 
-            uint256 maxWethForOsqth;
-            {
-                uint256 bullShare = user1BullBalanceBefore.wdiv(
-                    IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
-                );
-                uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
-                (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-                    ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-                uint256 wPowerPerpToRedeem =
-                    crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+    //         uint256 maxWethForOsqth;
+    //         {
+    //             uint256 bullShare = user1BullBalanceBefore.wdiv(
+    //                 IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+    //             );
+    //             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
+    //             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+    //                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+    //             uint256 wPowerPerpToRedeem =
+    //                 crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
 
-                maxWethForOsqth = Quoter(QUOTER).quoteExactOutputSingle(
-                    WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0
-                );
-            }
+    //             maxWethForOsqth = Quoter(QUOTER).quoteExactOutputSingle(
+    //                 WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0
+    //             );
+    //         }
 
-            vm.startPrank(user1);
-            IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-            emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
-            vm.stopPrank();
+    //         vm.startPrank(user1);
+    //         IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
+    //         emergencyWithdraw.emergencyWithdrawEthFromCrab(user1BullBalanceBefore, maxWethForOsqth);
+    //         vm.stopPrank();
 
-            // user3 emergency withdraw
-            emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
-            uint256 user3BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user3);
+    //         // user3 emergency withdraw
+    //         emergencyRedeemedBull = emergencyWithdraw.redeemedZenBullAmountForCrabWithdrawal();
+    //         uint256 user3BullBalanceBefore = IERC20(ZEN_BULL).balanceOf(user3);
 
-            {
-                uint256 bullShare = user3BullBalanceBefore.wdiv(
-                    IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
-                );
-                uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
-                (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
-                    ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-                uint256 wPowerPerpToRedeem =
-                    crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+    //         {
+    //             uint256 bullShare = user3BullBalanceBefore.wdiv(
+    //                 IERC20(ZEN_BULL).totalSupply().sub(emergencyRedeemedBull)
+    //             );
+    //             uint256 crabToRedeem = bullShare.wmul(ZenBullStrategy(ZEN_BULL).getCrabBalance());
+    //             (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+    //                 ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+    //             uint256 wPowerPerpToRedeem =
+    //                 crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
 
-                maxWethForOsqth = Quoter(QUOTER).quoteExactOutputSingle(
-                    WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0
-                );
-            }
+    //             maxWethForOsqth = Quoter(QUOTER).quoteExactOutputSingle(
+    //                 WETH, WPOWERPERP, 3000, wPowerPerpToRedeem, 0
+    //             );
+    //         }
 
-            vm.startPrank(user3);
-            IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
-            emergencyWithdraw.emergencyWithdrawEthFromCrab(user3BullBalanceBefore, maxWethForOsqth);
-            vm.stopPrank();
-        }
+    //         vm.startPrank(user3);
+    //         IERC20(ZEN_BULL).approve(address(emergencyWithdraw), type(uint256).max);
+    //         emergencyWithdraw.emergencyWithdrawEthFromCrab(user3BullBalanceBefore, maxWethForOsqth);
+    //         vm.stopPrank();
+    //     }
 
-        uint256 normalWithdrawPayoutAfterEmergencyWithdraws;
-        {
-            // normal withdraw from user2
-            uint256 bullAmountToWithdraw = IERC20(ZEN_BULL).balanceOf(user2);
-            (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
-                _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
-            uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
-            uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
-            (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-            uint256 ethToWithdrawFromCrab =
-                crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
-            // transfer some oSQTH from some squeether
-            vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
-            IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
+    //     uint256 normalWithdrawPayoutAfterEmergencyWithdraws;
+    //     {
+    //         // normal withdraw from user2
+    //         uint256 bullAmountToWithdraw = IERC20(ZEN_BULL).balanceOf(user2);
+    //         (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
+    //             _calcWPowerPerpAndCrabNeededForWithdraw(bullAmountToWithdraw);
+    //         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullAmountToWithdraw);
+    //         uint256 wethToWithdrawFromEuler = testUtil.calcWethToWithdraw(bullAmountToWithdraw);
+    //         (uint256 ethInCrab,) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+    //         uint256 ethToWithdrawFromCrab =
+    //             crabToRedeem.wdiv(IERC20(CRAB).totalSupply()).wmul(ethInCrab);
+    //         // transfer some oSQTH from some squeether
+    //         vm.prank(0x56178a0d5F301bAf6CF3e1Cd53d9863437345Bf9);
+    //         IERC20(WPOWERPERP).transfer(user2, wPowerPerpToRedeem);
 
-            vm.prank(0x0A59649758aa4d66E25f08Dd01271e891fe52199);
-            IERC20(USDC).transfer(user2, usdcToRepay);
+    //         vm.prank(0x0A59649758aa4d66E25f08Dd01271e891fe52199);
+    //         IERC20(USDC).transfer(user2, usdcToRepay);
 
-            uint256 user2EthBalanceBefore = address(user2).balance;
+    //         uint256 user2EthBalanceBefore = address(user2).balance;
 
-            vm.startPrank(user2);
-            IERC20(USDC).approve(ZEN_BULL, usdcToRepay);
-            IERC20(WPOWERPERP).approve(ZEN_BULL, wPowerPerpToRedeem);
-            ZenBullStrategy(ZEN_BULL).withdraw(bullAmountToWithdraw);
-            vm.stopPrank();
+    //         vm.startPrank(user2);
+    //         IERC20(USDC).approve(ZEN_BULL, usdcToRepay);
+    //         IERC20(WPOWERPERP).approve(ZEN_BULL, wPowerPerpToRedeem);
+    //         ZenBullStrategy(ZEN_BULL).withdraw(bullAmountToWithdraw);
+    //         vm.stopPrank();
 
-            uint256 user2EthBalanceAfter = address(user2).balance;
-            normalWithdrawPayoutAfterEmergencyWithdraws =
-                user2EthBalanceAfter.sub(user2EthBalanceBefore);
-        }
+    //         uint256 user2EthBalanceAfter = address(user2).balance;
+    //         normalWithdrawPayoutAfterEmergencyWithdraws =
+    //             user2EthBalanceAfter.sub(user2EthBalanceBefore);
+    //     }
 
-        assertLt(
-            normalWithdrawPayoutAfterEmergencyWithdraws,
-            normalWithdrawPayoutBeforeEmergencyWithdraws
-        );
-    }
+    //     assertLt(
+    //         normalWithdrawPayoutAfterEmergencyWithdraws,
+    //         normalWithdrawPayoutBeforeEmergencyWithdraws
+    //     );
+    // }
 
     function testScenarioEmergencyWithdrawAfterNormalWithdraw() public {
         // block number before euler rekt

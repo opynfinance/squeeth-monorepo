@@ -33,8 +33,9 @@ import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
 import { TOS_UPDATE_DATE } from '@constants/index'
-import { isBlocked } from '@utils/firestore'
-import AccountWarning from '@components/AccountWarning'
+import StrikeWarning from '@components/StrikeWarning'
+import { getAddressStrikeCount } from '@state/wallet/apis'
+import { addressStrikeCountAtom, isStrikeCountModalOpenAtom } from '@state/wallet/atoms'
 
 initializeAmplitude()
 
@@ -118,6 +119,9 @@ function MyApp({ Component, pageProps }: any) {
 const Init = () => {
   const onboardAddress = useAtomValue(onboardAddressAtom)
   const setWalletFailVisible = useUpdateAtom(walletFailVisibleAtom)
+  const setAddressStrikeCount = useUpdateAtom(addressStrikeCountAtom)
+  const setIsStrikeCountModalOpen = useUpdateAtom(isStrikeCountModalOpenAtom)
+
   const firstAddressCheck = useRef(true)
   const router = useRouter()
   const connectWallet = useConnectWallet()
@@ -155,24 +159,41 @@ const Init = () => {
     })
   }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
 
+  // increment strike count if user is restricted
   useEffect(() => {
     if (!isRestricted || !onboardAddress) {
       return
     }
 
     if (isRestricted) {
-      updateBlockedAddress(onboardAddress)
-    }
-  }, [isRestricted, onboardAddress])
+      // increment strike count
+      updateBlockedAddress(onboardAddress).then((visitCount) => {
+        setAddressStrikeCount(visitCount)
 
+        if (visitCount >= 3) {
+          blockUser()
+        }
+
+        // show strike count modal after updating strike count
+        setIsStrikeCountModalOpen(true)
+      })
+    }
+  }, [isRestricted, onboardAddress, setAddressStrikeCount, blockUser, setIsStrikeCountModalOpen])
+
+  // update user's strike count and block user if strike count >= 3
   useEffect(() => {
     if (!onboardAddress) {
       return
     }
-    isBlocked(onboardAddress).then((blocked) => {
-      if (blocked) blockUser()
+
+    getAddressStrikeCount(onboardAddress).then((visitCount) => {
+      setAddressStrikeCount(visitCount)
+
+      if (visitCount >= 3) {
+        blockUser()
+      }
     })
-  }, [blockUser, onboardAddress])
+  }, [blockUser, onboardAddress, setAddressStrikeCount])
 
   useOnboard()
   useTrackSiteReload()
@@ -197,7 +218,7 @@ const TradeApp = ({ Component, pageProps }: any) => {
         <CssBaseline />
         <ComputeSwapsProvider>
           <WalletFailModal />
-          <AccountWarning />
+          <StrikeWarning />
           <StrategyLayout>
             <Component {...pageProps} />
           </StrategyLayout>

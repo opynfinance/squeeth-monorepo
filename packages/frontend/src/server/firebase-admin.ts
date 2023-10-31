@@ -20,9 +20,26 @@ export const dbAdmin = firestore()
 export const updateBlockedAddress = async (address: string) => {
   const docRef = dbAdmin.collection('blocked-addresses').doc(address)
   const doc = await docRef.get()
+
+  let visitCount = 0
+
   if (doc.exists) {
-    await docRef.set({ address, visitCount: doc.data()?.visitCount + 1 })
+    visitCount = doc.data()?.visitCount + 1
+    await docRef.set({ address, visitCount })
   } else {
+    visitCount = 1
     await docRef.set({ address, visitCount: 1 })
+  }
+
+  return visitCount
+}
+
+export const getAddressStrikeCount = async (address: string) => {
+  const docRef = dbAdmin.collection('blocked-addresses').doc(address)
+  const doc = await docRef.get()
+  if (doc.exists) {
+    return doc.data()?.visitCount
+  } else {
+    return 0
   }
 }
