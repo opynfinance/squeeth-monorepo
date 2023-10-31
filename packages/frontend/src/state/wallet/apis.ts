@@ -20,5 +20,11 @@ export const updateBlockedAddress = async (address: string) => {
   //   return true
   // }
 
-  await axios.post<{ message: string }>('/api/updateBlockedAddress', { address })
+  const response = await axios.post<{ message: string; visitCount: number }>('/api/updateBlockedAddress', { address })
+  return response.data.visitCount
+}
+
+export const getAddressStrikeCount = async (address: string) => {
+  const { data } = await axios.get<{ count: number }>(`/api/strikes?address=${address}`)
+  return data.count
 }
