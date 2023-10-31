@@ -76,7 +76,7 @@ jobs:
   checkout-and-install-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -97,7 +97,7 @@ jobs:
   compile-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -118,7 +118,7 @@ jobs:
   lint-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -133,7 +133,7 @@ jobs:
   unit-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -148,7 +148,7 @@ jobs:
   integration-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -163,7 +163,7 @@ jobs:
   contract-size-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -178,7 +178,7 @@ jobs:
   e2e-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - restore_cache:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
@@ -195,7 +195,7 @@ jobs:
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
@@ -216,7 +216,7 @@ jobs:
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
-      - image: cimg/node:16.6.0
+      - image: cimg/node:16.14.0
     steps:
       - checkout:
           path: ~/squeeth
