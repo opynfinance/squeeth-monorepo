@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { ALLOW_WITHDRAWALS, BLOCKED_COUNTRIES } from '../constants/index'
+import { BLOCKED_COUNTRIES } from '../constants/index'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -30,40 +30,31 @@ const RestrictUserProvider: React.FC = ({ children }) => {
   const networkId = useAtomValue(networkIdAtom)
   const userLocation = router.query?.ct
   const [isBlockedUser, setIsBlockedUser] = useState(false)
-  const isRestricted = BLOCKED_COUNTRIES.includes(String(userLocation)) || isBlockedUser
-  const isWithdrawAllowed = ALLOW_WITHDRAWALS.includes(String(userLocation)) || isBlockedUser
+  const [isRestricted, setIsRestricted] = useState(false)
 
-  const [state, setState] = useState({
-    isRestricted: false,
-    isWithdrawAllowed: false,
-  })
-
-  const handleRestrictUser = useCallback((isRestricted: boolean, isWithdrawAllowed: boolean) => {
-    setState((prevState) => ({
-      ...prevState,
-      isRestricted: isRestricted,
-      isWithdrawAllowed,
-    }))
+  const handleRestrictUser = useCallback((isRestrictedFlag: boolean) => {
+    setIsRestricted(isRestrictedFlag)
   }, [])
 
   const blockUser = useCallback(() => {
     setIsBlockedUser(true)
   }, [])
 
+  const isUserRestricted = BLOCKED_COUNTRIES.includes(String(userLocation)) || isBlockedUser
   useEffect(() => {
-    if (isRestricted && networkId === Networks.MAINNET) {
-      handleRestrictUser(true, isWithdrawAllowed)
+    if (isUserRestricted && networkId === Networks.MAINNET) {
+      handleRestrictUser(true)
     } else {
-      handleRestrictUser(false, true)
+      handleRestrictUser(false)
     }
-  }, [handleRestrictUser, networkId, isRestricted, isWithdrawAllowed])
+  }, [handleRestrictUser, networkId, isUserRestricted])
 
   return (
     <restrictUserContext.Provider
       value={{
         handleRestrictUser,
-        isRestricted: state.isRestricted,
-        isWithdrawAllowed: state.isWithdrawAllowed,
+        isRestricted,
+        isWithdrawAllowed: true,
         blockUser,
         isBlockedUser,
       }}
