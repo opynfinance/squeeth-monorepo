@@ -70,6 +70,8 @@ export const BLOCKED_COUNTRIES = [
 ]
 export const ALLOW_WITHDRAWALS = ['CA']
 
+export const WHITELISTED_DATACENTER_ORGANIZATIONS = ['amazon', 'google', 'azure', 'oracle', 'softlayer', 'cloudflare']
+
 // V2 Migration details
 export const V2_MIGRATION_ETH_PRICE = 1611.71
 export const V2_MIGRATION_OSQTH_PRICE = 0.0897
