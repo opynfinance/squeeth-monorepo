@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
+
 import { isVPN } from 'src/server/ipqs'
+import { BLOCKED_IP_VALUE } from 'src/constants'
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -26,7 +28,7 @@ export async function middleware(request: NextRequest) {
       console.error('Failed to get data from Redis:', error)
     }
 
-    const isIPBlocked = !!redisData
+    const isIPBlocked = redisData === BLOCKED_IP_VALUE
     console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
     if (isIPBlocked && url.pathname !== '/blocked') {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
@@ -35,7 +37,7 @@ export async function middleware(request: NextRequest) {
     const isFromVpn = await isVPN(ip)
     if (isFromVpn && url.pathname !== '/blocked') {
       try {
-        await redis.set(ip, 1)
+        await redis.set(ip, BLOCKED_IP_VALUE)
       } catch (error) {
         console.error('Failed to set data in Redis:', error)
       }

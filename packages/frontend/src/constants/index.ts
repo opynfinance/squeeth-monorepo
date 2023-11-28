@@ -71,6 +71,7 @@ export const BLOCKED_COUNTRIES = [
 export const ALLOW_WITHDRAWALS = ['CA']
 
 export const WHITELISTED_DATACENTER_ORGANIZATIONS = ['amazon', 'google', 'azure', 'oracle', 'softlayer', 'cloudflare']
+export const BLOCKED_IP_VALUE = 'BLOCKED'
 
 // V2 Migration details
 export const V2_MIGRATION_ETH_PRICE = 1611.71
