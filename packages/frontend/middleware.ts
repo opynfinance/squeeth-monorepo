@@ -15,6 +15,7 @@ export async function middleware(request: NextRequest) {
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip
 
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
+  console.log({ allowedIPs })
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
   if (ip && !isIPWhitelisted) {
