@@ -19,18 +19,26 @@ export async function middleware(request: NextRequest) {
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
   if (ip && !isIPWhitelisted) {
-    const redisData = await redis.get(ip)
+    let redisData
+    try {
+      redisData = await redis.get(ip)
+    } catch (error) {
+      console.error('Failed to get data from Redis:', error)
+    }
+
     const isIPBlocked = !!redisData
-
     console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
-
     if (isIPBlocked && url.pathname !== '/blocked') {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
     const isFromVpn = await isVPN(ip)
     if (isFromVpn && url.pathname !== '/blocked') {
-      await redis.set(ip, 1)
+      try {
+        await redis.set(ip, 1)
+      } catch (error) {
+        console.error('Failed to set data in Redis:', error)
+      }
       console.log('vpnip', ip, isFromVpn, '/blocked')
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
