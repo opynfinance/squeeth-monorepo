@@ -1,5 +1,3 @@
-import { WHITELISTED_DATACENTER_ORGANIZATIONS } from '../constants'
-
 type ApiResponse = {
   success: boolean
   message: string
@@ -75,8 +73,9 @@ export async function isVPN(ipAddress: string): Promise<boolean> {
     const org = ipResult.organization
 
     // exclude datacenter IPs
-    // organization should include one of WHITELISTED_DATACENTER_ORGANIZATIONS
-    const isWhitelistedOrg = WHITELISTED_DATACENTER_ORGANIZATIONS.some((whitelistedOrg) =>
+    // organization should include one of whitelisted datacenter organizations
+    const whitelistedDataOrgs = (process.env.WHITELISTED_DATACENTER_ORGANIZATIONS || '').split(',')
+    const isWhitelistedOrg = whitelistedDataOrgs.some((whitelistedOrg) =>
       org.toLowerCase().includes(whitelistedOrg.toLowerCase()),
     )
     const isActiveVPN = ipResult.active_vpn === true
