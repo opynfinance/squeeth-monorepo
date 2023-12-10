@@ -16,6 +16,30 @@ interface RedisResponse {
   timestamp: number
 }
 
+async function isIPBlockedInRedis(ip: string, currentTime: number) {
+  let redisData: RedisResponse | null = null
+  try {
+    redisData = await redis.get<RedisResponse>(ip)
+  } catch (error) {
+    console.error('Failed to get data from Redis:', error)
+  }
+
+  let isIPBlocked = false
+  if (redisData) {
+    try {
+      const { value, timestamp } = redisData
+      // check if entry is valid and is less than 30 days old
+      if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= THIRTY_DAYS_IN_MS) {
+        isIPBlocked = true
+      }
+    } catch (error) {
+      console.error('Failed to parse data from Redis:', error)
+    }
+  }
+
+  return isIPBlocked
+}
+
 export async function middleware(request: NextRequest) {
   const cloudflareCountry = request.headers.get('cf-ipcountry')
   const country = cloudflareCountry ?? request.geo?.country
@@ -27,34 +51,16 @@ export async function middleware(request: NextRequest) {
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
   if (ip && !isIPWhitelisted) {
-    let redisData: RedisResponse | null = null
-    try {
-      redisData = await redis.get<RedisResponse>(ip)
-    } catch (error) {
-      console.error('Failed to get data from Redis:', error)
-    }
-
     const currentTime = Date.now()
-
-    let isIPBlocked = false
-    if (redisData) {
-      try {
-        const { value, timestamp } = redisData
-        // check if entry is valid and is less than 30 days old
-        if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= THIRTY_DAYS_IN_MS) {
-          isIPBlocked = true
-        }
-      } catch (error) {
-        console.error('Failed to parse data from Redis:', error)
-      }
-    }
-
+    // check if IP is blocked
+    const isIPBlocked = await isIPBlockedInRedis(ip, currentTime)
     if (isIPBlocked && url.pathname !== '/blocked') {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
-    const isFromVpn = await isVPN(ip)
-    if (isFromVpn && url.pathname !== '/blocked') {
+    // check if IP is from VPN
+    const isIPFromVPN = await isVPN(ip)
+    if (isIPFromVPN && url.pathname !== '/blocked') {
       try {
         await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime })
       } catch (error) {
