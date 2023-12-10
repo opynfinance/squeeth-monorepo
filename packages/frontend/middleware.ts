@@ -9,6 +9,8 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
+const THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000
+
 interface RedisResponse {
   value: string
   timestamp: number
@@ -33,14 +35,13 @@ export async function middleware(request: NextRequest) {
     }
 
     const currentTime = Date.now()
-    const fifteenDaysInMilliseconds = 15 * 24 * 60 * 60 * 1000
 
     let isIPBlocked = false
     if (redisData) {
       try {
         const { value, timestamp } = redisData
-        // check if entry is valid and is less than 15 days old
-        if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= fifteenDaysInMilliseconds) {
+        // check if entry is valid and is less than 30 days old
+        if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= THIRTY_DAYS_IN_MS) {
           isIPBlocked = true
         }
       } catch (error) {
