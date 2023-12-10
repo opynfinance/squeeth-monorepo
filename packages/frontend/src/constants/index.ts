@@ -70,6 +70,8 @@ export const BLOCKED_COUNTRIES = [
 ]
 export const ALLOW_WITHDRAWALS = ['CA']
 
+export const BLOCKED_IP_VALUE = 'BLOCKED'
+
 // V2 Migration details
 export const V2_MIGRATION_ETH_PRICE = 1611.71
 export const V2_MIGRATION_OSQTH_PRICE = 0.0897
