@@ -9,6 +9,11 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
+interface RedisResponse {
+  value: string
+  timestamp: number
+}
+
 export async function middleware(request: NextRequest) {
   const cloudflareCountry = request.headers.get('cf-ipcountry')
   const country = cloudflareCountry ?? request.geo?.country
@@ -17,19 +22,32 @@ export async function middleware(request: NextRequest) {
   const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip
 
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
-  console.log({ allowedIPs })
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
   if (ip && !isIPWhitelisted) {
-    let redisData
+    let redisData: RedisResponse | null = null
     try {
-      redisData = await redis.get(ip)
+      redisData = await redis.get<RedisResponse>(ip)
     } catch (error) {
       console.error('Failed to get data from Redis:', error)
     }
 
-    const isIPBlocked = redisData === BLOCKED_IP_VALUE
-    console.log('ip', ip, isIPBlocked, url.protocol, url.host, '/blocked')
+    const currentTime = Date.now()
+    const fifteenDaysInMilliseconds = 15 * 24 * 60 * 60 * 1000
+
+    let isIPBlocked = false
+    if (redisData) {
+      try {
+        const { value, timestamp } = redisData
+        // check if entry is valid and is less than 15 days old
+        if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= fifteenDaysInMilliseconds) {
+          isIPBlocked = true
+        }
+      } catch (error) {
+        console.error('Failed to parse data from Redis:', error)
+      }
+    }
+
     if (isIPBlocked && url.pathname !== '/blocked') {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
@@ -37,16 +55,13 @@ export async function middleware(request: NextRequest) {
     const isFromVpn = await isVPN(ip)
     if (isFromVpn && url.pathname !== '/blocked') {
       try {
-        await redis.set(ip, BLOCKED_IP_VALUE)
+        await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime })
       } catch (error) {
         console.error('Failed to set data in Redis:', error)
       }
-      console.log('vpnip', ip, isFromVpn, '/blocked')
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
   }
-
-  console.log('country', cloudflareCountry, country)
 
   if (url.searchParams.has('ct') && url.searchParams.get('ct') === String(country)) {
     return NextResponse.next()
