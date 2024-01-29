@@ -36,8 +36,10 @@ const moduleExports = {
 }
 
 const sentryWebpackPluginOptions = {
+  org: 'opyn',
+  project: 'squeeth',
+  // authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: true,
-  // authToken: process.env.NEXT_PUBLIC_SENTRY_AUTH_TOKEN,
 }
 
 module.exports = withSentryConfig(moduleExports, sentryWebpackPluginOptions)
