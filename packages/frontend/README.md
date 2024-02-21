@@ -43,5 +43,3 @@ We welcome contributions to the Squeeth Frontend! You can contribute by resolvin
 ## Branding
 
 Don't use the Opyn or Squeeth logo or name in anything dishonest or fraudulent. If you deploy another version of the interface, please make it clear that it is an interface to the Squeeth Protocol, but not affiliated with Opyn Inc.
-
-Test
