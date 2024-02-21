@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
   const country = cloudflareCountry ?? request.geo?.country
   const url = request.nextUrl
 
-  const ip = '58.138.27.45'
+  const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || request.ip
 
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
