@@ -78,6 +78,7 @@ export async function isVPN(ipAddress: string): Promise<boolean> {
     const isWhitelistedOrg = whitelistedDataOrgs.some((whitelistedOrg) =>
       org.toLowerCase().includes(whitelistedOrg.toLowerCase()),
     )
+    console.log({ isWhitelistedOrg })
     const isActiveVPN = ipResult.active_vpn === true
 
     // label as isAllowedOrg only if isWhitelistedOrg and not a active VPN
