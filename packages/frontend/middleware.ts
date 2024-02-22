@@ -50,17 +50,22 @@ export async function middleware(request: NextRequest) {
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
-  if (ip && !isIPWhitelisted) {
+  const excludedPaths = ['/blocked', '/research']
+
+  const isPathExcluded = excludedPaths.some((path) => url.pathname.startsWith(path))
+  const shouldCheckIfIPBlocked = !isPathExcluded && ip && !isIPWhitelisted // don't check if path is excluded or IP is empty / whitelisted
+
+  if (shouldCheckIfIPBlocked) {
     const currentTime = Date.now()
     // check if IP is blocked
     const isIPBlocked = await isIPBlockedInRedis(ip, currentTime)
-    if (isIPBlocked && url.pathname !== '/blocked') {
+    if (isIPBlocked) {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
     // check if IP is from VPN
     const isIPFromVPN = await isVPN(ip)
-    if (isIPFromVPN && url.pathname !== '/blocked') {
+    if (isIPFromVPN) {
       try {
         await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime })
       } catch (error) {
