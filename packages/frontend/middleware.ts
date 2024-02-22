@@ -53,9 +53,9 @@ export async function middleware(request: NextRequest) {
   const excludedPaths = ['/blocked', '/research']
 
   const isPathExcluded = excludedPaths.some((path) => url.pathname.startsWith(path))
-  const shouldCheckIfIPBlocked = !isPathExcluded && ip && !isIPWhitelisted // don't check if path is excluded or IP is empty / whitelisted
 
-  if (shouldCheckIfIPBlocked) {
+  if (!isPathExcluded && ip && !isIPWhitelisted) {
+    // don't check if path is excluded or IP is empty / whitelisted
     const currentTime = Date.now()
     // check if IP is blocked
     const isIPBlocked = await isIPBlockedInRedis(ip, currentTime)
