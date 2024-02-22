@@ -1,23 +1,26 @@
 import React from 'react'
-import Link from 'next/link'
-import { Hidden, Button, Typography, useMediaQuery, useTheme, Paper, Collapse } from '@material-ui/core'
+import { Typography } from '@material-ui/core'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { NextSeo } from 'next-seo'
 
 import AthenaBackgroundImg from 'public/images/landing/athena1-desktop.png'
-import DefaultSiteSeo from '@components/DefaultSiteSeo/DefaultSiteSeo'
 import { Nav } from '@components/Nav/Basic'
+import { SiteMetaDescription, SiteMetaImage, SQUEETH_BASE_URL } from '@constants/index'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     athenaBackground: {
       position: 'absolute',
       backgroundImage: `url(${AthenaBackgroundImg.src})`,
-      height: `calc(100vh - 120px)`,
+      height: `calc(100vh - 160px)`,
       width: '100vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right',
       backgroundSize: 'contain',
       zIndex: -1,
+      [theme.breakpoints.up('md')]: {
+        height: `calc(100vh - 120px)`,
+      },
     },
     content: {
       width: '85%',
@@ -115,7 +118,26 @@ function ResearchPage() {
 
   return (
     <div>
-      <DefaultSiteSeo />
+      <NextSeo
+        title={'Opyn | Research'}
+        description={SiteMetaDescription}
+        canonical={SQUEETH_BASE_URL}
+        openGraph={{
+          images: [
+            {
+              url: SiteMetaImage,
+              width: 1200,
+              height: 630,
+              alt: 'Opyn',
+            },
+          ],
+        }}
+        twitter={{
+          handle: '@opyn_',
+          site: '@opyn_',
+          cardType: 'summary_large_image',
+        }}
+      />
       <Nav />
 
       <div className={classes.athenaBackground} />
