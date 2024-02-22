@@ -93,3 +93,11 @@ export const SiteMetaDescription = 'DeFi Investment Strategies Powered by Squeet
 export const SiteMetaImage = SQUEETH_BASE_URL + '/images/previews/opyn.png'
 
 export const TOS_UPDATE_DATE = '2023-04-21'
+
+export const UNRESTRICTED_PATHS = [
+  '/blocked',
+  '/research',
+  '/terms-of-service',
+  'terms-of-service-faq',
+  '/privacy-policy',
+]

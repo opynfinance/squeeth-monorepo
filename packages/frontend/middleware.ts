@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
 
 import { isVPN } from 'src/server/ipqs'
-import { BLOCKED_IP_VALUE } from 'src/constants'
+import { BLOCKED_IP_VALUE, UNRESTRICTED_PATHS } from 'src/constants'
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -50,12 +50,10 @@ export async function middleware(request: NextRequest) {
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
-  const excludedPaths = ['/blocked', '/research']
+  const isPathUnrestricted = UNRESTRICTED_PATHS.some((path) => url.pathname.startsWith(path))
 
-  const isPathExcluded = excludedPaths.some((path) => url.pathname.startsWith(path))
-
-  if (!isPathExcluded && ip && !isIPWhitelisted) {
-    // don't check if path is excluded or IP is empty / whitelisted
+  // don't check if path is unrestricted or IP is empty / whitelisted
+  if (!isPathUnrestricted && ip && !isIPWhitelisted) {
     const currentTime = Date.now()
     // check if IP is blocked
     const isIPBlocked = await isIPBlockedInRedis(ip, currentTime)
