@@ -101,10 +101,10 @@ const useStyles = makeStyles((theme) =>
     },
     navStartEarningButton: {
       backgroundColor: theme.palette.primary.main,
-      padding: '15px 18px',
+      padding: '12px 16px',
       fontFamily: 'DM Sans',
-      fontWeight: 800,
-      fontSize: '18px',
+      fontWeight: 700,
+      fontSize: '16px',
       lineHeight: '130%',
       maxWidth: '180px',
       '&:hover': {
@@ -194,7 +194,7 @@ function Nav() {
         ))}
         <div className={classes.navAction}>
           <Link href={'/strategies/crab'} passHref>
-            <Button className={classes.navStartEarningButton}>Start Earning</Button>
+            <Button className={classes.navStartEarningButton}>Launch App</Button>
           </Link>
         </div>
       </div>
