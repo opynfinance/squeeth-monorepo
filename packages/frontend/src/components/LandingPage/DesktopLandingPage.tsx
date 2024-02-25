@@ -1,23 +1,26 @@
 import React, { useEffect } from 'react'
 import { makeStyles, createStyles } from '@material-ui/core/styles'
+import Image from 'next/image'
+import clsx from 'clsx'
+import { Button, Typography } from '@material-ui/core'
+import Link from 'next/link'
+
 import logo from 'public/images/OpynLogo.svg'
 import LandingPageBackground from 'public/images/landing/athena1-desktop.png'
 import LandingPageBackgroundDown from 'public/images/landing-page-background-down.svg'
 import LandingTitle from 'public/images/landing/landing-title.png'
 import Squeeth from 'public/images/landing/squeeth.png'
-import Link from 'next/link'
 import Strategies from 'public/images/landing/strategies.png'
 import Auction from 'public/images/landing/auction.png'
 import Twitter from 'public/images/landing/twitter.svg'
 import Discord from 'public/images/landing/discord.svg'
 import Github from 'public/images/landing/github.svg'
 import Medium from 'public/images/landing/medium.svg'
-import Image from 'next/image'
-import clsx from 'clsx'
-import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
 import useAmplitude from '@hooks/useAmplitude'
-import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
+import { LANDING_EVENTS } from '@utils/amplitude'
+import { EXTERNAL_LINKS, ROUTES } from '@constants/routes'
+import { navLinks, footerLinks } from './constants'
 
 const designBaseWidth = 1512
 
@@ -289,27 +292,6 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const navLinks = [
-  { label: 'Strategies', link: '/strategies/crab' },
-  { label: 'Squeeth', link: '/squeeth' },
-  { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
-  {
-    label: 'FAQ',
-    link: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',
-    analyticsEvent: SITE_EVENTS.NAV_FAQ,
-  },
-]
-
-const footerLinks = [
-  { label: 'Developers', link: 'https://opyn.gitbook.io/squeeth-1/', analyticsEvent: LANDING_EVENTS.NAV_DEVELOPERS },
-  { label: 'Blog', link: 'https://medium.com/opyn', analyticsEvent: LANDING_EVENTS.NAV_BLOG },
-  {
-    label: 'Security',
-    link: 'https://opyn.gitbook.io/squeeth-faq/squeeth/security',
-    analyticsEvent: LANDING_EVENTS.NAV_SECURITY,
-  },
-]
-
 function DesktopLandingPage() {
   const classes = useStyles()
   const tvl = useTVL()
@@ -323,7 +305,7 @@ function DesktopLandingPage() {
     <div className={classes.landing_page_container}>
       <div className={classes.nav}>
         <div className={classes.logo}>
-          <Link href={'/'} passHref>
+          <Link href={ROUTES.HOME} passHref>
             <Image src={logo} alt="logo" width={97} height={75} />
           </Link>
         </div>
@@ -341,7 +323,7 @@ function DesktopLandingPage() {
             </Typography>
           ))}
           <div className={classes.navAction}>
-            <Link href={'/strategies/crab'} passHref>
+            <Link href={ROUTES.STRATEGY.CRAB} passHref>
               <Button onClick={() => track(LANDING_EVENTS.NAV_START_EARNING)} className={classes.navStartEarningButton}>
                 Start Earning
               </Button>
@@ -369,7 +351,7 @@ function DesktopLandingPage() {
                 Powered by squeeth.
               </Typography>
               <div style={{ marginTop: '39px' }} />
-              <Link href={'/strategies/crab'} passHref>
+              <Link href={ROUTES.STRATEGY.CRAB} passHref>
                 <Button
                   onClick={() => track(LANDING_EVENTS.NAV_HERO_TOP_START_EARNING)}
                   className={classes.navStartEarningButton}
@@ -420,7 +402,7 @@ function DesktopLandingPage() {
                 protected downside, and no liquidations.
               </Typography>
               <div style={{ marginTop: '41px' }} />
-              <Link href={'/squeeth'} passHref>
+              <Link href={ROUTES.SQUEETH} passHref>
                 <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_SQUEETH)} className={classes.contentSectionButton}>
                   Trade Squeeth
                 </Button>
@@ -456,7 +438,7 @@ function DesktopLandingPage() {
                 supercharge your portfolio.
               </Typography>
               <div style={{ marginTop: '41px' }} />
-              <Link href={'/strategies/crab'} passHref>
+              <Link href={ROUTES.STRATEGY.CRAB} passHref>
                 <Button
                   onClick={() => track(LANDING_EVENTS.NAV_HERO_DOWN_START_EARNING)}
                   className={classes.contentSectionButton}
@@ -500,7 +482,7 @@ function DesktopLandingPage() {
                 squeeth in size with low price impact.
               </Typography>
               <div style={{ marginTop: '41px' }} />
-              <Link href={'https://squeethportal.xyz'} passHref>
+              <Link href={EXTERNAL_LINKS.AUCTION} passHref>
                 <Button onClick={() => track(LANDING_EVENTS.NAV_HERO_AUCTION)} className={classes.contentSectionButton}>
                   Try Auction
                 </Button>
@@ -527,22 +509,22 @@ function DesktopLandingPage() {
         </div>
         <div className={classes.footerSocial}>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_TWITTER)}>
-            <Link href={'https://twitter.com/opyn_'} passHref>
+            <Link href={EXTERNAL_LINKS.TWITTER} passHref>
               <Image className={classes.socialIcon} src={Twitter} alt="Opyn Twitter" />
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_DISCORD)}>
-            <Link href={'https://tiny.cc/opyndiscord'} passHref>
+            <Link href={EXTERNAL_LINKS.DISCORD} passHref>
               <Image className={classes.socialIcon} src={Discord} alt="Opyn Discord" />
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_GITHUB)}>
-            <Link href={'https://github.com/opynfinance/squeeth-monorepo'} passHref>
+            <Link href={EXTERNAL_LINKS.GITHUB} passHref>
               <Image className={classes.socialIcon} src={Github} alt="Opyn Github" />
             </Link>
           </div>
           <div onClick={() => track(LANDING_EVENTS.NAV_SOCIAL_MEDIUM)}>
-            <Link href={'https://medium.com/opyn'} passHref>
+            <Link href={EXTERNAL_LINKS.MEDIUM} passHref>
               <Image className={classes.socialIcon} src={Medium} alt="Opyn Medium" />
             </Link>
           </div>

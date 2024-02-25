@@ -20,6 +20,7 @@ import {
   YEAR,
   WETH_DECIMALS,
 } from '@constants/index'
+import { EXTERNAL_LINKS } from '@constants/routes'
 import { useGetFlashBulldepositParams, useBullFlashDeposit } from '@state/bull/hooks'
 import { impliedVolAtom, indexAtom, normFactorAtom, osqthRefVolAtom } from '@state/controller/atoms'
 import { useSelectWallet, useWalletBalance } from '@state/wallet/hooks'
@@ -309,7 +310,7 @@ const BullDeposit: React.FC<{ onTxnConfirm: (txn: BullTransactionConfirmation) =
             </div>
             <Typography variant="caption" className={classes.infoText}>
               High price impact. Try multiple smaller transactions or contact us through{' '}
-              <LinkWrapper href="https://tiny.cc/opyndiscord">discord</LinkWrapper> about OTC
+              <LinkWrapper href={EXTERNAL_LINKS.DISCORD}>discord</LinkWrapper> about OTC
             </Typography>
           </div>
         ) : null}

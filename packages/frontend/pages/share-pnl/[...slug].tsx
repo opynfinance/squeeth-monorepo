@@ -9,11 +9,11 @@ import isBefore from 'date-fns/isBefore'
 import { SQUEETH_BASE_URL, BULL_START_DATE, CRABV2_START_DATE } from '@constants/index'
 import Nav from '@components/Nav'
 import { formatNumber } from '@utils/formatter'
-
 import opynLogo from 'public/images/logo.png'
 import crabLogo from 'public/images/crab-logo.png'
 import zenBullLogo from 'public/images/zenbull-logo.png'
 import PnlChart from '@components/SharePnl/PnlChart'
+import { ROUTES } from '@constants/routes'
 
 type StrategyType = 'crab' | 'zenbull'
 
@@ -177,7 +177,7 @@ const UI = ({ strategy, depositedAt, pnl }: SharePnlProps) => {
             variant="outlined"
             color="primary"
             className={classes.ctaButton}
-            href={isCrab ? '/strategies/crab' : '/strategies/bull'}
+            href={isCrab ? ROUTES.STRATEGY.CRAB : ROUTES.STRATEGY.BULL}
           >
             Try {isCrab ? 'Crab' : 'Zen Bull'}
           </Button>
