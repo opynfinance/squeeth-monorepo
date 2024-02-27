@@ -9,11 +9,13 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 })
 
-const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000
+const THIRTY_DAYS_IN_MS = 30 * 24 * 60 * 60 * 1000
+const REDIS_DATA_VERSION = '1'
 
 interface RedisResponse {
   value: string
   timestamp: number
+  version: string // in case we want to purge all existing data and start fresh
 }
 
 async function isIPBlockedInRedis(ip: string, currentTime: number) {
@@ -27,9 +29,13 @@ async function isIPBlockedInRedis(ip: string, currentTime: number) {
   let isIPBlocked = false
   if (redisData) {
     try {
-      const { value, timestamp } = redisData
-      // check if entry is valid and is not more than 3 days old
-      if (value === BLOCKED_IP_VALUE && currentTime - timestamp <= THREE_DAYS_IN_MS) {
+      const { value, timestamp, version = '' } = redisData
+      // check if entry is valid, version is correct and data is not more than 30 days old
+      if (
+        value === BLOCKED_IP_VALUE &&
+        version === REDIS_DATA_VERSION &&
+        currentTime - timestamp <= THIRTY_DAYS_IN_MS
+      ) {
         isIPBlocked = true
       }
     } catch (error) {
@@ -62,7 +68,7 @@ export async function middleware(request: NextRequest) {
     const isIPFromVPN = await isVPN(ip)
     if (isIPFromVPN && url.pathname !== '/blocked') {
       try {
-        await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime })
+        await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime, version: REDIS_DATA_VERSION })
       } catch (error) {
         console.error('Failed to set data in Redis:', error)
       }
