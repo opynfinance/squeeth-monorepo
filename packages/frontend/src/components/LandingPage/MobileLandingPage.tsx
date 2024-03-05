@@ -296,6 +296,7 @@ const navLinks = [
   { label: 'Strategies', link: '/strategies/crab' },
   { label: 'Squeeth', link: '/squeeth' },
   { label: 'Auction', link: 'https://squeethportal.xyz', analyticsEvent: SITE_EVENTS.NAV_AUCTION },
+  { label: 'Research', link: 'https://research.opyn.co', analyticsEvent: SITE_EVENTS.NAV_RESEARCH },
   {
     label: 'FAQ',
     link: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',

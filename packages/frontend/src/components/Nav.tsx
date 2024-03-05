@@ -39,10 +39,11 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
-        width: '90%',
+        width: '100%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
+        padding: 0,
       },
       [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(0, 2),
@@ -62,9 +63,6 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       position: 'absolute',
       marginLeft: theme.spacing(12),
-      [theme.breakpoints.down(1042)]: {
-        marginLeft: theme.spacing(18),
-      },
     },
     navLink: {
       margin: theme.spacing(0, 2),
@@ -160,6 +158,13 @@ const Nav: React.FC = () => {
                 </Typography>
               </a>
               <NavLink path="/lp" name="LP" />
+
+              <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                <Typography className={classes.navLink} variant="h6">
+                  Research
+                </Typography>
+              </a>
+
               <a
                 href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
                 target="_blank"
@@ -173,24 +178,24 @@ const Nav: React.FC = () => {
             </div>
           </div>
           <div className={classes.wallet}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => {
-                setCopied(oSqueeth)
-              }}
-            >
-              {isCopied ? (
-                <>Copied</>
-              ) : (
-                <>
-                  <span style={{ textTransform: 'none' }}>oSQTH</span>
-                  <Hidden mdDown>
-                    : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
-                  </Hidden>
-                </>
-              )}
-            </Button>
+            <Hidden mdDown>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setCopied(oSqueeth)
+                }}
+              >
+                {isCopied ? (
+                  <>Copied</>
+                ) : (
+                  <>
+                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                    {oSqueeth?.substring(oSqueeth.length - 4)}
+                  </>
+                )}
+              </Button>
+            </Hidden>
             <WalletButton />
             <SettingMenu />
           </div>
@@ -244,6 +249,11 @@ const Nav: React.FC = () => {
                 </Typography>
               </a>
               <NavLink path="/lp" name="LP" />
+              <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                <Typography className={classes.navLink} variant="h6">
+                  Research
+                </Typography>
+              </a>
               <a
                 href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
                 target="_blank"
