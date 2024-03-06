@@ -1,4 +1,4 @@
-import { Button, Drawer, IconButton } from '@material-ui/core'
+import { Button, Drawer, IconButton, Menu, MenuItem, ButtonBase } from '@material-ui/core'
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
@@ -62,12 +62,9 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       position: 'absolute',
       marginLeft: theme.spacing(12),
-      [theme.breakpoints.down(1042)]: {
-        marginLeft: theme.spacing(18),
-      },
     },
     navLink: {
-      margin: theme.spacing(0, 2),
+      margin: theme.spacing(0, 1.5),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
@@ -130,6 +127,14 @@ const Nav: React.FC = () => {
   const [isCopied, setCopied] = useCopyClipboard()
   const { track } = useAmplitude()
 
+  const [anchorEl, setAnchorEl] = React.useState(null)
+  const handleClick = (event: any) => {
+    setAnchorEl(event.currentTarget)
+  }
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   return (
     <div className={classes.root}>
       <div className={classes.content}>
@@ -160,37 +165,50 @@ const Nav: React.FC = () => {
                 </Typography>
               </a>
               <NavLink path="/lp" name="LP" />
-              <a
-                href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-              >
+
+              <ButtonBase aria-controls="docs-menu" aria-haspopup="true" onClick={handleClick} className="">
                 <Typography className={classes.navLink} variant="h6">
-                  FAQ
+                  Docs
                 </Typography>
-              </a>
+              </ButtonBase>
+              <Menu id="docs-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
+                <MenuItem onClick={handleClose}>
+                  <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                    Research
+                  </a>
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                  <a
+                    href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => track(SITE_EVENTS.NAV_FAQ)}
+                  >
+                    FAQ
+                  </a>
+                </MenuItem>
+              </Menu>
             </div>
           </div>
           <div className={classes.wallet}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => {
-                setCopied(oSqueeth)
-              }}
-            >
-              {isCopied ? (
-                <>Copied</>
-              ) : (
-                <>
-                  <span style={{ textTransform: 'none' }}>oSQTH</span>
-                  <Hidden mdDown>
-                    : {oSqueeth?.substring(0, 6)}...{oSqueeth?.substring(oSqueeth.length - 4)}
-                  </Hidden>
-                </>
-              )}
-            </Button>
+            <Hidden mdDown>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setCopied(oSqueeth)
+                }}
+              >
+                {isCopied ? (
+                  <>Copied</>
+                ) : (
+                  <>
+                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                    {oSqueeth?.substring(oSqueeth.length - 4)}
+                  </>
+                )}
+              </Button>
+            </Hidden>
             <WalletButton />
             <SettingMenu />
           </div>
@@ -244,6 +262,11 @@ const Nav: React.FC = () => {
                 </Typography>
               </a>
               <NavLink path="/lp" name="LP" />
+              <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                <Typography className={classes.navLink} variant="h6">
+                  Research
+                </Typography>
+              </a>
               <a
                 href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
                 target="_blank"
