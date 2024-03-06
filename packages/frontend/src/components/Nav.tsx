@@ -1,4 +1,4 @@
-import { Button, Drawer, IconButton } from '@material-ui/core'
+import { Button, Drawer, IconButton, Menu, MenuItem, ButtonBase } from '@material-ui/core'
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
@@ -39,11 +39,10 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       [theme.breakpoints.down('lg')]: {
         maxWidth: 'none',
-        width: '100%',
+        width: '90%',
       },
       [theme.breakpoints.down('md')]: {
         width: '100%',
-        padding: 0,
       },
       [theme.breakpoints.down('sm')]: {
         padding: theme.spacing(0, 2),
@@ -65,7 +64,7 @@ const useStyles = makeStyles((theme) =>
       marginLeft: theme.spacing(12),
     },
     navLink: {
-      margin: theme.spacing(0, 2),
+      margin: theme.spacing(0, 1.5),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
@@ -128,6 +127,14 @@ const Nav: React.FC = () => {
   const [isCopied, setCopied] = useCopyClipboard()
   const { track } = useAmplitude()
 
+  const [anchorEl, setAnchorEl] = React.useState(null)
+  const handleClick = (event: any) => {
+    setAnchorEl(event.currentTarget)
+  }
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   return (
     <div className={classes.root}>
       <div className={classes.content}>
@@ -159,22 +166,28 @@ const Nav: React.FC = () => {
               </a>
               <NavLink path="/lp" name="LP" />
 
-              <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+              <ButtonBase aria-controls="docs-menu" aria-haspopup="true" onClick={handleClick} className="">
                 <Typography className={classes.navLink} variant="h6">
-                  Research
+                  Docs
                 </Typography>
-              </a>
-
-              <a
-                href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-              >
-                <Typography className={classes.navLink} variant="h6">
-                  FAQ
-                </Typography>
-              </a>
+              </ButtonBase>
+              <Menu id="docs-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
+                <MenuItem onClick={handleClose}>
+                  <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                    Research
+                  </a>
+                </MenuItem>
+                <MenuItem onClick={handleClose}>
+                  <a
+                    href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={() => track(SITE_EVENTS.NAV_FAQ)}
+                  >
+                    FAQ
+                  </a>
+                </MenuItem>
+              </Menu>
             </div>
           </div>
           <div className={classes.wallet}>
