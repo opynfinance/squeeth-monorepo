@@ -62,7 +62,7 @@ yarn chain
 yarn deploy
 ```
 
-to deploying on testnet, with INFURA_KEY specified as environment variable
+to deploying on testnet, with ALCHEMY_KEY specified as environment variable
 
 ```shell
 npx hardhat deploy --network ropsten

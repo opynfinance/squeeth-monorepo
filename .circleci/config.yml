@@ -230,7 +230,7 @@ jobs:
   lint-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -240,7 +240,7 @@ jobs:
   compile-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -250,7 +250,7 @@ jobs:
   test-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
@@ -258,7 +258,7 @@ jobs:
   fuzzing-zen-bull-vault:
     working_directory: ~/squeeth/packages/zen-bull
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run:
@@ -278,7 +278,7 @@ jobs:
   lint-crab-netting:
     working_directory: ~/squeeth/packages/crab-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -288,7 +288,7 @@ jobs:
   compile-crab-netting:
     working_directory: ~/squeeth/packages/crab-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -298,7 +298,7 @@ jobs:
   test-crab-netting:
     working_directory: ~/squeeth/packages/crab-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: cd packages/crab-netting && forge test -vv --gas-report
@@ -307,7 +307,7 @@ jobs:
   lint-zen-bull-netting:
     working_directory: ~/squeeth/packages/zen-bull-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -317,7 +317,7 @@ jobs:
   compile-zen-bull-netting:
     working_directory: ~/squeeth/packages/zen-bull-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: 
@@ -327,7 +327,7 @@ jobs:
   test-zen-bull-netting:
     working_directory: ~/squeeth/packages/zen-bull-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=test forge test -vv --gas-report
@@ -335,7 +335,7 @@ jobs:
   fuzzing-zen-bull-netting:
     working_directory: ~/squeeth/packages/zen-bull-netting
     docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run:
@@ -345,9 +345,8 @@ jobs:
       
   coverage-zen-bull-netting:
     working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      # - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
-      - image: ghcr.io/foundry-rs/foundry:latest
+    docker:      
+      - image: ghcr.io/foundry-rs/foundry:nightly-0078471691de77b017b16ba0cd7aac6734b58db6
     steps:
       - checkout
       - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=coverage forge coverage

@@ -1,11 +1,11 @@
 # HOW TO USE:
-# Run the following shell script using: INFURA_KEY=ur_keeeeey ./start_hardhat_fork.sh
+# Run the following shell script using: ALCHEMY_KEY=ur_keeeeey ./start_hardhat_fork.sh
 # To stop hardhat fork, run ./stop_hardhat_fork.sh
 
 #!/bin/bash
 
-infuraKey=$INFURA_KEY
+alchemyKey=$ALCHEMY_KEY
 
-echo "Using the current infura key: ${infuraKey}" 
+echo "Using the current alchemy key: ${alchemyKey}" 
 
-$(npm bin)/hardhat node --no-deploy --network hardhat --fork https://mainnet.infura.io/v3/$infuraKey
+$(npm bin)/hardhat node --no-deploy --network hardhat --fork https://eth-mainnet.g.alchemy.com/v2/$alchemyKey
