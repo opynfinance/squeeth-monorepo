@@ -65,8 +65,6 @@ contract DeployScript is Script {
         vm.stopBroadcast();
 
         require(zenBullNetting.owner() == ownerAddress);
-        require(zenBullNetting.MAX_OTC_PRICE_TOLERANCE() == 2e17);
-        require(zenBullNetting.MIN_AUCTION_TWAP() == 180);
         require(zenBullNetting.otcPriceTolerance() == 5e16);
         require(zenBullNetting.auctionTwapPeriod() == 420);
         require(

@@ -8,4 +8,5 @@ interface IController {
     function wPowerPerp() external view returns (address);
     function wPowerPerpPool() external view returns (address);
     function oracle() external view returns (address);
+    function feeRate() external view returns (uint256);
 }

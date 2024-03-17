@@ -46,8 +46,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         _queueEth(user1, ethToQueue);
         _queueZenBull(user2, zenBullToQueue);
 
-        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getReceipt(0, false);
 
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user2EthBalanceBefore = user2.balance;
@@ -57,8 +57,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,
@@ -88,8 +88,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         _queueEth(user1, ethToQueue);
         _queueZenBull(user2, zenBullToQueue);
 
-        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getReceipt(0, false);
 
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user2EthBalanceBefore = user2.balance;
@@ -99,8 +99,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.prank(bot);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,
@@ -150,8 +150,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         _queueEth(user1, ethToQueue);
         _queueZenBull(user2, zenBullToQueue);
 
-        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getReceipt(0, false);
 
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user2EthBalanceBefore = user2.balance;
@@ -163,8 +163,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToNet);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToNet,
@@ -192,8 +192,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         _queueEth(user1, ethToQueue);
         _queueZenBull(user2, zenBullToQueue);
 
-        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(1);
-        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getReceipt(1, true);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getReceipt(0, false);
 
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user2EthBalanceBefore = user2.balance;
@@ -203,8 +203,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,
@@ -231,8 +231,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         _queueEth(user1, ethToQueue);
         _queueZenBull(user2, zenBullToQueue);
 
-        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(1);
+        (, uint256 depReceiptAmountBefore,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountBefore,) = zenBullNetting.getReceipt(1, false);
 
         uint256 user1ZenBalanceBefore = IERC20(ZEN_BULL).balanceOf(user1);
         uint256 user2EthBalanceBefore = user2.balance;
@@ -242,8 +242,8 @@ contract NetAtPrice is ZenBullNettingBaseSetup {
         vm.prank(owner);
         zenBullNetting.netAtPrice(zenBullFairPrice, ethToQueue);
 
-        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getDepositReceipt(0);
-        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 depReceiptAmountAfter,) = zenBullNetting.getReceipt(0, true);
+        (, uint256 withReceiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(
             IERC20(ZEN_BULL).balanceOf(address(zenBullNetting)) + zenBullToQueue,

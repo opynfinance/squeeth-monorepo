@@ -121,14 +121,14 @@ contract WithdrawAuction is ZenBullNettingBaseSetup {
             IEulerSimpleLens(EULER_SIMPLE_LENS).getETokenBalance(WETH, ZEN_BULL);
         uint256 wethToWithdraw = amount * wethInEulerBefore / IERC20(ZEN_BULL).totalSupply();
 
-        (, uint256 receiptAmountBefore,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 receiptAmountBefore,) = zenBullNetting.getReceipt(0, false);
         uint256 user1EthBalanceBefore = user1.balance;
 
         vm.startPrank(owner);
         zenBullNetting.withdrawAuction(params);
         vm.stopPrank();
 
-        (, uint256 receiptAmountAfter,) = zenBullNetting.getWithdrawReceipt(0);
+        (, uint256 receiptAmountAfter,) = zenBullNetting.getReceipt(0, false);
 
         assertEq(receiptAmountBefore - amount, receiptAmountAfter);
         assertEq(IERC20(WPOWERPERP).balanceOf(mm1) + oSqthAmount, mm1WpowerPerpBalanceBefore);
