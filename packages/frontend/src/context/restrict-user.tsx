@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 
 import { Networks } from '../types'
 import { networkIdAtom } from 'src/state/wallet/atoms'
-import { BLOCKED_COUNTRIES } from '../constants/index'
+import { BLOCKED_COUNTRIES, UNRESTRICTED_PATHS } from '../constants/index'
 
 type restrictUserContextType = {
   isRestricted: boolean
@@ -27,6 +27,7 @@ const useRestrictUser = () => useContext(restrictUserContext)
 
 const RestrictUserProvider: React.FC = ({ children }) => {
   const router = useRouter()
+
   const networkId = useAtomValue(networkIdAtom)
   const userLocation = router.query?.ct
   const [isBlockedUser, setIsBlockedUser] = useState(false)
@@ -40,14 +41,17 @@ const RestrictUserProvider: React.FC = ({ children }) => {
     setIsBlockedUser(true)
   }, [])
 
+  const isPathUnrestricted = UNRESTRICTED_PATHS.some((path) => router.pathname.startsWith(path))
+
   const isUserRestricted = BLOCKED_COUNTRIES.includes(String(userLocation)) || isBlockedUser
   useEffect(() => {
-    if (isUserRestricted && networkId === Networks.MAINNET) {
+    // if user is restricted and on mainnet and not on unrestricted path, restrict user
+    if (isUserRestricted && networkId === Networks.MAINNET && !isPathUnrestricted) {
       handleRestrictUser(true)
     } else {
       handleRestrictUser(false)
     }
-  }, [handleRestrictUser, networkId, isUserRestricted])
+  }, [handleRestrictUser, networkId, isUserRestricted, isPathUnrestricted])
 
   return (
     <restrictUserContext.Provider

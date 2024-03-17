@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
 
 import { isVPN } from 'src/server/ipqs'
-import { BLOCKED_IP_VALUE } from 'src/constants'
+import { BLOCKED_IP_VALUE, UNRESTRICTED_PATHS } from 'src/constants'
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -50,17 +50,20 @@ export async function middleware(request: NextRequest) {
   const allowedIPs = (process.env.WHITELISTED_IPS || '').split(',')
   const isIPWhitelisted = ip && allowedIPs.includes(ip)
 
-  if (ip && !isIPWhitelisted) {
+  const isPathUnrestricted = UNRESTRICTED_PATHS.some((path) => url.pathname.startsWith(path))
+
+  // don't check if path is unrestricted or IP is empty / whitelisted
+  if (!isPathUnrestricted && ip && !isIPWhitelisted) {
     const currentTime = Date.now()
     // check if IP is blocked
     const isIPBlocked = await isIPBlockedInRedis(ip, currentTime)
-    if (isIPBlocked && url.pathname !== '/blocked') {
+    if (isIPBlocked) {
       return NextResponse.redirect(`${url.protocol}//${url.host}/blocked`)
     }
 
     // check if IP is from VPN
     const isIPFromVPN = await isVPN(ip)
-    if (isIPFromVPN && url.pathname !== '/blocked') {
+    if (isIPFromVPN) {
       try {
         await redis.set(ip, { value: BLOCKED_IP_VALUE, timestamp: currentTime })
       } catch (error) {
