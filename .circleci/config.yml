@@ -31,21 +31,6 @@ workflows:
       - unit-test-frontend:
           requires:
             - checkout-and-install-frontend
-  zen-bull-vault:
-    jobs:
-      - lint-zen-bull-vault
-      - compile-zen-bull-vault:
-          requires:
-            - lint-zen-bull-vault
-      - test-zen-bull-vault:
-          requires:
-            - compile-zen-bull-vault
-      - fuzzing-zen-bull-vault:
-          requires:
-            - compile-zen-bull-vault
-      - coverage-zen-bull-vault:
-          requires:
-            - test-zen-bull-vault
   crab-netting:
     jobs:
       - lint-crab-netting
@@ -55,21 +40,6 @@ workflows:
       - test-crab-netting:
           requires:
             - compile-crab-netting
-  zen-bull-netting:
-    jobs:
-      - lint-zen-bull-netting
-      - compile-zen-bull-netting:
-          requires:
-            - lint-zen-bull-netting
-      - test-zen-bull-netting:
-          requires:
-            - compile-zen-bull-netting
-      - fuzzing-zen-bull-netting:
-          requires:
-            - compile-zen-bull-netting
-      - coverage-zen-bull-netting:
-          requires:
-            - test-zen-bull-netting
 
 jobs:
   ################ hardhat jobs
@@ -85,7 +55,7 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - save_cache: 
+      - save_cache:
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
@@ -106,14 +76,14 @@ jobs:
       - run:
           name: Compile Contracts
           command: npx hardhat compile
-      - save_cache: 
-         key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-         paths:
-           - typechain
-      - save_cache: 
-         key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
-         paths:
-           - artifacts
+      - save_cache:
+          key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - typechain
+      - save_cache:
+          key: artifacts-cache-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - artifacts
 
   lint-hardhat:
     working_directory: ~/squeeth/packages/hardhat
@@ -129,7 +99,7 @@ jobs:
       - run:
           name: Lint
           command: yarn lint:check
-  
+
   unit-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -141,10 +111,10 @@ jobs:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Unit tests
           command: yarn test:crab-unit
-  
+
   integration-test-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -156,10 +126,10 @@ jobs:
           key: squeeth-{{ .Environment.CIRCLE_SHA1 }}
       - restore_cache:
           key: typechain-cache-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Integration tests
           command: yarn test:crab-integration
-    
+
   contract-size-hardhat:
     working_directory: ~/squeeth/packages/hardhat
     docker:
@@ -188,9 +158,9 @@ jobs:
           name: Set Env Variables
           command: echo "export ALCHEMY_KEY=${ALCHEMY_KEY}" >> $BASH_ENV
       - run:
-          name: Mainnet E2E Test 
+          name: Mainnet E2E Test
           command: yarn test:e2e
-  
+
   ################ frontend jobs
   checkout-and-install-frontend:
     working_directory: ~/squeeth/packages/frontend
@@ -204,7 +174,7 @@ jobs:
       - run:
           name: Install packages
           command: yarn install
-      - save_cache: 
+      - save_cache:
           key: dependency-frontend-cache-{{ checksum "package.json" }}
           paths:
             - node_modules
@@ -212,7 +182,7 @@ jobs:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - ~/squeeth
-  
+
   unit-test-frontend:
     working_directory: ~/squeeth/packages/frontend
     docker:
@@ -222,57 +192,9 @@ jobs:
           path: ~/squeeth
       - restore_cache:
           key: squeeth-frontend-{{ .Environment.CIRCLE_SHA1 }}
-      - run: 
+      - run:
           name: Unit tests
           command: yarn test:ci
-
-  ################ zen-bull-vault jobs
-  lint-zen-bull-vault:
-    working_directory: ~/squeeth/packages/zen-bull
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: 
-          name: Lint zen-bull-vault
-          command: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
-
-  compile-zen-bull-vault:
-    working_directory: ~/squeeth/packages/zen-bull
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: 
-          name: Build zen-bull-vault
-          command: cd packages/zen-bull-vault && forge build --force
-
-  test-zen-bull-vault:
-    working_directory: ~/squeeth/packages/zen-bull
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=test forge test -vv --gas-report
-
-  fuzzing-zen-bull-vault:
-    working_directory: ~/squeeth/packages/zen-bull
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run:
-          name: Set Env Variables
-          command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
-      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fuzz forge test -vv
-      
-  coverage-zen-bull-vault:
-    working_directory: ~/squeeth/packages/zen-bull
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
-    steps:
-      - checkout
-      - run: cd packages/zen-bull-vault && FOUNDRY_PROFILE=coverage forge coverage
 
   ################ crab-netting jobs
   lint-crab-netting:
@@ -281,7 +203,7 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: 
+      - run:
           name: Lint crab-netting
           command: cd packages/crab-netting && FOUNDRY_PROFILE=fmt forge fmt --check
 
@@ -291,7 +213,7 @@ jobs:
       - image: ghcr.io/foundry-rs/foundry:latest
     steps:
       - checkout
-      - run: 
+      - run:
           name: Build crab-netting
           command: cd packages/crab-netting && forge build --force
 
@@ -302,52 +224,3 @@ jobs:
     steps:
       - checkout
       - run: cd packages/crab-netting && forge test -vv --gas-report
-
-  ################ zen-bull-netting jobs
-  lint-zen-bull-netting:
-    working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: 
-          name: Lint zen-bull-netting
-          command: cd packages/zen-bull-netting && FOUNDRY_PROFILE=fmt forge fmt --check
-
-  compile-zen-bull-netting:
-    working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: 
-          name: Build zen-bull-netting
-          command: cd packages/zen-bull-netting && forge build --force
-
-  test-zen-bull-netting:
-    working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=test forge test -vv --gas-report
-
-  fuzzing-zen-bull-netting:
-    working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run:
-          name: Set Env Variables
-          command: echo "export FORK_URL=${FORK_URL}" >> $BASH_ENV
-      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=fuzz forge test -vv
-      
-  coverage-zen-bull-netting:
-    working_directory: ~/squeeth/packages/zen-bull-netting
-    docker:
-      # - image: ghcr.io/foundry-rs/foundry:nightly-e9f274df045d36527eff66f8a6d4e836c7227231
-      - image: ghcr.io/foundry-rs/foundry:latest
-    steps:
-      - checkout
-      - run: cd packages/zen-bull-netting && FOUNDRY_PROFILE=coverage forge coverage
