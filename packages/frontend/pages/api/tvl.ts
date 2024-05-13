@@ -7,6 +7,7 @@ const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
       const response = await axios.get(`${process.env.DEFILLAMA_ENDPOINT}/tvl/opyn`)
       res.status(200).json(response.data)
     } catch (error) {
+      console.error('Error fetching data from Defillama:', { error })
       res.status(500).json({ error: 'Error fetching data from Defillama' })
     }
   } else {
