@@ -2,6 +2,7 @@ import axios from 'axios'
 import type { NextApiRequest, NextApiResponse } from 'next'
 
 const handleRequest = async (req: NextApiRequest, res: NextApiResponse) => {
+  console.log({ endpoint: process.env.DEFILLAMA_ENDPOINT })
   if (req.method === 'GET') {
     try {
       const response = await axios.get(`${process.env.DEFILLAMA_ENDPOINT}/tvl/opyn`)
