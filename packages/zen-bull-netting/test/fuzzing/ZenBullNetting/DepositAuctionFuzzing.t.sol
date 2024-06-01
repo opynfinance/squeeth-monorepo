@@ -11,6 +11,7 @@ import { IZenBullStrategy } from "../../../src/interface/IZenBullStrategy.sol";
 import { IOracle } from "../../../src/interface/IOracle.sol";
 import { IEulerSimpleLens } from "../../../src/interface/IEulerSimpleLens.sol";
 import { IWETH } from "../../../src/interface/IWETH.sol";
+import { IController } from "../../../src/interface/IController.sol";
 // contract
 import { SigUtil } from "../../util/SigUtil.sol";
 import { ZenBullNetting } from "../../../src/ZenBullNetting.sol";
@@ -84,11 +85,15 @@ contract DepositAuctionFuzzing is ZenBullNettingBaseSetup {
 
         uint256 crabAmount = _calAuctionCrabAmount(_amount);
         uint256 crabTotalSupply = IERC20(CRAB).totalSupply();
-        (, uint256 crabDebt) = IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-        uint256 oSqthAmount = crabAmount * crabDebt / crabTotalSupply;
-
+        (uint256 crabCollateral, uint256 crabDebt) =
+            IZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        uint256 ethIntoCrab = crabAmount * crabCollateral / crabTotalSupply;
         uint256 squeethEthPrice =
             IOracle(ORACLE).getTwap(ethSqueethPool, WPOWERPERP, WETH, 420, false);
+        uint256 feeRate = IController(IZenBullStrategy(ZEN_BULL).powerTokenController()).feeRate();
+        uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
+        uint256 oSqthAmount =
+            div(mul(ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
         ZenBullNetting.Order[] memory orders = new ZenBullNetting.Order[](1);
         {
             // trader signature vars

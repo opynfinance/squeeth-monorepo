@@ -1,5 +1,5 @@
 # IFlashZen
-[Git Source](https://github.com/opynfinance/squeeth-monorepo/blob/334783aa87db73939fb00d5b133216b0033dfece/src/interface/IFlashZen.sol)
+[Git Source](https://github.com/opynfinance/squeeth-monorepo/blob/d9f476e77fa42301e16041672bb68b167162f81f/src/interface/IFlashZen.sol)
 
 
 ## Functions

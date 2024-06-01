@@ -6,6 +6,7 @@ import { IERC20 } from "openzeppelin/interfaces/IERC20.sol";
 import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 import { IOracle } from "./interface/IOracle.sol";
 import { IEulerSimpleLens } from "./interface/IEulerSimpleLens.sol";
+import { IController } from "./interface/IController.sol";
 
 library NettingLib {
     event TransferWethFromMarketMakers(
@@ -115,7 +116,7 @@ library NettingLib {
         address _trader,
         uint256 _remainingOsqthToPull,
         uint256 _quantity
-    ) internal returns (uint256) {
+    ) external returns (uint256) {
         uint256 oSqthRemaining;
         if (_quantity < _remainingOsqthToPull) {
             IERC20(_oSqth).transferFrom(_trader, address(this), _quantity);
@@ -233,22 +234,55 @@ library NettingLib {
     }
 
     /**
-     * @notice calculate oSQTH to mint and amount of eth to deposit into Crab v2 based on amount of crab token
+     * @notice estimate amount of eth to deposit into Crab v2 based on amount of crab token
      * @param _crab crab strategy address
      * @param _zenBull ZenBull strategy address
      * @param _crabAmount amount of crab token
+     * @return amount of ETH to deposit into Crab V2
      */
-    function calcOsqthToMintAndEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
+    function estimateEthIntoCrab(address _crab, address _zenBull, uint256 _crabAmount)
         external
         view
-        returns (uint256, uint256)
+        returns (uint256)
     {
         uint256 crabTotalSupply = IERC20(_crab).totalSupply();
-        (uint256 crabEth, uint256 crabDebt) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
-        uint256 _oSqthToMint = _crabAmount * crabDebt / crabTotalSupply;
+        (uint256 crabEth,) = IZenBullStrategy(_zenBull).getCrabVaultDetails();
         uint256 ethIntoCrab = _crabAmount * crabEth / crabTotalSupply;
 
-        return (_oSqthToMint, ethIntoCrab);
+        return ethIntoCrab;
+    }
+
+    /**
+     * @notice calculate oSQTH to mint based on amount _ethIntoCrab to deposit into Crab v2
+     * @param _oracle oracle address
+     * @param _ethSqueethPool wPowerPerp/ETH uni v3 pool address
+     * @param _oSqth oSQTH address
+     * @param _weth WETH address
+     * @param _zenBull ZenBull strategy address
+     * @param _ethIntoCrab amount of ETH to deposit into Crab V2
+     * @param _auctionTwapPeriod auction TWAP
+     */
+    function calcOsqthToMint(
+        address _oracle,
+        address _ethSqueethPool,
+        address _oSqth,
+        address _weth,
+        address _zenBull,
+        uint256 _ethIntoCrab,
+        uint32 _auctionTwapPeriod
+    ) external view returns (uint256) {
+        uint256 squeethEthPrice =
+            IOracle(_oracle).getTwap(_ethSqueethPool, _oSqth, _weth, _auctionTwapPeriod, false);
+        uint256 feeRate = IController(IZenBullStrategy(_zenBull).powerTokenController()).feeRate();
+        uint256 feeAdjustment = div(mul(squeethEthPrice, feeRate), 10000);
+
+        (uint256 crabCollateral, uint256 crabDebt) =
+            IZenBullStrategy(_zenBull).getCrabVaultDetails();
+        // _ethIntoCrab.wmul(crabDebt).wdiv(crabCollateral.add(crabDebt.wmul(feeAdjustment)));
+        uint256 oSqthToMint =
+            div(mul(_ethIntoCrab, crabDebt), (crabCollateral + (mul(crabDebt, feeAdjustment))));
+
+        return oSqthToMint;
     }
 
     /**
