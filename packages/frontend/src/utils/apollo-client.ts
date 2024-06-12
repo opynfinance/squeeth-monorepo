@@ -4,8 +4,18 @@ import { WebSocketLink } from '@apollo/client/link/ws'
 import { SITE_EVENTS, trackEvent } from './amplitude'
 import * as Fathom from 'fathom-client'
 
+const THE_GRAPH_API_KEYS = {
+  SQUEETH: process.env.NEXT_PUBLIC_THE_GRAPH_SQUEETH_SUBGRAPH_API_KEY,
+  UNISWAP: process.env.NEXT_PUBLIC_THE_GRAPH_UNISWAP_SUBGRAPH_API_KEY,
+}
+
+const SUBGRAPH_IDS = {
+  UNISWAP_V3: '5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV',
+  SQUEETH: '9VC95zuTxcMhXxU25qQkEK2akFzE3eEPiBZGXjGbGcbA',
+}
+
 const httpLinkMN = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
+  uri: `https://gateway-arbitrum.network.thegraph.com/api/${THE_GRAPH_API_KEYS.UNISWAP}/subgraphs/id/${SUBGRAPH_IDS.UNISWAP_V3}`,
 })
 
 const httpLinkRP = new HttpLink({
@@ -21,7 +31,7 @@ const httpLinkRPSqueeth = new HttpLink({
 })
 
 const httpLinkMNSqueeth = new HttpLink({
-  uri: 'https://api.thegraph.com/subgraphs/name/opynfinance/squeeth',
+  uri: `https://gateway-arbitrum.network.thegraph.com/api/${THE_GRAPH_API_KEYS.SQUEETH}/subgraphs/id/${SUBGRAPH_IDS.SQUEETH}`,
   fetch: async (...pl) => {
     const [_, options] = pl
     if (options?.body) {
