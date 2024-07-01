@@ -10,7 +10,7 @@ export default function WalletFailModal() {
     <Modal title="Wallet connect failed" open={visible} handleClose={() => setVisible(false)}>
       <Box px="10px">
         Unable to connect wallet for failure to comply with the{' '}
-        <Link href="https://opyn.co/terms-of-service" target="_blank">
+        <Link href="https://squeeth.opyn.co/terms-of-service" target="_blank">
           Terms of Service
         </Link>
         .

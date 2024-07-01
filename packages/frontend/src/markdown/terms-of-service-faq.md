@@ -4,14 +4,14 @@
 
 &nbsp;
 
-##### Periodically, we update our [Terms of Service](https://opyn.co/terms-of-service) as we work to improve the Squeeth App user experience. We want our users to understand exactly what’s contained in updates and why we’ve made those updates.
+##### Periodically, we update our [Terms of Service](https://squeeth.opyn.co/terms-of-service) as we work to improve the Squeeth App user experience. We want our users to understand exactly what’s contained in updates and why we’ve made those updates.
 
 &nbsp;
 
 
 #### Q. What are the major changes in the August 25, 2022 Updated Terms of Service?
 
-#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct  that attempt to interact with [opyn.co](https://opyn.co/).
+#### A. Opyn is implementing a new risk-management system that assesses and blocks Ethereum addresses associated with certain legally prohibited conduct that attempt to interact with [opyn.co](https://opyn.co/).
 
 &nbsp;
 

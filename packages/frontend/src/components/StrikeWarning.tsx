@@ -27,7 +27,7 @@ const StrikeWarningModal: React.FC<StrikeWarningModalProps> = ({ setIsStrikeModa
         <br />
         Please be aware that refreshing the page will not resolve the issue, but will instead count towards your
         strikes. Review our{' '}
-        <Link href="https://opyn.co/terms-of-service" target="_blank">
+        <Link href="https://squeeth.opyn.co/terms-of-service" target="_blank">
           Terms of Service
         </Link>{' '}
         for more details.
@@ -57,7 +57,7 @@ const StrikeCountModal: React.FC<StrikeCountModalProps> = ({ setIsStrikeModalSho
           <br />
           <br />
           Please review our{' '}
-          <Link href="https://opyn.co/terms-of-service" target="_blank">
+          <Link href="https://squeeth.opyn.co/terms-of-service" target="_blank">
             Terms of Service
           </Link>{' '}
           for more details.
