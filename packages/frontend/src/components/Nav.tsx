@@ -7,7 +7,7 @@ import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import useCopyClipboard from '@hooks/useCopyClipboard'
@@ -194,6 +194,8 @@ export const NavLink: React.FC<{ path: string; name: string; highlightForPaths?:
 
 const Nav: React.FC = () => {
   const classes = useStyles()
+  const router = useRouter()
+  const userLocation = router.query?.ct
   const { data: balance } = useWalletBalance()
 
   const { oSqueeth } = useAtomValue(addressesAtom)
@@ -202,6 +204,7 @@ const Nav: React.FC = () => {
   const { track } = useAmplitude()
 
   const [anchorEl, setAnchorEl] = React.useState(null)
+  const [showBanner, setShowBanner] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const handleModalToggle = () => {
     setModalOpen(!modalOpen)
@@ -213,17 +216,30 @@ const Nav: React.FC = () => {
     setAnchorEl(null)
   }
 
+  useEffect(() => {
+    if (userLocation === 'GB') {
+      // 'GB' is the country code for the United Kingdom
+      setShowBanner(true)
+    } else {
+      setShowBanner(false)
+    }
+  }, [userLocation])
+
   return (
     <div className={classes.root}>
-      <div className={classes.banner}>
-        <div className={classes.bannerContent}>
-          <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
-          <button className={classes.readMoreButton} onClick={handleModalToggle}>
-            Read more
-          </button>
-        </div>
-      </div>
-      <div className={classes.bannerDivider}></div>
+      {showBanner && (
+        <>
+          <div className={classes.banner}>
+            <div className={classes.bannerContent}>
+              <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
+              <button className={classes.readMoreButton} onClick={handleModalToggle}>
+                Read more
+              </button>
+            </div>
+          </div>
+          <div className={classes.bannerDivider}></div>
+        </>
+      )}
       <div className={classes.content}>
         <div className={classes.logo}>
           <Link href={'/'} passHref>
