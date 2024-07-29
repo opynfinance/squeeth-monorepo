@@ -2,6 +2,7 @@ import { Button, Drawer, IconButton, Menu, MenuItem, ButtonBase } from '@materia
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
+import { Modal, Box } from '@material-ui/core'
 import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -13,12 +14,16 @@ import useCopyClipboard from '@hooks/useCopyClipboard'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { truncateText } from '@utils/formatter'
 import { BIG_ZERO } from '@constants/index'
 import logo from 'public/images/OpynLogo.svg'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
+
+const ukLegalPayload =
+  'This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets.'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -28,6 +33,75 @@ const useStyles = makeStyles((theme) =>
       top: '0px',
       backdropFilter: 'blur(30px)',
       zIndex: theme.zIndex.appBar,
+    },
+    banner: {
+      padding: '20px',
+      boxSizing: 'border-box',
+    },
+    bannerDivider: {
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      width: '100%',
+    },
+    bannerContent: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    bannerText: {
+      fontSize: '15px',
+      fontWeight: 500,
+      whiteSpace: 'nowrap',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      maxWidth: 'calc(100% - 80px)', // Adjust based on your needs
+    },
+    readMoreButton: {
+      fontSize: '15px',
+      background: 'none',
+      border: 'none',
+      color: theme.palette.primary.main,
+      padding: 0,
+      font: 'inherit',
+      cursor: 'pointer',
+      outline: 'inherit',
+      marginLeft: '5px',
+      '&:hover': {
+        color: theme.palette.text.secondary,
+      },
+    },
+    modalBox: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '90%',
+      maxWidth: '600px',
+      backgroundColor: theme.palette.background.paper,
+      boxShadow: theme.shadows[5],
+      borderRadius: '8px',
+      padding: theme.spacing(4),
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      display: 'flex',
+      flexDirection: 'column',
+    },
+    modalTitle: {
+      marginBottom: theme.spacing(2),
+      color: theme.palette.primary.main,
+      textAlign: 'center',
+    },
+    modalContent: {
+      marginBottom: theme.spacing(2),
+      lineHeight: 1.6,
+    },
+    modalCloseButton: {
+      padding: theme.spacing(1.5, 4),
+      fontSize: '1.1rem',
+      fontWeight: 'bold',
+    },
+    modalFooter: {
+      display: 'flex',
+      justifyContent: 'center',
     },
     content: {
       maxWidth: '1280px',
@@ -128,6 +202,10 @@ const Nav: React.FC = () => {
   const { track } = useAmplitude()
 
   const [anchorEl, setAnchorEl] = React.useState(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const handleModalToggle = () => {
+    setModalOpen(!modalOpen)
+  }
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
   }
@@ -137,6 +215,15 @@ const Nav: React.FC = () => {
 
   return (
     <div className={classes.root}>
+      <div className={classes.banner}>
+        <div className={classes.bannerContent}>
+          <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
+          <button className={classes.readMoreButton} onClick={handleModalToggle}>
+            Read more
+          </button>
+        </div>
+      </div>
+      <div className={classes.bannerDivider}></div>
       <div className={classes.content}>
         <div className={classes.logo}>
           <Link href={'/'} passHref>
@@ -281,6 +368,32 @@ const Nav: React.FC = () => {
           </Drawer>
         </Hidden>
       </div>
+      <Modal
+        open={modalOpen}
+        onClose={handleModalToggle}
+        aria-labelledby="legal-modal-title"
+        aria-describedby="legal-modal-description"
+      >
+        <Box className={classes.modalBox}>
+          <Typography id="legal-modal-title" variant="h5" component="h2" className={classes.modalTitle}>
+            Disclaimer for UK Residents
+          </Typography>
+          <Typography id="legal-modal-description" className={classes.modalContent}>
+            {ukLegalPayload}
+          </Typography>
+          <div className={classes.modalFooter}>
+            <Button
+              onClick={handleModalToggle}
+              color="secondary"
+              variant="contained"
+              size="large"
+              className={classes.modalCloseButton}
+            >
+              Close
+            </Button>
+          </div>
+        </Box>
+      </Modal>
     </div>
   )
 }
