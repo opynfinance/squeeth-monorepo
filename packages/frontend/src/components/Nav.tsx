@@ -24,7 +24,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
 
 const ukLegalPayload =
-  'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets.'
+  'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets. For more information, see the Squeeth Terms of Service.'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -61,6 +61,10 @@ const useStyles = makeStyles((theme) =>
         maxWidth: 'calc(100% - 80px)',
       },
     },
+    bannerDivider: {
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      width: '100%',
+    },
     readMoreButton: {
       fontSize: '15px',
       background: 'none',
@@ -73,6 +77,14 @@ const useStyles = makeStyles((theme) =>
       marginLeft: '5px',
       '&:hover': {
         color: darken(theme.palette.primary.main, 0.2),
+      },
+    },
+    highlightedLink: {
+      color: theme.palette.primary.main,
+      fontWeight: 'bold',
+      textDecoration: 'underline',
+      '&:hover': {
+        color: theme.palette.primary.dark,
       },
     },
     modalTitle: {
@@ -385,7 +397,12 @@ const Nav: React.FC = () => {
             Disclaimer for UK Residents
           </Typography>
           <Typography id="legal-modal-description" className={classes.modalContent}>
-            {ukLegalPayload}
+            {ukLegalPayload.split('For more information')[0]}
+            For more information, see the{' '}
+            <Link href="https://opyn.co/terms-of-service" target="_blank" rel="noopener noreferrer">
+              <a className={classes.highlightedLink}>Squeeth Terms of Service</a>
+            </Link>
+            .
           </Typography>
           <div className={classes.modalFooter}>
             <Button
