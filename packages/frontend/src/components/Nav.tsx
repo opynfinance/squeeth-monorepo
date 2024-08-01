@@ -2,7 +2,8 @@ import { Button, Drawer, IconButton, Menu, MenuItem, ButtonBase } from '@materia
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
-import { Modal, Box } from '@material-ui/core'
+import { darken, Box } from '@material-ui/core/'
+import { Modal } from './Modal/Modal'
 import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -37,23 +38,28 @@ const useStyles = makeStyles((theme) =>
     banner: {
       padding: '20px',
       boxSizing: 'border-box',
-    },
-    bannerDivider: {
-      borderBottom: `1px solid ${theme.palette.divider}`,
-      width: '100%',
+      [theme.breakpoints.down('sm')]: {
+        padding: '10px',
+      },
     },
     bannerContent: {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+      },
     },
     bannerText: {
       fontSize: '15px',
       fontWeight: 500,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      maxWidth: 'calc(100% - 80px)', // Adjust based on your needs
+      [theme.breakpoints.up('md')]: {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: 'calc(100% - 80px)',
+      },
     },
     readMoreButton: {
       fontSize: '15px',
@@ -66,24 +72,8 @@ const useStyles = makeStyles((theme) =>
       outline: 'inherit',
       marginLeft: '5px',
       '&:hover': {
-        color: theme.palette.text.secondary,
+        color: darken(theme.palette.primary.main, 0.2),
       },
-    },
-    modalBox: {
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: '90%',
-      maxWidth: '600px',
-      backgroundColor: theme.palette.background.paper,
-      boxShadow: theme.shadows[5],
-      borderRadius: '8px',
-      padding: theme.spacing(4),
-      maxHeight: '80vh',
-      overflowY: 'auto',
-      display: 'flex',
-      flexDirection: 'column',
     },
     modalTitle: {
       marginBottom: theme.spacing(2),
@@ -390,7 +380,7 @@ const Nav: React.FC = () => {
         aria-labelledby="legal-modal-title"
         aria-describedby="legal-modal-description"
       >
-        <Box className={classes.modalBox}>
+        <Box>
           <Typography id="legal-modal-title" variant="h5" component="h2" className={classes.modalTitle}>
             Disclaimer for UK Residents
           </Typography>
