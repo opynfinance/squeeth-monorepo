@@ -388,9 +388,10 @@ const Nav: React.FC = () => {
       </div>
       <Modal
         open={modalOpen}
-        onClose={handleModalToggle}
+        handleClose={handleModalToggle}
         aria-labelledby="legal-modal-title"
         aria-describedby="legal-modal-description"
+        title="Disclaimer for UK Residents"
       >
         <Box>
           <Typography id="legal-modal-title" variant="h5" component="h2" className={classes.modalTitle}>
