@@ -1,3 +1,4 @@
+import { useRouter } from 'next/router'
 import { Box, Link } from '@material-ui/core'
 import { useAtomValue, useAtom } from 'jotai'
 import { useState, useEffect } from 'react'
@@ -5,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useRestrictUser } from '@context/restrict-user'
 import { Modal } from './Modal/Modal'
 import { connectedWalletAtom, isStrikeCountModalOpenAtom, addressStrikeCountAtom } from '@state/wallet/atoms'
+import { LEGAL_PAGES } from '@constants/index'
 
 interface StrikeWarningModalProps {
   setIsStrikeModalShownOnce: (value: boolean) => void
@@ -89,16 +91,20 @@ export default function StrikeModalManager() {
   const isWalletConnected = useAtomValue(connectedWalletAtom)
   const [isStrikeModalShownOnce, setIsStrikeModalShownOnce] = useState(false)
   const { isRestricted } = useRestrictUser()
+  const router = useRouter()
+
+  // Check if the current page is exempt from restriction (e.g., legal pages)
+  const isLegalPage = LEGAL_PAGES.includes(router.pathname)
 
   // delayed state change - show modal after 2 seconds
   // this is because it takes some time to automatically connect the wallet (incase previously connected)
   useEffect(() => {
-    if (isRestricted) {
+    if (isRestricted && !isLegalPage) {
       const timerId = setTimeout(() => setShowModal(true), 2_000)
       // cleanup function to clear the timeout if the component is unmounted before the delay is over.
       return () => clearTimeout(timerId)
     }
-  }, [isRestricted])
+  }, [isRestricted, isLegalPage])
 
   if (showModal) {
     if (isWalletConnected) {

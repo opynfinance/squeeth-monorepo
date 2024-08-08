@@ -32,7 +32,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import StrategyLayout from '@components/StrategyLayout/StrategyLayout'
 import useTrackSiteReload from '@hooks/useTrackSiteReload'
 import { hideCrispChat, showCrispChat } from '@utils/crisp-chat'
-import { TOS_UPDATE_DATE } from '@constants/index'
+import { TOS_UPDATE_DATE, LEGAL_PAGES } from '@constants/index'
 import StrikeWarning from '@components/StrikeWarning'
 import { getAddressStrikeCount } from '@state/wallet/apis'
 import { addressStrikeCountAtom, isStrikeCountModalOpenAtom } from '@state/wallet/atoms'
@@ -159,13 +159,16 @@ const Init = () => {
     })
   }, [onboardAddress, setWalletFailVisible, isZenbullPage, connectWallet])
 
+  // Check if the current page is exempt from restriction (e.g., legal pages)
+  const isLegalPage = LEGAL_PAGES.includes(router.pathname)
+
   // increment strike count if user is restricted
   useEffect(() => {
     if (!isRestricted || !onboardAddress) {
       return
     }
 
-    if (isRestricted) {
+    if (isRestricted && !isLegalPage) {
       // increment strike count
       updateBlockedAddress(onboardAddress).then((visitCount) => {
         setAddressStrikeCount(visitCount)
@@ -178,7 +181,7 @@ const Init = () => {
         setIsStrikeCountModalOpen(true)
       })
     }
-  }, [isRestricted, onboardAddress, setAddressStrikeCount, blockUser, setIsStrikeCountModalOpen])
+  }, [isRestricted, onboardAddress, setAddressStrikeCount, blockUser, setIsStrikeCountModalOpen, isLegalPage])
 
   // update user's strike count and block user if strike count >= 3
   useEffect(() => {
