@@ -105,7 +105,7 @@ export default function StrikeModalManager() {
     }
   }, [isRestricted, isExcludedPage])
 
-  if (showModal && !isExcludedPage) {
+  if (showModal) {
     if (isWalletConnected) {
       return <StrikeCountModal setIsStrikeModalShownOnce={setIsStrikeModalShownOnce} />
     }
