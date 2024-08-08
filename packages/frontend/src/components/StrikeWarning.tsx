@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { useRestrictUser } from '@context/restrict-user'
 import { Modal } from './Modal/Modal'
 import { connectedWalletAtom, isStrikeCountModalOpenAtom, addressStrikeCountAtom } from '@state/wallet/atoms'
+import { LEGAL_PAGES } from '@constants/index'
 
 interface StrikeWarningModalProps {
   setIsStrikeModalShownOnce: (value: boolean) => void
@@ -92,18 +93,18 @@ export default function StrikeModalManager() {
   const { isRestricted } = useRestrictUser()
   const router = useRouter()
 
-  // Check if the current page is either terms of service or privacy policy
-  const isExcludedPage = ['/terms-of-service', '/privacy-policy'].includes(router.pathname)
+  // Check if the current page is exempt from restriction (e.g., legal pages)
+  const isLegalPage = LEGAL_PAGES.includes(router.pathname)
 
   // delayed state change - show modal after 2 seconds
   // this is because it takes some time to automatically connect the wallet (incase previously connected)
   useEffect(() => {
-    if (isRestricted && !isExcludedPage) {
+    if (isRestricted && !isLegalPage) {
       const timerId = setTimeout(() => setShowModal(true), 2_000)
       // cleanup function to clear the timeout if the component is unmounted before the delay is over.
       return () => clearTimeout(timerId)
     }
-  }, [isRestricted, isExcludedPage])
+  }, [isRestricted, isLegalPage])
 
   if (showModal) {
     if (isWalletConnected) {
