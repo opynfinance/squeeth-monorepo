@@ -7,6 +7,7 @@ import { Modal } from './Modal/Modal'
 import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Link as MUILink } from '@material-ui/core'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import { useAtomValue } from 'jotai'
@@ -24,7 +25,7 @@ import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
 
 const ukLegalPayload =
-  'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets. For more information, see the Squeeth Terms of Service.'
+  'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets.'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -78,32 +79,6 @@ const useStyles = makeStyles((theme) =>
       '&:hover': {
         color: darken(theme.palette.primary.main, 0.2),
       },
-    },
-    highlightedLink: {
-      color: theme.palette.primary.main,
-      fontWeight: 'bold',
-      textDecoration: 'underline',
-      '&:hover': {
-        color: theme.palette.primary.dark,
-      },
-    },
-    modalTitle: {
-      marginBottom: theme.spacing(2),
-      color: theme.palette.primary.main,
-      textAlign: 'center',
-    },
-    modalContent: {
-      marginBottom: theme.spacing(2),
-      lineHeight: 1.6,
-    },
-    modalCloseButton: {
-      padding: theme.spacing(1.5, 4),
-      fontSize: '1.1rem',
-      fontWeight: 'bold',
-    },
-    modalFooter: {
-      display: 'flex',
-      justifyContent: 'center',
     },
     content: {
       maxWidth: '1280px',
@@ -393,29 +368,15 @@ const Nav: React.FC = () => {
         aria-describedby="legal-modal-description"
         title="Disclaimer for UK Residents"
       >
-        <Box>
-          <Typography id="legal-modal-title" variant="h5" component="h2" className={classes.modalTitle}>
-            Disclaimer for UK Residents
-          </Typography>
-          <Typography id="legal-modal-description" className={classes.modalContent}>
-            {ukLegalPayload.split('For more information')[0]}
-            For more information, see the{' '}
-            <Link href="https://opyn.co/terms-of-service" target="_blank" rel="noopener noreferrer">
-              <a className={classes.highlightedLink}>Squeeth Terms of Service</a>
-            </Link>
-            .
-          </Typography>
-          <div className={classes.modalFooter}>
-            <Button
-              onClick={handleModalToggle}
-              color="secondary"
-              variant="contained"
-              size="large"
-              className={classes.modalCloseButton}
-            >
-              Close
-            </Button>
-          </div>
+        <Box px="4px">
+          {ukLegalPayload}
+          <br />
+          <br />
+          Please review our{' '}
+          <MUILink href="https://opyn.co/terms-of-service" target="_blank">
+            Terms of Service
+          </MUILink>{' '}
+          for more details.
         </Box>
       </Modal>
     </div>
