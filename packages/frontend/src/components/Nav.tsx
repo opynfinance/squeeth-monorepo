@@ -2,23 +2,30 @@ import { Button, Drawer, IconButton, Menu, MenuItem, ButtonBase } from '@materia
 import Hidden from '@material-ui/core/Hidden'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import Typography from '@material-ui/core/Typography'
+import { darken, Box } from '@material-ui/core/'
+import { Modal } from './Modal/Modal'
 import MenuIcon from '@material-ui/icons/Menu'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Link as MUILink } from '@material-ui/core'
 import { useRouter } from 'next/router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useAtomValue } from 'jotai'
 
 import useCopyClipboard from '@hooks/useCopyClipboard'
 import { useWalletBalance } from '@state/wallet/hooks'
 import { addressesAtom } from '@state/positions/atoms'
 import { toTokenAmount } from '@utils/calculations'
+import { truncateText } from '@utils/formatter'
 import { BIG_ZERO } from '@constants/index'
 import logo from 'public/images/OpynLogo.svg'
 import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
+
+const ukLegalPayload =
+  'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets.'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -28,6 +35,50 @@ const useStyles = makeStyles((theme) =>
       top: '0px',
       backdropFilter: 'blur(30px)',
       zIndex: theme.zIndex.appBar,
+    },
+    banner: {
+      padding: '20px',
+      boxSizing: 'border-box',
+      [theme.breakpoints.down('sm')]: {
+        padding: '10px',
+      },
+    },
+    bannerContent: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      [theme.breakpoints.down('sm')]: {
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+      },
+    },
+    bannerText: {
+      fontSize: '15px',
+      fontWeight: 500,
+      [theme.breakpoints.up('md')]: {
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxWidth: 'calc(100% - 80px)',
+      },
+    },
+    bannerDivider: {
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      width: '100%',
+    },
+    readMoreButton: {
+      fontSize: '15px',
+      background: 'none',
+      border: 'none',
+      color: theme.palette.primary.main,
+      padding: 0,
+      font: 'inherit',
+      cursor: 'pointer',
+      outline: 'inherit',
+      marginLeft: '5px',
+      '&:hover': {
+        color: darken(theme.palette.primary.main, 0.2),
+      },
     },
     content: {
       maxWidth: '1280px',
@@ -120,6 +171,8 @@ export const NavLink: React.FC<{ path: string; name: string; highlightForPaths?:
 
 const Nav: React.FC = () => {
   const classes = useStyles()
+  const router = useRouter()
+  const userLocation = router.query?.ct
   const { data: balance } = useWalletBalance()
 
   const { oSqueeth } = useAtomValue(addressesAtom)
@@ -128,6 +181,11 @@ const Nav: React.FC = () => {
   const { track } = useAmplitude()
 
   const [anchorEl, setAnchorEl] = React.useState(null)
+  const [showBanner, setShowBanner] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const handleModalToggle = () => {
+    setModalOpen(!modalOpen)
+  }
   const handleClick = (event: any) => {
     setAnchorEl(event.currentTarget)
   }
@@ -135,8 +193,30 @@ const Nav: React.FC = () => {
     setAnchorEl(null)
   }
 
+  useEffect(() => {
+    if (userLocation === 'GB') {
+      // 'GB' is the country code for the United Kingdom
+      setShowBanner(true)
+    } else {
+      setShowBanner(false)
+    }
+  }, [userLocation])
+
   return (
     <div className={classes.root}>
+      {showBanner && (
+        <>
+          <div className={classes.banner}>
+            <div className={classes.bannerContent}>
+              <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
+              <button className={classes.readMoreButton} onClick={handleModalToggle}>
+                Read more
+              </button>
+            </div>
+          </div>
+          <div className={classes.bannerDivider}></div>
+        </>
+      )}
       <div className={classes.content}>
         <div className={classes.logo}>
           <Link href={'/'} passHref>
@@ -281,6 +361,24 @@ const Nav: React.FC = () => {
           </Drawer>
         </Hidden>
       </div>
+      <Modal
+        open={modalOpen}
+        handleClose={handleModalToggle}
+        aria-labelledby="legal-modal-title"
+        aria-describedby="legal-modal-description"
+        title="Disclaimer for UK Residents"
+      >
+        <Box px="4px">
+          {ukLegalPayload}
+          <br />
+          <br />
+          Please review our{' '}
+          <MUILink href="https://opyn.co/terms-of-service" target="_blank">
+            Terms of Service
+          </MUILink>{' '}
+          for more details.
+        </Box>
+      </Modal>
     </div>
   )
 }
