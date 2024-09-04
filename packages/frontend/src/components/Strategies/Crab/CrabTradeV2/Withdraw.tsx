@@ -535,7 +535,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </RoundedButton>
         <Box className={classes.infoIconGray} display="flex" alignItems="center">
           <Tooltip
-            title={`Standard attempts to reduce price impact and gas costs, but will not exit the strategy immediately. Instant gets in immediately.`}
+            title={`Standard attempts to reduce price impact and gas costs, but will not exit the strategy immediately. Instant exits immediately.`}
           >
             <HelpOutlineIcon fontSize="medium" />
           </Tooltip>
