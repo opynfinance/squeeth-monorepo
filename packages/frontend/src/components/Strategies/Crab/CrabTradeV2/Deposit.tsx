@@ -425,7 +425,7 @@ const CrabDeposit: React.FC<CrabDepositProps> = ({ onTxnConfirm }) => {
         </RoundedButton>
         <Box className={classes.infoIconGray} display="flex" alignItems="center">
           <Tooltip
-            title={`Standard reduces price impact and gas costs, getting into the strategy in 24hr on avg or Tuesday latest. Instant gets in immediately.`}
+            title={`Standard attempts to reduce price impact and gas costs, but will not get into the strategy immediately. Instant gets in immediately.`}
           >
             <HelpOutlineIcon fontSize="medium" />
           </Tooltip>
