@@ -17,7 +17,7 @@ import BigNumber from 'bignumber.js'
 import { makeStyles } from '@material-ui/core/styles'
 import { Skeleton } from '@material-ui/lab'
 
-import { currentImpliedFundingAtom } from '@state/controller/atoms'
+import { currentImpliedFundingAtom, currentImpliedFundingShutdownAtom } from '@state/controller/atoms'
 import { ethPriceAtLastHedgeAtomV2 } from '@state/crab/atoms'
 import { toTokenAmount } from '@utils/calculations'
 import { useOnChainETHPrice } from '@hooks/useETHPrice'
@@ -299,7 +299,7 @@ const Chart: React.FC<{ currentImpliedFunding: number }> = ({ currentImpliedFund
 }
 
 function ChartWrapper() {
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentImpliedFunding = useAtomValue(currentImpliedFundingShutdownAtom)
 
   if (currentImpliedFunding === 0) {
     return (

@@ -42,6 +42,21 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppMemo from '@hooks/useAppMemo'
 import { HidePnLText } from './HidePnLText'
 import Metric from '@components/Metric'
+import {
+  getSqueethPriceShutdown,
+  getSqueethImpliedVolatilityShutdown,
+  getDaysToShutdown,
+  getCurrentImpliedFundingShutdown,
+  getDailyHistoricalFunding,
+} from '@state/controller/utils'
+import {
+  currentImpliedFundingAtom,
+  currentImpliedFundingShutdownAtom,
+  dailyHistoricalFundingShutdownAtom,
+  impliedVolatilityShutdownAtom,
+  impliedVolAtom,
+  normFactorAtom,
+} from '@state/controller/atoms'
 
 const useStyles = makeStyles((theme) =>
   createStyles({

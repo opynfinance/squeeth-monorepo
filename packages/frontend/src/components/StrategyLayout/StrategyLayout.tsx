@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Typography, Tab, Tabs } from '@material-ui/core'
+import { Typography, Tab, Tabs, Link } from '@material-ui/core'
 import Image from 'next/image'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
 import { useRouter } from 'next/router'
@@ -9,6 +9,7 @@ import { Vaults, VaultSubtitle } from '@constants/enums'
 import crabStrategyImg from 'public/images/crab_strategy.svg'
 import bearStrategyImg from 'public/images/bear_strategy.svg'
 import bullStrategyImg from 'public/images/bull_strategy.png'
+import { ZenBullAlert } from '@components/Alerts/ZenBullAlert'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -137,9 +138,12 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
     return children
   }
 
+  const isBullPage = router.pathname === BULL_PATH
+
   return (
     <div>
       <Nav />
+      {isBullPage && <ZenBullAlert />}
 
       <Tabs
         centered

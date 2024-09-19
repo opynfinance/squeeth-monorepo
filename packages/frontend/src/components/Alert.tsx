@@ -19,7 +19,7 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       alignItems: 'center',
       gap: '20px',
-      padding: '24px',
+      padding: '16px',
     },
     text: {
       fontWeight: 500,
