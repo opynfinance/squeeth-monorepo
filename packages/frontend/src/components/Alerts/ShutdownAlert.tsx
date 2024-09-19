@@ -60,7 +60,7 @@ export const ShutdownAlert: React.FC = () => {
       shutdownDate.getUTCHours(),
       shutdownDate.getUTCMinutes(),
     ),
-    "do MMMM yyyy, h:mm a 'UTC'",
+    "MMMM d, yyyy 'at' HH:mm 'UTC'",
   )
 
   return (
