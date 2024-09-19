@@ -23,6 +23,7 @@ import WalletButton from './Button/WalletButton'
 import SettingMenu from './SettingsMenu'
 import useAmplitude from '@hooks/useAmplitude'
 import { SITE_EVENTS } from '@utils/amplitude'
+import { ShutdownAlert } from './Alerts/ShutdownAlert'
 
 const ukLegalPayload =
   'UK Disclaimer: This web application is provided as a tool for users to interact with the Squeeth Protocol on their own initiative, with no endorsement or recommendation of crypto asset trading activities. In doing so, Opyn is not recommending that users or potential users engage in crypto asset trading activity, and users or potential users of the web application should not regard this webpage or its contents as involving any form of recommendation, invitation, or inducement to deal in crypto assets.'
@@ -113,9 +114,12 @@ const useStyles = makeStyles((theme) =>
       alignItems: 'center',
       position: 'absolute',
       marginLeft: theme.spacing(12),
+      [theme.breakpoints.down(1042)]: {
+        marginLeft: theme.spacing(18),
+      },
     },
     navLink: {
-      margin: theme.spacing(0, 1.5),
+      margin: theme.spacing(0, 2),
       textDecoration: 'none',
       cursor: 'pointer',
       color: theme.palette.text.secondary,
@@ -203,164 +207,167 @@ const Nav: React.FC = () => {
   }, [userLocation])
 
   return (
-    <div className={classes.root}>
-      {showBanner && (
-        <>
-          <div className={classes.banner}>
-            <div className={classes.bannerContent}>
-              <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
-              <button className={classes.readMoreButton} onClick={handleModalToggle}>
-                Read more
-              </button>
-            </div>
-          </div>
-          <div className={classes.bannerDivider}></div>
-        </>
-      )}
-      <div className={classes.content}>
-        <div className={classes.logo}>
-          <Link href={'/'} passHref>
-            <Image src={logo} alt="logo" width={102} height={44} />
-          </Link>
-        </div>
-        {/*For Desktop view*/}
-        <Hidden smDown>
-          <div className={classes.navDiv}>
-            <div style={{ display: 'flex' }}>
-              <NavLink
-                highlightForPaths={['/strategies/crab', '/strategies/bull']}
-                path="/strategies/crab"
-                name="Strategies"
-              />
-              <NavLink path="/squeeth" name="Squeeth" />
-              <NavLink path="/positions" name="Positions" />
-              <a
-                href="https://squeethportal.xyz"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
-              >
-                <Typography className={classes.navLink} variant="h6">
-                  Auction
-                </Typography>
-              </a>
-              <NavLink path="/lp" name="LP" />
-
-              <ButtonBase aria-controls="docs-menu" aria-haspopup="true" onClick={handleClick} className="">
-                <Typography className={classes.navLink} variant="h6">
-                  Docs
-                </Typography>
-              </ButtonBase>
-              <Menu id="docs-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
-                <MenuItem onClick={handleClose}>
-                  <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
-                    Research
-                  </a>
-                </MenuItem>
-                <MenuItem onClick={handleClose}>
-                  <a
-                    href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-                  >
-                    FAQ
-                  </a>
-                </MenuItem>
-              </Menu>
-            </div>
-          </div>
-          <div className={classes.wallet}>
-            <Hidden mdDown>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  setCopied(oSqueeth)
-                }}
-              >
-                {isCopied ? (
-                  <>Copied</>
-                ) : (
-                  <>
-                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
-                    {oSqueeth?.substring(oSqueeth.length - 4)}
-                  </>
-                )}
-              </Button>
-            </Hidden>
-            <WalletButton />
-            <SettingMenu />
-          </div>
-        </Hidden>
-        <Hidden mdUp>
-          <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
-          <IconButton onClick={() => setNavOpen(true)}>
-            <MenuIcon />
-          </IconButton>
-          <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
-            <div className={classes.navDrawer}>
-              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                <WalletButton />
-                <SettingMenu />
+    <>
+      <div className={classes.root}>
+        {true && (
+          <>
+            <div className={classes.banner}>
+              <div className={classes.bannerContent}>
+                <Typography className={classes.bannerText}>{truncateText(ukLegalPayload, 150)}</Typography>
+                <button className={classes.readMoreButton} onClick={handleModalToggle}>
+                  Read more
+                </button>
               </div>
-              <Button
-                variant="outlined"
-                color="primary"
-                onClick={() => {
-                  setCopied(oSqueeth)
-                }}
-                style={{
-                  marginTop: '8px',
-                  width: '200px',
-                }}
-              >
-                {isCopied ? (
-                  <>Copied</>
-                ) : (
-                  <>
-                    <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
-                    {oSqueeth?.substring(oSqueeth.length - 4)}
-                  </>
-                )}
-              </Button>
-              <NavLink
-                highlightForPaths={['/strategies/crab', '/strategies/bull']}
-                path="/strategies/crab"
-                name="Strategies"
-              />
-              <NavLink path="/squeeth" name="Squeeth" />
-              <NavLink path="/positions" name="Positions" />
-              <a
-                href="https://squeethportal.xyz"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
-              >
-                <Typography className={classes.navLink} variant="h6">
-                  Auction
-                </Typography>
-              </a>
-              <NavLink path="/lp" name="LP" />
-              <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
-                <Typography className={classes.navLink} variant="h6">
-                  Research
-                </Typography>
-              </a>
-              <a
-                href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
-                target="_blank"
-                rel="noreferrer"
-                onClick={() => track(SITE_EVENTS.NAV_FAQ)}
-              >
-                <Typography className={classes.navLink} variant="h6">
-                  FAQ
-                </Typography>
-              </a>
             </div>
-          </Drawer>
-        </Hidden>
+            <div className={classes.bannerDivider}></div>
+          </>
+        )}
+        <div className={classes.content}>
+          <div className={classes.logo}>
+            <Link href={'/'} passHref>
+              <Image src={logo} alt="logo" width={102} height={44} />
+            </Link>
+          </div>
+          {/*For Desktop view*/}
+          <Hidden smDown>
+            <div className={classes.navDiv}>
+              <div style={{ display: 'flex' }}>
+                <NavLink
+                  highlightForPaths={['/strategies/crab', '/strategies/bull']}
+                  path="/strategies/crab"
+                  name="Strategies"
+                />
+                <NavLink path="/squeeth" name="Squeeth" />
+                <NavLink path="/positions" name="Positions" />
+                <a
+                  href="https://squeethportal.xyz"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
+                >
+                  <Typography className={classes.navLink} variant="h6">
+                    Auction
+                  </Typography>
+                </a>
+                <NavLink path="/lp" name="LP" />
+                <ButtonBase aria-controls="docs-menu" aria-haspopup="true" onClick={handleClick} className="">
+                  <Typography className={classes.navLink} variant="h6">
+                    Docs
+                  </Typography>
+                </ButtonBase>
+                <Menu id="docs-menu" anchorEl={anchorEl} keepMounted open={Boolean(anchorEl)} onClose={handleClose}>
+                  <MenuItem onClick={handleClose}>
+                    <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                      Research
+                    </a>
+                  </MenuItem>
+                  <MenuItem onClick={handleClose}>
+                    <a
+                      href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => track(SITE_EVENTS.NAV_FAQ)}
+                    >
+                      FAQ
+                    </a>
+                  </MenuItem>
+                </Menu>
+              </div>
+            </div>
+            <div className={classes.wallet}>
+              <Hidden mdDown>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    setCopied(oSqueeth)
+                  }}
+                >
+                  {isCopied ? (
+                    <>Copied</>
+                  ) : (
+                    <>
+                      <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                      {oSqueeth?.substring(oSqueeth.length - 4)}
+                    </>
+                  )}
+                </Button>
+              </Hidden>
+              <WalletButton />
+              <SettingMenu />
+            </div>
+          </Hidden>
+          <Hidden mdUp>
+            <Typography color="primary">{toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)} ETH</Typography>
+            <IconButton onClick={() => setNavOpen(true)}>
+              <MenuIcon />
+            </IconButton>
+            <Drawer anchor="right" open={navOpen} onClose={() => setNavOpen(false)}>
+              <div className={classes.navDrawer}>
+                <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                  <WalletButton />
+                  <SettingMenu />
+                </div>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    setCopied(oSqueeth)
+                  }}
+                  style={{
+                    marginTop: '8px',
+                    width: '200px',
+                  }}
+                >
+                  {isCopied ? (
+                    <>Copied</>
+                  ) : (
+                    <>
+                      <span style={{ textTransform: 'none' }}>oSQTH</span>: {oSqueeth?.substring(0, 6)}...
+                      {oSqueeth?.substring(oSqueeth.length - 4)}
+                    </>
+                  )}
+                </Button>
+                <NavLink
+                  highlightForPaths={['/strategies/crab', '/strategies/bull']}
+                  path="/strategies/crab"
+                  name="Strategies"
+                />
+                <NavLink path="/squeeth" name="Squeeth" />
+                <NavLink path="/positions" name="Positions" />
+                <a
+                  href="https://squeethportal.xyz"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => track(SITE_EVENTS.NAV_AUCTION)}
+                >
+                  <Typography className={classes.navLink} variant="h6">
+                    Auction
+                  </Typography>
+                </a>
+                <NavLink path="/lp" name="LP" />
+                <a href="https://research.opyn.co" onClick={() => track(SITE_EVENTS.NAV_RESEARCH)}>
+                  <Typography className={classes.navLink} variant="h6">
+                    Research
+                  </Typography>
+                </a>
+                <a
+                  href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => track(SITE_EVENTS.NAV_FAQ)}
+                >
+                  <Typography className={classes.navLink} variant="h6">
+                    FAQ
+                  </Typography>
+                </a>
+              </div>
+            </Drawer>
+          </Hidden>
+        </div>
       </div>
+
+      <ShutdownAlert />
       <Modal
         open={modalOpen}
         handleClose={handleModalToggle}
@@ -379,7 +386,7 @@ const Nav: React.FC = () => {
           for more details.
         </Box>
       </Modal>
-    </div>
+    </>
   )
 }
 

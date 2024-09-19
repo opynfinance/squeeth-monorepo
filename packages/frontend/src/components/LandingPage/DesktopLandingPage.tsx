@@ -18,6 +18,7 @@ import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
 import useAmplitude from '@hooks/useAmplitude'
 import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
+import { ShutdownAlert } from '@components/Alerts/ShutdownAlert'
 
 const designBaseWidth = 1512
 
@@ -92,6 +93,7 @@ const useStyles = makeStyles((theme) =>
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right',
       backgroundSize: 'contain',
+      zIndex: -1,
     },
     background2: {
       position: 'absolute',
@@ -100,6 +102,7 @@ const useStyles = makeStyles((theme) =>
       width: '90vw',
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'left',
+      zIndex: -1,
     },
     content: {},
     introSection: {
@@ -353,6 +356,8 @@ function DesktopLandingPage() {
       <div className={classes.background1} />
       <div className={classes.background2} />
       <div className={classes.content}>
+        <ShutdownAlert />
+
         <div className={classes.introSection}>
           <div className={classes.introSectionLeft}>
             <div>

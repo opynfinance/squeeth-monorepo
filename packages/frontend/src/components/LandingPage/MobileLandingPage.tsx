@@ -22,6 +22,7 @@ import { Button, Typography } from '@material-ui/core'
 import { useTVL } from '@hooks/useTVL'
 import useAmplitude from '@hooks/useAmplitude'
 import { LANDING_EVENTS, SITE_EVENTS } from '@utils/amplitude'
+import { ShutdownAlert } from '@components/Alerts/ShutdownAlert'
 
 const designBaseWidth = 393
 
@@ -382,6 +383,8 @@ function MobileLandingPage() {
         </div>
       </div>
       <div className={classes.content}>
+        <ShutdownAlert />
+
         <div className={classes.introSection}>
           <div>
             <Typography variant="h1" className={clsx([classes.introSectionHeading, classes.gradientText])}>

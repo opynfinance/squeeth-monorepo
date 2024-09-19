@@ -204,7 +204,7 @@ describe("Crab V2 integration test: Shutdown of Squeeth Power Perp contracts", f
 
     })
 
-    it("should NOT let user withdrawShutdown pre shutdown, pre redeemShortShutdown", async () => {
+    it("should NOT let user withdrawShutdown shutdown model, pre redeemShortShutdown", async () => {
       const userCrabBalanceBefore = await crabStrategy.balanceOf(depositor.address);
       await expect(crabStrategy.connect(depositor).withdrawShutdown(userCrabBalanceBefore)).to.be.revertedWith("C12")
     })

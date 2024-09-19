@@ -6,12 +6,15 @@ import { OSQUEETH_DECIMALS, SWAP_EVENT_TOPIC, TWAP_PERIOD } from '../../constant
 import {
   markAtom,
   currentImpliedFundingAtom,
+  currentImpliedFundingShutdownAtom,
   dailyHistoricalFundingAtom,
+  impliedVolatilityShutdownAtom,
   impliedVolAtom,
   indexAtom,
   normFactorAtom,
   osqthRefVolAtom,
   ethPriceAtom,
+  dailyHistoricalFundingShutdownAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -22,7 +25,10 @@ import { useOracle } from '@hooks/contracts/useOracle'
 import {
   calculateLiquidationPriceForLP,
   getCurrentImpliedFunding,
+  getCurrentImpliedFundingShutdown,
   getDailyHistoricalFunding,
+  getDailyHistoricalFundingShutdown,
+  getImpliedVolatilityShutdown,
   getIndex,
   getMark,
   getOsqthRefVol,
@@ -446,6 +452,47 @@ const useCurrentImpliedFunding = () => {
   return currentImpliedFunding
 }
 
+const useCurrentImpliedFundingShutdown = () => {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [currentImpliedFundingShutdown, setCurrentImpliedFundingShutdown] = useAtom(currentImpliedFundingShutdownAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  useEffect(() => {
+    if (!contract) return
+    getCurrentImpliedFundingShutdown(contract).then(setCurrentImpliedFundingShutdown)
+  }, [address, networkId, setCurrentImpliedFundingShutdown, contract])
+
+  return currentImpliedFundingShutdown
+}
+
+const useDailyHistoricalFundingShutdown = () => {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [dailyHistoricalFundingShutdown, setDailyHistoricalFundingShutdown] = useAtom(
+    dailyHistoricalFundingShutdownAtom,
+  )
+  const contract = useAtomValue(controllerContractAtom)
+  useEffect(() => {
+    if (!contract) return
+    getDailyHistoricalFundingShutdown(contract).then(setDailyHistoricalFundingShutdown)
+  }, [address, networkId, setDailyHistoricalFundingShutdown, contract])
+
+  return dailyHistoricalFundingShutdown
+}
+
+const useImpliedVolatilityShutdown = () => {
+  const address = useAtomValue(addressAtom)
+  const networkId = useAtomValue(networkIdAtom)
+  const [impliedVolatilityShutdown, setImpliedVolatilityShutdown] = useAtom(impliedVolatilityShutdownAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  useEffect(() => {
+    if (!contract) return
+    getImpliedVolatilityShutdown(contract).then(setImpliedVolatilityShutdown)
+  }, [address, networkId, setImpliedVolatilityShutdown, contract])
+
+  return impliedVolatilityShutdown
+}
+
 const useMark = () => {
   const address = useAtomValue(addressAtom)
   const web3 = useAtomValue(web3Atom)
@@ -495,6 +542,9 @@ export const useInitController = () => {
   useUpdateEthPrice()
   useMark()
   useCurrentImpliedFunding()
+  useCurrentImpliedFundingShutdown()
+  useDailyHistoricalFundingShutdown()
+  useImpliedVolatilityShutdown()
   useDailyHistoricalFunding()
   useNormFactor()
   useOsqthRefVol()

@@ -1,14 +1,11 @@
 import React, { useEffect } from 'react'
 import { createStyles, makeStyles } from '@material-ui/core/styles'
-import { Link, Typography } from '@material-ui/core'
 
 import { useInitBullRecoveryStrategy } from '@state/bull/hooks'
 import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import { useDisconnectWallet } from '@state/wallet/hooks'
 import About from './About'
-import StrategyPerformance from './StrategyPerformance'
 import BullTrade from './BullTrade'
-import Alert from '@components/Alert'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -46,9 +43,6 @@ const useStyles = makeStyles((theme) =>
       borderRadius: theme.spacing(1),
       padding: '32px 24px',
     },
-    topAlert: {
-      marginTop: '16px',
-    },
   }),
 )
 
@@ -75,21 +69,6 @@ const Bull: React.FC = () => {
 
   return (
     <>
-      <div className={classes.topAlert}>
-        <Alert severity="warning">
-          <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
-            Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please{' '}
-            <Link
-              style={{ fontSize: '15px', fontWeight: 500 }}
-              target="_blank"
-              href="https://discord.com/invite/2NFdXaE"
-            >
-              join discord
-            </Link>{' '}
-            for updates. You can recover funds from Recovery withdrawal section below.
-          </Typography>
-        </Alert>
-      </div>
       <div className={classes.container}>
         <div className={classes.leftColumn}>
           <div className={classes.infoContainer}>

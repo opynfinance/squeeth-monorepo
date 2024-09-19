@@ -11,6 +11,8 @@ import {
   markAtom,
   osqthRefVolAtom,
   currentImpliedFundingAtom,
+  impliedVolatilityShutdownAtom,
+  currentImpliedFundingShutdownAtom,
 } from '@state/controller/atoms'
 import Metric, { MetricLabel } from '@components/Metric'
 import { formatCurrency, formatNumber } from '@utils/formatter'
@@ -19,17 +21,17 @@ import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 const SqueethInfo: React.FC<BoxProps> = (props) => {
   const mark = useAtomValue(markAtom)
   const index = useAtomValue(indexAtom)
-  const impliedVol = useAtomValue(impliedVolAtom)
+  const impliedVolatilityShutdown = useAtomValue(impliedVolatilityShutdownAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentImpliedFundingShutdown = useAtomValue(currentImpliedFundingShutdownAtom)
   const { data: osqthPrice } = useOSQTHPrice()
 
   const eth2Price = toTokenAmount(index, 18)
   const ethPrice = eth2Price.sqrt()
   const markPrice = toTokenAmount(mark, 18)
-  const impliedVolPercent = impliedVol * 100
-  const currentImpliedPremium =
-    currentImpliedFunding === 0 ? 'loading' : formatNumber(currentImpliedFunding * 100) + '%'
+  const impliedVolatilityShutdownPercent = impliedVolatilityShutdown * 100
+  const currentImpliedPremiumShutdown =
+    currentImpliedFundingShutdown === 0 ? 'loading' : formatNumber(currentImpliedFundingShutdown * 100) + '%'
 
   const osqthPriceInETH = ethPrice.isZero() ? BIG_ZERO : osqthPrice.div(ethPrice)
 
@@ -56,8 +58,8 @@ const SqueethInfo: React.FC<BoxProps> = (props) => {
       />
 
       <Metric
-        label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
-        value={`${formatNumber(impliedVolPercent)}%`}
+        label={<MetricLabel label="Implied Volatility " tooltipTitle={Tooltips.ImplVol} />}
+        value={`${formatNumber(impliedVolatilityShutdownPercent)}%`}
       />
 
       <Metric
@@ -66,8 +68,8 @@ const SqueethInfo: React.FC<BoxProps> = (props) => {
       />
 
       <Metric
-        label={<MetricLabel label="Current Implied Premium" tooltipTitle={Tooltips.CurrentImplFunding} />}
-        value={currentImpliedPremium}
+        label={<MetricLabel label="Current Implied Premium " tooltipTitle={Tooltips.CurrentImplFunding} />}
+        value={currentImpliedPremiumShutdown}
       />
     </Box>
   )

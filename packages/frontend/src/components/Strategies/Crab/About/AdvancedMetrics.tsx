@@ -7,7 +7,13 @@ import { useAtomValue } from 'jotai'
 
 import Metric, { MetricLabel } from '@components/Metric'
 import { TextButton } from '@components/Button'
-import { impliedVolAtom, osqthRefVolAtom, currentImpliedFundingAtom } from '@state/controller/atoms'
+import {
+  impliedVolAtom,
+  osqthRefVolAtom,
+  currentImpliedFundingAtom,
+  impliedVolatilityShutdownAtom,
+  currentImpliedFundingShutdownAtom,
+} from '@state/controller/atoms'
 import { formatNumber } from '@utils/formatter'
 import { Tooltips } from '@constants/enums'
 import useAmplitude from '@hooks/useAmplitude'
@@ -30,14 +36,14 @@ const useStyles = makeStyles(() =>
 const AdvancedMetrics: React.FC = () => {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const impliedVol = useAtomValue(impliedVolAtom)
+  const impliedVolatilityShutdown = useAtomValue(impliedVolatilityShutdownAtom)
   const osqthRefVol = useAtomValue(osqthRefVolAtom)
-  const currentImpliedFunding = useAtomValue(currentImpliedFundingAtom)
+  const currentImpliedFundingShutdown = useAtomValue(currentImpliedFundingShutdownAtom)
   const { track } = useAmplitude()
 
   const classes = useStyles()
 
-  const impliedVolPercent = impliedVol * 100
+  const impliedVolatilityShutdownPercent = impliedVolatilityShutdown * 100
 
   return (
     <div>
@@ -58,17 +64,17 @@ const AdvancedMetrics: React.FC = () => {
             <Metric
               label={
                 <MetricLabel
-                  label="Daily Premium"
+                  label="Daily Premium "
                   tooltipTitle={`${Tooltips.StrategyEarnFunding}. ${Tooltips.CurrentImplFunding}`}
                 />
               }
               gridGap="4px"
-              value={formatNumber(currentImpliedFunding * 100) + '%'}
+              value={formatNumber(currentImpliedFundingShutdown * 100) + '%'}
             />
             <Metric
-              label={<MetricLabel label="Implied Volatility" tooltipTitle={Tooltips.ImplVol} />}
+              label={<MetricLabel label="Implied Volatility " tooltipTitle={Tooltips.ImplVol} />}
               gridGap="4px"
-              value={`${formatNumber(impliedVolPercent)}%`}
+              value={`${formatNumber(impliedVolatilityShutdownPercent)}%`}
             />
             <Metric
               label={<MetricLabel label="Reference Volatility" tooltipTitle={Tooltips.osqthRefVol} />}
