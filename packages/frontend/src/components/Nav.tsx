@@ -209,7 +209,7 @@ const Nav: React.FC = () => {
   return (
     <>
       <div className={classes.root}>
-        {true && (
+        {showBanner && (
           <>
             <div className={classes.banner}>
               <div className={classes.bannerContent}>
