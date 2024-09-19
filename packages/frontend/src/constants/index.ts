@@ -32,7 +32,7 @@ export const NETTING_PRICE_IMPACT = 0.2
 //7min, 420 seconds
 export const TWAP_PERIOD = 420
 
-export const SHUTDOWN_DATE = '2024-10-31T16:30:00Z'
+export const SHUTDOWN_DATE = '2024-11-04T16:00:00Z'
 
 export const EtherscanPrefix = {
   1: 'https://etherscan.io/tx/',

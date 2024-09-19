@@ -263,7 +263,7 @@ const Nav: React.FC = () => {
                   </MenuItem>
                   <MenuItem onClick={handleClose}>
                     <a
-                      href="https://opyn.gitbook.io/crab-strategy/crab-strategy/introduction"
+                      href="https://opyn.gitbook.io/opyn-hub"
                       target="_blank"
                       rel="noreferrer"
                       onClick={() => track(SITE_EVENTS.NAV_FAQ)}
@@ -352,7 +352,7 @@ const Nav: React.FC = () => {
                   </Typography>
                 </a>
                 <a
-                  href="https://opyn.gitbook.io/squeeth/resources/squeeth-faq"
+                  href="https://opyn.gitbook.io/opyn-hub"
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => track(SITE_EVENTS.NAV_FAQ)}

@@ -299,7 +299,7 @@ const navLinks = [
   { label: 'Research', link: 'https://research.opyn.co', analyticsEvent: SITE_EVENTS.NAV_RESEARCH },
   {
     label: 'FAQ',
-    link: 'https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq',
+    link: 'https://opyn.gitbook.io/opyn-hub',
     analyticsEvent: SITE_EVENTS.NAV_FAQ,
   },
 ]

@@ -82,13 +82,16 @@ export const ShutdownAlert: React.FC = () => {
           </Typography>
           <Typography variant="body2" className={classes.text} style={{ marginTop: theme.spacing(0.5) }}>
             At shutdown, positions will be closed with 0 fees and 0 price impact. For more details, please refer to our{' '}
-            <Link href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq" passHref>
+            <Link href="https://opyn.gitbook.io/opyn-hub/squeeth-retirement/squeeth-retirement-faqs" passHref>
               <a className={classes.link} target="_blank" rel="noopener noreferrer">
                 FAQ
               </a>
             </Link>{' '}
             and{' '}
-            <Link href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq" passHref>
+            <Link
+              href="https://opyn.medium.com/our-beloved-squeeth-is-retiring-its-time-for-opyn-markets-to-take-over-1b66aad68f00"
+              passHref
+            >
               <a className={classes.link} target="_blank" rel="noopener noreferrer">
                 Announcement
               </a>
