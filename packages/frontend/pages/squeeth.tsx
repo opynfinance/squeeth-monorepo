@@ -267,11 +267,11 @@ function TradePage() {
             <TabComponent />
 
             <div className={clsx(classes.sectionMargin, classes.tradeSection)}>
-              <Typography variant="h4" className={classes.subtitle}>
+              {/* <Typography variant="h4" className={classes.subtitle}>
                 Position
-              </Typography>
+              </Typography> */}
 
-              <Trade marginTop="16px" />
+              <Trade />
             </div>
           </Box>
         </Box>

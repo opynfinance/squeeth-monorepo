@@ -15,6 +15,7 @@ export const impliedVolAtom = atom((get) => {
 })
 
 export const normFactorAtom = atom(new BigNumber(Infinity))
+export const indexForSettlementAtom = atom(BIG_ZERO)
 export const dailyHistoricalFundingAtom = atom({ period: 0, funding: 0 })
 export const currentImpliedFundingAtom = atom(0)
 export const currentImpliedFundingShutdownAtom = atom(0)

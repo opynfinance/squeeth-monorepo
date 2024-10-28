@@ -15,6 +15,7 @@ import {
   osqthRefVolAtom,
   ethPriceAtom,
   dailyHistoricalFundingShutdownAtom,
+  indexForSettlementAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -208,6 +209,25 @@ export const useGetDebtAmount = () => {
     [contract, ethUsdcPool, getTwapSafe, normFactor?.toString(), usdc, weth],
   )
   return getDebtAmount
+}
+
+// get ETH debt amount based on the settlement index price
+export const useGetDebtSettlementAmount = () => {
+  const contract = useAtomValue(controllerContractAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const indexForSettlement = useAtomValue(indexForSettlementAtom)
+
+  const getDebtSettlementAmount = useCallback(
+    async (shortAmount: BigNumber) => {
+      if (!contract) return new BigNumber(0)
+
+      const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
+      const ethDebt = _shortAmt.multipliedBy(normFactor).multipliedBy(indexForSettlement)
+      return toTokenAmount(ethDebt, 18)
+    },
+    [contract, normFactor?.toString()],
+  )
+  return getDebtSettlementAmount
 }
 
 export const useGetTwapEthPrice = () => {
@@ -537,6 +557,27 @@ const useOsqthRefVol = async (): Promise<number> => {
   return OsqthRefVol
 }
 
+const useIndexForSettlement = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  const [indexForSettlement, setIndexForSettlement] = useAtom(indexForSettlementAtom)
+  useEffect(() => {
+    if (!contract) return
+
+    contract.methods
+      .indexForSettlement()
+      .call()
+      .then((_indexPriceForSettlement: any) => {
+        setIndexForSettlement(toTokenAmount(new BigNumber(_indexPriceForSettlement.toString()), 18))
+      })
+      .catch(() => {
+        console.log('indexForSettlement error')
+      })
+  }, [contract, setIndexForSettlement, networkId])
+
+  return indexForSettlement
+}
+
 export const useInitController = () => {
   useIndex()
   useUpdateEthPrice()
@@ -548,4 +589,5 @@ export const useInitController = () => {
   useDailyHistoricalFunding()
   useNormFactor()
   useOsqthRefVol()
+  useIndexForSettlement()
 }

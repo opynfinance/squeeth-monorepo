@@ -21,7 +21,7 @@ const Trade: React.FC<BoxProps> = (props) => {
 
   return (
     <Box id="trade-card" {...props}>
-      <SqueethTabsNew
+      {/* <SqueethTabsNew
         value={openPosition}
         onChange={(evt, val) => {
           setOpenPosition(val)
@@ -38,11 +38,9 @@ const Trade: React.FC<BoxProps> = (props) => {
       >
         <SqueethTabNew label="Open" id="open-btn" />
         <SqueethTabNew label="Close" id="close-btn" />
-      </SqueethTabsNew>
+      </SqueethTabsNew> */}
 
-      <Box marginTop="32px">
-        {tradeType === TradeType.LONG ? <Long open={openPosition === 0} /> : <Short open={openPosition === 0} />}
-      </Box>
+      <Box>{tradeType === TradeType.LONG ? <Long /> : <Short open={openPosition === 0} />}</Box>
     </Box>
   )
 }
