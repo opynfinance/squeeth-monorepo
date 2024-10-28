@@ -64,6 +64,7 @@ const useStyles = makeStyles((theme) =>
       textTransform: 'none',
       textAlign: 'center',
       color: '#000',
+      cursor: 'pointer',
       backgroundColor: theme.palette.primary.main,
       '&:hover': {
         backgroundColor: theme.palette.primary.dark,

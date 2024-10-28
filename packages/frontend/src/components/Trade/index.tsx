@@ -1,23 +1,15 @@
 import React from 'react'
 import { Box, BoxProps } from '@material-ui/core'
 import { useAtom, useAtomValue } from 'jotai'
-import { useResetAtom } from 'jotai/utils'
 
-import { isTransactionFirstStepAtom, transactionDataAtom, transactionLoadingAtom } from '@state/wallet/atoms'
-import { ethTradeAmountAtom, openPositionAtom, sqthTradeAmountAtom, tradeTypeAtom } from '@state/trade/atoms'
-import { SqueethTabNew, SqueethTabsNew } from '@components/Tabs'
+import { openPositionAtom, tradeTypeAtom } from '@state/trade/atoms'
 import { TradeType } from 'src/types'
 import Long from './Long'
 import Short from './Short'
 
 const Trade: React.FC<BoxProps> = (props) => {
-  const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
-  const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
   const tradeType = useAtomValue(tradeTypeAtom)
   const [openPosition, setOpenPosition] = useAtom(openPositionAtom)
-  const resetTransactionData = useResetAtom(transactionDataAtom)
-  const transactionInProgress = useAtomValue(transactionLoadingAtom)
-  const isTxFirstStep = useAtomValue(isTransactionFirstStepAtom)
 
   return (
     <Box id="trade-card" {...props}>

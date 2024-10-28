@@ -362,6 +362,22 @@ export const useWithdrawUniPositionToken = () => {
   return withdrawUniPositionToken
 }
 
+export const useRedeemVault = () => {
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const redeemVault = async (vaultId: number, onTxConfirmed?: () => void) => {
+    if (!contract || !address) return
+    await handleTransaction(
+      contract.methods.redeemShort(vaultId).send({
+        from: address,
+      }),
+      onTxConfirmed,
+    )
+  }
+  return redeemVault
+}
+
 const useNormFactor = () => {
   const networkId = useAtomValue(networkIdAtom)
   const contract = useAtomValue(controllerContractAtom)
