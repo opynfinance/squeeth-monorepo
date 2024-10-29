@@ -314,11 +314,11 @@ const RedeemShort: React.FC<SellType> = () => {
   const error = redeemError ? redeemError : ''
 
   return (
-    <div id="close-short-card">
+    <div id="redeem-short-card">
       {confirmed ? (
         <div>
           <Confirmed
-            confirmationMessage={`Closed ${confirmedAmount} Squeeth Short Position`}
+            confirmationMessage={`Redeemed ${confirmedAmount} Squeeth Short Position`}
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.TRADE}
           />
@@ -330,7 +330,7 @@ const RedeemShort: React.FC<SellType> = () => {
                 resetTransactionData()
               }}
               className={classes.amountInput}
-              id="close-short-close-btn"
+              id="redeem-short-close-btn"
             >
               {'Close'}
             </PrimaryButtonNew>
@@ -361,13 +361,12 @@ const RedeemShort: React.FC<SellType> = () => {
 
           <Box display="flex" flexDirection="column">
             <InputToken
-              id="close-short-osqth-input"
+              id="redeem-short-osqth-input"
               label="Short oSQTH position"
               value={shortAmount.toString()}
               symbol="oSQTH"
               logo={osqthLogo}
               balance={shortAmount}
-              usdPrice={osqthPrice}
               showMaxAction={false}
               error={!!redeemError}
               helperText={redeemError}
@@ -384,18 +383,18 @@ const RedeemShort: React.FC<SellType> = () => {
               flexWrap="wrap"
             >
               <Metric
-                label="Existing collateral"
+                label="Current collateral"
                 value={formatNumber(existingCollatInETH.isPositive() ? existingCollatInETH.toNumber() : 0) + ' ETH'}
                 isSmall
               />
               <Metric
-                label="Equivalent debt"
+                label="Current debt"
                 value={formatNumber(existingDebtInETH.isPositive() ? existingDebtInETH.toNumber() : 0) + ' ETH'}
                 isSmall
               />
             </Box>
 
-            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
+            <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="24px">
               <Metric
                 label="ETH you will receive"
                 value={formatNumber(existingCollatInETH.minus(existingDebtInETH).toNumber()) + ' ETH'}
@@ -417,7 +416,7 @@ const RedeemShort: React.FC<SellType> = () => {
                   variant="contained"
                   onClick={selectWallet}
                   disabled={true}
-                  id="close-short-restricted-btn"
+                  id="redeem-short-restricted-btn"
                 >
                   {'Unavailable'}
                 </PrimaryButtonNew>
@@ -428,7 +427,7 @@ const RedeemShort: React.FC<SellType> = () => {
                   onClick={selectWallet}
                   className={classes.amountInput}
                   disabled={!!isTxnLoading}
-                  id="close-short-connect-wallet-btn"
+                  id="redeem-short-connect-wallet-btn"
                 >
                   {'Connect Wallet'}
                 </PrimaryButtonNew>
@@ -444,7 +443,7 @@ const RedeemShort: React.FC<SellType> = () => {
                     !!redeemError ||
                     (vault && vault.shortAmount.isZero())
                   }
-                  id="close-short-submit-tx-btn"
+                  id="redeem-short-submit-tx-btn"
                 >
                   {!supportedNetwork ? (
                     'Unsupported Network'

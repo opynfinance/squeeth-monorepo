@@ -63,9 +63,9 @@ const useInputTokenProps = makeStyles((theme) =>
 )
 
 interface InputTokenProps extends InputNumberProps {
-  usdPrice: BigNumber
+  usdPrice?: BigNumber
   balance: BigNumber
-  logo: string
+  logo?: string
   symbol: string
   onBalanceClick?: () => void
   showMaxAction?: boolean
@@ -95,7 +95,7 @@ export const InputToken: React.FC<InputTokenProps> = ({
   const classes = useInputTokenProps()
   const textClasses = useTextStyles()
 
-  const usdValue = usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() // value is always "number" type
+  const usdValue = usdPrice ? usdPrice.multipliedBy(new BigNumber(value as number)).toNumber() : null // value is always "number" type
 
   return (
     <div className={classes.container}>
@@ -110,9 +110,11 @@ export const InputToken: React.FC<InputTokenProps> = ({
               endAdornment: (
                 <InputAdornment position="end">
                   <div className={classes.adornmentContainer}>
-                    <div className={classes.logo}>
-                      <Image src={logo} alt="logo" width="100%" height="100%" />
-                    </div>
+                    {logo && (
+                      <div className={classes.logo}>
+                        <Image src={logo} alt="logo" width="100%" height="100%" />
+                      </div>
+                    )}
 
                     <Typography className={clsx(textClasses.lightestFontColor, textClasses.mediumBold)}>
                       {symbol}
@@ -135,11 +137,11 @@ export const InputToken: React.FC<InputTokenProps> = ({
               {loadingMessage}
             </Typography>
           </Box>
-        ) : (
+        ) : usdValue ? (
           <Typography className={clsx(textClasses.lighterFontColor, textClasses.smallFont, textClasses.monoFont)}>
             {formatCurrency(usdValue)}
           </Typography>
-        )}
+        ) : null}
       </div>
 
       <div className={classes.subSection}>
