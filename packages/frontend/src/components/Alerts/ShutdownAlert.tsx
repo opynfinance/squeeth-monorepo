@@ -68,7 +68,7 @@ export const ShutdownAlert: React.FC = () => {
       <Alert severity="warning" showIcon={!isMobileBreakpoint}>
         <div>
           <Typography variant="body1" className={classes.textBig}>
-            Squeeth will be shutting down on {shutdownDateFormatted} as{' '}
+            Squeeth has shut down on {shutdownDateFormatted} as{' '}
             <Link href="https://markets.opyn.co" passHref>
               <a className={classes.link} target="_blank" rel="noopener noreferrer">
                 Opyn Markets
@@ -76,12 +76,9 @@ export const ShutdownAlert: React.FC = () => {
             </Link>{' '}
             gears up for launch
           </Typography>
-          <Typography variant="body2" className={classes.text} style={{ marginTop: theme.spacing(1) }}>
-            The protocol will function normally until shutdown, meaning positions can be opened and closed at
-            users&apos; discretion and Squeeth will continue to track ETH^2.
-          </Typography>
+
           <Typography variant="body2" className={classes.text} style={{ marginTop: theme.spacing(0.5) }}>
-            At shutdown, positions will be closed with 0 fees and 0 price impact. For more details, please refer to our{' '}
+            Positions can be redeemed with 0 fees and 0 price impact.. For more details, please refer to our{' '}
             <Link href="https://opyn.gitbook.io/opyn-hub/squeeth-retirement/squeeth-retirement-faqs" passHref>
               <a className={classes.link} target="_blank" rel="noopener noreferrer">
                 FAQ
