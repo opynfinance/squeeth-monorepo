@@ -1,8 +1,7 @@
 import { useQuery } from '@apollo/client'
 import {
   CircularProgress,
-  InputAdornment,
-  TextField,
+  Link,
   Typography,
   Tooltip,
   Select,
@@ -141,12 +140,14 @@ const useStyles = makeStyles((theme) =>
       },
     },
     redeemVaultWarning: {
-      color: theme.palette.error.main,
+      color: theme.palette.text.secondary,
       marginTop: theme.spacing(2),
-      padding: theme.spacing(2),
-      background: `${theme.palette.error.main}10`,
       borderRadius: theme.spacing(1),
       fontSize: '14px',
+
+      '& a': {
+        textDecoration: 'underline',
+      },
     },
     manager: {
       display: 'flex',
@@ -721,29 +722,45 @@ const Component: React.FC = () => {
           <div className={classes.redeemVaultBtnContainer}>
             <Typography className={classes.redeemVaultTitle}>Redeem Vault</Typography>
             <Typography className={classes.redeemVaultDescription}>
-              This will:
-              {isLPDeposited && <span>• Withdraw your LP position from vault</span>}
-              <span>• Close your short position by burning {vault?.shortAmount.toFixed(6)} oSQTH</span>
-            </Typography>
-
-            <RemoveButton
-              id="redeem-vault-submit-tx-btn"
-              onClick={handleRedeemVault}
-              disabled={txLoading}
-              className={classes.redeemVaultBtn}
-            >
-              {action === VaultAction.REDEEM_UNI_POSITION && txLoading ? (
-                <CircularProgress color="primary" size="1rem" />
+              {!vault?.shortAmount?.gt(0) && !isLPDeposited ? (
+                <Typography className={classes.redeemVaultDescription}>
+                  This vault has no positions to redeem.
+                </Typography>
               ) : (
-                'Redeem Vault'
+                <>
+                  <Typography className={classes.redeemVaultDescription}>
+                    {(vault?.shortAmount?.gt(0) || isLPDeposited) && (
+                      <>
+                        This will:
+                        {isLPDeposited && <span>• Withdraw your LP position from vault</span>}
+                        {vault?.shortAmount?.gt(0) && (
+                          <span>• Close your short position by burning {vault.shortAmount.toFixed(6)} oSQTH</span>
+                        )}
+                      </>
+                    )}
+                  </Typography>
+
+                  <RemoveButton
+                    id="redeem-vault-submit-tx-btn"
+                    onClick={handleRedeemVault}
+                    disabled={txLoading}
+                    className={classes.redeemVaultBtn}
+                  >
+                    {action === VaultAction.REDEEM_UNI_POSITION && txLoading ? (
+                      <CircularProgress color="primary" size="1rem" />
+                    ) : (
+                      'Redeem Vault'
+                    )}
+                  </RemoveButton>
+                </>
               )}
-            </RemoveButton>
+            </Typography>
 
             {lpedSqueeth?.gt(vault?.shortAmount || BIG_ZERO) && (
               <Typography className={classes.redeemVaultWarning}>
-                <b>Note:</b> After redemption, you'll need to manually redeem{' '}
+                <b>Note:</b> After redemption, you&apos;ll need to manually redeem{' '}
                 {lpedSqueeth.minus(vault?.shortAmount || BIG_ZERO).toFixed(6)} oSQTH from your LP position using the
-                "Redeem Long" functionality
+                &quot;Redeem Long&quot; functionality on the <Link href="/squeeth">trade page</Link>
               </Typography>
             )}
           </div>
@@ -757,15 +774,13 @@ const Component: React.FC = () => {
                 <Typography className={classes.lpManagerTitle}>Manage LP Token</Typography>
               </div>
 
-              {!isLPDeposited ? (
-                <div className={classes.lpManagerContent}>
-                  <UniswapIframe text={'Withdraw LP Position'} closePosition={true} />
-                  <Typography className={classes.lpManagerDescription}>
-                    If you have an LP position in Uniswap, you can withdraw it directly here. The withdrawn oSQTH can
-                    then be redeemed separately.
-                  </Typography>
-                </div>
-              ) : null}
+              <div className={classes.lpManagerContent}>
+                <UniswapIframe text={'Withdraw LP Position'} closePosition={true} />
+                <Typography className={classes.lpManagerDescription}>
+                  If you have an LP position in Uniswap, you can withdraw it directly here. The withdrawn oSQTH can then
+                  be redeemed separately.
+                </Typography>
+              </div>
             </div>
           ) : null}
         </div>
