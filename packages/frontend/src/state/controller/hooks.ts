@@ -273,6 +273,27 @@ export const useGetUniNFTCollatDetail = () => {
   return getUniNFTCollatDetail
 }
 
+export const useGetUniNFTDetails = () => {
+  const normFactor = useAtomValue(normFactorAtom)
+  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getTwapEthPrice = useGetTwapEthPrice()
+
+  const getUniNFTAmounts = async (uniId: number) => {
+    const ethPrice = await getTwapEthPrice()
+    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+
+    return {
+      ethAmount: wethAmount,
+      squeethAmount: oSqthAmount,
+      squeethValueInEth: sqthValueInEth,
+      position,
+    }
+  }
+
+  return getUniNFTAmounts
+}
+
 export const useGetCollatRatioAndLiqPrice = () => {
   const impliedVol = useAtomValue(impliedVolAtom)
   const isWethToken0 = useAtomValue(isWethToken0Atom)

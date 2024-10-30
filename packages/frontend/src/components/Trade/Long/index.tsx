@@ -2,7 +2,7 @@ import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse }
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
@@ -12,6 +12,8 @@ import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import { useShutdownLongHelper } from '@hooks/contracts/useLongHelper'
+import useAmplitude from '@hooks/useAmplitude'
+import { LONG_SQUEETH_EVENTS } from '@utils/amplitude'
 
 import { addressesAtom } from '@state/positions/atoms'
 
@@ -285,7 +287,6 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  const { data: osqthPrice } = useOSQTHPrice()
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
@@ -293,12 +294,14 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { value: oSqueethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
+  const { value: oSqueethBalance } = useTokenBalance(oSqueeth, 30, OSQUEETH_DECIMALS)
 
   const getOSqthSettlementAmount = useGetOSqthSettlementAmount()
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
+
+  const { track } = useAmplitude()
 
   // let openError: string | undefined
   let redeemError: string | undefined
@@ -329,18 +332,27 @@ const RedeemLong: React.FC<BuyProps> = () => {
           setInputQuoteLoading(false)
         })
     }
-  }, [oSqueethBalance, getOSqthSettlementAmount, setInputQuoteLoading])
+  }, [oSqueethBalance.toString(), getOSqthSettlementAmount, setInputQuoteLoading])
+
+  const needsSqueethApproval = useMemo(
+    () => squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth,
+    [squeethAllowance?.toString(), oSqueethBalance?.toString(), hasJustApprovedSqueeth],
+  )
 
   const redeemLong = useAppCallback(async () => {
     setIsRedeemTxnLoading(true)
     try {
-      if (squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth) {
+      if (needsSqueethApproval) {
+        track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_CLICK)
         setIsTxFirstStep(true)
         await squeethApprove(() => {
           setHasJustApprovedSqueeth(true)
           setIsRedeemTxnLoading(false)
+          track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_SUCCESS)
         })
       } else {
+        track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_CLICK)
+
         await redeemLongHelper(oSqueethBalance, () => {
           setIsTxFirstStep(false)
           setTradeSuccess(true)
@@ -350,14 +362,29 @@ const RedeemLong: React.FC<BuyProps> = () => {
 
           resetEthTradeAmount()
           resetSqthTradeAmount()
+
+          track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_SUCCESS, {
+            amount: oSqueethBalance.toNumber(),
+            ethReceived: ethToReceive.toNumber(),
+          })
         })
       }
     } catch (e) {
       console.log(e)
       setIsRedeemTxnLoading(false)
+
+      // Track failures
+      if (needsSqueethApproval) {
+        track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_FAILED)
+      } else {
+        track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_FAILED, {
+          amount: oSqueethBalance.toNumber(),
+        })
+      }
     }
   }, [
-    oSqueethBalance,
+    needsSqueethApproval,
+    oSqueethBalance?.toString(),
     hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,

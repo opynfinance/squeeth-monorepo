@@ -202,8 +202,8 @@ const TabComponent: React.FC = () => {
         variant="fullWidth"
         classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
       >
-        <SqueethTabNew label="Long" id="long-card-btn" classes={{ root: classes.longTab }} />
-        <SqueethTabNew label="Short" id="short-card-btn" classes={{ root: classes.shortTab }} />
+        <SqueethTabNew label="Redeem Long" id="long-card-btn" classes={{ root: classes.longTab }} />
+        <SqueethTabNew label="Redeem Short" id="short-card-btn" classes={{ root: classes.shortTab }} />
       </SqueethTabsNew>
     </div>
   )

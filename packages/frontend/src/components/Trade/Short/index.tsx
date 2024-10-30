@@ -15,7 +15,7 @@ import { connectedWalletAtom, supportedNetworkAtom, addressAtom } from '@state/w
 import { useSelectWallet, useTransactionStatus } from '@state/wallet/hooks'
 import { vaultHistoryUpdatingAtom } from '@state/positions/atoms'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import { useGetOSqthSettlementAmount } from '@state/controller/hooks'
+import { useGetOSqthSettlementAmount, useGetUniNFTDetails } from '@state/controller/hooks'
 import { useFirstValidVault } from '@state/positions/hooks'
 import { tradeCompletedAtom, tradeSuccessAtom } from '@state/trade/atoms'
 import Cancelled from '../Cancelled'
@@ -27,6 +27,8 @@ import osqthLogo from 'public/images/osqth-logo.svg'
 import { formatNumber } from '@utils/formatter'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { useRestrictUser } from '@context/restrict-user'
+import useAmplitude from '@hooks/useAmplitude'
+import { SHORT_SQUEETH_EVENTS } from '@utils/amplitude'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -200,6 +202,11 @@ const RedeemShort: React.FC<SellType> = () => {
   const [existingCollatInETH, setExistingCollatInETH] = useState(new BigNumber(0))
   const [existingDebtInETH, setExistingDebtInETH] = useState(new BigNumber(0))
 
+  // Add these new LP tracking variables
+  const [lpedEth, setLpedEth] = useState(new BigNumber(0))
+  const [lpedSqueethInEth, setLpedSqueethInEth] = useState(new BigNumber(0))
+  const [lpedSqueethAmount, setLpedSqueethAmount] = useState(new BigNumber(0))
+
   const [shortAmount, setShortAmount] = useState(new BigNumber(0))
   const [isTxnLoading, setIsTxnLoading] = useState(false)
 
@@ -220,6 +227,7 @@ const RedeemShort: React.FC<SellType> = () => {
 
   const selectWallet = useSelectWallet()
   const getOSqthSettlementAmount = useGetOSqthSettlementAmount()
+  const getUniNFTDetails = useGetUniNFTDetails()
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
@@ -227,19 +235,20 @@ const RedeemShort: React.FC<SellType> = () => {
   const { updateVault } = useVaultManager()
   const { validVault: vault, vaultId } = useFirstValidVault()
 
-  const { data: osqthPrice } = useOSQTHPrice()
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
-  console.log({ address, vault })
+  const { track } = useAmplitude()
+
+  console.log({ address, vault, vaultId })
 
   useAppEffect(() => {
     if (vault) {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setShortAmount(contractShort)
     }
-  }, [vault, vault?.shortAmount])
+  }, [vault?.shortAmount])
 
   useAppEffect(() => {
     if (shortAmount.isEqualTo(0)) {
@@ -260,6 +269,31 @@ const RedeemShort: React.FC<SellType> = () => {
     }
   }, [shortAmount, getOSqthSettlementAmount, vault])
 
+  // fetch LP details
+  useAppEffect(() => {
+    const getLPValues = async () => {
+      if (vault && Number(vault?.NFTCollateralId) !== 0) {
+        try {
+          const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
+          setLpedEth(ethAmount)
+          setLpedSqueethInEth(squeethValueInEth)
+          setLpedSqueethAmount(squeethAmount)
+        } catch (err) {
+          console.error('Error getting LP values:', err)
+          setLpedEth(new BigNumber(0))
+          setLpedSqueethInEth(new BigNumber(0))
+          setLpedSqueethAmount(new BigNumber(0))
+        }
+      } else {
+        setLpedEth(new BigNumber(0))
+        setLpedSqueethInEth(new BigNumber(0))
+        setLpedSqueethAmount(new BigNumber(0))
+      }
+    }
+
+    getLPValues()
+  }, [vault?.NFTCollateralId])
+
   useAppEffect(() => {
     if (transactionInProgress) {
       setIsTxnLoading(false)
@@ -270,6 +304,7 @@ const RedeemShort: React.FC<SellType> = () => {
     setIsTxnLoading(true)
 
     try {
+      track(SHORT_SQUEETH_EVENTS.REDEEM_SHORT_OSQTH_CLICK)
       await redeemShortPosition(Number(vaultId), async () => {
         setConfirmedAmount(shortAmount.toFixed(6).toString())
         setTradeSuccess(true)
@@ -279,13 +314,20 @@ const RedeemShort: React.FC<SellType> = () => {
         setVaultHistoryUpdating(true)
         updateVault()
         vaultHistoryQuery.refetch({ vaultId })
+
+        track(SHORT_SQUEETH_EVENTS.REDEEM_SHORT_OSQTH_SUCCESS, {
+          vaultId: Number(vaultId),
+          ethReceived: ethToReceive.toNumber(),
+        })
       })
     } catch (e) {
       console.log(e)
       setIsTxnLoading(false)
+
+      track(SHORT_SQUEETH_EVENTS.REDEEM_SHORT_OSQTH_FAILED)
     }
   }, [
-    shortAmount,
+    shortAmount?.toString(),
     updateVault,
     redeemShortPosition,
     setConfirmedAmount,
@@ -295,18 +337,26 @@ const RedeemShort: React.FC<SellType> = () => {
     setVaultHistoryUpdating,
     vaultHistoryQuery,
     vaultId,
+    track,
   ])
+
+  // Add these calculated variables
+  const totalCollateralInEth = existingCollatInETH.plus(lpedEth)
+  const remainingDebtInEth = lpedSqueethInEth.gte(existingDebtInETH)
+    ? new BigNumber(0)
+    : existingDebtInETH.minus(lpedSqueethInEth)
+  const ethToReceive = totalCollateralInEth.minus(remainingDebtInEth)
 
   let redeemError: string | undefined
 
   if (connected) {
     if (shortAmount.lte(0)) {
       redeemError = 'No position to redeem'
-    } else if (existingCollatInETH.isLessThan(existingDebtInETH)) {
+    } else if (ethToReceive.lte(0)) {
       redeemError = `Insolvent vault. Your collateral (${formatNumber(
-        existingCollatInETH.toNumber(),
+        totalCollateralInEth.toNumber(),
       )} ETH) is less than your debt (${formatNumber(
-        existingDebtInETH.toNumber(),
+        remainingDebtInEth.toNumber(),
       )} ETH). You will not receive any ETH back.`
     }
   }
@@ -391,6 +441,18 @@ const RedeemShort: React.FC<SellType> = () => {
                 isSmall
               />
             </Box>
+
+            {(lpedEth.isGreaterThan(0) || lpedSqueethAmount.isGreaterThan(0)) && (
+              <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
+                <Metric
+                  label="LP Position"
+                  value={`${formatNumber(lpedEth.toNumber())} ETH + ${formatNumber(
+                    lpedSqueethAmount.toNumber(),
+                  )} oSQTH`}
+                  isSmall
+                />
+              </Box>
+            )}
 
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="24px">
               <Metric
