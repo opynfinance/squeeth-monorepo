@@ -259,20 +259,25 @@ export const useCalculateEthWillingToPayV2 = () => {
   return calculateEthWillingToPay
 }
 
-export const useCalculateEthToReceiveShutdown = () => {
+export const useCalculateEthToReceiveShutdown = (version: 'v1' | 'v2' = 'v2') => {
+  const vaultV1 = useAtomValue(crabStrategyVaultAtom)
   const vaultV2 = useAtomValue(crabStrategyVaultAtomV2)
+  const contractV1 = useAtomValue(crabStrategyContractAtom)
   const contractV2 = useAtomValue(crabStrategyContractAtomV2)
 
   const calculateEthToReceive = useCallback(
     async (crabAmount: BigNumber) => {
-      if (!vaultV2) {
+      const vault = version === 'v1' ? vaultV1 : vaultV2
+      const contract = version === 'v1' ? contractV1 : contractV2
+
+      if (!vault) {
         return new BigNumber(0)
       }
 
-      const ethToReceive = await getCollateralFromCrabAmount(crabAmount, contractV2, vaultV2)
+      const ethToReceive = await getCollateralFromCrabAmount(crabAmount, contract, vault)
       return ethToReceive
     },
-    [vaultV2?.id, contractV2],
+    [version, vaultV1?.id, vaultV2?.id, contractV1, contractV2],
   )
 
   return calculateEthToReceive
@@ -300,24 +305,25 @@ export const useClaimV2Shares = () => {
   return claimV2Shares
 }
 
-export const useWithdrawShutdownV2 = () => {
+export const useWithdrawShutdown = (version: 'v1' | 'v2' = 'v2') => {
+  const contractV1 = useAtomValue(crabStrategyContractAtom)
   const contractV2 = useAtomValue(crabStrategyContractAtomV2)
-
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
 
   const withdrawShutdown = useCallback(
     async (crabAmount: BigNumber, onTxConfirmed?: () => void) => {
-      if (!contractV2) return
+      const contract = version === 'v1' ? contractV1 : contractV2
+      if (!contract) return
 
       return await handleTransaction(
-        contractV2.methods.withdrawShutdown(fromTokenAmount(crabAmount, 18).toFixed(0)).send({
+        contract.methods.withdrawShutdown(fromTokenAmount(crabAmount, 18).toFixed(0)).send({
           from: address,
         }),
         onTxConfirmed,
       )
     },
-    [contractV2, address, handleTransaction],
+    [version, contractV1, contractV2, address, handleTransaction],
   )
 
   return withdrawShutdown

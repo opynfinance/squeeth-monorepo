@@ -6,7 +6,7 @@ import CrabTradeV2 from '@components/Strategies/Crab/CrabTradeV2'
 import MyPosition from '@components/Strategies/Crab/MyPosition'
 import About from '@components/Strategies/Crab/About'
 import StrategyPerformance from '@components/Strategies/Crab/StrategyPerformance'
-import { useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
+import { useSetStrategyData, useSetStrategyDataV2, useCurrentCrabPositionValueV2 } from '@state/crab/hooks'
 import { useInitCrabMigration } from '@state/crabMigration/hooks'
 import { SQUEETH_BASE_URL } from '@constants/index'
 
@@ -50,6 +50,7 @@ const useStyles = makeStyles((theme) =>
 )
 
 const Crab: React.FC = () => {
+  const setStrategyData = useSetStrategyData()
   const setStrategyDataV2 = useSetStrategyDataV2()
   const classes = useStyles()
   const { currentCrabPositionValue, isCrabPositionValueLoading, refetchCrabTokenBalance } =
@@ -58,8 +59,9 @@ const Crab: React.FC = () => {
   useInitCrabMigration()
 
   useEffect(() => {
+    setStrategyData()
     setStrategyDataV2()
-  }, [setStrategyDataV2])
+  }, [setStrategyData, setStrategyDataV2])
 
   return (
     <>
