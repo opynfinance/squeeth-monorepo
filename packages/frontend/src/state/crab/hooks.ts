@@ -259,6 +259,70 @@ export const useCalculateEthWillingToPayV2 = () => {
   return calculateEthWillingToPay
 }
 
+export const useCalculateEthToReceiveShutdown = () => {
+  const vaultV2 = useAtomValue(crabStrategyVaultAtomV2)
+  const contractV2 = useAtomValue(crabStrategyContractAtomV2)
+
+  const calculateEthToReceive = useCallback(
+    async (crabAmount: BigNumber) => {
+      if (!vaultV2) {
+        return new BigNumber(0)
+      }
+
+      const ethToReceive = await getCollateralFromCrabAmount(crabAmount, contractV2, vaultV2)
+      return ethToReceive
+    },
+    [vaultV2?.id, contractV2],
+  )
+
+  return calculateEthToReceive
+}
+
+export const useClaimV2Shares = () => {
+  const contract = useAtomValue(crabMigrationContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const claimV2Shares = useCallback(
+    async (onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      return await handleTransaction(
+        contract.methods.claimV2Shares().send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return claimV2Shares
+}
+
+export const useWithdrawShutdownV2 = () => {
+  const contractV2 = useAtomValue(crabStrategyContractAtomV2)
+
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const withdrawShutdown = useCallback(
+    async (crabAmount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contractV2) return
+
+      return await handleTransaction(
+        contractV2.methods.withdrawShutdown(fromTokenAmount(crabAmount, 18).toFixed(0)).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contractV2, address, handleTransaction],
+  )
+
+  return withdrawShutdown
+}
+
 export const useCurrentCrabPositionValue = () => {
   const { crabStrategy } = useAtomValue(addressesAtom)
 

@@ -100,5 +100,16 @@ export const useStyles = makeStyles((theme) =>
     withdrawStepsContainer: {
       marginBottom: theme.spacing(2),
     },
+    stepper: {
+      width: '100%',
+      marginBottom: theme.spacing(1),
+      backgroundColor: theme.palette.background.stone,
+      borderRadius: '12px',
+
+      '& .MuiStepIcon-active .MuiStepIcon-text': {
+        // Black color for active step number
+        fill: theme.palette.common.black,
+      },
+    },
   }),
 )
