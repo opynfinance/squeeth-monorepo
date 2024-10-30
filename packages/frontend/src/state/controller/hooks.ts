@@ -212,12 +212,12 @@ export const useGetDebtAmount = () => {
 }
 
 // get ETH debt amount based on the settlement index price
-export const useGetDebtSettlementAmount = () => {
+export const useGetOSqthSettlementAmount = () => {
   const contract = useAtomValue(controllerContractAtom)
   const normFactor = useAtomValue(normFactorAtom)
   const indexForSettlement = useAtomValue(indexForSettlementAtom)
 
-  const getDebtSettlementAmount = useCallback(
+  const getOSqthSettlementAmount = useCallback(
     async (shortAmount: BigNumber) => {
       if (!contract) return new BigNumber(0)
 
@@ -227,7 +227,7 @@ export const useGetDebtSettlementAmount = () => {
     },
     [contract, normFactor?.toString()],
   )
-  return getDebtSettlementAmount
+  return getOSqthSettlementAmount
 }
 
 export const useGetTwapEthPrice = () => {

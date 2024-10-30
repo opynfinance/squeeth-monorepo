@@ -1,56 +1,40 @@
-import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse, Tooltip } from '@material-ui/core'
+import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
 import React, { useState } from 'react'
-import debounce from 'lodash/debounce'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
-import { UniswapIframe } from '@components/Modal/UniswapIframe'
-import { TradeSettings } from '@components/TradeSettings'
 import Alert from '@components/Alert'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
-import useAppMemo from '@hooks/useAppMemo'
-import { useETHPrice } from '@hooks/useETHPrice'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import { toTokenAmount } from '@utils/calculations'
-import { currentImpliedFundingAtom, dailyHistoricalFundingAtom } from '@state/controller/atoms'
-import { addressesAtom, isShortAtom } from '@state/positions/atoms'
-import { useComputeSwaps, useShortDebt } from '@state/positions/hooks'
-import {
-  useAutoRoutedBuyAndRefund,
-  useAutoRoutedSell,
-  useAutoRoutedGetSellQuote,
-  useGetBuyQuote,
-  useGetBuyQuoteForETH,
-  useGetSellQuoteForETH,
-} from '@state/squeethPool/hooks'
+import { useShutdownLongHelper } from '@hooks/contracts/useLongHelper'
+
+import { addressesAtom } from '@state/positions/atoms'
+
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
   inputQuoteLoadingAtom,
-  quoteAtom,
-  slippageAmountAtom,
   sqthTradeAmountAtom,
   tradeCompletedAtom,
   tradeSuccessAtom,
 } from '@state/trade/atoms'
 import { connectedWalletAtom, isTransactionFirstStepAtom, supportedNetworkAtom } from '@state/wallet/atoms'
-import { useSelectWallet, useTransactionStatus, useWalletBalance } from '@state/wallet/hooks'
-import { BIG_ZERO } from '@constants/index'
-import { formatCurrency, formatNumber } from '@utils/formatter'
-import ethLogo from 'public/images/eth-logo.svg'
+import { useSelectWallet, useTransactionStatus } from '@state/wallet/hooks'
+import { OSQUEETH_DECIMALS } from '@constants/index'
+import { formatNumber } from '@utils/formatter'
 import osqthLogo from 'public/images/osqth-logo.svg'
 import Cancelled from '../Cancelled'
 import Confirmed, { ConfirmType } from '../Confirmed'
 import Metric from '@components/Metric'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { useRestrictUser } from '@context/restrict-user'
-import { Tooltips } from '@constants/enums'
-import InfoIcon from '@material-ui/icons/InfoOutlined'
+import { useGetOSqthSettlementAmount } from '@state/controller/hooks'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -278,21 +262,8 @@ const useStyles = makeStyles((theme) =>
   }),
 )
 
-const Label: React.FC<{ label: string; tooltipTitle: string }> = ({ label, tooltipTitle }) => {
-  const classes = useStyles()
-
-  return (
-    <div className={classes.labelContainer}>
-      <Typography className={classes.label}>{label}</Typography>
-      <Tooltip title={tooltipTitle}>
-        <InfoIcon fontSize="small" className={classes.infoIcon} />
-      </Tooltip>
-    </div>
-  )
-}
-
 const RedeemLong: React.FC<BuyProps> = () => {
-  const [sellLoading, setSellLoading] = useState(false)
+  const [isRedeemTxnLoading, setIsRedeemTxnLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
 
   const classes = useStyles()
@@ -304,24 +275,17 @@ const RedeemLong: React.FC<BuyProps> = () => {
     resetTxCancelled,
     resetTransactionData,
   } = useTransactionStatus()
+
+  const [ethToReceive, setEthToReceive] = useState<BigNumber>(new BigNumber(0))
   const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
-  const sell = useAutoRoutedSell()
-  const getSellQuoteForETH = useGetSellQuoteForETH()
-  const getSellQuote = useAutoRoutedGetSellQuote()
-  const { data } = useWalletBalance()
-  const balance = Number(toTokenAmount(data ?? BIG_ZERO, 18).toFixed(4))
+  const { redeemLongHelper } = useShutdownLongHelper()
 
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
   const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
-  const [quote, setQuote] = useAtom(quoteAtom)
-  const [ethTradeAmount, setEthTradeAmount] = useAtom(ethTradeAmountAtom)
-  const [sqthTradeAmount, setSqthTradeAmount] = useAtom(sqthTradeAmountAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
-  const [slippageAmount, setSlippage] = useAtom(slippageAmountAtom)
-  const ethPrice = useETHPrice()
+
   const { data: osqthPrice } = useOSQTHPrice()
-  const amount = useAppMemo(() => new BigNumber(sqthTradeAmount), [sqthTradeAmount])
   const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
@@ -329,50 +293,60 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { squeethAmount } = useComputeSwaps()
+  const { value: oSqueethBalance } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
-  const shortDebt = useShortDebt()
-  const isShort = shortDebt.gt(0)
+  const getOSqthSettlementAmount = useGetOSqthSettlementAmount()
 
   const resetEthTradeAmount = useResetAtom(ethTradeAmountAtom)
   const resetSqthTradeAmount = useResetAtom(sqthTradeAmountAtom)
-  const resetQuote = useResetAtom(quoteAtom)
 
   // let openError: string | undefined
-  let closeError: string | undefined
-  let existingShortError: string | undefined
-  let priceImpactWarning: string | undefined
+  let redeemError: string | undefined
 
   if (connected) {
-    if (squeethAmount.lt(amount)) {
-      closeError = 'Insufficient oSQTH balance'
-    }
-    // if (amount.gt(balance)) {
-    //   openError = 'Insufficient ETH balance'
-    // }
-    if (new BigNumber(quote.priceImpact).gt(3)) {
-      priceImpactWarning = 'High Price Impact'
+    if (oSqueethBalance.lte(0)) {
+      redeemError = 'No position to redeem'
     }
   }
 
-  const longClosePriceImpactErrorState =
-    priceImpactWarning && !closeError && !sellLoading && !squeethAmount.isZero() && !isShort
-  const error = existingShortError ? existingShortError : priceImpactWarning ? priceImpactWarning : ''
+  useAppEffect(() => {
+    if (transactionInProgress) {
+      setIsRedeemTxnLoading(false)
+    }
+  }, [transactionInProgress])
 
-  const sellAndClose = useAppCallback(async () => {
-    setSellLoading(true)
+  useAppEffect(() => {
+    if (oSqueethBalance.isGreaterThan(0)) {
+      setInputQuoteLoading(true)
+
+      getOSqthSettlementAmount(oSqueethBalance)
+        .then((settlementAmount) => {
+          setEthToReceive(settlementAmount)
+          setInputQuoteLoading(false)
+        })
+        .catch((e) => {
+          console.log(e)
+          setInputQuoteLoading(false)
+        })
+    }
+  }, [oSqueethBalance, getOSqthSettlementAmount, setInputQuoteLoading])
+
+  const redeemLong = useAppCallback(async () => {
+    setIsRedeemTxnLoading(true)
     try {
-      if (squeethAllowance.lt(amount) && !hasJustApprovedSqueeth) {
+      if (squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth) {
         setIsTxFirstStep(true)
         await squeethApprove(() => {
           setHasJustApprovedSqueeth(true)
-          setSellLoading(false)
+          setIsRedeemTxnLoading(false)
         })
       } else {
-        await sell(amount, () => {
+        await redeemLongHelper(oSqueethBalance, () => {
           setIsTxFirstStep(false)
           setTradeSuccess(true)
           setTradeCompleted(true)
+
+          setConfirmedAmount(oSqueethBalance.toFixed(6))
 
           resetEthTradeAmount()
           resetSqthTradeAmount()
@@ -380,108 +354,35 @@ const RedeemLong: React.FC<BuyProps> = () => {
       }
     } catch (e) {
       console.log(e)
-      setSellLoading(false)
+      setIsRedeemTxnLoading(false)
     }
   }, [
-    amount,
+    oSqueethBalance,
     hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,
-    sell,
+    redeemLongHelper,
     setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
     squeethAllowance,
     squeethApprove,
+    setConfirmedAmount,
   ])
 
-  useAppEffect(() => {
-    if (transactionInProgress) {
-      setSellLoading(false)
-    }
-  }, [transactionInProgress])
-
-  const sellQuoteHandler = useAppCallback(
-    (sqthAmount, slippage) => {
-      if (parseFloat(sqthAmount) === 0) {
-        resetQuote()
-        resetEthTradeAmount()
-        return
-      }
-
-      setInputQuoteLoading(true)
-
-      return getSellQuote(new BigNumber(sqthAmount), slippage).then((quoteVal) => {
-        if (quoteVal) {
-          setQuote(quoteVal)
-
-          setEthTradeAmount(quoteVal.amountOut.toString())
-          setConfirmedAmount(Number(sqthAmount).toFixed(6))
-          setInputQuoteLoading(false)
-        }
-      })
-    },
-    [
-      getSellQuote,
-      resetEthTradeAmount,
-      resetQuote,
-      setQuote,
-      setEthTradeAmount,
-      setConfirmedAmount,
-      setInputQuoteLoading,
-    ],
-  )
-
-  const debouncedSellQuoteHandler = useAppMemo(() => debounce(sellQuoteHandler, 500), [sellQuoteHandler])
-
-  useAppEffect(() => {
-    debouncedSellQuoteHandler(sqthTradeAmount, slippageAmount)
-  }, [slippageAmount, sqthTradeAmount, debouncedSellQuoteHandler])
-
-  const handleSqthChange = useAppCallback((value: string) => setSqthTradeAmount(value), [setSqthTradeAmount])
-
-  const sellQuoteForETHHandler = useAppCallback(
-    (ethAmount, slippage) => {
-      setInputQuoteLoading(true)
-
-      return getSellQuoteForETH(new BigNumber(ethAmount), slippage).then((quoteVal) => {
-        setSqthTradeAmount(quoteVal.amountIn.toString())
-        setInputQuoteLoading(false)
-      })
-    },
-    [setInputQuoteLoading, getSellQuoteForETH, setSqthTradeAmount],
-  )
-
-  const debouncedSellQuoteForETHHandler = useAppMemo(
-    () => debounce(sellQuoteForETHHandler, 500),
-    [sellQuoteForETHHandler],
-  )
-
-  const handleEthChange = useAppCallback(
-    (value: string) => {
-      setEthTradeAmount(value)
-      debouncedSellQuoteForETHHandler(value, slippageAmount)
-    },
-    [setEthTradeAmount, slippageAmount, debouncedSellQuoteForETHHandler],
-  )
-
-  const slippageAmountValue = isNaN(slippageAmount.toNumber()) ? 0 : slippageAmount.toNumber()
-  const priceImpact = isNaN(Number(quote.priceImpact)) ? 0 : Number(quote.priceImpact)
-  const priceImpactColor = priceImpact > 3 ? 'error' : undefined
-
   return (
-    <div id="close-long-card">
+    <div id="redeem-long-card">
       {confirmed && !isTxFirstStep ? (
         <>
           <Confirmed
-            confirmationMessage={`Sold ${confirmedAmount} Squeeth`}
+            confirmationMessage={`Redeemed ${confirmedAmount} Squeeth`}
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.TRADE}
           />
           <div className={classes.buttonDiv}>
             <PrimaryButtonNew
               fullWidth
-              id="close-long-close-btn"
+              id="redeem-long-close-btn"
               variant="contained"
               onClick={() => {
                 resetTransactionData()
@@ -515,65 +416,35 @@ const RedeemLong: React.FC<BuyProps> = () => {
 
           <Box display="flex" flexDirection="column" gridGap="16px">
             <InputToken
-              id="close-long-osqth-input"
-              value={sqthTradeAmount}
-              onInputChange={handleSqthChange}
-              balance={squeethAmount}
-              logo={osqthLogo}
+              id="redeem-long-osqth-input"
+              label="oSQTH position"
+              value={oSqueethBalance.toString()}
               symbol="oSQTH"
-              usdPrice={osqthPrice}
-              onBalanceClick={() => handleSqthChange(squeethAmount.toString())}
-              error={!!closeError}
-              helperText={closeError}
-            />
-
-            <InputToken
-              id="close-long-eth-input"
-              value={ethTradeAmount}
-              onInputChange={handleEthChange}
-              balance={new BigNumber(balance)}
-              logo={ethLogo}
-              symbol="ETH"
-              usdPrice={ethPrice}
+              logo={osqthLogo}
+              balance={oSqueethBalance}
               showMaxAction={false}
+              error={!!redeemError}
+              helperText={redeemError}
+              readOnly={true}
+              readOnlyTooltip={'Only full redemption is allowed'}
             />
           </Box>
 
-          <Collapse in={!!error}>
+          <Collapse in={!!redeemError}>
             <Alert severity="error" marginTop="24px">
-              {error}
+              {redeemError}
             </Alert>
           </Collapse>
 
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="space-between"
-            gridGap="12px"
-            marginTop="24px"
-            flexWrap="wrap"
-          >
+          <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
             <Metric
-              label="Slippage"
-              value={formatNumber(slippageAmountValue) + '%'}
+              label="ETH you will receive"
+              value={formatNumber(ethToReceive.toNumber()) + ' ETH'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
               gridGap="12px"
             />
-            <Box display="flex" alignItems="center" gridGap="12px" flex="1">
-              <Metric
-                label="Price Impact"
-                value={formatNumber(priceImpact) + '%'}
-                textColor={priceImpactColor}
-                isSmall
-                flexDirection="row"
-                justifyContent="space-between"
-                gridGap="12px"
-              />
-
-              <TradeSettings setSlippage={(amt) => setSlippage(amt)} slippage={slippageAmount} />
-            </Box>
           </Box>
 
           {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
@@ -585,7 +456,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
                 variant="contained"
                 onClick={selectWallet}
                 disabled={true}
-                id="open-long-restricted-btn"
+                id="redeem-long-restricted-btn"
               >
                 {'Unavailable'}
               </PrimaryButtonNew>
@@ -594,41 +465,31 @@ const RedeemLong: React.FC<BuyProps> = () => {
                 fullWidth
                 variant="contained"
                 onClick={selectWallet}
-                disabled={!!sellLoading}
-                id="close-long-connect-wallet-btn"
+                disabled={!!isRedeemTxnLoading}
+                id="redeem-long-connect-wallet-btn"
               >
                 {'Connect Wallet'}
               </PrimaryButtonNew>
             ) : (
               <PrimaryButtonNew
                 fullWidth
-                variant={longClosePriceImpactErrorState ? 'outlined' : 'contained'}
-                onClick={sellAndClose}
+                onClick={redeemLong}
                 disabled={
                   !supportedNetwork ||
-                  !!sellLoading ||
+                  isRedeemTxnLoading ||
                   transactionInProgress ||
-                  !!closeError ||
-                  !!existingShortError ||
-                  squeethAmount.isZero() ||
-                  sqthTradeAmount === '0' ||
+                  !!redeemError ||
+                  oSqueethBalance.isZero() ||
                   inputQuoteLoading
                 }
-                style={
-                  longClosePriceImpactErrorState
-                    ? { color: '#f5475c', backgroundColor: 'transparent', borderColor: '#f5475c' }
-                    : {}
-                }
-                id="close-long-submit-tx-btn"
+                id="redeem-long-submit-tx-btn"
               >
                 {!supportedNetwork ? (
                   'Unsupported Network'
-                ) : sellLoading || transactionInProgress || inputQuoteLoading ? (
+                ) : isRedeemTxnLoading || transactionInProgress || inputQuoteLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
-                ) : squeethAllowance.lt(amount) && !hasJustApprovedSqueeth ? (
+                ) : squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'
-                ) : longClosePriceImpactErrorState ? (
-                  'Sell Anyway'
                 ) : hasJustApprovedSqueeth ? (
                   'Redeem oSQTH (2/2)'
                 ) : (

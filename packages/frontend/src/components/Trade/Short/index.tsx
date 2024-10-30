@@ -15,7 +15,7 @@ import { connectedWalletAtom, supportedNetworkAtom, addressAtom } from '@state/w
 import { useSelectWallet, useTransactionStatus } from '@state/wallet/hooks'
 import { vaultHistoryUpdatingAtom } from '@state/positions/atoms'
 import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
-import { useGetDebtSettlementAmount } from '@state/controller/hooks'
+import { useGetOSqthSettlementAmount } from '@state/controller/hooks'
 import { useFirstValidVault } from '@state/positions/hooks'
 import { tradeCompletedAtom, tradeSuccessAtom } from '@state/trade/atoms'
 import Cancelled from '../Cancelled'
@@ -219,7 +219,7 @@ const RedeemShort: React.FC<SellType> = () => {
   const address = useAtomValue(addressAtom)
 
   const selectWallet = useSelectWallet()
-  const getDebtSettlementAmount = useGetDebtSettlementAmount()
+  const getOSqthSettlementAmount = useGetOSqthSettlementAmount()
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
@@ -254,11 +254,11 @@ const RedeemShort: React.FC<SellType> = () => {
       setExistingCollatInETH(collateralInETH)
 
       const shortAmount = vault.shortAmount ?? new BigNumber(0)
-      getDebtSettlementAmount(shortAmount).then((debt) => {
+      getOSqthSettlementAmount(shortAmount).then((debt) => {
         setExistingDebtInETH(debt)
       })
     }
-  }, [shortAmount, getDebtSettlementAmount, vault])
+  }, [shortAmount, getOSqthSettlementAmount, vault])
 
   useAppEffect(() => {
     if (transactionInProgress) {
@@ -310,8 +310,6 @@ const RedeemShort: React.FC<SellType> = () => {
       )} ETH). You will not receive any ETH back.`
     }
   }
-
-  const error = redeemError ? redeemError : ''
 
   return (
     <div id="redeem-short-card">
@@ -401,9 +399,9 @@ const RedeemShort: React.FC<SellType> = () => {
               />
             </Box>
 
-            <Collapse in={!!error}>
+            <Collapse in={!!redeemError}>
               <Alert severity="error" marginTop="24px">
-                {error}
+                {redeemError}
               </Alert>
             </Collapse>
 
