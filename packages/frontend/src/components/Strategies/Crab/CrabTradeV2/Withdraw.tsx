@@ -35,6 +35,7 @@ enum RedeemSteps {
 const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useStyles()
 
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   const [currentStep, setCurrentStep] = useState<RedeemSteps>(RedeemSteps.CLAIM)
   const [txLoading, setTxLoading] = useState(false)
   const [ethToReceive, setEthToReceive] = useState(new BigNumber(0))
@@ -45,8 +46,6 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const { crabStrategy2 } = useAtomValue(addressesAtom)
-  // const currentCrabBalance = useMemo(() => new BigNumber(0), [])
-  // const refetchCrabBalance = () => {}
   const { value: currentCrabBalance, refetch: refetchCrabBalance } = useTokenBalance(crabStrategy2, 30, 18)
   const migratedCrabBalance = useAtomValue(userMigratedSharesAtom)
   const { resetTransactionData } = useTransactionStatus()
@@ -63,8 +62,16 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const updateSharesData = useUpdateSharesData()
   const setStrategyData = useSetStrategyDataV2()
 
+  useEffect(() => {
+    if (currentCrabBalance && crabV2Allowance) {
+      setIsInitialLoading(false)
+    }
+  }, [currentCrabBalance.toString(), crabV2Allowance.toString()])
+
   // Determine initial step based on migrated balance and allowance
   useEffect(() => {
+    if (!currentCrabBalance || !crabV2Allowance) return
+
     if (migratedCrabBalance.gt(0)) {
       setCurrentStep(RedeemSteps.CLAIM)
     } else if (crabV2Allowance.lt(currentCrabBalance)) {
@@ -72,16 +79,30 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     } else {
       setCurrentStep(RedeemSteps.REDEEM)
     }
-  }, [migratedCrabBalance, crabV2Allowance, currentCrabBalance])
+  }, [currentCrabBalance.toString(), migratedCrabBalance.toString(), crabV2Allowance.toString()])
 
   // Calculate ETH to receive on component mount
   useEffect(() => {
+    let mounted = true
+
     const getEthToReceive = async () => {
+      if (currentCrabBalance.eq(0)) {
+        if (mounted) {
+          setEthToReceive(new BigNumber(0))
+        }
+        return
+      }
       const ethAmount = await calculateEthToReceive(currentCrabBalance)
-      setEthToReceive(ethAmount || new BigNumber(0))
+      if (mounted) {
+        setEthToReceive(ethAmount || new BigNumber(0))
+      }
     }
     getEthToReceive()
-  }, [calculateEthToReceive, currentCrabBalance])
+
+    return () => {
+      mounted = false
+    }
+  }, [calculateEthToReceive, currentCrabBalance.toString()])
 
   const handleClaimV2Shares = async () => {
     setTxLoading(true)
@@ -136,34 +157,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     setTxLoading(false)
   }
 
-  const getActiveStep = () => {
-    if (migratedCrabBalance.gt(0)) {
-      // If there's migrated balance, count from all three steps
-      switch (currentStep) {
-        case RedeemSteps.CLAIM:
-          return 0
-        case RedeemSteps.APPROVE:
-          return 1
-        case RedeemSteps.REDEEM:
-          return 2
-        default:
-          return 0
-      }
-    } else {
-      // If no migrated balance, count from approve and redeem only
-      switch (currentStep) {
-        case RedeemSteps.APPROVE:
-          return 0
-        case RedeemSteps.REDEEM:
-          return 1
-        default:
-          return 0
-      }
-    }
-  }
-
-  const getButtonText = () => {
-    if (txLoading) return <CircularProgress color="primary" size="1.5rem" />
+  const buttonText = useMemo(() => {
+    if (isInitialLoading || txLoading) return <CircularProgress color="primary" size="1.5rem" />
 
     switch (currentStep) {
       case RedeemSteps.CLAIM:
@@ -175,7 +170,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       default:
         return 'Redeem'
     }
-  }
+  }, [isInitialLoading, txLoading, currentStep])
 
   const handleAction = () => {
     switch (currentStep) {
@@ -215,14 +210,15 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     [onTxnConfirm, recordAnalytics],
   )
 
-  let redeemError: string | undefined
-
-  if (connected) {
+  // Memoize error state
+  const redeemError = useMemo(() => {
+    if (!connected) return undefined
     const isApproveOrRedeemStep = currentStep === RedeemSteps.APPROVE || currentStep === RedeemSteps.REDEEM
     if (isApproveOrRedeemStep && currentCrabBalance.lte(0)) {
-      redeemError = 'No position to redeem'
+      return 'No position to redeem'
     }
-  }
+    return undefined
+  }, [connected, currentStep, currentCrabBalance.toString()])
 
   return (
     <>
@@ -233,25 +229,12 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       </Box>
 
       <div className={classes.tradeContainer}>
-        {/* Show stepper if there's migrated balance OR approval is needed */}
-        {(migratedCrabBalance.gt(0) || crabV2Allowance.lt(currentCrabBalance)) && (
-          <Stepper activeStep={getActiveStep()} className={classes.stepper}>
-            {/* Only show Claim step if there's migrated balance */}
-            {migratedCrabBalance.gt(0) ? (
-              <Step>
-                <StepLabel>Claim CRAB</StepLabel>
-              </Step>
-            ) : null}
-
-            <Step>
-              <StepLabel>Approve CRAB</StepLabel>
-            </Step>
-
-            <Step>
-              <StepLabel>Redeem ETH</StepLabel>
-            </Step>
-          </Stepper>
-        )}
+        <RedeemStepper
+          migratedCrabBalance={migratedCrabBalance}
+          currentCrabBalance={currentCrabBalance}
+          crabV2Allowance={crabV2Allowance}
+          currentStep={currentStep}
+        />
         <InputToken
           id="crab-redeem-input"
           label="Crab Position"
@@ -309,12 +292,69 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
               onClick={handleAction}
               disabled={txLoading || !!redeemError}
             >
-              {getButtonText()}
+              {buttonText}
             </PrimaryButtonNew>
           )}
         </div>
       </div>
     </>
+  )
+}
+
+const RedeemStepper: React.FC<{
+  migratedCrabBalance: BigNumber
+  currentCrabBalance: BigNumber
+  crabV2Allowance: BigNumber
+  currentStep: RedeemSteps
+}> = ({ migratedCrabBalance, currentCrabBalance, crabV2Allowance, currentStep }) => {
+  const classes = useStyles()
+
+  // Only show stepper if there's migrated balance OR approval is needed
+  if (!migratedCrabBalance.gt(0) && !crabV2Allowance.lt(currentCrabBalance)) {
+    return null
+  }
+
+  const getActiveStep = () => {
+    if (migratedCrabBalance.gt(0)) {
+      // If there's migrated balance, count from all three steps
+      switch (currentStep) {
+        case RedeemSteps.CLAIM:
+          return 0
+        case RedeemSteps.APPROVE:
+          return 1
+        case RedeemSteps.REDEEM:
+          return 2
+        default:
+          return 0
+      }
+    } else {
+      // If no migrated balance, count from approve and redeem only
+      switch (currentStep) {
+        case RedeemSteps.APPROVE:
+          return 0
+        case RedeemSteps.REDEEM:
+          return 1
+        default:
+          return 0
+      }
+    }
+  }
+
+  return (
+    <Stepper activeStep={getActiveStep()} className={classes.stepper}>
+      {/* Only show Claim step if there's migrated balance */}
+      {migratedCrabBalance.gt(0) && (
+        <Step>
+          <StepLabel>Claim CRAB</StepLabel>
+        </Step>
+      )}
+      <Step>
+        <StepLabel>Approve CRAB</StepLabel>
+      </Step>
+      <Step>
+        <StepLabel>Redeem ETH</StepLabel>
+      </Step>
+    </Stepper>
   )
 }
 
