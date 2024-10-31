@@ -17,16 +17,14 @@ export const useShutdownLongHelper = () => {
    * @param vaultId
    * @returns
    */
-  const redeemLongHelper = async (_osqthAmount: BigNumber, onTxConfirmed?: () => void) => {
+  const redeemLongHelper = async (osqthAmount: BigNumber, onTxConfirmed?: () => void) => {
     if (!contract || !address) {
       return
     }
 
-    const osqthAmount = fromTokenAmount(_osqthAmount, OSQUEETH_DECIMALS)
-
     // redeem vault
     const result = await handleTransaction(
-      contract.methods.redeemLong(osqthAmount.toString()).send({
+      contract.methods.redeemLong(fromTokenAmount(osqthAmount, OSQUEETH_DECIMALS).toFixed(0)).send({
         from: address,
       }),
       onTxConfirmed,
