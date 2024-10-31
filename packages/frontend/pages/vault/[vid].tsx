@@ -814,8 +814,8 @@ const Component: React.FC = () => {
               <div className={classes.lpManagerContent}>
                 <UniswapIframe text={'Withdraw LP Position'} closePosition={true} />
                 <Typography className={classes.lpManagerDescription}>
-                  If you have an LP position in Uniswap, you can withdraw it directly here. The withdrawn oSQTH can then
-                  be redeemed separately.
+                  If you have an LP position in Uniswap, you can withdraw it directly here. <br />
+                  The withdrawn oSQTH can then be redeemed separately from the <Link href="/squeeth">trade page</Link>.
                 </Typography>
               </div>
             </div>

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
 
 import { PrimaryButtonNew } from '@components/Button'
+import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
 import Metric from '@components/Metric'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
@@ -26,6 +27,7 @@ import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, O
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
 import Alert from '@components/Alert'
+import { useRestrictUser } from '@context/restrict-user'
 import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 
 enum RedeemStepsV1 {
@@ -52,6 +54,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const ongoingTransaction = useRef<OngoingTransaction | undefined>()
 
   const connected = useAtomValue(connectedWalletAtom)
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
+
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const { crabStrategy, crabStrategy2 } = useAtomValue(addressesAtom)
@@ -410,6 +414,8 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </Collapse>
 
         <div className={classes.ctaSection}>
+          {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
+
           {!connected ? (
             <PrimaryButtonNew
               fullWidth

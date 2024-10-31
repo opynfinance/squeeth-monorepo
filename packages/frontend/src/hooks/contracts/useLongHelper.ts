@@ -26,7 +26,7 @@ export const useShutdownLongHelper = () => {
 
     // redeem vault
     const result = await handleTransaction(
-      contract.methods.redeemShort(osqthAmount.toString()).send({
+      contract.methods.redeemLong(osqthAmount.toString()).send({
         from: address,
       }),
       onTxConfirmed,
