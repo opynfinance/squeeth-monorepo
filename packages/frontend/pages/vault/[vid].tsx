@@ -53,6 +53,7 @@ import {
   useGetShortAmountFromDebt,
   useGetTwapEthPrice,
   useGetUniNFTCollatDetail,
+  useGetUniNFTDetails,
   useOpenDepositAndMint,
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
@@ -341,6 +342,7 @@ enum VaultAction {
   DEPOSIT_UNI_POSITION,
   WITHDRAW_UNI_POSITION,
   REDEEM_UNI_POSITION,
+  REDEEM_VAULT,
 }
 
 enum VaultError {
@@ -426,6 +428,36 @@ const Component: React.FC = () => {
   const { existingCollatPercent, existingLiqPrice } = useVaultData(vault as any)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
+  const [lpedEth, setLpedEth] = useState(new BigNumber(0))
+  const [lpedSqueethInEth, setLpedSqueethInEth] = useState(new BigNumber(0))
+  const [lpedSqueethAmount, setLpedSqueethAmount] = useState(new BigNumber(0))
+
+  const getUniNFTDetails = useGetUniNFTDetails()
+
+  useEffect(() => {
+    const getLPValues = async () => {
+      if (!isVaultLoading && vault && Number(vault?.NFTCollateralId) !== 0) {
+        try {
+          const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
+          setLpedEth(ethAmount)
+          setLpedSqueethInEth(squeethValueInEth)
+          setLpedSqueethAmount(squeethAmount)
+        } catch (err) {
+          console.error('Error getting LP values:', err)
+          setLpedEth(new BigNumber(0))
+          setLpedSqueethInEth(new BigNumber(0))
+          setLpedSqueethAmount(new BigNumber(0))
+        }
+      } else {
+        setLpedEth(new BigNumber(0))
+        setLpedSqueethInEth(new BigNumber(0))
+        setLpedSqueethAmount(new BigNumber(0))
+      }
+    }
+
+    getLPValues()
+  }, [vault?.NFTCollateralId, isVaultLoading])
+
   useEffect(() => {
     ;(async () => {
       if (vault) {
@@ -509,13 +541,10 @@ const Component: React.FC = () => {
     if (!vault) return
 
     setTxLoading(true)
-    setAction(VaultAction.REDEEM_UNI_POSITION)
+    setAction(VaultAction.REDEEM_VAULT)
     try {
       await redeemVault(Number(vault.id))
       updateVault()
-      // reset to default action, should check if this nft got approved with history
-      // cuz now there is no nft selected
-      setAction(VaultAction.ADD_COLLATERAL)
     } catch (e) {
       console.log(e)
     }
@@ -714,10 +743,18 @@ const Component: React.FC = () => {
               <Typography className={classes.overviewTitle}>Collateral (ETH)</Typography>
             </div>
 
-            <div className={classes.overviewItem}>
-              <Typography className={classes.overviewValue}>{isLPDeposited ? vault?.NFTCollateralId : '-'}</Typography>
-              <Typography className={classes.overviewTitle}>LP Token</Typography>
-            </div>
+            {isLPDeposited && (
+              <>
+                <div className={classes.overviewItem}>
+                  <Typography className={classes.overviewValue}>{lpedEth.toFixed(4)}</Typography>
+                  <Typography className={classes.overviewTitle}>LP ETH Amount</Typography>
+                </div>
+                <div className={classes.overviewItem}>
+                  <Typography className={classes.overviewValue}>{lpedSqueethAmount.toFixed(6)}</Typography>
+                  <Typography className={classes.overviewTitle}>LP oSQTH Amount</Typography>
+                </div>
+              </>
+            )}
           </div>
           <div className={classes.redeemVaultBtnContainer}>
             <Typography className={classes.redeemVaultTitle}>Redeem Vault</Typography>
@@ -746,7 +783,7 @@ const Component: React.FC = () => {
                     disabled={txLoading}
                     className={classes.redeemVaultBtn}
                   >
-                    {action === VaultAction.REDEEM_UNI_POSITION && txLoading ? (
+                    {action === VaultAction.REDEEM_VAULT && txLoading ? (
                       <CircularProgress color="primary" size="1rem" />
                     ) : (
                       'Redeem Vault'

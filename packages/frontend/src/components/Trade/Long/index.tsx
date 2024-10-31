@@ -438,7 +438,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
       ) : (
         <>
           <Typography variant="h4" className={classes.title}>
-            Redeem Long oSQTH Position
+            Redeem oSQTH Position
           </Typography>
 
           <Box display="flex" flexDirection="column" gridGap="16px">

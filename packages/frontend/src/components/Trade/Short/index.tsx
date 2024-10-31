@@ -29,6 +29,7 @@ import RestrictionInfo from '@components/RestrictionInfo'
 import { useRestrictUser } from '@context/restrict-user'
 import useAmplitude from '@hooks/useAmplitude'
 import { SHORT_SQUEETH_EVENTS } from '@utils/amplitude'
+import useVault from '@hooks/useVault'
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -232,8 +233,8 @@ const RedeemShort: React.FC<SellType> = () => {
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
 
-  const { updateVault } = useVaultManager()
-  const { validVault: vault, vaultId } = useFirstValidVault()
+  const { vaultId } = useFirstValidVault()
+  const { vault, loading: isVaultLoading, updateVault } = useVault(vaultId)
 
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
@@ -241,24 +242,24 @@ const RedeemShort: React.FC<SellType> = () => {
 
   const { track } = useAmplitude()
 
-  console.log({ address, vault, vaultId })
+  console.log({ address, vaultId })
 
   useAppEffect(() => {
-    if (vault) {
+    if (!isVaultLoading && vault) {
       const contractShort = vault?.shortAmount?.isFinite() ? vault?.shortAmount : new BigNumber(0)
       setShortAmount(contractShort)
     }
-  }, [vault?.shortAmount])
+  }, [vault?.shortAmount, isVaultLoading])
 
   useAppEffect(() => {
-    if (shortAmount.isEqualTo(0)) {
+    if (!isVaultLoading && shortAmount.isEqualTo(0)) {
       setExistingCollatInETH(new BigNumber(0))
       setExistingDebtInETH(new BigNumber(0))
     }
-  }, [shortAmount])
+  }, [shortAmount, isVaultLoading])
 
   useAppEffect(() => {
-    if (vault && !shortAmount.isEqualTo(0)) {
+    if (!isVaultLoading && vault && !shortAmount.isEqualTo(0)) {
       const collateralInETH: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
       setExistingCollatInETH(collateralInETH)
 
@@ -267,12 +268,12 @@ const RedeemShort: React.FC<SellType> = () => {
         setExistingDebtInETH(debt)
       })
     }
-  }, [shortAmount, getOSqthSettlementAmount, vault])
+  }, [shortAmount, getOSqthSettlementAmount, vault, isVaultLoading])
 
   // fetch LP details
   useAppEffect(() => {
     const getLPValues = async () => {
-      if (vault && Number(vault?.NFTCollateralId) !== 0) {
+      if (!isVaultLoading && vault && Number(vault?.NFTCollateralId) !== 0) {
         try {
           const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
           setLpedEth(ethAmount)
@@ -292,7 +293,7 @@ const RedeemShort: React.FC<SellType> = () => {
     }
 
     getLPValues()
-  }, [vault?.NFTCollateralId])
+  }, [vault?.NFTCollateralId, isVaultLoading])
 
   useAppEffect(() => {
     if (transactionInProgress) {
@@ -404,7 +405,7 @@ const RedeemShort: React.FC<SellType> = () => {
       ) : (
         <>
           <Typography variant="h4" className={classes.title}>
-            Redeem Short oSQTH Position
+            Redeem Short Vault
           </Typography>
 
           <Box display="flex" flexDirection="column">
@@ -499,6 +500,7 @@ const RedeemShort: React.FC<SellType> = () => {
                   disabled={
                     !supportedNetwork ||
                     isTxnLoading ||
+                    isVaultLoading ||
                     transactionInProgress ||
                     !!redeemError ||
                     (vault && vault.shortAmount.isZero())
@@ -507,10 +509,10 @@ const RedeemShort: React.FC<SellType> = () => {
                 >
                   {!supportedNetwork ? (
                     'Unsupported Network'
-                  ) : isTxnLoading || transactionInProgress ? (
+                  ) : isTxnLoading || isVaultLoading || transactionInProgress ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : (
-                    'Redeem Short Position'
+                    'Redeem Short Vault'
                   )}
                 </PrimaryButtonNew>
               )}
