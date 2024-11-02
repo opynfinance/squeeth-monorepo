@@ -182,6 +182,7 @@ contract ShutdownEmergencyWithdrawTest is Test {
         ).wdiv(remainingZenBullTotalSupply);
 
         vm.startPrank(user1);
+        IERC20(ZEN_BULL).approve(address(shutdownEmergencyWithdraw), initialUser1ZenBullBalance);
         shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser1ZenBullBalance);
         vm.stopPrank();
 
@@ -189,12 +190,14 @@ contract ShutdownEmergencyWithdrawTest is Test {
         uint256 finalUser1ZenBullBalance = IERC20(ZEN_BULL).balanceOf(user1);
 
         vm.startPrank(user2);
+        IERC20(ZEN_BULL).approve(address(shutdownEmergencyWithdraw), initialUser2ZenBullBalance);
         shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser2ZenBullBalance);
         vm.stopPrank();
 
         vm.startPrank(user3);
+        IERC20(ZEN_BULL).approve(address(shutdownEmergencyWithdraw), 1e18);
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser2ZenBullBalance);
+        shutdownEmergencyWithdraw.claimZenBullRedemption(1e18);
         vm.stopPrank();
 
         uint256 finalUser2WethBalance = IERC20(WETH).balanceOf(user2);
