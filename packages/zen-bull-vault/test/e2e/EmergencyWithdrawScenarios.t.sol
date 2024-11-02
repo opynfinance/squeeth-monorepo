@@ -284,9 +284,8 @@ contract EmergencyWithdrawScenarios is Test {
 
     function _deployAndConfigure() internal {
         vm.startPrank(deployer);
-        emergencyWithdraw = new EmergencyWithdraw(
-            CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY
-        );
+        emergencyWithdraw =
+        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
         testUtil = new TestUtil(ZEN_BULL, CONTROLLER, E_TOKEN, D_TOKEN, CRAB);
         vm.stopPrank();
 

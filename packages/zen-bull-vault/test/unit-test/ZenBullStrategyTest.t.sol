@@ -88,14 +88,12 @@ contract ZenBullStrategyTest is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        emergencyShutdown = new ZenEmergencyShutdown(
-            address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984
-        );
+        emergencyShutdown =
+        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         emergencyShutdown.transferOwnership(bullOwner);
 
-        testUtil = new TestUtil(
-            address(bullStrategy), address(controller), eToken, dToken, address(crabV2)
-        );
+        testUtil =
+        new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
 
         vm.stopPrank();
 

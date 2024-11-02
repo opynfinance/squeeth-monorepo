@@ -81,10 +81,17 @@ contract FlashZenTestFork is Test {
         bullOwnerPk = 0xB11CD;
         bullOwner = vm.addr(bullOwnerPk);
 
-        bullStrategy =
-            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy = new ZenBullStrategy(
+            address(crabV2),
+            address(controller),
+            euler,
+            eulerMarketsModule
+        );
         bullStrategy.transferOwnership(bullOwner);
-        flashBull = new FlashZen(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        flashBull = new FlashZen(
+            address(bullStrategy),
+            0x1F98431c8aD98523631AE4a59f267346ea31F984
+        );
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -93,7 +100,11 @@ contract FlashZenTestFork is Test {
         ethWSqueethPool = IController(bullStrategy.powerTokenController()).wPowerPerpPool();
         ethUsdcPool = IController(bullStrategy.powerTokenController()).ethQuoteCurrencyPool();
         testUtil = new TestUtil(
-            address(bullStrategy), address(controller), eToken, dToken, address(crabV2)
+            address(bullStrategy),
+            address(controller),
+            eToken,
+            dToken,
+            address(crabV2)
         );
         controllerOwner = controller.owner();
 
@@ -424,7 +435,7 @@ contract FlashZenTestFork is Test {
                 minEthFromSqth: wSqueethToMintSecond.wmul(squeethEthPrice.wmul(99e16)),
                 minEthFromUsdc: usdcToBorrowSecond.mul(WETH_DECIMALS_DIFF).wdiv(
                     ethUsdPrice.wmul(uint256(1e18).add(5e15))
-                ),
+                    ),
                 wPowerPerpPoolFee: uint24(3000),
                 usdcPoolFee: uint24(3000)
             });
@@ -433,7 +444,7 @@ contract FlashZenTestFork is Test {
             flashBull.flashDeposit{
                 value: calcTotalEthToBull(
                     wethToLendSecond, ethToCrabSecond, usdcToBorrowSecond, wSqueethToMintSecond
-                )
+                    )
             }(params);
             vm.stopPrank();
         }

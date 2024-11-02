@@ -51,9 +51,8 @@ contract WithdrawEthTest is Test {
         user2 = vm.addr(user2Pk);
 
         vm.startPrank(deployer);
-        emergencyWithdraw = new EmergencyWithdraw(
-            CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY
-        );
+        emergencyWithdraw =
+        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
         vm.stopPrank();
 
         // prank ZenBull owner to point to a new auction contract address

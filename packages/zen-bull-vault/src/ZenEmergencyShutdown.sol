@@ -33,9 +33,7 @@ contract ZenEmergencyShutdown is UniFlash, Ownable {
     /// @dev enum to differentiate between Uniswap swap callback function source
 
     /// @dev enum to differentiate between Uniswap swap callback function source
-    enum FLASH_SOURCE {
-        SHUTDOWN
-    }
+    enum FLASH_SOURCE { SHUTDOWN }
 
     /// @dev redeemShortShutdown params structs
     struct ShutdownParams {

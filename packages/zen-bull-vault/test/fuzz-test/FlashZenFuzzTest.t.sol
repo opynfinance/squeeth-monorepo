@@ -70,10 +70,17 @@ contract FlashZenFuzzTest is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy =
-            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy = new ZenBullStrategy(
+            address(crabV2),
+            address(controller),
+            euler,
+            eulerMarketsModule
+        );
         bullStrategy.transferOwnership(deployer);
-        flashBull = new FlashZen(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        flashBull = new FlashZen(
+            address(bullStrategy),
+            0x1F98431c8aD98523631AE4a59f267346ea31F984
+        );
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
@@ -82,7 +89,11 @@ contract FlashZenFuzzTest is Test {
         ethWSqueethPool = IController(bullStrategy.powerTokenController()).wPowerPerpPool();
         ethUsdcPool = IController(bullStrategy.powerTokenController()).ethQuoteCurrencyPool();
         testUtil = new TestUtil(
-            address(bullStrategy), address(controller), eToken, dToken, address(crabV2)
+            address(bullStrategy),
+            address(controller),
+            eToken,
+            dToken,
+            address(crabV2)
         );
 
         cap = 100000e18;

@@ -72,9 +72,8 @@ contract ZenBullStrategyFuzzTest is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        testUtil = new TestUtil(
-            address(bullStrategy), address(controller), eToken, dToken, address(crabV2)
-        );
+        testUtil =
+        new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
         vm.stopPrank();
 
         cap = 100000e18;

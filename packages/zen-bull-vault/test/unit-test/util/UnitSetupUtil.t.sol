@@ -80,8 +80,8 @@ contract BullStrategyUnitTest is Test {
             address(wPowerPerp),
             address(weth),
             address(usdc),
-            ethUsdcPool,
-            ethWPowerPerpPool,
+            ethUsdcPool, 
+            ethWPowerPerpPool, 
             address(uniNonFungibleManager),
             _poolFee
         );
@@ -89,17 +89,8 @@ contract BullStrategyUnitTest is Test {
         wPowerPerp.init(address(controller));
         ShortPowerPerp(_shortPowerPerp).init(address(controller));
 
-        crabV2 = new CrabStrategyV2(
-            address(controller),
-            _oracle,
-            address(weth),
-            address(uniFactory),
-            ethWPowerPerpPool,
-            timelock,
-            timelock,
-            uint256(100),
-            uint256(1e17)
-        );
+        crabV2 =
+        new CrabStrategyV2(address(controller), _oracle, address(weth), address(uniFactory), ethWPowerPerpPool, timelock, timelock, uint256(100), uint256(1e17));
     }
 
     function _createUniPoolAndInitialize(
