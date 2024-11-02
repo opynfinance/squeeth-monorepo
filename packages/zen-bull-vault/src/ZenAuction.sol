@@ -187,7 +187,6 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
      * @param _eToken euler collateral token address for weth
      * @param _dToken euler debt token address for usdc
      */
-     
     constructor(
         address _auctionManager,
         address _bull,
@@ -530,6 +529,7 @@ contract ZenAuction is UniFlash, Ownable, EIP712 {
      * @param remainingAmount amount of wPowerPerp to trade
      * @param _clearingPrice clearing price weth/wPowerPerp, in 1e18 units
      */
+
     function _pushFundsFromOrders(
         Order[] memory _orders,
         uint256 remainingAmount,

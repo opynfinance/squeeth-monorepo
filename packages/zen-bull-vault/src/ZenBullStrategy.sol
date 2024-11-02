@@ -80,7 +80,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
      * @param _euler euler address
      * @param _eulerMarketsModule euler markets module address
      */
-     
+
     constructor(
         address _crab,
         address _powerTokenController,

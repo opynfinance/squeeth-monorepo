@@ -124,7 +124,7 @@ contract ZenAuctionFuzzTest is Test {
         ethWSqueethPool = controller.wPowerPerpPool();
         ethUsdcPool = controller.ethQuoteCurrencyPool();
         auctionBull = new ZenAuction(
-           auctionManager,
+            auctionManager,
             address(bullStrategy),
             factory,
             address(crabV2),

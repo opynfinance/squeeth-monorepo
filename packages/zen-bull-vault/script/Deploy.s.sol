@@ -42,18 +42,11 @@ contract DeployScript is Script {
         vm.startBroadcast(deployerAddress);
 
         // deploy contracts
-        zenBullStrategy = new ZenBullStrategy(
-            crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress
-        );
+        zenBullStrategy = 
+        new ZenBullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);	
         emergencyShutdown = new ZenEmergencyShutdown(address(zenBullStrategy), uniFactoryAddress);
-        zenAuction = new ZenAuction(
-            auctionManagerAddress,
-            address(zenBullStrategy),
-            uniFactoryAddress,
-            crabAddress,
-            eTokenAddress,
-            dTokenAddress
-        );
+        zenAuction = 
+        new ZenAuction(auctionManagerAddress, address(zenBullStrategy), uniFactoryAddress, crabAddress, eTokenAddress, dTokenAddress);	
         flashZen = new FlashZen(address(zenBullStrategy), uniFactoryAddress);
 
         // set contracts params
