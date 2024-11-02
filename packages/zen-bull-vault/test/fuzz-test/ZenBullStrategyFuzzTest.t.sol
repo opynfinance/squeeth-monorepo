@@ -4,22 +4,22 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 //interface
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IEulerMarkets} from "../../src/interface/IEulerMarkets.sol";
-import {IEulerEToken} from "../../src/interface/IEulerEToken.sol";
-import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
+import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
+import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
 // contract
-import {TestUtil} from "../util/TestUtil.t.sol";
-import {ZenBullStrategy} from "../../src/ZenBullStrategy.sol";
-import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
-import {Controller} from "squeeth-monorepo/core/Controller.sol";
+import { TestUtil } from "../util/TestUtil.t.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
+import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
+import { Controller } from "squeeth-monorepo/core/Controller.sol";
 // lib
-import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import {UniOracle} from "../../src/UniOracle.sol";
+import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import { UniOracle } from "../../src/UniOracle.sol";
 
 /**
  * @notice fuzz testing
@@ -64,14 +64,17 @@ contract ZenBullStrategyFuzzTest is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy = new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy =
+            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
         bullStrategy.transferOwnership(bullOwner);
         usdc = controller.quoteCurrency();
         weth = controller.weth();
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        testUtil = new TestUtil(address(bullStrategy), address(controller), eToken, dToken, address(crabV2));
+        testUtil = new TestUtil(
+            address(bullStrategy), address(controller), eToken, dToken, address(crabV2)
+        );
         vm.stopPrank();
 
         cap = 100000e18;
@@ -103,7 +106,8 @@ contract ZenBullStrategyFuzzTest is Test {
         _crabAmount = bound(_crabAmount, 1.1e14, IERC20(crabV2).balanceOf(user1));
 
         uint256 bullToMint = testUtil.calcBullToMint(_crabAmount);
-        (uint256 wethToLend, uint256 usdcToBorrow) = testUtil.calcCollateralAndBorrowAmount(_crabAmount);
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            testUtil.calcCollateralAndBorrowAmount(_crabAmount);
         uint256 userBullBalanceBefore = bullStrategy.balanceOf(user1);
         uint256 ethInLendingBefore = IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy));
         uint256 usdcBorrowedBefore = IEulerDToken(dToken).balanceOf(address(bullStrategy));
@@ -111,16 +115,26 @@ contract ZenBullStrategyFuzzTest is Test {
 
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{value: wethToLend}(_crabAmount);
+        bullStrategy.deposit{ value: wethToLend }(_crabAmount);
         vm.stopPrank();
 
         assertEq(bullStrategy.balanceOf(user1).sub(userBullBalanceBefore), bullToMint);
         assertTrue(
-            wethToLend.sub(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(ethInLendingBefore)) <= 2
+            wethToLend.sub(
+                IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)).sub(
+                    ethInLendingBefore
+                )
+            ) <= 2
         );
-        assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore), usdcToBorrow);
+        assertEq(
+            IEulerDToken(dToken).balanceOf(address(bullStrategy)).sub(usdcBorrowedBefore),
+            usdcToBorrow
+        );
         assertEq(IERC20(usdc).balanceOf(user1).sub(userUsdcBalanceBefore), usdcToBorrow);
-        assertTrue(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)) <= bullStrategy.strategyCap());
+        assertTrue(
+            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy))
+                <= bullStrategy.strategyCap()
+        );
     }
 
     function testFuzzingWithdraw(uint256 _crabAmount) public {
@@ -131,10 +145,11 @@ contract ZenBullStrategyFuzzTest is Test {
         (uint256 wethToLend,) = testUtil.calcCollateralAndBorrowAmount(_crabAmount);
         vm.startPrank(user1);
         IERC20(crabV2).approve(address(bullStrategy), _crabAmount);
-        bullStrategy.deposit{value: wethToLend}(_crabAmount);
+        bullStrategy.deposit{ value: wethToLend }(_crabAmount);
         vm.stopPrank();
 
-        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) = _calcWPowerPerpAndCrabNeededForWithdraw(bullToMint);
+        (uint256 wPowerPerpToRedeem, uint256 crabToRedeem) =
+            _calcWPowerPerpAndCrabNeededForWithdraw(bullToMint);
         uint256 usdcToRepay = _calcUsdcNeededForWithdraw(bullToMint);
         uint256 wethToWithdraw = testUtil.calcWethToWithdraw(bullToMint);
         // transfer some oSQTH from some squeether
@@ -164,15 +179,25 @@ contract ZenBullStrategyFuzzTest is Test {
             IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)),
             "Bull ETH in leverage amount mismatch"
         );
-        assertEq(userUsdcBalanceBefore.sub(usdcToRepay), IERC20(usdc).balanceOf(user1), "User1 USDC balance mismatch");
-        assertEq(userBullBalanceBefore.sub(bullToMint), bullStrategy.balanceOf(user1), "User1 bull balance mismatch");
+        assertEq(
+            userUsdcBalanceBefore.sub(usdcToRepay),
+            IERC20(usdc).balanceOf(user1),
+            "User1 USDC balance mismatch"
+        );
+        assertEq(
+            userBullBalanceBefore.sub(bullToMint),
+            bullStrategy.balanceOf(user1),
+            "User1 bull balance mismatch"
+        );
         assertEq(
             userWPowerPerpBalanceBefore.sub(wPowerPerpToRedeem),
             IERC20(wPowerPerp).balanceOf(user1),
             "User1 oSQTH balance mismatch"
         );
         assertEq(
-            crabBalanceBefore.sub(crabToRedeem), crabV2.balanceOf(address(bullStrategy)), "Bull ccrab balance mismatch"
+            crabBalanceBefore.sub(crabToRedeem),
+            crabV2.balanceOf(address(bullStrategy)),
+            "Bull ccrab balance mismatch"
         );
     }
 
@@ -180,7 +205,11 @@ contract ZenBullStrategyFuzzTest is Test {
      *
      * /************************************************************* Helper functions for testing! ********************************************************
      */
-    function _calcWPowerPerpAndCrabNeededForWithdraw(uint256 _bullAmount) internal view returns (uint256, uint256) {
+    function _calcWPowerPerpAndCrabNeededForWithdraw(uint256 _bullAmount)
+        internal
+        view
+        returns (uint256, uint256)
+    {
         uint256 share = _bullAmount.wdiv(bullStrategy.totalSupply());
         uint256 crabToRedeem = share.wmul(bullStrategy.getCrabBalance());
         uint256 crabTotalSupply = IERC20(crabV2).totalSupply();

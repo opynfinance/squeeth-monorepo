@@ -3,9 +3,9 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IEulerEToken} from "../src/interface/IEulerEToken.sol";
-import {IEulerMarkets} from "../src/interface/IEulerMarkets.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IEulerEToken } from "../src/interface/IEulerEToken.sol";
+import { IEulerMarkets } from "../src/interface/IEulerMarkets.sol";
 
 contract AddLiquidityEuler is Script {
     address private immutable euler;

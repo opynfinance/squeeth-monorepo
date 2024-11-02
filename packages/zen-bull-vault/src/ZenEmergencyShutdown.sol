@@ -3,15 +3,15 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
-import {IZenBullStrategy} from "./interface/IZenBullStrategy.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
 // contract
-import {UniFlash} from "./UniFlash.sol";
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+import { UniFlash } from "./UniFlash.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 //lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 
 /**
  * Error codes
@@ -88,10 +88,13 @@ contract ZenEmergencyShutdown is UniFlash, Ownable {
      */
     function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal override {
         if (FLASH_SOURCE(_uniFlashSwapData.callSource) == FLASH_SOURCE.SHUTDOWN) {
-            (uint256 usdcToRepay, uint256 shareToUnwind) = abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
+            (uint256 usdcToRepay, uint256 shareToUnwind) =
+                abi.decode(_uniFlashSwapData.callData, (uint256, uint256));
 
             IERC20(usdc).approve(bullStrategy, usdcToRepay);
-            IZenBullStrategy(bullStrategy).shutdownRepayAndWithdraw(_uniFlashSwapData.amountToPay, shareToUnwind);
+            IZenBullStrategy(bullStrategy).shutdownRepayAndWithdraw(
+                _uniFlashSwapData.amountToPay, shareToUnwind
+            );
 
             // repay the weth flash swap
             IWETH9(weth).transfer(_uniFlashSwapData.pool, _uniFlashSwapData.amountToPay);

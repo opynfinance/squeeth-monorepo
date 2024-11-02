@@ -3,7 +3,7 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import {ShutdownEmergencyWithdraw} from "../src/ShutdownEmergencyWithdraw.sol";
+import { ShutdownEmergencyWithdraw } from "../src/ShutdownEmergencyWithdraw.sol";
 
 /**
  * Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables. (Mainly the MAINNET_RPC_URL, DEPLOYER_PK and ETHERSCAN_API_KEY vars)
@@ -35,7 +35,16 @@ contract MainnetDeployShutdownEmergencyWithdraw is Script {
         vm.startBroadcast(deployerAddress);
 
         shutdownEmergencyWithdraw = new ShutdownEmergencyWithdraw(
-            CRAB, ZEN_BULL, WETH, USDC, OSQTH, ETH_USDC_POOL, ORACLE, ZEN_BULL_EMERGENCY_WITHDRAW, CONTROLLER, OWNER
+            CRAB,
+            ZEN_BULL,
+            WETH,
+            USDC,
+            OSQTH,
+            ETH_USDC_POOL,
+            ORACLE,
+            ZEN_BULL_EMERGENCY_WITHDRAW,
+            CONTROLLER,
+            OWNER
         );
 
         vm.stopBroadcast();

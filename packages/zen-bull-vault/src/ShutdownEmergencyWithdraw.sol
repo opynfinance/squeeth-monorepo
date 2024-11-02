@@ -3,17 +3,17 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IZenBullStrategy} from "./interface/IZenBullStrategy.sol";
-import {IZenEmergencyWithdraw} from "./interface/IZenEmergencyWithdraw.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
-import {IOracle} from "squeeth-monorepo/interfaces/IOracle.sol";
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IZenBullStrategy } from "./interface/IZenBullStrategy.sol";
+import { IZenEmergencyWithdraw } from "./interface/IZenEmergencyWithdraw.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IOracle } from "squeeth-monorepo/interfaces/IOracle.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
 // contract
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 // lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol";
-import {Address} from "openzeppelin/utils/Address.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import { Address } from "openzeppelin/utils/Address.sol";
 
 contract ShutdownEmergencyWithdraw is Ownable {
     using StrategyMath for uint256;
@@ -109,15 +109,19 @@ contract ShutdownEmergencyWithdraw is Ownable {
         uint256 crabToRedeem = IZenBullStrategy(zenBull).getCrabBalance();
         (, uint256 wPowerPerpInCrab) = IZenBullStrategy(zenBull).getCrabVaultDetails();
 
-        uint256 ethIndexPrice = IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, TWAP_PERIOD, true).div(INDEX_SCALE);
+        uint256 ethIndexPrice =
+            IOracle(oracle).getTwap(ethUsdcPool, weth, usdc, TWAP_PERIOD, true).div(INDEX_SCALE);
 
-        uint256 wPowerPerpToRedeem = crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
-        uint256 ethValueInWPowerPerp =
-            wPowerPerpToRedeem.wmul(ethIndexPrice).wmul(IController(controller).getExpectedNormalizationFactor());
+        uint256 wPowerPerpToRedeem =
+            crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
+        uint256 ethValueInWPowerPerp = wPowerPerpToRedeem.wmul(ethIndexPrice).wmul(
+            IController(controller).getExpectedNormalizationFactor()
+        );
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), wPowerPerpToRedeem);
 
-        uint256 totalPayout = IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
+        uint256 totalPayout =
+            IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
 
         IERC20(weth).transfer(msg.sender, ethValueInWPowerPerp);
 
@@ -127,14 +131,20 @@ contract ShutdownEmergencyWithdraw is Ownable {
         wethAtRedemption = IERC20(weth).balanceOf(address(this));
 
         emit ShutdownEmergencyWithdraw(
-            msg.sender, crabToRedeem, wPowerPerpToRedeem, totalPayout, ethValueInWPowerPerp, wethAtRedemption
+            msg.sender,
+            crabToRedeem,
+            wPowerPerpToRedeem,
+            totalPayout,
+            ethValueInWPowerPerp,
+            wethAtRedemption
         );
     }
 
     function claimZenBullRedemption(uint256 _amountToRedeem) external {
         require(zenBullTotalSupplyAtRedemption != 0, "Emergency withdraw not called");
         IERC20(zenBull).transferFrom(msg.sender, address(this), _amountToRedeem);
-        uint256 wethOwed = _amountToRedeem.wmul(wethAtRedemption).wdiv(zenBullTotalSupplyAtRedemption);
+        uint256 wethOwed =
+            _amountToRedeem.wmul(wethAtRedemption).wdiv(zenBullTotalSupplyAtRedemption);
         IERC20(weth).transfer(msg.sender, wethOwed);
         emit ZenBullRedeemed(msg.sender, _amountToRedeem, wethOwed);
     }

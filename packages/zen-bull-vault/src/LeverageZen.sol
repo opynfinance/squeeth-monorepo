@@ -2,17 +2,17 @@
 pragma solidity =0.7.6;
 
 // interface
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IEulerMarkets} from "./interface/IEulerMarkets.sol";
-import {IEulerEToken} from "./interface/IEulerEToken.sol";
-import {IEulerDToken} from "./interface/IEulerDToken.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IEulerMarkets } from "./interface/IEulerMarkets.sol";
+import { IEulerEToken } from "./interface/IEulerEToken.sol";
+import { IEulerDToken } from "./interface/IEulerDToken.sol";
 // contract
-import {Ownable} from "openzeppelin/access/Ownable.sol";
+import { Ownable } from "openzeppelin/access/Ownable.sol";
 // lib
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol";
-import {UniOracle} from "./UniOracle.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import { UniOracle } from "./UniOracle.sol";
 
 /**
  * Error codes
@@ -57,10 +57,14 @@ contract LeverageZen is Ownable {
     /// @dev auction contract address
     address public auction;
 
-    event AuctionRepayAndWithdrawFromLeverage(address indexed from, uint256 usdcToRepay, uint256 wethToWithdraw);
+    event AuctionRepayAndWithdrawFromLeverage(
+        address indexed from, uint256 usdcToRepay, uint256 wethToWithdraw
+    );
     event SetAuction(address oldAuction, address newAuction);
 
-    event DepositAndRepayFromLeverage(address indexed from, uint256 wethDeposited, uint256 usdcRepaid);
+    event DepositAndRepayFromLeverage(
+        address indexed from, uint256 wethDeposited, uint256 usdcRepaid
+    );
 
     /**
      * @dev constructor
@@ -70,8 +74,12 @@ contract LeverageZen is Ownable {
      */
     constructor(address _euler, address _eulerMarkets, address _powerTokenController) Ownable() {
         eulerMarkets = _eulerMarkets;
-        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(IController(_powerTokenController).weth());
-        dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(IController(_powerTokenController).quoteCurrency());
+        eToken = IEulerMarkets(_eulerMarkets).underlyingToEToken(
+            IController(_powerTokenController).weth()
+        );
+        dToken = IEulerMarkets(_eulerMarkets).underlyingToDToken(
+            IController(_powerTokenController).quoteCurrency()
+        );
         weth = IController(_powerTokenController).weth();
         usdc = IController(_powerTokenController).quoteCurrency();
         wPowerPerp = IController(_powerTokenController).wPowerPerp();
@@ -79,7 +87,9 @@ contract LeverageZen is Ownable {
         ethUSDCPool = IController(_powerTokenController).ethQuoteCurrencyPool();
 
         IERC20(IController(_powerTokenController).weth()).approve(_euler, type(uint256).max);
-        IERC20(IController(_powerTokenController).quoteCurrency()).approve(_euler, type(uint256).max);
+        IERC20(IController(_powerTokenController).quoteCurrency()).approve(
+            _euler, type(uint256).max
+        );
 
         IEulerMarkets(_eulerMarkets).enterMarket(0, IController(_powerTokenController).weth());
     }
@@ -101,7 +111,9 @@ contract LeverageZen is Ownable {
      * @param _usdcToRepay amount of USDC to repay
      * @param _wethToWithdraw amount of WETH to withdraw
      */
-    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw) external {
+    function auctionRepayAndWithdrawFromLeverage(uint256 _usdcToRepay, uint256 _wethToWithdraw)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
         if (_usdcToRepay > 0) {
@@ -139,7 +151,9 @@ contract LeverageZen is Ownable {
      * @param _wethToDeposit WETH amount to deposit
      * @param _usdcToRepay USDC amount to repay
      */
-    function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay) external {
+    function auctionDepositAndRepayFromLeverage(uint256 _wethToDeposit, uint256 _usdcToRepay)
+        external
+    {
         require(msg.sender == auction, "LB1");
 
         if (_wethToDeposit > 0) {
@@ -170,7 +184,9 @@ contract LeverageZen is Ownable {
         uint256 _wPowerPerpInCrab,
         uint256 _totalCrabSupply
     ) external view returns (uint256, uint256) {
-        return _calcLeverageWethUsdc(_crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _totalCrabSupply);
+        return _calcLeverageWethUsdc(
+            _crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _totalCrabSupply
+        );
     }
 
     /**
@@ -208,8 +224,9 @@ contract LeverageZen is Ownable {
         uint256 _wPowerPerpInCrab,
         uint256 _crabTotalSupply
     ) internal returns (uint256, uint256, uint256) {
-        (uint256 wethToLend, uint256 usdcToBorrow) =
-            _calcLeverageWethUsdc(_crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _crabTotalSupply);
+        (uint256 wethToLend, uint256 usdcToBorrow) = _calcLeverageWethUsdc(
+            _crabAmount, _bullShare, _ethInCrab, _wPowerPerpInCrab, _crabTotalSupply
+        );
 
         require(wethToLend <= msg.value, "LB0");
 
@@ -224,7 +241,7 @@ contract LeverageZen is Ownable {
      * @param _ethToDeposit amount of ETH to deposit
      */
     function _depositWethInEuler(uint256 _ethToDeposit) internal {
-        IWETH9(weth).deposit{value: _ethToDeposit}();
+        IWETH9(weth).deposit{ value: _ethToDeposit }();
         IEulerEToken(eToken).deposit(0, _ethToDeposit);
     }
 
@@ -240,7 +257,10 @@ contract LeverageZen is Ownable {
      * @notice repay USDC debt to euler and withdraw collateral based on the bull share amount to burn
      * @param _bullShare amount of bull share to burn
      */
-    function _repayAndWithdrawFromLeverage(uint256 _bullShare) internal returns (uint256, uint256) {
+    function _repayAndWithdrawFromLeverage(uint256 _bullShare)
+        internal
+        returns (uint256, uint256)
+    {
         uint256 usdcToRepay = _calcUsdcToRepay(_bullShare);
         uint256 wethToWithdraw = _calcWethToWithdraw(_bullShare);
 
@@ -273,17 +293,24 @@ contract LeverageZen is Ownable {
         {
             if (_bullShare == ONE) {
                 uint256 ethUsdPrice = UniOracle._getTwap(ethUSDCPool, weth, usdc, TWAP, false);
-                uint256 wPowerPerpEthPrice = UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
+                uint256 wPowerPerpEthPrice =
+                    UniOracle._getTwap(ethWPowerPerpPool, wPowerPerp, weth, TWAP, false);
                 uint256 crabUsdPrice = (
-                    _ethInCrab.wmul(ethUsdPrice).sub(_wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice))
+                    _ethInCrab.wmul(ethUsdPrice).sub(
+                        _wPowerPerpInCrab.wmul(wPowerPerpEthPrice).wmul(ethUsdPrice)
+                    )
                 ).wdiv(_totalCrabSupply);
                 wethToLend = TARGET_CR.wmul(_crabAmount).wmul(crabUsdPrice).wdiv(ethUsdPrice);
-                uint256 usdcToBorrow = wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+                uint256 usdcToBorrow =
+                    wethToLend.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
                 return (wethToLend, usdcToBorrow);
             }
         }
-        wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
-        uint256 usdcToBorrow = IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
+        wethToLend = IEulerEToken(eToken).balanceOfUnderlying(address(this)).wmul(_bullShare).wdiv(
+            ONE.sub(_bullShare)
+        );
+        uint256 usdcToBorrow =
+            IEulerDToken(dToken).balanceOf(address(this)).wmul(_bullShare).wdiv(ONE.sub(_bullShare));
         return (wethToLend, usdcToBorrow);
     }
 

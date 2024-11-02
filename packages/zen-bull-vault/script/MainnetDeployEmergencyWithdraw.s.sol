@@ -3,8 +3,8 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {EmergencyWithdraw} from "../src/EmergencyWithdraw.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { EmergencyWithdraw } from "../src/EmergencyWithdraw.sol";
 
 /**
  * Before running the deployment script, make sure to copy `.env.example` in a `.env` file and set the environment variables. (Mainly the MAINNET_RPC_URL, DEPLOYER_PK and ETHERSCAN_API_KEY vars)
@@ -32,8 +32,9 @@ contract MainnetDeployEmergencyWithdraw is Script {
 
         vm.startBroadcast(deployerAddress);
 
-        emergencyWithdraw =
-            new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
+        emergencyWithdraw = new EmergencyWithdraw(
+            CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY
+        );
 
         vm.stopBroadcast();
 

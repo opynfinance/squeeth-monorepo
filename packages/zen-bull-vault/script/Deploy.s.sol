@@ -3,10 +3,10 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import {ZenBullStrategy} from "../src/ZenBullStrategy.sol";
-import {ZenEmergencyShutdown} from "../src/ZenEmergencyShutdown.sol";
-import {ZenAuction} from "../src/ZenAuction.sol";
-import {FlashZen} from "../src/FlashZen.sol";
+import { ZenBullStrategy } from "../src/ZenBullStrategy.sol";
+import { ZenEmergencyShutdown } from "../src/ZenEmergencyShutdown.sol";
+import { ZenAuction } from "../src/ZenAuction.sol";
+import { FlashZen } from "../src/FlashZen.sol";
 
 contract DeployScript is Script {
     /// @dev owner address for BullStrategy, EmergencyShutdown and AuctionBull
@@ -42,8 +42,9 @@ contract DeployScript is Script {
         vm.startBroadcast(deployerAddress);
 
         // deploy contracts
-        zenBullStrategy =
-            new ZenBullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);
+        zenBullStrategy = new ZenBullStrategy(
+            crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress
+        );
         emergencyShutdown = new ZenEmergencyShutdown(address(zenBullStrategy), uniFactoryAddress);
         zenAuction = new ZenAuction(
             auctionManagerAddress,

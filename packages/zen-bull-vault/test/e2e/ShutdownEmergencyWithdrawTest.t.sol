@@ -3,15 +3,15 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
-import {console} from "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
-import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
-import {IOracle} from "squeeth-monorepo/interfaces/IOracle.sol";
-import {IController} from "squeeth-monorepo/interfaces/IController.sol";
-import {ShutdownEmergencyWithdraw} from "../../src/ShutdownEmergencyWithdraw.sol";
-import {ZenBullStrategy} from "../../src/ZenBullStrategy.sol";
-import {IZenEmergencyWithdraw} from "../../src/interface/IZenEmergencyWithdraw.sol";
-import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
+import { IOracle } from "squeeth-monorepo/interfaces/IOracle.sol";
+import { IController } from "squeeth-monorepo/interfaces/IController.sol";
+import { ShutdownEmergencyWithdraw } from "../../src/ShutdownEmergencyWithdraw.sol";
+import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
+import { IZenEmergencyWithdraw } from "../../src/interface/IZenEmergencyWithdraw.sol";
+import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
 
 contract ShutdownEmergencyWithdrawTest is Test {
     using StrategyMath for uint256;
@@ -119,16 +119,20 @@ contract ShutdownEmergencyWithdrawTest is Test {
         // get initial crab balance in zen bull strategy
         uint256 initialZenBullCrabBalance = ZenBullStrategy(ZEN_BULL).getCrabBalance();
 
-        (uint256 ethInCrab, uint256 wPowerPerpInCrab) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+            ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
 
         uint256 ethShare = initialZenBullCrabBalance.wdiv(IERC20(CRAB).totalSupply());
         uint256 wethToReceive = ethInCrab.wmul(ethShare);
 
-        uint256 ethIndexPrice = IOracle(ORACLE).getTwap(ETH_USDC_POOL, WETH, USDC, TWAP_PERIOD, true).div(INDEX_SCALE);
+        uint256 ethIndexPrice =
+            IOracle(ORACLE).getTwap(ETH_USDC_POOL, WETH, USDC, TWAP_PERIOD, true).div(INDEX_SCALE);
 
-        uint256 wPowerPerpToProvide = initialZenBullCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
-        uint256 wethToCaller =
-            wPowerPerpToProvide.wmul(ethIndexPrice).wmul(IController(CONTROLLER).getExpectedNormalizationFactor());
+        uint256 wPowerPerpToProvide =
+            initialZenBullCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+        uint256 wethToCaller = wPowerPerpToProvide.wmul(ethIndexPrice).wmul(
+            IController(CONTROLLER).getExpectedNormalizationFactor()
+        );
 
         // use deal() to get some oSQTH for testing
         deal(address(OSQTH), address(OWNER), wPowerPerpToProvide);
@@ -151,7 +155,9 @@ contract ShutdownEmergencyWithdrawTest is Test {
 
         // check that ETH was received by deployer
         assertEq(
-            finalOwnerWethBalance, initialOwnerWethBalance + wethToCaller, "Owner should have received correct WETH"
+            finalOwnerWethBalance,
+            initialOwnerWethBalance + wethToCaller,
+            "Owner should have received correct WETH"
         );
 
         // check that contract has correct eth balance
@@ -180,12 +186,14 @@ contract ShutdownEmergencyWithdrawTest is Test {
         // get initial crab balance in zen bull strategy
         uint256 initialZenBullCrabBalance = ZenBullStrategy(ZEN_BULL).getCrabBalance();
 
-        (uint256 ethInCrab, uint256 wPowerPerpInCrab) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
+        (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
+            ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
 
         uint256 ethShare = initialZenBullCrabBalance.wdiv(IERC20(CRAB).totalSupply());
         uint256 wethToReceive = ethInCrab.wmul(ethShare);
 
-        uint256 wPowerPerpToProvide = initialZenBullCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
+        uint256 wPowerPerpToProvide =
+            initialZenBullCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
 
         // use deal() to get some oSQTH for testing
         deal(address(OSQTH), address(OWNER), wPowerPerpToProvide);
@@ -207,7 +215,8 @@ contract ShutdownEmergencyWithdrawTest is Test {
         assertGt(initialUser2ZenBullBalance, 0, "User2 should have some ZenBull");
 
         uint256 remainingZenBullTotalSupply = IERC20(ZEN_BULL).totalSupply()
-            - IZenEmergencyWithdraw(ZEN_BULL_EMERGENCY_WITHDRAW).redeemedZenBullAmountForCrabWithdrawal();
+            - IZenEmergencyWithdraw(ZEN_BULL_EMERGENCY_WITHDRAW).redeemedZenBullAmountForCrabWithdrawal(
+            );
         uint256 user1WethToReceive = initialUser1ZenBullBalance.wmul(
             IERC20(WETH).balanceOf(address(shutdownEmergencyWithdraw))
         ).wdiv(remainingZenBullTotalSupply);
@@ -245,13 +254,26 @@ contract ShutdownEmergencyWithdrawTest is Test {
             "User2 should have received correct WETH"
         );
         //owner
-        assertEq(finalOwnerWethBalance, initialOwnerWethBalance, "Owner should have not received any WETH");
+        assertEq(
+            finalOwnerWethBalance,
+            initialOwnerWethBalance,
+            "Owner should have not received any WETH"
+        );
     }
 
     function _deployAndConfigure() internal {
         vm.startPrank(deployer);
         shutdownEmergencyWithdraw = new ShutdownEmergencyWithdraw(
-            CRAB, ZEN_BULL, WETH, USDC, OSQTH, ETH_USDC_POOL, ORACLE, ZEN_BULL_EMERGENCY_WITHDRAW, CONTROLLER, OWNER
+            CRAB,
+            ZEN_BULL,
+            WETH,
+            USDC,
+            OSQTH,
+            ETH_USDC_POOL,
+            ORACLE,
+            ZEN_BULL_EMERGENCY_WITHDRAW,
+            CONTROLLER,
+            OWNER
         );
         vm.stopPrank();
 
@@ -259,7 +281,11 @@ contract ShutdownEmergencyWithdrawTest is Test {
         vm.prank(OWNER);
         ZenBullStrategy(ZEN_BULL).setAuction(address(shutdownEmergencyWithdraw));
 
-        assertEq(shutdownEmergencyWithdraw.owner(), OWNER, "ShutdownEmergencyWithdraw should have the correct owner");
+        assertEq(
+            shutdownEmergencyWithdraw.owner(),
+            OWNER,
+            "ShutdownEmergencyWithdraw should have the correct owner"
+        );
 
         vm.label(address(shutdownEmergencyWithdraw), "ShutdownWithdraw");
     }

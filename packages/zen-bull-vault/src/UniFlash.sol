@@ -11,7 +11,7 @@ import "v3-periphery/libraries/PoolAddress.sol";
 import "v3-periphery/libraries/CallbackValidation.sol";
 import "v3-core/libraries/TickMath.sol";
 import "v3-core/libraries/SafeCast.sol";
-import {SafeMath} from "openzeppelin/math/SafeMath.sol";
+import { SafeMath } from "openzeppelin/math/SafeMath.sol";
 
 /**
  * @notice UniFlash contract
@@ -59,7 +59,10 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      * @param amount1Delta amount of token1
      * @param _data callback data encoded as SwapCallbackData struct
      */
-    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata _data) external override {
+    function uniswapV3SwapCallback(int256 amount0Delta, int256 amount1Delta, bytes calldata _data)
+        external
+        override
+    {
         require(amount0Delta > 0 || amount1Delta > 0); // swaps entirely within 0-liquidity regions are not supported
 
         SwapCallbackData memory data = abi.decode(_data, (SwapCallbackData));
@@ -74,7 +77,14 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
         //calls the strategy function that uses the proceeds from flash swap and executes logic to have an amount of token to repay the flash swap
         _uniFlashSwap(
             UniFlashswapCallbackData(
-                pool, data.caller, tokenIn, tokenOut, fee, amountToPay, data.callData, data.callSource
+                pool,
+                data.caller,
+                tokenIn,
+                tokenOut,
+                fee,
+                amountToPay,
+                data.callData,
+                data.callSource
             )
         );
     }
@@ -84,7 +94,7 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      * @dev this function should be overridden by the child contract
      * @param _uniFlashSwapData UniFlashswapCallbackData struct
      */
-    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual {}
+    function _uniFlashSwap(UniFlashswapCallbackData memory _uniFlashSwapData) internal virtual { }
 
     /**
      * @notice execute an exact-in flash swap (specify an exact amount to pay)
@@ -244,7 +254,13 @@ abstract contract UniFlash is IUniswapV3SwapCallback {
      * @param tokenB address of second token
      * @param fee fee tier for pool
      */
-    function _getPool(address tokenA, address tokenB, uint24 fee) internal view returns (IUniswapV3Pool) {
-        return IUniswapV3Pool(PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee)));
+    function _getPool(address tokenA, address tokenB, uint24 fee)
+        internal
+        view
+        returns (IUniswapV3Pool)
+    {
+        return IUniswapV3Pool(
+            PoolAddress.computeAddress(factory, PoolAddress.getPoolKey(tokenA, tokenB, fee))
+        );
     }
 }
