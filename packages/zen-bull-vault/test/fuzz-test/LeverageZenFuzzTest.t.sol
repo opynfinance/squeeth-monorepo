@@ -4,21 +4,21 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
-import { console } from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 //interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
-import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
-import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
+import {IEulerMarkets} from "../../src/interface/IEulerMarkets.sol";
+import {IEulerEToken} from "../../src/interface/IEulerEToken.sol";
+import {IController} from "squeeth-monorepo/interfaces/IController.sol";
+import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
 // contract
-import { LeverageZen } from "../../src/LeverageZen.sol";
-import { Controller } from "squeeth-monorepo/core/Controller.sol";
+import {LeverageZen} from "../../src/LeverageZen.sol";
+import {Controller} from "squeeth-monorepo/core/Controller.sol";
 // lib
-import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import { UniOracle } from "../../src/UniOracle.sol";
+import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {UniOracle} from "../../src/UniOracle.sol";
 
 /**
  * @notice fuzz testing
@@ -91,7 +91,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{ value: _wethToDeposit }();
+        IWETH9(weth).deposit{value: _wethToDeposit}();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -99,8 +99,7 @@ contract LeverageZenFuzzTest is Test {
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
-        uint256 balanceOfUnderlying =
-            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+        uint256 balanceOfUnderlying = IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
         uint256 wethBalanceBefore = IERC20(weth).balanceOf(auction);
 
         // balanceOfUnderlying is rounded down after deposit, 2wei delta sometimes
@@ -116,10 +115,9 @@ contract LeverageZenFuzzTest is Test {
         assertEq(wethBalanceAfter.sub(wethBalanceBefore), balanceOfUnderlying);
     }
 
-    function testFuzzingDepositAndWithdrawPartialBalanceOfUnderlying(
-        uint256 _wethToDeposit,
-        uint256 _percentage
-    ) public {
+    function testFuzzingDepositAndWithdrawPartialBalanceOfUnderlying(uint256 _wethToDeposit, uint256 _percentage)
+        public
+    {
         _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
         _percentage = bound(_percentage, 0, 100);
 
@@ -127,7 +125,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{ value: _wethToDeposit }();
+        IWETH9(weth).deposit{value: _wethToDeposit}();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -135,8 +133,7 @@ contract LeverageZenFuzzTest is Test {
         vm.prank(address(leverageBull));
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
-        uint256 balanceOfUnderlying =
-            IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
+        uint256 balanceOfUnderlying = IEulerEToken(eToken).balanceOfUnderlying(address(leverageBull));
         uint256 wethBalanceBefore = IERC20(weth).balanceOf(auction);
         uint256 balanceOfUnderlyingToWithdraw = balanceOfUnderlying.mul(_percentage).div(100);
 
@@ -158,7 +155,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{ value: _wethToDeposit }();
+        IWETH9(weth).deposit{value: _wethToDeposit}();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -167,8 +164,7 @@ contract LeverageZenFuzzTest is Test {
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-        uint256 usdcToBorrow =
-            _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
         uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
 
         if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;
@@ -192,9 +188,7 @@ contract LeverageZenFuzzTest is Test {
         assertEq(usdcBalanceAfter.sub(usdcToRepay), 0);
     }
 
-    function testFuzzingBorrowAndRepayPartialBalanceOf(uint256 _wethToDeposit, uint256 _percentage)
-        public
-    {
+    function testFuzzingBorrowAndRepayPartialBalanceOf(uint256 _wethToDeposit, uint256 _percentage) public {
         _wethToDeposit = bound(_wethToDeposit, 1e18, 100000000e18);
         _percentage = bound(_percentage, 0, 100);
 
@@ -202,7 +196,7 @@ contract LeverageZenFuzzTest is Test {
 
         vm.startPrank(auction);
         // deposit first WETH in euler
-        IWETH9(weth).deposit{ value: _wethToDeposit }();
+        IWETH9(weth).deposit{value: _wethToDeposit}();
         IWETH9(weth).approve(address(leverageBull), _wethToDeposit);
         leverageBull.depositAndBorrowFromLeverage(_wethToDeposit, 0);
         vm.stopPrank();
@@ -211,8 +205,7 @@ contract LeverageZenFuzzTest is Test {
         IEulerMarkets(eulerMarketsModule).enterMarket(0, weth);
 
         uint256 ethUsdPrice = UniOracle._getTwap(ethUsdcPool, weth, usdc, TWAP, false);
-        uint256 usdcToBorrow =
-            _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
+        uint256 usdcToBorrow = _wethToDeposit.wmul(ethUsdPrice).wdiv(TARGET_CR).div(WETH_DECIMALS_DIFF);
         uint256 eulerUsdcBalance = IERC20(usdc).balanceOf(euler);
 
         if (usdcToBorrow > eulerUsdcBalance) usdcToBorrow = eulerUsdcBalance;

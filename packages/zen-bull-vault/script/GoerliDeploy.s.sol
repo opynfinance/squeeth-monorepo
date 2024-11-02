@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import { DeployScript } from "./Deploy.s.sol";
+import {DeployScript} from "./Deploy.s.sol";
 
 contract GoerliDeploy is DeployScript {
     address public constant systemOwnerAddress = 0xE3Dc747E5A8D8B664Dd701EE6A72AE63e740Ebc6;

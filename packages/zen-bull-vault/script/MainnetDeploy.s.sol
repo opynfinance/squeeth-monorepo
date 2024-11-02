@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.7.6;
 
-import { DeployScript } from "./Deploy.s.sol";
+import {DeployScript} from "./Deploy.s.sol";
 
 contract MainnetDeploy is DeployScript {
     address public constant systemOwnerAddress = 0xAfE66363c27EedB597a140c28B70b32F113fd5a8;

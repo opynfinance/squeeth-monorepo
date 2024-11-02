@@ -3,17 +3,17 @@ pragma solidity =0.7.6;
 pragma abicoder v2;
 
 // interface
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-import { ICrabStrategyV2 } from "./interface/ICrabStrategyV2.sol";
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import {IController} from "squeeth-monorepo/interfaces/IController.sol";
+import {ICrabStrategyV2} from "./interface/ICrabStrategyV2.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
-import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
-import { LeverageZen } from "./LeverageZen.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {LeverageZen} from "./LeverageZen.sol";
 // lib
-import { Address } from "openzeppelin/utils/Address.sol";
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol";
-import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
+import {Address} from "openzeppelin/utils/Address.sol";
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol";
+import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
 
 /**
  * Error codes
@@ -66,9 +66,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         uint256 indexed crabToRedeem, uint256 wPowerPerpRedeemed, uint256 wethBalanceReturned
     );
     event SetShutdownContract(address oldShutdownContract, address newShutdownContract);
-    event ShutdownRepayAndWithdraw(
-        uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem
-    );
+    event ShutdownRepayAndWithdraw(uint256 wethToUniswap, uint256 shareToUnwind, uint256 crabToRedeem);
     event Farm(address indexed asset, address indexed receiver);
     event DepositEthIntoCrab(uint256 ethToDeposit);
     event WithdrawShutdown(address indexed withdrawer, uint256 bullAmount, uint256 ethToReceive);
@@ -80,13 +78,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
      * @param _euler euler address
      * @param _eulerMarketsModule euler markets module address
      */
-
-    constructor(
-        address _crab,
-        address _powerTokenController,
-        address _euler,
-        address _eulerMarketsModule
-    )
+    constructor(address _crab, address _powerTokenController, address _euler, address _eulerMarketsModule)
         ERC20("Zen Bull Strategy", "ZenBull")
         LeverageZen(_euler, _eulerMarketsModule, _powerTokenController)
     {
@@ -169,9 +161,8 @@ contract ZenBullStrategy is ERC20, LeverageZen {
 
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) = _getCrabVaultDetails();
         // deposit eth into leverage component and borrow USDC
-        (uint256 wethLent, uint256 usdcBorrowed, uint256 _totalWethInEuler) = _leverageDeposit(
-            _crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply()
-        );
+        (uint256 wethLent, uint256 usdcBorrowed, uint256 _totalWethInEuler) =
+            _leverageDeposit(_crabAmount, share, ethInCrab, wPowerPerpInCrab, IERC20(crab).totalSupply());
 
         require(_totalWethInEuler <= strategyCap, "BS2");
 
@@ -206,14 +197,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
 
         (uint256 usdcToRepay,) = _repayAndWithdrawFromLeverage(share);
 
-        emit Withdraw(
-            msg.sender,
-            _bullAmount,
-            crabToRedeem,
-            wPowerPerpToRedeem,
-            usdcToRepay,
-            address(this).balance
-        );
+        emit Withdraw(msg.sender, _bullAmount, crabToRedeem, wPowerPerpToRedeem, usdcToRepay, address(this).balance);
 
         payable(msg.sender).sendValue(address(this).balance);
     }
@@ -223,10 +207,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
      * @param _crabToRedeem amount of crab token redeemed by auction
      * @param _wPowerPerpToRedeem amount of wPowerPerp sent back for crab redeem
      */
-    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem)
-        external
-        returns (uint256)
-    {
+    function redeemCrabAndWithdrawWEth(uint256 _crabToRedeem, uint256 _wPowerPerpToRedeem) external returns (uint256) {
         require(msg.sender == auction, "BS8");
 
         IERC20(wPowerPerp).transferFrom(msg.sender, address(this), _wPowerPerpToRedeem);
@@ -238,7 +219,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         _decreaseCrabBalance(crabBalancebefore.sub(IERC20(crab).balanceOf(address(this))));
 
         uint256 wethBalanceToReturn = address(this).balance;
-        IWETH9(weth).deposit{ value: wethBalanceToReturn }();
+        IWETH9(weth).deposit{value: wethBalanceToReturn}();
         IWETH9(weth).transfer(msg.sender, wethBalanceToReturn);
 
         emit RedeemCrabAndWithdrawEth(_crabToRedeem, _wPowerPerpToRedeem, wethBalanceToReturn);
@@ -258,7 +239,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
 
         uint256 crabBalancebefore = IERC20(crab).balanceOf(address(this));
 
-        ICrabStrategyV2(crab).deposit{ value: _ethToDeposit }();
+        ICrabStrategyV2(crab).deposit{value: _ethToDeposit}();
 
         _increaseCrabBalance(IERC20(crab).balanceOf(address(this)).sub(crabBalancebefore));
 
@@ -283,7 +264,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
         ICrabStrategyV2(crab).withdrawShutdown(crabToRedeem);
 
         _repayAndWithdrawFromLeverage(shareToUnwind);
-        IWETH9(weth).deposit{ value: wethToUniswap }();
+        IWETH9(weth).deposit{value: wethToUniswap}();
         IWETH9(weth).transfer(shutdownContract, wethToUniswap);
 
         emit ShutdownRepayAndWithdraw(wethToUniswap, shareToUnwind, crabToRedeem);
@@ -346,8 +327,7 @@ contract ZenBullStrategy is ERC20, LeverageZen {
      * @return vault eth collateral, vault wPowerPerp debt
      */
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
-        VaultLib.Vault memory strategyVault =
-            IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
+        VaultLib.Vault memory strategyVault = IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
 
         return (strategyVault.collateralAmount, strategyVault.shortAmount);
     }

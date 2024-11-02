@@ -2,8 +2,8 @@
 pragma solidity =0.7.6;
 
 import "forge-std/Test.sol";
-import { ERC20 } from "openzeppelin/token/ERC20/ERC20.sol";
-import { EulerMock } from "./EulerMock.t.sol";
+import {ERC20} from "openzeppelin/token/ERC20/ERC20.sol";
+import {EulerMock} from "./EulerMock.t.sol";
 
 contract EulerDtokenMock is ERC20, Test {
     // asset to borrow/repay
@@ -11,13 +11,9 @@ contract EulerDtokenMock is ERC20, Test {
 
     EulerMock internal euler;
 
-    constructor(
-        address _euler,
-        address _underlying,
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
-    ) ERC20(_name, _symbol) {
+    constructor(address _euler, address _underlying, string memory _name, string memory _symbol, uint8 _decimals)
+        ERC20(_name, _symbol)
+    {
         euler = EulerMock(_euler);
         underlying = _underlying;
         _setupDecimals(_decimals);

@@ -3,8 +3,8 @@ pragma solidity =0.7.6;
 
 import "forge-std/Script.sol";
 
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { EmergencyWithdraw } from "../src/EmergencyWithdraw.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {EmergencyWithdraw} from "../src/EmergencyWithdraw.sol";
 
 contract GoerliDeployEmergencyWithdraw is Script {
     address payable public constant ZEN_BULL = 0x2a5AD7582a9e42944Ee32671436593D16999c70a;
@@ -26,17 +26,8 @@ contract GoerliDeployEmergencyWithdraw is Script {
 
         vm.startBroadcast(deployerAddress);
 
-        emergencyWithdraw = new EmergencyWithdraw(
-            CRAB,
-            ZEN_BULL,
-            WETH,
-            USDC,
-            WPOWERPERP,
-            ETH_USDC_POOL,
-            E_TOKEN,
-            D_TOKEN,
-            UNI_FACTORY
-        );
+        emergencyWithdraw =
+            new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
 
         vm.stopBroadcast();
 

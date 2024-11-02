@@ -4,13 +4,13 @@ pragma abicoder v2;
 
 // interface
 import "v3-core/interfaces/IUniswapV3Pool.sol";
-import { IERC20Detailed } from "squeeth-monorepo/interfaces/IERC20Detailed.sol";
+import {IERC20Detailed} from "squeeth-monorepo/interfaces/IERC20Detailed.sol";
 // lib
 import "v3-periphery/libraries/Path.sol";
 import "v3-periphery/libraries/PoolAddress.sol";
 import "v3-core/libraries/SafeCast.sol";
-import { OracleLibrary } from "squeeth-monorepo/libs/OracleLibrary.sol";
-import { SafeMath } from "openzeppelin/math/SafeMath.sol";
+import {OracleLibrary} from "squeeth-monorepo/libs/OracleLibrary.sol";
+import {SafeMath} from "openzeppelin/math/SafeMath.sol";
 
 /**
  * @notice UniOracle contract
@@ -32,13 +32,11 @@ library UniOracle {
      * @param _checkPeriod if true, checks the maximum period and overrides it if less than period provided
      * @return price of 1 base currency in quote currency. scaled by 1e18
      */
-    function _getTwap(
-        address _pool,
-        address _base,
-        address _quote,
-        uint32 _period,
-        bool _checkPeriod
-    ) internal view returns (uint256) {
+    function _getTwap(address _pool, address _base, address _quote, uint32 _period, bool _checkPeriod)
+        internal
+        view
+        returns (uint256)
+    {
         // if the period is already checked, request TWAP directly. Will revert if period is too long.
         if (!_checkPeriod) return _fetchTwap(_pool, _base, _quote, _period);
 
@@ -57,14 +55,9 @@ library UniOracle {
      * @param _period number of seconds in the past to start calculating time-weighted average
      * @return twap price which is scaled
      */
-    function _fetchTwap(address _pool, address _base, address _quote, uint32 _period)
-        private
-        view
-        returns (uint256)
-    {
+    function _fetchTwap(address _pool, address _base, address _quote, uint32 _period) private view returns (uint256) {
         int24 twapTick = OracleLibrary.consultAtHistoricTime(_pool, _period, 0);
-        uint256 quoteAmountOut =
-            OracleLibrary.getQuoteAtTick(twapTick, uint128(1e18), _base, _quote);
+        uint256 quoteAmountOut = OracleLibrary.getQuoteAtTick(twapTick, uint128(1e18), _base, _quote);
 
         uint8 baseDecimals = IERC20Detailed(_base).decimals();
         uint8 quoteDecimals = IERC20Detailed(_quote).decimals();
@@ -94,8 +87,7 @@ library UniOracle {
         // it's safe to use % without checking cardinality = 0 because cardinality is always >= 1
         uint16 oldestObservationIndex = (observationIndex + 1) % cardinality;
 
-        (uint32 oldestObservationTimestamp,,, bool initialized) =
-            pool.observations(oldestObservationIndex);
+        (uint32 oldestObservationTimestamp,,, bool initialized) = pool.observations(oldestObservationIndex);
 
         if (initialized) return uint32(block.timestamp) - oldestObservationTimestamp;
 

@@ -4,27 +4,27 @@ pragma abicoder v2;
 
 // test dependency
 import "forge-std/Test.sol";
-import { console } from "forge-std/console.sol";
+import {console} from "forge-std/console.sol";
 
 //interface
-import { IERC20 } from "openzeppelin/token/ERC20/IERC20.sol";
-import { IController } from "squeeth-monorepo/interfaces/IController.sol";
-import { IEulerMarkets } from "../../src/interface/IEulerMarkets.sol";
-import { IEulerEToken } from "../../src/interface/IEulerEToken.sol";
-import { IEulerDToken } from "../../src/interface/IEulerDToken.sol";
-import { IWETH9 } from "squeeth-monorepo/interfaces/IWETH9.sol";
+import {IERC20} from "openzeppelin/token/ERC20/IERC20.sol";
+import {IController} from "squeeth-monorepo/interfaces/IController.sol";
+import {IEulerMarkets} from "../../src/interface/IEulerMarkets.sol";
+import {IEulerEToken} from "../../src/interface/IEulerEToken.sol";
+import {IEulerDToken} from "../../src/interface/IEulerDToken.sol";
+import {IWETH9} from "squeeth-monorepo/interfaces/IWETH9.sol";
 // contract
-import { SwapRouter } from "v3-periphery/SwapRouter.sol";
-import { TestUtil } from "../util/TestUtil.t.sol";
-import { ZenBullStrategy } from "../../src/ZenBullStrategy.sol";
-import { CrabStrategyV2 } from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
-import { Controller } from "squeeth-monorepo/core/Controller.sol";
-import { ZenEmergencyShutdown } from "../../src/ZenEmergencyShutdown.sol";
-import { FlashZen } from "../../src/FlashZen.sol";
+import {SwapRouter} from "v3-periphery/SwapRouter.sol";
+import {TestUtil} from "../util/TestUtil.t.sol";
+import {ZenBullStrategy} from "../../src/ZenBullStrategy.sol";
+import {CrabStrategyV2} from "squeeth-monorepo/strategy/CrabStrategyV2.sol";
+import {Controller} from "squeeth-monorepo/core/Controller.sol";
+import {ZenEmergencyShutdown} from "../../src/ZenEmergencyShutdown.sol";
+import {FlashZen} from "../../src/FlashZen.sol";
 // lib
-import { VaultLib } from "squeeth-monorepo/libs/VaultLib.sol";
-import { StrategyMath } from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
-import { UniOracle } from "../../src/UniOracle.sol";
+import {VaultLib} from "squeeth-monorepo/libs/VaultLib.sol";
+import {StrategyMath} from "squeeth-monorepo/strategy/base/StrategyMath.sol"; // StrategyMath licensed under AGPL-3.0-only
+import {UniOracle} from "../../src/UniOracle.sol";
 
 /**
  * @notice mainnet fork testing
@@ -78,8 +78,7 @@ contract ZenBullStrategyTest is Test {
         eulerMarketsModule = 0x3520d5a913427E6F0D6A83E07ccD4A4da316e4d3;
         controller = Controller(0x64187ae08781B09368e6253F9E94951243A493D5);
         crabV2 = CrabStrategyV2(0x3B960E47784150F5a63777201ee2B15253D713e8);
-        bullStrategy =
-            new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
+        bullStrategy = new ZenBullStrategy(address(crabV2), address(controller), euler, eulerMarketsModule);
         bullStrategy.transferOwnership(bullOwner);
         address factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
         flashBull = new FlashZen(address(bullStrategy), factory);
@@ -88,12 +87,10 @@ contract ZenBullStrategyTest is Test {
         eToken = IEulerMarkets(eulerMarketsModule).underlyingToEToken(weth);
         dToken = IEulerMarkets(eulerMarketsModule).underlyingToDToken(usdc);
         wPowerPerp = controller.wPowerPerp();
-        emergencyShutdown =
-        new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
+        emergencyShutdown = new ZenEmergencyShutdown(address(bullStrategy), 0x1F98431c8aD98523631AE4a59f267346ea31F984);
         emergencyShutdown.transferOwnership(bullOwner);
 
-        testUtil =
-        new TestUtil(address(bullStrategy), address (controller), eToken, dToken, address(crabV2));
+        testUtil = new TestUtil(address(bullStrategy), address(controller), eToken, dToken, address(crabV2));
 
         vm.stopPrank();
 
@@ -133,13 +130,12 @@ contract ZenBullStrategyTest is Test {
         (uint256 ethInCrab,) = testUtil.getCrabVaultDetails();
 
         uint256 crabShare = ethToDeposit.wdiv(ethInCrab.add(ethToDeposit));
-        uint256 crabToBeMinted =
-            IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
+        uint256 crabToBeMinted = IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
         vm.startPrank(auction);
-        IWETH9(weth).deposit{ value: ethToDeposit }();
+        IWETH9(weth).deposit{value: ethToDeposit}();
         IWETH9(weth).approve(address(bullStrategy), ethToDeposit);
         bullStrategy.depositEthIntoCrab(ethToDeposit);
         vm.stopPrank();
@@ -154,13 +150,12 @@ contract ZenBullStrategyTest is Test {
         (, uint256 fee) = testUtil.calcWsqueethToMintAndFee(ethToDeposit, squeethInCrab, ethInCrab);
 
         uint256 crabShare = (ethToDeposit.sub(fee)).wdiv(ethInCrab.add(ethToDeposit));
-        uint256 crabToBeMinted =
-            IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
+        uint256 crabToBeMinted = IERC20(crabV2).totalSupply().wmul(crabShare).wdiv(uint256(ONE).sub(crabShare));
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
         vm.startPrank(auction);
-        IWETH9(weth).deposit{ value: ethToDeposit }();
+        IWETH9(weth).deposit{value: ethToDeposit}();
         IWETH9(weth).approve(address(bullStrategy), ethToDeposit);
         bullStrategy.depositEthIntoCrab(ethToDeposit);
         vm.stopPrank();
@@ -174,12 +169,11 @@ contract ZenBullStrategyTest is Test {
         vm.startPrank(0x06CECFbac34101aE41C88EbC2450f8602b3d164b);
         IERC20(crabV2).approve(address(bullStrategy), crabToRedeem);
         vm.deal(0x06CECFbac34101aE41C88EbC2450f8602b3d164b, wethToLend);
-        bullStrategy.deposit{ value: wethToLend }(crabToRedeem);
+        bullStrategy.deposit{value: wethToLend}(crabToRedeem);
         vm.stopPrank();
 
         (, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
-        uint256 wPowerPerpToRedeem =
-            squeethInCrab.wmul(crabToRedeem).wdiv(IERC20(crabV2).totalSupply());
+        uint256 wPowerPerpToRedeem = squeethInCrab.wmul(crabToRedeem).wdiv(IERC20(crabV2).totalSupply());
 
         uint256 bullCrabBalanceBefore = bullStrategy.getCrabBalance();
 
@@ -197,19 +191,15 @@ contract ZenBullStrategyTest is Test {
     function _initateDepositInBull(address _depositor, uint256 _ethToCrab) internal {
         // Put some money in bull to start with
         (uint256 ethInCrab, uint256 squeethInCrab) = testUtil.getCrabVaultDetails();
-        (uint256 wSqueethToMint, uint256 fee) =
-            testUtil.calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab);
-        uint256 crabToBeMinted =
-            testUtil.calcSharesToMint(_ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
+        (uint256 wSqueethToMint, uint256 fee) = testUtil.calcWsqueethToMintAndFee(_ethToCrab, squeethInCrab, ethInCrab);
+        uint256 crabToBeMinted = testUtil.calcSharesToMint(_ethToCrab.sub(fee), ethInCrab, IERC20(crabV2).totalSupply());
         uint256 bullCrabBalanceBefore = IERC20(crabV2).balanceOf(address(bullStrategy));
 
         uint256 bullShare = 1e18;
-        (uint256 wethToLend, uint256 usdcToBorrow) = bullStrategy.calcLeverageEthUsdc(
-            crabToBeMinted, bullShare, ethInCrab, squeethInCrab, crabV2.totalSupply()
-        );
+        (uint256 wethToLend, uint256 usdcToBorrow) =
+            bullStrategy.calcLeverageEthUsdc(crabToBeMinted, bullShare, ethInCrab, squeethInCrab, crabV2.totalSupply());
 
-        uint256 totalEthToBull =
-            testUtil.calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint);
+        uint256 totalEthToBull = testUtil.calcTotalEthToBull(wethToLend, _ethToCrab, usdcToBorrow, wSqueethToMint);
 
         FlashZen.FlashDepositParams memory params = FlashZen.FlashDepositParams({
             ethToCrab: _ethToCrab,
@@ -220,13 +210,11 @@ contract ZenBullStrategyTest is Test {
         });
 
         vm.startPrank(_depositor);
-        flashBull.flashDeposit{ value: totalEthToBull }(params);
+        flashBull.flashDeposit{value: totalEthToBull}(params);
         vm.stopPrank();
 
         assertEq(IEulerDToken(dToken).balanceOf(address(bullStrategy)), usdcToBorrow);
-        assertApproxEqAbs(
-            IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1
-        );
+        assertApproxEqAbs(IEulerEToken(eToken).balanceOfUnderlying(address(bullStrategy)), wethToLend, 1);
         assertEq(bullStrategy.getCrabBalance().sub(crabToBeMinted), bullCrabBalanceBefore);
     }
 }
