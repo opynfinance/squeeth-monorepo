@@ -224,3 +224,32 @@ jobs:
     steps:
       - checkout
       - run: cd packages/crab-netting && forge test -vv --gas-report
+
+  ################ zen-bull-vault jobs
+  lint-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run:
+          name: Lint zen-bull-vault
+          command: cd packages/zen-bull-vault && FOUNDRY_PROFILE=fmt forge fmt --check
+
+  compile-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run:
+          name: Build zen-bull-vault
+          command: cd packages/zen-bull-vault && forge build --force
+
+  test-zen-bull-vault:
+    working_directory: ~/squeeth/packages/zen-bull-vault
+    docker:
+      - image: ghcr.io/foundry-rs/foundry:latest
+    steps:
+      - checkout
+      - run: cd packages/zen-bull-vault && forge test -vv --gas-report
