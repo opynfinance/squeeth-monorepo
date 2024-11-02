@@ -51,7 +51,7 @@ contract EmergencyRepayEulerDebtTest is Test {
         user2 = vm.addr(user2Pk);
 
         vm.startPrank(deployer);
-        emergencyWithdraw =	        emergencyWithdraw = new EmergencyWithdraw(
+        emergencyWithdraw =
         new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);	
         vm.stopPrank();
 

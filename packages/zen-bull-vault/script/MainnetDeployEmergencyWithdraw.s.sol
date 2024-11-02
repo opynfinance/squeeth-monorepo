@@ -32,7 +32,7 @@ contract MainnetDeployEmergencyWithdraw is Script {
 
         vm.startBroadcast(deployerAddress);
 
-        emergencyWithdraw = 
+        emergencyWithdraw =
         new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
 
         vm.stopBroadcast();

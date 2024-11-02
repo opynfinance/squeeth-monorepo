@@ -375,7 +375,7 @@ contract FlashZen is UniFlash {
      * @notice get crab vault debt and collateral details
      * @return vault eth collateral, vault wPowerPerp debt
      */
-     
+
     function _getCrabVaultDetails() internal view returns (uint256, uint256) {
         VaultLib.Vault memory strategyVault =
             IController(powerTokenController).vaults(ICrabStrategyV2(crab).vaultId());
