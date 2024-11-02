@@ -40,6 +40,15 @@ workflows:
       - test-crab-netting:
           requires:
             - compile-crab-netting
+  zen-bull-vault:
+    jobs:
+      - lint-zen-bull-vault
+      - compile-zen-bull-vault:
+          requires:
+            - lint-zen-bull-vault
+      - test-zen-bull-vault:
+          requires:
+            - compile-zen-bull-vault
 
 jobs:
   ################ hardhat jobs
