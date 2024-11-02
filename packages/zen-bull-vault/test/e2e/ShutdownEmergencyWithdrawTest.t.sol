@@ -33,11 +33,11 @@ contract ShutdownEmergencyWithdrawTest is Test {
     uint32 public constant TWAP_PERIOD = 420 seconds;
 
     uint256 deployerPk;
-    //uint256 user1Pk;
-    //uint256 user2Pk;
+    uint256 user3Pk;
     address deployer;
     address user1;
     address user2;
+    address user3;
 
     ShutdownEmergencyWithdraw internal shutdownEmergencyWithdraw;
 
@@ -47,12 +47,10 @@ contract ShutdownEmergencyWithdrawTest is Test {
 
         deployerPk = 0xA11CD;
         deployer = vm.addr(deployerPk);
-        // user1Pk = 0xB12CD;
-        // user1 = vm.addr(user1Pk);
-        // user2Pk = 0xC13CD;
-        // user2 = vm.addr(user2Pk);
         user1 = 0x73738c989398EBAfdAfD097836Fd910BAc14CCDC;
         user2 = 0x1ba20876565280C8274eEd551B575936097e414F;
+        user3Pk = 0xB12CD;
+        user3 = vm.addr(user3Pk);
 
         vm.label(deployer, "Deployer");
         vm.label(user1, "User1");
@@ -73,47 +71,6 @@ contract ShutdownEmergencyWithdrawTest is Test {
         shutdownEmergencyWithdraw.shutdownEmergencyWithdraw();
         vm.stopPrank();
     }
-
-    /*     function testShutdownEmergencyWithdraw() public {
-        
-        // get initial crab balance in zen bull strategy
-        uint256 initialCrabBalance = ZenBullStrategy(ZEN_BULL).getCrabBalance();
-
-        (uint256 ethInCrab, uint256 wPowerPerpInCrab) = ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
-
-        uint256 ethShare = initialCrabBalance.wdiv(IERC20(CRAB).totalSupply());
-        uint256 wethToReceive = ethInCrab.wmul(ethShare);
-
-        uint256 wPowerPerpToProvide = initialCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());
-        
-        // use deal() to get some oSQTH for testing
-        deal(address(OSQTH),address(OWNER), wPowerPerpToProvide);
-        
-        // get initial balances
-        uint256 initialWethBalance = IERC20(WETH).balanceOf(OWNER);
-        uint256 initialWPowerPerpBalance = IERC20(WPOWERPERP).balanceOf(OWNER);
-
-        // execute emergency withdrawal
-        vm.startPrank(OWNER);
-        IERC20(OSQTH).approve(address(shutdownEmergencyWithdraw), wPowerPerpToProvide);
-        shutdownEmergencyWithdraw.shutdownEmergencyWithdraw();
-        vm.stopPrank();
-
-        // verify the results
-        uint256 finalWethBalance = IERC20(WETH).balanceOf(OWNER);
-        uint256 finalCrabBalance = ZenBullStrategy(ZEN_BULL).getCrabBalance();
-        uint256 finalCrabBalanceFromCrab = IERC20(CRAB).balanceOf(address(ZEN_BULL));
-        uint256 finalWPowerPerpBalance = IERC20(WPOWERPERP).balanceOf(OWNER);
-        
-        // check that ETH was received
-        assertEq(finalWethBalance, initialWethBalance + wethToReceive, "User should have received correct ETH");
-    
-        // check that Crab balance was reduced and wpowerperp was provided correctly
-        assertEq(finalCrabBalance, 0, "All Crab should have been redeemed");
-        assertEq(finalCrabBalanceFromCrab, 0, "All Crab should have been redeemed");
-        assertEq(finalWPowerPerpBalance, initialWPowerPerpBalance - wPowerPerpToProvide, "User should have provided correct WPowerPerp");
-    }
-    */
 
     function testShutdownEmergencyWithdraw() public {
         // get initial crab balance in zen bull strategy
@@ -232,6 +189,11 @@ contract ShutdownEmergencyWithdrawTest is Test {
         uint256 finalUser1ZenBullBalance = IERC20(ZEN_BULL).balanceOf(user1);
 
         vm.startPrank(user2);
+        shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser2ZenBullBalance);
+        vm.stopPrank();
+
+        vm.startPrank(user3);
+        vm.expectRevert("ERC20: transfer amount exceeds balance");
         shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser2ZenBullBalance);
         vm.stopPrank();
 
