@@ -52,7 +52,7 @@ contract EmergencyRepayEulerDebtTest is Test {
 
         vm.startPrank(deployer);
         emergencyWithdraw =
-        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);	
+        new EmergencyWithdraw(CRAB, ZEN_BULL, WETH, USDC, WPOWERPERP, ETH_USDC_POOL, E_TOKEN, D_TOKEN, UNI_FACTORY);
         vm.stopPrank();
 
         // prank ZenBull owner to point to a new auction contract address

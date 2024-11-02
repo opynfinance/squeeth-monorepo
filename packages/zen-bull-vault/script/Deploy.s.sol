@@ -43,10 +43,10 @@ contract DeployScript is Script {
 
         // deploy contracts
         zenBullStrategy =
-        new ZenBullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);	
+        new ZenBullStrategy(crabAddress, powerTokenControllerAddress, eulerAddress, eulerMarketsModuleAddress);
         emergencyShutdown = new ZenEmergencyShutdown(address(zenBullStrategy), uniFactoryAddress);
         zenAuction =
-        new ZenAuction(auctionManagerAddress, address(zenBullStrategy), uniFactoryAddress, crabAddress, eTokenAddress, dTokenAddress);	
+        new ZenAuction(auctionManagerAddress, address(zenBullStrategy), uniFactoryAddress, crabAddress, eTokenAddress, dTokenAddress);
         flashZen = new FlashZen(address(zenBullStrategy), uniFactoryAddress);
 
         // set contracts params
