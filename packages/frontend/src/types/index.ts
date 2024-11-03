@@ -27,6 +27,7 @@ export enum Networks {
   MAINNET = 1,
   ROPSTEN = 3,
   GOERLI = 5,
+  SEPOLIA = 11155111,
   ARBITRUM_RINKEBY = 421611,
   LOCAL = 31337,
 }
