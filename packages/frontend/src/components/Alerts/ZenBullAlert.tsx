@@ -39,13 +39,13 @@ export const ZenBullAlert = () => {
     <div className={classes.container}>
       <Alert severity="warning" showIcon={!isMobileBreakpoint}>
         <Typography style={{ fontSize: '15px', fontWeight: 500 }}>
-          Zen Bull has been impacted by the Euler Finance exploit. All other Squeeth contracts are unaffected. Please{' '}
+          Zen Bull was impacted by the Euler Finance exploit. Please{' '}
           <Link href="https://opyn.gitbook.io/opyn-strategies/strategies-faq/faq">
             <a className={classes.link} target="_blank">
               join discord
             </a>
           </Link>{' '}
-          for updates. You can recover funds from Recovery withdrawal section below.
+          for updates. You can recover funds from the section below.
         </Typography>
       </Alert>
     </div>

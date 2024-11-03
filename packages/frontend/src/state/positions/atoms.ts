@@ -29,6 +29,7 @@ import {
   EULER_SIMPLE_LENS,
   USDC_D_TOKEN,
   BULL_EMERGENCY_WITHDRAW,
+  BULL_SHUTDOWN_EMERGENCY_WITHDRAW,
 } from '@constants/address'
 import { networkIdAtom, web3Atom } from '../wallet/atoms'
 import { BIG_ZERO } from '@constants/index'
@@ -76,6 +77,7 @@ export const addressesAtom = atom((get) => {
     auctionBull: AUCTION_BULL[networkId].toLowerCase(),
     eulerSimpleLens: EULER_SIMPLE_LENS[networkId].toLowerCase(),
     usdcDToken: USDC_D_TOKEN[networkId].toLowerCase(),
+    bullShutdownEmergencyWithdraw: BULL_SHUTDOWN_EMERGENCY_WITHDRAW[networkId].toLowerCase(),
   }
 })
 
