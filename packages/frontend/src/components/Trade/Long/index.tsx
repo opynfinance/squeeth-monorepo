@@ -466,7 +466,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
             <Metric
               label="ETH you will receive"
-              value={formatNumber(ethToReceive.toNumber()) + ' ETH'}
+              value={formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
