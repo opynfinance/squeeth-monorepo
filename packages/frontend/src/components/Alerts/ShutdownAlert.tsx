@@ -72,8 +72,8 @@ export const ShutdownAlert: React.FC = () => {
           </Typography>
 
           <Typography variant="body2" className={classes.text} style={{ marginTop: theme.spacing(0.5) }}>
-            Positions can be redeemed with 0 price impact by connecting your wallet. For more information, please refer
-            to the{' '}
+            Positions can be redeemed with 0 price impact (from the settlement price) by connecting your wallet. For
+            more information, please refer to the{' '}
             <Link href="https://opyn.gitbook.io/opyn-hub/squeeth-retirement/squeeth-retirement-faqs" passHref>
               <a className={classes.link} target="_blank" rel="noopener noreferrer">
                 Squeeth Shutdown FAQ
