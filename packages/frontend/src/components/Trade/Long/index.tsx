@@ -279,7 +279,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
   } = useTransactionStatus()
 
   const [ethToReceive, setEthToReceive] = useState<BigNumber>(new BigNumber(0))
-  const { swapRouter2, oSqueeth } = useAtomValue(addressesAtom)
+  const { oSqueeth, controller } = useAtomValue(addressesAtom)
   const { redeemLongHelper } = useShutdownLongHelper()
 
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
@@ -287,7 +287,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, swapRouter2)
+  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, controller)
   const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
