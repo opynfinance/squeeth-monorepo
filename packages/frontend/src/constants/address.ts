@@ -249,3 +249,12 @@ export const BULL_EMERGENCY_WITHDRAW: Address = {
   421611: '',
   31337: '',
 }
+
+export const BULL_SHUTDOWN_EMERGENCY_WITHDRAW: Address = {
+  1: '',
+  3: '',
+  5: '',
+  11155111: '',
+  421611: '',
+  31337: '',
+}

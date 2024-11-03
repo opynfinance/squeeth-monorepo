@@ -138,10 +138,16 @@ const goerli = new ApolloClient({
   cache: new InMemoryCache(),
 })
 
+const sepolia = new ApolloClient({
+  link: typeof window !== 'undefined' ? splitLink(wsLinkGL, httpLinkGL) : undefined,
+  cache: new InMemoryCache(),
+})
+
 export const uniswapClient = {
   1: mainnet,
   3: ropsten,
   5: goerli,
+  11155111: sepolia,
   31337: mainnet, // Can be replaced with local graph node if needed
   421611: mainnet, // Should be replaced with arbitrum subgraph
 }
@@ -161,10 +167,16 @@ const squeethGoerli = new ApolloClient({
   cache: new InMemoryCache(),
 })
 
+const squeethSepolia = new ApolloClient({
+  link: typeof window !== 'undefined' ? splitLink(wsLinkGLSqueeth, httpLinkGLSqueeth) : undefined,
+  cache: new InMemoryCache(),
+})
+
 export const squeethClient = {
   1: squeethMainnet,
   3: squeethRopsten,
   5: squeethGoerli,
+  11155111: squeethSepolia,
   31337: squeethMainnet, // Can be replaced with local graph node if needed
   421611: squeethMainnet, // Should be replaced with arbitrum subgraph
 }
