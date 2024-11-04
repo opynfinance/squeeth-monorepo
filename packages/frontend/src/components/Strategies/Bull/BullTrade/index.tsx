@@ -80,6 +80,7 @@ const BullTrade: React.FC = () => {
           onTxnConfirm={onTxnConfirm}
           isLoadingBalance={isBullBalanceLoading}
           bullBalance={bullBalance}
+          refetchBullBalance={refetchBullBalance}
         />
       )}
     </>

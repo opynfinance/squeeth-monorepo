@@ -162,6 +162,5 @@ export const bullShutdownEmergencyWithdrawContractAtom = atom<Contract | null>((
   const { bullShutdownEmergencyWithdraw } = get(addressesAtom)
   if (!web3) return null
 
-  // return getContract(web3, bullShutdownEmergencyWithdraw, bullShutdownEmergencyWithdrawAbi)
-  return null
+  return getContract(web3, bullShutdownEmergencyWithdraw, bullShutdownEmergencyWithdrawAbi)
 })

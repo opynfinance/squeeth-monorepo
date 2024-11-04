@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, CircularProgress, Tooltip } from '@material-ui/core'
+import { Box, Typography, CircularProgress, Collapse } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
@@ -7,7 +7,7 @@ import InfoIcon from '@material-ui/icons/Info'
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import Metric from '@components/Metric'
-import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import Alert from '@components/Alert'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import { addressesAtom } from '@state/positions/atoms'
 import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
@@ -19,21 +19,28 @@ import { BIG_ZERO } from '@constants/index'
 import { useZenBullStyles } from './styles'
 import { BullTradeType, BullTransactionConfirmation } from './index'
 import { useBullShutdownEmergencyWithdrawState, useZenBullRedeem, useCalculateWethToReceive } from '@state/bull/hooks'
+import { useRestrictUser } from '@context/restrict-user'
+import RestrictionInfo from '@components/RestrictionInfo'
+
+type Callback = () => void
 
 interface ShutdownEmergencyWithdrawProps {
   onTxnConfirm: (txn: BullTransactionConfirmation) => void
   isLoadingBalance: boolean
   bullBalance: BigNumber
+  refetchBullBalance: (cb?: Callback) => void
 }
 
 export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps> = ({
   onTxnConfirm,
   isLoadingBalance,
   bullBalance,
+  refetchBullBalance,
 }) => {
   const classes = useZenBullStyles()
   const [isRedeemTxnLoading, setIsRedeemTxnLoading] = useState(false)
   const [hasJustApprovedZenBull, setHasJustApprovedZenBull] = useState(false)
+  const [isWethToReceiveLoading, setIsWethToReceiveLoading] = useState(false)
   const [estimatedWethToReceive, setEstimatedWethToReceive] = useState(BIG_ZERO)
 
   // Contract state & recovery hooks
@@ -52,16 +59,43 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
     bullShutdownEmergencyWithdraw,
   )
 
+  const { isRestricted, isWithdrawAllowed } = useRestrictUser()
+
   const logAndRunTransaction = useTrackTransactionFlow()
 
-  // Update estimated WETH on balance changes
+  // Update estimated WETH on balance changes with loading state
   useEffect(() => {
+    let mounted = true
+
     const updateEstimate = async () => {
-      const wethAmount = await calculateWethToReceive()
-      setEstimatedWethToReceive(wethAmount)
+      if (!bullBalance.isZero()) {
+        setIsWethToReceiveLoading(true)
+        try {
+          const wethAmount = await calculateWethToReceive()
+          if (mounted) {
+            setEstimatedWethToReceive(wethAmount)
+          }
+        } catch (error) {
+          console.error('Error calculating WETH to receive:', error)
+        } finally {
+          if (mounted) {
+            setIsWethToReceiveLoading(false)
+          }
+        }
+      } else {
+        if (mounted) {
+          setEstimatedWethToReceive(BIG_ZERO)
+          setIsWethToReceiveLoading(false)
+        }
+      }
     }
+
     updateEstimate()
-  }, [bullBalance, calculateWethToReceive])
+
+    return () => {
+      mounted = false
+    }
+  }, [bullBalance?.toString(), calculateWethToReceive])
 
   const onApproveClick = async () => {
     setIsRedeemTxnLoading(true)
@@ -87,6 +121,8 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
           amount: wethReceived,
           tradeType: BullTradeType.Redeem,
         })
+
+        refetchBullBalance()
       })
     } catch (e) {
       console.error(e)
@@ -106,7 +142,7 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
 
   const redeemError = !isShutdownRedemptionContractActive
     ? 'Shutdown redemption contract not ready'
-    : bullBalance.lte(0)
+    : !isLoadingBalance && bullBalance.lte(0)
     ? 'No ZenBull to redeem'
     : undefined
 
@@ -139,7 +175,7 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
         <Box display="flex" justifyContent="space-between" marginTop="24px">
           <Metric
             label="WETH to Receive"
-            value={formatNumber(estimatedWethToReceive.toNumber(), 4) + ' WETH'}
+            value={isWethToReceiveLoading ? 'Loading...' : formatNumber(estimatedWethToReceive.toNumber(), 4) + ' WETH'}
             isSmall
             flexDirection="row"
             justifyContent="space-between"
@@ -147,18 +183,13 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
           />
         </Box>
 
-        {!isShutdownRedemptionContractActive && (
-          <Box marginTop="16px" display="flex" alignItems="center" className={classes.notice}>
-            <div className={classes.infoIcon}>
-              <Tooltip title="Emergency withdrawal is not yet active">
-                <InfoIcon fontSize="medium" />
-              </Tooltip>
-            </div>
-            <Typography variant="caption" className={classes.infoText}>
-              Shutdown redemption contract is not yet active
-            </Typography>
-          </Box>
-        )}
+        <Collapse in={!!redeemError}>
+          <Alert severity="error" marginTop="24px">
+            {redeemError}
+          </Alert>
+        </Collapse>
+
+        {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
         <Box marginTop="24px">
           {!connected ? (
@@ -174,7 +205,7 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
               fullWidth
               variant="contained"
               onClick={onApproveClick}
-              disabled={isRedeemTxnLoading || !!redeemError}
+              disabled={isRedeemTxnLoading || isWethToReceiveLoading || !!redeemError}
               id="zenbull-approve-btn"
             >
               {!isRedeemTxnLoading ? 'Approve ZenBull' : <CircularProgress color="primary" size="2rem" />}
@@ -184,7 +215,7 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
               fullWidth
               variant="contained"
               onClick={onRedeemClick}
-              disabled={isRedeemTxnLoading || !!redeemError}
+              disabled={isRedeemTxnLoading || isWethToReceiveLoading || !!redeemError}
               id="zenbull-redeem-btn"
             >
               {!isRedeemTxnLoading ? 'Redeem ZenBull' : <CircularProgress color="primary" size="2rem" />}
