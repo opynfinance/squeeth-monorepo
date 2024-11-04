@@ -181,6 +181,15 @@ contract ShutdownEmergencyWithdrawTest is Test {
             IERC20(WETH).balanceOf(address(shutdownEmergencyWithdraw))
         ).wdiv(remainingZenBullTotalSupply);
 
+        uint256 user1WethExpectedCheck;
+
+        {
+        uint256 totalSupplyCheck = 205.071599790461620024e18-190.713979953694709911e18;
+        uint256 initialUser1ZenBullBalanceCheck = 6.868492039476635186e18;
+
+        user1WethExpectedCheck = initialUser1ZenBullBalanceCheck.wmul(IERC20(WETH).balanceOf(address(shutdownEmergencyWithdraw))).wdiv(totalSupplyCheck);
+        }
+        
         vm.startPrank(user1);
         IERC20(ZEN_BULL).approve(address(shutdownEmergencyWithdraw), initialUser1ZenBullBalance);
         shutdownEmergencyWithdraw.claimZenBullRedemption(initialUser1ZenBullBalance);
@@ -210,6 +219,11 @@ contract ShutdownEmergencyWithdrawTest is Test {
             finalUser1WethBalance,
             initialUser1WethBalance + user1WethToReceive,
             "User1 should have received correct WETH"
+        );
+        assertEq(
+            finalUser1WethBalance,
+            initialUser1WethBalance + user1WethExpectedCheck,
+            "User1 should have received correct WETH check"
         );
         //user 2
         assertEq(finalUser2ZenBullBalance, 0, "User2 should have no ZenBull left");
