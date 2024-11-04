@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Box, Typography, CircularProgress, Collapse } from '@material-ui/core'
+import { Box, Typography, CircularProgress, Collapse, Link } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 import InfoIcon from '@material-ui/icons/Info'
@@ -157,6 +157,19 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
       <Typography variant="body2" style={{ marginTop: '8px', marginBottom: '24px' }}>
         Redeem ZenBull tokens for WETH after protocol shutdown
       </Typography>
+
+      <Alert severity="warning">
+        <Typography variant="body2">
+          Haven't claimed your Euler funds yet? Visit the{' '}
+          <Link href="https://redemptions.euler.finance/" target="_blank">
+            Euler redemption page
+          </Link>{' '}
+          or{' '}
+          <Link href="https://opyn.gitbook.io/zen-bull-euler-exploit-faq/" target="_blank">
+            learn more
+          </Link>
+        </Typography>
+      </Alert>
 
       <div className={classes.tradeContainer}>
         <InputToken
