@@ -459,7 +459,7 @@ const PositionCard: React.FC = () => {
               }
             />
 
-            {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
+            {/* {isToHidePnL || (tradeType === TradeType.SHORT && positionType != PositionType.LONG) ? (
               <Metric label="PnL" value={<HidePnLText />} gridGap="6px" />
             ) : (
               <>
@@ -521,7 +521,7 @@ const PositionCard: React.FC = () => {
                   }
                 />
               </>
-            )}
+            )} */}
           </Box>
         )}
       </div>

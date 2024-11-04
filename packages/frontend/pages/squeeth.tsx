@@ -246,9 +246,9 @@ function TradePage() {
           <Box className={classes.leftColumn}>
             <Header />
 
-            <div className={classes.sectionMargin}>
+            {/* <div className={classes.sectionMargin}>
               {tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}
-            </div>
+            </div> */}
 
             <Box marginTop="76px">
               <PositionCard />

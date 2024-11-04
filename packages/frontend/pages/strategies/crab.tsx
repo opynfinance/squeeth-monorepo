@@ -93,7 +93,7 @@ const Crab: React.FC = () => {
               currentCrabPositionValue={currentCrabPositionValue}
               isCrabPositionValueLoading={isCrabPositionValueLoading}
             />
-            <StrategyPerformance />
+            {/* <StrategyPerformance /> */}
             <About />
           </div>
         </div>
