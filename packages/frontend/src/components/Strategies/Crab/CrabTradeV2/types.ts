@@ -3,6 +3,7 @@ import BigNumber from 'bignumber.js'
 export enum CrabTradeType {
   Deposit = 'Deposit',
   Withdraw = 'Withdraw',
+  Redeem = 'Redeem',
 }
 
 export enum CrabTradeTransactionType {

@@ -76,7 +76,7 @@ export const useSwaps = () => {
       variables: {
         origin: address || '',
         orderDirection: 'asc',
-        recipient_not_in: [crabStrategy, crabStrategy2,  flashBull, bullStrategy],
+        recipient_not_in: [crabStrategy, crabStrategy2, flashBull, bullStrategy],
         ...(networkId === Networks.MAINNET
           ? {
               tokenAddress: oSqueeth,
@@ -402,6 +402,7 @@ export const useVaultQuery = (vaultId: number) => {
         collateralAmount: toTokenAmount(new BigNumber(vault?.collateralAmount), 18),
         shortAmount: toTokenAmount(new BigNumber(vault?.shortAmount), OSQUEETH_DECIMALS),
         operator: vault?.operator,
+        owner: vault?.owner?.id,
       }
     }
   }, [query.data])

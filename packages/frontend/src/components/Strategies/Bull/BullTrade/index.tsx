@@ -7,11 +7,12 @@ import Confirmed, { ConfirmType } from '@components/Trade/Confirmed'
 import { useTransactionStatus } from '@state/wallet/hooks'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { addressesAtom } from '@state/positions/atoms'
-import BullEmergencyWithdraw from './EmergencyWithdraw'
+import { ShutdownEmergencyWithdraw } from './ShutdownEmergencyWithdraw'
 
 export enum BullTradeType {
   Deposit = 'Deposit',
   Withdraw = 'Withdraw',
+  Redeem = 'Redeem',
 }
 
 export interface BullTransactionConfirmation {
@@ -46,14 +47,27 @@ const BullTrade: React.FC = () => {
     resetTransactionData()
   }, [setConfirmedTransactionData, resetTransactionData])
 
+  const getConfirmationMessage = (data?: BullTransactionConfirmation) => {
+    if (!data) return ''
+
+    switch (data.tradeType) {
+      case BullTradeType.Deposit:
+        return `Deposited ${data.amount.toFixed(4)} ETH`
+      case BullTradeType.Withdraw:
+        return `Withdrawn ${data.amount.toFixed(4)} ETH`
+      case BullTradeType.Redeem:
+        return `Redeemed ZenBull for ${data.amount.toFixed(4)} WETH`
+      default:
+        return ''
+    }
+  }
+
   return (
     <>
       {confirmed && confirmedTransactionData?.status ? (
         <>
           <Confirmed
-            confirmationMessage={`${
-              confirmedTransactionData?.tradeType === BullTradeType.Deposit ? `Deposited` : `Withdrawn`
-            } ${confirmedTransactionData?.amount.toFixed(4)} ETH`}
+            confirmationMessage={getConfirmationMessage(confirmedTransactionData)}
             txnHash={transactionData?.hash ?? ''}
             confirmType={ConfirmType.BULL}
           />
@@ -62,10 +76,11 @@ const BullTrade: React.FC = () => {
           </PrimaryButtonNew>
         </>
       ) : (
-        <BullEmergencyWithdraw
+        <ShutdownEmergencyWithdraw
           onTxnConfirm={onTxnConfirm}
           isLoadingBalance={isBullBalanceLoading}
           bullBalance={bullBalance}
+          refetchBullBalance={refetchBullBalance}
         />
       )}
     </>

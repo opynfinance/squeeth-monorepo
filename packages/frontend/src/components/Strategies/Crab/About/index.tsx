@@ -55,12 +55,12 @@ const About: React.FC = () => {
         </Typography>
       </Box>
 
-      <Box position="relative" marginTop="32px">
+      {/* <Box position="relative" marginTop="32px">
         <div className={aboutClasses.timerContainer}>
           <NextRebalanceTimer />
         </div>
         <ProfitabilityChart />
-      </Box>
+      </Box> */}
 
       <Box marginTop="16px">
         <AdvancedMetrics />

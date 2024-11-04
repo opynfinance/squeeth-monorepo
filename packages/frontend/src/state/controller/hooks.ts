@@ -15,6 +15,7 @@ import {
   osqthRefVolAtom,
   ethPriceAtom,
   dailyHistoricalFundingShutdownAtom,
+  indexForSettlementAtom,
 } from './atoms'
 import { fromTokenAmount, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
@@ -210,6 +211,31 @@ export const useGetDebtAmount = () => {
   return getDebtAmount
 }
 
+// get ETH debt amount based on the settlement index price
+export const useGetOSqthSettlementAmount = () => {
+  const contract = useAtomValue(controllerContractAtom)
+  const normFactor = useAtomValue(normFactorAtom)
+  const indexForSettlement = useAtomValue(indexForSettlementAtom)
+
+  const getOSqthSettlementAmount = useCallback(
+    async (shortAmount: BigNumber) => {
+      if (!contract) {
+        return new BigNumber(0)
+      }
+      // sometimes getting normFactor as infinite number
+      if (!normFactor.isFinite()) {
+        return new BigNumber(0)
+      }
+
+      const shortAmountRaw = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
+      const ethDebt = shortAmountRaw.multipliedBy(normFactor).multipliedBy(indexForSettlement)
+      return toTokenAmount(ethDebt, 18)
+    },
+    [contract, normFactor?.toString(), indexForSettlement?.toString()],
+  )
+  return getOSqthSettlementAmount
+}
+
 export const useGetTwapEthPrice = () => {
   const { ethUsdcPool, weth, usdc } = useAtomValue(addressesAtom)
   const { getTwapSafe } = useOracle()
@@ -251,6 +277,27 @@ export const useGetUniNFTCollatDetail = () => {
   }
 
   return getUniNFTCollatDetail
+}
+
+export const useGetUniNFTDetails = () => {
+  const normFactor = useAtomValue(normFactorAtom)
+  const getETHandOSQTHAmount = useGetETHandOSQTHAmount()
+  const getTwapEthPrice = useGetTwapEthPrice()
+
+  const getUniNFTAmounts = async (uniId: number) => {
+    const ethPrice = await getTwapEthPrice()
+    const { wethAmount, oSqthAmount, position } = await getETHandOSQTHAmount(uniId)
+    const sqthValueInEth = oSqthAmount.multipliedBy(normFactor).multipliedBy(ethPrice).div(INDEX_SCALE)
+
+    return {
+      ethAmount: wethAmount,
+      squeethAmount: oSqthAmount,
+      squeethValueInEth: sqthValueInEth,
+      position,
+    }
+  }
+
+  return getUniNFTAmounts
 }
 
 export const useGetCollatRatioAndLiqPrice = () => {
@@ -340,6 +387,23 @@ export const useWithdrawUniPositionToken = () => {
     )
   }
   return withdrawUniPositionToken
+}
+
+export const useRedeemVault = () => {
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  const handleTransaction = useHandleTransaction()
+
+  const redeemVault = async (vaultId: number, onTxConfirmed?: () => void) => {
+    if (!contract || !address) return
+    await handleTransaction(
+      contract.methods.redeemShort(vaultId).send({
+        from: address,
+      }),
+      onTxConfirmed,
+    )
+  }
+  return redeemVault
 }
 
 const useNormFactor = () => {
@@ -537,6 +601,27 @@ const useOsqthRefVol = async (): Promise<number> => {
   return OsqthRefVol
 }
 
+const useIndexForSettlement = () => {
+  const networkId = useAtomValue(networkIdAtom)
+  const contract = useAtomValue(controllerContractAtom)
+  const [indexForSettlement, setIndexForSettlement] = useAtom(indexForSettlementAtom)
+  useEffect(() => {
+    if (!contract) return
+
+    contract.methods
+      .indexForSettlement()
+      .call()
+      .then((_indexPriceForSettlement: any) => {
+        setIndexForSettlement(toTokenAmount(new BigNumber(_indexPriceForSettlement.toString()), 18))
+      })
+      .catch(() => {
+        console.log('indexForSettlement error')
+      })
+  }, [contract, setIndexForSettlement, networkId])
+
+  return indexForSettlement
+}
+
 export const useInitController = () => {
   useIndex()
   useUpdateEthPrice()
@@ -548,4 +633,5 @@ export const useInitController = () => {
   useDailyHistoricalFunding()
   useNormFactor()
   useOsqthRefVol()
+  useIndexForSettlement()
 }

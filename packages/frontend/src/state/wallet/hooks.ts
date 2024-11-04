@@ -117,19 +117,25 @@ export const useDisconnectWallet = () => {
 export const useHandleTransaction = () => {
   const [notify] = useAtom(notifyAtom)
   const [networkId] = useAtom(networkIdAtom)
+  const web3 = useAtomValue(web3Atom)
   const { refetch } = useWalletBalance()
   const setTransactionData = useUpdateAtom(transactionDataAtom)
 
   const handleTransaction = useCallback(
     (tx: any, onTxConfirmed?: (id?: string) => void) => {
       if (!notify) return
-      tx.on('transactionHash', (hash: string) => {
-        const { emitter } = notify.hash(hash)
-        //have to return the emitter object in last order, or the latter emitter object will replace the previous one
-        //if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
 
+      tx.on('transactionHash', async (hash: string) => {
+        // Primary Method: Blocknative Notify
+        // This provides real-time transaction updates via websocket, showing transaction stages
+        // (pending, confirmed, failed, etc) with better UX and detailed status info
+        const { emitter } = notify.hash(hash)
+
+        // have to return the emitter object in last order, or the latter emitter object will replace the previous one
+        // if call getbalance in second order, since it has no return, it will show default notification w/o etherscan link
         emitter.on('all', (transaction) => {
           if (networkId === Networks.LOCAL) return
+
           setTransactionData(transaction)
 
           if (transaction.status === 'confirmed') {
@@ -143,11 +149,39 @@ export const useHandleTransaction = () => {
             link: `${EtherscanPrefix[networkId]}${transaction.hash}`,
           }
         })
+
+        // Fallback Method: Direct Provider Polling
+        // This is a backup in case the websocket connection fails
+        // It uses the provider's built-in waitForTransaction method which polls
+        // for transaction confirmation via standard RPC calls
+        if (!web3?.currentProvider) return
+
+        const provider = new ethers.providers.Web3Provider(web3.currentProvider as any)
+
+        try {
+          // Wait for 1 block confirmation
+          // This acts as a safety net - if Blocknative notify fails to detect confirmation,
+          // this will still catch it and update the UI accordingly
+          const receipt = await provider.waitForTransaction(hash, 1)
+
+          if (receipt.status === 1) {
+            setTransactionData({ status: 'confirmed', hash })
+            if (onTxConfirmed) {
+              onTxConfirmed(hash)
+            }
+            refetch()
+          } else {
+            setTransactionData({ status: 'failed', hash })
+          }
+        } catch (err) {
+          console.error('Transaction failed', err)
+          setTransactionData({ status: 'failed', hash })
+        }
       })
 
       return tx
     },
-    [networkId, notify, refetch, setTransactionData],
+    [networkId, notify, refetch, setTransactionData, web3],
   )
 
   return handleTransaction

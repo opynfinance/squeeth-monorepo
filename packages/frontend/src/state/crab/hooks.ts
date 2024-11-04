@@ -1,6 +1,8 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { useUpdateAtom } from 'jotai/utils'
 import { useCallback, useEffect } from 'react'
+import Web3 from 'web3'
+import { Contract } from 'web3-eth-contract'
 
 import {
   maxCapAtom,
@@ -64,7 +66,7 @@ import BigNumber from 'bignumber.js'
 import { useGetBuyQuote, useGetSellQuote, useGetWSqueethPositionValueInETH } from '../squeethPool/hooks'
 import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
 import { useHandleTransaction } from '../wallet/hooks'
-import { addressAtom, networkIdAtom } from '../wallet/atoms'
+import { addressAtom, networkIdAtom, web3Atom } from '../wallet/atoms'
 import { currentImpliedFundingAtom, impliedVolAtom, indexAtom, normFactorAtom } from '../controller/atoms'
 import {
   crabHelperContractAtom,
@@ -257,6 +259,84 @@ export const useCalculateEthWillingToPayV2 = () => {
   )
 
   return calculateEthWillingToPay
+}
+
+export const getEthToReceiveFromCrabAmount = async (crabAmount: BigNumber, contract: Contract | null, web3: Web3) => {
+  if (!contract) return null
+
+  const totalSupply = toTokenAmount(await contract.methods.totalSupply().call(), 18)
+  const contractBalance = toTokenAmount(await web3.eth.getBalance(contract.options.address), 18)
+
+  return contractBalance.times(crabAmount).div(totalSupply)
+}
+
+export const useCalculateEthToReceiveShutdown = (version: 'v1' | 'v2' = 'v2') => {
+  const contractV1 = useAtomValue(crabStrategyContractAtom)
+  const contractV2 = useAtomValue(crabStrategyContractAtomV2)
+  const web3 = useAtomValue(web3Atom)
+
+  const contract = version === 'v1' ? contractV1 : contractV2
+
+  const calculateEthToReceive = useCallback(
+    async (crabAmount: BigNumber) => {
+      if (!contract || !web3) {
+        return new BigNumber(0)
+      }
+
+      const ethToReceive = await getEthToReceiveFromCrabAmount(crabAmount, contract, web3)
+      return ethToReceive
+    },
+    [contract, web3],
+  )
+
+  return calculateEthToReceive
+}
+
+export const useClaimV2Shares = () => {
+  const contract = useAtomValue(crabMigrationContractAtom)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const claimV2Shares = useCallback(
+    async (onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      return await handleTransaction(
+        contract.methods.claimV2Shares().send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return claimV2Shares
+}
+
+export const useWithdrawShutdown = (version: 'v1' | 'v2' = 'v2') => {
+  const contractV1 = useAtomValue(crabStrategyContractAtom)
+  const contractV2 = useAtomValue(crabStrategyContractAtomV2)
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+
+  const contract = version === 'v1' ? contractV1 : contractV2
+
+  const withdrawShutdown = useCallback(
+    async (crabAmount: BigNumber, onTxConfirmed?: () => void) => {
+      if (!contract) return
+
+      return await handleTransaction(
+        contract.methods.withdrawShutdown(fromTokenAmount(crabAmount, 18).toFixed(0)).send({
+          from: address,
+        }),
+        onTxConfirmed,
+      )
+    },
+    [contract, address, handleTransaction],
+  )
+
+  return withdrawShutdown
 }
 
 export const useCurrentCrabPositionValue = () => {

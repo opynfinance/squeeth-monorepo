@@ -202,8 +202,8 @@ const TabComponent: React.FC = () => {
         variant="fullWidth"
         classes={{ indicator: tradeType === TradeType.SHORT ? classes.shortIndicator : classes.longIndicator }}
       >
-        <SqueethTabNew label="Long" id="long-card-btn" classes={{ root: classes.longTab }} />
-        <SqueethTabNew label="Short" id="short-card-btn" classes={{ root: classes.shortTab }} />
+        <SqueethTabNew label="Redeem oSQTH" id="long-card-btn" classes={{ root: classes.longTab }} />
+        <SqueethTabNew label="Redeem Short Vault" id="short-card-btn" classes={{ root: classes.shortTab }} />
       </SqueethTabsNew>
     </div>
   )
@@ -246,9 +246,9 @@ function TradePage() {
           <Box className={classes.leftColumn}>
             <Header />
 
-            <div className={classes.sectionMargin}>
+            {/* <div className={classes.sectionMargin}>
               {tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}
-            </div>
+            </div> */}
 
             <Box marginTop="76px">
               <PositionCard />
@@ -267,11 +267,11 @@ function TradePage() {
             <TabComponent />
 
             <div className={clsx(classes.sectionMargin, classes.tradeSection)}>
-              <Typography variant="h4" className={classes.subtitle}>
+              {/* <Typography variant="h4" className={classes.subtitle}>
                 Position
-              </Typography>
+              </Typography> */}
 
-              <Trade marginTop="16px" />
+              <Trade />
             </div>
           </Box>
         </Box>

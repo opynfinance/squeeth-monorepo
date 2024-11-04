@@ -1,176 +1,256 @@
-import { Box, CircularProgress, Switch, Tooltip, Typography } from '@material-ui/core'
+import { Box, CircularProgress, Typography, Stepper, Step, StepLabel, Collapse, Tooltip } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
-import { useDebounce } from 'use-debounce'
-import InfoIcon from '@material-ui/icons/Info'
-import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined'
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline'
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useAtomValue } from 'jotai'
 
-import { PrimaryButtonNew, RoundedButton } from '@components/Button'
-import { TradeSettings } from '@components/TradeSettings'
+import { PrimaryButtonNew } from '@components/Button'
 import RestrictionInfo from '@components/RestrictionInfo'
 import { InputToken } from '@components/InputNew'
-import Metric, { MetricLabel } from '@components/Metric'
-import { addressAtom, connectedWalletAtom, networkIdAtom, supportedNetworkAtom } from '@state/wallet/atoms'
+import Metric from '@components/Metric'
+import { connectedWalletAtom, supportedNetworkAtom } from '@state/wallet/atoms'
 import { useTransactionStatus, useSelectWallet } from '@state/wallet/hooks'
 import {
-  crabStrategySlippageAtomV2,
-  currentCrabPositionETHActualAtomV2,
-  currentCrabPositionValueAtomV2,
-  isNettingAuctionLiveAtom,
-  crabQueuedAtom,
-  minCrabAmountAtom,
-  totalUsdcQueuedAtom,
-  totalCrabQueueInUsddAtom,
-} from '@state/crab/atoms'
-import {
+  useSetStrategyData,
   useSetStrategyDataV2,
-  useFlashWithdrawEthV2,
-  useCalculateEthWillingToPayV2,
-  useClaimAndWithdrawEthV2,
-  useETHtoCrab,
-  useFlashWithdrawV2USDC,
-  useQueueWithdrawCrab,
+  useCalculateEthToReceiveShutdown,
+  useClaimV2Shares,
+  useWithdrawShutdown,
 } from '@state/crab/hooks'
-import { readyAtom } from '@state/squeethPool/atoms'
-import { useUserCrabV2TxHistory } from '@hooks/useUserCrabV2TxHistory'
-import {
-  dailyHistoricalFundingAtom,
-  impliedVolAtom,
-  indexAtom,
-  normFactorAtom,
-  osqthRefVolAtom,
-} from '@state/controller/atoms'
 import { addressesAtom } from '@state/positions/atoms'
-import { userMigratedSharesETHAtom } from '@state/crabMigration/atom'
+import { userMigratedSharesAtom } from '@state/crabMigration/atom'
 import { useUpdateSharesData } from '@state/crabMigration/hooks'
-import useAppMemo from '@hooks/useAppMemo'
-import { useUniswapQuoter } from '@hooks/useUniswapQuoter'
 import { useUserAllowance } from '@hooks/contracts/useAllowance'
-import useStateWithReset from '@hooks/useStateWithReset'
-import {
-  BIG_ZERO,
-  FUNDING_PERIOD,
-  INDEX_SCALE,
-  USDC_DECIMALS,
-  VOL_PERCENT_FIXED,
-  VOL_PERCENT_SCALAR,
-  YEAR,
-  AVERAGE_AUCTION_PRICE_IMPACT,
-  CRAB_TOKEN_DECIMALS,
-  NETTING_PRICE_IMPACT,
-  STRATEGY_DEPOSIT_LIMIT,
-  UNI_POOL_FEES,
-} from '@constants/index'
-import { useRestrictUser } from '@context/restrict-user'
-import { fromTokenAmount, getUSDCPoolFee, toTokenAmount } from '@utils/calculations'
+import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { formatNumber } from '@utils/formatter'
-import ethLogo from 'public/images/eth-logo.svg'
-import usdcLogo from 'public/images/usdc-logo.svg'
 import { useStyles } from './styles'
 import { CrabTradeTransactionType, CrabTradeType, CrabTransactionConfirmation, OngoingTransaction } from './types'
 import { CRAB_EVENTS } from '@utils/amplitude'
 import useAmplitude from '@hooks/useAmplitude'
-import useExecuteOnce from '@hooks/useExecuteOnce'
-import useAppEffect from '@hooks/useAppEffect'
-import { CrabStrategyV2TxType, CrabStrategyTxType } from 'src/types'
-import useTrackTransactionFlow from '@hooks/useTrackTransactionFlow'
+import Alert from '@components/Alert'
+import { useRestrictUser } from '@context/restrict-user'
+import { SqueethTabsNew, SqueethTabNew } from '@components/Tabs'
 
-enum WithdrawSteps {
-  APPROVE = 'Approve CRAB',
-  WITHDRAW = 'Withdraw',
+enum RedeemStepsV1 {
+  // APPROVE = 'Approve CRAB', // Not needed since contract is token
+  REDEEM = 'Redeem ETH',
 }
 
-const OTC_PRICE_IMPACT_THRESHOLD = Number(process.env.NEXT_PUBLIC_OTC_PRICE_IMPACT_THRESHOLD) || 1
-console.log(OTC_PRICE_IMPACT_THRESHOLD)
+enum RedeemStepsV2 {
+  CLAIM = 'Claim CRAB',
+  // APPROVE = 'Approve CRAB', // Not needed since contract is token
+  REDEEM = 'Redeem ETH',
+}
 
 const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useStyles()
-  const [withdrawAmount, setWithdrawAmount] = useState('0')
-  const [debouncedWithdrawAmount] = useDebounce(withdrawAmount, 500)
-  const withdrawAmountBN = useMemo(() => new BigNumber(debouncedWithdrawAmount), [debouncedWithdrawAmount])
-  const ongoingTransaction = useRef<OngoingTransaction | undefined>()
-  const [txLoading, setTxLoading] = useState(false)
-  const [withdrawPriceImpact, setWithdrawPriceImpact, resetWithdrawPriceImpact] = useStateWithReset('0')
-  const [uniswapFee, setUniswapFee, resetUniswapFee] = useStateWithReset('0')
-  const [ethAmountInFromWithdraw, setEthAmountInFromWithdraw, resetEthAmountInFromWithdraw] = useStateWithReset(
-    new BigNumber(0),
-  )
-  const [usdcAmountOutFromWithdraw, setUSDCAmountOutFromWithdraw, resetUSDCAmountOutFromWithdraw] = useStateWithReset(
-    new BigNumber(0),
-  )
-  const [squeethAmountOutFromWithdraw, setSqueethAmountOutFromWithdraw, resetSqueethAmountOutFromWithdraw] =
-    useStateWithReset(new BigNumber(0))
-  const [useUsdc, setUseUsdc] = useState(true)
-  const [queueOptionAvailable, setQueueOptionAvailable] = useState(false)
-  const [useQueue, setUseQueue] = useState(false)
-  const [withdrawStep, setWithdrawStep] = useState(WithdrawSteps.WITHDRAW)
-  const [showTokenToggle, setShowTokenToggle] = useState(false)
-  const [userOverrode, setUserOverrode] = useState(false)
 
-  const isNettingAuctionLive = useAtomValue(isNettingAuctionLiveAtom)
-  const minCrabAmountValue = useAtomValue(minCrabAmountAtom)
+  // loading states
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isEthToReceiveLoading, setIsEthToReceiveLoading] = useState(false)
+  const [txLoading, setTxLoading] = useState(false)
+
+  const [selectedVersion, setSelectedVersion] = useState<'v1' | 'v2'>('v2')
+  const [currentStepV1, setCurrentStepV1] = useState<RedeemStepsV1>(RedeemStepsV1.REDEEM)
+  const [currentStepV2, setCurrentStepV2] = useState<RedeemStepsV2>(RedeemStepsV2.CLAIM)
+  const [ethToReceive, setEthToReceive] = useState(new BigNumber(0))
+
+  const ongoingTransaction = useRef<OngoingTransaction | undefined>()
 
   const connected = useAtomValue(connectedWalletAtom)
-  const currentEthActualValue = useAtomValue(currentCrabPositionETHActualAtomV2)
-  const currentUsdcValue = useAtomValue(currentCrabPositionValueAtomV2)
-  const migratedCurrentEthValue = useAtomValue(userMigratedSharesETHAtom)
-  const [slippage, setSlippage] = useAtom(crabStrategySlippageAtomV2)
-  const network = useAtomValue(networkIdAtom)
-  const supportedNetwork = useAtomValue(supportedNetworkAtom)
-  const osqthRefVol = useAtomValue(osqthRefVolAtom)
-  const selectWallet = useSelectWallet()
-
-  const currentEthValue = migratedCurrentEthValue.gt(0) ? migratedCurrentEthValue : currentEthActualValue
-  const isClaimAndWithdraw = migratedCurrentEthValue.gt(0)
-
-  const { usdc, weth, crabHelper, crabStrategy2, crabNetting } = useAtomValue(addressesAtom)
-  const { getExactIn } = useUniswapQuoter()
-  const setStrategyData = useSetStrategyDataV2()
-  const flashWithdrawEth = useFlashWithdrawEthV2()
-  const claimAndWithdrawEth = useClaimAndWithdrawEthV2()
-  const calculateEthWillingToPay = useCalculateEthWillingToPayV2()
-  const updateSharesData = useUpdateSharesData()
-  const flashWithdrawUSDC = useFlashWithdrawV2USDC()
-  const queueCRAB = useQueueWithdrawCrab()
-  const getUserCrabForEthAmount = useETHtoCrab()
-  const [crabQueued, setCrabQueued] = useAtom(crabQueuedAtom)
-
-  const index = useAtomValue(indexAtom)
-  const ethIndexPrice = toTokenAmount(index, 18).sqrt()
-  const { confirmed, resetTransactionData } = useTransactionStatus()
-  const logAndRunTransaction = useTrackTransactionFlow()
-
-  const ready = useAtomValue(readyAtom)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
-  const dailyHistoricalFunding = useAtomValue(dailyHistoricalFundingAtom)
+  const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
-  const address = useAtomValue(addressAtom)
-  const { allowance: crabAllowance, approve: approveCrab } = useUserAllowance(crabStrategy2, crabHelper)
-  const { allowance: crabQueueAllowance, approve: approveQueueCrab } = useUserAllowance(crabStrategy2, crabNetting)
-  const { data } = useUserCrabV2TxHistory(address ?? '')
+  const { crabStrategy, crabStrategy2 } = useAtomValue(addressesAtom)
+  const {
+    value: currentCrabV1Balance,
+    refetch: refetchCrabV1Balance,
+    loading: isCrabV1BalanceLoading,
+  } = useTokenBalance(crabStrategy, 30, 18)
+  const {
+    value: currentCrabV2Balance,
+    refetch: refetchCrabV2Balance,
+    loading: isCrabV2BalanceLoading,
+  } = useTokenBalance(crabStrategy2, 30, 18)
+  const migratedCrabBalance = useAtomValue(userMigratedSharesAtom)
 
-  const impliedVol = useAtomValue(impliedVolAtom)
-  const normFactor = useAtomValue(normFactorAtom)
-
+  const { resetTransactionData } = useTransactionStatus()
+  const selectWallet = useSelectWallet()
   const { track } = useAmplitude()
 
-  const trackUserEnteredWithdrawAmount = useCallback(
-    (amount: BigNumber) => track(CRAB_EVENTS.WITHDRAW_CRAB_AMOUNT_ENTERED, { amount: amount.toNumber() }),
-    [track],
-  )
-  const [trackWithdrawAmountEnteredOnce, resetTracking] = useExecuteOnce(trackUserEnteredWithdrawAmount)
+  const claimV2Shares = useClaimV2Shares()
+  const calculateEthToReceive = useCalculateEthToReceiveShutdown(selectedVersion)
+  const withdrawShutdown = useWithdrawShutdown(selectedVersion)
 
-  const onInputChange = useCallback(
-    (amount: string) => {
-      setWithdrawAmount(amount)
-      const withdraw = new BigNumber(amount)
-      withdraw.isGreaterThan(0) ? trackWithdrawAmountEnteredOnce(withdraw) : null
-    },
-    [setWithdrawAmount, trackWithdrawAmountEnteredOnce],
-  )
+  const updateMigrationSharesData = useUpdateSharesData()
+  const setStrategyDataV1 = useSetStrategyData()
+  const setStrategyDataV2 = useSetStrategyDataV2()
+
+  useEffect(() => {
+    const loading = selectedVersion === 'v1' ? isCrabV1BalanceLoading : isCrabV2BalanceLoading
+    if (!loading) {
+      setIsInitialLoading(false)
+    }
+  }, [selectedVersion, isCrabV1BalanceLoading, isCrabV2BalanceLoading])
+
+  // Determine initial step for V1
+  useEffect(() => {
+    if (!currentCrabV1Balance) return
+
+    setCurrentStepV1(RedeemStepsV1.REDEEM)
+  }, [currentCrabV1Balance?.toString()])
+
+  // Determine initial step based on migrated balance and allowance
+  useEffect(() => {
+    if (!currentCrabV2Balance) return
+
+    if (migratedCrabBalance.gt(0)) {
+      setCurrentStepV2(RedeemStepsV2.CLAIM)
+    } else {
+      setCurrentStepV2(RedeemStepsV2.REDEEM)
+    }
+  }, [currentCrabV2Balance?.toString(), migratedCrabBalance?.toString()])
+
+  useEffect(() => {
+    let mounted = true
+
+    const getEthToReceive = async () => {
+      const balance = selectedVersion === 'v1' ? currentCrabV1Balance : currentCrabV2Balance
+
+      if (balance.eq(0)) {
+        if (mounted) {
+          setEthToReceive(new BigNumber(0))
+          setIsEthToReceiveLoading(false)
+        }
+        return
+      }
+
+      setIsEthToReceiveLoading(true)
+      try {
+        const ethAmount = await calculateEthToReceive(balance)
+        if (mounted) {
+          setEthToReceive(ethAmount || new BigNumber(0))
+          setIsEthToReceiveLoading(false)
+        }
+      } catch (error) {
+        console.error('Error calculating ETH to receive:', error)
+        if (mounted) {
+          setIsEthToReceiveLoading(false)
+        }
+      }
+    }
+
+    getEthToReceive()
+
+    return () => {
+      mounted = false
+    }
+  }, [selectedVersion, calculateEthToReceive, currentCrabV1Balance?.toString(), currentCrabV2Balance?.toString()])
+
+  const handleClaimV2Shares = async () => {
+    setTxLoading(true)
+    try {
+      await claimV2Shares()
+      setCurrentStepV2(RedeemStepsV2.REDEEM)
+      track(CRAB_EVENTS.CLAIM_CRABV2_SUCCESS)
+
+      updateMigrationSharesData()
+      setStrategyDataV2()
+      refetchCrabV2Balance()
+    } catch (e) {
+      console.error(e)
+      track(CRAB_EVENTS.CLAIM_CRABV2_FAILED)
+    }
+    setTxLoading(false)
+  }
+
+  const handleRedeemCrabV1 = async () => {
+    setTxLoading(true)
+    try {
+      ongoingTransaction.current = {
+        amount: currentCrabV1Balance,
+        token: 'ETH',
+        queuedTransaction: false,
+        analytics: [CRAB_EVENTS.REDEEM_CRABV1],
+      }
+
+      await withdrawShutdown(currentCrabV1Balance, onRedeemTxnConfirmed)
+      track(CRAB_EVENTS.REDEEM_CRABV1_SUCCESS)
+
+      setStrategyDataV1()
+      refetchCrabV1Balance()
+
+      // Switch to V2 tab after successful redemption
+      setSelectedVersion('v2')
+    } catch (e) {
+      console.error(e)
+      track(CRAB_EVENTS.REDEEM_CRABV1_FAILED)
+    }
+    setTxLoading(false)
+  }
+
+  const handleRedeemCrabV2 = async () => {
+    setTxLoading(true)
+    try {
+      ongoingTransaction.current = {
+        amount: currentCrabV2Balance,
+        token: 'ETH',
+        queuedTransaction: false,
+        analytics: [CRAB_EVENTS.REDEEM_CRABV2],
+      }
+
+      await withdrawShutdown(currentCrabV2Balance, onRedeemTxnConfirmed)
+      track(CRAB_EVENTS.REDEEM_CRABV2_SUCCESS)
+
+      setStrategyDataV2()
+      refetchCrabV2Balance()
+    } catch (e) {
+      console.error(e)
+      track(CRAB_EVENTS.REDEEM_CRABV2_FAILED)
+    }
+    setTxLoading(false)
+  }
+
+  const buttonText = useMemo(() => {
+    if (isInitialLoading || txLoading) {
+      return <CircularProgress color="primary" size="1.5rem" />
+    }
+
+    if (selectedVersion === 'v1') {
+      switch (currentStepV1) {
+        case RedeemStepsV1.REDEEM:
+          return 'Redeem ETH'
+        default:
+          return 'Redeem'
+      }
+    } else {
+      switch (currentStepV2) {
+        case RedeemStepsV2.CLAIM:
+          return 'Claim CRAB'
+        case RedeemStepsV2.REDEEM:
+          return 'Redeem ETH'
+        default:
+          return 'Redeem'
+      }
+    }
+  }, [isInitialLoading, txLoading, currentStepV1, currentStepV2, selectedVersion])
+
+  const handleAction = () => {
+    if (selectedVersion === 'v1') {
+      switch (currentStepV1) {
+        case RedeemStepsV1.REDEEM:
+          return handleRedeemCrabV1()
+      }
+    } else {
+      switch (currentStepV2) {
+        case RedeemStepsV2.CLAIM:
+          return handleClaimV2Shares()
+
+        case RedeemStepsV2.REDEEM:
+          return handleRedeemCrabV2()
+      }
+    }
+  }
 
   const recordAnalytics = useCallback(
     (events: string[]) => {
@@ -179,570 +259,227 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     [track],
   )
 
-  useAppEffect(() => {
-    // show token toggle only if the user has deposited before 28th December 00:00 UTC, the launch date of new design
-    const launchDate = new Date('2022-12-28T00:00:00.000Z').getTime() / 1000
-    const isLegacyUser =
-      data?.some((tx) => {
-        const isDepositTx =
-          tx.type === CrabStrategyV2TxType.FLASH_DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.DEPOSIT_V1 ||
-          tx.type === CrabStrategyTxType.DEPOSIT ||
-          tx.type === CrabStrategyV2TxType.OTC_DEPOSIT
-
-        return isDepositTx && tx.timestamp < launchDate
-      }) ?? false
-
-    setShowTokenToggle(isLegacyUser)
-  }, [data])
-
-  const withdrawPriceImpactWarning = useAppMemo(() => {
-    if (useQueue) return false
-
-    const squeethPrice = ethAmountInFromWithdraw.div(squeethAmountOutFromWithdraw).times(1 - UNI_POOL_FEES / 1000_000)
-    const scalingFactor = new BigNumber(INDEX_SCALE)
-    const fundingPeriod = new BigNumber(FUNDING_PERIOD).div(YEAR)
-    const executionVol = new BigNumber(
-      Math.log(scalingFactor.times(squeethPrice).div(normFactor.times(ethIndexPrice)).toNumber()),
-    )
-      .div(fundingPeriod)
-      .sqrt()
-
-    const showPriceImpactWarning = executionVol
-      .minus(impliedVol)
-      .abs()
-      .gt(BigNumber.max(new BigNumber(impliedVol).times(VOL_PERCENT_SCALAR), VOL_PERCENT_FIXED))
-    return showPriceImpactWarning
-  }, [impliedVol, ethAmountInFromWithdraw, squeethAmountOutFromWithdraw, useQueue, ethIndexPrice, normFactor])
-
-  const withdrawFundingWarning = useAppMemo(() => {
-    const impliedVolDiff = new BigNumber(VOL_PERCENT_SCALAR)
-    const impliedVolDiffLowVol = new BigNumber(VOL_PERCENT_FIXED)
-
-    const threshold = BigNumber.max(
-      new BigNumber(osqthRefVol / 100).times(new BigNumber(1).plus(impliedVolDiff)),
-      new BigNumber(osqthRefVol / 100).plus(impliedVolDiffLowVol),
-    )
-
-    const fundingWarning = new BigNumber(impliedVol).gt(threshold) ? true : false
-    return fundingWarning
-  }, [impliedVol, osqthRefVol])
-
-  const withdrawError = useAppMemo(() => {
-    let withdrawError: string | undefined
-
-    if (connected) {
-      if (!useUsdc && withdrawAmountBN.gt(currentEthValue)) {
-        withdrawError = 'Withdraw amount greater than strategy balance'
-      } else if (useUsdc && withdrawAmountBN.gt(currentUsdcValue)) {
-        withdrawError = 'Withdraw amount greater than strategy balance'
-      }
-    }
-
-    return withdrawError
-  }, [connected, withdrawAmountBN, currentEthValue, currentUsdcValue, useUsdc])
-
-  const withdrawEthAmount = useAppMemo(() => {
-    if (!useUsdc) return withdrawAmountBN
-    else {
-      if (currentUsdcValue.isZero()) return BIG_ZERO
-      return withdrawAmountBN.div(currentUsdcValue).times(currentEthValue)
-    }
-  }, [withdrawAmountBN, useUsdc, currentUsdcValue, currentEthValue])
-
-  const withdrawCrabAmount = useAppMemo(() => {
-    return getUserCrabForEthAmount(withdrawEthAmount || BIG_ZERO)
-  }, [withdrawEthAmount, getUserCrabForEthAmount])
-
-  useEffect(() => {
-    if (!ready) {
-      return
-    }
-
-    if (withdrawCrabAmount.isZero()) {
-      resetWithdrawPriceImpact()
-      resetUniswapFee()
-      resetEthAmountInFromWithdraw()
-      resetSqueethAmountOutFromWithdraw()
-      resetUSDCAmountOutFromWithdraw()
-      return
-    }
-
-    if (!useUsdc) {
-      calculateEthWillingToPay(withdrawCrabAmount, slippage).then((q) => {
-        setEthAmountInFromWithdraw(q.amountIn)
-        setSqueethAmountOutFromWithdraw(q.squeethDebt)
-
-        let quotePriceImpact = q.priceImpact
-        if (q.poolFee) {
-          quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
-        }
-        setWithdrawPriceImpact(quotePriceImpact)
-        setUniswapFee(q.poolFee)
-      })
-    } else {
-      const fee = getUSDCPoolFee(network)
-      calculateEthWillingToPay(withdrawCrabAmount, slippage).then(async (q) => {
-        const { minAmountOut } = await getExactIn(weth, usdc, fromTokenAmount(q.ethToGet, 18), fee, slippage)
-        setUSDCAmountOutFromWithdraw(toTokenAmount(minAmountOut, USDC_DECIMALS))
-        let quotePriceImpact = q.priceImpact
-        if (q.poolFee) quotePriceImpact = (Number(q.priceImpact) - Number(q.poolFee)).toFixed(2)
-
-        setUniswapFee(q.poolFee)
-        setWithdrawPriceImpact(quotePriceImpact)
-        setEthAmountInFromWithdraw(q.amountIn)
-        setSqueethAmountOutFromWithdraw(q.squeethDebt)
-      })
-    }
-  }, [ready, withdrawCrabAmount.toString(), slippage, network, useUsdc, usdc, weth])
-
-  const onTxnConfirmed = useCallback(
+  const onRedeemTxnConfirmed = useCallback(
     (id?: string) => {
       if (!ongoingTransaction.current) return
       const transaction = ongoingTransaction.current
-      if (transaction.queuedTransaction)
-        setCrabQueued(crabQueued.plus(fromTokenAmount(transaction.amount, CRAB_TOKEN_DECIMALS)))
+
       onTxnConfirm({
         status: true,
         amount: transaction.amount,
-        tradeType: CrabTradeType.Withdraw,
-        transactionType: transaction.queuedTransaction
-          ? CrabTradeTransactionType.Queued
-          : CrabTradeTransactionType.Instant,
+        tradeType: CrabTradeType.Redeem,
+        transactionType: CrabTradeTransactionType.Instant,
         token: transaction.token,
         id,
       })
       transaction.analytics ? recordAnalytics(transaction.analytics) : null
-      onInputChange('0')
-      resetTracking()
+
       ongoingTransaction.current = undefined
     },
-    [setCrabQueued, crabQueued, onTxnConfirm, onInputChange, recordAnalytics, resetTracking],
+    [onTxnConfirm, recordAnalytics],
   )
 
-  const withdraw = async () => {
-    setTxLoading(true)
-
-    try {
-      if (isClaimAndWithdraw) {
-        await claimAndWithdrawEth(withdrawAmountBN, slippage)
-      } else {
-        if (withdrawStep === WithdrawSteps.APPROVE) {
-          if (useQueue) {
-            logAndRunTransaction(async () => {
-              await approveQueueCrab(() => resetTransactionData())
-            }, CRAB_EVENTS.APPROVE_WITHDRAW_STN_CRAB_USDC)
-          } else {
-            logAndRunTransaction(async () => {
-              await approveCrab(() => resetTransactionData())
-            }, CRAB_EVENTS.APPROVE_WITHDRAW_CRAB_USDC)
-          }
-        } else {
-          const userForceInstantAnalytics = queueOptionAvailable && !useQueue
-          ongoingTransaction.current = {
-            amount: withdrawAmountBN,
-            token: useUsdc ? 'USDC' : 'ETH',
-            queuedTransaction: useQueue,
-            analytics: userForceInstantAnalytics ? [CRAB_EVENTS.USER_FORCE_INSTANT_WIT_CRAB] : undefined,
-          }
-
-          if (useQueue) {
-            await queueCRAB(withdrawCrabAmount, onTxnConfirmed)
-          } else if (useUsdc) {
-            await flashWithdrawUSDC(withdrawCrabAmount, slippage, onTxnConfirmed)
-          } else {
-            await flashWithdrawEth(withdrawAmountBN, slippage, onTxnConfirmed)
-          }
-        }
-      }
-      updateSharesData()
-      setStrategyData()
-    } catch (e) {
-      resetTracking()
-      console.log(e)
+  // Memoize error state
+  const redeemError = useMemo(() => {
+    if (!connected) {
+      return undefined
+    }
+    if (isInitialLoading) {
+      return undefined
     }
 
-    setTxLoading(false)
-  }
-
-  useEffect(() => {
-    if (isClaimAndWithdraw) {
-      setUseUsdc(false)
-    } else {
-      setUseUsdc(true)
-    }
-  }, [isClaimAndWithdraw])
-
-  const handleTokenChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setUseUsdc(event.target.checked)
-      onInputChange('0')
-    },
-    [onInputChange],
-  )
-
-  const setWithdrawMax = () => {
-    track(CRAB_EVENTS.WITHDRAW_CRAB_SET_AMOUNT_MAX, {
-      amount: !useUsdc ? currentEthValue.toNumber() : currentUsdcValue.toNumber(),
-      usdc: useUsdc,
-    })
-    if (!useUsdc) onInputChange(currentEthValue.toString())
-    else onInputChange(currentUsdcValue.toString())
-  }
-
-  const depositToken = useMemo(() => (useQueue ? 'USDC' : useUsdc ? 'USDC' : 'ETH'), [useUsdc, useQueue])
-
-  // Update withdraw step
-  useEffect(() => {
-    if (useQueue) {
-      if (crabQueueAllowance.lt(withdrawCrabAmount)) {
-        setWithdrawStep(WithdrawSteps.APPROVE)
-      } else {
-        setWithdrawStep(WithdrawSteps.WITHDRAW)
-      }
-    } else if (useUsdc) {
-      if (crabAllowance.lt(withdrawCrabAmount)) {
-        setWithdrawStep(WithdrawSteps.APPROVE)
-      } else {
-        setWithdrawStep(WithdrawSteps.WITHDRAW)
+    if (selectedVersion === 'v1') {
+      if (currentCrabV1Balance.lte(0)) {
+        return 'No V1 position to redeem'
       }
     } else {
-      setWithdrawStep(WithdrawSteps.WITHDRAW)
+      const isRedeemStep = currentStepV2 === RedeemStepsV2.REDEEM
+      if (isRedeemStep && currentCrabV2Balance.lte(0)) {
+        return 'No position to redeem'
+      }
     }
-  }, [useUsdc, crabAllowance, withdrawCrabAmount, crabQueueAllowance, useQueue])
-
-  const minCrabAmount = toTokenAmount(minCrabAmountValue, CRAB_TOKEN_DECIMALS)
-  const isWithdrawCrabAmountLessThanMinAllowed = withdrawCrabAmount.lt(minCrabAmount)
-
-  useEffect(() => {
-    if (!useUsdc || isNettingAuctionLive || isWithdrawCrabAmountLessThanMinAllowed) {
-      setQueueOptionAvailable(false)
-      setUseQueue(false)
-      return
-    }
-
-    if (Number(withdrawPriceImpact) + Number(uniswapFee) > OTC_PRICE_IMPACT_THRESHOLD) {
-      setQueueOptionAvailable(true)
-      if (userOverrode) return
-
-      setUseQueue(true)
-    } else {
-      setQueueOptionAvailable(false)
-      if (userOverrode) return
-
-      setUseQueue(false)
-    }
+    return undefined
   }, [
-    withdrawPriceImpact,
-    useUsdc,
-    isNettingAuctionLive,
-    isWithdrawCrabAmountLessThanMinAllowed,
-    uniswapFee,
-    userOverrode,
+    connected,
+    selectedVersion,
+    isInitialLoading,
+    currentCrabV1Balance?.toString(),
+    currentStepV2,
+    currentCrabV2Balance?.toString(),
   ])
 
-  const totalDepositsQueued = useAtomValue(totalUsdcQueuedAtom)
-  const totalWithdrawsQueued = useAtomValue(totalCrabQueueInUsddAtom)
+  // Get current balance based on version and step
+  const currentBalance = useMemo(() => {
+    if (selectedVersion === 'v1') {
+      return currentCrabV1Balance
+    } else {
+      return currentStepV2 === RedeemStepsV2.CLAIM ? migratedCrabBalance : currentCrabV2Balance
+    }
+  }, [selectedVersion, currentStepV2, currentCrabV1Balance, currentCrabV2Balance, migratedCrabBalance])
 
-  const withdrawPriceImpactNumber = useAppMemo(() => {
-    if (!useQueue) return Number(withdrawPriceImpact)
+  // Get loading state based on version
+  const isBalanceLoading = useMemo(() => {
+    return selectedVersion === 'v1' ? isCrabV1BalanceLoading : isCrabV2BalanceLoading
+  }, [selectedVersion, isCrabV1BalanceLoading, isCrabV2BalanceLoading])
 
-    const totalDeposits = totalDepositsQueued.minus(totalWithdrawsQueued).isNegative()
-      ? new BigNumber(0)
-      : totalDepositsQueued.minus(totalWithdrawsQueued)
-
-    const nettingWithdrawAmount = totalDeposits.gt(withdrawAmountBN) ? withdrawAmountBN : totalDeposits
-    const remainingWithdraw = withdrawAmountBN.minus(nettingWithdrawAmount)
-
-    const priceImpact = nettingWithdrawAmount
-      .times(NETTING_PRICE_IMPACT)
-      .plus(remainingWithdraw.times(AVERAGE_AUCTION_PRICE_IMPACT))
-      .div(withdrawAmountBN)
-      .toNumber()
-
-    return priceImpact
-  }, [totalDepositsQueued, totalWithdrawsQueued, useQueue, withdrawAmountBN, withdrawPriceImpact])
-
-  const withdrawBtnVariant =
-    withdrawPriceImpactNumber > 3 || withdrawFundingWarning || withdrawPriceImpactWarning ? 'outlined' : 'contained'
-  const withdrawBtnClassName =
-    withdrawPriceImpactNumber > 3
-      ? classes.btnDanger
-      : withdrawFundingWarning || withdrawPriceImpactWarning
-      ? classes.btnWarning
-      : ''
-
-  const onChangeSlippage = useCallback(
-    (amount: BigNumber) => {
-      track(CRAB_EVENTS.WITHDRAW_CRAB_CHANGE_SLIPPAGE, { percent: amount.toNumber() })
-      setSlippage(amount.toNumber())
-    },
-    [track, setSlippage],
-  )
+  // Show tabs only if there's a V1 balance before redemption
+  const showVersionTabs = useMemo(() => {
+    return currentCrabV1Balance.gt(0)
+  }, [currentCrabV1Balance?.toString])
 
   return (
     <>
-      <Box marginTop="32px" display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
+      <Box display="flex" justifyContent="space-between" alignItems="center" gridGap="12px">
         <Typography variant="h3" className={classes.subtitle}>
-          Strategy Withdraw
+          Strategy Redeem
         </Typography>
-
-        {showTokenToggle && (
-          <Box className={classes.tokenSelectBox}>
-            <Typography variant="caption" className={classes.tokenChoice}>
-              ETH
-            </Typography>
-            <Switch
-              checked={useUsdc}
-              onChange={handleTokenChange}
-              color="primary"
-              name="useUSDC"
-              size="small"
-              disabled={isClaimAndWithdraw}
-            />
-            <Typography variant="caption" className={classes.tokenChoice}>
-              USDC
-            </Typography>
-          </Box>
-        )}
-      </Box>
-
-      <Box display="flex" alignItems="center" gridGap="12px" marginTop="16px">
-        <RoundedButton
-          disabled={Number(withdrawAmount) >= STRATEGY_DEPOSIT_LIMIT || !Number(withdrawAmount)}
-          variant="outlined"
-          size="small"
-          onClick={() => {
-            setUseQueue(false)
-            setUserOverrode(true)
-          }}
-          className={!useQueue ? classes.btnActive : classes.btnDefault}
-        >
-          Instant
-        </RoundedButton>
-        <RoundedButton
-          disabled={!queueOptionAvailable}
-          variant={!queueOptionAvailable ? 'contained' : 'outlined'}
-          size="small"
-          onClick={() => {
-            setUseQueue(true)
-            setUserOverrode(true)
-          }}
-          className={useQueue ? classes.btnActive : classes.btnDefault}
-        >
-          Standard
-        </RoundedButton>
-        <Box className={classes.infoIconGray} display="flex" alignItems="center">
-          <Tooltip
-            title={`Standard attempts to reduce price impact and gas costs, but will not exit the strategy immediately. Instant exits immediately.`}
-          >
-            <HelpOutlineIcon fontSize="medium" />
-          </Tooltip>
-        </Box>
       </Box>
 
       <div className={classes.tradeContainer}>
-        {isClaimAndWithdraw && currentEthActualValue.gt(0) ? (
-          <div className={classes.withdrawStepsContainer}>
-            <Typography variant="caption" component="div">
-              Step 1: Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
-            </Typography>
-            <Typography variant="caption">
-              Step 2: Withdraw crab v2 position, {currentEthActualValue.toFixed(4)} ETH
-            </Typography>
-          </div>
-        ) : isClaimAndWithdraw ? (
-          <div className={classes.withdrawStepsContainer}>
-            <Typography variant="caption" component="div">
-              Withdraw migrated crab position, <b>{migratedCurrentEthValue.toFixed(4)}</b> ETH
-            </Typography>
-          </div>
-        ) : null}
+        {showVersionTabs && (
+          <SqueethTabsNew
+            value={selectedVersion}
+            onChange={(_, newValue) => setSelectedVersion(newValue)}
+            aria-label="crab-version-tab"
+            centered
+            variant="fullWidth"
+            style={{ marginBottom: '1rem' }}
+          >
+            <SqueethTabNew label="Crab V1" value="v1" />
+            <SqueethTabNew label="Crab V2" value="v2" />
+          </SqueethTabsNew>
+        )}
+
+        {selectedVersion === 'v2' && (
+          <RedeemStepperV2 migratedCrabBalance={migratedCrabBalance} currentStepV2={currentStepV2} />
+        )}
 
         <InputToken
-          id="crab-withdraw-input"
-          value={withdrawAmount}
-          onInputChange={onInputChange}
-          balance={useUsdc ? currentUsdcValue : currentEthValue}
-          logo={useUsdc ? usdcLogo : ethLogo}
-          symbol={depositToken}
-          usdPrice={useUsdc ? new BigNumber(1) : ethIndexPrice}
-          onBalanceClick={setWithdrawMax}
-          error={!!withdrawError}
-          helperText={withdrawError}
+          id="crab-redeem-input"
+          label="Crab Position"
+          value={currentBalance}
+          balance={currentBalance}
+          isBalanceLoading={isBalanceLoading}
+          symbol="CRAB"
+          showMaxAction={false}
+          error={!!redeemError}
+          helperText={redeemError}
+          readOnly={true}
+          readOnlyTooltip="Only full redemption is allowed"
         />
 
-        {withdrawFundingWarning && !useQueue ? (
-          <div className={classes.notice}>
-            <div className={classes.infoIcon}>
-              <Tooltip
-                title={
-                  'Squeeth is currently more expensive than usual. The strategy buys back squeeth to withdraw. You can still withdraw, but you will pay more.'
-                }
-              >
-                <InfoIcon fontSize="medium" />
-              </Tooltip>
-            </div>
-            <Typography variant="caption" className={classes.infoText}>
-              It is currently costly to withdraw. Consider withdrawing later.
-            </Typography>
-          </div>
-        ) : null}
-
-        {withdrawPriceImpactWarning ? (
-          <div className={classes.notice}>
-            <div className={classes.infoIcon}>
-              <Tooltip
-                title={
-                  'High price impact means that you are losing a significant amount of value due to the size of your trade. Withdrawing a smaller size can reduce your price impact.'
-                }
-              >
-                <InfoIcon fontSize="medium" />
-              </Tooltip>
-            </div>
-            <Typography variant="caption" className={classes.infoText}>
-              High price impact. Try multiple smaller transactions or{' '}
-              {isNettingAuctionLive ? 'wait for auction to be over.' : 'standard withdraw'}
-            </Typography>
-          </div>
-        ) : null}
-
-        <Box display="flex" flexDirection="column" gridGap="12px" marginTop="24px">
-          {useUsdc && !useQueue ? (
+        {/* Show ETH to receive for both V1 and V2 */}
+        {(selectedVersion === 'v1' || (selectedVersion === 'v2' && currentStepV2 === RedeemStepsV2.REDEEM)) && (
+          <Box display="flex" alignItems="center" justifyContent="space-between" marginTop="12px">
             <Metric
-              label="Min USDC to receive"
-              value={formatNumber(usdcAmountOutFromWithdraw.toNumber()) + ' USDC'}
+              label="ETH you will receive"
+              value={isEthToReceiveLoading ? 'Loading...' : formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
               gridGap="12px"
             />
-          ) : null}
-
-          <Box display="flex" alignItems="center" justifyContent="space-between" gridGap="12px" flexWrap="wrap">
-            <Metric
-              label="Uniswap Fee"
-              value={useQueue ? '0%' : formatNumber(Number(uniswapFee)) + '%'}
-              isSmall
-              flexDirection="row"
-              justifyContent="space-between"
-              gridGap="8px"
-            />
-
-            <Box display="flex" alignItems="center" gridGap="6px" flex="1">
-              <Metric
-                isSmall
-                label={
-                  <MetricLabel
-                    isSmall
-                    label={useQueue ? 'Est. Price Impact' : 'Price Impact'}
-                    tooltipTitle={
-                      useQueue
-                        ? `For standard withdraw, the average price impact is ${formatNumber(
-                            withdrawPriceImpactNumber,
-                          )}% based on historical auctions`
-                        : undefined
-                    }
-                  />
-                }
-                value={formatNumber(withdrawPriceImpactNumber) + '%'}
-                textColor={withdrawPriceImpactNumber > 3 ? 'error' : undefined}
-                flexDirection="row"
-                justifyContent="space-between"
-                gridGap="8px"
-              />
-
-              {!useQueue && <TradeSettings setSlippage={onChangeSlippage} slippage={new BigNumber(slippage)} />}
-            </Box>
           </Box>
-        </Box>
+        )}
+
+        <Collapse in={!!redeemError}>
+          <Alert severity="error" marginTop="24px">
+            {redeemError}
+          </Alert>
+        </Collapse>
 
         <div className={classes.ctaSection}>
-          {/* {useQueue && (
-            <div className={classes.queueNotice}>
-              <Typography variant="subtitle2" color="primary">
-                To reduce price impact, your withdrawal may take up until Tuesday to enter the strategy
-              </Typography>
-            </div>
-          )} */}
-
           {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} marginTop="24px" />}
 
-          <div>
-            {isRestricted && !isWithdrawAllowed ? (
-              <PrimaryButtonNew
-                fullWidth
-                variant="contained"
-                onClick={selectWallet}
-                disabled={true}
-                id="open-long-restricted-btn"
-              >
-                {'Unavailable'}
-              </PrimaryButtonNew>
-            ) : !connected ? (
-              <PrimaryButtonNew
-                fullWidth
-                variant="contained"
-                onClick={selectWallet}
-                disabled={!!txLoading}
-                id="crab-select-wallet-btn"
-              >
-                {'Connect Wallet'}
-              </PrimaryButtonNew>
-            ) : !supportedNetwork ? (
-              <PrimaryButtonNew
-                fullWidth
-                variant="contained"
-                onClick={() => {}}
-                disabled={true}
-                id="crab-unsupported-network-btn"
-              >
-                {'Unsupported Network'}
-              </PrimaryButtonNew>
-            ) : (
-              <PrimaryButtonNew
-                fullWidth
-                id="crab-withdraw-btn"
-                variant={withdrawBtnVariant}
-                className={withdrawBtnClassName}
-                onClick={withdraw}
-                disabled={txLoading || !!withdrawError}
-              >
-                {!txLoading && useQueue && withdrawStep === WithdrawSteps.WITHDRAW ? (
-                  <>
-                    Standard withdraw
-                    <Tooltip
-                      title={
-                        <div>
-                          Your withdrawal will be submitted via auction to reduce price impact. This may take until
-                          Tuesday.
-                        </div>
-                      }
-                      style={{ marginLeft: '8' }}
-                    >
-                      <InfoOutlinedIcon fontSize="small" />
-                    </Tooltip>
-                  </>
-                ) : !txLoading &&
-                  (withdrawFundingWarning || withdrawPriceImpactWarning) &&
-                  withdrawStep === WithdrawSteps.WITHDRAW ? (
-                  'Withdraw anyway'
-                ) : !txLoading ? (
-                  withdrawStep === WithdrawSteps.APPROVE ? (
-                    'Approve strategy to withdraw'
-                  ) : (
-                    'Withdraw'
-                  )
-                ) : (
-                  <CircularProgress color="primary" size="1.5rem" />
-                )}
-              </PrimaryButtonNew>
-            )}
-          </div>
+          {!connected ? (
+            <PrimaryButtonNew
+              fullWidth
+              variant="contained"
+              onClick={selectWallet}
+              id="crab-connect-wallet-btn"
+              disabled={!!txLoading}
+            >
+              Connect Wallet
+            </PrimaryButtonNew>
+          ) : !supportedNetwork ? (
+            <PrimaryButtonNew fullWidth variant="contained" disabled={true} id="crab-unsupported-network-btn">
+              Unsupported Network
+            </PrimaryButtonNew>
+          ) : (
+            <PrimaryButtonNew
+              fullWidth
+              id="crab-redeem-btn"
+              variant="contained"
+              onClick={handleAction}
+              disabled={txLoading || !!redeemError || isBalanceLoading || isEthToReceiveLoading}
+            >
+              {buttonText}
+            </PrimaryButtonNew>
+          )}
         </div>
       </div>
     </>
+  )
+}
+
+const RedeemStepperV2: React.FC<{
+  migratedCrabBalance: BigNumber
+  currentStepV2: RedeemStepsV2
+}> = ({ migratedCrabBalance, currentStepV2 }) => {
+  const classes = useStyles()
+
+  // Only show stepper if there's migrated balance
+  if (migratedCrabBalance.eq(0)) {
+    return null
+  }
+
+  const getActiveStep = () => {
+    if (migratedCrabBalance.gt(0)) {
+      // If there's migrated balance, count from all three steps
+      switch (currentStepV2) {
+        case RedeemStepsV2.CLAIM:
+          return 0
+        case RedeemStepsV2.REDEEM:
+          return 1
+        default:
+          return 0
+      }
+    } else {
+      // If no migrated balance, count from approve and redeem only
+      switch (currentStepV2) {
+        case RedeemStepsV2.REDEEM:
+          return 0
+        default:
+          return 0
+      }
+    }
+  }
+
+  return (
+    <div className={classes.stepperContainer}>
+      <Collapse in={migratedCrabBalance.gt(0)}>
+        <Alert severity="warning">
+          {'You have unclaimed Crab v2 tokens from CrabMigration. Claim them before redeeming for ETH.'}
+        </Alert>
+      </Collapse>
+
+      <Stepper activeStep={getActiveStep()} className={classes.stepper}>
+        <Step key="claim">
+          <StepLabel>
+            <Tooltip title="Claim CrabV2 tokens from CrabMigration contract" placement="top">
+              <Typography>Claim CRAB</Typography>
+            </Tooltip>
+          </StepLabel>
+        </Step>
+        <Step key="redeem">
+          <StepLabel>
+            <Tooltip title="Redeem CrabV2 tokens to get ETH" placement="top">
+              <Typography>Redeem ETH</Typography>
+            </Tooltip>
+          </StepLabel>
+        </Step>
+      </Stepper>
+    </div>
   )
 }
 

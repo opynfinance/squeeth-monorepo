@@ -28,9 +28,14 @@ export const useUpdateSharesData = () => {
     if (address != null) {
       const p2 = crabMigrationContract?.methods.sharesDeposited(address).call()
 
-      const [_userShare] = await Promise.all([p2])
-      //setTotalMigratedShares(toTokenAmount(_totalShare, 18))
-      setUserMigratedShares(toTokenAmount(_userShare, 18))
+      try {
+        const [_userShare] = await Promise.all([p2])
+
+        //setTotalMigratedShares(toTokenAmount(_totalShare, 18))
+        setUserMigratedShares(toTokenAmount(_userShare, 18))
+      } catch (e) {
+        console.log("error in getting user's migrated shares", e)
+      }
     }
   }, [address, crabMigrationContract?.methods, setUserMigratedShares])
 

@@ -5,10 +5,24 @@ import BigNumber from 'bignumber.js'
 import { BIG_ZERO, DEFAULT_SLIPPAGE, ETH_USDC_POOL_FEES, FUNDING_PERIOD, UNI_POOL_FEES } from '../constants'
 import { CollateralStatus, Networks } from '../types'
 
+/**
+ * Converts a raw amount from the blockchain into a more readable format.
+ *
+ * @param {BigNumber | number | string} amount - The raw amount from the blockchain.
+ * @param {number} decimals - The number of decimals the token uses.
+ * @returns {BigNumber} The amount in the more readable format.
+ */
 export function toTokenAmount(amount: BigNumber | number | string, decimals: number): BigNumber {
   return new BigNumber(amount).div(new BigNumber(10).exponentiatedBy(decimals))
 }
 
+/**
+ * Converts a readable amount into the raw format that the blockchain understands.
+ *
+ * @param {BigNumber | number | string} amount - The readable amount.
+ * @param {number} decimals - The number of decimals the token uses.
+ * @returns {BigNumber} The amount in the raw format that the blockchain understands.
+ */
 export function fromTokenAmount(amount: BigNumber | number | string, decimals: number): BigNumber {
   return new BigNumber(amount).times(new BigNumber(10).exponentiatedBy(decimals))
 }

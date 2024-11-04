@@ -7,7 +7,7 @@ import { addressAtom } from 'src/state/wallet/atoms'
 import { useHandleTransaction } from 'src/state/wallet/hooks'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { useGetBuyParam, useGetSellParam } from 'src/state/squeethPool/hooks'
-import { shortHelperContractAtom } from '../../state/contracts/atoms'
+import { shortHelperContractAtom, controllerContractAtom } from '../../state/contracts/atoms'
 import { normFactorAtom } from 'src/state/controller/atoms'
 
 export const useShortHelper = () => {
@@ -77,6 +77,37 @@ export const useShortHelper = () => {
   return {
     openShort,
     closeShort,
+  }
+}
+
+export const useShutdownShortHelper = () => {
+  const handleTransaction = useHandleTransaction()
+  const address = useAtomValue(addressAtom)
+  const contract = useAtomValue(controllerContractAtom)
+
+  /**
+   * Redeem vault
+   * @param vaultId
+   * @returns
+   */
+  const redeemShortPosition = async (vaultId: number, onTxConfirmed?: () => void) => {
+    if (!contract || !address) {
+      return
+    }
+
+    // redeem vault
+    const result = await handleTransaction(
+      contract.methods.redeemShort(vaultId).send({
+        from: address,
+      }),
+      onTxConfirmed,
+    )
+
+    return result
+  }
+
+  return {
+    redeemShortPosition,
   }
 }
 

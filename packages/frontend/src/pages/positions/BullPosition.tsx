@@ -1,4 +1,4 @@
-import { Tooltip, Typography, makeStyles } from '@material-ui/core'
+import { Tooltip, Typography, makeStyles, Link } from '@material-ui/core'
 import InfoIcon from '@material-ui/icons/InfoOutlined'
 import useStyles from './useStyles'
 import Image from 'next/image'
@@ -39,6 +39,11 @@ const BullPosition: React.FC = () => {
           </div>
           <Typography style={{ marginLeft: '8px' }}>Zen Bull</Typography>
         </div>
+        <Typography className={classes.link}>
+          <Link href={`/strategies/bull`} target="_blank">
+            Redeem
+          </Link>
+        </Typography>
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>

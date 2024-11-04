@@ -1,5 +1,5 @@
 import BigNumber from 'bignumber.js'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { usePrevious } from 'react-use'
 import { Contract } from 'web3-eth-contract'
 import { useQuery } from 'react-query'
@@ -41,7 +41,10 @@ export const useTokenBalance = (token: string, refetchIntervalSec = 30, decimals
   // Contract being state mess up if the network is ropsten
   // It take one rerender to update the correct contract ie) mainnet => ropsten
   // updateBalance returns 0 as it use mainnet contract. Since it's useQuery the value is cached always
-  const contract = new web3.eth.Contract(erc20Abi as any, token)
+  const contract = useMemo(() => {
+    if (!web3 || !token) return undefined
+    return new web3.eth.Contract(erc20Abi as any, token)
+  }, [web3, token])
 
   const balanceQuery = useQuery(
     tokenBalanceQueryKeys.userTokenBalance({ address, connected, decimals, refetchIntervalSec, token, network }),
@@ -81,7 +84,7 @@ async function updateBalance(
   address: string | null,
   decimals: number,
 ) {
-  if (!token || !connected || !contract) return
+  if (!token || !connected || !contract || !address) return new BigNumber(0)
   const _bal = await contract.methods.balanceOf(address).call({
     from: address,
   })

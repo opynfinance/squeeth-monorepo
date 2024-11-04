@@ -92,9 +92,8 @@ const BEAR_PATH = `${STRATEGIES_PATH}/bear`
 const allowedPaths = [CRAB_PATH, BULL_PATH, BEAR_PATH]
 
 const routeMap = {
-  [BEAR_PATH]: 0,
-  [CRAB_PATH]: 1,
-  [BULL_PATH]: 2,
+  [CRAB_PATH]: 0,
+  [BULL_PATH]: 1,
 }
 
 const StrategyLabel: React.FC<{ title: Vaults; subtitle?: VaultSubtitle }> = ({ title, subtitle = '' }) => {
@@ -152,18 +151,11 @@ const StrategyLayout: React.FC<{ children: any }> = ({ children }) => {
         indicatorColor="primary"
         textColor="primary"
         onChange={(_, value) => {
-          if (routeMap[BEAR_PATH] === value) router.push(BEAR_PATH)
           if (routeMap[BULL_PATH] === value) router.push(BULL_PATH)
           if (routeMap[CRAB_PATH] === value) router.push(CRAB_PATH)
         }}
         aria-label="strategy tabs"
       >
-        <Tab
-          classes={{ root: tabClasses.tabRoot }}
-          label={<StrategyLabel title={Vaults.ETHBear} subtitle={VaultSubtitle.ETHBear} />}
-          icon={<StrategyImage img={bearStrategyImg} imgAlt="Bear strategy" />}
-          disabled
-        />
         <Tab
           classes={{ root: tabClasses.tabRoot }}
           label={<StrategyLabel title={Vaults.CrabVault} subtitle={VaultSubtitle.CrabVault} />}

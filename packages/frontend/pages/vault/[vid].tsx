@@ -1,8 +1,7 @@
 import { useQuery } from '@apollo/client'
 import {
   CircularProgress,
-  InputAdornment,
-  TextField,
+  Link,
   Typography,
   Tooltip,
   Select,
@@ -40,10 +39,12 @@ import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
-import { addressAtom, connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom, supportedNetworkAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
+import { useVaultQuery } from 'src/state/positions/hooks'
 import { addressesAtom, collatPercentAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
+import { UniswapIframe } from 'src/components/Modal/UniswapIframe'
 import {
   useBurnAndRedeem,
   useDepositCollateral,
@@ -53,9 +54,11 @@ import {
   useGetShortAmountFromDebt,
   useGetTwapEthPrice,
   useGetUniNFTCollatDetail,
+  useGetUniNFTDetails,
   useOpenDepositAndMint,
   useWithdrawCollateral,
   useWithdrawUniPositionToken,
+  useRedeemVault,
 } from 'src/state/controller/hooks'
 import {
   useComputeSwaps,
@@ -81,6 +84,11 @@ const useStyles = makeStyles((theme) =>
         margin: theme.spacing(0, 'auto'),
       },
     },
+    overviewHeaderTitle: {
+      fontSize: '20px',
+      marginTop: theme.spacing(1),
+      fontWeight: 300,
+    },
     overview: {
       display: 'flex',
       marginTop: theme.spacing(2),
@@ -92,6 +100,7 @@ const useStyles = makeStyles((theme) =>
       background: theme.palette.background.stone,
       // height: '75px',
       width: '100%',
+      maxWidth: '225px',
       borderRadius: theme.spacing(2),
       padding: theme.spacing(2, 3),
       marginBottom: '1em',
@@ -105,6 +114,42 @@ const useStyles = makeStyles((theme) =>
     },
     overviewValue: {
       fontSize: '22px',
+    },
+    redeemVaultBtnContainer: {
+      marginTop: theme.spacing(4),
+      padding: theme.spacing(3),
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(2),
+    },
+    redeemVaultBtn: {
+      width: '100%',
+      minHeight: '40px',
+      marginTop: theme.spacing(2),
+      cursor: 'pointer',
+    },
+    redeemVaultTitle: {
+      fontSize: '20px',
+      fontWeight: 500,
+      marginBottom: theme.spacing(2),
+    },
+    redeemVaultDescription: {
+      color: theme.palette.text.secondary,
+      fontSize: '14px',
+      '& span': {
+        display: 'block',
+        marginTop: theme.spacing(0.5),
+        paddingLeft: theme.spacing(2),
+      },
+    },
+    redeemVaultWarning: {
+      color: theme.palette.text.secondary,
+      marginTop: theme.spacing(2),
+      borderRadius: theme.spacing(1),
+      fontSize: '14px',
+
+      '& a': {
+        textDecoration: 'underline',
+      },
     },
     manager: {
       display: 'flex',
@@ -237,6 +282,55 @@ const useStyles = makeStyles((theme) =>
       display: 'flex',
       justifyContent: 'space-between',
     },
+    manageLPTokenActionsContainer: {
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: '8px',
+      width: '100%',
+    },
+    manageLPTokenActions: {
+      display: 'flex',
+      justifyContent: 'space-around',
+      width: '100%',
+    },
+    lpManagerContainer: {
+      marginTop: theme.spacing(4),
+      padding: theme.spacing(3),
+      background: theme.palette.background.stone,
+      borderRadius: theme.spacing(2),
+    },
+    lpManagerHeader: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      marginBottom: theme.spacing(3),
+    },
+    lpManagerTitle: {
+      fontSize: '20px',
+      fontWeight: 500,
+    },
+    lpManagerContent: {
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+    },
+    lpManagerDescription: {
+      color: theme.palette.text.secondary,
+      textAlign: 'center',
+      maxWidth: '600px',
+      fontSize: '14px',
+      lineHeight: 1.5,
+    },
+    logoContainer: {
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   }),
 )
 
@@ -248,6 +342,8 @@ enum VaultAction {
   APPROVE_UNI_POSITION,
   DEPOSIT_UNI_POSITION,
   WITHDRAW_UNI_POSITION,
+  REDEEM_UNI_POSITION,
+  REDEEM_VAULT,
 }
 
 enum VaultError {
@@ -305,49 +401,67 @@ const Component: React.FC = () => {
 
   const getCollatRatioAndLiqPrice = useGetCollatRatioAndLiqPrice()
   const getDebtAmount = useGetDebtAmount()
-  const getShortAmountFromDebt = useGetShortAmountFromDebt()
-  const depositCollateral = useDepositCollateral()
   const withdrawCollateral = useWithdrawCollateral()
-  const openDepositAndMint = useOpenDepositAndMint()
-  const burnAndRedeem = useBurnAndRedeem()
   const getTwapEthPrice = useGetTwapEthPrice()
-  const depositUniPositionToken = useDepositUnuPositionToken()
-  const withdrawUniPositionToken = useWithdrawUniPositionToken()
+  const redeemVault = useRedeemVault()
   const getUniNFTCollatDetail = useGetUniNFTCollatDetail()
 
-  const { data: balance } = useWalletBalance()
   const { vid } = router.query
   const { liquidations } = useVaultLiquidations(Number(vid))
-  const { oSqueeth, nftManager, controller } = useAtomValue(addressesAtom)
-  const positionType = useAtomValue(positionTypeAtom)
-  const { squeethAmount } = useComputeSwaps()
   const mintedDebt = useMintedDebt()
   const shortDebt = useShortDebt()
 
   const lpedSqueeth = useLpDebt()
-  const { getApproved, approve } = useERC721(nftManager)
-  const { value: oSqueethBal } = useTokenBalance(oSqueeth, 15, OSQUEETH_DECIMALS)
 
   const [minCollateral, setMinCollateral] = useState<string | undefined>(undefined)
   const [collateral, setCollateral] = useState('0')
   const [lpNftCollatPercent, setLpNftCollatPercent] = useState(0)
   const collateralBN = new BigNumber(collateral)
   const [shortAmount, setShortAmount] = useState('0')
-  const shortAmountBN = new BigNumber(shortAmount)
-  const [maxToMint, setMaxToMint] = useState(new BigNumber(0))
+
   const [twapEthPrice, setTwapEthPrice] = useState(new BigNumber(0))
   const [newLiqPrice, setNewLiqPrice] = useState(new BigNumber(0))
   const [newLpNftLiqPrice, setNewLpNftLiqPrice] = useState(new BigNumber(0))
   const [action, setAction] = useState(VaultAction.ADD_COLLATERAL)
   const [txLoading, setTxLoading] = useState(false)
-  const [uniTokenToDeposit, setUniTokenToDeposit] = useState(0)
 
   const { vault, loading: isVaultLoading, updateVault } = useVault(Number(vid))
   const { existingCollatPercent, existingLiqPrice } = useVaultData(vault as any)
   const [collatPercent, setCollatPercent] = useAtom(collatPercentAtom)
 
+  const [lpedEth, setLpedEth] = useState(new BigNumber(0))
+  const [lpedSqueethInEth, setLpedSqueethInEth] = useState(new BigNumber(0))
+  const [lpedSqueethAmount, setLpedSqueethAmount] = useState(new BigNumber(0))
+
+  const getUniNFTDetails = useGetUniNFTDetails()
+
   useEffect(() => {
-    ; (async () => {
+    const getLPValues = async () => {
+      // make sure vault is loaded and has NFT as collateral
+      if (!isVaultLoading && vault && Number(vault?.NFTCollateralId) !== 0) {
+        try {
+          const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
+          setLpedEth(ethAmount)
+          setLpedSqueethInEth(squeethValueInEth)
+          setLpedSqueethAmount(squeethAmount)
+        } catch (err) {
+          console.error('Error getting LP values:', err)
+          setLpedEth(new BigNumber(0))
+          setLpedSqueethInEth(new BigNumber(0))
+          setLpedSqueethAmount(new BigNumber(0))
+        }
+      } else {
+        setLpedEth(new BigNumber(0))
+        setLpedSqueethInEth(new BigNumber(0))
+        setLpedSqueethAmount(new BigNumber(0))
+      }
+    }
+
+    getLPValues()
+  }, [vault?.NFTCollateralId, isVaultLoading])
+
+  useEffect(() => {
+    ;(async () => {
       if (vault) {
         let collateralAmount = vault.collateralAmount
         if (currentLpNftId) {
@@ -410,99 +524,6 @@ const Component: React.FC = () => {
     setAction(collatAmountBN.isPositive() ? VaultAction.ADD_COLLATERAL : VaultAction.REMOVE_COLLATERAL)
   }
 
-  const updateCollatPercent = async (percent: number) => {
-    if (!vault) return
-
-    setAction(percent > existingCollatPercent ? VaultAction.ADD_COLLATERAL : VaultAction.REMOVE_COLLATERAL)
-    setCollatPercent(percent)
-    const debt = await getDebtAmount(vault.shortAmount)
-    let lpCollatPercent = BIG_ZERO
-    // If NFT is deposited, Collateral amount from LP NFT should not be included. So target collat % - lp collat % will give actual collat to remove
-    if (currentLpNftId) {
-      const { collateral: uniCollat } = await getUniNFTCollatDetail(currentLpNftId)
-      lpCollatPercent = uniCollat.div(debt).times(100)
-    }
-    const newCollat = new BigNumber(percent).minus(lpCollatPercent).times(debt).div(100)
-
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(newCollat, vault.shortAmount, currentLpNftId)
-    setNewLiqPrice(lp)
-    setCollateral(newCollat.minus(vault.collateralAmount).toString())
-  }
-
-  const updateShort = async (shortAmountInput: string) => {
-    setShortAmount(shortAmountInput)
-    if (!vault) return
-    const shortAmountBN = new BigNumber(shortAmountInput)
-
-    const { collateralPercent: cp, liquidationPrice: lp } = await getCollatRatioAndLiqPrice(
-      vault.collateralAmount,
-      shortAmountBN.plus(vault.shortAmount),
-      currentLpNftId,
-    )
-
-    setNewLiqPrice(lp)
-    setCollatPercent(cp)
-    setAction(shortAmountBN.isPositive() ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
-  }
-
-  const updateDebtForCollatPercent = async (percent: number) => {
-    setCollatPercent(percent)
-    if (!vault) return
-
-    let lpNftCollat = BIG_ZERO
-    if (currentLpNftId) {
-      const { collateral: nftCollat } = await getUniNFTCollatDetail(currentLpNftId)
-      lpNftCollat = nftCollat
-    }
-    const debt = vault.collateralAmount.plus(lpNftCollat).times(100).div(percent)
-    const _shortAmt = await getShortAmountFromDebt(debt)
-    setShortAmount(_shortAmt.minus(vault.shortAmount).toString())
-    setAction(percent < existingCollatPercent ? VaultAction.MINT_SQUEETH : VaultAction.BURN_SQUEETH)
-    const { liquidationPrice: lp } = await getCollatRatioAndLiqPrice(vault.collateralAmount, _shortAmt, currentLpNftId)
-
-    setNewLiqPrice(lp)
-  }
-
-  const getMaxToMint = async () => {
-    const max = await getShortAmountFromDebt(vault ? vault?.collateralAmount.times(100).div(150) : new BigNumber(0))
-    const diff = vault ? max.minus(vault?.shortAmount) : new BigNumber(0)
-    setMaxToMint(diff)
-  }
-
-  const updateUniLPTokenInput = useCallback(
-    async (input: number) => {
-      setUniTokenToDeposit(input)
-      updateNftCollateral(BIG_ZERO, BIG_ZERO, input)
-      if (!input) return
-
-      const approvedAddress: string = await getApproved(input)
-      if (controller.toLowerCase() === (approvedAddress || '').toLowerCase()) {
-        setAction(VaultAction.DEPOSIT_UNI_POSITION)
-      } else {
-        setAction(VaultAction.APPROVE_UNI_POSITION)
-      }
-    },
-    [controller, getApproved],
-  )
-
-  useEffect(() => {
-    if (vault) getMaxToMint()
-  }, [vault, vault?.collateralAmount, vault?.shortAmount])
-
-  const addCollat = async (collatAmount: BigNumber) => {
-    if (!vault) return
-
-    setTxLoading(true)
-    try {
-      await depositCollateral(Number(vault.id), collatAmount)
-      updateVault()
-      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
-    } catch (e) {
-      console.log(e)
-    }
-    setTxLoading(false)
-  }
-
   const removeCollat = async (collatAmount: BigNumber) => {
     if (!vault) return
 
@@ -518,116 +539,19 @@ const Component: React.FC = () => {
     setTxLoading(false)
   }
 
-  const mint = async (sAmount: BigNumber) => {
+  const handleRedeemVault = async () => {
     if (!vault) return
 
     setTxLoading(true)
+    setAction(VaultAction.REDEEM_VAULT)
     try {
-      await openDepositAndMint(Number(vault.id), sAmount, new BigNumber(0))
+      await redeemVault(Number(vault.id))
       updateVault()
-      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
     } catch (e) {
       console.log(e)
     }
     setTxLoading(false)
   }
-
-  const burn = async (sAmount: BigNumber) => {
-    if (!vault) return
-
-    setTxLoading(true)
-    try {
-      await burnAndRedeem(Number(vault.id), sAmount.abs(), new BigNumber(0))
-      updateVault()
-      updateNftCollateral(BIG_ZERO, BIG_ZERO, currentLpNftId)
-    } catch (e) {
-      console.log(e)
-    }
-    setTxLoading(false)
-  }
-
-  const depositUniLPToken = async (tokenId: number) => {
-    if (!vault) return
-
-    setTxLoading(true)
-    try {
-      await depositUniPositionToken(Number(vault.id), tokenId)
-      updateVault()
-      setAction(VaultAction.WITHDRAW_UNI_POSITION)
-    } catch (e) {
-      console.log(e)
-    }
-    setTxLoading(false)
-  }
-
-  const withdrawUniLPToken = async () => {
-    if (!vault) return
-
-    setTxLoading(true)
-    setAction(VaultAction.WITHDRAW_UNI_POSITION)
-    try {
-      await withdrawUniPositionToken(Number(vault.id))
-      updateVault()
-      // reset to default action, shld check if this nft got approved with history
-      // cuz now there is no nft selected
-      setAction(VaultAction.ADD_COLLATERAL)
-    } catch (e) {
-      console.log(e)
-    }
-    setTxLoading(false)
-  }
-
-  const approveUniLPToken = async (tokenId: number) => {
-    if (!vault) return
-
-    setTxLoading(true)
-    try {
-      await approve(controller, tokenId)
-      setAction(VaultAction.DEPOSIT_UNI_POSITION)
-    } catch (e) {
-      console.log(e)
-    }
-    setTxLoading(false)
-  }
-
-  const isCollatAction = useMemo(() => {
-    return action === VaultAction.ADD_COLLATERAL || action === VaultAction.REMOVE_COLLATERAL
-  }, [action])
-
-  const isDebtAction = useMemo(() => {
-    return action === VaultAction.MINT_SQUEETH || action === VaultAction.BURN_SQUEETH
-  }, [action])
-
-  const isLPNFTAction = useMemo(() => {
-    return (
-      action === VaultAction.APPROVE_UNI_POSITION ||
-      action === VaultAction.DEPOSIT_UNI_POSITION ||
-      action === VaultAction.WITHDRAW_UNI_POSITION
-    )
-  }, [action])
-
-  const { adjustAmountError, adjustCollatError } = useMemo(() => {
-    let adjustCollatError = null
-    let adjustAmountError = null
-    if (!vault?.shortAmount.gt(0)) return { adjustAmountError, adjustCollatError }
-    if (action === VaultAction.ADD_COLLATERAL && collateralBN.gt(toTokenAmount(balance ?? BIG_ZERO, 18)))
-      adjustCollatError = VaultError.INSUFFICIENT_ETH_BALANCE
-    else if (isCollatAction) {
-      if (collatPercent < 150) adjustCollatError = VaultError.MIN_COLLAT_PERCENT
-      else if (
-        vault?.collateralAmount.minus(collateralBN.negated()).lt(MIN_COLLATERAL_AMOUNT) &&
-        !vault?.collateralAmount.minus(collateralBN.negated()).eq(0)
-      )
-        adjustCollatError = VaultError.MIN_COLLATERAL
-    } else {
-      if (action === VaultAction.BURN_SQUEETH && shortAmountBN.abs().gt(oSqueethBal))
-        adjustAmountError = VaultError.INSUFFICIENT_OSQTH_BALANCE
-      else if (collatPercent < 150 && !shortAmountBN.abs().isEqualTo(vault.shortAmount))
-        adjustAmountError = VaultError.MIN_COLLAT_PERCENT
-    }
-
-    return { adjustAmountError, adjustCollatError }
-  }, [shortAmount, collateral, collatPercent, action, balance?.toString()])
 
   const collatStatus = useCallback(() => {
     return getCollatPercentStatus(existingCollatPercent)
@@ -765,11 +689,37 @@ const Component: React.FC = () => {
             </div>
           </div>
 
+          <Typography className={classes.overviewHeaderTitle} variant="h6">
+            Vault Stats
+          </Typography>
           <div className={classes.overview}>
-            {/* <div className={classes.overviewItem}>
+            <div className={classes.overviewItem}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography className={classes.overviewValue}>
+                  {existingCollatPercent === Infinity ? '--' : `${existingCollatPercent || 0} %`}
+                </Typography>
+                <Typography className={clsx(classes.collatStatus, collatClass)} variant="caption" id="vault-cr">
+                  {getCollatPercentStatus(existingCollatPercent)}
+                </Typography>
+              </div>
+              <Typography className={classes.overviewTitle}>Collateral percent</Typography>
+            </div>
+            <div className={classes.overviewItem}>
+              <Typography className={classes.overviewValue}>
+                $ <span id="vault-liqp">{!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}</span>
+              </Typography>
+              <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
+            </div>
+          </div>
+
+          <Typography className={classes.overviewHeaderTitle} variant="h6">
+            Vault Components
+          </Typography>
+          <div className={classes.overview}>
+            <div className={classes.overviewItem}>
               <Typography className={classes.overviewValue}>{vault?.shortAmount.toFixed(6)}</Typography>
               <Typography className={classes.overviewTitle}>Total Debt (oSQTH)</Typography>
-            </div> */}
+            </div>
             <div className={classes.overviewItem}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography className={classes.overviewValue} id="vault-collat-amount">
@@ -794,390 +744,124 @@ const Component: React.FC = () => {
               </div>
               <Typography className={classes.overviewTitle}>Collateral (ETH)</Typography>
             </div>
-            <div className={classes.overviewItem}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography className={classes.overviewValue}>
-                  {existingCollatPercent === Infinity ? '--' : `${existingCollatPercent || 0} %`}
-                </Typography>
-                <Typography className={clsx(classes.collatStatus, collatClass)} variant="caption" id="vault-cr">
-                  {getCollatPercentStatus(existingCollatPercent)}
-                </Typography>
-              </div>
-              <Typography className={classes.overviewTitle}>Collateral percent</Typography>
-            </div>
-            <div className={classes.overviewItem}>
-              <Typography className={classes.overviewValue}>
-                $ <span id="vault-liqp">{!existingLiqPrice.isFinite() ? '--' : existingLiqPrice.toFixed(2)}</span>
-              </Typography>
-              <Typography className={classes.overviewTitle}>Liquidation Price</Typography>
-            </div>
+
+            {isLPDeposited && (
+              <>
+                <div className={classes.overviewItem}>
+                  <Typography className={classes.overviewValue}>{lpedEth.toFixed(4)}</Typography>
+                  <Typography className={classes.overviewTitle}>LP ETH Amount</Typography>
+                </div>
+                <div className={classes.overviewItem}>
+                  <Typography className={classes.overviewValue}>{lpedSqueethAmount.toFixed(6)}</Typography>
+                  <Typography className={classes.overviewTitle}>LP oSQTH Amount</Typography>
+                </div>
+              </>
+            )}
           </div>
+
+          <VaultRedeemSection
+            vault={vault}
+            isLPDeposited={isLPDeposited}
+            lpedSqueeth={lpedSqueeth}
+            txLoading={txLoading}
+            action={action}
+            handleRedeemVault={handleRedeemVault}
+            vaultId={Number(vid)} // Pass the vault ID from router.query
+          />
+
           {!isRestricted || isWithdrawAllowed ? (
-            <>
-              <div className={classes.manager}>
-                <div className={classes.managerItem}>
-                  <div className={classes.managerItemHeader}>
-                    <div style={{ width: '40px', height: '40px' }}>
-                      <Image src={ethLogo} alt="logo" width={40} height={40} />
-                    </div>
-                    <Typography className={classes.managerItemTitle} variant="h6">
-                      Adjust Collateral
-                    </Typography>
-                  </div>
-                  <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                    <div className={classes.mintBurnTooltip}>
-                      <Tooltip title={Tooltips.CollatRemoveAdd} style={{ alignSelf: 'center' }}>
-                        <InfoIcon fontSize="small" className={classes.infoIcon} />
-                      </Tooltip>
-                      <LinkButton
-                        id="collat-max-btn"
-                        size="small"
-                        color="primary"
-                        onClick={() => {
-                          if (collateralBN.isPositive()) {
-                            updateCollateral(toTokenAmount(balance ?? BIG_ZERO, 18).toString())
-                          } else {
-                            if (minCollateral) {
-                              updateCollateral(minCollateral)
-                            }
-                          }
-                        }}
-                        variant="text"
-                      >
-                        Max
-                      </LinkButton>
-                    </div>
-
-                    <NumberInput
-                      id="collat-amount-input"
-                      min={minCollateral || '0'}
-                      step={0.1}
-                      placeholder="Collateral"
-                      onChange={(v) => updateCollateral(v)}
-                      value={collateral}
-                      unit="ETH"
-                      hint={
-                        !!adjustCollatError ? (
-                          adjustCollatError
-                        ) : (
-                          <span>
-                            Balance{' '}
-                            <span id="vault-collat-input-eth-balance">
-                              {toTokenAmount(balance ?? BIG_ZERO, 18).toFixed(4)}
-                            </span>{' '}
-                            ETH
-                          </span>
-                        )
-                      }
-                      error={!!adjustCollatError}
-                    />
-                  </div>
-                  <div className={classes.collatContainer} id="collat-collat-ratio-container">
-                    <TextField
-                      size="small"
-                      type="number"
-                      style={{ width: '100%', marginRight: '4px' }}
-                      onChange={(event) => updateCollatPercent(Number(event.target.value))}
-                      value={isCollatAction ? collatPercent : existingCollatPercent}
-                      id="filled-basic"
-                      label="Collateral Ratio"
-                      variant="outlined"
-                      // error={collatPercent < 150}
-                      // helperText={`Balance ${toTokenAmount(balance, 18).toFixed(4)} ETH`}
-                      InputProps={{
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Typography variant="caption">%</Typography>
-                          </InputAdornment>
-                        ),
-                      }}
-                      inputProps={{
-                        min: '0',
-                      }}
-                      className="collat-collat-perct"
-                    />
-                    <CollatRange
-                      collatValue={isCollatAction ? collatPercent : existingCollatPercent}
-                      onCollatValueChange={updateCollatPercent}
-                    />
-                  </div>
-                  <div className={classes.txDetails}>
-                    <TradeInfoItem
-                      label="New liquidation price"
-                      value={isCollatAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                      frontUnit="$"
-                      id="collat-new-liqp"
-                    />
-                  </div>
-                  {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} />}
-                  <div className={classes.managerActions}>
-                    <RemoveButton
-                      id="remove-collat-submit-tx-btn"
-                      className={classes.actionBtn}
-                      size="small"
-                      disabled={action !== VaultAction.REMOVE_COLLATERAL || txLoading || !!adjustCollatError || (isRestricted && !isWithdrawAllowed)}
-                      onClick={() => removeCollat(collateralBN.abs())}
-                    >
-                      {action === VaultAction.REMOVE_COLLATERAL && txLoading ? (
-                        <CircularProgress color="primary" size="1rem" />
-                      ) : (
-                        'Remove'
-                      )}
-                    </RemoveButton>
-                    <AddButton
-                      id="add-collat-submit-tx-btn"
-                      onClick={() => addCollat(collateralBN)}
-                      className={classes.actionBtn}
-                      size="small"
-                      disabled={action !== VaultAction.ADD_COLLATERAL || txLoading || !!adjustCollatError || isRestricted}
-                    >
-                      {action === VaultAction.ADD_COLLATERAL && txLoading ? (
-                        <CircularProgress color="primary" size="1rem" />
-                      ) : (
-                        'Add'
-                      )}
-                    </AddButton>
-                  </div>
+            <div className={classes.lpManagerContainer}>
+              <div className={classes.lpManagerHeader}>
+                <div className={classes.logoContainer}>
+                  <Image src={ethLogo} alt="ETH logo" width={40} height={40} />
                 </div>
-                <div className={classes.managerItem}>
-                  <div className={classes.managerItemHeader}>
-                    <div style={{ width: '40px', height: '40px' }}>
-                      <Image src={squeethLogo} alt="logo" width={40} height={40} />
-                    </div>
-                    <Typography className={classes.managerItemTitle} variant="h6">
-                      Adjust Debt
-                    </Typography>
-                  </div>
-                  <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                    <div className={classes.mintBurnTooltip}>
-                      <Tooltip title={Tooltips.MintBurnInput} style={{ alignSelf: 'center' }}>
-                        <InfoIcon fontSize="small" className={classes.infoIcon} />
-                      </Tooltip>
-                      <LinkButton
-                        id="debt-max-btn"
-                        size="small"
-                        color="primary"
-                        onClick={() =>
-                          shortAmountBN.isPositive()
-                            ? updateShort(maxToMint.toString())
-                            : vault?.shortAmount.isGreaterThan(oSqueethBal)
-                              ? updateShort(oSqueethBal.negated().toString())
-                              : updateShort(vault?.shortAmount ? vault?.shortAmount.negated().toString() : '0')
-                        }
-                        variant="text"
-                      >
-                        Max
-                      </LinkButton>
-                    </div>
-                    <NumberInput
-                      id="debt-amount-input"
-                      min={oSqueethBal.negated().toString()}
-                      step={0.1}
-                      placeholder="Amount"
-                      onChange={(v) => updateShort(v)}
-                      value={shortAmount}
-                      unit="oSQTH"
-                      hint={
-                        !!adjustAmountError ? (
-                          adjustAmountError
-                        ) : (
-                          <span>
-                            Balance{' '}
-                            <span id="vault-debt-input-osqth-balance">
-                              {oSqueethBal?.isGreaterThan(0) &&
-                                positionType === PositionType.LONG &&
-                                oSqueethBal.minus(squeethAmount).isGreaterThan(0)
-                                ? oSqueethBal.minus(squeethAmount).toFixed(6)
-                                : oSqueethBal.toFixed(6)}
-                            </span>{' '}
-                            oSQTH
-                          </span>
-                        )
-                      }
-                      error={!!adjustAmountError}
-                    />
-                    <div className={classes.collatContainer} id="debt-collat-ratio-container">
-                      <TextField
-                        size="small"
-                        type="number"
-                        style={{ width: '100%', marginRight: '4px' }}
-                        onChange={(event) => updateDebtForCollatPercent(Number(event.target.value))}
-                        value={isDebtAction ? collatPercent : existingCollatPercent}
-                        id="filled-basic"
-                        label="Collateral Ratio"
-                        variant="outlined"
-                        InputProps={{
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <Typography variant="caption">%</Typography>
-                            </InputAdornment>
-                          ),
-                        }}
-                        inputProps={{
-                          min: '0',
-                        }}
-                        className="debt-collat-perct"
-                      />
-                      <CollatRange
-                        collatValue={isDebtAction ? collatPercent : existingCollatPercent}
-                        onCollatValueChange={updateDebtForCollatPercent}
-                      />
-                    </div>
-                  </div>
-                  <div className={classes.txDetails}>
-                    <TradeInfoItem
-                      label="New liquidation price"
-                      value={isDebtAction ? (newLiqPrice || 0).toFixed(2) : '0'}
-                      frontUnit="$"
-                      id="debt-new-liqp"
-                    />
-                  </div>
-                  {isRestricted && <RestrictionInfo withdrawAllowed={isWithdrawAllowed} />}
-                  <div className={classes.managerActions}>
-                    <RemoveButton
-                      id="burn-submit-tx-btn"
-                      onClick={() => burn(shortAmountBN)}
-                      className={classes.actionBtn}
-                      size="small"
-                      disabled={action !== VaultAction.BURN_SQUEETH || txLoading || !!adjustAmountError || (isRestricted && !isWithdrawAllowed)}
-                    >
-                      {action === VaultAction.BURN_SQUEETH && txLoading ? (
-                        <CircularProgress color="primary" size="1rem" />
-                      ) : (
-                        'Burn'
-                      )}
-                    </RemoveButton>
-                    <AddButton
-                      id="mint-submit-tx-btn"
-                      onClick={() => mint(shortAmountBN)}
-                      className={classes.actionBtn}
-                      size="small"
-                      disabled={action !== VaultAction.MINT_SQUEETH || txLoading || !!adjustAmountError || isRestricted}
-                    >
-                      {action === VaultAction.MINT_SQUEETH && txLoading ? (
-                        <CircularProgress color="primary" size="1rem" />
-                      ) : (
-                        'Mint'
-                      )}
-                    </AddButton>
-                  </div>
-                </div>
+                <Typography className={classes.lpManagerTitle}>Manage LP Token</Typography>
               </div>
-              <div className={classes.manager}>
-                <div className={classes.managerItem}>
-                  <div className={classes.managerItemHeader}>
-                    <div style={{ marginLeft: '16px', width: '40px', height: '40px' }}>
-                      <Image src={ethLogo} alt="logo" width={40} height={40} />
-                    </div>
-                    <Typography className={classes.managerItemTitle} variant="h6">
-                      Manage LP token
-                    </Typography>
-                  </div>
-                  <div style={{ margin: 'auto', width: '300px', marginTop: '24px' }}>
-                    {!isLPDeposited ? (
-                      <SelectLP lpToken={uniTokenToDeposit} setLpToken={updateUniLPTokenInput} />
-                    ) : (
-                      <TextField
-                        size="small"
-                        value={isLPDeposited ? vault?.NFTCollateralId : uniTokenToDeposit}
-                        type="number"
-                        style={{ width: 300 }}
-                        onChange={(event) => updateUniLPTokenInput(Number(event.target.value))}
-                        id="filled-basic"
-                        label="Uni LP token"
-                        variant="outlined"
-                        disabled={isLPDeposited}
-                        className="deposited-lp-id"
-                      />
-                    )}
-                  </div>
 
-                  {(currentLpNftId || isLPNFTAction) && (isLPDeposited || uniTokenToDeposit) ? (
-                    <>
-                      <div className={classes.collatContainer}>
-                        <TextField
-                          size="small"
-                          type="number"
-                          style={{ width: '100%', marginRight: '4px' }}
-                          onChange={(event) => updateCollatPercent(Number(event.target.value))}
-                          value={lpNftCollatPercent}
-                          id="filled-basic"
-                          label="New Collateral Ratio"
-                          variant="outlined"
-                          disabled={true}
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <Typography variant="caption">%</Typography>
-                              </InputAdornment>
-                            ),
-                          }}
-                          inputProps={{
-                            min: '0',
-                          }}
-                        />
-                      </div>
-                      <div className={classes.txDetails}>
-                        <TradeInfoItem
-                          label="New liquidation price"
-                          value={(newLpNftLiqPrice ?? 0).toFixed(2)}
-                          frontUnit="$"
-                        />
-                      </div>
-                    </>
-                  ) : null}
-                  <div className={classes.managerActions} style={{ marginTop: '16px' }}>
-                    {isLPDeposited ? (
-                      <RemoveButton
-                        id="remove-lp-nft-submit-tx-btn"
-                        className={classes.actionBtn}
-                        size="small"
-                        disabled={txLoading}
-                        onClick={() => withdrawUniLPToken()}
-                      >
-                        {action === VaultAction.WITHDRAW_UNI_POSITION && txLoading ? (
-                          <CircularProgress color="primary" size="1rem" />
-                        ) : (
-                          'Remove'
-                        )}
-                      </RemoveButton>
-                    ) : null}
-                    {!isLPDeposited && action === VaultAction.APPROVE_UNI_POSITION && uniTokenToDeposit ? (
-                      <AddButton
-                        id="approve-lp-nft-submit-tx-btn"
-                        onClick={() => approveUniLPToken(uniTokenToDeposit)}
-                        className={classes.actionBtn}
-                        size="small"
-                        disabled={action !== VaultAction.APPROVE_UNI_POSITION || txLoading || isRestricted}
-                      >
-                        {action === VaultAction.APPROVE_UNI_POSITION && txLoading ? (
-                          <CircularProgress color="primary" size="1rem" />
-                        ) : (
-                          'Approve'
-                        )}
-                      </AddButton>
-                    ) : null}
-                    {!isLPDeposited && action === VaultAction.DEPOSIT_UNI_POSITION && uniTokenToDeposit ? (
-                      <AddButton
-                        id="deposit-lp-nft-submit-tx-btn"
-                        onClick={() => depositUniLPToken(uniTokenToDeposit)}
-                        className={classes.actionBtn}
-                        size="small"
-                        disabled={action !== VaultAction.DEPOSIT_UNI_POSITION || txLoading || isRestricted}
-                      >
-                        {action === VaultAction.DEPOSIT_UNI_POSITION && txLoading ? (
-                          <CircularProgress color="primary" size="1rem" />
-                        ) : (
-                          'Deposit'
-                        )}
-                      </AddButton>
-                    ) : null}
-                  </div>
-                </div>
+              <div className={classes.lpManagerContent}>
+                <UniswapIframe text={'Withdraw LP Position'} closePosition={true} />
+                <Typography className={classes.lpManagerDescription}>
+                  If you have an LP position in Uniswap, you can withdraw it directly here. <br />
+                  The withdrawn oSQTH can then be redeemed separately from the <Link href="/squeeth">trade page</Link>.
+                </Typography>
               </div>
-            </>
+            </div>
           ) : null}
         </div>
+      )}
+    </div>
+  )
+}
+
+interface VaultRedeemSectionProps {
+  vault: Vault | undefined
+  isLPDeposited: boolean
+  lpedSqueeth: BigNumber
+  txLoading: boolean
+  action: VaultAction
+  handleRedeemVault: () => Promise<void>
+  vaultId: number
+}
+
+const VaultRedeemSection: React.FC<VaultRedeemSectionProps> = ({
+  vault,
+  isLPDeposited,
+  lpedSqueeth,
+  txLoading,
+  action,
+  handleRedeemVault,
+  vaultId,
+}) => {
+  const classes = useStyles()
+
+  const currentUserAddress = useAtomValue(addressAtom)
+  const { data: vaultQueryData } = useVaultQuery(vaultId)
+
+  const isVaultOwner = currentUserAddress?.toLowerCase() === vaultQueryData?.owner?.toLowerCase()
+  if (!isVaultOwner) return null
+
+  return (
+    <div className={classes.redeemVaultBtnContainer}>
+      <Typography className={classes.redeemVaultTitle}>Redeem Vault</Typography>
+      <Typography className={classes.redeemVaultDescription}>
+        {!vault?.shortAmount?.gt(0) && !isLPDeposited ? (
+          <Typography className={classes.redeemVaultDescription}>This vault has no positions to redeem.</Typography>
+        ) : (
+          <>
+            <Typography className={classes.redeemVaultDescription}>
+              {(vault?.shortAmount?.gt(0) || isLPDeposited) && (
+                <>
+                  This will:
+                  {isLPDeposited && <span>• Withdraw your LP position from vault</span>}
+                  {vault?.shortAmount?.gt(0) && (
+                    <span>• Close your short position by burning {vault.shortAmount.toFixed(6)} oSQTH</span>
+                  )}
+                </>
+              )}
+            </Typography>
+
+            <RemoveButton
+              id="redeem-vault-submit-tx-btn"
+              onClick={handleRedeemVault}
+              disabled={txLoading}
+              className={classes.redeemVaultBtn}
+            >
+              {action === VaultAction.REDEEM_VAULT && txLoading ? (
+                <CircularProgress color="primary" size="1rem" />
+              ) : (
+                'Redeem Vault'
+              )}
+            </RemoveButton>
+          </>
+        )}
+      </Typography>
+
+      {lpedSqueeth?.gt(vault?.shortAmount || BIG_ZERO) && (
+        <Typography className={classes.redeemVaultWarning}>
+          <b>Note:</b> After redemption, you&apos;ll need to manually redeem{' '}
+          {lpedSqueeth.minus(vault?.shortAmount || BIG_ZERO).toFixed(6)} oSQTH from your LP position using the
+          &quot;Redeem Long&quot; functionality on the <Link href="/squeeth">trade page</Link>
+        </Typography>
       )}
     </div>
   )
