@@ -250,9 +250,9 @@ function TradePage() {
               {tradeType === TradeType.LONG ? <LongChartPayoff /> : <ShortFundingChart />}
             </div> */}
 
-            <Box marginTop="76px">
+            {/* <Box marginTop="76px">
               <PositionCard />
-            </Box>
+            </Box> */}
 
             <Box marginTop="40px">
               <Typography variant="h4" className={classes.subtitle}>
