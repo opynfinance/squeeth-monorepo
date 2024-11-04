@@ -1,4 +1,4 @@
-import Typography from '@material-ui/core/Typography'
+import { Typography, Link } from '@material-ui/core'
 import { useAtomValue } from 'jotai'
 import { useComputeSwaps, useLongRealizedPnl, useLPPositionsQuery } from 'src/state/positions/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
@@ -26,6 +26,11 @@ export default function LongSqueeth() {
     <div className={classes.position}>
       <div className={classes.positionTitle}>
         <Typography>Long Squeeth</Typography>
+        <Typography className={classes.link}>
+          <Link href={`/squeeth`} target="_blank">
+            Redeem
+          </Link>
+        </Typography>
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>

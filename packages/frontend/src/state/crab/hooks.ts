@@ -271,25 +271,22 @@ export const getEthToReceiveFromCrabAmount = async (crabAmount: BigNumber, contr
 }
 
 export const useCalculateEthToReceiveShutdown = (version: 'v1' | 'v2' = 'v2') => {
-  const vaultV1 = useAtomValue(crabStrategyVaultAtom)
-  const vaultV2 = useAtomValue(crabStrategyVaultAtomV2)
   const contractV1 = useAtomValue(crabStrategyContractAtom)
   const contractV2 = useAtomValue(crabStrategyContractAtomV2)
   const web3 = useAtomValue(web3Atom)
 
+  const contract = version === 'v1' ? contractV1 : contractV2
+
   const calculateEthToReceive = useCallback(
     async (crabAmount: BigNumber) => {
-      const vault = version === 'v1' ? vaultV1 : vaultV2
-      const contract = version === 'v1' ? contractV1 : contractV2
-
-      if (!vault) {
+      if (!contract || !web3) {
         return new BigNumber(0)
       }
 
       const ethToReceive = await getEthToReceiveFromCrabAmount(crabAmount, contract, web3)
       return ethToReceive
     },
-    [version, vaultV1?.id, vaultV2?.id, contractV1, contractV2],
+    [contract, web3],
   )
 
   return calculateEthToReceive
@@ -323,9 +320,10 @@ export const useWithdrawShutdown = (version: 'v1' | 'v2' = 'v2') => {
   const handleTransaction = useHandleTransaction()
   const address = useAtomValue(addressAtom)
 
+  const contract = version === 'v1' ? contractV1 : contractV2
+
   const withdrawShutdown = useCallback(
     async (crabAmount: BigNumber, onTxConfirmed?: () => void) => {
-      const contract = version === 'v1' ? contractV1 : contractV2
       if (!contract) return
 
       return await handleTransaction(
@@ -335,7 +333,7 @@ export const useWithdrawShutdown = (version: 'v1' | 'v2' = 'v2') => {
         onTxConfirmed,
       )
     },
-    [version, contractV1, contractV2, address, handleTransaction],
+    [contract, address, handleTransaction],
   )
 
   return withdrawShutdown

@@ -1,4 +1,4 @@
-import { Tooltip, Typography } from '@material-ui/core'
+import { Tooltip, Typography, Link } from '@material-ui/core'
 import BigNumber from 'bignumber.js'
 import { useAtomValue } from 'jotai'
 import { useEffect } from 'react'
@@ -56,6 +56,11 @@ const CrabPositionV2: React.FC<CrabPositionV2Type> = ({
           <Typography>🦀</Typography>
           <Typography style={{ marginLeft: '8px' }}>{version}</Typography>
         </div>
+        <Typography className={classes.link}>
+          <Link href={`/strategies/crab`} target="_blank">
+            Redeem
+          </Link>
+        </Typography>
       </div>
       <div className={classes.shortPositionData}>
         <div className={classes.innerPositionData}>

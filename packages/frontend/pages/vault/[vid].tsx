@@ -39,8 +39,9 @@ import { LinkButton } from '@components/Button'
 import { useERC721 } from '@hooks/contracts/useERC721'
 import { ACTIVE_POSITIONS_QUERY } from '@queries/uniswap/positionsQuery'
 import { positions, positionsVariables } from '@queries/uniswap/__generated__/positions'
-import { addressAtom, connectedWalletAtom, supportedNetworkAtom } from 'src/state/wallet/atoms'
+import { addressAtom, connectedWalletAtom, supportedNetworkAtom, networkIdAtom } from 'src/state/wallet/atoms'
 import { useWalletBalance } from 'src/state/wallet/hooks'
+import { useVaultQuery } from 'src/state/positions/hooks'
 import { addressesAtom, collatPercentAtom, positionTypeAtom } from 'src/state/positions/atoms'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import { UniswapIframe } from 'src/components/Modal/UniswapIframe'
@@ -436,6 +437,7 @@ const Component: React.FC = () => {
 
   useEffect(() => {
     const getLPValues = async () => {
+      // make sure vault is loaded and has NFT as collateral
       if (!isVaultLoading && vault && Number(vault?.NFTCollateralId) !== 0) {
         try {
           const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
@@ -756,51 +758,16 @@ const Component: React.FC = () => {
               </>
             )}
           </div>
-          <div className={classes.redeemVaultBtnContainer}>
-            <Typography className={classes.redeemVaultTitle}>Redeem Vault</Typography>
-            <Typography className={classes.redeemVaultDescription}>
-              {!vault?.shortAmount?.gt(0) && !isLPDeposited ? (
-                <Typography className={classes.redeemVaultDescription}>
-                  This vault has no positions to redeem.
-                </Typography>
-              ) : (
-                <>
-                  <Typography className={classes.redeemVaultDescription}>
-                    {(vault?.shortAmount?.gt(0) || isLPDeposited) && (
-                      <>
-                        This will:
-                        {isLPDeposited && <span>• Withdraw your LP position from vault</span>}
-                        {vault?.shortAmount?.gt(0) && (
-                          <span>• Close your short position by burning {vault.shortAmount.toFixed(6)} oSQTH</span>
-                        )}
-                      </>
-                    )}
-                  </Typography>
 
-                  <RemoveButton
-                    id="redeem-vault-submit-tx-btn"
-                    onClick={handleRedeemVault}
-                    disabled={txLoading}
-                    className={classes.redeemVaultBtn}
-                  >
-                    {action === VaultAction.REDEEM_VAULT && txLoading ? (
-                      <CircularProgress color="primary" size="1rem" />
-                    ) : (
-                      'Redeem Vault'
-                    )}
-                  </RemoveButton>
-                </>
-              )}
-            </Typography>
-
-            {lpedSqueeth?.gt(vault?.shortAmount || BIG_ZERO) && (
-              <Typography className={classes.redeemVaultWarning}>
-                <b>Note:</b> After redemption, you&apos;ll need to manually redeem{' '}
-                {lpedSqueeth.minus(vault?.shortAmount || BIG_ZERO).toFixed(6)} oSQTH from your LP position using the
-                &quot;Redeem Long&quot; functionality on the <Link href="/squeeth">trade page</Link>
-              </Typography>
-            )}
-          </div>
+          <VaultRedeemSection
+            vault={vault}
+            isLPDeposited={isLPDeposited}
+            lpedSqueeth={lpedSqueeth}
+            txLoading={txLoading}
+            action={action}
+            handleRedeemVault={handleRedeemVault}
+            vaultId={Number(vid)} // Pass the vault ID from router.query
+          />
 
           {!isRestricted || isWithdrawAllowed ? (
             <div className={classes.lpManagerContainer}>
@@ -821,6 +788,80 @@ const Component: React.FC = () => {
             </div>
           ) : null}
         </div>
+      )}
+    </div>
+  )
+}
+
+interface VaultRedeemSectionProps {
+  vault: Vault | undefined
+  isLPDeposited: boolean
+  lpedSqueeth: BigNumber
+  txLoading: boolean
+  action: VaultAction
+  handleRedeemVault: () => Promise<void>
+  vaultId: number
+}
+
+const VaultRedeemSection: React.FC<VaultRedeemSectionProps> = ({
+  vault,
+  isLPDeposited,
+  lpedSqueeth,
+  txLoading,
+  action,
+  handleRedeemVault,
+  vaultId,
+}) => {
+  const classes = useStyles()
+
+  const currentUserAddress = useAtomValue(addressAtom)
+  const { data: vaultQueryData } = useVaultQuery(vaultId)
+
+  const isVaultOwner = currentUserAddress?.toLowerCase() === vaultQueryData?.owner?.toLowerCase()
+  if (!isVaultOwner) return null
+
+  return (
+    <div className={classes.redeemVaultBtnContainer}>
+      <Typography className={classes.redeemVaultTitle}>Redeem Vault</Typography>
+      <Typography className={classes.redeemVaultDescription}>
+        {!vault?.shortAmount?.gt(0) && !isLPDeposited ? (
+          <Typography className={classes.redeemVaultDescription}>This vault has no positions to redeem.</Typography>
+        ) : (
+          <>
+            <Typography className={classes.redeemVaultDescription}>
+              {(vault?.shortAmount?.gt(0) || isLPDeposited) && (
+                <>
+                  This will:
+                  {isLPDeposited && <span>• Withdraw your LP position from vault</span>}
+                  {vault?.shortAmount?.gt(0) && (
+                    <span>• Close your short position by burning {vault.shortAmount.toFixed(6)} oSQTH</span>
+                  )}
+                </>
+              )}
+            </Typography>
+
+            <RemoveButton
+              id="redeem-vault-submit-tx-btn"
+              onClick={handleRedeemVault}
+              disabled={txLoading}
+              className={classes.redeemVaultBtn}
+            >
+              {action === VaultAction.REDEEM_VAULT && txLoading ? (
+                <CircularProgress color="primary" size="1rem" />
+              ) : (
+                'Redeem Vault'
+              )}
+            </RemoveButton>
+          </>
+        )}
+      </Typography>
+
+      {lpedSqueeth?.gt(vault?.shortAmount || BIG_ZERO) && (
+        <Typography className={classes.redeemVaultWarning}>
+          <b>Note:</b> After redemption, you&apos;ll need to manually redeem{' '}
+          {lpedSqueeth.minus(vault?.shortAmount || BIG_ZERO).toFixed(6)} oSQTH from your LP position using the
+          &quot;Redeem Long&quot; functionality on the <Link href="/squeeth">trade page</Link>
+        </Typography>
       )}
     </div>
   )

@@ -219,13 +219,19 @@ export const useGetOSqthSettlementAmount = () => {
 
   const getOSqthSettlementAmount = useCallback(
     async (shortAmount: BigNumber) => {
-      if (!contract) return new BigNumber(0)
+      if (!contract) {
+        return new BigNumber(0)
+      }
+      // sometimes getting normFactor as infinite number
+      if (!normFactor.isFinite()) {
+        return new BigNumber(0)
+      }
 
-      const _shortAmt = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
-      const ethDebt = _shortAmt.multipliedBy(normFactor).multipliedBy(indexForSettlement)
+      const shortAmountRaw = fromTokenAmount(shortAmount, OSQUEETH_DECIMALS)
+      const ethDebt = shortAmountRaw.multipliedBy(normFactor).multipliedBy(indexForSettlement)
       return toTokenAmount(ethDebt, 18)
     },
-    [contract, normFactor?.toString()],
+    [contract, normFactor?.toString(), indexForSettlement?.toString()],
   )
   return getOSqthSettlementAmount
 }
@@ -387,6 +393,7 @@ export const useRedeemVault = () => {
   const address = useAtomValue(addressAtom)
   const contract = useAtomValue(controllerContractAtom)
   const handleTransaction = useHandleTransaction()
+
   const redeemVault = async (vaultId: number, onTxConfirmed?: () => void) => {
     if (!contract || !address) return
     await handleTransaction(

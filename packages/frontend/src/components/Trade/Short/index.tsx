@@ -202,6 +202,8 @@ const RedeemShort: React.FC<SellType> = () => {
   const [confirmedAmount, setConfirmedAmount] = useState('')
   const [existingCollatInETH, setExistingCollatInETH] = useState(new BigNumber(0))
   const [existingDebtInETH, setExistingDebtInETH] = useState(new BigNumber(0))
+  const [isCollatAndDebtLoading, setIsCollatAndDebtLoading] = useState(false)
+  const [isLpDetailsLoading, setIsLpDetailsLoading] = useState(false)
 
   // Add these new LP tracking variables
   const [lpedEth, setLpedEth] = useState(new BigNumber(0))
@@ -233,8 +235,11 @@ const RedeemShort: React.FC<SellType> = () => {
 
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
 
-  const { vaultId } = useFirstValidVault()
-  const { vault, loading: isVaultLoading, updateVault } = useVault(vaultId)
+  const { vaultId, isVaultLoading: isLoadingValidVault } = useFirstValidVault()
+  const { vault, loading: isLoadingVaultDetails, updateVault } = useVault(vaultId)
+
+  // Combine vault loading states
+  const isVaultLoading = isLoadingValidVault || isLoadingVaultDetails
 
   const [isVaultHistoryUpdating, setVaultHistoryUpdating] = useAtom(vaultHistoryUpdatingAtom)
   const vaultHistoryQuery = useVaultHistoryQuery(Number(vaultId), isVaultHistoryUpdating)
@@ -255,25 +260,36 @@ const RedeemShort: React.FC<SellType> = () => {
     if (!isVaultLoading && shortAmount.isEqualTo(0)) {
       setExistingCollatInETH(new BigNumber(0))
       setExistingDebtInETH(new BigNumber(0))
+      setIsCollatAndDebtLoading(false)
+      return
     }
-  }, [shortAmount, isVaultLoading])
 
-  useAppEffect(() => {
-    if (!isVaultLoading && vault && !shortAmount.isEqualTo(0)) {
-      const collateralInETH: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
-      setExistingCollatInETH(collateralInETH)
+    const fetchCollatAndDebt = async () => {
+      if (!isVaultLoading && vault && !shortAmount.isEqualTo(0)) {
+        setIsCollatAndDebtLoading(true)
+        try {
+          const collateralInETH: BigNumber = vault?.collateralAmount ?? new BigNumber(0)
+          setExistingCollatInETH(collateralInETH)
 
-      const shortAmount = vault.shortAmount ?? new BigNumber(0)
-      getOSqthSettlementAmount(shortAmount).then((debt) => {
-        setExistingDebtInETH(debt)
-      })
+          const shortAmount = vault.shortAmount ?? new BigNumber(0)
+          const debt = await getOSqthSettlementAmount(shortAmount)
+          setExistingDebtInETH(debt)
+        } catch (error) {
+          console.error('Error fetching collateral and debt:', error)
+        } finally {
+          setIsCollatAndDebtLoading(false)
+        }
+      }
     }
+
+    fetchCollatAndDebt()
   }, [shortAmount, getOSqthSettlementAmount, vault, isVaultLoading])
 
   // fetch LP details
   useAppEffect(() => {
     const getLPValues = async () => {
       if (!isVaultLoading && vault && Number(vault?.NFTCollateralId) !== 0) {
+        setIsLpDetailsLoading(true)
         try {
           const { ethAmount, squeethValueInEth, squeethAmount } = await getUniNFTDetails(Number(vault?.NFTCollateralId))
           setLpedEth(ethAmount)
@@ -284,11 +300,14 @@ const RedeemShort: React.FC<SellType> = () => {
           setLpedEth(new BigNumber(0))
           setLpedSqueethInEth(new BigNumber(0))
           setLpedSqueethAmount(new BigNumber(0))
+        } finally {
+          setIsLpDetailsLoading(false)
         }
       } else {
         setLpedEth(new BigNumber(0))
         setLpedSqueethInEth(new BigNumber(0))
         setLpedSqueethAmount(new BigNumber(0))
+        setIsLpDetailsLoading(false)
       }
     }
 
@@ -341,7 +360,9 @@ const RedeemShort: React.FC<SellType> = () => {
     track,
   ])
 
-  // Add these calculated variables
+  // Calculate final values only when data is loaded
+  const isCalculationsLoading = isVaultLoading || isCollatAndDebtLoading || isLpDetailsLoading
+
   const totalCollateralInEth = existingCollatInETH.plus(lpedEth)
   const remainingDebtInEth = lpedSqueethInEth.gte(existingDebtInETH)
     ? new BigNumber(0)
@@ -350,7 +371,7 @@ const RedeemShort: React.FC<SellType> = () => {
 
   let redeemError: string | undefined
 
-  if (connected) {
+  if (connected && !isVaultLoading) {
     if (shortAmount.lte(0)) {
       redeemError = 'No position to redeem'
     } else if (ethToReceive.lte(0)) {
@@ -413,9 +434,10 @@ const RedeemShort: React.FC<SellType> = () => {
               id="redeem-short-osqth-input"
               label="Short oSQTH position"
               value={shortAmount.toString()}
+              balance={shortAmount}
+              isBalanceLoading={isVaultLoading}
               symbol="oSQTH"
               logo={osqthLogo}
-              balance={shortAmount}
               showMaxAction={false}
               error={!!redeemError}
               helperText={redeemError}
@@ -433,12 +455,20 @@ const RedeemShort: React.FC<SellType> = () => {
             >
               <Metric
                 label="Current collateral"
-                value={formatNumber(existingCollatInETH.isPositive() ? existingCollatInETH.toNumber() : 0) + ' ETH'}
+                value={
+                  isCollatAndDebtLoading
+                    ? 'Loading...'
+                    : formatNumber(existingCollatInETH.isPositive() ? existingCollatInETH.toNumber() : 0, 4) + ' ETH'
+                }
                 isSmall
               />
               <Metric
                 label="Current debt"
-                value={formatNumber(existingDebtInETH.isPositive() ? existingDebtInETH.toNumber() : 0) + ' ETH'}
+                value={
+                  isCollatAndDebtLoading
+                    ? 'Loading...'
+                    : formatNumber(existingDebtInETH.isPositive() ? existingDebtInETH.toNumber() : 0, 4) + ' ETH'
+                }
                 isSmall
               />
             </Box>
@@ -447,9 +477,14 @@ const RedeemShort: React.FC<SellType> = () => {
               <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
                 <Metric
                   label="LP Position"
-                  value={`${formatNumber(lpedEth.toNumber())} ETH + ${formatNumber(
-                    lpedSqueethAmount.toNumber(),
-                  )} oSQTH`}
+                  value={
+                    isLpDetailsLoading
+                      ? 'Loading...'
+                      : `${formatNumber(lpedEth.toNumber())} ETH + ${formatNumber(
+                          lpedSqueethAmount.toNumber(),
+                          4,
+                        )} oSQTH`
+                  }
                   isSmall
                 />
               </Box>
@@ -458,7 +493,11 @@ const RedeemShort: React.FC<SellType> = () => {
             <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="24px">
               <Metric
                 label="ETH you will receive"
-                value={formatNumber(existingCollatInETH.minus(existingDebtInETH).toNumber()) + ' ETH'}
+                value={
+                  isCalculationsLoading
+                    ? 'Loading...'
+                    : formatNumber(existingCollatInETH.minus(existingDebtInETH).toNumber(), 4) + ' ETH'
+                }
               />
             </Box>
 
@@ -501,6 +540,7 @@ const RedeemShort: React.FC<SellType> = () => {
                     !supportedNetwork ||
                     isTxnLoading ||
                     isVaultLoading ||
+                    isCalculationsLoading ||
                     transactionInProgress ||
                     !!redeemError ||
                     (vault && vault.shortAmount.isZero())
@@ -509,7 +549,7 @@ const RedeemShort: React.FC<SellType> = () => {
                 >
                   {!supportedNetwork ? (
                     'Unsupported Network'
-                  ) : isTxnLoading || isVaultLoading || transactionInProgress ? (
+                  ) : isTxnLoading || isVaultLoading || isCalculationsLoading || transactionInProgress ? (
                     <CircularProgress color="primary" size="1.5rem" />
                   ) : (
                     'Redeem Short Vault'

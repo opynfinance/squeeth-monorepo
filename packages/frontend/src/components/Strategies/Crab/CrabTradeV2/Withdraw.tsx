@@ -44,11 +44,14 @@ enum RedeemStepsV2 {
 const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) => void }> = ({ onTxnConfirm }) => {
   const classes = useStyles()
 
+  // loading states
   const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isEthToReceiveLoading, setIsEthToReceiveLoading] = useState(false)
+  const [txLoading, setTxLoading] = useState(false)
+
   const [selectedVersion, setSelectedVersion] = useState<'v1' | 'v2'>('v2')
   const [currentStepV1, setCurrentStepV1] = useState<RedeemStepsV1>(RedeemStepsV1.REDEEM)
   const [currentStepV2, setCurrentStepV2] = useState<RedeemStepsV2>(RedeemStepsV2.CLAIM)
-  const [txLoading, setTxLoading] = useState(false)
   const [ethToReceive, setEthToReceive] = useState(new BigNumber(0))
 
   const ongoingTransaction = useRef<OngoingTransaction | undefined>()
@@ -59,8 +62,16 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
 
   const { crabStrategy, crabStrategy2 } = useAtomValue(addressesAtom)
-  const { value: currentCrabV1Balance, refetch: refetchCrabV1Balance } = useTokenBalance(crabStrategy, 30, 18)
-  const { value: currentCrabV2Balance, refetch: refetchCrabV2Balance } = useTokenBalance(crabStrategy2, 30, 18)
+  const {
+    value: currentCrabV1Balance,
+    refetch: refetchCrabV1Balance,
+    loading: isCrabV1BalanceLoading,
+  } = useTokenBalance(crabStrategy, 30, 18)
+  const {
+    value: currentCrabV2Balance,
+    refetch: refetchCrabV2Balance,
+    loading: isCrabV2BalanceLoading,
+  } = useTokenBalance(crabStrategy2, 30, 18)
   const migratedCrabBalance = useAtomValue(userMigratedSharesAtom)
 
   const { resetTransactionData } = useTransactionStatus()
@@ -72,20 +83,15 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   const withdrawShutdown = useWithdrawShutdown(selectedVersion)
 
   const updateMigrationSharesData = useUpdateSharesData()
-  const setStrategyDataV2 = useSetStrategyDataV2()
   const setStrategyDataV1 = useSetStrategyData()
+  const setStrategyDataV2 = useSetStrategyDataV2()
 
   useEffect(() => {
-    if (selectedVersion === 'v1') {
-      if (currentCrabV1Balance) {
-        setIsInitialLoading(false)
-      }
-    } else {
-      if (currentCrabV2Balance) {
-        setIsInitialLoading(false)
-      }
+    const loading = selectedVersion === 'v1' ? isCrabV1BalanceLoading : isCrabV2BalanceLoading
+    if (!loading) {
+      setIsInitialLoading(false)
     }
-  }, [selectedVersion, currentCrabV1Balance?.toString(), currentCrabV2Balance?.toString()])
+  }, [selectedVersion, isCrabV1BalanceLoading, isCrabV2BalanceLoading])
 
   // Determine initial step for V1
   useEffect(() => {
@@ -105,26 +111,35 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
     }
   }, [currentCrabV2Balance?.toString(), migratedCrabBalance?.toString()])
 
-  // Calculate ETH to receive on component mount
   useEffect(() => {
     let mounted = true
 
     const getEthToReceive = async () => {
       const balance = selectedVersion === 'v1' ? currentCrabV1Balance : currentCrabV2Balance
-      console.log({ balance: balance.toString(), selectedVersion })
 
       if (balance.eq(0)) {
         if (mounted) {
           setEthToReceive(new BigNumber(0))
+          setIsEthToReceiveLoading(false)
         }
         return
       }
 
-      const ethAmount = await calculateEthToReceive(balance)
-      if (mounted) {
-        setEthToReceive(ethAmount || new BigNumber(0))
+      setIsEthToReceiveLoading(true)
+      try {
+        const ethAmount = await calculateEthToReceive(balance)
+        if (mounted) {
+          setEthToReceive(ethAmount || new BigNumber(0))
+          setIsEthToReceiveLoading(false)
+        }
+      } catch (error) {
+        console.error('Error calculating ETH to receive:', error)
+        if (mounted) {
+          setIsEthToReceiveLoading(false)
+        }
       }
     }
+
     getEthToReceive()
 
     return () => {
@@ -164,6 +179,9 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
       setStrategyDataV1()
       refetchCrabV1Balance()
+
+      // Switch to V2 tab after successful redemption
+      setSelectedVersion('v2')
     } catch (e) {
       console.error(e)
       track(CRAB_EVENTS.REDEEM_CRABV1_FAILED)
@@ -194,7 +212,9 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   }
 
   const buttonText = useMemo(() => {
-    if (isInitialLoading || txLoading) return <CircularProgress color="primary" size="1.5rem" />
+    if (isInitialLoading || txLoading) {
+      return <CircularProgress color="primary" size="1.5rem" />
+    }
 
     if (selectedVersion === 'v1') {
       switch (currentStepV1) {
@@ -207,7 +227,6 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       switch (currentStepV2) {
         case RedeemStepsV2.CLAIM:
           return 'Claim CRAB'
-
         case RedeemStepsV2.REDEEM:
           return 'Redeem ETH'
         default:
@@ -262,7 +281,12 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
 
   // Memoize error state
   const redeemError = useMemo(() => {
-    if (!connected) return undefined
+    if (!connected) {
+      return undefined
+    }
+    if (isInitialLoading) {
+      return undefined
+    }
 
     if (selectedVersion === 'v1') {
       if (currentCrabV1Balance.lte(0)) {
@@ -275,7 +299,33 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       }
     }
     return undefined
-  }, [connected, selectedVersion, currentCrabV1Balance?.toString(), currentStepV2, currentCrabV2Balance?.toString()])
+  }, [
+    connected,
+    selectedVersion,
+    isInitialLoading,
+    currentCrabV1Balance?.toString(),
+    currentStepV2,
+    currentCrabV2Balance?.toString(),
+  ])
+
+  // Get current balance based on version and step
+  const currentBalance = useMemo(() => {
+    if (selectedVersion === 'v1') {
+      return currentCrabV1Balance
+    } else {
+      return currentStepV2 === RedeemStepsV2.CLAIM ? migratedCrabBalance : currentCrabV2Balance
+    }
+  }, [selectedVersion, currentStepV2, currentCrabV1Balance, currentCrabV2Balance, migratedCrabBalance])
+
+  // Get loading state based on version
+  const isBalanceLoading = useMemo(() => {
+    return selectedVersion === 'v1' ? isCrabV1BalanceLoading : isCrabV2BalanceLoading
+  }, [selectedVersion, isCrabV1BalanceLoading, isCrabV2BalanceLoading])
+
+  // Show tabs only if there's a V1 balance before redemption
+  const showVersionTabs = useMemo(() => {
+    return currentCrabV1Balance.gt(0)
+  }, [currentCrabV1Balance?.toString])
 
   return (
     <>
@@ -286,7 +336,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
       </Box>
 
       <div className={classes.tradeContainer}>
-        {currentCrabV1Balance.gt(0) && (
+        {showVersionTabs && (
           <SqueethTabsNew
             value={selectedVersion}
             onChange={(_, newValue) => setSelectedVersion(newValue)}
@@ -300,23 +350,16 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           </SqueethTabsNew>
         )}
 
+        {selectedVersion === 'v2' && (
+          <RedeemStepperV2 migratedCrabBalance={migratedCrabBalance} currentStepV2={currentStepV2} />
+        )}
+
         <InputToken
           id="crab-redeem-input"
           label="Crab Position"
-          value={
-            selectedVersion === 'v1'
-              ? currentCrabV1Balance
-              : currentStepV2 === RedeemStepsV2.CLAIM
-              ? migratedCrabBalance
-              : currentCrabV2Balance
-          }
-          balance={
-            selectedVersion === 'v1'
-              ? currentCrabV1Balance
-              : currentStepV2 === RedeemStepsV2.CLAIM
-              ? migratedCrabBalance
-              : currentCrabV2Balance
-          }
+          value={currentBalance}
+          balance={currentBalance}
+          isBalanceLoading={isBalanceLoading}
           symbol="CRAB"
           showMaxAction={false}
           error={!!redeemError}
@@ -330,7 +373,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
           <Box display="flex" alignItems="center" justifyContent="space-between" marginTop="12px">
             <Metric
               label="ETH you will receive"
-              value={formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
+              value={isEthToReceiveLoading ? 'Loading...' : formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
@@ -368,7 +411,7 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
               id="crab-redeem-btn"
               variant="contained"
               onClick={handleAction}
-              disabled={txLoading || !!redeemError}
+              disabled={txLoading || !!redeemError || isBalanceLoading || isEthToReceiveLoading}
             >
               {buttonText}
             </PrimaryButtonNew>
@@ -376,6 +419,67 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
         </div>
       </div>
     </>
+  )
+}
+
+const RedeemStepperV2: React.FC<{
+  migratedCrabBalance: BigNumber
+  currentStepV2: RedeemStepsV2
+}> = ({ migratedCrabBalance, currentStepV2 }) => {
+  const classes = useStyles()
+
+  // Only show stepper if there's migrated balance
+  if (migratedCrabBalance.eq(0)) {
+    return null
+  }
+
+  const getActiveStep = () => {
+    if (migratedCrabBalance.gt(0)) {
+      // If there's migrated balance, count from all three steps
+      switch (currentStepV2) {
+        case RedeemStepsV2.CLAIM:
+          return 0
+        case RedeemStepsV2.REDEEM:
+          return 1
+        default:
+          return 0
+      }
+    } else {
+      // If no migrated balance, count from approve and redeem only
+      switch (currentStepV2) {
+        case RedeemStepsV2.REDEEM:
+          return 0
+        default:
+          return 0
+      }
+    }
+  }
+
+  return (
+    <div className={classes.stepperContainer}>
+      <Collapse in={migratedCrabBalance.gt(0)}>
+        <Alert severity="warning">
+          {'You have unclaimed Crab v2 tokens from CrabMigration. Claim them before redeeming for ETH.'}
+        </Alert>
+      </Collapse>
+
+      <Stepper activeStep={getActiveStep()} className={classes.stepper}>
+        <Step key="claim">
+          <StepLabel>
+            <Tooltip title="Claim CrabV2 tokens from CrabMigration contract" placement="top">
+              <Typography>Claim CRAB</Typography>
+            </Tooltip>
+          </StepLabel>
+        </Step>
+        <Step key="redeem">
+          <StepLabel>
+            <Tooltip title="Redeem CrabV2 tokens to get ETH" placement="top">
+              <Typography>Redeem ETH</Typography>
+            </Tooltip>
+          </StepLabel>
+        </Step>
+      </Stepper>
+    </div>
   )
 }
 

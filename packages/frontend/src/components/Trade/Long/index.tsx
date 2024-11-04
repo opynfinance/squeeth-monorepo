@@ -20,7 +20,6 @@ import { addressesAtom } from '@state/positions/atoms'
 import {
   confirmedAmountAtom,
   ethTradeAmountAtom,
-  inputQuoteLoadingAtom,
   sqthTradeAmountAtom,
   tradeCompletedAtom,
   tradeSuccessAtom,
@@ -267,6 +266,8 @@ const useStyles = makeStyles((theme) =>
 const RedeemLong: React.FC<BuyProps> = () => {
   const [isRedeemTxnLoading, setIsRedeemTxnLoading] = useState(false)
   const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
+  const [isEthToReceiveLoading, setIsEthToReceiveLoading] = useState(false)
+  const [ethToReceive, setEthToReceive] = useState<BigNumber>(new BigNumber(0))
 
   const classes = useStyles()
   const {
@@ -278,12 +279,10 @@ const RedeemLong: React.FC<BuyProps> = () => {
     resetTransactionData,
   } = useTransactionStatus()
 
-  const [ethToReceive, setEthToReceive] = useState<BigNumber>(new BigNumber(0))
   const { oSqueeth, controller } = useAtomValue(addressesAtom)
   const { redeemLongHelper } = useShutdownLongHelper()
 
   const [confirmedAmount, setConfirmedAmount] = useAtom(confirmedAmountAtom)
-  const [inputQuoteLoading, setInputQuoteLoading] = useAtom(inputQuoteLoadingAtom)
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
@@ -294,7 +293,11 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
   const connected = useAtomValue(connectedWalletAtom)
   const selectWallet = useSelectWallet()
-  const { value: oSqueethBalance } = useTokenBalance(oSqueeth, 30, OSQUEETH_DECIMALS)
+  const {
+    value: oSqueethBalance,
+    loading: isOSqueethBalanceLoading,
+    refetch: refetchOSqueethBalance,
+  } = useTokenBalance(oSqueeth, 30, OSQUEETH_DECIMALS)
 
   const getOSqthSettlementAmount = useGetOSqthSettlementAmount()
 
@@ -303,36 +306,46 @@ const RedeemLong: React.FC<BuyProps> = () => {
 
   const { track } = useAmplitude()
 
-  // let openError: string | undefined
-  let redeemError: string | undefined
-
-  if (connected) {
-    if (oSqueethBalance.lte(0)) {
-      redeemError = 'No position to redeem'
-    }
-  }
-
   useAppEffect(() => {
     if (transactionInProgress) {
       setIsRedeemTxnLoading(false)
     }
   }, [transactionInProgress])
 
+  // Update the effect to handle loading state
   useAppEffect(() => {
-    if (oSqueethBalance.isGreaterThan(0)) {
-      setInputQuoteLoading(true)
+    let mounted = true
 
-      getOSqthSettlementAmount(oSqueethBalance)
-        .then((settlementAmount) => {
-          setEthToReceive(settlementAmount)
-          setInputQuoteLoading(false)
-        })
-        .catch((e) => {
+    const fetchEthToReceive = async () => {
+      if (oSqueethBalance.isGreaterThan(0)) {
+        setIsEthToReceiveLoading(true)
+
+        try {
+          const settlementAmount = await getOSqthSettlementAmount(oSqueethBalance)
+          if (mounted) {
+            setEthToReceive(settlementAmount)
+          }
+        } catch (e) {
           console.log(e)
-          setInputQuoteLoading(false)
-        })
+        } finally {
+          if (mounted) {
+            setIsEthToReceiveLoading(false)
+          }
+        }
+      } else {
+        if (mounted) {
+          setEthToReceive(new BigNumber(0))
+          setIsEthToReceiveLoading(false)
+        }
+      }
     }
-  }, [oSqueethBalance.toString(), getOSqthSettlementAmount, setInputQuoteLoading])
+
+    fetchEthToReceive()
+
+    return () => {
+      mounted = false
+    }
+  }, [oSqueethBalance.toString(), getOSqthSettlementAmount])
 
   const needsSqueethApproval = useMemo(
     () => squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth,
@@ -362,6 +375,8 @@ const RedeemLong: React.FC<BuyProps> = () => {
 
           resetEthTradeAmount()
           resetSqthTradeAmount()
+
+          refetchOSqueethBalance()
 
           track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_SUCCESS, {
             amount: oSqueethBalance.toNumber(),
@@ -396,6 +411,15 @@ const RedeemLong: React.FC<BuyProps> = () => {
     squeethApprove,
     setConfirmedAmount,
   ])
+
+  // let openError: string | undefined
+  let redeemError: string | undefined
+
+  if (connected) {
+    if (!isOSqueethBalanceLoading && oSqueethBalance.lte(0)) {
+      redeemError = 'No position to redeem'
+    }
+  }
 
   return (
     <div id="redeem-long-card">
@@ -446,9 +470,10 @@ const RedeemLong: React.FC<BuyProps> = () => {
               id="redeem-long-osqth-input"
               label="oSQTH position"
               value={oSqueethBalance.toString()}
+              balance={oSqueethBalance}
+              isBalanceLoading={isOSqueethBalanceLoading}
               symbol="oSQTH"
               logo={osqthLogo}
-              balance={oSqueethBalance}
               showMaxAction={false}
               error={!!redeemError}
               helperText={redeemError}
@@ -466,7 +491,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" marginTop="12px">
             <Metric
               label="ETH you will receive"
-              value={formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
+              value={isEthToReceiveLoading ? 'Loading...' : formatNumber(ethToReceive.toNumber(), 4) + ' ETH'}
               isSmall
               flexDirection="row"
               justifyContent="space-between"
@@ -503,17 +528,18 @@ const RedeemLong: React.FC<BuyProps> = () => {
                 onClick={redeemLong}
                 disabled={
                   !supportedNetwork ||
+                  isOSqueethBalanceLoading ||
                   isRedeemTxnLoading ||
                   transactionInProgress ||
                   !!redeemError ||
                   oSqueethBalance.isZero() ||
-                  inputQuoteLoading
+                  isEthToReceiveLoading
                 }
                 id="redeem-long-submit-tx-btn"
               >
                 {!supportedNetwork ? (
                   'Unsupported Network'
-                ) : isRedeemTxnLoading || transactionInProgress || inputQuoteLoading ? (
+                ) : isOSqueethBalanceLoading || isRedeemTxnLoading || transactionInProgress || isEthToReceiveLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
                 ) : squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth ? (
                   'Approve oSQTH (1/2)'

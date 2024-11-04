@@ -100,9 +100,14 @@ export const useStyles = makeStyles((theme) =>
     withdrawStepsContainer: {
       marginBottom: theme.spacing(2),
     },
+    stepperContainer: {
+      marginBottom: theme.spacing(2),
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(2),
+    },
     stepper: {
       width: '100%',
-      marginBottom: theme.spacing(1),
       backgroundColor: theme.palette.background.stone,
       borderRadius: '12px',
 
