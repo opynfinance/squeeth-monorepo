@@ -146,8 +146,8 @@ contract ShutdownEmergencyWithdrawTest is Test {
         (uint256 ethInCrab, uint256 wPowerPerpInCrab) =
             ZenBullStrategy(ZEN_BULL).getCrabVaultDetails();
 
-        uint256 ethShare = initialZenBullCrabBalance.wdiv(IERC20(CRAB).totalSupply());
-        uint256 wethToReceive = ethInCrab.wmul(ethShare);
+        uint256 share = initialZenBullCrabBalance.wdiv(IERC20(CRAB).totalSupply());
+        uint256 wethToReceive = ethInCrab.wmul(share);
 
         uint256 wPowerPerpToProvide =
             initialZenBullCrabBalance.wmul(wPowerPerpInCrab).wdiv(IERC20(CRAB).totalSupply());

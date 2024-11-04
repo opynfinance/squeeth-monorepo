@@ -101,9 +101,16 @@ contract ShutdownEmergencyWithdraw is Ownable {
     }
 
     /**
-     * @notice withdraw from all remaining Crab in ZenBull strategy
-     * @dev only owner can call this function
-     */
+    * @notice emergency function to withdraw remaining Crab tokens from ZenBull and unwind positions
+    * @dev only callable by owner. Must be called before users can claim their share via claimZenBullRedemption
+    * @dev zen bull holders will be able to redeem their proportional share of the withdrawn WETH
+    * @dev this function:
+    * 1. calculates how many wPowerPerp tokens are needed to redeem the Crab position
+    * 2. takes wPowerPerp tokens from msg.sender (the person helping unwind)
+    * 3. redeems Crab tokens for WETH
+    * 4. compensates msg.sender with WETH equal to their wPowerPerp value
+    * 5. keeps remaining WETH for ZenBull holders to claim
+    */
     function shutdownEmergencyWithdraw() external onlyOwner {
         require(zenBullTotalSupplyAtRedemption == 0, "ZenBull total supply set");
         uint256 crabToRedeem = IZenBullStrategy(zenBull).getCrabBalance();
@@ -114,7 +121,7 @@ contract ShutdownEmergencyWithdraw is Ownable {
 
         uint256 wPowerPerpToRedeem =
             crabToRedeem.wmul(wPowerPerpInCrab).wdiv(IERC20(crab).totalSupply());
-        uint256 ethValueInWPowerPerp = wPowerPerpToRedeem.wmul(ethIndexPrice).wmul(
+        uint256 wPowerPerpValueInEth = wPowerPerpToRedeem.wmul(ethIndexPrice).wmul(
             IController(controller).getExpectedNormalizationFactor()
         );
 
@@ -123,7 +130,7 @@ contract ShutdownEmergencyWithdraw is Ownable {
         uint256 totalPayout =
             IZenBullStrategy(zenBull).redeemCrabAndWithdrawWEth(crabToRedeem, wPowerPerpToRedeem);
 
-        IERC20(weth).transfer(msg.sender, ethValueInWPowerPerp);
+        IERC20(weth).transfer(msg.sender, wPowerPerpValueInEth);
 
         zenBullTotalSupplyAtRedemption = IERC20(zenBull).totalSupply()
             - IZenEmergencyWithdraw(zenBullEmergencyWithdraw).redeemedZenBullAmountForCrabWithdrawal();
@@ -135,11 +142,19 @@ contract ShutdownEmergencyWithdraw is Ownable {
             crabToRedeem,
             wPowerPerpToRedeem,
             totalPayout,
-            ethValueInWPowerPerp,
+            wPowerPerpValueInEth,
             wethAtRedemption
         );
     }
 
+
+    /**
+    * @notice allows ZenBull token holders to claim their proportional share of WETH after emergency shutdown
+    * @dev after shutdownEmergencyWithdraw has been called, ZenBull holders can redeem their tokens for WETH
+    * @dev the WETH amount received is proportional to their share of remaining circulating ZenBull supply at time of shutdown
+    * @dev wethOwed = (amountToRedeem / zenBullTotalSupplyAtRedemption) * wethAtRedemption
+    * @param _amountToRedeem an amount of ZenBull tokens to redeem for WETH
+    */
     function claimZenBullRedemption(uint256 _amountToRedeem) external {
         require(zenBullTotalSupplyAtRedemption != 0, "Emergency withdraw not called");
         IERC20(zenBull).transferFrom(msg.sender, address(this), _amountToRedeem);
