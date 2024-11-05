@@ -2,15 +2,13 @@ import { CircularProgress, createStyles, makeStyles, Typography, Box, Collapse }
 import BigNumber from 'bignumber.js'
 import { useAtom, useAtomValue } from 'jotai'
 import { useResetAtom, useUpdateAtom } from 'jotai/utils'
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 
 import { PrimaryButtonNew } from '@components/Button'
 import { InputToken } from '@components/InputNew'
 import Alert from '@components/Alert'
-import { useUserAllowance } from '@hooks/contracts/useAllowance'
 import useAppCallback from '@hooks/useAppCallback'
 import useAppEffect from '@hooks/useAppEffect'
-import { useOSQTHPrice } from '@hooks/useOSQTHPrice'
 import { useShutdownLongHelper } from '@hooks/contracts/useLongHelper'
 import useAmplitude from '@hooks/useAmplitude'
 import { LONG_SQUEETH_EVENTS } from '@utils/amplitude'
@@ -265,7 +263,6 @@ const useStyles = makeStyles((theme) =>
 
 const RedeemLong: React.FC<BuyProps> = () => {
   const [isRedeemTxnLoading, setIsRedeemTxnLoading] = useState(false)
-  const [hasJustApprovedSqueeth, setHasJustApprovedSqueeth] = useState(false)
   const [isEthToReceiveLoading, setIsEthToReceiveLoading] = useState(false)
   const [ethToReceive, setEthToReceive] = useState<BigNumber>(new BigNumber(0))
 
@@ -286,8 +283,6 @@ const RedeemLong: React.FC<BuyProps> = () => {
   const setTradeSuccess = useUpdateAtom(tradeSuccessAtom)
   const setTradeCompleted = useUpdateAtom(tradeCompletedAtom)
 
-  const { allowance: squeethAllowance, approve: squeethApprove } = useUserAllowance(oSqueeth, controller)
-  const [isTxFirstStep, setIsTxFirstStep] = useAtom(isTransactionFirstStepAtom)
   const { isRestricted, isWithdrawAllowed } = useRestrictUser()
 
   const supportedNetwork = useAtomValue(supportedNetworkAtom)
@@ -347,69 +342,40 @@ const RedeemLong: React.FC<BuyProps> = () => {
     }
   }, [oSqueethBalance.toString(), getOSqthSettlementAmount])
 
-  const needsSqueethApproval = useMemo(
-    () => squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth,
-    [squeethAllowance?.toString(), oSqueethBalance?.toString(), hasJustApprovedSqueeth],
-  )
-
   const redeemLong = useAppCallback(async () => {
     setIsRedeemTxnLoading(true)
     try {
-      if (needsSqueethApproval) {
-        track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_CLICK)
-        setIsTxFirstStep(true)
-        await squeethApprove(() => {
-          setHasJustApprovedSqueeth(true)
-          setIsRedeemTxnLoading(false)
-          track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_SUCCESS)
+      track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_CLICK)
+
+      await redeemLongHelper(oSqueethBalance, () => {
+        setTradeSuccess(true)
+        setTradeCompleted(true)
+        setConfirmedAmount(oSqueethBalance.toFixed(6))
+        resetEthTradeAmount()
+        resetSqthTradeAmount()
+        refetchOSqueethBalance()
+
+        track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_SUCCESS, {
+          amount: oSqueethBalance.toNumber(),
+          ethReceived: ethToReceive.toNumber(),
         })
-      } else {
-        track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_CLICK)
-
-        await redeemLongHelper(oSqueethBalance, () => {
-          setIsTxFirstStep(false)
-          setTradeSuccess(true)
-          setTradeCompleted(true)
-
-          setConfirmedAmount(oSqueethBalance.toFixed(6))
-
-          resetEthTradeAmount()
-          resetSqthTradeAmount()
-
-          refetchOSqueethBalance()
-
-          track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_SUCCESS, {
-            amount: oSqueethBalance.toNumber(),
-            ethReceived: ethToReceive.toNumber(),
-          })
-        })
-      }
+      })
     } catch (e) {
       console.log(e)
       setIsRedeemTxnLoading(false)
-
-      // Track failures
-      if (needsSqueethApproval) {
-        track(LONG_SQUEETH_EVENTS.APPROVE_LONG_OSQTH_FAILED)
-      } else {
-        track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_FAILED, {
-          amount: oSqueethBalance.toNumber(),
-        })
-      }
+      track(LONG_SQUEETH_EVENTS.REDEEM_LONG_OSQTH_FAILED, {
+        amount: oSqueethBalance.toNumber(),
+      })
     }
   }, [
-    needsSqueethApproval,
     oSqueethBalance?.toString(),
-    hasJustApprovedSqueeth,
     resetEthTradeAmount,
     resetSqthTradeAmount,
     redeemLongHelper,
-    setIsTxFirstStep,
     setTradeCompleted,
     setTradeSuccess,
-    squeethAllowance,
-    squeethApprove,
     setConfirmedAmount,
+    ethToReceive?.toString(),
   ])
 
   // let openError: string | undefined
@@ -423,7 +389,7 @@ const RedeemLong: React.FC<BuyProps> = () => {
 
   return (
     <div id="redeem-long-card">
-      {confirmed && !isTxFirstStep ? (
+      {confirmed ? (
         <>
           <Confirmed
             confirmationMessage={`Redeemed ${confirmedAmount} Squeeth`}
@@ -541,10 +507,6 @@ const RedeemLong: React.FC<BuyProps> = () => {
                   'Unsupported Network'
                 ) : isOSqueethBalanceLoading || isRedeemTxnLoading || transactionInProgress || isEthToReceiveLoading ? (
                   <CircularProgress color="primary" size="1.5rem" />
-                ) : squeethAllowance.lt(oSqueethBalance) && !hasJustApprovedSqueeth ? (
-                  'Approve oSQTH (1/2)'
-                ) : hasJustApprovedSqueeth ? (
-                  'Redeem oSQTH (2/2)'
                 ) : (
                   'Redeem oSQTH'
                 )}

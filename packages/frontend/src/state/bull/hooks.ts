@@ -6,6 +6,7 @@ import {
   UNI_POOL_FEES,
   USDC_DECIMALS,
   WETH_DECIMALS,
+  BULL_TOKEN_DECIMALS,
 } from '@constants/index'
 import { useTokenBalance } from '@hooks/contracts/useTokenBalance'
 import useAmplitude from '@hooks/useAmplitude'
@@ -216,7 +217,7 @@ export const useBullShutdownEmergencyWithdrawState = () => {
       }
 
       const wethAtRedemption = await bullShutdownEmergencyWithdrawContract.methods.wethAtRedemption().call()
-      return new BigNumber(wethAtRedemption)
+      return toTokenAmount(new BigNumber(wethAtRedemption.toString()), WETH_DECIMALS)
     } catch (error) {
       console.error('Error getting wethAtRedemption', error)
       return BIG_ZERO
@@ -232,7 +233,7 @@ export const useBullShutdownEmergencyWithdrawState = () => {
       const bullSupplyAtRedemption = await bullShutdownEmergencyWithdrawContract.methods
         .zenBullTotalSupplyAtRedemption()
         .call()
-      return new BigNumber(bullSupplyAtRedemption)
+      return toTokenAmount(new BigNumber(bullSupplyAtRedemption.toString()), BULL_TOKEN_DECIMALS)
     } catch (error) {
       console.error('Error getting zenBullTotalSupplyAtRedemption', error)
       return BIG_ZERO
@@ -280,46 +281,38 @@ export const useCalculateWethToReceive = (zenBullAmount: BigNumber) => {
 }
 
 export const useZenBullRedeem = () => {
-  const bullShutdownEmergencyWithdrawContract = useAtomValue(bullShutdownEmergencyWithdrawContractAtom)
+  const contract = useAtomValue(bullShutdownEmergencyWithdrawContractAtom)
+  const address = useAtomValue(addressAtom)
   const handleTransaction = useHandleTransaction()
   const { track } = useAmplitude()
 
   const redeemZenBull = async (amountToRedeem: BigNumber, onTxConfirmed?: (wethToReceive: BigNumber) => void) => {
-    if (!bullShutdownEmergencyWithdrawContract) {
+    if (!contract) {
       console.error('Emergency withdraw contract not initialized')
       return null
     }
 
-    let gas
     try {
       track(BULL_EVENTS.REDEEM_ZENBULL_CLICK)
 
       const amountToRedeemRaw = fromTokenAmount(amountToRedeem, 18).toFixed(0)
 
       // Get expected WETH to receive
-      const wethToReceive = await bullShutdownEmergencyWithdrawContract.methods.wethAtRedemption().call()
-      const totalSupply = await bullShutdownEmergencyWithdrawContract.methods.zenBullTotalSupplyAtRedemption().call()
+      const wethToReceive = await contract.methods.wethAtRedemption().call()
+      const totalSupply = await contract.methods.zenBullTotalSupplyAtRedemption().call()
       const expectedWeth = amountToRedeem.times(wethToReceive).div(totalSupply)
-
-      // Get gas estimate
-      const gasEstimate = await bullShutdownEmergencyWithdrawContract.methods
-        .claimZenBullRedemption(amountToRedeemRaw)
-        .estimateGas()
-
-      if (gasEstimate === 0) throw new Error('Invalid gas estimate')
-
-      gas = Math.floor(gasEstimate * 1.2)
 
       // Execute transaction
       await handleTransaction(
-        bullShutdownEmergencyWithdrawContract.methods.claimZenBullRedemption(amountToRedeemRaw).send({ gas }),
+        contract.methods.claimZenBullRedemption(amountToRedeemRaw).send({
+          from: address,
+        }),
         () => onTxConfirmed?.(expectedWeth),
       )
 
       track(BULL_EVENTS.REDEEM_ZENBULL_SUCCESS, {
         amountRedeemed: amountToRedeem.toNumber(),
         wethReceived: expectedWeth.toNumber(),
-        gas,
       })
       return true
     } catch (error: any) {
@@ -328,7 +321,6 @@ export const useZenBullRedeem = () => {
       track(BULL_EVENTS.REDEEM_ZENBULL_FAILED, {
         amount: amountToRedeem.toNumber(),
         error: error?.message,
-        gas,
       })
       return null
     }
