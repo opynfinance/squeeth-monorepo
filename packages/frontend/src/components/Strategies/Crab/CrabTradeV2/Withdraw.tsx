@@ -323,9 +323,14 @@ const CrabWithdraw: React.FC<{ onTxnConfirm: (txn: CrabTransactionConfirmation) 
   }, [selectedVersion, isCrabV1BalanceLoading, isCrabV2BalanceLoading])
 
   // Show tabs only if there's a V1 balance before redemption
-  const showVersionTabs = useMemo(() => {
-    return currentCrabV1Balance.gt(0)
-  }, [currentCrabV1Balance?.toString])
+  const showVersionTabs = currentCrabV1Balance.gt(0)
+
+  // Set v1 as default tab if there's a V1 balance
+  useEffect(() => {
+    if (showVersionTabs) {
+      setSelectedVersion('v1')
+    }
+  }, [showVersionTabs])
 
   return (
     <>
