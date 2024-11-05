@@ -95,7 +95,7 @@ export const ShutdownEmergencyWithdraw: React.FC<ShutdownEmergencyWithdrawProps>
     return () => {
       mounted = false
     }
-  }, [bullBalance?.toString(), calculateWethToReceive])
+  }, [bullBalance?.toString()])
 
   const onApproveClick = async () => {
     setIsRedeemTxnLoading(true)
