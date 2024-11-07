@@ -21,7 +21,7 @@ const SqueethMetrics: React.FC<BoxProps> = (props) => {
 
       <Metric
         label={<MetricLabel label="Norm Factor" tooltipTitle={Tooltips.NormFactor} />}
-        value={formatNumber(normFactor.toNumber(), 4)}
+        value={normFactor.isFinite() ? formatNumber(normFactor.toNumber(), 4) : ''}
       />
     </Box>
   )
