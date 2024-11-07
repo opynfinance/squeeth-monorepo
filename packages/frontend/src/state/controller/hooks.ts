@@ -632,6 +632,6 @@ export const useInitController = () => {
   useImpliedVolatilityShutdown()
   useDailyHistoricalFunding()
   useNormFactor()
-  useOsqthRefVol()
+  // useOsqthRefVol()
   useIndexForSettlement()
 }
