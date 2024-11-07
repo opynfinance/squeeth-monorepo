@@ -331,11 +331,24 @@ export async function getDailyHistoricalFundingShutdown(contract: Contract | nul
 }
 
 export async function getOsqthRefVol() {
-  const response = await fetch(`/api/currentsqueethvol`).then((res) => res.json())
+  try {
+    const response = await fetch(`/api/currentsqueethvol`)
 
-  if (response.status === 'error') {
-    console.log('Error fetching squeeth vol', response.status)
+    // Check if the fetch request itself was successful
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // Check for API-level error response
+    if (data.status === 'error') {
+      throw new Error(data.message || 'Error fetching squeeth vol')
+    }
+
+    return data * 100
+  } catch (error) {
+    console.error('Error fetching squeeth vol:', error)
+    return 0
   }
-
-  return response * 100
 }
