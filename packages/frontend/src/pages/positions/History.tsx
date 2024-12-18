@@ -82,9 +82,14 @@ const History: React.FC = () => {
                 >
                   {tx.ethAmount.toFixed(4)}&nbsp; WETH
                 </Typography>
-                <Typography variant="caption" color="textSecondary">
-                  ${getUsdAmt(tx.ethAmount, tx.timestamp).toFixed(2)}
-                </Typography>
+                {(() => {
+                  const usdAmount = getUsdAmt(tx.ethAmount, tx.timestamp)
+                  return usdAmount.gt(0) ? (
+                    <Typography variant="caption" color="textSecondary">
+                      ${usdAmount.toFixed(2)}
+                    </Typography>
+                  ) : null
+                })()}
               </div>
               <div className={classes.txItemVal} />
             </>
@@ -131,14 +136,22 @@ const History: React.FC = () => {
                 >
                   {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
                   tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
-                    ? `${tx.usdValue.toFixed(2)} USDC`
-                    : `${tx.ethAmount.toFixed(4)} WETH`}
+                    ? tx.usdValue.gt(0)
+                      ? `${tx.usdValue.toFixed(2)} USDC`
+                      : null
+                    : tx.ethAmount.gt(0)
+                    ? `${tx.ethAmount.toFixed(4)} WETH`
+                    : null}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
                   {tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_DEPOSIT ||
                   tx.transactionType === TransactionType.CRAB_V2_USDC_FLASH_WITHDRAW
-                    ? `${tx.ethAmount.toFixed(4)} WETH`
-                    : `$${tx.usdValue.toFixed(2)}`}
+                    ? tx.ethAmount.gt(0)
+                      ? `${tx.ethAmount.toFixed(4)} WETH`
+                      : null
+                    : tx.usdValue.gt(0)
+                    ? `$${tx.usdValue.toFixed(2)}`
+                    : null}
                 </Typography>
               </div>
             </>

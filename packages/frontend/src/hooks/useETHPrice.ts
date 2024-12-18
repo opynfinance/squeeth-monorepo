@@ -53,17 +53,21 @@ export const getETHPriceCoingecko = async (): Promise<BigNumber> => {
 }
 
 export const getHistoricEthPrice = async (dateString: string): Promise<BigNumber> => {
-  const pair = 'ETH/USD'
+  try {
+    const pair = 'ETH/USD'
 
-  const response = await fetch(
-    `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`,
-  ).then((res) => res.json())
+    const response = await fetch(
+      `/api/twelvedata?path=time_series&start_date=${dateString}&end_date=${dateString}&symbol=${pair}&interval=1min`,
+    ).then((res) => res.json())
 
-  if (response.status === 'error') {
-    throw new Error(response.status)
+    if (response.status === 'error' || !response.values?.[0]?.close) {
+      return new BigNumber(0)
+    }
+
+    return new BigNumber(Number(response.values[0].close))
+  } catch (error) {
+    return new BigNumber(0)
   }
-
-  return new BigNumber(Number(response.values[0].close))
 }
 
 export const getHistoricEthPrices = async (timestamps: number[]) => {
@@ -71,20 +75,32 @@ export const getHistoricEthPrices = async (timestamps: number[]) => {
     return
   }
 
-  const timestampStr = timestamps.join(',')
-  const pair = 'ETH/USD'
+  try {
+    const timestampStr = timestamps.join(',')
+    const pair = 'ETH/USD'
 
-  const response = await (
-    await fetch(
-      `/api/historicalprice?timestamps=${timestampStr}&pair=${pair}&interval=1min&timezone=${
-        Intl.DateTimeFormat().resolvedOptions().timeZone
-      }`,
-    )
-  ).json()
+    const response = await (
+      await fetch(
+        `/api/historicalprice?timestamps=${timestampStr}&pair=${pair}&interval=1min&timezone=${
+          Intl.DateTimeFormat().resolvedOptions().timeZone
+        }`,
+      )
+    ).json()
 
-  if (response.status === 'error') {
-    throw new Error(response.message)
+    if (response.status === 'error') {
+      // Return an object with all timestamps mapped to '0'
+      return timestamps.reduce((acc, timestamp) => {
+        acc[timestamp] = '0'
+        return acc
+      }, {} as Record<number, string>)
+    }
+
+    return response
+  } catch (error) {
+    // In case of any error, return an object with all timestamps mapped to '0'
+    return timestamps.reduce((acc, timestamp) => {
+      acc[timestamp] = '0'
+      return acc
+    }, {} as Record<number, string>)
   }
-
-  return response
 }

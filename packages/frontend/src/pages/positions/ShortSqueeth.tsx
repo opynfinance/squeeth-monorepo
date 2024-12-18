@@ -27,7 +27,7 @@ export default function ShortSqueeth() {
   const isPnLLoading = useAtomValue(loadingAtom)
   const shortPositionValue = useCurrentShortPositionValue()
   const shortGain = useShortGain()
-  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  // const shortUnrealizedPNL = useShortUnrealizedPNL()
   const shortRealizedPNL = useShortRealizedPnl()
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
 
@@ -92,7 +92,7 @@ export default function ShortSqueeth() {
           <HidePnLText />
         ) : (
           <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-            <div style={{ width: '50%' }}>
+            {/* <div style={{ width: '50%' }}>
               <div className={classes.pnlTitle}>
                 <Typography variant="caption" component="span" color="textSecondary">
                   Unrealized P&L
@@ -111,7 +111,7 @@ export default function ShortSqueeth() {
                   </Typography>
                 </>
               )}
-            </div>
+            </div> */}
             <div style={{ width: '50%' }}>
               <div className={classes.pnlTitle}>
                 <Typography variant="caption" component="span" color="textSecondary">

@@ -17,8 +17,8 @@ export default function LongSqueeth() {
   const { squeethAmount, loading: swapsLoading } = useComputeSwaps()
   const isPnLLoading = useAtomValue(loadingAtom)
   const isToHidePnL = useAtomValue(isToHidePnLAtom)
-  const longGain = useLongGain()
-  const longUnrealizedPNL = useLongUnrealizedPNL()
+  // const longGain = useLongGain()
+  // const longUnrealizedPNL = useLongUnrealizedPNL()
   const longRealizedPNL = useLongRealizedPnl()
   const longPositionValue = useCurrentLongPositionValue()
 
@@ -60,7 +60,7 @@ export default function LongSqueeth() {
           <HidePnLText />
         ) : (
           <div className={classes.innerPositionData} style={{ marginTop: '16px' }}>
-            <div style={{ width: '50%' }}>
+            {/* <div style={{ width: '50%' }}>
               <div className={classes.pnlTitle}>
                 <Typography variant="caption" component="span" color="textSecondary">
                   Unrealized P&L
@@ -73,15 +73,13 @@ export default function LongSqueeth() {
                 <>
                   <Typography variant="body1" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                     $ {longUnrealizedPNL.usd.toFixed(2)} ({longUnrealizedPNL.eth.toFixed(5)} ETH)
-                    {/* ${sellQuote.amountOut.minus(wethAmount.abs()).times(toTokenAmount(index, 18).sqrt()).toFixed(2)}{' '}
-              ({sellQuote.amountOut.minus(wethAmount.abs()).toFixed(5)} ETH) */}
                   </Typography>
                   <Typography variant="caption" className={longGain.isLessThan(0) ? classes.red : classes.green}>
                     {(longGain || 0).toFixed(2)}%
                   </Typography>
                 </>
               )}
-            </div>
+            </div> */}
             <div style={{ width: '50%' }}>
               <div className={classes.pnlTitle}>
                 <Typography variant="caption" component="span" color="textSecondary">

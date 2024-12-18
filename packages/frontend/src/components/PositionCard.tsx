@@ -27,14 +27,7 @@ import {
   tradeSuccessAtom,
   tradeTypeAtom,
 } from 'src/state/trade/atoms'
-import {
-  useLongGain,
-  useShortGain,
-  useCurrentLongPositionValue,
-  useCurrentShortPositionValue,
-  useLongUnrealizedPNL,
-  useShortUnrealizedPNL,
-} from 'src/state/pnl/hooks'
+import { useCurrentLongPositionValue, useCurrentShortPositionValue } from 'src/state/pnl/hooks'
 import { loadingAtom } from 'src/state/pnl/atoms'
 import { useVaultData } from '@hooks/useVaultData'
 import useAppEffect from '@hooks/useAppEffect'
@@ -230,10 +223,10 @@ const pnlClass = (positionType: string, long: number | BigNumber, short: number 
 }
 
 const PositionCard: React.FC = () => {
-  const shortGain = useShortGain()
-  const longGain = useLongGain()
-  const longUnrealizedPNL = useLongUnrealizedPNL()
-  const shortUnrealizedPNL = useShortUnrealizedPNL()
+  // const shortGain = useShortGain()
+  // const longGain = useLongGain()
+  // const longUnrealizedPNL = useLongUnrealizedPNL()
+  // const shortUnrealizedPNL = useShortUnrealizedPNL()
   const longPositionValue = useCurrentLongPositionValue()
   const shortPositionValue = useCurrentShortPositionValue()
   const loading = useAtomValue(loadingAtom)
@@ -343,14 +336,14 @@ const PositionCard: React.FC = () => {
     setPostPosition(_postPosition)
   }, [actualTradeType, isOpenPosition, isPositionLoading, positionType, squeethAmount, tradeAmount])
 
-  const pnlLoading = useAppMemo(() => {
-    if (positionType === PositionType.LONG) {
-      return longUnrealizedPNL.loading
-    }
-    if (positionType === PositionType.SHORT) {
-      return shortUnrealizedPNL.loading
-    }
-  }, [longUnrealizedPNL.loading, positionType, shortUnrealizedPNL.loading])
+  // const pnlLoading = useAppMemo(() => {
+  //   if (positionType === PositionType.LONG) {
+  //     return longUnrealizedPNL.loading
+  //   }
+  //   if (positionType === PositionType.SHORT) {
+  //     return shortUnrealizedPNL.loading
+  //   }
+  // }, [longUnrealizedPNL.loading, positionType, shortUnrealizedPNL.loading])
 
   return (
     <div>

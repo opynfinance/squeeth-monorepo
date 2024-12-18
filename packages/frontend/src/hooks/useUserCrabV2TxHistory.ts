@@ -22,6 +22,7 @@ import BigNumber from 'bignumber.js'
 import { addressesAtom } from 'src/state/positions/atoms'
 import { getHistoricEthPrices } from './useETHPrice'
 import { useEffect, useMemo, useState } from 'react'
+import { useUsdAmount } from './useUsdAmount'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.DEPOSIT) return 'Deposit'
@@ -34,8 +35,9 @@ const getTxTitle = (type: string) => {
 export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
   const { usdc } = useAtomValue(addressesAtom)
-  const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
-  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
+  // const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
+  // const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
+  const { getUsdAmt } = useUsdAmount()
   const { data, loading, startPolling, stopPolling, error } = useQuery<userCrabV2Txes, userCrabV2TxesVariables>(
     USER_CRAB_V2_TX_QUERY,
     {
@@ -50,35 +52,37 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
 
   const crabUserTxes = useAppMemo(() => data?.crabUserTxes ?? [], [data])
 
-  //get all timestamps found in the user's history once
-  useEffect(() => {
-    const timestampsArr = crabUserTxes.map((tx) => tx.timestamp * 1000)
+  // get all timestamps found in the user's history once
+  // useEffect(() => {
+  //   const timestampsArr = crabUserTxes.map((tx) => tx.timestamp * 1000)
 
-    setEthUsdPriceMap(undefined)
-    setEthUsdPriceMapLoading(true)
+  //   setEthUsdPriceMap(undefined)
+  //   setEthUsdPriceMapLoading(true)
 
-    getHistoricEthPrices(timestampsArr)
-      .then((result) => {
-        setEthUsdPriceMap(result ?? undefined)
-      })
-      .finally(() => {
-        setEthUsdPriceMapLoading(false)
-      })
-  }, [crabUserTxes])
+  //   getHistoricEthPrices(timestampsArr)
+  //     .then((result) => {
+  //       setEthUsdPriceMap(result ?? undefined)
+  //     })
+  //     .finally(() => {
+  //       setEthUsdPriceMapLoading(false)
+  //     })
+  // }, [crabUserTxes])
 
-  const isEthUsdPriceMapValid = useMemo(
-    () => ethUsdPriceMap && crabUserTxes.every((tx) => !!ethUsdPriceMap![Number(tx.timestamp) * 1000]),
-    [crabUserTxes, ethUsdPriceMap],
-  )
+  // const isEthUsdPriceMapValid = useMemo(
+  //   () => ethUsdPriceMap && crabUserTxes.every((tx) => !!ethUsdPriceMap![Number(tx.timestamp) * 1000]),
+  //   [crabUserTxes, ethUsdPriceMap],
+  // )
 
   const uiData = useAppMemo(() => {
-    if (!isEthUsdPriceMapValid) {
-      return []
-    }
+    // if (!isEthUsdPriceMapValid) {
+    //   return []
+    // }
 
     return crabUserTxes.map((tx) => {
       let ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
-      let ethUsdValue = ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
+
+      const ethPriceAtTxTimestamp = getUsdAmt(toTokenAmount(BIG_ONE, 18), tx.timestamp)
+      let ethUsdValue = ethAmount.multipliedBy(ethPriceAtTxTimestamp)
 
       if (tx.type === CrabStrategyV2TxType.DEPOSIT_V1) {
         const ethMigrated = new BigNumber(V2_MIGRATION_ETH_AMOUNT)
@@ -91,6 +95,7 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
 
         ethUsdValue = ethAmount.times(V2_MIGRATION_ETH_PRICE)
       }
+
       if (tx.type === CrabStrategyV2TxType.FLASH_WITHDRAW && usdc.toLowerCase() === tx.erc20Token?.toLowerCase()) {
         ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS)
       } else if (
@@ -98,21 +103,17 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         usdc.toLowerCase() === tx.erc20Token?.toLowerCase()
       ) {
         ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-          ethUsdPriceMap
-            ? toTokenAmount(tx.excessEth, 18).multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
-            : 0,
+          ethPriceAtTxTimestamp.isZero() ? 0 : toTokenAmount(tx.excessEth, 18).multipliedBy(ethPriceAtTxTimestamp),
         )
       }
 
       if (tx.type === CrabStrategyV2TxType.OTC_DEPOSIT || tx.type === CrabStrategyV2TxType.OTC_WITHDRAW) {
         ethUsdValue = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).minus(
-          toTokenAmount(tx.ethAmount, 18).multipliedBy(
-            ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0,
-          ),
+          toTokenAmount(tx.ethAmount, 18).multipliedBy(ethPriceAtTxTimestamp),
         )
-        ethAmount = toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(
-          toTokenAmount(BIG_ONE, 18).multipliedBy(ethUsdPriceMap ? ethUsdPriceMap![Number(tx.timestamp) * 1000] : 0),
-        )
+        ethAmount = ethPriceAtTxTimestamp.isZero()
+          ? new BigNumber(0)
+          : toTokenAmount(tx.erc20Amount, USDC_DECIMALS).div(ethPriceAtTxTimestamp)
       }
 
       const lpAmount = toTokenAmount(tx.lpAmount, WETH_DECIMALS)
@@ -127,10 +128,10 @@ export const useUserCrabV2TxHistory = (user: string, isDescending?: boolean) => 
         txTitle: getTxTitle(tx.type),
       }
     })
-  }, [crabUserTxes, usdc, ethUsdPriceMap, isEthUsdPriceMapValid])
+  }, [crabUserTxes, usdc, getUsdAmt])
 
   return {
-    loading: loading || ethUsdPriceMapLoading,
+    loading: loading,
     data: uiData,
     startPolling,
     stopPolling,

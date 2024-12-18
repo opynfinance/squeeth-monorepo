@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client'
 import { userBullTxes, userBullTxesVariables } from '../queries/squeeth/__generated__/userBullTxes'
 import USER_BULL_TX_QUERY from '../queries/squeeth/userBullQuery'
 import { toTokenAmount } from '@utils/calculations'
-import { WETH_DECIMALS } from '../constants'
+import { WETH_DECIMALS, BIG_ONE } from '../constants'
 import { squeethClient } from '@utils/apollo-client'
 import { CrabStrategyV2TxType } from '../types/index'
 import { networkIdAtom } from 'src/state/wallet/atoms'
@@ -10,6 +10,8 @@ import { useAtomValue } from 'jotai'
 import useAppMemo from './useAppMemo'
 import { getHistoricEthPrices } from './useETHPrice'
 import { useEffect, useState } from 'react'
+import BigNumber from 'bignumber.js'
+import { useUsdAmount } from './useUsdAmount'
 
 const getTxTitle = (type: string) => {
   if (type === CrabStrategyV2TxType.FLASH_DEPOSIT) return 'Flash Deposit'
@@ -18,8 +20,9 @@ const getTxTitle = (type: string) => {
 
 export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
   const networkId = useAtomValue(networkIdAtom)
-  const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
-  const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
+  // const [ethUsdPriceMap, setEthUsdPriceMap] = useState<Record<number, string> | undefined>()
+  // const [ethUsdPriceMapLoading, setEthUsdPriceMapLoading] = useState(false)
+  const { getUsdAmt } = useUsdAmount()
   const { data, loading, startPolling, stopPolling } = useQuery<userBullTxes, userBullTxesVariables>(
     USER_BULL_TX_QUERY,
     {
@@ -34,30 +37,31 @@ export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
 
   const bullUserTxes = useAppMemo(() => data?.bullUserTxes ?? [], [data])
 
-  //get all timestamps found in the user's history once
-  useEffect(() => {
-    const timestampsArr = bullUserTxes.map((tx) => tx.timestamp * 1000)
+  // get all timestamps found in the user's history once
+  // useEffect(() => {
+  //   const timestampsArr = bullUserTxes.map((tx) => tx.timestamp * 1000)
 
-    setEthUsdPriceMap(undefined)
-    setEthUsdPriceMapLoading(true)
+  //   setEthUsdPriceMap(undefined)
+  //   setEthUsdPriceMapLoading(true)
 
-    getHistoricEthPrices(timestampsArr)
-      .then((result) => {
-        setEthUsdPriceMap(result ?? undefined)
-      })
-      .finally(() => {
-        setEthUsdPriceMapLoading(false)
-      })
-  }, [bullUserTxes])
+  //   getHistoricEthPrices(timestampsArr)
+  //     .then((result) => {
+  //       setEthUsdPriceMap(result ?? undefined)
+  //     })
+  //     .finally(() => {
+  //       setEthUsdPriceMapLoading(false)
+  //     })
+  // }, [bullUserTxes])
 
   const uiData = useAppMemo(() => {
-    if (!ethUsdPriceMap) {
-      return []
-    }
+    // if (!ethUsdPriceMap) {
+    //   return []
+    // }
 
     return bullUserTxes.map((tx) => {
       const ethAmount = toTokenAmount(tx.ethAmount, WETH_DECIMALS)
-      const ethUsdValue = ethAmount.multipliedBy(ethUsdPriceMap![Number(tx.timestamp) * 1000])
+      const ethPriceAtTxTimestamp = getUsdAmt(toTokenAmount(BIG_ONE, 18), tx.timestamp)
+      const ethUsdValue = ethAmount.multipliedBy(ethPriceAtTxTimestamp)
 
       const bullAmount = toTokenAmount(tx.bullAmount, WETH_DECIMALS)
 
@@ -69,10 +73,10 @@ export const useUserBullTxHistory = (user: string, isDescending?: boolean) => {
         txTitle: getTxTitle(tx.type),
       }
     })
-  }, [bullUserTxes, ethUsdPriceMap])
+  }, [bullUserTxes, getUsdAmt])
 
   return {
-    loading: loading || ethUsdPriceMapLoading,
+    loading: loading,
     data: uiData,
     startPolling,
     stopPolling,
