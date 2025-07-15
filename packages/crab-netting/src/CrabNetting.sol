@@ -57,7 +57,7 @@ struct DepositAuctionParams {
 
 /// @dev params for withdraw auction
 struct WithdrawAuctionParams {
-    /// @dev amont of crab to queue for withdrawal
+    /// @dev amount of crab to queue for withdrawal
     uint256 crabToWithdraw;
     /// @dev orders that sell sqth to the auction
     Order[] orders;
@@ -248,7 +248,7 @@ contract CrabNetting is Ownable, EIP712 {
     }
 
     /**
-     * @dev view function to get the domain seperator used in signing
+     * @dev view function to get the domain separator used in signing
      */
     function DOMAIN_SEPARATOR() external view returns (bytes32) {
         return _domainSeparatorV4();
